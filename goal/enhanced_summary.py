@@ -57,6 +57,7 @@ class SummaryQualityFilter:
         'config': [r'config', r'setting', r'option'],
         'test': [r'test_', r'_test', r'spec'],
         'docs': [r'\.md$', r'readme', r'doc'],
+        'quality': [r'quality', r'metric', r'coverage', r'dependen'],
     }
     
     # Intent classification patterns
@@ -239,17 +240,21 @@ class SummaryQualityFilter:
         deletion_pct = (deleted / total) * 100 if total else 0
         if deleted > 0 and deletion_pct >= 10:
             if net < 0:
-                return '📉', f"{deletion_pct:.0f}% churn was deletions (-{deleted} lines removed, NET {net})"
+                return '📉', (
+                    f"+{added}/-{deleted} lines (NET {net}, {deletion_pct:.0f}% churn deletions)"
+                )
             if deleted >= 250:
-                return '📉', f"{deletion_pct:.0f}% churn was deletions (-{deleted} lines refactored, NET +{net})"
-            return '📊', f"{deletion_pct:.0f}% churn was deletions (-{deleted} lines, NET +{net})"
+                return '📉', (
+                    f"+{added}/-{deleted} lines (NET +{net}, {deletion_pct:.0f}% churn deletions)"
+                )
+            return '📊', f"+{added}/-{deleted} lines (NET +{net}, {deletion_pct:.0f}% churn deletions)"
         if net < 0:
-            return '📉', f"NET {net} lines (cleanup)"
+            return '📉', f"+{added}/-{deleted} lines (NET {net})"
         if net > 100:
-            return '📈', f"NET +{net} lines (significant new features)"
+            return '📈', f"+{added}/-{deleted} lines (NET +{net})"
         if net > 0:
-            return '📊', f"NET +{net} lines (new features)"
-        return '➡️', f"NET {net} lines (balanced refactor)"
+            return '📊', f"+{added}/-{deleted} lines (NET +{net})"
+        return '➡️', f"+{added}/-{deleted} lines (NET {net})"
     
     def classify_intent_smart(self, files: List[str], entities: List[Dict], 
                                added: int = 0, deleted: int = 0) -> str:
@@ -907,10 +912,11 @@ class EnhancedSummaryGenerator:
         capabilities = self.detect_capabilities(files, diff_content)
         capabilities = self.quality_filter.prioritize_capabilities(capabilities)
         
-        # Detect relations and clean them
+        # Detect relations and dedupe them
         relations = self.detect_file_relations(files, diff_content)
-        relations['relations'] = self.quality_filter.filter_generic_nodes(relations.get('relations', []))
         relations['relations'] = self.quality_filter.dedupe_relations(relations.get('relations', []))
+        # Remove generic nodes, then rebuild chain and ASCII after cleaning
+        relations['relations'] = self.quality_filter.filter_generic_nodes(relations['relations'])
         relations['chain'] = self._build_relation_chain(relations['relations'])
         relations['ascii'] = self._render_relations_ascii(relations['relations'], files)
         
@@ -951,9 +957,6 @@ class EnhancedSummaryGenerator:
         metrics['lines_added'] = lines_added
         metrics['lines_deleted'] = lines_deleted
         
-        # Filter generic nodes from relations
-        relations['relations'] = self.quality_filter.filter_generic_nodes(relations['relations'])
-        
         # Generate title
         title = self.generate_value_title(capabilities, analysis, files)
         
@@ -967,12 +970,12 @@ class EnhancedSummaryGenerator:
             aggregated=aggregated
         )
         
-        # Classify intent
+        # Classify intent (use line stats so refactors can't become "feat")
         intent = self.quality_filter.classify_intent_smart(
             files,
             aggregated.get('added_entities', []),
-            lines_added,
-            lines_deleted
+            added=lines_added,
+            deleted=lines_deleted,
         )
         
         return {
@@ -1010,6 +1013,31 @@ class EnhancedSummaryGenerator:
             for role in roles[:5]:
                 role_lines.append(f"✅ {role['role']} ({role['name']})")
             sections.append('\n'.join(role_lines))
+
+        # ARCHITECTURE section - show concrete file names per category
+        categorized = self.quality_filter.categorize_files(files)
+        if categorized:
+            icon_map = {
+                'analyzer': '🔬',
+                'cli': '🤖',
+                'quality': '📊',
+                'test': '🧪',
+                'config': '⚙️',
+                'docs': '📚',
+                'api': '🌐',
+                'service': '🧠',
+                'model': '📦',
+                'util': '🔧',
+                'core': '🧩',
+            }
+            arch_lines = ["ARCHITECTURE:"]
+            for category, cat_files in sorted(categorized.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+                names = [Path(f).name for f in cat_files]
+                shown = names[:4]
+                suffix = f", +{len(names) - 4} more" if len(names) > 4 else ""
+                icon = icon_map.get(category, '📦')
+                arch_lines.append(f"{icon} {category} ({len(names)} files): {', '.join(shown)}{suffix}")
+            sections.append('\n'.join(arch_lines))
         
         # IMPACT METRICS section
         if metrics:
@@ -1041,7 +1069,13 @@ class EnhancedSummaryGenerator:
             rel_lines = ["DEPENDENCY FLOW:"]
             chain = relations.get('chain', '')
             if chain:
-                rel_lines.append(f"  {chain}")
+                rel_lines.append(f"  Chain: {chain}")
+
+            # Show concrete edges (not just counts)
+            rel_lines.append("  Relations:")
+            for r in relations.get('relations', [])[:8]:
+                rel_lines.append(f"  - {r.get('from')}.py → {r.get('to')}.py")
+
             # Add ASCII visualization if available
             if relations.get('ascii') and len(relations['relations']) > 1:
                 rel_lines.append("")
@@ -1049,15 +1083,12 @@ class EnhancedSummaryGenerator:
                     rel_lines.append(f"  {line}")
             sections.append('\n'.join(rel_lines))
         
-        # FILES section (smart categorization with deduplication)
-        categorized = self.quality_filter.categorize_files(files)
+        # FILES section (summary counts)
         file_parts = []
         for category, cat_files in categorized.items():
             count = len(cat_files)
             if count > 0:
-                examples = ", ".join(Path(f).name for f in cat_files[:3])
-                suffix = f": {examples}" if examples else ""
-                file_parts.append(f"{count} {category}{suffix}")
+                file_parts.append(f"{category}={count}")
         
         if file_parts:
             sections.append(f"Files: {'; '.join(file_parts)}")
