@@ -109,9 +109,11 @@ class SummaryQualityFilter:
     
     def has_banned_words(self, title: str) -> List[str]:
         """Check if title contains banned words. Returns list of found banned words."""
+        # Only evaluate the description part (after the conventional prefix).
+        # This avoids false positives like banning the commit type token `fix`.
         desc = title.split(':', 1)[1] if ':' in title else title
-        words = set(re.findall(r"[a-zA-Z]+", desc.lower()))
-        return [w for w in self.BANNED_TITLE_WORDS if w in words]
+        desc_words = set(re.findall(r"[a-zA-Z]+", desc.lower()))
+        return sorted([w for w in self.BANNED_TITLE_WORDS if w in desc_words])
     
     def classify_intent(self, files: List[str], entities: List[Dict]) -> str:
         """Classify commit intent: feat, fix, refactor, docs, chore."""

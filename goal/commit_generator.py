@@ -682,6 +682,7 @@ class CommitMessageGenerator:
                     'enhanced': True,
                     'metrics': enhanced.get('metrics'),
                     'capabilities': enhanced.get('capabilities'),
+                    'roles': enhanced.get('roles'),
                     'relations': enhanced.get('relations'),
                     'intent': enhanced.get('intent'),
                     'analysis': enhanced.get('analysis'),
