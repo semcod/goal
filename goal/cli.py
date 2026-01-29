@@ -1897,8 +1897,10 @@ def config_get(ctx, key):
 
 @main.command()
 @click.option('--fix', '-f', is_flag=True, help='Auto-fix detected issues')
+@click.option('--cached/--working-tree', 'cached', default=True, show_default=True,
+               help='Validate staged (--cached) or unstaged working tree (--working-tree) changes')
 @click.pass_context
-def validate(ctx, fix):
+def validate(ctx, fix, cached):
     """Validate commit summary against quality gates.
     
     Checks for:
@@ -1914,14 +1916,13 @@ def validate(ctx, fix):
     except ImportError:
         from enhanced_summary import QualityValidator, EnhancedSummaryGenerator
     
-    # Get staged files
-    staged = get_staged_files()
-    if not staged or staged == ['']:
-        click.echo(click.style("No staged changes to validate.", fg='yellow'))
+    files = get_staged_files() if cached else get_working_tree_files()
+    if not files or files == ['']:
+        click.echo(click.style("No changes to validate.", fg='yellow'))
         return
     
-    diff_content = get_diff_content()
-    numstats = get_diff_stats()
+    diff_content = get_diff_content(cached=cached)
+    numstats = get_diff_stats(cached=cached)
     stats = {
         'added': sum(v[0] for v in numstats.values()),
         'deleted': sum(v[1] for v in numstats.values())
@@ -1933,14 +1934,14 @@ def validate(ctx, fix):
     
     generator = EnhancedSummaryGenerator(config_dict)
     summary = generator.generate_enhanced_summary(
-        staged, diff_content, 
+        files, diff_content, 
         lines_added=stats['added'], 
         lines_deleted=stats['deleted']
     )
     
     # Validate
     validator = QualityValidator(config_dict)
-    result = validator.validate(summary, staged)
+    result = validator.validate(summary, files)
     
     if result['valid']:
         click.echo(click.style("✓ SUMMARY PASSED QUALITY GATES", fg='green', bold=True))
@@ -1964,7 +1965,7 @@ def validate(ctx, fix):
     if fix:
         # Auto-fix
         click.echo(click.style("\n🔧 Auto-fixing issues...", fg='cyan'))
-        fixed = validator.auto_fix(summary, staged, stats['added'], stats['deleted'])
+        fixed = validator.auto_fix(summary, files, stats['added'], stats['deleted'])
         
         click.echo(click.style("\nApplied fixes:", fg='green'))
         for f in fixed.get('applied_fixes', []):
@@ -1980,8 +1981,10 @@ def validate(ctx, fix):
 @main.command('fix-summary')
 @click.option('--auto', 'auto_fix', is_flag=True, help='Automatically fix all issues')
 @click.option('--preview', '-p', is_flag=True, help='Preview fixes without applying')
+@click.option('--cached/--working-tree', 'cached', default=True, show_default=True,
+               help='Fix summary for staged (--cached) or unstaged working tree (--working-tree) changes')
 @click.pass_context
-def fix_summary(ctx, auto_fix, preview):
+def fix_summary(ctx, auto_fix, preview, cached):
     """Auto-fix commit summary quality issues.
     
     Fixes:
@@ -1996,14 +1999,13 @@ def fix_summary(ctx, auto_fix, preview):
     except ImportError:
         from enhanced_summary import QualityValidator, EnhancedSummaryGenerator
     
-    # Get staged files
-    staged = get_staged_files()
-    if not staged or staged == ['']:
-        click.echo(click.style("No staged changes to fix.", fg='yellow'))
+    files = get_staged_files() if cached else get_working_tree_files()
+    if not files or files == ['']:
+        click.echo(click.style("No changes to fix.", fg='yellow'))
         return
     
-    diff_content = get_diff_content()
-    numstats = get_diff_stats()
+    diff_content = get_diff_content(cached=cached)
+    numstats = get_diff_stats(cached=cached)
     stats = {
         'added': sum(v[0] for v in numstats.values()),
         'deleted': sum(v[1] for v in numstats.values())
@@ -2015,7 +2017,7 @@ def fix_summary(ctx, auto_fix, preview):
     
     generator = EnhancedSummaryGenerator(config_dict)
     summary = generator.generate_enhanced_summary(
-        staged, diff_content,
+        files, diff_content,
         lines_added=stats['added'],
         lines_deleted=stats['deleted']
     )
@@ -2028,7 +2030,7 @@ def fix_summary(ctx, auto_fix, preview):
     click.echo(f"Intent: {summary.get('intent', 'unknown')}")
     
     # Fix
-    fixed = validator.auto_fix(summary, staged, stats['added'], stats['deleted'])
+    fixed = validator.auto_fix(summary, files, stats['added'], stats['deleted'])
     
     # Show fixed
     click.echo(click.style("\n=== AFTER ===", fg='green'))
