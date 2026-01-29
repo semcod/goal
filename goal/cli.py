@@ -553,8 +553,17 @@ def bump_version(version: str, bump_type: str = 'patch') -> str:
 # Changelog Management
 # =============================================================================
 
-def update_changelog(version: str, files: List[str], commit_msg: str):
-    """Update CHANGELOG.md with new version and changes."""
+def update_changelog(version: str, files: List[str], commit_msg: str, 
+                     config: Dict = None, changelog_entry: Dict = None):
+    """Update CHANGELOG.md with new version and changes.
+    
+    Args:
+        version: New version string.
+        files: List of changed files.
+        commit_msg: Commit message.
+        config: Optional goal.yaml config dict for domain grouping.
+        changelog_entry: Optional structured changelog entry from smart_commit.
+    """
     changelog_path = Path('CHANGELOG.md')
     existing_content = ""
     if changelog_path.exists():
@@ -562,24 +571,78 @@ def update_changelog(version: str, files: List[str], commit_msg: str):
     
     date_str = datetime.now().strftime('%Y-%m-%d')
     
-    # Build change list
-    changes = []
-    for f in files:
-        if f:
+    # Check if we should use domain grouping
+    use_domain_grouping = False
+    if config:
+        use_domain_grouping = config.get('git', {}).get('changelog', {}).get('group_by_domain', False)
+    
+    # Build change list with domain grouping
+    if use_domain_grouping and config:
+        domain_mapping = config.get('git', {}).get('commit', {}).get('domain_mapping', {})
+        domain_changes = {}
+        
+        for f in files:
+            if not f:
+                continue
+            # Determine domain for file
+            domain = 'other'
+            for pattern, d in domain_mapping.items():
+                import fnmatch
+                if fnmatch.fnmatch(f, pattern):
+                    domain = d
+                    break
+                if pattern.endswith('/*') and f.startswith(pattern[:-2]):
+                    domain = d
+                    break
+            
+            if domain not in domain_changes:
+                domain_changes[domain] = []
+            
             desc = categorize_file(f)
             if desc:
-                changes.append(desc)
-    
-    # Create entry
-    new_entry = f"## [{version}] - {date_str}\n\n"
-    new_entry += f"### Summary\n\n{commit_msg}\n\n"
-    if changes:
-        new_entry += "### Changes\n\n"
-        for change in changes[:20]:  # Limit to 20 changes
-            new_entry += f"- {change}\n"
-        if len(changes) > 20:
-            new_entry += f"- ... and {len(changes) - 20} more changes\n"
-    new_entry += "\n"
+                domain_changes[domain].append(desc)
+        
+        # Create entry with domain sections
+        new_entry = f"## [{version}] - {date_str}\n\n"
+        new_entry += f"### Summary\n\n{commit_msg}\n\n"
+        
+        # Add entities if available
+        if changelog_entry and changelog_entry.get('entity_details'):
+            entities = changelog_entry['entity_details']
+            new_entry += f"**Key Changes:** {', '.join(f'`{e}`' for e in entities[:5])}\n\n"
+        
+        # Domain sections
+        domain_order = ['core', 'api', 'app', 'docs', 'test', 'build', 'ci', 'config', 'other']
+        for domain in domain_order:
+            if domain in domain_changes and domain_changes[domain]:
+                domain_title = domain.capitalize()
+                new_entry += f"### {domain_title}\n\n"
+                for change in domain_changes[domain][:10]:
+                    new_entry += f"- {change}\n"
+                if len(domain_changes[domain]) > 10:
+                    new_entry += f"- ... and {len(domain_changes[domain]) - 10} more\n"
+                new_entry += "\n"
+        
+        new_entry += "\n"
+    else:
+        # Legacy format without domain grouping
+        changes = []
+        for f in files:
+            if f:
+                desc = categorize_file(f)
+                if desc:
+                    changes.append(desc)
+        
+        # Create entry
+        new_entry = f"## [{version}] - {date_str}\n\n"
+        new_entry += f"### Summary\n\n{commit_msg}\n\n"
+        if changes:
+            new_entry += "### Changes\n\n"
+            for change in changes[:20]:  # Limit to 20 changes
+                new_entry += f"- {change}\n"
+            if len(changes) > 20:
+                new_entry += f"- ... and {len(changes) - 20} more changes\n"
+        new_entry += "\n"
     
     changelog_path.write_text(new_entry + existing_content)
 
@@ -610,6 +673,115 @@ def run_tests(project_types: List[str]) -> bool:
     return True
 
 
+def get_registry_help(project_type: str) -> str:
+    """Get help message for configuring registry authentication."""
+    help_messages = {
+        'nodejs': """
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📦 npm Registry Configuration                                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ To publish to npm, you need to authenticate:                                │
+│                                                                             │
+│ Option 1: Interactive login                                                 │
+│   $ npm login                                                               │
+│                                                                             │
+│ Option 2: Use automation token (recommended for CI/CD)                      │
+│   1. Create token at: https://www.npmjs.com/settings/tokens                 │
+│   2. Set environment variable:                                              │
+│      $ export NPM_TOKEN="npm_xxxxxxxx"                                      │
+│   3. Create .npmrc in project root:                                         │
+│      //registry.npmjs.org/:_authToken=${NPM_TOKEN}                          │
+│                                                                             │
+│ Configure in goal.yaml:                                                     │
+│   registries:                                                               │
+│     npm:                                                                    │
+│       url: "https://registry.npmjs.org/"                                    │
+│       token_env: "NPM_TOKEN"                                                │
+│                                                                             │
+│ For scoped packages (@org/package):                                         │
+│   $ npm publish --access public                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+""",
+        'python': """
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🐍 PyPI Registry Configuration                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ To publish to PyPI, you need to authenticate:                               │
+│                                                                             │
+│ Option 1: Use API token (recommended)                                       │
+│   1. Create token at: https://pypi.org/manage/account/token/               │
+│   2. Create ~/.pypirc:                                                      │
+│      [pypi]                                                                 │
+│      username = __token__                                                   │
+│      password = pypi-xxxxxxxx                                               │
+│                                                                             │
+│ Option 2: Environment variable                                              │
+│   $ export TWINE_USERNAME=__token__                                         │
+│   $ export TWINE_PASSWORD=pypi-xxxxxxxx                                     │
+│                                                                             │
+│ Configure in goal.yaml:                                                     │
+│   registries:                                                               │
+│     pypi:                                                                   │
+│       url: "https://pypi.org/simple/"                                       │
+│       token_env: "PYPI_TOKEN"                                               │
+│                                                                             │
+│ For Test PyPI (testing):                                                    │
+│   $ twine upload --repository testpypi dist/*                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+""",
+        'rust': """
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🦀 crates.io Registry Configuration                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ To publish to crates.io, you need to authenticate:                          │
+│                                                                             │
+│ 1. Get API token at: https://crates.io/settings/tokens                     │
+│ 2. Login with cargo:                                                        │
+│    $ cargo login <your-token>                                               │
+│                                                                             │
+│ Or use environment variable:                                                │
+│    $ export CARGO_REGISTRY_TOKEN=<your-token>                               │
+│                                                                             │
+│ Configure in goal.yaml:                                                     │
+│   registries:                                                               │
+│     cargo:                                                                  │
+│       url: "https://crates.io/"                                             │
+│       token_env: "CARGO_REGISTRY_TOKEN"                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+""",
+        'ruby': """
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 💎 RubyGems Registry Configuration                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ To publish to RubyGems, you need to authenticate:                           │
+│                                                                             │
+│ 1. Get API key at: https://rubygems.org/profile/api_keys                   │
+│ 2. Create ~/.gem/credentials:                                               │
+│    ---                                                                      │
+│    :rubygems_api_key: rubygems_xxxxxxxx                                     │
+│                                                                             │
+│ Or use environment variable:                                                │
+│    $ export GEM_HOST_API_KEY=rubygems_xxxxxxxx                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+"""
+    }
+    return help_messages.get(project_type, f"""
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📦 Registry Configuration                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Publishing failed. Please configure your registry authentication.           │
+│                                                                             │
+│ Check goal.yaml registries section for configuration options:              │
+│   $ goal config show -k registries                                          │
+│                                                                             │
+│ Common environment variables:                                               │
+│   - NPM_TOKEN: npm registry token                                           │
+│   - PYPI_TOKEN: PyPI API token                                              │
+│   - CARGO_REGISTRY_TOKEN: crates.io token                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+""")
+
+
 def publish_project(project_types: List[str], version: str) -> bool:
     """Publish project for detected project types."""
     for ptype in project_types:
@@ -617,7 +789,14 @@ def publish_project(project_types: List[str], version: str) -> bool:
             cmd = PROJECT_TYPES[ptype]['publish_command']
             click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
             result = run_command(cmd, capture=False)
-            return result.returncode == 0
+            
+            if result.returncode != 0:
+                # Show registry configuration help
+                click.echo(click.style("\n⚠️  Publish failed - Authentication required", fg='yellow', bold=True))
+                click.echo(get_registry_help(ptype))
+                return False
+            
+            return True
     
     click.echo(click.style("\nNo publish command configured for this project type", fg='yellow'))
     return True
@@ -735,13 +914,29 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     if message:
         commit_title = apply_ticket_prefix(message, ticket)
     else:
-        generator = CommitMessageGenerator()
-        detailed = generator.generate_detailed_message(cached=True)
-        if detailed:
-            commit_title = apply_ticket_prefix(detailed.get('title'), ticket)
-            commit_body = detailed.get('body')
+        # Get config from context for smart abstraction
+        config_obj = ctx.obj.get('config')
+        config_dict = config_obj.to_dict() if config_obj else None
+        generator = CommitMessageGenerator(config=config_dict)
+        
+        # Use abstraction-based generation if available
+        if abstraction != 'legacy' and config_dict:
+            abstraction_result = generator.generate_abstraction_message(level=abstraction, cached=True)
+            if abstraction_result:
+                commit_title = apply_ticket_prefix(abstraction_result.get('title'), ticket)
+                commit_body = abstraction_result.get('body')
+            else:
+                detailed = generator.generate_detailed_message(cached=True)
+                if detailed:
+                    commit_title = apply_ticket_prefix(detailed.get('title'), ticket)
+                    commit_body = detailed.get('body')
         else:
-            commit_title = apply_ticket_prefix(generate_smart_commit_message(files, diff_content), ticket)
+            detailed = generator.generate_detailed_message(cached=True)
+            if detailed:
+                commit_title = apply_ticket_prefix(detailed.get('title'), ticket)
+                commit_body = detailed.get('body')
+            else:
+                commit_title = apply_ticket_prefix(generate_smart_commit_message(files, diff_content), ticket)
         if not commit_title:
             click.echo(click.style("No changes to commit.", fg='yellow'))
             return
@@ -760,7 +955,9 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     if dry_run:
         # Split mode: show planned commits per group
         if split and not message:
-            generator = CommitMessageGenerator()
+            config_obj = ctx.obj.get('config')
+            config_dict = config_obj.to_dict() if config_obj else None
+            generator = CommitMessageGenerator(config=config_dict)
             groups = split_paths_by_type(files)
             plan_lines = []
             for gname in ['code', 'docs', 'ci', 'examples', 'other']:
@@ -900,7 +1097,9 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
 
     # Split commits per group if requested (single push at end)
     if split and not message:
-        generator = CommitMessageGenerator()
+        config_obj = ctx.obj.get('config')
+        config_dict = config_obj.to_dict() if config_obj else None
+        generator = CommitMessageGenerator(config=config_dict)
         # Unstage everything first, then stage/commit per group
         run_git('reset')
         groups = split_paths_by_type(files)
@@ -944,7 +1143,9 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                 click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg='green'))
 
             if not no_changelog:
-                update_changelog(new_version, files, commit_msg)
+                config_obj = ctx.obj.get('config')
+                config_dict = config_obj.to_dict() if config_obj else None
+                update_changelog(new_version, files, commit_msg, config=config_dict)
                 stage_paths(['CHANGELOG.md'])
                 click.echo(click.style(f"✓ Updated CHANGELOG.md", fg='green'))
 
@@ -976,7 +1177,9 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     
     # Update changelog
     if not no_changelog:
-        update_changelog(new_version, files, commit_msg)
+        config_obj = ctx.obj.get('config')
+        config_dict = config_obj.to_dict() if config_obj else None
+        update_changelog(new_version, files, commit_msg, config=config_dict)
         run_git('add', 'CHANGELOG.md')
         click.echo(click.style(f"✓ Updated CHANGELOG.md", fg='green'))
     
@@ -1127,13 +1330,22 @@ def status(ctx, markdown):
 @click.option('--unstaged', '-u', is_flag=True, help='Analyze unstaged changes instead of staged')
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
 @click.option('--ticket', help='Ticket prefix to include in commit title (overrides TICKET)')
+@click.option('--abstraction', type=click.Choice(['auto', 'high', 'medium', 'low', 'legacy']), 
+              default='auto', help='Commit message abstraction level')
 @click.pass_context
-def commit(ctx, detailed, unstaged, markdown, ticket):
+def commit(ctx, detailed, unstaged, markdown, ticket, abstraction):
     """Generate a smart commit message for current changes."""
-    generator = CommitMessageGenerator()
+    # Get config from context for smart abstraction
+    config_obj = ctx.obj.get('config')
+    config_dict = config_obj.to_dict() if config_obj else None
+    generator = CommitMessageGenerator(config=config_dict)
     
     if detailed:
-        result = generator.generate_detailed_message(cached=not unstaged)
+        # Use abstraction-based generation if available
+        if abstraction != 'legacy' and config_dict:
+            result = generator.generate_abstraction_message(level=abstraction, cached=not unstaged)
+        else:
+            result = generator.generate_detailed_message(cached=not unstaged)
         if result:
             title = apply_ticket_prefix(result['title'], ticket)
             if markdown or ctx.obj.get('markdown'):
@@ -1147,7 +1359,7 @@ def commit(ctx, detailed, unstaged, markdown, ticket):
             click.echo(click.style("No changes to analyze.", fg='yellow'))
             sys.exit(1)
     else:
-        msg = generator.generate_commit_message(cached=not unstaged)
+        msg = generator.generate_commit_message(cached=not unstaged, abstraction_level=abstraction)
         if msg:
             msg = apply_ticket_prefix(msg, ticket)
             if markdown or ctx.obj.get('markdown'):

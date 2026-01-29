@@ -85,11 +85,17 @@ def format_push_result(
     test_result: Optional[str] = None,
     test_exit_code: int = 0,
     actions: List[str] = None,
-    error: Optional[str] = None
+    error: Optional[str] = None,
+    analysis: Optional[Dict[str, Any]] = None
 ) -> str:
     """Format push command result as markdown."""
     
     formatter = MarkdownFormatter()
+    
+    # Extract features and summary from analysis if available
+    features = analysis.get('features', []) if analysis else []
+    summary = analysis.get('summary', '') if analysis else ''
+    entities = analysis.get('entities', []) if analysis else []
     
     # Add metadata
     formatter.add_metadata(
@@ -97,37 +103,77 @@ def format_push_result(
         project_types=project_types,
         version_bump=f"{current_version} -> {new_version}",
         file_count=len(files),
+        features=features if features else None,
         timestamp=datetime.now().isoformat()
     )
     
     # Header
     formatter.add_header("Goal Push Result", 1)
     
-    # Overview
+    # Functional Summary (new - shows what was actually done)
     total_adds = sum(s[0] for s in stats.values())
     total_dels = sum(s[1] for s in stats.values())
-    overview = f"""
+    
+    if features or summary:
+        functional_overview = f"**What Changed:** "
+        if features:
+            if len(features) == 1:
+                functional_overview += f"Added {features[0]} support"
+            elif len(features) == 2:
+                functional_overview += f"Added {features[0]} and {features[1]} support"
+            else:
+                functional_overview += f"Added {features[0]}, {features[1]}, and {len(features)-2} more features"
+        elif summary:
+            functional_overview += summary
+        else:
+            functional_overview += f"Updated {len(files)} files"
+        
+        functional_overview += f"\n**Scope:** {len(files)} files (+{total_adds}/-{total_dels} lines)"
+        functional_overview += f"\n**Version:** {current_version} → {new_version}"
+        functional_overview += f"\n**Commit:** `{commit_msg}`"
+        
+        formatter.add_section("Summary", functional_overview)
+        
+        # Key changes (entities/features)
+        if entities:
+            meaningful = [e for e in entities if len(e) > 2][:6]
+            if meaningful:
+                formatter.sections.append("\n**Key Functions/Classes:**\n")
+                for e in meaningful:
+                    formatter.sections.append(f"- `{e}`\n")
+    else:
+        # Fallback to traditional overview
+        overview = f"""
 **Project Type:** {', '.join(project_types)}
 **Files Changed:** {len(files)} (+{total_adds}/-{total_dels} lines)
 **Version:** {current_version} → {new_version}
 **Commit Message:** `{commit_msg}`
-    """.strip()
-    
-    formatter.add_section("Overview", overview)
+        """.strip()
+        formatter.add_section("Overview", overview)
 
     if commit_body:
         formatter.add_section("Commit Body", commit_body, code_block=True)
     
-    # Files list
-    file_details = []
-    for f in files[:10]:  # Limit to 10 files
-        adds, dels = stats.get(f, (0, 0))
-        file_details.append(f"{f} (+{adds}/-{dels})")
-    
-    if len(files) > 10:
-        file_details.append(f"... and {len(files) - 10} more files")
-    
-    formatter.add_list("Changed Files", file_details)
+    # Group files by domain if analysis available
+    if analysis and analysis.get('domains'):
+        domains = analysis['domains']
+        domain_summary = []
+        for domain, domain_files in domains.items():
+            if domain_files:
+                domain_summary.append(f"**{domain.title()}:** {len(domain_files)} files")
+        if domain_summary:
+            formatter.add_list("Changes by Area", domain_summary)
+    else:
+        # Files list (fallback)
+        file_details = []
+        for f in files[:10]:  # Limit to 10 files
+            adds, dels = stats.get(f, (0, 0))
+            file_details.append(f"{f} (+{adds}/-{dels})")
+        
+        if len(files) > 10:
+            file_details.append(f"... and {len(files) - 10} more files")
+        
+        formatter.add_list("Changed Files", file_details)
     
     # Test results if available
     if test_result is not None:

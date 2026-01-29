@@ -1,7 +1,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.1-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.4-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -88,20 +88,190 @@ goal --yes
 goal --all
 ```
 
+### Real-world examples
+
+#### 1. Python project with pytest
+
+```bash
+# Make changes to your Python code
+git add .
+
+# Run the full workflow
+goal
+
+# Output:
+# ✓ Detected project types: python
+# ✓ Running tests: pytest tests/ -v
+# ✓ Tests passed (23/23)
+# ✓ Generated commit: feat(api): add user authentication endpoint
+# ✓ Updated VERSION to 1.2.3
+# ✓ Updated CHANGELOG.md
+# ✓ Created tag v1.2.3
+# ✓ Pushed to origin
+# ? Publish to PyPI? [Y/n]: Y
+# ✓ Published version 1.2.3
+```
+
+#### 2. Node.js project with npm
+
+```bash
+# Quick patch release for bug fix
+goal push --yes -m "fix: resolve memory leak in parser"
+
+# Output:
+# ✓ Detected project types: nodejs
+# ✓ Running tests: npm test
+# ✓ Tests passed
+# ✓ Committed: fix: resolve memory leak in parser
+# ✓ Updated package.json to 1.0.1
+# ✓ Updated CHANGELOG.md
+# ✓ Created tag v1.0.1
+# ✓ Pushed to origin
+```
+
+#### 3. Rust project with cargo
+
+```bash
+# Major release with breaking changes
+goal push --bump major --yes
+
+# Output:
+# ✓ Detected project types: rust
+# ✓ Running tests: cargo test
+# ✓ All tests passed
+# ✓ Generated commit: feat!: change public API structure
+# ✓ Updated Cargo.toml to 2.0.0
+# ✓ Updated CHANGELOG.md
+# ✓ Created tag v2.0.0
+# ✓ Pushed to origin
+# ? Publish to crates.io? [Y/n]: Y
+# ✓ Published crate v2.0.0
+```
+
+#### 4. Multi-language project
+
+```bash
+# Project with both Python backend and Node.js frontend
+goal info
+
+# Output:
+# === Project Information ===
+# Project types: python, nodejs
+# Current version: 1.5.0
+# 
+# Version files:
+#   ✓ VERSION: 1.5.0
+#   ✓ package.json: 1.5.0
+#   ✓ pyproject.toml: 1.5.0
+
+# Run release - updates both package.json and pyproject.toml
+goal push --yes
+```
+
+#### 5. Documentation updates
+
+```bash
+# Skip tests for docs-only changes
+goal push --no-test -m "docs: update API documentation"
+
+# Or let goal detect it's docs only
+git add README.md docs/
+goal push --yes
+
+# Output:
+# ✓ Detected project types: python
+# ✓ Generated commit: docs: update API documentation
+# ✓ Updated VERSION to 1.5.1
+# ✓ Updated CHANGELOG.md
+# ✓ Created tag v1.5.1
+# ✓ Pushed to origin
+```
+
+#### 6. CI/CD automation
+
+```yaml
+# .github/workflows/release.yml
+name: Release
+on:
+  push:
+    branches: [main]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Goal
+        run: pip install goal
+      - name: Configure PyPI token
+        run: echo "__token__=${{ secrets.PYPI_TOKEN }}" > ~/.pypirc
+      - name: Release
+        run: goal --all --bump patch
+```
+
+#### 7. Dry run for preview
+
+```bash
+# Preview what will happen
+goal push --dry-run --bump minor
+
+# Output:
+# === DRY RUN ===
+# Project types: python
+# Files to commit: 12 (+342/-15 lines)
+#   - src/auth.py (+120/-5)
+#   - tests/test_auth.py (+85/-0)
+#   - docs/api.md (+137/-10)
+# Commit message: feat(auth): add OAuth2 integration
+# Version: 1.5.0 -> 1.6.0
+# Version sync: VERSION, pyproject.toml
+# Tag: v1.6.0
+```
+
+#### 8. Custom commit message
+
+```bash
+# Override auto-generated message
+goal push -m "feat: implement real-time notifications"
+
+# Or use conventional commit format
+goal push -m "fix(auth): resolve JWT token expiration issue"
+```
+
+#### 9. Split commits for large changes
+
+```bash
+# Split changes into logical commits
+goal push --split --yes
+
+# Output:
+# ✓ Committed docs: update README and API docs
+# ✓ Committed feat: add user authentication system
+# ✓ Committed test: add comprehensive test coverage
+# ✓ Committed chore: update dependencies and CI config
+# ✓ Committed release: v2.0.0
+```
+
+#### 10. Skip specific steps
+
+```bash
+# Skip version bump for hotfix
+goal push --yes --no-version-sync -m "hotfix: critical security patch"
+
+# Skip changelog for minor tweak
+goal push --yes --no-changelog -m "style: fix linting issues"
+
+# Skip tag creation for experimental feature
+goal push --yes --no-tag -m "feat: experimental AI integration"
+```
+
 ### Using the push command directly
 
 ```bash
 # Interactive push with prompts
 goal push
-
-# Split commits by change type (docs/code/ci/examples)
-goal push --split
-
-# Split + auto (CI style)
-goal push --split --yes
-
-# Split + add ticket prefix
-goal push --split --ticket ABC-123
 
 # Automatic push without prompts
 goal push --yes
@@ -114,6 +284,12 @@ goal push -m "feat: add new authentication system"
 
 # Skip specific steps
 goal push --no-tag --no-changelog
+
+# With version bump
+goal push --bump minor
+
+# Markdown output for CI/CD logs
+goal push --markdown
 ```
 
 ### Version management
@@ -326,6 +502,59 @@ goal push --bump minor
 goal push --yes --no-tag
 ```
 
+### Working with Multiple Projects
+
+```bash
+# Monorepo with frontend and backend
+# Structure:
+# /backend (Python)
+# /frontend (Node.js)
+# /docs
+
+# From root directory
+goal info
+
+# Output:
+# Project types: python, nodejs
+# Version files:
+#   ✓ VERSION: 2.1.0
+#   ✓ backend/pyproject.toml: 2.1.0
+#   ✓ frontend/package.json: 2.1.0
+
+# Release updates all projects
+goal push --yes
+```
+
+### Hotfix Workflow
+
+```bash
+# Critical fix - skip tests and version bump
+goal push --yes --no-test --no-version-sync -m "hotfix: security patch"
+
+# Then create proper release
+goal push --bump patch -m "release: v1.2.1 with security fix"
+```
+
+### Feature Branch Workflow
+
+```bash
+# On feature branch
+goal push --yes --no-tag --no-publish
+
+# After merge to main
+goal push --bump minor --yes
+```
+
+### Release Candidate
+
+```bash
+# Create RC version
+goal push --bump patch -m "release: v2.0.0-rc1"
+
+# After testing, promote to stable
+goal push --bump patch -m "release: v2.0.0 stable"
+```
+
 ## Configuration
 
 Goal uses `goal.yaml` for configuration. Run `goal init` to create it automatically with detected settings.
@@ -477,6 +706,16 @@ major:
 # Dry run
 dry-run:
 	goal push --dry-run
+
+# Release with custom message
+release-message:
+	goal push --yes -m "$(MSG)"
+
+# Release from specific branch
+release-branch:
+	git checkout main
+	git pull
+	goal --all --bump $(BUMP)
 ```
 
 ### package.json scripts
@@ -488,7 +727,9 @@ dry-run:
     "release:patch": "goal push --yes",
     "release:all": "goal --all",
     "release:minor": "goal push --yes --bump minor",
-    "release:major": "goal push --yes --bump major"
+    "release:major": "goal push --yes --bump major",
+    "release:dry": "goal push --dry-run",
+    "release:docs": "goal push --yes -m 'docs: update documentation'"
   }
 }
 ```
@@ -498,7 +739,36 @@ dry-run:
 ```bash
 #!/bin/sh
 # .git/hooks/pre-commit
+echo "Running goal pre-commit check..."
 goal push --dry-run
+if [ $? -eq 0 ]; then
+    echo "✅ Ready to commit!"
+else
+    echo "❌ Issues found. Fix them before committing."
+    exit 1
+fi
+```
+
+### Docker integration
+
+```dockerfile
+# Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Install goal
+RUN pip install goal
+
+# Copy source code
+COPY . .
+
+# Run tests and release
+CMD ["sh", "-c", "goal --all"]
 ```
 
 ## Smart Commit Messages
@@ -541,6 +811,105 @@ Ensure you're authenticated with the appropriate package manager:
 - PyPI: `twine configure` or use `__token__`
 - npm: `npm login`
 - crates.io: `cargo login`
+
+### Common Issues
+
+#### Goal doesn't detect my project type
+```bash
+# Check what's detected
+goal info
+
+# Manually specify in goal.yaml
+project:
+  type: ["python", "nodejs"]
+```
+
+#### Version sync not working
+```bash
+# Check version files
+goal info
+
+# Manually configure in goal.yaml
+versioning:
+  files:
+    - "VERSION"
+    - "my-app/__init__.py:__version__"
+```
+
+#### Tests timing out
+```yaml
+# In goal.yaml
+advanced:
+  performance:
+    timeout_test: 600  # 10 minutes
+```
+
+#### Commit message not accurate
+```bash
+# Use custom message
+goal push -m "your custom message"
+
+# Or configure templates in goal.yaml
+git:
+  commit:
+    templates:
+      feat: "feat({scope}): {description}"
+```
+
+## Tips & Tricks
+
+### 1. Use with aliases
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+alias g='goal'
+alias gp='goal push --yes'
+alias ga='goal --all'
+alias gd='goal push --dry-run'
+```
+
+### 2. Team workflow
+```bash
+# For team development, use ticket prefixes
+echo "prefix=PROJ-123" > TICKET
+goal push --split  # Creates commits like "PROJ-123: feat: add feature"
+```
+
+### 3. Release checklist
+```bash
+# Before release
+goal status      # Check status
+goal push --dry-run  # Preview changes
+
+# Release
+goal --all       # Full automation
+```
+
+### 4. Working with feature flags
+```bash
+# Commit feature flag changes
+goal push -m "feat: enable beta feature flag"
+
+# Later, remove the flag
+goal push -m "feat: launch feature to all users"
+```
+
+### 5. Automated releases on schedule
+```yaml
+# .github/workflows/scheduled-release.yml
+name: Scheduled Release
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Goal
+        run: pip install goal
+      - name: Weekly Release
+        run: goal --all --bump patch
+```
 
 ## License
 

@@ -1,3 +1,25 @@
+## [2.1.5] - 2026-01-29
+
+### Summary
+
+test(core): improved test coverage
+
+### Core
+
+- update goal/__init__.py
+- update goal/cli.py
+- update goal/formatter.py
+- update goal/smart_commit.py
+
+### Docs
+
+- docs: update README
+
+### Build
+
+- update pyproject.toml
+
+
 ## [2.1.3] - 2026-01-29
 
 ### Summary

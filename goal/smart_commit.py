@@ -125,28 +125,50 @@ class CodeAbstraction:
         
         return topics[:5]
     
-    def infer_benefit(self, entities: List[str], domain: str, commit_type: str) -> str:
-        """Infer business benefit from entities and context."""
+    def infer_benefit(self, entities: List[str], domain: str, commit_type: str, 
+                       files: List[str] = None, features: List[str] = None) -> str:
+        """Infer business benefit from entities, files, and detected features."""
+        # If we have detected features, use them directly
+        if features:
+            if len(features) == 1:
+                return f"{features[0]} support"
+            elif len(features) <= 3:
+                return ', '.join(features[:-1]) + f" and {features[-1]} support"
+            else:
+                return f"{features[0]}, {features[1]} and {len(features) - 2} more features"
+        
         # Check for specific patterns in entities
         entity_str = ' '.join(entities).lower()
         
         # Pattern matching for common functionality
         benefit_patterns = [
-            (r'config|settings|yaml|json', 'better configuration management'),
-            (r'cli|command|option|arg', 'improved CLI experience'),
-            (r'api|endpoint|route|handler', 'enhanced API functionality'),
-            (r'test|spec|assert', 'improved test coverage'),
-            (r'doc|readme|guide|tutorial', 'better documentation'),
-            (r'auth|login|token|session', 'enhanced security'),
-            (r'cache|perf|optim|speed', 'improved performance'),
-            (r'refactor|clean|extract|split', 'cleaner code architecture'),
-            (r'fix|bug|issue|error', 'resolved issues'),
-            (r'feat|add|new|create', 'new functionality'),
+            (r'kubernetes|k8s|deployment|pod|service', 'Kubernetes support'),
+            (r'terraform|tf|provider|resource', 'Terraform support'),
+            (r'docker|container|compose', 'Docker support'),
+            (r'ansible|playbook|task', 'Ansible support'),
+            (r'gitlab|github|ci|cd|pipeline', 'CI/CD support'),
+            (r'analyzer|parser|detect', 'analysis capabilities'),
+            (r'config|settings|yaml|json', 'configuration management'),
+            (r'cli|command|option|arg', 'CLI experience'),
+            (r'api|endpoint|route|handler', 'API functionality'),
+            (r'test|spec|assert', 'test coverage'),
+            (r'doc|readme|guide|tutorial|example', 'documentation'),
+            (r'auth|login|token|session', 'security'),
+            (r'cache|perf|optim|speed', 'performance'),
+            (r'refactor|clean|extract|split', 'code architecture'),
+            (r'fix|bug|issue|error', 'bug fixes'),
         ]
         
         for pattern, benefit in benefit_patterns:
             if re.search(pattern, entity_str):
                 return benefit
+        
+        # Check file paths for technology hints
+        if files:
+            file_str = ' '.join(files).lower()
+            for pattern, benefit in benefit_patterns:
+                if re.search(pattern, file_str):
+                    return benefit
         
         # Fallback to domain-based benefit
         domain_benefits = self.benefit_keywords
@@ -158,6 +180,44 @@ class CodeAbstraction:
             return domain_benefits[commit_type]
         
         return 'improved functionality'
+    
+    def detect_features(self, files: List[str], entities: List[str]) -> List[str]:
+        """Detect high-level features from files and entities."""
+        features = []
+        file_str = ' '.join(files).lower()
+        entity_str = ' '.join(entities).lower()
+        combined = file_str + ' ' + entity_str
+        
+        # Technology/feature detection patterns
+        feature_patterns = [
+            (r'kubernetes|k8s|deployment\.ya?ml|pod|service\.ya?ml', 'Kubernetes'),
+            (r'terraform|\.tf$|provider|resource\s', 'Terraform'),
+            (r'docker.compose|compose\.ya?ml', 'Docker Compose'),
+            (r'dockerfile', 'Docker'),
+            (r'ansible|playbook\.ya?ml', 'Ansible'),
+            (r'gitlab.ci|\.gitlab-ci', 'GitLab CI'),
+            (r'github.actions|\.github/workflows', 'GitHub Actions'),
+            (r'jenkins|jenkinsfile', 'Jenkins'),
+            (r'helm|chart\.ya?ml|values\.ya?ml', 'Helm'),
+            (r'nginx|nginx\.conf', 'Nginx'),
+            (r'apache|httpd\.conf', 'Apache'),
+            (r'systemd|\.service$', 'systemd'),
+            (r'makefile', 'Make'),
+        ]
+        
+        for pattern, feature in feature_patterns:
+            if re.search(pattern, combined, re.IGNORECASE):
+                if feature not in features:
+                    features.append(feature)
+        
+        # Detect analyzer additions
+        analyzer_match = re.findall(r'analyzers?[/\\](\w+)', file_str)
+        for analyzer in analyzer_match:
+            name = analyzer.replace('_', ' ').title()
+            if name not in features and name.lower() not in ['init', 'base', 'generic']:
+                features.append(f"{name} analyzer")
+        
+        return features[:5]  # Limit to 5 features
     
     def determine_abstraction_level(self, analysis: Dict[str, Any]) -> str:
         """Determine the best abstraction level based on analysis."""
@@ -215,11 +275,13 @@ class SmartCommitGenerator:
             'file_count': len(staged_files),
             'domains': defaultdict(list),
             'entities': [],
+            'features': [],
             'added': 0,
             'deleted': 0,
             'primary_domain': 'core',
             'commit_type': 'feat',
             'benefit': '',
+            'summary': '',
         }
         
         if not staged_files:
@@ -264,17 +326,75 @@ class SmartCommitGenerator:
                 unique_entities.append(e)
         analysis['entities'] = unique_entities[:10]
         
+        # Detect high-level features
+        analysis['features'] = self.abstraction.detect_features(staged_files, unique_entities)
+        
         # Determine commit type
         analysis['commit_type'] = self._infer_commit_type(analysis)
         
-        # Infer benefit
+        # Infer benefit using features
         analysis['benefit'] = self.abstraction.infer_benefit(
             analysis['entities'],
             analysis['primary_domain'],
-            analysis['commit_type']
+            analysis['commit_type'],
+            files=staged_files,
+            features=analysis['features']
         )
         
+        # Generate functional summary
+        analysis['summary'] = self._generate_functional_summary(analysis)
+        
         return analysis
+    
+    def _generate_functional_summary(self, analysis: Dict[str, Any]) -> str:
+        """Generate a human-readable functional summary of changes."""
+        parts = []
+        
+        features = analysis.get('features', [])
+        entities = analysis.get('entities', [])
+        files = analysis.get('files', [])
+        added = analysis.get('added', 0)
+        deleted = analysis.get('deleted', 0)
+        
+        # Feature-based summary
+        if features:
+            if len(features) == 1:
+                parts.append(f"Added {features[0]} support")
+            elif len(features) == 2:
+                parts.append(f"Added {features[0]} and {features[1]} support")
+            else:
+                parts.append(f"Added {features[0]}, {features[1]}, and {len(features)-2} more features")
+        
+        # Entity-based summary
+        elif entities:
+            meaningful = [e for e in entities if len(e) > 2 and not e.startswith('test_')]
+            if meaningful:
+                if len(meaningful) <= 3:
+                    parts.append(f"Implemented {', '.join(meaningful)}")
+                else:
+                    parts.append(f"Implemented {meaningful[0]}, {meaningful[1]}, and {len(meaningful)-2} more functions")
+        
+        # Docs detection
+        doc_files = [f for f in files if f.endswith(('.md', '.rst', '.txt'))]
+        if doc_files and len(doc_files) > len(files) // 2:
+            doc_names = [Path(f).stem.upper() for f in doc_files[:3]]
+            parts.append(f"Updated documentation ({', '.join(doc_names)})")
+        
+        # Test detection
+        test_files = [f for f in files if 'test' in f.lower()]
+        if test_files and not parts:
+            parts.append(f"Added/updated {len(test_files)} test files")
+        
+        # Fallback
+        if not parts:
+            if added > deleted * 2:
+                parts.append(f"Added new functionality ({added} lines)")
+            elif deleted > added:
+                parts.append(f"Refactored code ({deleted} lines removed)")
+            else:
+                parts.append(f"Updated {len(files)} files")
+        
+        return '; '.join(parts)
     
     def _get_staged_files(self) -> List[str]:
         """Get list of staged files."""
@@ -347,49 +467,88 @@ class SmartCommitGenerator:
         commit_type = analysis.get('commit_type', 'feat')
         domain = analysis.get('primary_domain', 'core')
         entities = analysis.get('entities', [])
+        features = analysis.get('features', [])
         benefit = analysis.get('benefit', 'improved functionality')
+        summary = analysis.get('summary', '')
         file_count = analysis.get('file_count', 0)
         added = analysis.get('added', 0)
         deleted = analysis.get('deleted', 0)
         
-        # Get template for commit type and level
-        templates = self.abstraction.templates.get(commit_type, {})
-        
-        if isinstance(templates, dict) and level in templates:
-            template = templates[level]
-        elif isinstance(templates, str):
-            template = templates
-        else:
-            # Fallback to abstraction_levels
-            levels = self.config.get('git', {}).get('commit', {}).get('abstraction_levels', {})
-            template = levels.get(level, '{type}({domain}): {benefit}')
-        
-        # Format entities for message
-        if entities:
-            if len(entities) <= 3:
-                entities_str = ', '.join(entities)
+        # For high abstraction, prefer features/benefit over entities
+        if level == 'high' and features:
+            if len(features) == 1:
+                return f"{commit_type}({domain}): add {features[0]} support"
+            elif len(features) == 2:
+                return f"{commit_type}({domain}): add {features[0]} and {features[1]} support"
             else:
-                entities_str = ', '.join(entities[:3]) + f' and {len(entities) - 3} more'
-        else:
-            entities_str = 'changes'
+                return f"{commit_type}({domain}): add {features[0]}, {features[1]} and more"
         
-        # Build message
-        action = self.abstraction.get_action_verb(commit_type)
+        # Use benefit for high abstraction
+        if level == 'high':
+            return f"{commit_type}({domain}): {benefit}"
         
-        message = template.format(
-            type=commit_type,
-            domain=domain,
-            benefit=benefit,
-            entities=entities_str,
-            action=action,
-            file_count=file_count,
-            added=added,
-            deleted=deleted,
-            scope=domain,
-            description=benefit,
-        )
+        # For medium abstraction, use meaningful entities or features
+        if level == 'medium':
+            if features:
+                feature_str = ', '.join(features[:3])
+                return f"{commit_type}({domain}): add {feature_str}"
+            elif entities:
+                meaningful = [e for e in entities if len(e) > 2 and not e.startswith('test_')][:3]
+                if meaningful:
+                    return f"{commit_type}({domain}): add {', '.join(meaningful)}"
+            return f"{commit_type}({domain}): {benefit}"
         
-        return message
+        # Low abstraction - include stats
+        return f"{commit_type}({domain}): update {file_count} files (+{added}/-{deleted})"
+    
+    def generate_functional_body(self, analysis: Dict[str, Any] = None) -> str:
+        """Generate a functional, human-readable commit body."""
+        if analysis is None:
+            analysis = self.analyze_changes()
+        
+        parts = []
+        features = analysis.get('features', [])
+        entities = analysis.get('entities', [])
+        files = analysis.get('files', [])
+        added = analysis.get('added', 0)
+        deleted = analysis.get('deleted', 0)
+        summary = analysis.get('summary', '')
+        
+        # Main summary
+        if summary:
+            parts.append(f"## Summary\n{summary}\n")
+        
+        # Features added
+        if features:
+            parts.append("## Features Added")
+            for f in features:
+                parts.append(f"- {f}")
+            parts.append("")
+        
+        # Key functions/classes
+        if entities:
+            meaningful = [e for e in entities if len(e) > 2][:8]
+            if meaningful:
+                parts.append("## Key Changes")
+                for e in meaningful:
+                    parts.append(f"- `{e}`")
+                parts.append("")
+        
+        # File changes by domain
+        domains = analysis.get('domains', {})
+        if domains:
+            parts.append("## Changes by Area")
+            for domain, domain_files in domains.items():
+                if domain_files:
+                    parts.append(f"- **{domain.title()}**: {len(domain_files)} files")
+            parts.append("")
+        
+        # Stats
+        parts.append(f"## Statistics")
+        parts.append(f"- Files: {len(files)}")
+        parts.append(f"- Lines: +{added}/-{deleted}")
+        
+        return '\n'.join(parts)
     
     def generate_changelog_entry(self, analysis: Dict[str, Any] = None, 
                                   commit_hash: str = None) -> Dict[str, Any]:
