@@ -301,7 +301,119 @@ goal push --yes --no-tag
 
 ## Configuration
 
-Goal requires no configuration files. It works based on conventions:
+Goal uses `goal.yaml` for configuration. Run `goal init` to create it automatically with detected settings.
+
+### goal.yaml Structure
+
+```yaml
+# goal.yaml - Goal configuration file
+version: "1.0"
+
+project:
+  name: "my-project"           # Auto-detected from pyproject.toml/package.json
+  type: ["python"]             # Auto-detected project types
+  description: "My project"    # Auto-detected description
+
+versioning:
+  strategy: "semver"           # semver, calver, or date
+  files:                       # Files to sync version to
+    - "VERSION"
+    - "pyproject.toml:version"
+    - "package.json:version"
+  bump_rules:                  # Auto-bump thresholds
+    patch: 10                  # Files changed
+    minor: 50                  # Lines added
+    major: 200                 # Large changes
+
+git:
+  commit:
+    strategy: "conventional"   # conventional, semantic, custom
+    scope: "my-project"        # Default scope for commits
+    templates:                 # Custom commit templates
+      feat: "feat({scope}): {description}"
+      fix: "fix({scope}): {description}"
+      docs: "docs({scope}): {description}"
+    classify_by:               # Classification methods
+      - "file_extensions"
+      - "directory_paths"
+      - "line_stats"
+      - "keywords_diff"
+  changelog:
+    enabled: true
+    template: "keep-a-changelog"
+    output: "CHANGELOG.md"
+    sections: ["Added", "Changed", "Fixed", "Deprecated"]
+  tag:
+    enabled: true
+    prefix: "v"
+    format: "{prefix}{version}"
+
+strategies:
+  python:
+    test: "pytest tests/ -v"
+    build: "python -m build"
+    publish: "twine upload dist/*"
+  nodejs:
+    test: "npm test"
+    build: "npm run build"
+    publish: "npm publish"
+
+registries:
+  pypi:
+    url: "https://pypi.org/simple/"
+    token_env: "PYPI_TOKEN"
+  npm:
+    url: "https://registry.npmjs.org/"
+    token_env: "NPM_TOKEN"
+
+hooks:
+  pre_commit: ""               # Command to run before commit
+  post_commit: ""              # Command to run after commit
+  pre_push: ""                 # Command to run before push
+  post_push: ""                # Command to run after push
+
+advanced:
+  auto_update_config: true     # Auto-update config on detection changes
+  performance:
+    max_files: 50              # Split commits if > N files
+    timeout_test: 300          # Test timeout in seconds
+```
+
+### Config Commands
+
+```bash
+# Show full configuration
+goal config show
+
+# Show specific key (dot notation)
+goal config show -k git.commit.strategy
+
+# Get a value
+goal config get project.name
+
+# Set a value
+goal config set git.commit.scope "my-app"
+
+# Validate configuration
+goal config validate
+
+# Update config based on project detection
+goal config update
+```
+
+### Custom Config File
+
+```bash
+# Use a custom config file
+goal --config custom-goal.yaml push
+
+# Or in CI/CD
+goal -c .goal/ci.yaml --all
+```
+
+### Conventions (without goal.yaml)
+
+Goal also works without configuration based on conventions:
 
 1. **Version detection**: Looks for `VERSION` file first, then project-specific files
 2. **Project detection**: Automatically detects project type from files

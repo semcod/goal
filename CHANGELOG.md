@@ -1,3 +1,45 @@
+## [2.1.1] - 2026-01-29
+
+### Summary
+
+feat(goal): add markdown output and commit messages
+
+### Changes
+
+- docs: update README
+- config: update goal.yaml
+- update goal/__init__.py
+- update goal/cli.py
+- update goal/config.py
+- update pyproject.toml
+
+## [2.1.0] - 2026-01-29
+
+### Summary
+
+feat(goal): add YAML configuration support with goal.yaml
+
+### Added
+
+- **goal.yaml configuration file** - Full project configuration via YAML
+- **Auto-detection** - Automatic project type, name, and version file detection
+- **Config commands** - `goal config show/get/set/validate/update`
+- **Custom config path** - `goal --config custom.yaml` support
+- **Strategies** - Configurable test/build/publish per project type
+- **Registries** - Registry configuration with token environment variables
+- **Hooks** - Pre/post commit and push hooks configuration
+- **Version sync** - Configurable version file synchronization
+
+### Changed
+
+- `goal init` now creates goal.yaml with auto-detected settings
+- Added `--config` / `-c` option to main command
+- Added `--force` option to `goal init` for regenerating config
+
+### Dependencies
+
+- Added PyYAML>=6.0 as core dependency
+
 ## [2.0.5] - 2026-01-29
 
 ### Summary

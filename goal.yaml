@@ -1,0 +1,103 @@
+# goal.yaml - Goal configuration file
+# Generated: 2026-01-29 11:02:50
+# Documentation: https://github.com/wronai/goal#configuration
+#
+# This file configures Goal's behavior for:
+# - Version management (semver/calver)
+# - Commit message generation
+# - Changelog updates
+# - Build/test/publish strategies
+# - Registry authentication
+#
+# Edit this file to customize Goal's behavior for your project.
+
+version: '1.0'
+project:
+  name: goal
+  type:
+  - python
+  description: Automated git push with smart commit messages, changelog updates, and
+    version tagging
+versioning:
+  strategy: semver
+  files:
+  - VERSION
+  - pyproject.toml:version
+  - goal/__init__.py:__version__
+  bump_rules:
+    patch: 10
+    minor: 50
+    major: 200
+git:
+  commit:
+    strategy: conventional
+    scope: goal
+    templates:
+      feat: 'feat({scope}): {description}'
+      fix: 'fix({scope}): {description}'
+      docs: 'docs({scope}): {description}'
+      style: 'style({scope}): {description}'
+      refactor: 'refactor({scope}): {description}'
+      perf: 'perf({scope}): {description}'
+      test: 'test({scope}): {description}'
+      build: 'build({scope}): {description}'
+      chore: 'chore({scope}): {description}'
+    classify_by:
+    - file_extensions
+    - directory_paths
+    - line_stats
+    - keywords_diff
+  changelog:
+    enabled: true
+    template: keep-a-changelog
+    output: CHANGELOG.md
+    sections:
+    - Added
+    - Changed
+    - Fixed
+    - Deprecated
+    - Removed
+    - Security
+  tag:
+    enabled: true
+    prefix: v
+    format: '{prefix}{version}'
+strategies:
+  python:
+    test: pytest tests/ -v
+    build: python -m build
+    publish: twine upload dist/*
+    dependencies:
+      file: requirements.txt
+      lock: pip freeze > requirements.txt
+  nodejs:
+    test: npm test
+    build: npm run build
+    publish: npm publish
+    dependencies:
+      file: package-lock.json
+      lock: npm install
+  rust:
+    test: cargo test
+    build: cargo build --release
+    publish: cargo publish
+    dependencies:
+      file: Cargo.lock
+      lock: cargo update
+registries:
+  pypi:
+    url: https://pypi.org/simple/
+    token_env: PYPI_TOKEN
+  npm:
+    url: https://registry.npmjs.org/
+    token_env: NPM_TOKEN
+hooks:
+  pre_commit: ''
+  post_commit: ''
+  pre_push: ''
+  post_push: ''
+advanced:
+  auto_update_config: true
+  performance:
+    max_files: 50
+    timeout_test: 300

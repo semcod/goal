@@ -14,9 +14,11 @@ import click
 try:
     from .formatter import format_push_result, format_status_output
     from .commit_generator import CommitMessageGenerator
+    from .config import GoalConfig, ensure_config, init_config, load_config
 except ImportError:
     from formatter import format_push_result, format_status_output
     from commit_generator import CommitMessageGenerator
+    from config import GoalConfig, ensure_config, init_config, load_config
 
 
 def read_tickert(path: Path = Path('TICKET')) -> Dict[str, str]:
@@ -629,12 +631,24 @@ def publish_project(project_types: List[str], version: str) -> bool:
 @click.option('--all', '-a', is_flag=True, help='Automate all stages including tests, commit, push, and publish')
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without doing it')
+@click.option('--config', '-c', 'config_path', type=click.Path(), default=None,
+              help='Path to goal.yaml config file')
 @click.pass_context
-def main(ctx, bump, yes, all, markdown, dry_run):
+def main(ctx, bump, yes, all, markdown, dry_run, config_path):
     """Goal - Automated git push with smart commit messages."""
     # Store output preference in context
     ctx.ensure_object(dict)
     ctx.obj['markdown'] = markdown
+    ctx.obj['config_path'] = config_path
+    
+    # Load configuration (creates goal.yaml if it doesn't exist)
+    try:
+        if config_path:
+            ctx.obj['config'] = load_config(config_path)
+        else:
+            ctx.obj['config'] = ensure_config()
+    except Exception:
+        ctx.obj['config'] = None
     
     if ctx.invoked_subcommand is None:
         # Run interactive push by default
@@ -800,13 +814,22 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     
     # Interactive workflow
     if not yes:
-        click.echo(click.style("\n=== GOAL Workflow ===", fg='cyan', bold=True))
-        click.echo(f"Will commit {len(files)} files (+{total_adds}/-{total_dels} lines)")
-        click.echo(f"Version bump: {current_version} -> {new_version}")
-        click.echo(f"Commit message: {click.style(commit_msg, fg='green')}")
-        if commit_body and not message:
-            click.echo(click.style("\nCommit body (preview):", fg='cyan'))
-            click.echo(commit_body)
+        if markdown or ctx.obj.get('markdown'):
+            # Markdown preview for interactive mode
+            click.echo(f"\n## GOAL Workflow Preview\n")
+            click.echo(f"- **Files:** {len(files)} (+{total_adds}/-{total_dels} lines)")
+            click.echo(f"- **Version:** {current_version} → {new_version}")
+            click.echo(f"- **Commit:** `{commit_msg}`")
+            if commit_body and not message:
+                click.echo(f"\n### Commit Body\n```\n{commit_body}\n```")
+        else:
+            click.echo(click.style("\n=== GOAL Workflow ===", fg='cyan', bold=True))
+            click.echo(f"Will commit {len(files)} files (+{total_adds}/-{total_dels} lines)")
+            click.echo(f"Version bump: {current_version} -> {new_version}")
+            click.echo(f"Commit message: {click.style(commit_msg, fg='green')}")
+            if commit_body and not message:
+                click.echo(click.style("\nCommit body (preview):", fg='cyan'))
+                click.echo(commit_body)
     
     # Test stage
     test_result = None
@@ -1143,10 +1166,13 @@ def version(bump_type):
 
 
 @main.command()
-def init():
-    """Initialize goal in current repository (creates VERSION and CHANGELOG.md if missing)."""
+@click.option('--force', '-f', is_flag=True, help='Overwrite existing goal.yaml')
+@click.pass_context
+def init(ctx, force):
+    """Initialize goal in current repository (creates VERSION, CHANGELOG.md, and goal.yaml)."""
     version_file = Path('VERSION')
     changelog_file = Path('CHANGELOG.md')
+    config_file = Path('goal.yaml')
     
     # Detect existing version from project files
     detected_version = None
@@ -1185,6 +1211,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         click.echo(click.style("✓ Created CHANGELOG.md", fg='green'))
     else:
         click.echo("CHANGELOG.md exists")
+    
+    # Create goal.yaml configuration
+    if not config_file.exists() or force:
+        config = init_config(force=force)
+        if force and config_file.exists():
+            click.echo(click.style("✓ Regenerated goal.yaml", fg='green'))
+        else:
+            click.echo(click.style("✓ Created goal.yaml with auto-detected settings", fg='green'))
+        
+        # Show detected settings
+        project_name = config.get('project.name')
+        project_types = config.get('project.type', [])
+        if project_name:
+            click.echo(f"  Project: {click.style(project_name, fg='cyan')}")
+        if project_types:
+            click.echo(f"  Types: {click.style(', '.join(project_types), fg='cyan')}")
+    else:
+        click.echo("goal.yaml exists (use --force to regenerate)")
     
     # Show detected project types
     project_types = detect_project_types()
@@ -1267,6 +1311,127 @@ def info():
     if unstaged or (staged and staged != ['']):
         total = len(unstaged) + (len(staged) if staged != [''] else 0)
         click.echo(f"  Pending changes: {total} files")
+
+
+@main.group()
+@click.pass_context
+def config(ctx):
+    """Manage goal.yaml configuration."""
+    pass
+
+
+@config.command('show')
+@click.option('--key', '-k', default=None, help='Show specific config key (dot notation)')
+@click.pass_context
+def config_show(ctx, key):
+    """Show current configuration."""
+    cfg = ctx.obj.get('config')
+    if not cfg:
+        cfg = GoalConfig()
+        cfg.load()
+    
+    if key:
+        value = cfg.get(key)
+        if value is not None:
+            if isinstance(value, (dict, list)):
+                import yaml
+                click.echo(yaml.dump(value, default_flow_style=False))
+            else:
+                click.echo(value)
+        else:
+            click.echo(click.style(f"Key not found: {key}", fg='red'))
+    else:
+        import yaml
+        click.echo(yaml.dump(cfg.to_dict(), default_flow_style=False, sort_keys=False))
+
+
+@config.command('validate')
+@click.pass_context
+def config_validate(ctx):
+    """Validate goal.yaml configuration."""
+    cfg = ctx.obj.get('config')
+    if not cfg:
+        cfg = GoalConfig()
+        if not cfg.exists():
+            click.echo(click.style("No goal.yaml found. Run 'goal init' first.", fg='yellow'))
+            return
+        cfg.load()
+    
+    errors = cfg.validate()
+    if errors:
+        click.echo(click.style("Configuration errors:", fg='red', bold=True))
+        for error in errors:
+            click.echo(click.style(f"  ✗ {error}", fg='red'))
+        sys.exit(1)
+    else:
+        click.echo(click.style("✓ Configuration is valid", fg='green'))
+
+
+@config.command('update')
+@click.pass_context
+def config_update(ctx):
+    """Update goal.yaml based on project detection."""
+    cfg = ctx.obj.get('config')
+    if not cfg:
+        cfg = GoalConfig()
+        if not cfg.exists():
+            click.echo(click.style("No goal.yaml found. Run 'goal init' first.", fg='yellow'))
+            return
+        cfg.load()
+    
+    if cfg.update_from_detection():
+        cfg.save()
+        click.echo(click.style("✓ Configuration updated with detected changes", fg='green'))
+    else:
+        click.echo("Configuration is up-to-date")
+
+
+@config.command('set')
+@click.argument('key')
+@click.argument('value')
+@click.pass_context
+def config_set(ctx, key, value):
+    """Set a configuration value (dot notation key)."""
+    cfg = ctx.obj.get('config')
+    if not cfg:
+        cfg = GoalConfig()
+        if not cfg.exists():
+            click.echo(click.style("No goal.yaml found. Run 'goal init' first.", fg='yellow'))
+            return
+        cfg.load()
+    
+    # Try to parse value as JSON for complex types
+    try:
+        import json
+        parsed_value = json.loads(value)
+    except (json.JSONDecodeError, ValueError):
+        parsed_value = value
+    
+    cfg.set(key, parsed_value)
+    cfg.save()
+    click.echo(click.style(f"✓ Set {key} = {value}", fg='green'))
+
+
+@config.command('get')
+@click.argument('key')
+@click.pass_context
+def config_get(ctx, key):
+    """Get a configuration value (dot notation key)."""
+    cfg = ctx.obj.get('config')
+    if not cfg:
+        cfg = GoalConfig()
+        cfg.load()
+    
+    value = cfg.get(key)
+    if value is not None:
+        if isinstance(value, (dict, list)):
+            import yaml
+            click.echo(yaml.dump(value, default_flow_style=False))
+        else:
+            click.echo(value)
+    else:
+        click.echo(click.style(f"Key not found: {key}", fg='red'))
+        sys.exit(1)
 
 
 if __name__ == '__main__':
