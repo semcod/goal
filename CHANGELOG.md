@@ -1,4 +1,16 @@
-## [1.0.2] - 2026-01-29
+## [2.0.5] - 2026-01-29
+
+### Summary
+
+fix(goal): update 5 files (+22/-5)
+
+### Changes
+
+- update goal/__init__.py
+- update goal/cli.py
+- update pyproject.toml
+
+## [2.0.4] - 2026-01-29
 
 ### Summary
 

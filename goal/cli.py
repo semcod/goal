@@ -687,7 +687,24 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     # Get staged files
     files = get_staged_files()
     if not files or files == ['']:
-        click.echo(click.style("No changes to commit.", fg='yellow'))
+        if markdown or ctx.obj.get('markdown'):
+            current_version = get_current_version()
+            md_output = format_push_result(
+                project_types=project_types or [],
+                files=[],
+                stats={},
+                current_version=current_version,
+                new_version=current_version,
+                commit_msg="(none)",
+                commit_body="No staged changes detected.",
+                test_result="Not executed",
+                test_exit_code=0,
+                actions=["Detected project types"],
+                error="No changes to commit"
+            )
+            click.echo(md_output)
+        else:
+            click.echo(click.style("No changes to commit.", fg='yellow'))
         return
     
     # Get diff content for smart analysis
