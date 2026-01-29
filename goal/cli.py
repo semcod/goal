@@ -19,8 +19,8 @@ except ImportError:
     from commit_generator import CommitMessageGenerator
 
 
-def read_tickert(path: Path = Path('TICKERT')) -> Dict[str, str]:
-    """Read TICKERT configuration file (key=value)."""
+def read_tickert(path: Path = Path('TICKET')) -> Dict[str, str]:
+    """Read TICKET configuration file (key=value)."""
     cfg: Dict[str, str] = {'prefix': '', 'format': '[{ticket}] {title}'}
     if not path.exists():
         return cfg
@@ -655,7 +655,7 @@ def main(ctx, bump, yes, all, markdown, dry_run):
 @click.option('--yes', '-y', is_flag=True, help='Skip all prompts (run automatically)')
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
 @click.option('--split', is_flag=True, help='Create separate commits per change type (docs/code/ci/examples)')
-@click.option('--ticket', help='Ticket prefix to include in commit titles (overrides TICKERT)')
+@click.option('--ticket', help='Ticket prefix to include in commit titles (overrides TICKET)')
 @click.pass_context
 def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket):
     """Add, commit, tag, and push changes to remote.
@@ -1081,7 +1081,7 @@ def status(ctx, markdown):
 @click.option('--detailed', '-d', is_flag=True, help='Generate detailed commit message with body')
 @click.option('--unstaged', '-u', is_flag=True, help='Analyze unstaged changes instead of staged')
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
-@click.option('--ticket', help='Ticket prefix to include in commit title (overrides TICKERT)')
+@click.option('--ticket', help='Ticket prefix to include in commit title (overrides TICKET)')
 @click.pass_context
 def commit(ctx, detailed, unstaged, markdown, ticket):
     """Generate a smart commit message for current changes."""

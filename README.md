@@ -192,9 +192,9 @@ When `--split` is enabled, Goal will create multiple commits:
 
 Then it will create a final **release metadata** commit with version bump + changelog (unless disabled).
 
-## Ticket prefixing (TICKERT)
+## Ticket prefixing (TICKET)
 
-Create a `TICKERT` file in repository root:
+Create a `TICKET` file in repository root:
 
 ```ini
 prefix=ABC-123
