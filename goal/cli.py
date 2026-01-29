@@ -633,13 +633,16 @@ def publish_project(project_types: List[str], version: str) -> bool:
 @click.option('--dry-run', is_flag=True, help='Show what would be done without doing it')
 @click.option('--config', '-c', 'config_path', type=click.Path(), default=None,
               help='Path to goal.yaml config file')
+@click.option('--abstraction', type=click.Choice(['auto', 'high', 'medium', 'low', 'legacy']), 
+              default='auto', help='Commit message abstraction level (default: auto)')
 @click.pass_context
-def main(ctx, bump, yes, all, markdown, dry_run, config_path):
+def main(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction):
     """Goal - Automated git push with smart commit messages."""
     # Store output preference in context
     ctx.ensure_object(dict)
     ctx.obj['markdown'] = markdown
     ctx.obj['config_path'] = config_path
+    ctx.obj['abstraction'] = abstraction
     
     # Load configuration (creates goal.yaml if it doesn't exist)
     try:
@@ -653,9 +656,9 @@ def main(ctx, bump, yes, all, markdown, dry_run, config_path):
     if ctx.invoked_subcommand is None:
         # Run interactive push by default
         if all:
-            ctx.invoke(push, bump=bump, yes=True, markdown=markdown, dry_run=dry_run)
+            ctx.invoke(push, bump=bump, yes=True, markdown=markdown, dry_run=dry_run, abstraction=abstraction)
         else:
-            ctx.invoke(push, bump=bump, yes=yes, markdown=markdown, dry_run=dry_run)
+            ctx.invoke(push, bump=bump, yes=yes, markdown=markdown, dry_run=dry_run, abstraction=abstraction)
 
 
 @main.command()
@@ -670,8 +673,10 @@ def main(ctx, bump, yes, all, markdown, dry_run, config_path):
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
 @click.option('--split', is_flag=True, help='Create separate commits per change type (docs/code/ci/examples)')
 @click.option('--ticket', help='Ticket prefix to include in commit titles (overrides TICKET)')
+@click.option('--abstraction', type=click.Choice(['auto', 'high', 'medium', 'low', 'legacy']), 
+              default='auto', help='Commit message abstraction level')
 @click.pass_context
-def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket):
+def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction):
     """Add, commit, tag, and push changes to remote.
     
     Automatically:

@@ -3,9 +3,16 @@
 import re
 import os
 from collections import Counter, defaultdict
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 from pathlib import Path
 import subprocess
+
+# Import smart_commit for abstraction-based generation
+try:
+    from .smart_commit import SmartCommitGenerator, CodeAbstraction
+    HAS_SMART_COMMIT = True
+except ImportError:
+    HAS_SMART_COMMIT = False
 
 
 class CommitMessageGenerator:
@@ -64,8 +71,14 @@ class CommitMessageGenerator:
         'config': r'config|setup|pyproject',
     }
     
-    def __init__(self):
+    def __init__(self, config: Dict[str, Any] = None):
         self.cache = {}
+        self.config = config
+        self._smart_generator = None
+        
+        # Initialize smart generator if config provided
+        if config and HAS_SMART_COMMIT:
+            self._smart_generator = SmartCommitGenerator(config)
     
     def get_diff_stats(self, cached: bool = True) -> Dict[str, int]:
         """Get diff statistics using git command."""
@@ -487,12 +500,29 @@ class CommitMessageGenerator:
                 out.append(n)
         return out[:3]
     
-    def generate_commit_message(self, cached: bool = True, paths: Optional[List[str]] = None) -> str:
-        """Generate a conventional commit message."""
+    def generate_commit_message(self, cached: bool = True, paths: Optional[List[str]] = None, 
+                                 abstraction_level: str = None) -> str:
+        """Generate a conventional commit message.
+        
+        Args:
+            cached: Whether to use cached (staged) changes.
+            paths: Optional list of specific file paths to analyze.
+            abstraction_level: Abstraction level ('auto', 'high', 'medium', 'low').
+                              If None, uses config or falls back to legacy.
+        """
         # Get all the data
         files = self.get_changed_files(cached, paths=paths)
         if not files:
             return None
+        
+        # Use smart generator if available and configured
+        if self._smart_generator and abstraction_level != 'legacy':
+            try:
+                analysis = self._smart_generator.analyze_changes(files)
+                level = abstraction_level if abstraction_level else None
+                return self._smart_generator.generate_message(analysis, level)
+            except Exception:
+                pass  # Fall back to legacy generation
         
         diff_content = self.get_diff_content(cached, paths=paths)
         stats = self.get_diff_stats(cached)
@@ -515,6 +545,63 @@ class CommitMessageGenerator:
         # Short action summary (2–6 words)
         desc = self._short_action_summary(files, diff_content)
         return f"{base}: {desc}"
+    
+    def generate_abstraction_message(self, level: str = 'auto', 
+                                      cached: bool = True) -> Optional[Dict[str, Any]]:
+        """Generate commit message with abstraction-based analysis.
+        
+        Args:
+            level: Abstraction level ('auto', 'high', 'medium', 'low').
+            cached: Whether to use cached (staged) changes.
+            
+        Returns:
+            Dict with 'title', 'body', 'analysis', and 'level' keys, or None.
+        """
+        if not self._smart_generator:
+            return None
+        
+        files = self.get_changed_files(cached)
+        if not files:
+            return None
+        
+        try:
+            analysis = self._smart_generator.analyze_changes(files)
+            actual_level = level if level != 'auto' else self._smart_generator.abstraction.determine_abstraction_level(analysis)
+            
+            title = self._smart_generator.generate_message(analysis, actual_level)
+            
+            # Generate detailed body
+            detailed = self.generate_detailed_message(cached)
+            body = detailed['body'] if detailed else ''
+            
+            return {
+                'title': title,
+                'body': body,
+                'analysis': analysis,
+                'level': actual_level,
+            }
+        except Exception:
+            return None
+    
+    def generate_changelog_entry(self, cached: bool = True, 
+                                  commit_hash: str = None) -> Optional[Dict[str, Any]]:
+        """Generate structured changelog entry using smart abstraction.
+        
+        Returns:
+            Dict with changelog entry details, or None.
+        """
+        if not self._smart_generator:
+            return None
+        
+        files = self.get_changed_files(cached)
+        if not files:
+            return None
+        
+        try:
+            analysis = self._smart_generator.analyze_changes(files)
+            return self._smart_generator.generate_changelog_entry(analysis, commit_hash)
+        except Exception:
+            return None
     
     def generate_detailed_message(self, cached: bool = True, paths: Optional[List[str]] = None) -> Dict[str, str]:
         """Generate a detailed commit message with body."""

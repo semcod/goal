@@ -1,3 +1,16 @@
+## [2.1.3] - 2026-01-29
+
+### Summary
+
+feat(goal): add markdown output and commit messages
+
+### Changes
+
+- update goal/cli.py
+- update goal/commit_generator.py
+- update goal/config.py
+- update goal/smart_commit.py
+
 ## [2.1.2] - 2026-01-29
 
 ### Summary
