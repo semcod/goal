@@ -874,38 +874,6 @@ def publish_project(project_types: List[str], version: str) -> bool:
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'publish_command' in PROJECT_TYPES[ptype]:
             if ptype == 'python':
-                for d in ('dist', 'build'):
-                    p = Path(d)
-                    if p.exists():
-                        shutil.rmtree(p)
-
-                missing = [
-                    m for m in ('build', 'twine')
-                    if importlib.util.find_spec(m) is None
-                ]
-                if missing:
-                    cmd = 'python -m pip install --upgrade build twine'
-                    click.echo(f"\n{click.style('Preparing publish:', fg='cyan', bold=True)} {cmd}")
-                    sys.stdout.flush()
-                    result = run_command(cmd, capture=False)
-                    sys.stdout.flush()
-                    if result.returncode != 0:
-                        click.echo("")
-                        click.echo(click.style("Failed to install build dependencies.", fg='red'))
-                        return False
-
-                build_started_at = datetime.now().timestamp()
-                cmd = 'python -m build'
-                click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
-                sys.stdout.flush()
-                result = run_command(cmd, capture=False)
-
-                if result.returncode != 0:
-                    sys.stdout.flush()
-                    click.echo("")
-                    click.echo(click.style("Build failed. Check the output above.", fg='red'))
-                    return False
-
                 package_name = None
                 pyproject_path = Path('pyproject.toml')
                 if pyproject_path.exists():
@@ -923,40 +891,99 @@ def publish_project(project_types: List[str], version: str) -> bool:
                     except Exception:
                         package_name = None
 
+                name_variants = set()
+                if package_name:
+                    base = package_name.strip()
+                    if base:
+                        name_variants.update(
+                            {
+                                base,
+                                base.lower(),
+                                base.replace('-', '_'),
+                                base.replace('-', '_').lower(),
+                                base.replace('_', '-'),
+                                base.replace('_', '-').lower(),
+                            }
+                        )
+
+                build_dir = Path('build')
+                if build_dir.exists():
+                    shutil.rmtree(build_dir)
+
                 dist = Path('dist')
+                if dist.exists():
+                    for f in dist.iterdir():
+                        if not f.is_file():
+                            continue
+                        if not (f.name.endswith('.whl') or f.name.endswith('.tar.gz')):
+                            continue
+                        if name_variants:
+                            if not any(
+                                f.name.startswith(f"{n}-")
+                                for n in name_variants
+                            ):
+                                continue
+                        try:
+                            f.unlink()
+                        except OSError:
+                            pass
+
+                missing = [
+                    m for m in ('build', 'twine')
+                    if importlib.util.find_spec(m) is None
+                ]
+                if missing:
+                    cmd = 'python -m pip install --upgrade build twine'
+                    click.echo(f"\n{click.style('Preparing publish:', fg='cyan', bold=True)} {cmd}")
+                    sys.stdout.flush()
+                    result = run_command(cmd, capture=False)
+                    sys.stdout.flush()
+                    if result.returncode != 0:
+                        click.echo("")
+                        click.echo(click.style("Failed to install build dependencies.", fg='red'))
+                        return False
+
+                cmd = 'python -m build'
+                click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
+                sys.stdout.flush()
+                result = run_command(cmd, capture=False)
+
+                if result.returncode != 0:
+                    sys.stdout.flush()
+                    click.echo("")
+                    click.echo(click.style("Build failed. Check the output above.", fg='red'))
+                    return False
+
                 artifacts = []
                 if dist.exists():
-                    name_variants = set()
-                    if package_name:
-                        base = package_name.strip()
-                        if base:
-                            name_variants.update(
-                                {
-                                    base,
-                                    base.lower(),
-                                    base.replace('-', '_'),
-                                    base.replace('-', '_').lower(),
-                                    base.replace('_', '-'),
-                                    base.replace('_', '-').lower(),
-                                }
-                            )
                     for f in dist.iterdir():
                         if not f.is_file():
                             continue
                         if not (f.name.endswith('.whl') or f.name.endswith('.tar.gz')):
                             continue
 
-                        try:
-                            if f.stat().st_mtime < build_started_at - 2:
-                                continue
-                        except OSError:
-                            pass
+                        dist_name = None
+                        dist_version = None
+                        if f.name.endswith('.whl'):
+                            stem = f.name[:-len('.whl')]
+                            parts = stem.split('-')
+                            if len(parts) >= 2:
+                                dist_name = parts[0]
+                                dist_version = parts[1]
+                        else:
+                            stem = f.name[:-len('.tar.gz')]
+                            if '-' in stem:
+                                dist_name, dist_version = stem.rsplit('-', 1)
+
+                        if not dist_name or not dist_version:
+                            continue
+                        if dist_version != version:
+                            continue
 
                         if name_variants:
-                            if not any(f.name.startswith(f"{n}-{version}") for n in name_variants):
-                                continue
-                        else:
-                            if (f"-{version}" not in f.name) and (f"_{version}" not in f.name):
+                            norm = dist_name.replace('_', '-').lower()
+                            allowed = {n.replace('_', '-').lower() for n in name_variants}
+                            if norm not in allowed:
                                 continue
 
                         artifacts.append(f)
