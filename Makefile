@@ -71,6 +71,11 @@ bump-version:
 	@echo "${YELLOW}Bumping $(PART) version...${RESET}"
 	poetry version $(PART)
 	git add pyproject.toml
-	git commit -m "Bump version to $(shell poetry version -s)"
-	git tag -a v$(shell poetry version -s) -m "Version $(shell poetry version -s)"
-	@echo "${GREEN}Version bumped to $(shell poetry version -s)${RESET}"
+	@VERSION=$$(poetry version -s); \
+	git commit -m "Bump version to $$VERSION"; \
+	if git rev-parse "v$$VERSION" >/dev/null 2>&1; then \
+		echo "${YELLOW}Error: tag 'v$$VERSION' already exists${RESET}"; \
+		exit 1; \
+	fi; \
+	git tag -a "v$$VERSION" -m "Version $$VERSION"; \
+	echo "${GREEN}Version bumped to $$VERSION${RESET}"
