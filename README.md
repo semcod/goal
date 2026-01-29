@@ -1,5 +1,14 @@
 # Goal
 
+<p align="center">
+  <img src="https://img.shields.io/badge/version-2.1.1-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
+  <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
+  <a href="https://github.com/wronai/goal/actions"><img src="https://github.com/wronai/goal/workflows/CI/badge.svg" alt="CI"></a>
+  <a href="https://coveralls.io/github/wronai/goal"><img src="https://coveralls.io/repos/github/wronai/goal/badge.svg" alt="Coverage"></a>
+</p>
+
 Automated git push with smart commit messages, changelog updates, version tagging, and interactive workflow.
 
 ## Features
@@ -21,15 +30,21 @@ pip install goal
 
 ## Quick Start
 
-### 1. Initialize your repository
+### 1. Install Goal
+
+```bash
+pip install goal
+```
+
+### 2. Initialize your repository
 
 ```bash
 goal init
 ```
 
-Creates `VERSION` and `CHANGELOG.md` files if they don't exist.
+Creates `VERSION`, `CHANGELOG.md`, and `goal.yaml` with auto-detected settings.
 
-### 2. Run the interactive workflow
+### 3. Run the interactive workflow
 
 ```bash
 goal
@@ -42,6 +57,18 @@ This will guide you through:
 - ✅ Publish version X.X.X? [Y/n]
 
 Press Enter to accept the default (Yes) for any step.
+
+## Documentation
+
+📚 **Complete Documentation**: [docs/README.md](docs/README.md)
+
+### Key Topics
+- [Installation Guide](docs/installation.md) - Detailed installation instructions
+- [Quick Start](docs/quickstart.md) - Get started in 5 minutes
+- [Configuration Guide](docs/configuration.md) - Complete goal.yaml reference
+- [Examples](docs/examples.md) - Real-world examples and use cases
+- [CI/CD Integration](docs/ci-cd.md) - Use Goal in pipelines
+- [Command Reference](docs/commands.md) - All commands and options
 
 ## Usage Examples
 
@@ -518,3 +545,9 @@ Ensure you're authenticated with the appropriate package manager:
 ## License
 
 Apache License 2.0
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ by the community</sub>
+</div>

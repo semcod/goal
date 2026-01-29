@@ -1,3 +1,27 @@
+## [2.1.2] - 2026-01-29
+
+### Summary
+
+docs(docs): add markdown output and commit messages
+
+### Changes
+
+- docs: update README
+- docs: update README
+- docs: update ci-cd.md
+- docs: update commands.md
+- docs: update configuration.md
+- docs: update examples.md
+- docs: update faq.md
+- docs: update hooks.md
+- docs: update installation.md
+- docs: update markdown-output-guide.md
+- docs: update quickstart.md
+- docs: update registries.md
+- docs: update strategies.md
+- docs: update troubleshooting.md
+- docs: update usage.md
+
 ## [2.1.1] - 2026-01-29
 
 ### Summary
