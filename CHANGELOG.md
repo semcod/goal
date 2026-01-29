@@ -1,3 +1,14 @@
+## [2.1.7] - 2026-01-29
+
+### Summary
+
+fix(core): add formatting, cli and more
+
+### Core
+
+- update goal/commit_generator.py
+
+
 ## [2.1.6] - 2026-01-29
 
 ### Summary

@@ -652,9 +652,8 @@ class CommitMessageGenerator:
             diff_content = self.get_diff_content(cached, paths=paths)
             result = self._enhanced_generator.generate_enhanced_summary(files, diff_content)
             
-            # Generate commit type/scope prefix using existing methods
-            stats = self.get_diff_stats(cached)
-            commit_type = self.classify_change_type(files, diff_content, stats)
+            # Use intent from enhanced summary (more accurate classification)
+            commit_type = result.get('intent', 'refactor')
             scope = self.detect_scope(files)
             
             # Enhance title with conventional commit format
