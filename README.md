@@ -5,7 +5,7 @@ Automated git push with smart commit messages, changelog updates, and version ta
 ## Installation
 
 ```bash
-pip install goal-push
+pip install goal
 ```
 
 ## Usage
