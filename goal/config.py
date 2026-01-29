@@ -202,7 +202,7 @@ DEFAULT_CONFIG = {
         'python': {
             'test': 'pytest tests/ -v',
             'build': 'python -m build',
-            'publish': 'twine upload dist/*',
+            'publish': 'twine upload dist/goal-{version}*',
             'dependencies': {
                 'file': 'requirements.txt',
                 'lock': 'pip freeze > requirements.txt',

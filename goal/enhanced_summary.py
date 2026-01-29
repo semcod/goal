@@ -236,17 +236,20 @@ class SummaryQualityFilter:
         if total == 0:
             return '➡️', "No line changes"
         
+        deletion_pct = (deleted / total) * 100 if total else 0
+        if deleted > 0 and deletion_pct >= 10:
+            if net < 0:
+                return '📉', f"{deletion_pct:.0f}% churn was deletions (-{deleted} lines removed, NET {net})"
+            if deleted >= 250:
+                return '📉', f"{deletion_pct:.0f}% churn was deletions (-{deleted} lines refactored, NET +{net})"
+            return '📊', f"{deletion_pct:.0f}% churn was deletions (-{deleted} lines, NET +{net})"
         if net < 0:
-            reduction_pct = abs(net) / (deleted or 1) * 100
-            if reduction_pct > 20:
-                return '📉', f"NET {net} lines ({reduction_pct:.0f}% code reduction via refactoring)"
             return '📉', f"NET {net} lines (cleanup)"
-        elif net > 100:
+        if net > 100:
             return '📈', f"NET +{net} lines (significant new features)"
-        elif net > 0:
+        if net > 0:
             return '📊', f"NET +{net} lines (new features)"
-        else:
-            return '➡️', f"NET {net} lines (balanced refactor)"
+        return '➡️', f"NET {net} lines (balanced refactor)"
     
     def classify_intent_smart(self, files: List[str], entities: List[Dict], 
                                added: int = 0, deleted: int = 0) -> str:
@@ -321,8 +324,22 @@ class QualityValidator:
         self.config = config or {}
         self.filter = SummaryQualityFilter()
         
-        # Override defaults with config
-        gates = self.config.get('quality_gates', {})
+        quality = self.config.get('quality', {})
+        commit_summary = quality.get('commit_summary', {})
+        enhanced_summary = quality.get('enhanced_summary', {})
+        
+        self.min_value_words = commit_summary.get('min_value_words', 3)
+        self.max_generic_terms = commit_summary.get('max_generic_terms', 0)
+        self.required_metrics = commit_summary.get('required_metrics', 2)
+        self.relation_threshold = commit_summary.get('relation_threshold', 0.7)
+        
+        generic_terms = commit_summary.get('generic_terms')
+        if isinstance(generic_terms, list) and generic_terms:
+            self.filter.BANNED_TITLE_WORDS = set(self.filter.BANNED_TITLE_WORDS) | {t.lower() for t in generic_terms}
+        
+        self.enhanced_enabled = bool(enhanced_summary.get('enabled', True))
+        
+        gates = quality.get('gates', {})
         for key, default in self.GATES.items():
             setattr(self, key, gates.get(key, default))
     
@@ -340,11 +357,35 @@ class QualityValidator:
         relations = summary.get('relations', {}).get('relations', [])
         capabilities = summary.get('capabilities', [])
         
+        intent = summary.get('intent')
+        if not intent and title:
+            m = re.match(r'^(\w+)\([^)]*\):', title)
+            if m:
+                intent = m.group(1)
+        
+        added = metrics.get('lines_added', 0)
+        deleted = metrics.get('lines_deleted', 0)
+        
         # 1. Check banned words
         banned = self.filter.has_banned_words(title)
         if banned:
             errors.append(f"Banned words in title: {banned}")
             fixes.append(('remove_banned_words', banned))
+        
+        # 1b. Wrong intent vs refactor signals
+        try:
+            entities = []
+            agg = summary.get('analysis', {}).get('aggregated', {}) if isinstance(summary.get('analysis'), dict) else {}
+            entities = agg.get('added_entities', []) if isinstance(agg, dict) else []
+            smart_intent = self.filter.classify_intent_smart(files, entities, added, deleted)
+            if intent == 'feat' and smart_intent == 'refactor':
+                errors.append("Wrong intent: feat → refactor (refactor patterns or code reduction detected)")
+                fixes.append(('reclassify_intent', 'refactor'))
+            if intent in ('feat', 'fix') and (deleted >= 250 and smart_intent == 'refactor'):
+                errors.append("Hidden refactor: large deletions with non-refactor intent")
+                fixes.append(('fix_hidden_refactor', deleted))
+        except Exception:
+            pass
         
         # 2. Check complexity (already capped in format_complexity_delta)
         old_cc = metrics.get('old_complexity', 1)
@@ -365,6 +406,12 @@ class QualityValidator:
         # 3b. Check generic nodes in relations
         clean_relations = self.filter.filter_generic_nodes(relations)
         generic_count = len(relations) - len(clean_relations)
+        
+        # Rebuild relations chain/ASCII after filtering generic nodes
+        relations = clean_relations
+        relations_chain = self.filter._build_relation_chain(relations)
+        relations_ascii = self.filter._render_relations_ascii(relations, files)
+        
         if generic_count > 1:  # Allow max 1 generic node
             errors.append(f"Generic nodes in graph: {generic_count} (base, utils, etc.)")
             fixes.append(('filter_generic_nodes', generic_count))
@@ -381,6 +428,14 @@ class QualityValidator:
         # 5. Check capabilities
         if len(capabilities) < self.min_capabilities:
             warnings.append(f"Only {len(capabilities)} capabilities (need {self.min_capabilities})")
+        
+        # 6. Check that the body exposes metrics (enterprise-grade preview)
+        body = summary.get('body', '')
+        if body:
+            metric_keywords = ['NET', 'Relations:', 'Test coverage', 'score', '%', 'deletions']
+            metric_count = sum(1 for kw in metric_keywords if kw.lower() in body.lower())
+            if metric_count < self.required_metrics:
+                warnings.append(f"Only {metric_count} metrics found in body (need {self.required_metrics})")
         
         # Calculate score
         score = 100
@@ -857,11 +912,12 @@ class EnhancedSummaryGenerator:
         capabilities = self.detect_capabilities(files, diff_content)
         capabilities = self.quality_filter.prioritize_capabilities(capabilities)
         
-        # Detect relations and dedupe them
+        # Detect relations and clean them
         relations = self.detect_file_relations(files, diff_content)
+        relations['relations'] = self.quality_filter.filter_generic_nodes(relations.get('relations', []))
         relations['relations'] = self.quality_filter.dedupe_relations(relations.get('relations', []))
-        # Rebuild chain after deduplication
         relations['chain'] = self._build_relation_chain(relations['relations'])
+        relations['ascii'] = self._render_relations_ascii(relations['relations'], files)
         
         # Calculate metrics
         metrics = self.calculate_quality_metrics(analysis, files)
@@ -917,7 +973,12 @@ class EnhancedSummaryGenerator:
         )
         
         # Classify intent
-        intent = self.quality_filter.classify_intent(files, aggregated.get('added_entities', []))
+        intent = self.quality_filter.classify_intent_smart(
+            files,
+            aggregated.get('added_entities', []),
+            lines_added,
+            lines_deleted
+        )
         
         return {
             'title': title,
@@ -989,7 +1050,7 @@ class EnhancedSummaryGenerator:
             # Add ASCII visualization if available
             if relations.get('ascii') and len(relations['relations']) > 1:
                 rel_lines.append("")
-                for line in relations['ascii'].split('\n')[1:]:  # Skip header
+                for line in relations['ascii'].split('\n'):
                     rel_lines.append(f"  {line}")
             sections.append('\n'.join(rel_lines))
         
@@ -999,7 +1060,9 @@ class EnhancedSummaryGenerator:
         for category, cat_files in categorized.items():
             count = len(cat_files)
             if count > 0:
-                file_parts.append(f"{count} {category}")
+                examples = ", ".join(Path(f).name for f in cat_files[:3])
+                suffix = f": {examples}" if examples else ""
+                file_parts.append(f"{count} {category}{suffix}")
         
         if file_parts:
             sections.append(f"Files: {'; '.join(file_parts)}")

@@ -90,7 +90,7 @@ class CommitMessageGenerator:
         
         # Initialize enhanced summary generator
         if HAS_ENHANCED_SUMMARY:
-            self._enhanced_generator = EnhancedSummaryGenerator(config)
+            self._enhanced_generator = EnhancedSummaryGenerator(config or {})
     
     def get_diff_stats(self, cached: bool = True) -> Dict[str, int]:
         """Get diff statistics using git command."""
@@ -667,7 +667,7 @@ class CommitMessageGenerator:
     def generate_detailed_message(self, cached: bool = True, paths: Optional[List[str]] = None) -> Dict[str, str]:
         """Generate a detailed commit message with body."""
         # Try enhanced summary first if available
-        if self._enhanced_generator and self.config:
+        if self._enhanced_generator:
             enhanced = self.generate_enhanced_summary(cached, paths)
             if enhanced:
                 return {

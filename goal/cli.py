@@ -6,6 +6,7 @@ import os
 import sys
 import re
 import json
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
@@ -85,6 +86,7 @@ def stage_paths(paths: List[str]):
     if chunk:
         run_git('add', '--', *chunk)
 
+
 # =============================================================================
 # Project Type Detection & Version File Management
 # =============================================================================
@@ -98,7 +100,7 @@ PROJECT_TYPES = {
             'setup.cfg': r'^version\s*=\s*(\d+\.\d+\.\d+)',
         },
         'test_command': 'pytest',
-        'publish_command': 'python -m build && twine upload dist/*',
+        'publish_command': 'python -m build && twine upload dist/goal-{version}*',
     },
     'nodejs': {
         'files': ['package.json'],
@@ -787,10 +789,48 @@ def publish_project(project_types: List[str], version: str) -> bool:
     import sys
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'publish_command' in PROJECT_TYPES[ptype]:
-            cmd = PROJECT_TYPES[ptype]['publish_command']
-            click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
-            sys.stdout.flush()
-            result = run_command(cmd, capture=False)
+            if ptype == 'python':
+                for d in ('dist', 'build'):
+                    p = Path(d)
+                    if p.exists():
+                        shutil.rmtree(p)
+
+                cmd = 'python -m build'
+                click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
+                sys.stdout.flush()
+                result = run_command(cmd, capture=False)
+
+                if result.returncode != 0:
+                    sys.stdout.flush()
+                    click.echo("")
+                    click.echo(click.style("Build failed. Check the output above.", fg='red'))
+                    return False
+
+                dist = Path('dist')
+                artifacts = []
+                if dist.exists():
+                    for f in dist.iterdir():
+                        if (
+                            f.is_file()
+                            and f.name.startswith(f"goal-{version}")
+                            and (f.name.endswith('.whl') or f.name.endswith('.tar.gz'))
+                        ):
+                            artifacts.append(f)
+
+                artifacts = sorted({str(a) for a in artifacts})
+                if not artifacts:
+                    click.echo(click.style(f"No dist artifacts found for version {version}", fg='red'))
+                    return False
+
+                cmd = 'twine upload ' + ' '.join(artifacts)
+                click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
+                sys.stdout.flush()
+                result = run_command(cmd, capture=False)
+            else:
+                cmd = PROJECT_TYPES[ptype]['publish_command']
+                click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
+                sys.stdout.flush()
+                result = run_command(cmd, capture=False)
             sys.stdout.flush()
             
             if result.returncode != 0:
