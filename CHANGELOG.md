@@ -1,3 +1,15 @@
+## [2.1.8] - 2026-01-29
+
+### Summary
+
+fix(core): add database, api, auth
+
+### Core
+
+- update goal/cli.py
+- update goal/enhanced_summary.py
+
+
 ## [2.1.7] - 2026-01-29
 
 ### Summary

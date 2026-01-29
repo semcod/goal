@@ -35,7 +35,28 @@ class SummaryQualityFilter:
     # Banned words for commit titles (too generic)
     BANNED_TITLE_WORDS = {
         'add', 'logging', 'testing', 'performance', 'update', 
-        'improve', 'fix', 'misc', 'various', 'some', 'stuff'
+        'improve', 'fix', 'misc', 'various', 'some', 'stuff',
+        'formatting', 'auth', 'validation', 'changes', 'updates',
+        'modifications', 'enhancements', 'tweaks', 'adjustments'
+    }
+    
+    # Generic nodes to filter from dependency graphs
+    GENERIC_NODES = {
+        'base', '__init__', 'utils', 'common', 'helpers', 'constants',
+        'types', 'exceptions', 'models', 'schemas'
+    }
+    
+    # Domain patterns for smart file categorization
+    DOMAIN_PATTERNS = {
+        'analyzer': [r'analy[sz]', r'parse', r'scan', r'inspect'],
+        'cli': [r'cli', r'command', r'arg'],
+        'api': [r'api', r'endpoint', r'route', r'handler'],
+        'model': [r'model', r'schema', r'entity'],
+        'service': [r'service', r'manager', r'provider'],
+        'util': [r'util', r'helper', r'tool'],
+        'config': [r'config', r'setting', r'option'],
+        'test': [r'test_', r'_test', r'spec'],
+        'docs': [r'\.md$', r'readme', r'doc'],
     }
     
     # Intent classification patterns
@@ -168,26 +189,120 @@ class SummaryQualityFilter:
         return unique
     
     def categorize_files(self, files: List[str]) -> Dict[str, List[str]]:
-        """Categorize files by type with line counts."""
-        categories = {
-            'core': [],
-            'docs': [],
-            'config': [],
-            'test': [],
-        }
+        """Smart domain-based file categorization."""
+        categories = defaultdict(list)
         
         for f in files:
             fname = f.lower()
-            if fname.endswith('.md') or 'doc' in fname or 'readme' in fname:
-                categories['docs'].append(f)
-            elif fname.endswith(('.yaml', '.yml', '.toml', '.json', '.ini')):
-                categories['config'].append(f)
-            elif 'test' in fname:
-                categories['test'].append(f)
-            else:
-                categories['core'].append(f)
+            stem = Path(f).stem.lower()
+            matched = False
+            
+            # Try domain patterns first
+            for domain, patterns in self.DOMAIN_PATTERNS.items():
+                if any(re.search(p, fname) for p in patterns):
+                    categories[domain].append(f)
+                    matched = True
+                    break
+            
+            if not matched:
+                # Fallback categorization
+                if fname.endswith('.md'):
+                    categories['docs'].append(f)
+                elif fname.endswith(('.yaml', '.yml', '.toml', '.json', '.ini')):
+                    categories['config'].append(f)
+                elif 'test' in fname:
+                    categories['test'].append(f)
+                else:
+                    categories['core'].append(f)
         
         return {k: v for k, v in categories.items() if v}
+    
+    def filter_generic_nodes(self, relations: List[Dict]) -> List[Dict]:
+        """Remove generic nodes from dependency graph."""
+        return [
+            r for r in relations
+            if r.get('from', '').lower() not in self.GENERIC_NODES
+            and r.get('to', '').lower() not in self.GENERIC_NODES
+        ]
+    
+    def format_net_lines(self, added: int, deleted: int) -> Tuple[str, str]:
+        """Format NET lines change with proper interpretation.
+        
+        Returns: (emoji, description)
+        """
+        net = added - deleted
+        total = added + deleted
+        
+        if total == 0:
+            return '➡️', "No line changes"
+        
+        if net < 0:
+            reduction_pct = abs(net) / (deleted or 1) * 100
+            if reduction_pct > 20:
+                return '📉', f"NET {net} lines ({reduction_pct:.0f}% code reduction via refactoring)"
+            return '📉', f"NET {net} lines (cleanup)"
+        elif net > 100:
+            return '📈', f"NET +{net} lines (significant new features)"
+        elif net > 0:
+            return '📊', f"NET +{net} lines (new features)"
+        else:
+            return '➡️', f"NET {net} lines (balanced refactor)"
+    
+    def classify_intent_smart(self, files: List[str], entities: List[Dict], 
+                               added: int = 0, deleted: int = 0) -> str:
+        """Smart intent classification using multiple signals."""
+        combined = ' '.join(files) + ' ' + ' '.join(e.get('name', '') for e in entities)
+        
+        # Signal 1: Net lines (strong signal for refactor)
+        net = added - deleted
+        if net < -100:  # Significant code reduction
+            return 'refactor'
+        
+        # Signal 2: File patterns
+        refactor_score = sum(1 for p in self._refactor_re if p.search(combined))
+        feat_score = sum(1 for p in self._feat_re if p.search(combined))
+        fix_score = sum(1 for p in self._fix_re if p.search(combined))
+        
+        # Signal 3: File count vs net lines ratio
+        if len(files) > 10 and net < 0:
+            refactor_score += 3  # Many files with net negative = refactor
+        
+        # Check for docs-only
+        if all(f.endswith('.md') or 'doc' in f.lower() for f in files):
+            return 'docs'
+        
+        # Check for config-only
+        if all(f.endswith(('.yaml', '.toml', '.json', '.ini')) for f in files):
+            return 'chore'
+        
+        scores = {'refactor': refactor_score, 'feat': feat_score, 'fix': fix_score}
+        if max(scores.values()) == 0:
+            return 'refactor' if net <= 0 else 'feat'
+        return max(scores, key=scores.get)
+    
+    def generate_architecture_title(self, files: List[str], categories: Dict) -> str:
+        """Generate architecture-aware title based on file patterns."""
+        stems = [Path(f).stem.lower() for f in files]
+        
+        # Detect framework type
+        if any('analyzer' in s or 'analysis' in s for s in stems):
+            if len(files) > 10:
+                return "complete analysis framework"
+            return "analysis engine improvements"
+        
+        if any('git' in s for s in stems):
+            return "git integration framework"
+        
+        if 'cli' in categories and len(categories.get('cli', [])) > 2:
+            return "CLI interface overhaul"
+        
+        if 'api' in categories:
+            return "API layer enhancements"
+        
+        # Fallback based on dominant category
+        if categories:
+            dominant = max(categories.items(), key=lambda x: len(x[1]))
+            return f"{dominant[0]} module improvements"
 
 
 class QualityValidator:
@@ -247,6 +362,13 @@ class QualityValidator:
             errors.append(f"Duplicate relations: {duplicates}")
             fixes.append(('dedupe_relations', duplicates))
         
+        # 3b. Check generic nodes in relations
+        clean_relations = self.filter.filter_generic_nodes(relations)
+        generic_count = len(relations) - len(clean_relations)
+        if generic_count > 1:  # Allow max 1 generic node
+            errors.append(f"Generic nodes in graph: {generic_count} (base, utils, etc.)")
+            fixes.append(('filter_generic_nodes', generic_count))
+        
         # 4. Check duplicate files
         unique_files = self.filter.dedupe_files(files)
         if len(files) > 0:
@@ -274,34 +396,53 @@ class QualityValidator:
             'score': score
         }
     
-    def auto_fix(self, summary: Dict[str, Any], files: List[str]) -> Dict[str, Any]:
+    def auto_fix(self, summary: Dict[str, Any], files: List[str], 
+                 added: int = 0, deleted: int = 0) -> Dict[str, Any]:
         """Auto-fix summary issues and return corrected summary."""
         fixed = summary.copy()
         applied_fixes = []
         
-        # 1. Remove banned words from title
+        # Get file categories for architecture title
+        categories = self.filter.categorize_files(files)
+        
+        # 1. Remove banned words and generate architecture title
         title = fixed.get('title', '')
         banned = self.filter.has_banned_words(title)
         if banned:
-            for word in banned:
-                title = re.sub(rf'\b{word}\b', '', title, flags=re.IGNORECASE)
-            title = ' '.join(title.split())  # Clean up whitespace
-            if not title or len(title) < 5:
-                title = "production-grade improvements"
-            fixed['title'] = title
-            applied_fixes.append(f"Removed banned words: {banned}")
+            # Generate architecture-aware title instead of just removing words
+            arch_title = self.filter.generate_architecture_title(files, categories)
+            
+            # Extract scope from original title if present
+            scope_match = re.search(r'\(([^)]+)\)', title)
+            scope = scope_match.group(1) if scope_match else 'core'
+            
+            # Reclassify intent based on net lines
+            entities = summary.get('analysis', {}).get('aggregated', {}).get('added_entities', [])
+            intent = self.filter.classify_intent_smart(files, entities, added, deleted)
+            
+            fixed['title'] = f"{intent}({scope}): {arch_title}"
+            fixed['intent'] = intent
+            applied_fixes.append(f"Fixed title: banned words {banned} → '{arch_title}'")
         
-        # 2. Dedupe relations
+        # 2. Dedupe and clean relations (remove generic nodes)
         if 'relations' in fixed and 'relations' in fixed['relations']:
             original_count = len(fixed['relations']['relations'])
-            fixed['relations']['relations'] = self.filter.dedupe_relations(
-                fixed['relations']['relations']
-            )
-            new_count = len(fixed['relations']['relations'])
+            relations = fixed['relations']['relations']
+            
+            # First filter generic nodes
+            relations = self.filter.filter_generic_nodes(relations)
+            generic_removed = original_count - len(relations)
+            
+            # Then dedupe
+            relations = self.filter.dedupe_relations(relations)
+            fixed['relations']['relations'] = relations
+            
+            new_count = len(relations)
             if original_count != new_count:
-                applied_fixes.append(f"Deduped relations: {original_count} → {new_count}")
+                applied_fixes.append(f"Cleaned relations: {original_count} → {new_count} "
+                                    f"({generic_removed} generic nodes removed)")
         
-        # 3. Dedupe files (in body formatting, not here)
+        # 3. Dedupe files
         original_files = len(files)
         unique_files = self.filter.dedupe_files(files)
         if original_files != len(unique_files):
@@ -312,12 +453,18 @@ class QualityValidator:
             fixed['capabilities'] = self.filter.prioritize_capabilities(fixed['capabilities'])
             applied_fixes.append("Reordered capabilities by priority")
         
-        # 5. Reclassify intent if needed
-        aggregated = fixed.get('analysis', {}).get('aggregated', {})
-        entities = aggregated.get('added_entities', [])
-        correct_intent = self.filter.classify_intent(files, entities)
-        applied_fixes.append(f"Verified intent: {correct_intent}")
-        fixed['intent'] = correct_intent
+        # 5. Store NET lines info
+        if added or deleted:
+            net = added - deleted
+            emoji, desc = self.filter.format_net_lines(added, deleted)
+            fixed['net_lines'] = {'added': added, 'deleted': deleted, 'net': net, 
+                                  'emoji': emoji, 'description': desc}
+            applied_fixes.append(f"Added NET lines: {desc}")
+        
+        # 6. Smart file categorization
+        fixed['categories'] = categories
+        cat_summary = ', '.join(f"{len(v)} {k}" for k, v in categories.items())
+        applied_fixes.append(f"Categorized: {cat_summary}")
         
         fixed['applied_fixes'] = applied_fixes
         return fixed
@@ -692,10 +839,16 @@ class EnhancedSummaryGenerator:
         return analysis.get('functional_value', 'code improvements')
     
     def generate_enhanced_summary(self, files: List[str], 
-                                   diff_content: str = '') -> Dict[str, Any]:
+                                   diff_content: str = '',
+                                   lines_added: int = 0, lines_deleted: int = 0) -> Dict[str, Any]:
         """Generate complete enhanced summary with business value focus."""
         # Dedupe files first
         files = self.quality_filter.dedupe_files(files)
+        
+        # Extract line stats from diff if not provided
+        if not lines_added and not lines_deleted and diff_content:
+            lines_added = diff_content.count('\n+') - diff_content.count('\n+++')
+            lines_deleted = diff_content.count('\n-') - diff_content.count('\n---')
         
         # Run deep analysis
         analysis = self.analyzer.generate_functional_summary(files)
@@ -744,6 +897,11 @@ class EnhancedSummaryGenerator:
         new_complexity = old_complexity + aggregated.get('complexity_change', 0)
         metrics['old_complexity'] = old_complexity
         metrics['new_complexity'] = new_complexity
+        metrics['lines_added'] = lines_added
+        metrics['lines_deleted'] = lines_deleted
+        
+        # Filter generic nodes from relations
+        relations['relations'] = self.quality_filter.filter_generic_nodes(relations['relations'])
         
         # Generate title
         title = self.generate_value_title(capabilities, analysis, files)
@@ -801,22 +959,25 @@ class EnhancedSummaryGenerator:
         if metrics:
             metric_lines = ["IMPACT:"]
             
-            # Use interpretable complexity metric
-            old_cc = metrics.get('old_complexity', 1)
-            new_cc = metrics.get('new_complexity', old_cc)
-            if old_cc != new_cc:
-                emoji, desc = self.quality_filter.format_complexity_delta(old_cc, new_cc)
+            # NET lines change (primary metric for refactors)
+            added = metrics.get('lines_added', 0)
+            deleted = metrics.get('lines_deleted', 0)
+            if added or deleted:
+                emoji, desc = self.quality_filter.format_net_lines(added, deleted)
                 metric_lines.append(f"{emoji} {desc}")
             
-            if metrics.get('test_impact', 0) > 0:
-                metric_lines.append(f"🧪 Test coverage: +{metrics['test_impact']}%")
-            
-            # Show relation count instead of density
+            # Show relation count 
             rel_count = len(relations.get('relations', []))
             if rel_count > 0:
-                metric_lines.append(f"🔗 Relations: {rel_count} dependencies detected")
+                metric_lines.append(f"🔗 Relations: {rel_count} clean dependencies")
             
-            metric_lines.append(f"⭐ Value score: {metrics['value_score']}/100")
+            # Test coverage
+            test_files = sum(1 for f in files if 'test' in f.lower())
+            if test_files > 0:
+                coverage_pct = int(test_files / len(files) * 100) if files else 0
+                metric_lines.append(f"🧪 Test coverage: {test_files}/{len(files)} files ({coverage_pct}%)")
+            
+            metric_lines.append(f"⭐ Framework score: {metrics['value_score']}/100")
             sections.append('\n'.join(metric_lines))
         
         # RELATIONS section - show concrete dependency paths

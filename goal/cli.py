@@ -1658,5 +1658,163 @@ def config_get(ctx, key):
         sys.exit(1)
 
 
+@main.command()
+@click.option('--fix', '-f', is_flag=True, help='Auto-fix detected issues')
+@click.pass_context
+def validate(ctx, fix):
+    """Validate commit summary against quality gates.
+    
+    Checks for:
+    - Banned words in title (add, logging, formatting, etc.)
+    - Generic nodes in dependency graph (base, utils)
+    - Duplicate files and relations
+    - Missing capabilities
+    
+    Use --fix to automatically correct issues.
+    """
+    try:
+        from .enhanced_summary import QualityValidator, EnhancedSummaryGenerator
+    except ImportError:
+        from enhanced_summary import QualityValidator, EnhancedSummaryGenerator
+    
+    # Get staged files
+    staged = get_staged_files()
+    if not staged or staged == ['']:
+        click.echo(click.style("No staged changes to validate.", fg='yellow'))
+        return
+    
+    # Get diff stats
+    diff_content = get_diff_content()
+    stats = {'added': 0, 'deleted': 0}
+    for line in diff_content.split('\n'):
+        if line.startswith('+') and not line.startswith('+++'):
+            stats['added'] += 1
+        elif line.startswith('-') and not line.startswith('---'):
+            stats['deleted'] += 1
+    
+    # Generate summary
+    config_obj = ctx.obj.get('config')
+    config_dict = config_obj.to_dict() if config_obj else {}
+    
+    generator = EnhancedSummaryGenerator(config_dict)
+    summary = generator.generate_enhanced_summary(
+        staged, diff_content, 
+        lines_added=stats['added'], 
+        lines_deleted=stats['deleted']
+    )
+    
+    # Validate
+    validator = QualityValidator(config_dict)
+    result = validator.validate(summary, staged)
+    
+    if result['valid']:
+        click.echo(click.style("✓ SUMMARY PASSED QUALITY GATES", fg='green', bold=True))
+        click.echo(f"Score: {result['score']}/100")
+        return
+    
+    # Show errors
+    click.echo(click.style("❌ SUMMARY FAILED QUALITY GATES", fg='red', bold=True))
+    click.echo(f"Score: {result['score']}/100\n")
+    
+    if result['errors']:
+        click.echo(click.style("Errors:", fg='red'))
+        for e in result['errors']:
+            click.echo(f"  ✗ {e}")
+    
+    if result['warnings']:
+        click.echo(click.style("\nWarnings:", fg='yellow'))
+        for w in result['warnings']:
+            click.echo(f"  ⚠ {w}")
+    
+    if fix:
+        # Auto-fix
+        click.echo(click.style("\n🔧 Auto-fixing issues...", fg='cyan'))
+        fixed = validator.auto_fix(summary, staged, stats['added'], stats['deleted'])
+        
+        click.echo(click.style("\nApplied fixes:", fg='green'))
+        for f in fixed.get('applied_fixes', []):
+            click.echo(f"  ✅ {f}")
+        
+        click.echo(click.style(f"\nFixed title: \"{fixed['title']}\"", fg='green', bold=True))
+        click.echo(click.style("✓ SUMMARY APPROVED", fg='green', bold=True))
+    else:
+        click.echo(click.style("\n💡 Run: goal validate --fix", fg='cyan'))
+        sys.exit(1)
+
+
+@main.command('fix-summary')
+@click.option('--auto', 'auto_fix', is_flag=True, help='Automatically fix all issues')
+@click.option('--preview', '-p', is_flag=True, help='Preview fixes without applying')
+@click.pass_context
+def fix_summary(ctx, auto_fix, preview):
+    """Auto-fix commit summary quality issues.
+    
+    Fixes:
+    - Removes banned words from title
+    - Generates architecture-aware title
+    - Filters generic nodes from dependency graph
+    - Deduplicates files and relations
+    - Reclassifies intent based on NET lines
+    """
+    try:
+        from .enhanced_summary import QualityValidator, EnhancedSummaryGenerator
+    except ImportError:
+        from enhanced_summary import QualityValidator, EnhancedSummaryGenerator
+    
+    # Get staged files
+    staged = get_staged_files()
+    if not staged or staged == ['']:
+        click.echo(click.style("No staged changes to fix.", fg='yellow'))
+        return
+    
+    # Get diff stats
+    diff_content = get_diff_content()
+    stats = {'added': 0, 'deleted': 0}
+    for line in diff_content.split('\n'):
+        if line.startswith('+') and not line.startswith('+++'):
+            stats['added'] += 1
+        elif line.startswith('-') and not line.startswith('---'):
+            stats['deleted'] += 1
+    
+    # Generate summary
+    config_obj = ctx.obj.get('config')
+    config_dict = config_obj.to_dict() if config_obj else {}
+    
+    generator = EnhancedSummaryGenerator(config_dict)
+    summary = generator.generate_enhanced_summary(
+        staged, diff_content,
+        lines_added=stats['added'],
+        lines_deleted=stats['deleted']
+    )
+    
+    validator = QualityValidator(config_dict)
+    
+    # Show original
+    click.echo(click.style("=== BEFORE ===", fg='yellow'))
+    click.echo(f"Title: {summary['title']}")
+    click.echo(f"Intent: {summary.get('intent', 'unknown')}")
+    
+    # Fix
+    fixed = validator.auto_fix(summary, staged, stats['added'], stats['deleted'])
+    
+    # Show fixed
+    click.echo(click.style("\n=== AFTER ===", fg='green'))
+    click.echo(f"Title: {fixed['title']}")
+    click.echo(f"Intent: {fixed.get('intent', 'unknown')}")
+    
+    if fixed.get('net_lines'):
+        nl = fixed['net_lines']
+        click.echo(f"NET lines: {nl['emoji']} {nl['description']}")
+    
+    click.echo(click.style("\nApplied fixes:", fg='cyan'))
+    for f in fixed.get('applied_fixes', []):
+        click.echo(f"  ✅ {f}")
+    
+    if preview:
+        click.echo(click.style("\n(Preview mode - no changes applied)", fg='yellow'))
+    else:
+        click.echo(click.style("\n✓ SUMMARY FIXED", fg='green', bold=True))
+
+
 if __name__ == '__main__':
     main()
