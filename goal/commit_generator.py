@@ -651,21 +651,22 @@ class CommitMessageGenerator:
         try:
             diff_content = self.get_diff_content(cached, paths=paths)
             stats = self.get_diff_stats(cached)
+
             result = self._enhanced_generator.generate_enhanced_summary(
                 files,
                 diff_content,
                 lines_added=stats.get('added', 0),
-                lines_deleted=stats.get('deleted', 0)
+                lines_deleted=stats.get('deleted', 0),
             )
-            
+
             # Use intent from enhanced summary (more accurate classification)
             commit_type = result.get('intent', 'refactor')
             scope = self.detect_scope(files)
-            
+
             # Enhance title with conventional commit format
             if result.get('title'):
                 result['title'] = f"{commit_type}({scope}): {result['title']}"
-            
+
             return result
         except Exception:
             return None

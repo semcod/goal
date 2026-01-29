@@ -1,3 +1,15 @@
+## [2.1.13] - 2026-01-29
+
+### Summary
+
+feat(goal): commit message generator
+
+### Core
+
+- update goal/cli.py
+- update goal/commit_generator.py
+
+
 ## [2.1.12] - 2026-01-29
 
 ### Summary

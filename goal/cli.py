@@ -14,11 +14,11 @@ from typing import Optional, List, Dict, Tuple
 
 import click
 try:
-    from .formatter import format_push_result, format_status_output
+    from .formatter import format_push_result, format_status_output, format_enhanced_summary
     from .commit_generator import CommitMessageGenerator
     from .config import GoalConfig, ensure_config, init_config, load_config
 except ImportError:
-    from formatter import format_push_result, format_status_output
+    from formatter import format_push_result, format_status_output, format_enhanced_summary
     from commit_generator import CommitMessageGenerator
     from config import GoalConfig, ensure_config, init_config, load_config
 
@@ -974,6 +974,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     # Generate or use provided commit message
     commit_title = None
     commit_body = None
+    detailed_result = None
     if message:
         commit_title = apply_ticket_prefix(message, ticket)
     else:
@@ -981,9 +982,17 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         config_obj = ctx.obj.get('config')
         config_dict = config_obj.to_dict() if config_obj else None
         generator = CommitMessageGenerator(config=config_dict)
+
+        use_enhanced = bool((config_dict or {}).get('quality', {}).get('enhanced_summary', {}).get('enabled', False))
+        if use_enhanced:
+            detailed = generator.generate_detailed_message(cached=True)
+            if detailed and detailed.get('enhanced'):
+                detailed_result = detailed
+                commit_title = apply_ticket_prefix(detailed.get('title'), ticket)
+                commit_body = detailed.get('body')
         
         # Use abstraction-based generation if available
-        if abstraction != 'legacy' and config_dict:
+        if not commit_title and abstraction != 'legacy' and config_dict:
             abstraction_result = generator.generate_abstraction_message(level=abstraction, cached=True)
             if abstraction_result:
                 commit_title = apply_ticket_prefix(abstraction_result.get('title'), ticket)
@@ -991,11 +1000,13 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             else:
                 detailed = generator.generate_detailed_message(cached=True)
                 if detailed:
+                    detailed_result = detailed
                     commit_title = apply_ticket_prefix(detailed.get('title'), ticket)
                     commit_body = detailed.get('body')
-        else:
+        elif not commit_title:
             detailed = generator.generate_detailed_message(cached=True)
             if detailed:
+                detailed_result = detailed
                 commit_title = apply_ticket_prefix(detailed.get('title'), ticket)
                 commit_body = detailed.get('body')
             else:
@@ -1014,6 +1025,89 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     stats = get_diff_stats()
     total_adds = sum(s[0] for s in stats.values())
     total_dels = sum(s[1] for s in stats.values())
+
+    # Enforce commit quality gates for auto-generated messages
+    if not message:
+        config_obj = ctx.obj.get('config')
+        config_dict = config_obj.to_dict() if config_obj else {}
+        quality_cfg = (config_dict or {}).get('quality', {}).get('enhanced_summary', {})
+        enforce_quality = bool(quality_cfg.get('enabled', True))
+
+        if enforce_quality:
+            try:
+                from .enhanced_summary import EnhancedSummaryGenerator, QualityValidator
+            except ImportError:
+                from enhanced_summary import EnhancedSummaryGenerator, QualityValidator
+
+            try:
+                generator = EnhancedSummaryGenerator(config_dict)
+                summary = generator.generate_enhanced_summary(
+                    files,
+                    diff_content,
+                    lines_added=total_adds,
+                    lines_deleted=total_dels,
+                )
+
+                # Validate the actual commit message we are about to use
+                summary_for_validation = dict(summary)
+                summary_for_validation['title'] = commit_msg
+
+                validator = QualityValidator(config_dict)
+                validation = validator.validate(summary_for_validation, files)
+
+                if not validation.get('valid', True):
+                    suggested = validator.auto_fix(summary_for_validation, files, total_adds, total_dels)
+
+                    if markdown or ctx.obj.get('markdown'):
+                        click.echo("\n## ❌ FAILED QUALITY GATES\n")
+                        click.echo(f"- **Score:** {validation.get('score', 0)}/100")
+                        click.echo("\n### Errors")
+                        for e in validation.get('errors', []):
+                            click.echo(f"- {e}")
+                        if validation.get('warnings'):
+                            click.echo("\n### Warnings")
+                            for w in validation.get('warnings', []):
+                                click.echo(f"- {w}")
+                        click.echo("\n### Suggested Fix")
+                        click.echo(f"- **Title:** `{suggested.get('title', '')}`")
+                        click.echo("\n💡 Run: `goal validate --fix` or `goal fix-summary --auto`")
+                    else:
+                        click.echo(click.style("\n❌ FAILED QUALITY GATES", fg='red', bold=True))
+                        click.echo(f"Score: {validation.get('score', 0)}/100\n")
+                        for e in validation.get('errors', []):
+                            click.echo(f"  ✗ {e}")
+                        if validation.get('warnings'):
+                            click.echo("")
+                            for w in validation.get('warnings', []):
+                                click.echo(f"  ⚠ {w}")
+                        click.echo("")
+                        click.echo(click.style(f"Suggested title: {suggested.get('title', '')}", fg='cyan'))
+                        click.echo(click.style("Run: goal validate --fix OR goal fix-summary --auto", fg='cyan'))
+
+                    sys.exit(1)
+            except Exception:
+                # If validation fails unexpectedly, do not block push
+                pass
+
+    if detailed_result and detailed_result.get('enhanced'):
+        try:
+            try:
+                from .enhanced_summary import QualityValidator
+            except ImportError:
+                from enhanced_summary import QualityValidator
+
+            validator = QualityValidator(config_dict or {})
+            validation = validator.validate(detailed_result, detailed_result.get('files') or files)
+            if not validation.get('valid'):
+                click.echo(click.style("❌ FAILED QUALITY GATES", fg='red', bold=True))
+                for e in validation.get('errors') or []:
+                    click.echo(click.style(f"✗ {e}", fg='red'))
+                for w in validation.get('warnings') or []:
+                    click.echo(click.style(f"⚠ {w}", fg='yellow'))
+                click.echo(click.style("\n💡 Run: goal fix-summary --auto", fg='cyan'))
+                sys.exit(1)
+        except Exception:
+            pass
     
     if dry_run:
         # Split mode: show planned commits per group
@@ -1038,26 +1132,40 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
 
         if markdown or ctx.obj.get('markdown'):
             # Generate markdown output for dry run
-            md_output = format_push_result(
-                project_types=project_types,
-                files=files,
-                stats=stats,
-                current_version=current_version,
-                new_version=new_version,
-                commit_msg=commit_msg,
-                commit_body=commit_body,
-                test_result="Dry run - tests not executed",
-                test_exit_code=0,
-                actions=[
-                    "Detected project types",
-                    "Staged changes",
-                    "Generated commit message",
-                    "Planned version bump",
-                    "Planned changelog update",
-                    "Planned tag creation",
-                    "Planned push to remote"
-                ]
-            )
+            if detailed_result and detailed_result.get('enhanced'):
+                md_output = format_enhanced_summary(
+                    commit_title=commit_msg,
+                    commit_body=commit_body or '',
+                    capabilities=detailed_result.get('capabilities'),
+                    roles=detailed_result.get('roles'),
+                    relations=detailed_result.get('relations'),
+                    metrics=detailed_result.get('metrics'),
+                    files=files,
+                    stats=stats,
+                    current_version=current_version,
+                    new_version=new_version
+                )
+            else:
+                md_output = format_push_result(
+                    project_types=project_types,
+                    files=files,
+                    stats=stats,
+                    current_version=current_version,
+                    new_version=new_version,
+                    commit_msg=commit_msg,
+                    commit_body=commit_body,
+                    test_result="Dry run - tests not executed",
+                    test_exit_code=0,
+                    actions=[
+                        "Detected project types",
+                        "Staged changes",
+                        "Generated commit message",
+                        "Planned version bump",
+                        "Planned changelog update",
+                        "Planned tag creation",
+                        "Planned push to remote"
+                    ]
+                )
             click.echo(md_output)
         else:
             click.echo(click.style("=== DRY RUN ===", fg='cyan', bold=True))
@@ -1082,7 +1190,9 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         if markdown or ctx.obj.get('markdown'):
             # Markdown preview for interactive mode
             click.echo(f"\n## GOAL Workflow Preview\n")
-            click.echo(f"- **Files:** {len(files)} (+{total_adds}/-{total_dels} lines)")
+            denom = (total_adds + total_dels) or 1
+            deletion_pct = int((total_dels / denom) * 100)
+            click.echo(f"- **Files:** {len(files)} (+{total_adds}/-{total_dels} = {deletion_pct}% deletions)")
             click.echo(f"- **Version:** {current_version} → {new_version}")
             click.echo(f"- **Commit:** `{commit_msg}`")
             if commit_body and not message:
@@ -1739,14 +1849,12 @@ def validate(ctx, fix):
         click.echo(click.style("No staged changes to validate.", fg='yellow'))
         return
     
-    # Get diff stats
     diff_content = get_diff_content()
-    stats = {'added': 0, 'deleted': 0}
-    for line in diff_content.split('\n'):
-        if line.startswith('+') and not line.startswith('+++'):
-            stats['added'] += 1
-        elif line.startswith('-') and not line.startswith('---'):
-            stats['deleted'] += 1
+    numstats = get_diff_stats()
+    stats = {
+        'added': sum(v[0] for v in numstats.values()),
+        'deleted': sum(v[1] for v in numstats.values())
+    }
     
     # Generate summary
     config_obj = ctx.obj.get('config')
@@ -1823,14 +1931,12 @@ def fix_summary(ctx, auto_fix, preview):
         click.echo(click.style("No staged changes to fix.", fg='yellow'))
         return
     
-    # Get diff stats
     diff_content = get_diff_content()
-    stats = {'added': 0, 'deleted': 0}
-    for line in diff_content.split('\n'):
-        if line.startswith('+') and not line.startswith('+++'):
-            stats['added'] += 1
-        elif line.startswith('-') and not line.startswith('---'):
-            stats['deleted'] += 1
+    numstats = get_diff_stats()
+    stats = {
+        'added': sum(v[0] for v in numstats.values()),
+        'deleted': sum(v[1] for v in numstats.values())
+    }
     
     # Generate summary
     config_obj = ctx.obj.get('config')
