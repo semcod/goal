@@ -894,6 +894,7 @@ def publish_project(project_types: List[str], version: str) -> bool:
                         click.echo(click.style("Failed to install build dependencies.", fg='red'))
                         return False
 
+                build_started_at = datetime.now().timestamp()
                 cmd = 'python -m build'
                 click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                 sys.stdout.flush()
@@ -905,20 +906,70 @@ def publish_project(project_types: List[str], version: str) -> bool:
                     click.echo(click.style("Build failed. Check the output above.", fg='red'))
                     return False
 
+                package_name = None
+                pyproject_path = Path('pyproject.toml')
+                if pyproject_path.exists():
+                    try:
+                        try:
+                            import tomllib
+                        except ModuleNotFoundError:
+                            tomllib = None
+                        if tomllib is not None:
+                            data = tomllib.loads(pyproject_path.read_text())
+                            package_name = (
+                                (data.get('project') or {}).get('name')
+                                or ((data.get('tool') or {}).get('poetry') or {}).get('name')
+                            )
+                    except Exception:
+                        package_name = None
+
                 dist = Path('dist')
                 artifacts = []
                 if dist.exists():
+                    name_variants = set()
+                    if package_name:
+                        base = package_name.strip()
+                        if base:
+                            name_variants.update(
+                                {
+                                    base,
+                                    base.lower(),
+                                    base.replace('-', '_'),
+                                    base.replace('-', '_').lower(),
+                                    base.replace('_', '-'),
+                                    base.replace('_', '-').lower(),
+                                }
+                            )
                     for f in dist.iterdir():
-                        if (
-                            f.is_file()
-                            and f.name.startswith(f"goal-{version}")
-                            and (f.name.endswith('.whl') or f.name.endswith('.tar.gz'))
-                        ):
-                            artifacts.append(f)
+                        if not f.is_file():
+                            continue
+                        if not (f.name.endswith('.whl') or f.name.endswith('.tar.gz')):
+                            continue
+
+                        try:
+                            if f.stat().st_mtime < build_started_at - 2:
+                                continue
+                        except OSError:
+                            pass
+
+                        if name_variants:
+                            if not any(f.name.startswith(f"{n}-{version}") for n in name_variants):
+                                continue
+                        else:
+                            if (f"-{version}" not in f.name) and (f"_{version}" not in f.name):
+                                continue
+
+                        artifacts.append(f)
 
                 artifacts = sorted({str(a) for a in artifacts})
                 if not artifacts:
                     click.echo(click.style(f"No dist artifacts found for version {version}", fg='red'))
+                    if dist.exists():
+                        dist_listing = sorted(p.name for p in dist.iterdir() if p.is_file())
+                        if dist_listing:
+                            click.echo(click.style("Dist directory contains:", fg='yellow'))
+                            for name in dist_listing[:20]:
+                                click.echo(f"  - {name}")
                     return False
 
                 cmd = 'python -m twine upload ' + ' '.join(artifacts)
@@ -1443,11 +1494,15 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     # Create tag
     if not no_tag:
         tag_name = f"v{new_version}"
-        result = run_git('tag', '-a', tag_name, '-m', f"Release {new_version}")
-        if result.returncode != 0:
-            click.echo(click.style(f"Warning: Could not create tag: {result.stderr}", fg='yellow'))
+        tag_exists = run_git('rev-parse', '-q', '--verify', f"refs/tags/{tag_name}")
+        if tag_exists.returncode == 0:
+            click.echo(click.style(f"Warning: Tag already exists: {tag_name}", fg='yellow'))
         else:
-            click.echo(click.style(f"✓ Created tag: {tag_name}", fg='green'))
+            result = run_git('tag', '-a', tag_name, '-m', f"Release {new_version}")
+            if result.returncode != 0:
+                click.echo(click.style(f"Warning: Could not create tag: {result.stderr}", fg='yellow'))
+            else:
+                click.echo(click.style(f"✓ Created tag: {tag_name}", fg='green'))
     
     # Push stage
     if not yes:
