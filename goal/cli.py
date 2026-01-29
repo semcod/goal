@@ -1,13 +1,109 @@
 #!/usr/bin/env python3
-"""Goal CLI - Automated git push with smart commit messages."""
+"""Goal CLI - Automated git push with smart commit messages and version management."""
 
 import subprocess
 import os
 import sys
+import re
+import json
 from datetime import datetime
 from pathlib import Path
+from typing import Optional, List, Dict, Tuple
 
 import click
+try:
+    from .formatter import format_push_result, format_status_output
+    from .commit_generator import CommitMessageGenerator
+except ImportError:
+    from formatter import format_push_result, format_status_output
+    from commit_generator import CommitMessageGenerator
+
+# =============================================================================
+# Project Type Detection & Version File Management
+# =============================================================================
+
+PROJECT_TYPES = {
+    'python': {
+        'files': ['pyproject.toml', 'setup.py', 'setup.cfg'],
+        'version_patterns': {
+            'pyproject.toml': r'^version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
+            'setup.py': r'version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
+            'setup.cfg': r'^version\s*=\s*(\d+\.\d+\.\d+)',
+        },
+        'test_command': 'pytest',
+        'publish_command': 'python -m build && twine upload dist/*',
+    },
+    'nodejs': {
+        'files': ['package.json'],
+        'version_patterns': {
+            'package.json': r'"version"\s*:\s*"(\d+\.\d+\.\d+)"',
+        },
+        'test_command': 'npm test',
+        'publish_command': 'npm publish',
+    },
+    'rust': {
+        'files': ['Cargo.toml'],
+        'version_patterns': {
+            'Cargo.toml': r'^version\s*=\s*"(\d+\.\d+\.\d+)"',
+        },
+        'test_command': 'cargo test',
+        'publish_command': 'cargo publish',
+    },
+    'go': {
+        'files': ['go.mod'],
+        'version_patterns': {},  # Go uses git tags
+        'test_command': 'go test ./...',
+        'publish_command': 'git push origin --tags',
+    },
+    'ruby': {
+        'files': ['Gemfile', '*.gemspec'],
+        'version_patterns': {
+            '*.gemspec': r'\.version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
+        },
+        'test_command': 'bundle exec rspec',
+        'publish_command': 'gem build *.gemspec && gem push *.gem',
+    },
+    'php': {
+        'files': ['composer.json'],
+        'version_patterns': {
+            'composer.json': r'"version"\s*:\s*"(\d+\.\d+\.\d+)"',
+        },
+        'test_command': 'composer test',
+        'publish_command': 'composer publish',
+    },
+    'dotnet': {
+        'files': ['*.csproj', '*.fsproj'],
+        'version_patterns': {
+            '*.csproj': r'<Version>(\d+\.\d+\.\d+)</Version>',
+            '*.fsproj': r'<Version>(\d+\.\d+\.\d+)</Version>',
+        },
+        'test_command': 'dotnet test',
+        'publish_command': 'dotnet pack && dotnet nuget push *.nupkg',
+    },
+    'java': {
+        'files': ['pom.xml', 'build.gradle', 'build.gradle.kts'],
+        'version_patterns': {
+            'pom.xml': r'<version>(\d+\.\d+\.\d+)</version>',
+            'build.gradle': r'version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
+            'build.gradle.kts': r'version\s*=\s*"(\d+\.\d+\.\d+)"',
+        },
+        'test_command': 'mvn test',
+        'publish_command': 'mvn deploy',
+    },
+}
+
+# Conventional commit types based on file patterns
+COMMIT_TYPES = {
+    'feat': ['add', 'new', 'create', 'implement'],
+    'fix': ['fix', 'bug', 'patch', 'repair', 'resolve'],
+    'docs': ['readme', 'doc', 'comment', 'license'],
+    'style': ['format', 'style', 'lint', 'whitespace'],
+    'refactor': ['refactor', 'restructure', 'reorganize', 'rename'],
+    'perf': ['perf', 'optimize', 'speed', 'cache'],
+    'test': ['test', 'spec', 'coverage'],
+    'build': ['build', 'compile', 'makefile', 'docker', 'ci', 'cd'],
+    'chore': ['chore', 'deps', 'update', 'bump', 'config'],
+}
 
 
 def run_git(*args, capture=True):
@@ -20,21 +116,295 @@ def run_git(*args, capture=True):
     return result
 
 
-def get_staged_files():
+def run_command(command: str, capture: bool = True) -> subprocess.CompletedProcess:
+    """Run a shell command and return the result."""
+    return subprocess.run(
+        command,
+        shell=True,
+        capture_output=capture,
+        text=True
+    )
+
+
+def confirm(prompt: str, default: bool = True) -> bool:
+    """Ask for user confirmation with Y/n prompt (Enter defaults to Yes)."""
+    if default:
+        suffix = " [Y/n] "
+    else:
+        suffix = " [y/N] "
+    
+    while True:
+        response = input(click.style(prompt, fg='cyan') + suffix).strip().lower()
+        
+        if not response:
+            return default
+        
+        if response in ['y', 'yes']:
+            return True
+        elif response in ['n', 'no']:
+            return False
+        else:
+            click.echo(click.style("Please respond with 'y' or 'n'", fg='red'))
+
+
+def detect_project_types() -> List[str]:
+    """Detect what type(s) of project this is."""
+    detected = []
+    for ptype, config in PROJECT_TYPES.items():
+        for file_pattern in config['files']:
+            if '*' in file_pattern:
+                if list(Path('.').glob(file_pattern)):
+                    detected.append(ptype)
+                    break
+            elif Path(file_pattern).exists():
+                detected.append(ptype)
+                break
+    return detected
+
+
+def find_version_files() -> Dict[str, Path]:
+    """Find all version-containing files in the project."""
+    found = {}
+    for ptype, config in PROJECT_TYPES.items():
+        for file_pattern, pattern in config.get('version_patterns', {}).items():
+            if '*' in file_pattern:
+                for f in Path('.').glob(file_pattern):
+                    found[str(f)] = (f, pattern)
+            elif Path(file_pattern).exists():
+                found[file_pattern] = (Path(file_pattern), pattern)
+    return found
+
+
+def get_version_from_file(filepath: Path, pattern: str) -> Optional[str]:
+    """Extract version from a file using regex pattern."""
+    try:
+        content = filepath.read_text()
+        match = re.search(pattern, content, re.MULTILINE)
+        if match:
+            return match.group(1)
+    except Exception:
+        pass
+    return None
+
+
+def update_version_in_file(filepath: Path, pattern: str, old_version: str, new_version: str) -> bool:
+    """Update version in a specific file."""
+    try:
+        content = filepath.read_text()
+        # Create replacement pattern
+        new_content = re.sub(
+            pattern.replace(r'(\d+\.\d+\.\d+)', old_version),
+            lambda m: m.group(0).replace(old_version, new_version),
+            content,
+            count=1,
+            flags=re.MULTILINE
+        )
+        if new_content != content:
+            filepath.write_text(new_content)
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def update_json_version(filepath: Path, new_version: str) -> bool:
+    """Update version in JSON files (package.json, composer.json)."""
+    try:
+        content = json.loads(filepath.read_text())
+        if 'version' in content:
+            content['version'] = new_version
+            filepath.write_text(json.dumps(content, indent=2) + '\n')
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def sync_all_versions(new_version: str) -> List[str]:
+    """Update version in all detected project files."""
+    updated = []
+    
+    # Always update VERSION file
+    Path('VERSION').write_text(new_version + '\n')
+    updated.append('VERSION')
+    
+    # Update package.json
+    if Path('package.json').exists():
+        if update_json_version(Path('package.json'), new_version):
+            updated.append('package.json')
+    
+    # Update composer.json
+    if Path('composer.json').exists():
+        if update_json_version(Path('composer.json'), new_version):
+            updated.append('composer.json')
+    
+    # Update pyproject.toml
+    if Path('pyproject.toml').exists():
+        content = Path('pyproject.toml').read_text()
+        new_content = re.sub(
+            r'^(version\s*=\s*["\'])\d+\.\d+\.\d+(["\'])',
+            rf'\g<1>{new_version}\g<2>',
+            content,
+            count=1,
+            flags=re.MULTILINE
+        )
+        if new_content != content:
+            Path('pyproject.toml').write_text(new_content)
+            updated.append('pyproject.toml')
+    
+    # Update Cargo.toml
+    if Path('Cargo.toml').exists():
+        content = Path('Cargo.toml').read_text()
+        new_content = re.sub(
+            r'^(version\s*=\s*")\d+\.\d+\.\d+(")',
+            rf'\g<1>{new_version}\g<2>',
+            content,
+            count=1,
+            flags=re.MULTILINE
+        )
+        if new_content != content:
+            Path('Cargo.toml').write_text(new_content)
+            updated.append('Cargo.toml')
+    
+    # Update *.csproj
+    for csproj in Path('.').glob('*.csproj'):
+        content = csproj.read_text()
+        new_content = re.sub(
+            r'<Version>\d+\.\d+\.\d+</Version>',
+            f'<Version>{new_version}</Version>',
+            content,
+            count=1
+        )
+        if new_content != content:
+            csproj.write_text(new_content)
+            updated.append(str(csproj))
+    
+    # Update pom.xml (first version tag only - project version)
+    if Path('pom.xml').exists():
+        content = Path('pom.xml').read_text()
+        # Only update the first <version> which is typically the project version
+        new_content = re.sub(
+            r'(<version>)\d+\.\d+\.\d+(</version>)',
+            rf'\g<1>{new_version}\g<2>',
+            content,
+            count=1
+        )
+        if new_content != content:
+            Path('pom.xml').write_text(new_content)
+            updated.append('pom.xml')
+    
+    return updated
+
+
+# =============================================================================
+# Git Diff Analysis for Smart Commit Messages
+# =============================================================================
+
+def get_staged_files() -> List[str]:
     """Get list of staged files."""
     result = run_git('diff', '--cached', '--name-only')
     return result.stdout.strip().split('\n') if result.stdout.strip() else []
 
 
-def get_unstaged_files():
+def get_unstaged_files() -> List[str]:
     """Get list of unstaged/untracked files."""
     result = run_git('status', '--porcelain')
     return [line[3:] for line in result.stdout.strip().split('\n') if line]
 
 
-def categorize_file(filename):
+def get_diff_stats() -> Dict[str, Tuple[int, int]]:
+    """Get additions/deletions per file."""
+    result = run_git('diff', '--cached', '--numstat')
+    stats = {}
+    for line in result.stdout.strip().split('\n'):
+        if line:
+            parts = line.split('\t')
+            if len(parts) == 3:
+                adds = int(parts[0]) if parts[0] != '-' else 0
+                dels = int(parts[1]) if parts[1] != '-' else 0
+                stats[parts[2]] = (adds, dels)
+    return stats
+
+
+def get_diff_content() -> str:
+    """Get the actual diff content for analysis."""
+    result = run_git('diff', '--cached', '-U3')
+    return result.stdout
+
+
+def analyze_diff_for_type(diff_content: str, files: List[str]) -> str:
+    """Analyze diff content to determine commit type."""
+    diff_lower = diff_content.lower()
+    
+    # Check for test files
+    if any('test' in f.lower() or 'spec' in f.lower() for f in files):
+        return 'test'
+    
+    # Check for documentation
+    if any(f.endswith('.md') or 'doc' in f.lower() for f in files):
+        if all(f.endswith('.md') or 'doc' in f.lower() for f in files):
+            return 'docs'
+    
+    # Check for new files (likely feat)
+    result = run_git('diff', '--cached', '--name-status')
+    if 'A\t' in result.stdout:
+        return 'feat'
+    
+    # Check for fix patterns in diff
+    fix_patterns = ['fix', 'bug', 'error', 'issue', 'problem', 'correct', 'repair']
+    if any(p in diff_lower for p in fix_patterns):
+        return 'fix'
+    
+    # Check for build/config files
+    build_files = ['makefile', 'dockerfile', 'docker-compose', '.yml', '.yaml', 'ci', 'cd']
+    if any(any(bf in f.lower() for bf in build_files) for f in files):
+        return 'build'
+    
+    # Check for dependency updates
+    dep_files = ['package.json', 'requirements.txt', 'pyproject.toml', 'cargo.toml', 'go.mod']
+    if any(f.lower() in dep_files for f in files):
+        return 'chore'
+    
+    # Default to chore for misc changes
+    return 'chore'
+
+
+def extract_function_changes(diff_content: str) -> List[str]:
+    """Extract changed function/method names from diff."""
+    functions = []
+    
+    # Python functions
+    py_funcs = re.findall(r'^\+\s*def\s+(\w+)\s*\(', diff_content, re.MULTILINE)
+    functions.extend(py_funcs)
+    
+    # JavaScript/TypeScript functions
+    js_funcs = re.findall(r'^\+\s*(?:function|const|let|var)\s+(\w+)\s*[=(]', diff_content, re.MULTILINE)
+    functions.extend(js_funcs)
+    
+    # Class definitions
+    classes = re.findall(r'^\+\s*class\s+(\w+)', diff_content, re.MULTILINE)
+    functions.extend([f'class {c}' for c in classes])
+    
+    return list(set(functions))[:5]  # Limit to 5
+
+
+def generate_smart_commit_message(files: List[str], diff_content: str) -> str:
+    """Generate intelligent commit message based on diff analysis."""
+    if not files:
+        return None
+    
+    # Use the new commit message generator
+    generator = CommitMessageGenerator()
+    return generator.generate_commit_message(cached=True)
+
+
+def categorize_file(filename: str) -> Optional[str]:
     """Categorize file and return appropriate description."""
     basename = os.path.basename(filename)
+    
+    # Skip auto-generated files
+    if basename in ('CHANGELOG.md', 'VERSION'):
+        return None
     
     # Special files
     if basename == 'Makefile':
@@ -43,8 +413,6 @@ def categorize_file(filename):
         return "deps: update package.json"
     elif basename in ('Dockerfile', 'docker-compose.yml'):
         return "docker: update " + basename
-    elif basename in ('CHANGELOG.md', 'VERSION'):
-        return None  # Skip these, they're auto-generated
     elif basename == 'README.md':
         return "docs: update README"
     elif filename.endswith('.md'):
@@ -61,41 +429,45 @@ def categorize_file(filename):
         return f"update {filename}"
 
 
-def generate_commit_message(files):
-    """Generate commit message based on changed files."""
-    changes = []
-    for f in files:
-        if f:
-            desc = categorize_file(f)
-            if desc:
-                changes.append(desc)
-    
-    if not changes:
-        return None
-    
-    if len(changes) == 1:
-        return changes[0]
-    elif len(changes) <= 3:
-        return "chore: " + ", ".join(changes)
-    else:
-        return f"chore: update {len(changes)} files"
+# =============================================================================
+# Version Management
+# =============================================================================
 
-
-def get_current_version():
-    """Get current version from VERSION file or default to 1.0.0."""
+def get_current_version() -> str:
+    """Get current version from VERSION file or detect from project files."""
+    # First try VERSION file
     version_file = Path('VERSION')
     if version_file.exists():
         return version_file.read_text().strip()
+    
+    # Try to detect from project files
+    if Path('package.json').exists():
+        try:
+            data = json.loads(Path('package.json').read_text())
+            if 'version' in data:
+                return data['version']
+        except Exception:
+            pass
+    
+    if Path('pyproject.toml').exists():
+        content = Path('pyproject.toml').read_text()
+        match = re.search(r'^version\s*=\s*["\'](\d+\.\d+\.\d+)["\']', content, re.MULTILINE)
+        if match:
+            return match.group(1)
+    
     return "1.0.0"
 
 
-def bump_version(version, bump_type='patch'):
+def bump_version(version: str, bump_type: str = 'patch') -> str:
     """Bump version based on type (major, minor, patch)."""
     parts = version.split('.')
     if len(parts) != 3:
         return "1.0.0"
     
-    major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+    try:
+        major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+    except ValueError:
+        return "1.0.0"
     
     if bump_type == 'major':
         major += 1
@@ -110,13 +482,20 @@ def bump_version(version, bump_type='patch'):
     return f"{major}.{minor}.{patch}"
 
 
-def update_version_file(new_version):
-    """Update VERSION file."""
-    Path('VERSION').write_text(new_version + '\n')
+# =============================================================================
+# Changelog Management
+# =============================================================================
 
-
-def update_changelog(version, files):
+def update_changelog(version: str, files: List[str], commit_msg: str):
     """Update CHANGELOG.md with new version and changes."""
+    changelog_path = Path('CHANGELOG.md')
+    existing_content = ""
+    if changelog_path.exists():
+        existing_content = changelog_path.read_text()
+    
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    
+    # Build change list
     changes = []
     for f in files:
         if f:
@@ -124,31 +503,80 @@ def update_changelog(version, files):
             if desc:
                 changes.append(desc)
     
-    changelog_path = Path('CHANGELOG.md')
-    existing_content = ""
-    if changelog_path.exists():
-        existing_content = changelog_path.read_text()
-    
-    date_str = datetime.now().strftime('%Y-%m-%d')
+    # Create entry
     new_entry = f"## [{version}] - {date_str}\n\n"
-    for change in changes:
-        new_entry += f"- {change}\n"
+    new_entry += f"### Summary\n\n{commit_msg}\n\n"
+    if changes:
+        new_entry += "### Changes\n\n"
+        for change in changes[:20]:  # Limit to 20 changes
+            new_entry += f"- {change}\n"
+        if len(changes) > 20:
+            new_entry += f"- ... and {len(changes) - 20} more changes\n"
     new_entry += "\n"
     
     changelog_path.write_text(new_entry + existing_content)
 
 
-def get_remote_branch():
+def get_remote_branch() -> str:
     """Get the current branch name."""
     result = run_git('rev-parse', '--abbrev-ref', 'HEAD')
     return result.stdout.strip() if result.returncode == 0 else 'main'
 
 
-@click.group()
+def run_tests(project_types: List[str]) -> bool:
+    """Run tests for detected project types."""
+    for ptype in project_types:
+        if ptype in PROJECT_TYPES and 'test_command' in PROJECT_TYPES[ptype]:
+            cmd = PROJECT_TYPES[ptype]['test_command']
+            click.echo(f"\n{click.style('Running tests:', fg='cyan', bold=True)} {cmd}")
+            result = run_command(cmd, capture=False)
+            if result.returncode == 0:
+                return True
+
+            if 'pytest' in cmd and result.returncode == 5:
+                click.echo(click.style("No tests collected (pytest exit code 5). Continuing.", fg='yellow'))
+                return True
+
+            return False
+    
+    click.echo(click.style("\nNo test command configured for this project type", fg='yellow'))
+    return True
+
+
+def publish_project(project_types: List[str], version: str) -> bool:
+    """Publish project for detected project types."""
+    for ptype in project_types:
+        if ptype in PROJECT_TYPES and 'publish_command' in PROJECT_TYPES[ptype]:
+            cmd = PROJECT_TYPES[ptype]['publish_command']
+            click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
+            result = run_command(cmd, capture=False)
+            return result.returncode == 0
+    
+    click.echo(click.style("\nNo publish command configured for this project type", fg='yellow'))
+    return True
+
+
+@click.group(invoke_without_command=True)
 @click.version_option()
-def main():
+@click.option('--bump', '-b', type=click.Choice(['patch', 'minor', 'major']), default='patch',
+              help='Version bump type (default: patch)')
+@click.option('--yes', '-y', is_flag=True, help='Skip all prompts (run automatically)')
+@click.option('--all', '-a', is_flag=True, help='Automate all stages including tests, commit, push, and publish')
+@click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
+@click.option('--dry-run', is_flag=True, help='Show what would be done without doing it')
+@click.pass_context
+def main(ctx, bump, yes, all, markdown, dry_run):
     """Goal - Automated git push with smart commit messages."""
-    pass
+    # Store output preference in context
+    ctx.ensure_object(dict)
+    ctx.obj['markdown'] = markdown
+    
+    if ctx.invoked_subcommand is None:
+        # Run interactive push by default
+        if all:
+            ctx.invoke(push, bump=bump, yes=True, markdown=markdown, dry_run=dry_run)
+        else:
+            ctx.invoke(push, bump=bump, yes=yes, markdown=markdown, dry_run=dry_run)
 
 
 @main.command()
@@ -156,10 +584,22 @@ def main():
               help='Version bump type (default: patch)')
 @click.option('--no-tag', is_flag=True, help='Skip creating git tag')
 @click.option('--no-changelog', is_flag=True, help='Skip updating changelog')
+@click.option('--no-version-sync', is_flag=True, help='Skip syncing version to project files')
 @click.option('--message', '-m', help='Custom commit message (overrides auto-generation)')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without doing it')
-def push(bump, no_tag, no_changelog, message, dry_run):
-    """Add, commit, tag, and push changes to remote."""
+@click.option('--yes', '-y', is_flag=True, help='Skip all prompts (run automatically)')
+@click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
+@click.pass_context
+def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown):
+    """Add, commit, tag, and push changes to remote.
+    
+    Automatically:
+    - Generates smart commit messages based on diff analysis
+    - Updates VERSION file and syncs to package.json, pyproject.toml, etc.
+    - Updates CHANGELOG.md with changes
+    - Creates git tag
+    - Pushes to remote
+    """
     
     # Check if we're in a git repository
     if not Path('.git').exists():
@@ -167,6 +607,11 @@ def push(bump, no_tag, no_changelog, message, dry_run):
         if result.returncode != 0:
             click.echo(click.style("Error: Not a git repository", fg='red'))
             sys.exit(1)
+    
+    # Detect project types
+    project_types = detect_project_types()
+    if project_types and not dry_run:
+        click.echo(f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}")
     
     # Stage all changes
     if not dry_run:
@@ -178,45 +623,174 @@ def push(bump, no_tag, no_changelog, message, dry_run):
         click.echo(click.style("No changes to commit.", fg='yellow'))
         return
     
+    # Get diff content for smart analysis
+    diff_content = get_diff_content()
+    
     # Generate or use provided commit message
+    commit_title = None
+    commit_body = None
     if message:
-        commit_msg = message
+        commit_title = message
     else:
-        commit_msg = generate_commit_message(files)
-        if not commit_msg:
+        generator = CommitMessageGenerator()
+        detailed = generator.generate_detailed_message(cached=True)
+        if detailed:
+            commit_title = detailed.get('title')
+            commit_body = detailed.get('body')
+        else:
+            commit_title = generate_smart_commit_message(files, diff_content)
+        if not commit_title:
             click.echo(click.style("No changes to commit.", fg='yellow'))
             return
+
+    commit_msg = commit_title
     
     # Get version info
     current_version = get_current_version()
     new_version = bump_version(current_version, bump)
     
+    # Get diff stats for display
+    stats = get_diff_stats()
+    total_adds = sum(s[0] for s in stats.values())
+    total_dels = sum(s[1] for s in stats.values())
+    
     if dry_run:
-        click.echo(click.style("=== DRY RUN ===", fg='cyan', bold=True))
-        click.echo(f"Files to commit: {len(files)}")
-        for f in files[:10]:
-            click.echo(f"  - {f}")
-        if len(files) > 10:
-            click.echo(f"  ... and {len(files) - 10} more")
-        click.echo(f"Commit message: {commit_msg}")
-        click.echo(f"Version: {current_version} -> {new_version}")
-        if not no_tag:
-            click.echo(f"Tag: v{new_version}")
+        if markdown or ctx.obj.get('markdown'):
+            # Generate markdown output for dry run
+            md_output = format_push_result(
+                project_types=project_types,
+                files=files,
+                stats=stats,
+                current_version=current_version,
+                new_version=new_version,
+                commit_msg=commit_msg,
+                commit_body=commit_body,
+                test_result="Dry run - tests not executed",
+                test_exit_code=0,
+                actions=[
+                    "Detected project types",
+                    "Staged changes",
+                    "Generated commit message",
+                    "Planned version bump",
+                    "Planned changelog update",
+                    "Planned tag creation",
+                    "Planned push to remote"
+                ]
+            )
+            click.echo(md_output)
+        else:
+            click.echo(click.style("=== DRY RUN ===", fg='cyan', bold=True))
+            if project_types:
+                click.echo(f"Project types: {', '.join(project_types)}")
+            click.echo(f"Files to commit: {len(files)} (+{total_adds}/-{total_dels} lines)")
+            for f in files[:10]:
+                stat = stats.get(f, (0, 0))
+                click.echo(f"  - {f} (+{stat[0]}/-{stat[1]})")
+            if len(files) > 10:
+                click.echo(f"  ... and {len(files) - 10} more")
+            click.echo(f"Commit message: {click.style(commit_msg, fg='green')}")
+            click.echo(f"Version: {current_version} -> {new_version}")
+            if not no_version_sync:
+                click.echo("Version sync: VERSION, package.json, pyproject.toml, etc.")
+            if not no_tag:
+                click.echo(f"Tag: v{new_version}")
         return
+    
+    # Interactive workflow
+    if not yes:
+        click.echo(click.style("\n=== GOAL Workflow ===", fg='cyan', bold=True))
+        click.echo(f"Will commit {len(files)} files (+{total_adds}/-{total_dels} lines)")
+        click.echo(f"Version bump: {current_version} -> {new_version}")
+        click.echo(f"Commit message: {click.style(commit_msg, fg='green')}")
+        if commit_body and not message:
+            click.echo(click.style("\nCommit body (preview):", fg='cyan'))
+            click.echo(commit_body)
+    
+    # Test stage
+    test_result = None
+    test_exit_code = 0
+    
+    if not yes:
+        if confirm("Run tests?"):
+            click.echo(click.style("\nRunning tests...", fg='cyan'))
+            test_success = run_tests(project_types)
+            if not test_success:
+                test_exit_code = 1
+                if not confirm("Tests failed. Continue anyway?", default=False):
+                    # Output markdown if requested
+                    if markdown or ctx.obj.get('markdown'):
+                        md_output = format_push_result(
+                            project_types=project_types,
+                            files=files,
+                            stats=stats,
+                            current_version=current_version,
+                            new_version=new_version,
+                            commit_msg=commit_msg,
+                            commit_body=commit_body,
+                            test_result="Tests failed - aborted by user",
+                            test_exit_code=1,
+                            actions=["Detected project types", "Staged changes", "Attempted to run tests"],
+                            error="User aborted due to test failures"
+                        )
+                        click.echo(md_output)
+                    click.echo(click.style("Aborted.", fg='red'))
+                    sys.exit(1)
+        else:
+            click.echo(click.style("Skipping tests.", fg='yellow'))
+    else:
+        # When --yes or --all is used, run tests automatically
+        click.echo(click.style("\nRunning tests...", fg='cyan'))
+        test_success = run_tests(project_types)
+        if not test_success:
+            test_exit_code = 1
+            test_result = "Tests failed - aborting"
+            if markdown or ctx.obj.get('markdown'):
+                md_output = format_push_result(
+                    project_types=project_types,
+                    files=files,
+                    stats=stats,
+                    current_version=current_version,
+                    new_version=new_version,
+                    commit_msg=commit_msg,
+                    commit_body=commit_body,
+                    test_result=test_result,
+                    test_exit_code=test_exit_code,
+                    actions=["Detected project types", "Staged changes", "Ran tests automatically"],
+                    error="Tests failed - automatic abort"
+                )
+                click.echo(md_output)
+            click.echo(click.style("Tests failed!", fg='red'))
+            sys.exit(1)
+    
+    # Commit stage
+    if not yes:
+        if not confirm("Commit changes?"):
+            click.echo(click.style("Aborted.", fg='red'))
+            sys.exit(1)
+    
+    # Sync versions to all project files
+    if not no_version_sync:
+        updated_files = sync_all_versions(new_version)
+        for f in updated_files:
+            run_git('add', f)
+            click.echo(click.style(f"✓ Updated {f} to {new_version}", fg='green'))
+    else:
+        # Just update VERSION file
+        Path('VERSION').write_text(new_version + '\n')
+        run_git('add', 'VERSION')
+        click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg='green'))
     
     # Update changelog
     if not no_changelog:
-        update_changelog(new_version, files)
+        update_changelog(new_version, files, commit_msg)
         run_git('add', 'CHANGELOG.md')
         click.echo(click.style(f"✓ Updated CHANGELOG.md", fg='green'))
     
-    # Update version file
-    update_version_file(new_version)
-    run_git('add', 'VERSION')
-    click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg='green'))
-    
     # Commit
-    result = run_git('commit', '-m', commit_msg)
+    if commit_body and not message:
+        result = run_git('commit', '-m', commit_title, '-m', commit_body)
+    else:
+        result = run_git('commit', '-m', commit_msg)
     if result.returncode != 0:
         click.echo(click.style(f"Error committing: {result.stderr}", fg='red'))
         sys.exit(1)
@@ -231,46 +805,158 @@ def push(bump, no_tag, no_changelog, message, dry_run):
         else:
             click.echo(click.style(f"✓ Created tag: {tag_name}", fg='green'))
     
-    # Push
-    branch = get_remote_branch()
-    if no_tag:
-        result = run_git('push', 'origin', branch, capture=False)
+    # Push stage
+    if not yes:
+        if confirm("Push to remote?"):
+            branch = get_remote_branch()
+            if no_tag:
+                result = run_git('push', 'origin', branch, capture=False)
+            else:
+                result = run_git('push', 'origin', branch, '--tags', capture=False)
+            
+            if result.returncode != 0:
+                click.echo(click.style("Error pushing to remote", fg='red'))
+                sys.exit(1)
+            
+            click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
+        else:
+            click.echo(click.style("Skipping push.", fg='yellow'))
     else:
-        result = run_git('push', 'origin', branch, '--tags', capture=False)
+        # Auto-push
+        branch = get_remote_branch()
+        if no_tag:
+            result = run_git('push', 'origin', branch, capture=False)
+        else:
+            result = run_git('push', 'origin', branch, '--tags', capture=False)
+        
+        if result.returncode != 0:
+            click.echo(click.style("Error pushing to remote", fg='red'))
+            sys.exit(1)
+        
+        click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
     
-    if result.returncode != 0:
-        click.echo(click.style("Error pushing to remote", fg='red'))
-        sys.exit(1)
+    # Publish stage
+    if not yes:
+        if confirm(f"Publish version {new_version}?"):
+            if not publish_project(project_types, new_version):
+                click.echo(click.style("Publish failed. Check the output above.", fg='red'))
+                sys.exit(1)
+            click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
+        else:
+            click.echo(click.style("Skipping publish.", fg='yellow'))
+    else:
+        # Auto-publish when --yes or --all is used
+        click.echo(click.style(f"\nPublishing version {new_version}...", fg='cyan'))
+        if not publish_project(project_types, new_version):
+            click.echo(click.style("Publish failed. Check the output above.", fg='red'))
+            sys.exit(1)
+        click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
     
-    click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
+    # Output markdown if requested
+    if markdown or ctx.obj.get('markdown'):
+        actions_performed = [
+            "Detected project types",
+            "Staged changes",
+            "Ran tests" if test_exit_code == 0 else "Tests failed but continued",
+            "Committed changes",
+            f"Updated version to {new_version}",
+            "Updated changelog",
+            f"Created tag v{new_version}" if not no_tag else "Skipped tag creation",
+            "Pushed to remote" if not no_tag else "Pushed to remote without tags",
+            f"Published version {new_version}"
+        ]
+        
+        md_output = format_push_result(
+            project_types=project_types,
+            files=files,
+            stats=stats,
+            current_version=current_version,
+            new_version=new_version,
+            commit_msg=commit_msg,
+            commit_body=commit_body,
+            test_result="Tests passed" if test_exit_code == 0 else "Tests failed but continued",
+            test_exit_code=test_exit_code,
+            actions=actions_performed
+        )
+        click.echo("\n" + md_output)
 
 
 @main.command()
-def status():
+@click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
+@click.pass_context
+def status(ctx, markdown):
     """Show current git status and version info."""
     # Version
     version = get_current_version()
-    click.echo(f"Version: {click.style(version, fg='cyan')}")
     
     # Branch
     branch = get_remote_branch()
-    click.echo(f"Branch: {click.style(branch, fg='cyan')}")
     
     # Staged files
     staged = get_staged_files()
-    if staged and staged != ['']:
-        click.echo(f"\nStaged files ({len(staged)}):")
-        for f in staged:
-            click.echo(f"  {click.style('+', fg='green')} {f}")
     
     # Unstaged files
     unstaged = get_unstaged_files()
-    if unstaged:
-        click.echo(f"\nUnstaged/untracked ({len(unstaged)}):")
-        for f in unstaged[:10]:
-            click.echo(f"  {click.style('?', fg='yellow')} {f}")
-        if len(unstaged) > 10:
-            click.echo(f"  ... and {len(unstaged) - 10} more")
+    
+    # Check if markdown is requested
+    if markdown or ctx.obj.get('markdown'):
+        md_output = format_status_output(
+            version=version,
+            branch=branch,
+            staged_files=staged if staged and staged != [''] else [],
+            unstaged_files=unstaged
+        )
+        click.echo(md_output)
+    else:
+        # Regular output
+        click.echo(f"Version: {click.style(version, fg='cyan')}")
+        click.echo(f"Branch: {click.style(branch, fg='cyan')}")
+        
+        if staged and staged != ['']:
+            click.echo(f"\nStaged files ({len(staged)}):")
+            for f in staged:
+                click.echo(f"  {click.style('+', fg='green')} {f}")
+        
+        if unstaged:
+            click.echo(f"\nUnstaged/untracked ({len(unstaged)}):")
+            for f in unstaged[:10]:
+                click.echo(f"  {click.style('?', fg='yellow')} {f}")
+            if len(unstaged) > 10:
+                click.echo(f"  ... and {len(unstaged) - 10} more")
+
+
+@main.command()
+@click.option('--detailed', '-d', is_flag=True, help='Generate detailed commit message with body')
+@click.option('--unstaged', '-u', is_flag=True, help='Analyze unstaged changes instead of staged')
+@click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
+@click.pass_context
+def commit(ctx, detailed, unstaged, markdown):
+    """Generate a smart commit message for current changes."""
+    generator = CommitMessageGenerator()
+    
+    if detailed:
+        result = generator.generate_detailed_message(cached=not unstaged)
+        if result:
+            if markdown or ctx.obj.get('markdown'):
+                output = f"```text\n{result['title']}\n\n{result['body']}\n```"
+                click.echo(output)
+            else:
+                click.echo(result['title'])
+                click.echo()
+                click.echo(result['body'])
+        else:
+            click.echo(click.style("No changes to analyze.", fg='yellow'))
+            sys.exit(1)
+    else:
+        msg = generator.generate_commit_message(cached=not unstaged)
+        if msg:
+            if markdown or ctx.obj.get('markdown'):
+                click.echo(f"```text\n{msg}\n```")
+            else:
+                click.echo(msg)
+        else:
+            click.echo(click.style("No changes to analyze.", fg='yellow'))
+            sys.exit(1)
 
 
 @main.command()
@@ -290,9 +976,29 @@ def init():
     version_file = Path('VERSION')
     changelog_file = Path('CHANGELOG.md')
     
+    # Detect existing version from project files
+    detected_version = None
+    if Path('package.json').exists():
+        try:
+            data = json.loads(Path('package.json').read_text())
+            detected_version = data.get('version')
+        except Exception:
+            pass
+    
+    if not detected_version and Path('pyproject.toml').exists():
+        content = Path('pyproject.toml').read_text()
+        match = re.search(r'^version\s*=\s*["\'](\d+\.\d+\.\d+)["\']', content, re.MULTILINE)
+        if match:
+            detected_version = match.group(1)
+    
+    initial_version = detected_version or "1.0.0"
+    
     if not version_file.exists():
-        version_file.write_text("1.0.0\n")
-        click.echo(click.style("✓ Created VERSION file (1.0.0)", fg='green'))
+        version_file.write_text(initial_version + '\n')
+        if detected_version:
+            click.echo(click.style(f"✓ Created VERSION file ({initial_version}) - detected from project", fg='green'))
+        else:
+            click.echo(click.style(f"✓ Created VERSION file ({initial_version})", fg='green'))
     else:
         click.echo(f"VERSION exists: {version_file.read_text().strip()}")
     
@@ -308,7 +1014,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     else:
         click.echo("CHANGELOG.md exists")
     
+    # Show detected project types
+    project_types = detect_project_types()
+    if project_types:
+        click.echo(f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}")
+    
     click.echo(click.style("\n✓ Goal initialized!", fg='green', bold=True))
+
+
+@main.command()
+def info():
+    """Show detailed project information and version status."""
+    click.echo(click.style("=== Project Information ===", fg='cyan', bold=True))
+    
+    # Detect project types
+    project_types = detect_project_types()
+    if project_types:
+        click.echo(f"Project types: {', '.join(project_types)}")
+    else:
+        click.echo("Project types: Unknown")
+    
+    # Current version
+    version = get_current_version()
+    click.echo(f"Current version: {click.style(version, fg='green')}")
+    
+    # Version files status
+    click.echo(f"\n{click.style('Version files:', bold=True)}")
+    
+    version_files = [
+        ('VERSION', Path('VERSION')),
+        ('package.json', Path('package.json')),
+        ('pyproject.toml', Path('pyproject.toml')),
+        ('Cargo.toml', Path('Cargo.toml')),
+        ('composer.json', Path('composer.json')),
+        ('pom.xml', Path('pom.xml')),
+    ]
+    
+    for name, path in version_files:
+        if path.exists():
+            if name == 'VERSION':
+                ver = path.read_text().strip()
+            elif name in ('package.json', 'composer.json'):
+                try:
+                    data = json.loads(path.read_text())
+                    ver = data.get('version', 'not set')
+                except Exception:
+                    ver = 'error reading'
+            elif name == 'pyproject.toml':
+                content = path.read_text()
+                match = re.search(r'^version\s*=\s*["\'](\d+\.\d+\.\d+)["\']', content, re.MULTILINE)
+                ver = match.group(1) if match else 'not set'
+            elif name == 'Cargo.toml':
+                content = path.read_text()
+                match = re.search(r'^version\s*=\s*"(\d+\.\d+\.\d+)"', content, re.MULTILINE)
+                ver = match.group(1) if match else 'not set'
+            elif name == 'pom.xml':
+                content = path.read_text()
+                match = re.search(r'<version>(\d+\.\d+\.\d+)</version>', content)
+                ver = match.group(1) if match else 'not set'
+            else:
+                ver = 'unknown'
+            
+            status = click.style('✓', fg='green') if ver == version else click.style('⚠', fg='yellow')
+            click.echo(f"  {status} {name}: {ver}")
+    
+    # Git info
+    click.echo(f"\n{click.style('Git status:', bold=True)}")
+    branch = get_remote_branch()
+    click.echo(f"  Branch: {branch}")
+    
+    # Recent tags
+    result = run_git('tag', '--sort=-version:refname')
+    tags = result.stdout.strip().split('\n')[:5]
+    if tags and tags[0]:
+        click.echo(f"  Recent tags: {', '.join(tags)}")
+    
+    # Pending changes
+    unstaged = get_unstaged_files()
+    staged = get_staged_files()
+    if unstaged or (staged and staged != ['']):
+        total = len(unstaged) + (len(staged) if staged != [''] else 0)
+        click.echo(f"  Pending changes: {total} files")
 
 
 if __name__ == '__main__':
