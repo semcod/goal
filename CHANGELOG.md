@@ -1,3 +1,14 @@
+## [2.1.20] - 2026-01-29
+
+### Summary
+
+feat(other): add Make support
+
+### Other
+
+- build: update Makefile
+
+
 ## [2.1.19] - 2026-01-29
 
 ### Summary

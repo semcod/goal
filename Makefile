@@ -43,7 +43,8 @@ build: clean
 	python -m pip install --upgrade build twine
 	python -m build --sdist --wheel
 
-publish: build
+
+publish: bump-version build
 	python -m twine upload dist/*
 
 clean:
