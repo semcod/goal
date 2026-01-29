@@ -109,7 +109,8 @@ class SummaryQualityFilter:
     
     def has_banned_words(self, title: str) -> List[str]:
         """Check if title contains banned words. Returns list of found banned words."""
-        words = set(re.findall(r"[a-zA-Z]+", title.lower()))
+        desc = title.split(':', 1)[1] if ':' in title else title
+        words = set(re.findall(r"[a-zA-Z]+", desc.lower()))
         return [w for w in self.BANNED_TITLE_WORDS if w in words]
     
     def classify_intent(self, files: List[str], entities: List[Dict]) -> str:
@@ -376,6 +377,16 @@ class QualityValidator:
         if banned:
             errors.append(f"Banned words in title: {banned}")
             fixes.append(('remove_banned_words', banned))
+
+        # 1a. Check generic term count in the title description
+        generic_terms = self.config.get('quality', {}).get('commit_summary', {}).get('generic_terms')
+        if isinstance(generic_terms, list) and generic_terms:
+            desc = title.split(':', 1)[1] if ':' in title else title
+            desc_words = set(re.findall(r"[a-zA-Z]+", desc.lower()))
+            generic_count = sum(1 for t in generic_terms if t.lower() in desc_words)
+            if generic_count > self.max_generic_terms:
+                errors.append(f"Title contains {generic_count} generic terms (max {self.max_generic_terms})")
+                fixes.append(('reduce_generic_terms', generic_count))
         
         # 1b. Wrong intent vs refactor signals
         try:
