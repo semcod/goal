@@ -1,3 +1,14 @@
+## [2.1.6] - 2026-01-29
+
+### Summary
+
+feat(core): add logging, api and more
+
+### Core
+
+- update goal/enhanced_summary.py
+
+
 ## [2.1.5] - 2026-01-29
 
 ### Summary

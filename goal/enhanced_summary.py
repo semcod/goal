@@ -574,21 +574,26 @@ class EnhancedSummaryGenerator:
         return ', '.join(chains)
     
     def _render_relations_ascii(self, relations: List[Dict], files: List[str]) -> str:
-        """Render file relations as ASCII art."""
+        """Render file relations as ASCII art (deduplicated)."""
         if not relations:
             return ''
         
-        lines = ["CHANGE RELATIONS:"]
+        lines = []
         
-        # Group by source
-        by_source = defaultdict(list)
+        # Group by source with deduplicated targets
+        by_source = defaultdict(set)  # Use set to auto-dedupe
         for r in relations:
-            by_source[r['from']].append(r['to'])
+            by_source[r['from']].add(r['to'])
         
-        for source, targets in by_source.items():
-            lines.append(f"{source}.py ──┬──> {targets[0]}.py")
-            for t in targets[1:]:
-                lines.append(f"          └──> {t}.py")
+        for source, targets in sorted(by_source.items()):
+            targets_list = sorted(targets)  # Sort for consistent output
+            if len(targets_list) == 1:
+                lines.append(f"{source}.py → {targets_list[0]}.py")
+            else:
+                lines.append(f"{source}.py ──┬──> {targets_list[0]}.py")
+                for t in targets_list[1:-1]:
+                    lines.append(f"{'':>{len(source)+4}}├──> {t}.py")
+                lines.append(f"{'':>{len(source)+4}}└──> {targets_list[-1]}.py")
         
         return '\n'.join(lines)
     
