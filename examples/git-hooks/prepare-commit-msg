@@ -1,0 +1,29 @@
+#!/bin/bash
+# Git prepare-commit-msg hook using Goal's smart commit message generator
+
+# Get the commit message file path
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"
+SHA1="$3"
+
+# Skip if we're merging or using a template message
+if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "template" ]; then
+    exit 0
+fi
+
+# Check if the commit message is empty
+if [ -s "$COMMIT_MSG_FILE" ]; then
+    # Message already exists, don't override
+    exit 0
+fi
+
+# Generate smart commit message using Goal
+MESSAGE=$(goal commit 2>/dev/null)
+
+# If Goal succeeded and generated a message, use it
+if [ $? -eq 0 ] && [ -n "$MESSAGE" ]; then
+    echo "$MESSAGE" > "$COMMIT_MSG_FILE"
+    echo "Generated commit message: $MESSAGE"
+fi
+
+exit 0

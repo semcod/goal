@@ -1,0 +1,49 @@
+[package]
+name = "example-rust-crate"
+version = "0.1.0"
+edition = "2021"
+authors = ["Example Author <author@example.com>"]
+description = "Example Rust crate demonstrating Goal integration"
+license = "MIT"
+repository = "https://github.com/example/rust-crate"
+homepage = "https://github.com/example/rust-crate"
+documentation = "https://docs.rs/example-rust-crate"
+keywords = ["example", "goal", "automation"]
+categories = ["development-tools"]
+readme = "README.md"
+rust-version = "1.70"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.4"
+
+[[bin]]
+name = "example-cli"
+path = "src/main.rs"
+
+[lib]
+name = "example_rust_crate"
+path = "src/lib.rs"
+
+[[bench]]
+name = "benchmark"
+harness = false
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[workspace.metadata.release]
+allow-branch = ["main"]
+consolidate-commits = true
+consolidate-pushes = true
+publish = false
+push = true
+tag = true
+verify = true
