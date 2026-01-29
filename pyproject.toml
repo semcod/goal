@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.0.3"
+version = "1.0.2"
 description = "Automated git push with smart commit messages, changelog updates, and version tagging"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -49,3 +49,8 @@ Issues = "https://github.com/wronai/goal/issues"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["goal*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["venv", ".venv", "build", "dist", "*.egg-info"]
+python_files = ["test_*.py"]
