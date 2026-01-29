@@ -14,6 +14,13 @@ try:
 except ImportError:
     HAS_SMART_COMMIT = False
 
+# Import enhanced summary for business-value focused messages
+try:
+    from .enhanced_summary import EnhancedSummaryGenerator
+    HAS_ENHANCED_SUMMARY = True
+except ImportError:
+    HAS_ENHANCED_SUMMARY = False
+
 
 class CommitMessageGenerator:
     """Generate conventional commit messages using diff analysis and lightweight classification."""
@@ -75,10 +82,15 @@ class CommitMessageGenerator:
         self.cache = {}
         self.config = config
         self._smart_generator = None
+        self._enhanced_generator = None
         
         # Initialize smart generator if config provided
         if config and HAS_SMART_COMMIT:
             self._smart_generator = SmartCommitGenerator(config)
+        
+        # Initialize enhanced summary generator
+        if HAS_ENHANCED_SUMMARY:
+            self._enhanced_generator = EnhancedSummaryGenerator(config)
     
     def get_diff_stats(self, cached: bool = True) -> Dict[str, int]:
         """Get diff statistics using git command."""
@@ -485,9 +497,27 @@ class CommitMessageGenerator:
                 notes.append('add markdown formatting')
 
         if path.endswith(('.md', '.rst')):
-            headings = [re.sub(r'^#+\s*', '', l) for l in added_lines if l.startswith('#')]
+            # Filter out changelog noise from headings
+            noise_patterns = [
+                r'^\[.*\d+\.\d+.*\]',  # [1.2.0]
+                r'^\d{4}-\d{2}-\d{2}',  # Dates
+                r'^(Added|Changed|Deprecated|Removed|Fixed|Security)$',
+                r'^(Changelog|CHANGELOG|Unreleased)',
+                r'^v?\d+\.\d+',  # Version numbers
+            ]
+            headings = []
+            for l in added_lines:
+                if l.startswith('#'):
+                    h = re.sub(r'^#+\s*', '', l).strip()
+                    if h and len(h) > 2:
+                        if not any(re.match(p, h, re.IGNORECASE) for p in noise_patterns):
+                            headings.append(h)
             if headings:
                 notes.append('update sections: ' + ', '.join(headings[:4]))
+            elif 'changelog' in path.lower():
+                notes.append('update changelog entries')
+            elif 'readme' in path.lower():
+                notes.append('update documentation')
 
         if path.endswith('.sh'):
             if any('chmod' in l or 'hook' in l for l in added_lines):
@@ -603,8 +633,53 @@ class CommitMessageGenerator:
         except Exception:
             return None
     
+    def generate_enhanced_summary(self, cached: bool = True, 
+                                   paths: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
+        """Generate enhanced business-value focused summary.
+        
+        Returns:
+            Dict with 'title', 'body', 'capabilities', 'roles', 'relations', 
+            'metrics', and 'analysis' keys, or None.
+        """
+        if not self._enhanced_generator:
+            return None
+        
+        files = self.get_changed_files(cached, paths=paths)
+        if not files:
+            return None
+        
+        try:
+            diff_content = self.get_diff_content(cached, paths=paths)
+            result = self._enhanced_generator.generate_enhanced_summary(files, diff_content)
+            
+            # Generate commit type/scope prefix using existing methods
+            stats = self.get_diff_stats(cached)
+            commit_type = self.classify_change_type(files, diff_content, stats)
+            scope = self.detect_scope(files)
+            
+            # Enhance title with conventional commit format
+            if result.get('title'):
+                result['title'] = f"{commit_type}({scope}): {result['title']}"
+            
+            return result
+        except Exception:
+            return None
+    
     def generate_detailed_message(self, cached: bool = True, paths: Optional[List[str]] = None) -> Dict[str, str]:
         """Generate a detailed commit message with body."""
+        # Try enhanced summary first if available
+        if self._enhanced_generator and self.config:
+            enhanced = self.generate_enhanced_summary(cached, paths)
+            if enhanced:
+                return {
+                    'title': enhanced['title'],
+                    'body': enhanced['body'],
+                    'enhanced': True,
+                    'metrics': enhanced.get('metrics'),
+                    'capabilities': enhanced.get('capabilities'),
+                    'relations': enhanced.get('relations')
+                }
+        
         main_msg = self.generate_commit_message(cached, paths=paths)
         if not main_msg:
             return None

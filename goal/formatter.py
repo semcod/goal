@@ -221,6 +221,102 @@ def format_push_result(
     return formatter.render()
 
 
+def format_enhanced_summary(
+    commit_title: str,
+    commit_body: str,
+    capabilities: List[Dict[str, str]] = None,
+    roles: List[Dict[str, str]] = None,
+    relations: Dict[str, Any] = None,
+    metrics: Dict[str, Any] = None,
+    files: List[str] = None,
+    stats: Dict[str, tuple] = None,
+    current_version: str = "",
+    new_version: str = ""
+) -> str:
+    """Format enhanced business-value summary as markdown."""
+    
+    formatter = MarkdownFormatter()
+    
+    # Metadata
+    formatter.add_metadata(
+        command="goal push",
+        enhanced=True,
+        version_bump=f"{current_version} -> {new_version}" if current_version else None,
+        value_score=metrics.get('value_score') if metrics else None,
+        timestamp=datetime.now().isoformat()
+    )
+    
+    formatter.add_header("Goal Push Result", 1)
+    
+    # Calculate totals
+    total_adds = sum(s[0] for s in (stats or {}).values())
+    total_dels = sum(s[1] for s in (stats or {}).values())
+    
+    # Main summary with business value
+    summary_parts = [
+        f"**Files:** {len(files or [])} (+{total_adds}/-{total_dels} lines)",
+        f"**Version:** {current_version} → {new_version}" if current_version else None,
+        f"**Commit:** `{commit_title}`"
+    ]
+    formatter.add_section("Summary", '\n'.join(p for p in summary_parts if p))
+    
+    # NEW CAPABILITIES section
+    if capabilities:
+        cap_lines = []
+        for cap in capabilities[:5]:
+            cap_lines.append(f"✅ **{cap['capability']}** - {cap['impact']}")
+        formatter.add_section("New Capabilities", '\n'.join(cap_lines))
+    
+    # FUNCTIONAL COMPONENTS section (roles)
+    if roles:
+        role_lines = []
+        for role in roles[:5]:
+            role_lines.append(f"- **{role['role']}** (`{role['name']}`)")
+        formatter.add_section("Functional Components", '\n'.join(role_lines))
+    
+    # IMPACT METRICS section
+    if metrics:
+        metric_lines = []
+        
+        # Use interpretable complexity metrics
+        old_cc = metrics.get('old_complexity', 1)
+        new_cc = metrics.get('new_complexity', old_cc)
+        if old_cc != new_cc and old_cc > 0:
+            delta_pct = ((new_cc - old_cc) / old_cc) * 100
+            if delta_pct < -10:
+                metric_lines.append(f"📉 -{abs(delta_pct):.0f}% complexity (refactor win)")
+            elif delta_pct > 50:
+                metric_lines.append(f"⚠️ +{delta_pct:.0f}% complexity (monitor)")
+            elif delta_pct > 0:
+                metric_lines.append(f"📊 +{delta_pct:.0f}% complexity (new features)")
+            else:
+                metric_lines.append("➡️ Stable complexity")
+        
+        if metrics.get('test_impact', 0) > 0:
+            metric_lines.append(f"🧪 Test coverage: +{metrics['test_impact']}%")
+        
+        # Show relation count instead of density
+        rel_count = len(relations.get('relations', [])) if relations else 0
+        if rel_count > 0:
+            metric_lines.append(f"🔗 Relations: {rel_count} dependencies detected")
+        
+        metric_lines.append(f"⭐ Value score: {metrics['value_score']}/100")
+        formatter.add_section("Impact Metrics", '\n'.join(metric_lines))
+    
+    # RELATIONS section
+    if relations and relations.get('chain'):
+        rel_content = f"**Chain:** `{relations['chain']}`"
+        if relations.get('ascii'):
+            rel_content += f"\n```\n{relations['ascii']}\n```"
+        formatter.add_section("Relations", rel_content)
+    
+    # Commit body (if different from capabilities display)
+    if commit_body and not capabilities:
+        formatter.add_section("Details", commit_body, code_block=True)
+    
+    return formatter.render()
+
+
 def format_status_output(
     version: str,
     branch: str,

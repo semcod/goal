@@ -127,6 +127,54 @@ DEFAULT_CONFIG = {
                 'keywords_diff',
                 'code_entities',
             ],
+            'value_patterns': {
+                'configuration': {
+                    'signatures': ['config', 'yaml', 'toml', 'settings', 'options'],
+                    'impact': 'better configuration management',
+                    'changelog_section': 'core',
+                },
+                'cli': {
+                    'signatures': ['click.', '@click', 'command', 'option', 'argparse'],
+                    'impact': 'improved CLI experience',
+                    'changelog_section': 'core',
+                },
+                'api': {
+                    'signatures': ['endpoint', 'route', 'request', 'response', 'handler'],
+                    'impact': 'enhanced API functionality',
+                    'changelog_section': 'core',
+                },
+                'testing': {
+                    'signatures': ['test_', 'assert', 'mock', 'fixture', 'pytest'],
+                    'impact': 'improved test coverage',
+                    'changelog_section': 'test',
+                },
+                'documentation': {
+                    'paths': ['docs/*', '*.md', 'README*'],
+                    'impact': 'comprehensive documentation',
+                    'changelog_section': 'docs',
+                },
+                'performance': {
+                    'signatures': ['cache', 'async', 'parallel', 'optimize', 'speed'],
+                    'impact': 'performance improvements',
+                    'changelog_section': 'core',
+                },
+                'security': {
+                    'signatures': ['auth', 'token', 'permission', 'encrypt', 'secure'],
+                    'impact': 'security enhancements',
+                    'changelog_section': 'core',
+                },
+                'formatting': {
+                    'signatures': ['format', 'render', 'template', 'markdown', 'output'],
+                    'impact': 'improved output formatting',
+                    'changelog_section': 'core',
+                },
+            },
+            'relations': {
+                'config → cli': 'configuration-driven CLI',
+                'config → core': 'configurable core logic',
+                'test → core': 'better test coverage',
+                'docs → core': 'improved documentation',
+            },
         },
         'changelog': {
             'enabled': True,
@@ -200,6 +248,59 @@ DEFAULT_CONFIG = {
         'performance': {
             'max_files': 50,
             'timeout_test': 300,
+        },
+    },
+    'quality': {
+        'commit_summary': {
+            'min_value_words': 3,
+            'max_generic_terms': 0,
+            'required_metrics': 2,
+            'relation_threshold': 0.7,
+            'generic_terms': ['update', 'improve', 'enhance', 'fix', 'change', 
+                            'modify', 'cleaner', 'better', 'refactor', 'misc'],
+        },
+        'enhanced_summary': {
+            'enabled': True,
+            'min_capabilities': 1,
+            'min_value_score': 50,
+            'include_metrics': True,
+            'include_relations': True,
+            'include_roles': True,
+        },
+        'role_patterns': {
+            r'_analyze_(python|js|generic)_diff': 'language-specific code analyzer',
+            r'CodeChangeAnalyzer': 'AST-based change detector',
+            r'analyze_file_diff': 'diff analysis engine',
+            r'generate_functional_summary': 'business value summarizer',
+            r'generate.*message': 'commit message generator',
+            r'EnhancedSummaryGenerator': 'enterprise changelog generator',
+            r'GoalConfig': 'configuration manager',
+            r'@click\\.command': 'CLI command',
+            r'@click\\.option': 'CLI option',
+            r'format_.*result': 'output formatter',
+            r'_calculate_complexity': 'complexity analyzer',
+        },
+        'value_patterns': {
+            'ast_analysis': {
+                'signatures': ['ast.parse', 'ast.walk', 'libcst', 'tree-sitter', 'AST'],
+                'capability': 'deep code analysis engine',
+                'impact': 'intelligent change detection',
+            },
+            'dependency_graph': {
+                'signatures': ['networkx', 'relations', 'dependencies', 'graph'],
+                'capability': 'code relationship mapping',
+                'impact': 'architecture understanding',
+            },
+            'quality_metrics': {
+                'signatures': ['radon', 'cyclomatic', 'complexity', 'coverage'],
+                'capability': 'code quality metrics',
+                'impact': 'maintainability tracking',
+            },
+            'multi_language': {
+                'signatures': ['_analyze_python', '_analyze_js', 'language', 'parser'],
+                'capability': 'multi-language support',
+                'impact': 'universal code analysis',
+            },
         },
     },
     'code_parsers': {

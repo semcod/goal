@@ -784,16 +784,23 @@ def get_registry_help(project_type: str) -> str:
 
 def publish_project(project_types: List[str], version: str) -> bool:
     """Publish project for detected project types."""
+    import sys
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'publish_command' in PROJECT_TYPES[ptype]:
             cmd = PROJECT_TYPES[ptype]['publish_command']
             click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
+            sys.stdout.flush()
             result = run_command(cmd, capture=False)
+            sys.stdout.flush()
             
             if result.returncode != 0:
                 # Show registry configuration help
-                click.echo(click.style("\n⚠️  Publish failed - Authentication required", fg='yellow', bold=True))
+                click.echo("")  # Ensure newline after npm output
+                click.echo(click.style("=" * 77, fg='yellow'))
+                click.echo(click.style("⚠️  PUBLISH FAILED - Authentication Required", fg='yellow', bold=True))
+                click.echo(click.style("=" * 77, fg='yellow'))
                 click.echo(get_registry_help(ptype))
+                click.echo(click.style("=" * 77, fg='yellow'))
                 return False
             
             return True

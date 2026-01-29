@@ -1,0 +1,183 @@
+# goal.yaml - Enhanced Summary Configuration Example
+# 
+# This configuration enables enterprise-grade commit summaries with
+# business value focus, capability detection, and quality metrics.
+
+version: "1.0"
+
+project:
+  name: "my-project"
+  type: ["python"]
+  description: "My awesome project"
+
+# Quality thresholds for enhanced summaries
+quality:
+  commit_summary:
+    min_value_words: 3              # Title must have 3+ meaningful words
+    max_generic_terms: 0            # No generic words allowed
+    required_metrics: 2             # Must include 2+ metrics
+    relation_threshold: 0.7         # Minimum relation score
+    
+    # Words that will be flagged as too generic
+    generic_terms:
+      - update
+      - improve
+      - enhance
+      - fix
+      - change
+      - modify
+      - cleaner
+      - better
+      - refactor
+      - misc
+      - various
+      - some
+
+  enhanced_summary:
+    enabled: true                   # Enable enhanced summaries
+    min_capabilities: 1             # Must detect 1+ capability
+    min_value_score: 50             # Minimum value score (0-100)
+    include_metrics: true           # Include quality metrics
+    include_relations: true         # Include file relations
+    include_roles: true             # Map entities to functional roles
+
+  # Custom role patterns (regex -> role name)
+  role_patterns:
+    # Analysis patterns
+    '_analyze_(python|js|generic)_diff': 'language-specific code analyzer'
+    'CodeChangeAnalyzer': 'AST-based change detector'
+    'analyze_file_diff': 'diff analysis engine'
+    'aggregate_changes': 'change aggregator'
+    'detect_relations': 'dependency graph builder'
+    
+    # Summary patterns
+    'generate_functional_summary': 'business value summarizer'
+    'generate.*message': 'commit message generator'
+    'generate.*summary': 'summary generator'
+    'EnhancedSummaryGenerator': 'enterprise changelog generator'
+    
+    # Config patterns
+    'GoalConfig': 'configuration manager'
+    'load_config': 'config loader'
+    'validate': 'validation engine'
+    
+    # CLI patterns
+    '@click\.command': 'CLI command'
+    '@click\.option': 'CLI option'
+    
+    # Quality patterns
+    '_calculate_complexity': 'complexity analyzer'
+    'coverage': 'test coverage analyzer'
+
+  # Value patterns (signatures -> capability + impact)
+  value_patterns:
+    ast_analysis:
+      signatures:
+        - ast.parse
+        - ast.walk
+        - libcst
+        - tree-sitter
+        - AST
+      capability: "deep code analysis engine"
+      impact: "intelligent change detection"
+    
+    dependency_graph:
+      signatures:
+        - networkx
+        - relations
+        - dependencies
+        - graph
+        - detect_relations
+      capability: "code relationship mapping"
+      impact: "architecture understanding"
+    
+    quality_metrics:
+      signatures:
+        - radon
+        - cyclomatic
+        - complexity
+        - coverage
+        - metrics
+      capability: "code quality metrics"
+      impact: "maintainability tracking"
+    
+    multi_language:
+      signatures:
+        - _analyze_python
+        - _analyze_js
+        - language
+        - parser
+      capability: "multi-language support"
+      impact: "universal code analysis"
+    
+    config_system:
+      signatures:
+        - yaml
+        - config
+        - GoalConfig
+        - settings
+      capability: "configuration management"
+      impact: "customizable workflows"
+    
+    cli_interface:
+      signatures:
+        - click
+        - command
+        - option
+        - argument
+      capability: "CLI interface"
+      impact: "improved user experience"
+    
+    authentication:
+      signatures:
+        - auth
+        - login
+        - token
+        - jwt
+        - oauth
+      capability: "authentication system"
+      impact: "secure access control"
+    
+    api_endpoints:
+      signatures:
+        - endpoint
+        - route
+        - handler
+        - request
+        - response
+      capability: "API endpoints"
+      impact: "service integration"
+
+# Git commit configuration
+git:
+  commit:
+    strategy: "conventional"
+    abstraction_level: "auto"       # auto, high, medium, low
+    
+    # Domain mapping (file pattern -> domain)
+    domain_mapping:
+      'goal/*.py': 'core'
+      'src/*.py': 'core'
+      'lib/*.py': 'core'
+      'app/*.py': 'app'
+      'api/*.py': 'api'
+      'docs/*': 'docs'
+      'tests/*': 'test'
+      '*.md': 'docs'
+      'pyproject.toml': 'build'
+      'package.json': 'build'
+      '.github/*': 'ci'
+      'Dockerfile': 'docker'
+
+  changelog:
+    enabled: true
+    group_by_domain: true           # Group changes by domain
+    include_entities: true          # Include key entities
+    max_entities_per_entry: 5
+
+# Advanced settings
+advanced:
+  auto_update_config: true
+  performance:
+    max_files: 50
+    timeout_test: 300

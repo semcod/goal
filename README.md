@@ -9,12 +9,31 @@
   <a href="https://coveralls.io/github/wronai/goal"><img src="https://coveralls.io/repos/github/wronai/goal/badge.svg" alt="Coverage"></a>
 </p>
 
-Automated git push with smart commit messages, changelog updates, version tagging, and interactive workflow.
+Automated git push with **enterprise-grade commit intelligence**, smart changelog updates, version tagging, and interactive workflow.
+
+## 🆕 What's New in v2.1
+
+> **Enterprise-Grade Commit Intelligence** - Transform statistical commit messages into business-value summaries
+
+```
+❌ BEFORE: refactor(core): add testing, logging, validation
+✅ AFTER:  feat(goal): enterprise-grade commit intelligence engine
+
+NEW CAPABILITIES:
+├── deep code analysis engine: intelligent change detection
+├── code relationship mapping: architecture understanding
+└── code quality metrics: maintainability tracking
+
+IMPACT: ⭐ Value score: 85/100 | 🔗 Relations: cli→generator
+```
+
+📖 [Full Documentation](docs/enhanced-summary.md) | 📂 [Examples](examples/enhanced-summary/)
 
 ## Features
 
 - 🚀 **Interactive workflow** - Confirms each stage (test, commit, push, publish) with Y/n prompts
 - 🧠 **Smart commit messages** - Generates conventional commits based on diff analysis
+- 🎯 **Enhanced Summary** - Business-value focused messages with capabilities, metrics, relations
 - 📦 **Multi-language support** - Python, Node.js, Rust, Go, Ruby, PHP, .NET, Java
 - 🏷️ **Version management** - Automatic version bumping and synchronization across project files
 - 📝 **Changelog updates** - Maintains CHANGELOG.md with version history

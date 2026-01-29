@@ -111,17 +111,31 @@ class CodeAbstraction:
         return unique_entities[:10]  # Limit to 10 entities
     
     def extract_markdown_topics(self, diff_content: str) -> List[str]:
-        """Extract topics from markdown changes."""
+        """Extract meaningful topics from markdown changes, filtering out noise."""
         topics = []
+        
+        # Patterns to ignore (changelog noise, version numbers, dates)
+        ignore_patterns = [
+            r'^\[.*\d+\.\d+.*\]',  # Version numbers like [1.2.0]
+            r'^\d{4}-\d{2}-\d{2}',  # Dates
+            r'^(Added|Changed|Deprecated|Removed|Fixed|Security)$',  # Changelog sections
+            r'^(Changelog|CHANGELOG|Change\s*Log)',  # Changelog headers
+            r'^(Unreleased|\[Unreleased\])',  # Unreleased section
+            r'^v?\d+\.\d+',  # Version numbers
+            r'^Table of Contents',  # TOC
+            r'^#+$',  # Empty headers
+        ]
         
         for line in diff_content.split('\n'):
             if line.startswith('+') and not line.startswith('+++'):
                 line = line[1:].strip()
                 # Extract headers
                 if line.startswith('#'):
-                    topic = re.sub(r'^#+\s*', '', line)
+                    topic = re.sub(r'^#+\s*', '', line).strip()
                     if topic and len(topic) > 2:
-                        topics.append(topic)
+                        # Skip noise patterns
+                        if not any(re.match(p, topic, re.IGNORECASE) for p in ignore_patterns):
+                            topics.append(topic)
         
         return topics[:5]
     
@@ -264,6 +278,18 @@ class SmartCommitGenerator:
         """Initialize with goal.yaml configuration."""
         self.config = config
         self.abstraction = CodeAbstraction(config)
+        self._deep_analyzer = None
+    
+    @property
+    def deep_analyzer(self):
+        """Lazy-load deep analyzer to avoid circular imports."""
+        if self._deep_analyzer is None:
+            try:
+                from goal.deep_analyzer import CodeChangeAnalyzer
+                self._deep_analyzer = CodeChangeAnalyzer()
+            except ImportError:
+                self._deep_analyzer = False  # Mark as unavailable
+        return self._deep_analyzer if self._deep_analyzer else None
     
     def analyze_changes(self, staged_files: List[str] = None) -> Dict[str, Any]:
         """Analyze staged changes and extract abstractions."""
@@ -332,14 +358,45 @@ class SmartCommitGenerator:
         # Determine commit type
         analysis['commit_type'] = self._infer_commit_type(analysis)
         
-        # Infer benefit using features
-        analysis['benefit'] = self.abstraction.infer_benefit(
-            analysis['entities'],
-            analysis['primary_domain'],
-            analysis['commit_type'],
-            files=staged_files,
-            features=analysis['features']
-        )
+        # Use deep analyzer if available for better functional value
+        deep_analysis = None
+        if self.deep_analyzer:
+            try:
+                deep_analysis = self.deep_analyzer.generate_functional_summary(staged_files)
+                analysis['deep_analysis'] = deep_analysis
+                
+                # Extract functional value from deep analysis
+                if deep_analysis.get('functional_value'):
+                    analysis['benefit'] = deep_analysis['functional_value']
+                
+                # Merge deep entities with existing
+                if deep_analysis.get('aggregated'):
+                    agg = deep_analysis['aggregated']
+                    added_names = [e['name'] for e in agg.get('added_entities', [])]
+                    if added_names:
+                        # Prepend deep analysis entities
+                        analysis['entities'] = added_names[:5] + analysis['entities'][:5]
+                        analysis['entities'] = list(dict.fromkeys(analysis['entities']))[:10]
+                    
+                    # Use functional areas as features if none detected
+                    if not analysis['features'] and agg.get('functional_areas'):
+                        analysis['features'] = agg['functional_areas']
+                
+                # Store relations for commit body
+                if deep_analysis.get('relations'):
+                    analysis['relations'] = deep_analysis['relations']
+            except Exception:
+                pass  # Fall back to basic analysis
+        
+        # Fallback: Infer benefit using features if not set by deep analysis
+        if not analysis.get('benefit'):
+            analysis['benefit'] = self.abstraction.infer_benefit(
+                analysis['entities'],
+                analysis['primary_domain'],
+                analysis['commit_type'],
+                files=staged_files,
+                features=analysis['features']
+            )
         
         # Generate functional summary
         analysis['summary'] = self._generate_functional_summary(analysis)
@@ -473,6 +530,28 @@ class SmartCommitGenerator:
         file_count = analysis.get('file_count', 0)
         added = analysis.get('added', 0)
         deleted = analysis.get('deleted', 0)
+        files = analysis.get('files', [])
+        
+        # Check if this is a docs-only change
+        is_docs_only = all(
+            f.lower().endswith(('.md', '.rst', '.txt')) or 
+            'readme' in f.lower() or 
+            f.startswith('docs/')
+            for f in files
+        ) if files else False
+        
+        # For docs-only changes, use simpler functional descriptions
+        if is_docs_only and commit_type == 'docs':
+            if any('readme' in f.lower() for f in files):
+                if added > 100:
+                    return f"docs({domain}): expand README with detailed examples"
+                return f"docs({domain}): update README"
+            if any('changelog' in f.lower() for f in files):
+                return f"docs({domain}): update changelog"
+            if file_count == 1:
+                fname = Path(files[0]).stem.lower()
+                return f"docs({domain}): update {fname} documentation"
+            return f"docs({domain}): update documentation"
         
         # For high abstraction, prefer features/benefit over entities
         if level == 'high' and features:
@@ -493,13 +572,50 @@ class SmartCommitGenerator:
                 feature_str = ', '.join(features[:3])
                 return f"{commit_type}({domain}): add {feature_str}"
             elif entities:
-                meaningful = [e for e in entities if len(e) > 2 and not e.startswith('test_')][:3]
+                # Filter out noise from entities
+                meaningful = [
+                    e for e in entities 
+                    if len(e) > 2 
+                    and not e.startswith('test_')
+                    and not re.match(r'^\[.*\]$', e)  # Skip [version] patterns
+                    and not re.match(r'^\d', e)  # Skip entities starting with numbers
+                ][:3]
                 if meaningful:
                     return f"{commit_type}({domain}): add {', '.join(meaningful)}"
             return f"{commit_type}({domain}): {benefit}"
         
-        # Low abstraction - include stats
-        return f"{commit_type}({domain}): update {file_count} files (+{added}/-{deleted})"
+        # Low abstraction - still prefer functional description over raw stats
+        # Use benefit or infer from context
+        if benefit and benefit != 'improved functionality':
+            return f"{commit_type}({domain}): {benefit}"
+        
+        # Try to create functional description from entities
+        if entities:
+            meaningful = [e for e in entities if len(e) > 2][:2]
+            if meaningful:
+                verb = self.abstraction._get_verb_for_commit_type(commit_type)
+                return f"{commit_type}({domain}): {verb} {', '.join(meaningful)}"
+        
+        # Infer from file patterns
+        if files:
+            # Check for common patterns
+            if any('cli' in f.lower() for f in files):
+                return f"{commit_type}({domain}): improve CLI functionality"
+            if any('config' in f.lower() for f in files):
+                return f"{commit_type}({domain}): update configuration handling"
+            if any('test' in f.lower() for f in files):
+                return f"{commit_type}({domain}): improve test coverage"
+            if any(f.endswith('.md') for f in files):
+                return f"{commit_type}({domain}): update documentation"
+        
+        # Final fallback - use verb-based description
+        verb = self.abstraction._get_verb_for_commit_type(commit_type)
+        if added > deleted * 2:
+            return f"{commit_type}({domain}): {verb} new functionality"
+        elif deleted > added:
+            return f"{commit_type}({domain}): refactor and simplify code"
+        else:
+            return f"{commit_type}({domain}): {verb} code structure"
     
     def generate_functional_body(self, analysis: Dict[str, Any] = None) -> str:
         """Generate a functional, human-readable commit body."""
