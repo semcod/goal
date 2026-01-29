@@ -67,6 +67,15 @@ goal --all
 # Interactive push with prompts
 goal push
 
+# Split commits by change type (docs/code/ci/examples)
+goal push --split
+
+# Split + auto (CI style)
+goal push --split --yes
+
+# Split + add ticket prefix
+goal push --split --ticket ABC-123
+
 # Automatic push without prompts
 goal push --yes
 
@@ -163,11 +172,42 @@ Main command for the complete workflow.
 - `--yes, -y`: Skip all prompts (run automatically)
 - `--all, -a`: Automate all stages including tests, commit, push, and publish
 - `--markdown/--ascii`: Output format (default: markdown)
+- `--split`: Create separate commits per change type (docs/code/ci/examples)
+- `--ticket`: Ticket prefix to include in commit titles (overrides TICKERT)
 - `--no-tag`: Skip creating git tag
 - `--no-changelog`: Skip updating changelog
 - `--no-version-sync`: Skip syncing version to project files
 - `--message, -m`: Custom commit message
 - `--dry-run`: Show what would be done without doing it
+
+## Split commits (per type)
+
+When `--split` is enabled, Goal will create multiple commits:
+
+- **code**: changes in `goal/`, `src/`, `lib/`, `*.py`
+- **docs**: `docs/*`, `README.md`, `*.md`
+- **ci**: `.github/*`, `.gitlab/*`, `*.yml`/`*.yaml`
+- **examples**: `examples/*`
+- **other**: everything else
+
+Then it will create a final **release metadata** commit with version bump + changelog (unless disabled).
+
+## Ticket prefixing (TICKERT)
+
+Create a `TICKERT` file in repository root:
+
+```ini
+prefix=ABC-123
+format=[{ticket}] {title}
+```
+
+You can override it per run:
+
+```bash
+goal push --ticket ABC-123
+goal push --split --ticket ABC-123
+goal commit --ticket ABC-123
+```
 
 ### `goal init`
 

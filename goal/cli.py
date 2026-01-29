@@ -18,6 +18,71 @@ except ImportError:
     from formatter import format_push_result, format_status_output
     from commit_generator import CommitMessageGenerator
 
+
+def read_tickert(path: Path = Path('TICKERT')) -> Dict[str, str]:
+    """Read TICKERT configuration file (key=value)."""
+    cfg: Dict[str, str] = {'prefix': '', 'format': '[{ticket}] {title}'}
+    if not path.exists():
+        return cfg
+    try:
+        for raw in path.read_text().splitlines():
+            line = raw.strip()
+            if not line or line.startswith('#'):
+                continue
+            if '=' not in line:
+                continue
+            k, v = line.split('=', 1)
+            cfg[k.strip()] = v.strip()
+    except Exception:
+        return cfg
+    return cfg
+
+
+def apply_ticket_prefix(title: str, ticket: Optional[str]) -> str:
+    """Apply ticket prefix (from CLI or TICKERT) to commit title."""
+    cfg = read_tickert()
+    ticket_value = (ticket or cfg.get('prefix') or '').strip()
+    if not ticket_value:
+        return title
+    fmt = cfg.get('format') or '[{ticket}] {title}'
+    try:
+        return fmt.format(ticket=ticket_value, title=title)
+    except Exception:
+        return f"[{ticket_value}] {title}"
+
+
+def split_paths_by_type(paths: List[str]) -> Dict[str, List[str]]:
+    """Split file paths into groups (code/docs/ci/examples/other)."""
+    groups: Dict[str, List[str]] = {'code': [], 'docs': [], 'ci': [], 'examples': [], 'other': []}
+    for p in paths:
+        pl = p.lower()
+        if pl.startswith('examples/'):
+            groups['examples'].append(p)
+        elif pl.startswith('docs/') or pl.endswith(('.md', '.rst')) or os.path.basename(pl) in ('readme.md',):
+            groups['docs'].append(p)
+        elif pl.startswith('.github/') or pl.startswith('.gitlab/') or pl.endswith(('.yml', '.yaml')):
+            groups['ci'].append(p)
+        elif pl.startswith('goal/') or pl.startswith('src/') or pl.startswith('lib/') or pl.endswith('.py'):
+            groups['code'].append(p)
+        else:
+            groups['other'].append(p)
+
+    return {k: v for k, v in groups.items() if v}
+
+
+def stage_paths(paths: List[str]):
+    if not paths:
+        return
+    # stage in chunks to avoid arg length issues
+    chunk: List[str] = []
+    for p in paths:
+        chunk.append(p)
+        if len(chunk) >= 100:
+            run_git('add', '--', *chunk)
+            chunk = []
+    if chunk:
+        run_git('add', '--', *chunk)
+
 # =============================================================================
 # Project Type Detection & Version File Management
 # =============================================================================
@@ -589,8 +654,10 @@ def main(ctx, bump, yes, all, markdown, dry_run):
 @click.option('--dry-run', is_flag=True, help='Show what would be done without doing it')
 @click.option('--yes', '-y', is_flag=True, help='Skip all prompts (run automatically)')
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
+@click.option('--split', is_flag=True, help='Create separate commits per change type (docs/code/ci/examples)')
+@click.option('--ticket', help='Ticket prefix to include in commit titles (overrides TICKERT)')
 @click.pass_context
-def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown):
+def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket):
     """Add, commit, tag, and push changes to remote.
     
     Automatically:
@@ -630,15 +697,15 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     commit_title = None
     commit_body = None
     if message:
-        commit_title = message
+        commit_title = apply_ticket_prefix(message, ticket)
     else:
         generator = CommitMessageGenerator()
         detailed = generator.generate_detailed_message(cached=True)
         if detailed:
-            commit_title = detailed.get('title')
+            commit_title = apply_ticket_prefix(detailed.get('title'), ticket)
             commit_body = detailed.get('body')
         else:
-            commit_title = generate_smart_commit_message(files, diff_content)
+            commit_title = apply_ticket_prefix(generate_smart_commit_message(files, diff_content), ticket)
         if not commit_title:
             click.echo(click.style("No changes to commit.", fg='yellow'))
             return
@@ -655,6 +722,24 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     total_dels = sum(s[1] for s in stats.values())
     
     if dry_run:
+        # Split mode: show planned commits per group
+        if split and not message:
+            generator = CommitMessageGenerator()
+            groups = split_paths_by_type(files)
+            plan_lines = []
+            for gname in ['code', 'docs', 'ci', 'examples', 'other']:
+                if gname not in groups:
+                    continue
+                d = generator.generate_detailed_message(cached=True, paths=groups[gname])
+                if not d:
+                    continue
+                title = apply_ticket_prefix(d.get('title'), ticket)
+                plan_lines.append(f"- {gname}: {title} ({len(groups[gname])} files)")
+            if not no_version_sync or not no_changelog:
+                plan_lines.append(f"- release: chore(release): bump to {bump_version(get_current_version(), bump)}")
+            commit_body = (commit_body or '')
+            commit_body = ("Planned split commits:\n" + "\n".join(plan_lines)).strip()
+
         if markdown or ctx.obj.get('markdown'):
             # Generate markdown output for dry run
             md_output = format_push_result(
@@ -767,6 +852,70 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         if not confirm("Commit changes?"):
             click.echo(click.style("Aborted.", fg='red'))
             sys.exit(1)
+
+    # Split commits per group if requested (single push at end)
+    if split and not message:
+        generator = CommitMessageGenerator()
+        # Unstage everything first, then stage/commit per group
+        run_git('reset')
+        groups = split_paths_by_type(files)
+
+        if not yes:
+            click.echo(click.style("\nSplit commits plan:", fg='cyan', bold=True))
+            for gname in ['code', 'docs', 'ci', 'examples', 'other']:
+                if gname in groups:
+                    d = generator.generate_detailed_message(cached=False, paths=groups[gname])
+                    title = apply_ticket_prefix(d.get('title'), ticket) if d else gname
+                    click.echo(f"- {gname}: {title} ({len(groups[gname])} files)")
+
+        # Commit each group
+        for gname in ['code', 'docs', 'ci', 'examples', 'other']:
+            if gname not in groups:
+                continue
+
+            stage_paths(groups[gname])
+            d = generator.generate_detailed_message(cached=True, paths=groups[gname])
+            if not d:
+                continue
+            title = apply_ticket_prefix(d.get('title'), ticket)
+            body = d.get('body')
+            result = run_git('commit', '-m', title, '-m', body)
+            if result.returncode != 0:
+                click.echo(click.style(f"Error committing split group {gname}: {result.stderr}", fg='red'))
+                sys.exit(1)
+            click.echo(click.style(f"✓ Committed ({gname}): {title}", fg='green'))
+
+        # Release meta commit: version sync + changelog
+        if (not no_version_sync) or (not no_changelog):
+            # Sync versions to all project files
+            if not no_version_sync:
+                updated_files = sync_all_versions(new_version)
+                stage_paths(updated_files)
+                for f in updated_files:
+                    click.echo(click.style(f"✓ Updated {f} to {new_version}", fg='green'))
+            else:
+                Path('VERSION').write_text(new_version + '\n')
+                stage_paths(['VERSION'])
+                click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg='green'))
+
+            if not no_changelog:
+                update_changelog(new_version, files, commit_msg)
+                stage_paths(['CHANGELOG.md'])
+                click.echo(click.style(f"✓ Updated CHANGELOG.md", fg='green'))
+
+            release_title = apply_ticket_prefix(f"chore(release): bump version to {new_version}", ticket)
+            release_body = f"Release metadata\n\nVersion: {current_version} -> {new_version}"\
+                + ("\nChangelog: updated" if not no_changelog else "")
+            result = run_git('commit', '-m', release_title, '-m', release_body)
+            if result.returncode != 0:
+                click.echo(click.style(f"Error committing release metadata: {result.stderr}", fg='red'))
+                sys.exit(1)
+            click.echo(click.style(f"✓ Committed (release): {release_title}", fg='green'))
+
+        # Continue with tagging/pushing/publishing below
+        # (Skip the single-commit path)
+        commit_body = None
+        message = "__split__"  # sentinel to skip single commit section
     
     # Sync versions to all project files
     if not no_version_sync:
@@ -787,14 +936,17 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         click.echo(click.style(f"✓ Updated CHANGELOG.md", fg='green'))
     
     # Commit
-    if commit_body and not message:
+    if message == "__split__":
+        result = subprocess.CompletedProcess(args=[], returncode=0)
+    elif commit_body and not message:
         result = run_git('commit', '-m', commit_title, '-m', commit_body)
     else:
         result = run_git('commit', '-m', commit_msg)
     if result.returncode != 0:
         click.echo(click.style(f"Error committing: {result.stderr}", fg='red'))
         sys.exit(1)
-    click.echo(click.style(f"✓ Committed: {commit_msg}", fg='green'))
+    if message != "__split__":
+        click.echo(click.style(f"✓ Committed: {commit_msg}", fg='green'))
     
     # Create tag
     if not no_tag:
@@ -929,19 +1081,21 @@ def status(ctx, markdown):
 @click.option('--detailed', '-d', is_flag=True, help='Generate detailed commit message with body')
 @click.option('--unstaged', '-u', is_flag=True, help='Analyze unstaged changes instead of staged')
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
+@click.option('--ticket', help='Ticket prefix to include in commit title (overrides TICKERT)')
 @click.pass_context
-def commit(ctx, detailed, unstaged, markdown):
+def commit(ctx, detailed, unstaged, markdown, ticket):
     """Generate a smart commit message for current changes."""
     generator = CommitMessageGenerator()
     
     if detailed:
         result = generator.generate_detailed_message(cached=not unstaged)
         if result:
+            title = apply_ticket_prefix(result['title'], ticket)
             if markdown or ctx.obj.get('markdown'):
-                output = f"```text\n{result['title']}\n\n{result['body']}\n```"
+                output = f"```text\n{title}\n\n{result['body']}\n```"
                 click.echo(output)
             else:
-                click.echo(result['title'])
+                click.echo(title)
                 click.echo()
                 click.echo(result['body'])
         else:
@@ -950,6 +1104,7 @@ def commit(ctx, detailed, unstaged, markdown):
     else:
         msg = generator.generate_commit_message(cached=not unstaged)
         if msg:
+            msg = apply_ticket_prefix(msg, ticket)
             if markdown or ctx.obj.get('markdown'):
                 click.echo(f"```text\n{msg}\n```")
             else:

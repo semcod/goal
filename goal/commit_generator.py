@@ -106,9 +106,10 @@ class CommitMessageGenerator:
         except Exception:
             return {'files': 0, 'added': 0, 'deleted': 0}
 
-    def get_name_status(self, cached: bool = True) -> List[Tuple[str, str]]:
+    def get_name_status(self, cached: bool = True, paths: Optional[List[str]] = None) -> List[Tuple[str, str]]:
         """Return list of (status, path) from git diff --name-status."""
-        cache_key = f"name_status_{cached}"
+        paths_key = ','.join(paths) if paths else '*'
+        cache_key = f"name_status_{cached}_{paths_key}"
         if cache_key in self.cache:
             return self.cache[cache_key]
 
@@ -116,6 +117,9 @@ class CommitMessageGenerator:
         if cached:
             cmd.append('--cached')
         cmd.append('--name-status')
+        if paths:
+            cmd.append('--')
+            cmd.extend(paths)
 
         items: List[Tuple[str, str]] = []
         try:
@@ -134,9 +138,10 @@ class CommitMessageGenerator:
         self.cache[cache_key] = items
         return items
 
-    def get_numstat_map(self, cached: bool = True) -> Dict[str, Tuple[int, int]]:
+    def get_numstat_map(self, cached: bool = True, paths: Optional[List[str]] = None) -> Dict[str, Tuple[int, int]]:
         """Return map path -> (added, deleted) from git diff --numstat."""
-        cache_key = f"numstat_map_{cached}"
+        paths_key = ','.join(paths) if paths else '*'
+        cache_key = f"numstat_map_{cached}_{paths_key}"
         if cache_key in self.cache:
             return self.cache[cache_key]
 
@@ -144,6 +149,9 @@ class CommitMessageGenerator:
         if cached:
             cmd.append('--cached')
         cmd.append('--numstat')
+        if paths:
+            cmd.append('--')
+            cmd.extend(paths)
 
         out: Dict[str, Tuple[int, int]] = {}
         try:
@@ -163,26 +171,23 @@ class CommitMessageGenerator:
         self.cache[cache_key] = out
         return out
     
-    def get_changed_files(self, cached: bool = True) -> List[str]:
-        """Get list of changed files."""
-        cache_key = f"changed_files_{cached}"
+    def get_changed_files(self, cached: bool = True, paths: Optional[List[str]] = None) -> List[str]:
+        """Get list of changed files. If paths provided, limit diff to those paths."""
+        paths_key = ','.join(paths) if paths else '*'
+        cache_key = f"changed_files_{cached}_{paths_key}"
         
         if cache_key in self.cache:
             return self.cache[cache_key]
         
         try:
+            cmd = ['git', 'diff']
             if cached:
-                result = subprocess.run(
-                    ['git', 'diff', '--cached', '--name-only'],
-                    capture_output=True,
-                    text=True
-                )
-            else:
-                result = subprocess.run(
-                    ['git', 'diff', '--name-only'],
-                    capture_output=True,
-                    text=True
-                )
+                cmd.append('--cached')
+            cmd.append('--name-only')
+            if paths:
+                cmd.append('--')
+                cmd.extend(paths)
+            result = subprocess.run(cmd, capture_output=True, text=True)
             
             files = [f.strip() for f in result.stdout.strip().split('\n') if f.strip()]
             self.cache[cache_key] = files
@@ -191,26 +196,23 @@ class CommitMessageGenerator:
         except Exception:
             return []
     
-    def get_diff_content(self, cached: bool = True) -> str:
-        """Get diff content for analysis."""
-        cache_key = f"diff_content_{cached}"
+    def get_diff_content(self, cached: bool = True, paths: Optional[List[str]] = None) -> str:
+        """Get diff content for analysis. If paths provided, limit diff to those paths."""
+        paths_key = ','.join(paths) if paths else '*'
+        cache_key = f"diff_content_{cached}_{paths_key}"
         
         if cache_key in self.cache:
             return self.cache[cache_key]
         
         try:
+            cmd = ['git', 'diff']
             if cached:
-                result = subprocess.run(
-                    ['git', 'diff', '--cached', '-U3'],
-                    capture_output=True,
-                    text=True
-                )
-            else:
-                result = subprocess.run(
-                    ['git', 'diff', '-U3'],
-                    capture_output=True,
-                    text=True
-                )
+                cmd.append('--cached')
+            cmd.append('-U3')
+            if paths:
+                cmd.append('--')
+                cmd.extend(paths)
+            result = subprocess.run(cmd, capture_output=True, text=True)
             
             self.cache[cache_key] = result.stdout
             return result.stdout
@@ -230,6 +232,13 @@ class CommitMessageGenerator:
         )
         has_docs_only = all(
             f.endswith(('.md', '.rst', '.txt')) or 'docs/' in f or 'readme' in f.lower()
+            for f in files
+        )
+
+        has_ci_only = all(
+            f.startswith('.github/')
+            or f.startswith('.gitlab/')
+            or f.endswith(('.yml', '.yaml'))
             for f in files
         )
 
@@ -294,6 +303,9 @@ class CommitMessageGenerator:
 
         if has_docs_only:
             scores['docs'] += 5
+
+        if has_ci_only:
+            scores['build'] += 5
         
         # Special cases
         if any('version' in f or 'package' in f or 'pyproject' in f for f in files):
@@ -305,6 +317,12 @@ class CommitMessageGenerator:
         # Prefer fix when we clearly fix something
         if scores.get('fix', 0) >= max(scores.get('feat', 0), scores.get('chore', 0), scores.get('docs', 0)) + 1:
             return 'fix'
+
+        # If changes are docs-only or CI-only, force the expected type
+        if has_docs_only and not has_package_code:
+            return 'docs'
+        if has_ci_only and not has_package_code:
+            return 'build'
 
         # Prefer feat when we clearly add new capabilities (avoid defaulting to chore)
         if has_package_code and (
@@ -469,14 +487,14 @@ class CommitMessageGenerator:
                 out.append(n)
         return out[:3]
     
-    def generate_commit_message(self, cached: bool = True) -> str:
+    def generate_commit_message(self, cached: bool = True, paths: Optional[List[str]] = None) -> str:
         """Generate a conventional commit message."""
         # Get all the data
-        files = self.get_changed_files(cached)
+        files = self.get_changed_files(cached, paths=paths)
         if not files:
             return None
         
-        diff_content = self.get_diff_content(cached)
+        diff_content = self.get_diff_content(cached, paths=paths)
         stats = self.get_diff_stats(cached)
         
         # Classify the change
@@ -498,18 +516,18 @@ class CommitMessageGenerator:
         desc = self._short_action_summary(files, diff_content)
         return f"{base}: {desc}"
     
-    def generate_detailed_message(self, cached: bool = True) -> Dict[str, str]:
+    def generate_detailed_message(self, cached: bool = True, paths: Optional[List[str]] = None) -> Dict[str, str]:
         """Generate a detailed commit message with body."""
-        main_msg = self.generate_commit_message(cached)
+        main_msg = self.generate_commit_message(cached, paths=paths)
         if not main_msg:
             return None
         
-        files = self.get_changed_files(cached)
+        files = self.get_changed_files(cached, paths=paths)
         stats = self.get_diff_stats(cached)
-        diff_content = self.get_diff_content(cached)
+        diff_content = self.get_diff_content(cached, paths=paths)
 
-        name_status = self.get_name_status(cached)
-        numstat_map = self.get_numstat_map(cached)
+        name_status = self.get_name_status(cached, paths=paths)
+        numstat_map = self.get_numstat_map(cached, paths=paths)
 
         added_files = [p for s, p in name_status if s.startswith('A')]
         deleted_files = [p for s, p in name_status if s.startswith('D')]
