@@ -267,6 +267,13 @@ DEFAULT_CONFIG = {
             'include_relations': True,
             'include_roles': True,
         },
+        'gates': {
+            'max_complexity_percent': 200,
+            'max_duplicate_relations': 0,
+            'min_unique_files_ratio': 0.8,
+            'min_capabilities': 1,
+            'max_banned_words': 0,
+        },
         'role_patterns': {
             r'_analyze_(python|js|generic)_diff': 'language-specific code analyzer',
             r'CodeChangeAnalyzer': 'AST-based change detector',
@@ -302,6 +309,18 @@ DEFAULT_CONFIG = {
                 'impact': 'universal code analysis',
             },
         },
+        'commit_message': {
+            'min_length': 15,
+            'max_length': 72,
+            'max_entities': 5,
+            'require_type': True,
+            'require_scope': True,
+        },
+        'changelog': {
+            'min_entries_per_release': 1,
+            'max_file_lines': 10,
+            'include_commit_hash': True,
+        },
     },
     'code_parsers': {
         'python': {
@@ -333,20 +352,6 @@ DEFAULT_CONFIG = {
             'extract': ['# ', '## ', '### ', '#### ', '- **'],
             'ignore': ['<!--', '-->'],
             'entity_pattern': r'^#+\s+(.+)$',
-        },
-    },
-    'quality': {
-        'commit_message': {
-            'min_length': 15,
-            'max_length': 72,
-            'max_entities': 5,
-            'require_type': True,
-            'require_scope': True,
-        },
-        'changelog': {
-            'min_entries_per_release': 1,
-            'max_file_lines': 10,
-            'include_commit_hash': True,
         },
     },
 }

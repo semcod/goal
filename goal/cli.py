@@ -7,6 +7,7 @@ import sys
 import re
 import json
 import shutil
+import importlib.util
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
@@ -100,7 +101,7 @@ PROJECT_TYPES = {
             'setup.cfg': r'^version\s*=\s*(\d+\.\d+\.\d+)',
         },
         'test_command': 'pytest',
-        'publish_command': 'python -m build && twine upload dist/goal-{version}*',
+        'publish_command': 'python -m build && python -m twine upload dist/goal-{version}*',
     },
     'nodejs': {
         'files': ['package.json'],
@@ -795,6 +796,21 @@ def publish_project(project_types: List[str], version: str) -> bool:
                     if p.exists():
                         shutil.rmtree(p)
 
+                missing = [
+                    m for m in ('build', 'twine')
+                    if importlib.util.find_spec(m) is None
+                ]
+                if missing:
+                    cmd = 'python -m pip install --upgrade build twine'
+                    click.echo(f"\n{click.style('Preparing publish:', fg='cyan', bold=True)} {cmd}")
+                    sys.stdout.flush()
+                    result = run_command(cmd, capture=False)
+                    sys.stdout.flush()
+                    if result.returncode != 0:
+                        click.echo("")
+                        click.echo(click.style("Failed to install build dependencies.", fg='red'))
+                        return False
+
                 cmd = 'python -m build'
                 click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                 sys.stdout.flush()
@@ -822,7 +838,7 @@ def publish_project(project_types: List[str], version: str) -> bool:
                     click.echo(click.style(f"No dist artifacts found for version {version}", fg='red'))
                     return False
 
-                cmd = 'twine upload ' + ' '.join(artifacts)
+                cmd = 'python -m twine upload ' + ' '.join(artifacts)
                 click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                 sys.stdout.flush()
                 result = run_command(cmd, capture=False)

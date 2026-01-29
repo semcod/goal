@@ -387,6 +387,13 @@ class QualityValidator:
             if generic_count > self.max_generic_terms:
                 errors.append(f"Title contains {generic_count} generic terms (max {self.max_generic_terms})")
                 fixes.append(('reduce_generic_terms', generic_count))
+
+        # 1c. Minimum value words
+        desc = title.split(':', 1)[1] if ':' in title else title
+        desc_word_count = len(re.findall(r"[a-zA-Z]+", desc.lower()))
+        if desc_word_count < self.min_value_words:
+            errors.append(f"Title too short ({desc_word_count} words, need {self.min_value_words})")
+            fixes.append(('expand_title', desc_word_count))
         
         # 1b. Wrong intent vs refactor signals
         try:
@@ -438,15 +445,25 @@ class QualityValidator:
         
         # 5. Check capabilities
         if len(capabilities) < self.min_capabilities:
-            warnings.append(f"Only {len(capabilities)} capabilities (need {self.min_capabilities})")
-        
+            errors.append(f"Only {len(capabilities)} capabilities (need {self.min_capabilities})")
+            fixes.append(('add_capabilities', len(capabilities)))
+
         # 6. Check that the body exposes metrics (enterprise-grade preview)
         body = summary.get('body', '')
         if body:
             metric_keywords = ['NET', 'Relations:', 'Test coverage', 'score', '%', 'deletions']
             metric_count = sum(1 for kw in metric_keywords if kw.lower() in body.lower())
             if metric_count < self.required_metrics:
-                warnings.append(f"Only {metric_count} metrics found in body (need {self.required_metrics})")
+                errors.append(f"Only {metric_count} metrics found in body (need {self.required_metrics})")
+                fixes.append(('expose_metrics', metric_count))
+
+        # 7. Enhanced summary minimum value score
+        min_value_score = self.config.get('quality', {}).get('enhanced_summary', {}).get('min_value_score')
+        if isinstance(min_value_score, int):
+            value_score = metrics.get('value_score')
+            if isinstance(value_score, int) and value_score < min_value_score:
+                errors.append(f"Value score {value_score}/100 < {min_value_score}/100")
+                fixes.append(('raise_value_score', value_score))
         
         # Calculate score
         score = 100
@@ -1064,7 +1081,11 @@ class EnhancedSummaryGenerator:
             # Show relation count 
             rel_count = len(relations.get('relations', []))
             if rel_count > 0:
-                metric_lines.append(f"🔗 Relations: {rel_count} clean dependencies")
+                chain = relations.get('chain', '')
+                if chain:
+                    metric_lines.append(f"🔗 {chain} ({rel_count} clean relations)")
+                else:
+                    metric_lines.append(f"🔗 Relations: {rel_count} clean relations")
             
             # Test coverage
             test_files = sum(1 for f in files if 'test' in f.lower())

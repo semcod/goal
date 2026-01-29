@@ -650,7 +650,13 @@ class CommitMessageGenerator:
         
         try:
             diff_content = self.get_diff_content(cached, paths=paths)
-            result = self._enhanced_generator.generate_enhanced_summary(files, diff_content)
+            stats = self.get_diff_stats(cached)
+            result = self._enhanced_generator.generate_enhanced_summary(
+                files,
+                diff_content,
+                lines_added=stats.get('added', 0),
+                lines_deleted=stats.get('deleted', 0)
+            )
             
             # Use intent from enhanced summary (more accurate classification)
             commit_type = result.get('intent', 'refactor')
@@ -676,7 +682,10 @@ class CommitMessageGenerator:
                     'enhanced': True,
                     'metrics': enhanced.get('metrics'),
                     'capabilities': enhanced.get('capabilities'),
-                    'relations': enhanced.get('relations')
+                    'relations': enhanced.get('relations'),
+                    'intent': enhanced.get('intent'),
+                    'analysis': enhanced.get('analysis'),
+                    'files': enhanced.get('files')
                 }
         
         main_msg = self.generate_commit_message(cached, paths=paths)

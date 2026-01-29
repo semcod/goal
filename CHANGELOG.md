@@ -1,3 +1,17 @@
+## [2.1.12] - 2026-01-29
+
+### Summary
+
+feat(core): add auth, formatting, api
+
+### Core
+
+- update goal/cli.py
+- update goal/commit_generator.py
+- update goal/config.py
+- update goal/enhanced_summary.py
+
+
 ## [2.1.11] - 2026-01-29
 
 ### Summary
