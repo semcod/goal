@@ -382,9 +382,24 @@ def get_unstaged_files() -> List[str]:
     return [line[3:] for line in result.stdout.strip().split('\n') if line]
 
 
-def get_diff_stats() -> Dict[str, Tuple[int, int]]:
+def get_working_tree_files() -> List[str]:
+    """Get list of files changed in working tree (unstaged + untracked)."""
+    changed = run_git('diff', '--name-only').stdout.strip().split('\n')
+    untracked = run_git('ls-files', '--others', '--exclude-standard').stdout.strip().split('\n')
+
+    files: List[str] = []
+    for f in [*changed, *untracked]:
+        f = (f or '').strip()
+        if not f:
+            continue
+        if f not in files:
+            files.append(f)
+    return files
+
+
+def get_diff_stats(cached: bool = True) -> Dict[str, Tuple[int, int]]:
     """Get additions/deletions per file."""
-    result = run_git('diff', '--cached', '--numstat')
+    result = run_git('diff', '--cached', '--numstat') if cached else run_git('diff', '--numstat')
     stats = {}
     for line in result.stdout.strip().split('\n'):
         if line:
@@ -396,9 +411,9 @@ def get_diff_stats() -> Dict[str, Tuple[int, int]]:
     return stats
 
 
-def get_diff_content() -> str:
+def get_diff_content(cached: bool = True) -> str:
     """Get the actual diff content for analysis."""
-    result = run_git('diff', '--cached', '-U3')
+    result = run_git('diff', '--cached', '-U3') if cached else run_git('diff', '-U3')
     return result.stdout
 
 
@@ -658,6 +673,51 @@ def get_remote_branch() -> str:
 
 def run_tests(project_types: List[str]) -> bool:
     """Run tests for detected project types."""
+    def is_poetry_project() -> bool:
+        if Path('poetry.lock').exists():
+            return True
+        pyproject = Path('pyproject.toml')
+        if not pyproject.exists():
+            return False
+        try:
+            content = pyproject.read_text(errors='ignore')
+        except Exception:
+            return False
+        return ('[tool.poetry]' in content) or ('[tool.poetry.dependencies]' in content)
+
+    def wrap_python_test_cmd(cmd: str) -> str:
+        """Run pytest in the repo's intended environment (Poetry / .venv) instead of the active shell venv."""
+        if 'pytest' not in cmd:
+            return cmd
+
+        if is_poetry_project() and shutil.which('poetry'):
+            return f"poetry run {cmd}"
+
+        venv_python = Path('.venv/bin/python')
+        if venv_python.exists() and venv_python.is_file():
+            if cmd.strip() == 'pytest':
+                return f"{venv_python} -m pytest"
+            return f"{venv_python} -m {cmd}"
+
+        return cmd
+
+    def wrap_install_cmd(cmd: str) -> str:
+        if is_poetry_project() and shutil.which('poetry'):
+            return f"poetry run {cmd}"
+        return cmd
+
+    def has_pytest_cov() -> bool:
+        if is_poetry_project() and shutil.which('poetry'):
+            result = run_command('poetry run python -c "import pytest_cov"', capture=True)
+            return result.returncode == 0
+
+        venv_python = Path('.venv/bin/python')
+        if venv_python.exists() and venv_python.is_file():
+            result = run_command(f'{venv_python} -c "import pytest_cov"', capture=True)
+            return result.returncode == 0
+
+        return importlib.util.find_spec('pytest_cov') is not None
+
     def project_uses_cov_options() -> bool:
         for p in ('pyproject.toml', 'pytest.ini', 'setup.cfg', 'tox.ini'):
             path = Path(p)
@@ -673,13 +733,13 @@ def run_tests(project_types: List[str]) -> bool:
 
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'test_command' in PROJECT_TYPES[ptype]:
-            cmd = PROJECT_TYPES[ptype]['test_command']
+            cmd = wrap_python_test_cmd(PROJECT_TYPES[ptype]['test_command'])
 
             if 'pytest' in cmd and project_uses_cov_options():
-                if importlib.util.find_spec('pytest_cov') is None:
+                if not has_pytest_cov():
                     click.echo(click.style("pytest-cov is missing but this project appears to use --cov options.", fg='yellow'))
                     if confirm("Install pytest-cov now?", default=True):
-                        install_cmd = 'python -m pip install --upgrade pytest-cov'
+                        install_cmd = wrap_install_cmd('python -m pip install --upgrade pytest-cov')
                         click.echo(f"{click.style('Preparing tests:', fg='cyan', bold=True)} {install_cmd}")
                         result = run_command(install_cmd, capture=False)
                         if result.returncode != 0:
