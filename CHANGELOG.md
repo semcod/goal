@@ -1,3 +1,16 @@
+## [2.1.14] - 2026-01-29
+
+### Summary
+
+refactor(goal): commit message generator
+
+### Core
+
+- update goal/cli.py
+- update goal/commit_generator.py
+- update goal/enhanced_summary.py
+
+
 ## [2.1.13] - 2026-01-29
 
 ### Summary

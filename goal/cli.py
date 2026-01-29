@@ -1026,8 +1026,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     total_adds = sum(s[0] for s in stats.values())
     total_dels = sum(s[1] for s in stats.values())
 
+    quality_enforced = False
+
     # Enforce commit quality gates for auto-generated messages
-    if not message:
+    if not message and detailed_result and detailed_result.get('enhanced'):
         config_obj = ctx.obj.get('config')
         config_dict = config_obj.to_dict() if config_obj else {}
         quality_cfg = (config_dict or {}).get('quality', {}).get('enhanced_summary', {})
@@ -1035,26 +1037,22 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
 
         if enforce_quality:
             try:
-                from .enhanced_summary import EnhancedSummaryGenerator, QualityValidator
+                from .enhanced_summary import QualityValidator
             except ImportError:
-                from enhanced_summary import EnhancedSummaryGenerator, QualityValidator
+                from enhanced_summary import QualityValidator
 
             try:
-                generator = EnhancedSummaryGenerator(config_dict)
-                summary = generator.generate_enhanced_summary(
-                    files,
-                    diff_content,
-                    lines_added=total_adds,
-                    lines_deleted=total_dels,
-                )
+                validator = QualityValidator(config_dict or {})
 
                 # Validate the actual commit message we are about to use
-                summary_for_validation = dict(summary)
+                summary_for_validation = dict(detailed_result)
                 summary_for_validation['title'] = commit_msg
+                summary_for_validation['intent'] = detailed_result.get('intent')
+                summary_for_validation.setdefault('metrics', {})
+                summary_for_validation['metrics'].setdefault('lines_added', total_adds)
+                summary_for_validation['metrics'].setdefault('lines_deleted', total_dels)
 
-                validator = QualityValidator(config_dict)
-                validation = validator.validate(summary_for_validation, files)
-
+                validation = validator.validate(summary_for_validation, detailed_result.get('files') or files)
                 if not validation.get('valid', True):
                     suggested = validator.auto_fix(summary_for_validation, files, total_adds, total_dels)
 
@@ -1085,29 +1083,11 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                         click.echo(click.style("Run: goal validate --fix OR goal fix-summary --auto", fg='cyan'))
 
                     sys.exit(1)
+
+                quality_enforced = True
             except Exception:
                 # If validation fails unexpectedly, do not block push
                 pass
-
-    if detailed_result and detailed_result.get('enhanced'):
-        try:
-            try:
-                from .enhanced_summary import QualityValidator
-            except ImportError:
-                from enhanced_summary import QualityValidator
-
-            validator = QualityValidator(config_dict or {})
-            validation = validator.validate(detailed_result, detailed_result.get('files') or files)
-            if not validation.get('valid'):
-                click.echo(click.style("❌ FAILED QUALITY GATES", fg='red', bold=True))
-                for e in validation.get('errors') or []:
-                    click.echo(click.style(f"✗ {e}", fg='red'))
-                for w in validation.get('warnings') or []:
-                    click.echo(click.style(f"⚠ {w}", fg='yellow'))
-                click.echo(click.style("\n💡 Run: goal fix-summary --auto", fg='cyan'))
-                sys.exit(1)
-        except Exception:
-            pass
     
     if dry_run:
         # Split mode: show planned commits per group
@@ -1192,14 +1172,22 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             click.echo(f"\n## GOAL Workflow Preview\n")
             denom = (total_adds + total_dels) or 1
             deletion_pct = int((total_dels / denom) * 100)
-            click.echo(f"- **Files:** {len(files)} (+{total_adds}/-{total_dels} = {deletion_pct}% deletions)")
+            net = total_adds - total_dels
+            click.echo(
+                f"- **Files:** {len(files)} (+{total_adds}/-{total_dels} lines, NET {net}, {deletion_pct}% churn deletions)"
+            )
             click.echo(f"- **Version:** {current_version} → {new_version}")
             click.echo(f"- **Commit:** `{commit_msg}`")
             if commit_body and not message:
                 click.echo(f"\n### Commit Body\n```\n{commit_body}\n```")
         else:
             click.echo(click.style("\n=== GOAL Workflow ===", fg='cyan', bold=True))
-            click.echo(f"Will commit {len(files)} files (+{total_adds}/-{total_dels} lines)")
+            denom = (total_adds + total_dels) or 1
+            deletion_pct = int((total_dels / denom) * 100)
+            net = total_adds - total_dels
+            click.echo(
+                f"Will commit {len(files)} files (+{total_adds}/-{total_dels} lines, NET {net}, {deletion_pct}% churn deletions)"
+            )
             click.echo(f"Version bump: {current_version} -> {new_version}")
             click.echo(f"Commit message: {click.style(commit_msg, fg='green')}")
             if commit_body and not message:

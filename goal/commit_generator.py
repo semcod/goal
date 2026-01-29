@@ -650,13 +650,20 @@ class CommitMessageGenerator:
         
         try:
             diff_content = self.get_diff_content(cached, paths=paths)
-            stats = self.get_diff_stats(cached)
+            if paths:
+                numstat_map = self.get_numstat_map(cached, paths=paths)
+                lines_added = sum(v[0] for v in numstat_map.values())
+                lines_deleted = sum(v[1] for v in numstat_map.values())
+            else:
+                stats = self.get_diff_stats(cached)
+                lines_added = stats.get('added', 0)
+                lines_deleted = stats.get('deleted', 0)
 
             result = self._enhanced_generator.generate_enhanced_summary(
                 files,
                 diff_content,
-                lines_added=stats.get('added', 0),
-                lines_deleted=stats.get('deleted', 0),
+                lines_added=lines_added,
+                lines_deleted=lines_deleted,
             )
 
             # Use intent from enhanced summary (more accurate classification)

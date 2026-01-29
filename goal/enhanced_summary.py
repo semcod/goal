@@ -63,7 +63,8 @@ class SummaryQualityFilter:
     # Intent classification patterns
     REFACTOR_PATTERNS = [
         r'analyzer', r'deep_', r'enhanced_', r'AST', r'refactor',
-        r'restructure', r'reorganize', r'simplif', r'clean'
+        r'restructure', r'reorganize', r'simplif', r'clean',
+        r'framework', r'intelligence', r'git_'
     ]
     FEAT_PATTERNS = [
         r'new_', r'initial', r'support', r'implement', r'create'
@@ -242,6 +243,10 @@ class SummaryQualityFilter:
         
         deletion_pct = (deleted / total) * 100 if total else 0
         if deleted > 0 and deletion_pct >= 10:
+            if deleted >= 250 and deletion_pct >= 20:
+                return '📉', (
+                    f"{deletion_pct:.0f}% code reduction (-{deleted} lines refactored, +{added}/-{deleted}, NET {net})"
+                )
             if net < 0:
                 return '📉', (
                     f"+{added}/-{deleted} lines (NET {net}, {deletion_pct:.0f}% churn deletions)"
@@ -264,9 +269,16 @@ class SummaryQualityFilter:
         """Smart intent classification using multiple signals."""
         combined = ' '.join(files) + ' ' + ' '.join(e.get('name', '') for e in entities)
         
-        # Signal 1: Net lines (strong signal for refactor)
+        # Signal 1: Deletions/churn signal (refactor often includes large deletions)
         net = added - deleted
-        if net < -100:  # Significant code reduction
+        churn_total = added + deleted
+        deletion_pct = (deleted / churn_total) * 100 if churn_total else 0
+
+        if deleted >= 1000:
+            return 'refactor'
+        if deleted >= 250 and deletion_pct >= 20:
+            return 'refactor'
+        if net < -100:  # Significant net reduction
             return 'refactor'
         
         # Signal 2: File patterns
@@ -289,6 +301,10 @@ class SummaryQualityFilter:
         scores = {'refactor': refactor_score, 'feat': feat_score, 'fix': fix_score}
         if max(scores.values()) == 0:
             return 'refactor' if net <= 0 else 'feat'
+
+        # If refactor patterns are present and deletions are meaningful, prefer refactor.
+        if deleted >= 100 and refactor_score >= feat_score and refactor_score >= fix_score:
+            return 'refactor'
         return max(scores, key=scores.get)
     
     def generate_architecture_title(self, files: List[str], categories: Dict) -> str:
@@ -508,6 +524,20 @@ class QualityValidator:
             fixed['title'] = f"{intent}({scope}): {arch_title}"
             fixed['intent'] = intent
             applied_fixes.append(f"Fixed title: banned words {banned} → '{arch_title}'")
+
+        # 1b. Fix wrong intent even if there are no banned words
+        title = fixed.get('title', '')
+        m = re.match(r'^(\w+)\(([^)]*)\):\s*(.*)$', title)
+        if m:
+            current_intent = m.group(1)
+            scope = m.group(2)
+            desc = m.group(3)
+            entities = summary.get('analysis', {}).get('aggregated', {}).get('added_entities', [])
+            smart_intent = self.filter.classify_intent_smart(files, entities, added, deleted)
+            if current_intent != smart_intent and smart_intent == 'refactor':
+                fixed['title'] = f"{smart_intent}({scope}): {desc}"
+                fixed['intent'] = smart_intent
+                applied_fixes.append(f"Fixed intent: {current_intent} → {smart_intent}")
         
         # 2. Dedupe and clean relations (remove generic nodes)
         if 'relations' in fixed and 'relations' in fixed['relations']:
@@ -797,7 +827,7 @@ class EnhancedSummaryGenerator:
             current = root
             visited = {root}
             while adj[current] - visited:
-                next_node = (adj[current] - visited).pop()
+                next_node = sorted(adj[current] - visited)[0]
                 chain.append(next_node)
                 visited.add(next_node)
                 current = next_node
@@ -1060,7 +1090,9 @@ class EnhancedSummaryGenerator:
                 'util': '🔧',
                 'core': '🧩',
             }
-            arch_lines = ["ARCHITECTURE:"]
+            layer_keys = {'analyzer', 'cli', 'quality'}
+            header = "3-LAYER ARCHITECTURE:" if (set(categorized.keys()) & layer_keys) else "ARCHITECTURE:"
+            arch_lines = [header]
             for category, cat_files in sorted(categorized.items(), key=lambda kv: (-len(kv[1]), kv[0])):
                 names = [Path(f).name for f in cat_files]
                 shown = names[:4]
