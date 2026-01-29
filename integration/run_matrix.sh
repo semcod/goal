@@ -25,7 +25,7 @@ run_case() {
   cat > goal.yaml <<'YAML'
 quality:
   enhanced_summary:
-    enabled: true
+    enabled: false
   gates:
     min_capabilities: 0
     min_unique_files_ratio: 0

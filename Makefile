@@ -57,6 +57,10 @@ push: bump-version
 	fi
 
 
+docker-matrix:
+	bash integration/run_docker_matrix.sh
+
+
 ## Bump version (e.g., make bump-version PART=patch)
 bump-version:
 	@if [ -z "$(PART)" ]; then \

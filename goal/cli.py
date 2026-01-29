@@ -1217,33 +1217,85 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                 if not validation.get('valid', True):
                     suggested = validator.auto_fix(summary_for_validation, files, total_adds, total_dels)
 
-                    if markdown or ctx.obj.get('markdown'):
-                        click.echo("\n## ❌ FAILED QUALITY GATES\n")
-                        click.echo(f"- **Score:** {validation.get('score', 0)}/100")
-                        click.echo("\n### Errors")
-                        for e in validation.get('errors', []):
-                            click.echo(f"- {e}")
-                        if validation.get('warnings'):
-                            click.echo("\n### Warnings")
-                            for w in validation.get('warnings', []):
-                                click.echo(f"- {w}")
-                        click.echo("\n### Suggested Fix")
-                        click.echo(f"- **Title:** `{suggested.get('title', '')}`")
-                        click.echo("\n💡 Run: `goal validate --fix` or `goal fix-summary --auto`")
-                    else:
-                        click.echo(click.style("\n❌ FAILED QUALITY GATES", fg='red', bold=True))
-                        click.echo(f"Score: {validation.get('score', 0)}/100\n")
-                        for e in validation.get('errors', []):
-                            click.echo(f"  ✗ {e}")
-                        if validation.get('warnings'):
-                            click.echo("")
-                            for w in validation.get('warnings', []):
-                                click.echo(f"  ⚠ {w}")
-                        click.echo("")
-                        click.echo(click.style(f"Suggested title: {suggested.get('title', '')}", fg='cyan'))
-                        click.echo(click.style("Run: goal validate --fix OR goal fix-summary --auto", fg='cyan'))
+                    suggested_title = (suggested or {}).get('title')
+                    if suggested_title and suggested_title.strip() and suggested_title != commit_msg:
+                        apply_fix = True
+                        if not yes:
+                            apply_fix = confirm(f"Apply suggested title?\n\nCurrent: {commit_msg}\nSuggested: {suggested_title}")
 
-                    sys.exit(1)
+                        if apply_fix:
+                            commit_msg = suggested_title
+                            summary_for_validation['title'] = commit_msg
+                            validation = validator.validate(
+                                summary_for_validation,
+                                detailed_result.get('files') or files,
+                            )
+                            if validation.get('valid', True):
+                                if markdown or ctx.obj.get('markdown'):
+                                    click.echo(f"\n- **Applied title fix:** `{commit_msg}`")
+                                else:
+                                    click.echo(click.style(f"\n✓ Applied title fix: {commit_msg}", fg='green'))
+                            else:
+                                if markdown or ctx.obj.get('markdown'):
+                                    click.echo("\n## ❌ FAILED QUALITY GATES\n")
+                                    click.echo(f"- **Score:** {validation.get('score', 0)}/100")
+                                    click.echo("\n### Errors")
+                                    for e in validation.get('errors', []):
+                                        click.echo(f"- {e}")
+                                    if validation.get('warnings'):
+                                        click.echo("\n### Warnings")
+                                        for w in validation.get('warnings', []):
+                                            click.echo(f"- {w}")
+                                else:
+                                    click.echo(click.style("\n❌ FAILED QUALITY GATES", fg='red', bold=True))
+                                    click.echo(f"Score: {validation.get('score', 0)}/100\n")
+                                    for e in validation.get('errors', []):
+                                        click.echo(f"  ✗ {e}")
+                                    if validation.get('warnings'):
+                                        click.echo("")
+                                        for w in validation.get('warnings', []):
+                                            click.echo(f"  ⚠ {w}")
+                                sys.exit(1)
+                        else:
+                            if markdown or ctx.obj.get('markdown'):
+                                click.echo("\n### Suggested Fix")
+                                click.echo(f"- **Title:** `{suggested_title}`")
+                                click.echo("\n💡 Run: `goal validate --fix` or `goal fix-summary --auto`")
+                            else:
+                                click.echo(click.style(f"Suggested title: {suggested_title}", fg='cyan'))
+                                click.echo(click.style("Run: goal validate --fix OR goal fix-summary --auto", fg='cyan'))
+                            sys.exit(1)
+
+                    if validation.get('valid', True):
+                        commit_title = commit_msg
+                    else:
+                        if markdown or ctx.obj.get('markdown'):
+                            click.echo("\n## ❌ FAILED QUALITY GATES\n")
+                            click.echo(f"- **Score:** {validation.get('score', 0)}/100")
+                            click.echo("\n### Errors")
+                            for e in validation.get('errors', []):
+                                click.echo(f"- {e}")
+                            if validation.get('warnings'):
+                                click.echo("\n### Warnings")
+                                for w in validation.get('warnings', []):
+                                    click.echo(f"- {w}")
+                            click.echo("\n### Suggested Fix")
+                            click.echo(f"- **Title:** `{suggested.get('title', '')}`")
+                            click.echo("\n💡 Run: `goal validate --fix` or `goal fix-summary --auto`")
+                        else:
+                            click.echo(click.style("\n❌ FAILED QUALITY GATES", fg='red', bold=True))
+                            click.echo(f"Score: {validation.get('score', 0)}/100\n")
+                            for e in validation.get('errors', []):
+                                click.echo(f"  ✗ {e}")
+                            if validation.get('warnings'):
+                                click.echo("")
+                                for w in validation.get('warnings', []):
+                                    click.echo(f"  ⚠ {w}")
+                            click.echo("")
+                            click.echo(click.style(f"Suggested title: {suggested.get('title', '')}", fg='cyan'))
+                            click.echo(click.style("Run: goal validate --fix OR goal fix-summary --auto", fg='cyan'))
+
+                        sys.exit(1)
 
                 quality_enforced = True
             except Exception:

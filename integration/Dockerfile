@@ -8,6 +8,8 @@ WORKDIR /workspace
 
 COPY . /workspace
 
+RUN chmod +x /workspace/integration/run_matrix.sh
+
 RUN pip install -e .
 
 ENTRYPOINT ["/bin/bash", "-lc", "./integration/run_matrix.sh"]
