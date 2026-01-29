@@ -108,7 +108,7 @@ class SummaryQualityFilter:
     
     def has_banned_words(self, title: str) -> List[str]:
         """Check if title contains banned words. Returns list of found banned words."""
-        words = set(title.lower().split())
+        words = set(re.findall(r"[a-zA-Z]+", title.lower()))
         return [w for w in self.BANNED_TITLE_WORDS if w in words]
     
     def classify_intent(self, files: List[str], entities: List[Dict]) -> str:
@@ -406,11 +406,6 @@ class QualityValidator:
         # 3b. Check generic nodes in relations
         clean_relations = self.filter.filter_generic_nodes(relations)
         generic_count = len(relations) - len(clean_relations)
-        
-        # Rebuild relations chain/ASCII after filtering generic nodes
-        relations = clean_relations
-        relations_chain = self.filter._build_relation_chain(relations)
-        relations_ascii = self.filter._render_relations_ascii(relations, files)
         
         if generic_count > 1:  # Allow max 1 generic node
             errors.append(f"Generic nodes in graph: {generic_count} (base, utils, etc.)")

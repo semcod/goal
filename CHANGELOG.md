@@ -1,3 +1,14 @@
+## [2.1.9] - 2026-01-29
+
+### Summary
+
+refactor(core): add logging, configuration and more
+
+### Core
+
+- update goal/enhanced_summary.py
+
+
 ## [2.1.8] - 2026-01-29
 
 ### Summary
