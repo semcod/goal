@@ -658,9 +658,32 @@ def get_remote_branch() -> str:
 
 def run_tests(project_types: List[str]) -> bool:
     """Run tests for detected project types."""
+    def project_uses_cov_options() -> bool:
+        for p in ('pyproject.toml', 'pytest.ini', 'setup.cfg', 'tox.ini'):
+            path = Path(p)
+            if not path.exists() or not path.is_file():
+                continue
+            try:
+                content = path.read_text(errors='ignore')
+            except Exception:
+                continue
+            if '--cov' in content:
+                return True
+        return False
+
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'test_command' in PROJECT_TYPES[ptype]:
             cmd = PROJECT_TYPES[ptype]['test_command']
+
+            if 'pytest' in cmd and project_uses_cov_options():
+                if importlib.util.find_spec('pytest_cov') is None:
+                    click.echo(click.style("pytest-cov is missing but this project appears to use --cov options.", fg='yellow'))
+                    if confirm("Install pytest-cov now?", default=True):
+                        install_cmd = 'python -m pip install --upgrade pytest-cov'
+                        click.echo(f"{click.style('Preparing tests:', fg='cyan', bold=True)} {install_cmd}")
+                        result = run_command(install_cmd, capture=False)
+                        if result.returncode != 0:
+                            return False
             click.echo(f"\n{click.style('Running tests:', fg='cyan', bold=True)} {cmd}")
             result = run_command(cmd, capture=False)
             if result.returncode == 0:
