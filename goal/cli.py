@@ -7,6 +7,7 @@ import sys
 import re
 import json
 import shutil
+import shlex
 import importlib.util
 from datetime import datetime
 from pathlib import Path
@@ -713,11 +714,27 @@ def run_tests(project_types: List[str]) -> bool:
         if is_poetry_project() and shutil.which('poetry'):
             return f"poetry run {cmd}"
 
-        venv_python = Path('.venv/bin/python')
-        if venv_python.exists() and venv_python.is_file():
+        # Prefer the currently active environment over a hardcoded .venv path.
+        # This prevents running tests with a stale/unrelated .venv.
+        python_bin: Optional[Path] = None
+        venv_env = os.environ.get('VIRTUAL_ENV')
+        if venv_env:
+            candidate = Path(venv_env) / 'bin' / 'python'
+            if candidate.exists() and candidate.is_file():
+                python_bin = candidate
+
+        if python_bin is None:
+            try:
+                candidate = Path(sys.executable)
+                if candidate.exists() and candidate.is_file():
+                    python_bin = candidate
+            except Exception:
+                python_bin = None
+
+        if python_bin is not None:
             if cmd.strip() == 'pytest':
-                return f"{venv_python} -m pytest"
-            return f"{venv_python} -m {cmd}"
+                return f"{python_bin} -m pytest"
+            return f"{python_bin} -m {cmd}"
 
         return cmd
 
@@ -725,6 +742,48 @@ def run_tests(project_types: List[str]) -> bool:
         if is_poetry_project() and shutil.which('poetry'):
             return f"poetry run {cmd}"
         return cmd
+
+    def ensure_pytest_available(test_cmd: str) -> bool:
+        test_cmd = (test_cmd or '').strip()
+        if not test_cmd:
+            return True
+        if 'pytest' not in test_cmd:
+            return True
+
+        check_cmd = None
+        install_cmd = None
+
+        if test_cmd.startswith('poetry run '):
+            check_cmd = 'poetry run python -c "import pytest"'
+            install_cmd = 'poetry run python -m pip install --upgrade pytest'
+        else:
+            try:
+                parts = shlex.split(test_cmd)
+            except Exception:
+                parts = test_cmd.split()
+
+            python_bin = None
+            if len(parts) >= 3 and parts[1:3] == ['-m', 'pytest']:
+                python_bin = parts[0]
+
+            if python_bin:
+                check_cmd = f'{python_bin} -c "import pytest"'
+                install_cmd = f'{python_bin} -m pip install --upgrade pytest'
+            else:
+                check_cmd = 'python -c "import pytest"'
+                install_cmd = 'python -m pip install --upgrade pytest'
+
+        probe = run_command(check_cmd, capture=True)
+        if probe.returncode == 0:
+            return True
+
+        click.echo(click.style("pytest is missing in the selected test environment.", fg='yellow'))
+        if confirm("Install pytest now?", default=True):
+            click.echo(f"{click.style('Preparing tests:', fg='cyan', bold=True)} {install_cmd}")
+            result = run_command(install_cmd, capture=False)
+            if result.returncode != 0:
+                return False
+        return True
 
     def has_pytest_cov() -> bool:
         if is_poetry_project() and shutil.which('poetry'):
@@ -754,6 +813,10 @@ def run_tests(project_types: List[str]) -> bool:
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'test_command' in PROJECT_TYPES[ptype]:
             cmd = wrap_python_test_cmd(PROJECT_TYPES[ptype]['test_command'])
+
+            if 'pytest' in cmd:
+                if not ensure_pytest_available(cmd):
+                    return False
 
             if 'pytest' in cmd and project_uses_cov_options():
                 if not has_pytest_cov():

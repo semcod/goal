@@ -1,3 +1,14 @@
+## [2.1.22] - 2026-01-30
+
+### Summary
+
+test(core): add auth, logging and more
+
+### Core
+
+- update goal/cli.py
+
+
 ## [2.1.21] - 2026-01-30
 
 ### Summary
