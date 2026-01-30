@@ -4,21 +4,29 @@ Common issues and solutions when using Goal.
 
 ## General Issues
 
-### Goal command not found
+### Goal command not found or using old version
 
 ```bash
-# Check installation
-pip show goal
+# Check which goal is being used
+which -a goal
 
-# If not installed
+# Check if you're in a goal repository with local changes
+ls -la goal/ goal/cli.py 2>/dev/null || echo "Not in goal repo"
+
+# If you're in the goal repo and want to use the local version:
+python3 -m goal  # instead of just 'goal'
+
+# Or install the local version in development mode
+pip install -e .
+
+# If not installed:
 pip install goal
 
-# If using Python 3 specifically
+# If using Python 3 specifically:
 python3 -m pip install goal
 
 # Check PATH
-which goal
-echo $PATH | grep -o "[^:]*"
+echo $PATH | grep -o "[^:]*" | grep -E "(local|user)"
 ```
 
 ### Permission denied
@@ -216,19 +224,59 @@ pytest tests/
 goal push --yes
 ```
 
-## Push Issues
+## Publish Issues
 
-### Push fails - authentication error
+### File already exists on PyPI
+
+If you see `HTTPError: 400 Bad Request ... File already exists`, it means you're trying to upload a package version that's already on PyPI.
 
 ```bash
-# Check git remote
-git remote -v
+# Quick fix: clean dist and rebuild
+rm -rf dist build *.egg-info
+python -m build
+# Upload ONLY the current version artifacts
+twine upload dist/*your-package-{version}*
 
-# Configure credentials
-git config --global credential.helper store
+# Or let goal handle it correctly (goal v2.1.23+):
+python3 -m goal  # use local version if in goal repo
+```
 
-# Or use token-based auth
-git remote set-url origin https://token@github.com/user/repo.git
+**Why this happens**: `twine upload dist/*` uploads ALL files in dist/, including old versions. Goal v2.1.23+ automatically filters to upload only the current version.
+
+### Authentication errors during publish
+
+```bash
+# Check if you're using the right version
+goal --version
+
+# For PyPI, create token at: https://pypi.org/manage/account/token/
+# Option 1: ~/.pypirc
+[pypi]
+username = __token__
+password = pypi-xxxxxxxx
+
+# Option 2: Environment variables
+export TWINE_USERNAME=__token__
+export TWINE_PASSWORD=pypi-xxxxxxxx
+
+# Option 3: Configure in goal.yaml
+goal config set registries.pypi.token_env "PYPI_TOKEN"
+export PYPI_TOKEN=pypi-xxxxxxxx
+```
+
+### Publish command not found
+
+```bash
+# Check project type
+goal config get project.type
+
+# Install missing tools
+# Python:
+pip install build twine
+# Node.js:
+npm install -g npm
+# Rust:
+cargo install cargo-publish
 ```
 
 ### Push fails - branch not found

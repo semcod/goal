@@ -77,6 +77,21 @@ This will guide you through:
 
 Press Enter to accept the default (Yes) for any step.
 
+### Running from a local clone
+
+If you're working with the goal source code:
+
+```bash
+git clone https://github.com/wronai/goal.git
+cd goal
+
+# Use the local version without installing
+python3 -m goal
+
+# Or install in development mode
+pip install -e .
+```
+
 ## Documentation
 
 📚 **Complete Documentation**: [docs/README.md](docs/README.md)
@@ -166,6 +181,23 @@ goal push --bump major --yes
 # ? Publish to crates.io? [Y/n]: Y
 # ✓ Published crate v2.0.0
 ```
+
+#### 4. Publishing packages
+
+```bash
+# Publish only (after committing)
+goal publish
+
+# Or include publishing in the full workflow
+goal --all  # Will publish automatically
+```
+
+**Important**: Goal automatically filters artifacts to upload only the current version, avoiding "File already exists" errors on PyPI.
+
+If you see a "File already exists" error:
+1. Clean and rebuild: `rm -rf dist build && python -m build`
+2. Or bump version again: `goal --bump patch`
+3. Check you're using the latest goal: `python3 -m goal` (in goal repo)
 
 #### 4. Multi-language project
 

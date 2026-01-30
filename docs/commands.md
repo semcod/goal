@@ -125,6 +125,31 @@ goal version              # Show current and next versions
 goal version --bump minor # Show next minor version
 ```
 
+### `goal publish`
+
+Publish the current version to package registries.
+
+```bash
+goal publish [OPTIONS]
+```
+
+**Options:**
+- `--yes, -y`: Skip confirmation prompts
+- `--dry-run`: Show what would be published without doing it
+
+**Behavior:**
+- Detects project type and builds packages if needed
+- Uploads only the current version artifacts (not everything in `dist/`)
+- Shows clear error messages for common issues (File already exists, Authentication)
+
+**Examples:**
+```bash
+goal publish                    # Interactive
+goal publish --yes              # Automatic
+```
+
+**Note:** If a `Makefile` with a `publish` target exists, `goal publish` will use `make publish` instead.
+
 ### `goal commit`
 
 Generate a smart commit message for current changes.
@@ -145,22 +170,6 @@ goal commit               # Simple message
 goal commit --detailed    # Detailed message with body
 goal commit --unstaged    # Analyze unstaged changes
 ```
-
-### `goal info`
-
-Show detailed project information and version status.
-
-```bash
-goal info
-```
-
-**Shows:**
-- Detected project types
-- Current version
-- Version files status
-- Git information
-- Recent tags
-- Pending changes
 
 ## Configuration Commands
 
