@@ -24,6 +24,16 @@ except ImportError:
     from config import GoalConfig, ensure_config, init_config, load_config
 
 
+ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+
+
+def strip_ansi(text: str) -> str:
+    try:
+        return ANSI_ESCAPE_RE.sub('', text)
+    except Exception:
+        return text
+
+
 def read_tickert(path: Path = Path('TICKET')) -> Dict[str, str]:
     """Read TICKET configuration file (key=value)."""
     cfg: Dict[str, str] = {'prefix': '', 'format': '[{ticket}] {title}'}
@@ -1088,6 +1098,10 @@ def publish_project(project_types: List[str], version: str) -> bool:
                 result = run_command_tee(cmd)
             else:
                 cmd = PROJECT_TYPES[ptype]['publish_command']
+                try:
+                    cmd = cmd.format(version=version)
+                except Exception:
+                    pass
                 click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                 sys.stdout.flush()
                 result = run_command_tee(cmd)
@@ -1095,11 +1109,11 @@ def publish_project(project_types: List[str], version: str) -> bool:
             
             if result.returncode != 0:
                 out = ((result.stdout or '') + "\n" + (result.stderr or '')).strip()
-                out_l = out.lower()
+                out_l = strip_ansi(out).lower()
 
                 click.echo("")
                 click.echo(click.style("=" * 77, fg='yellow'))
-                if 'file already exists' in out_l:
+                if re.search(r'file[^a-z0-9]+already[^a-z0-9]+exists', out_l) is not None:
                     click.echo(click.style("⚠️  PUBLISH FAILED - File already exists", fg='yellow', bold=True))
                     click.echo(click.style("=" * 77, fg='yellow'))
                     click.echo(click.style("This version (or filename) already exists in the registry.", fg='yellow'))
@@ -1675,6 +1689,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         click.echo(click.style(f"✓ Committed: {commit_msg}", fg='green'))
     
     # Create tag
+    tag_name = None
     if not no_tag:
         tag_name = f"v{new_version}"
         tag_exists = run_git('rev-parse', '-q', '--verify', f"refs/tags/{tag_name}")
@@ -1691,14 +1706,17 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     if not yes:
         if confirm("Push to remote?"):
             branch = get_remote_branch()
-            if no_tag:
-                result = run_git('push', 'origin', branch, capture=False)
-            else:
-                result = run_git('push', 'origin', branch, '--tags', capture=False)
+            result = run_git('push', 'origin', branch, capture=False)
             
             if result.returncode != 0:
                 click.echo(click.style("Error pushing to remote", fg='red'))
                 sys.exit(1)
+
+            if (not no_tag) and tag_name:
+                result = run_git('push', 'origin', tag_name, capture=False)
+                if result.returncode != 0:
+                    click.echo(click.style("Error pushing tag to remote", fg='red'))
+                    sys.exit(1)
             
             click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
         else:
@@ -1706,14 +1724,17 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     else:
         # Auto-push
         branch = get_remote_branch()
-        if no_tag:
-            result = run_git('push', 'origin', branch, capture=False)
-        else:
-            result = run_git('push', 'origin', branch, '--tags', capture=False)
+        result = run_git('push', 'origin', branch, capture=False)
         
         if result.returncode != 0:
             click.echo(click.style("Error pushing to remote", fg='red'))
             sys.exit(1)
+
+        if (not no_tag) and tag_name:
+            result = run_git('push', 'origin', tag_name, capture=False)
+            if result.returncode != 0:
+                click.echo(click.style("Error pushing tag to remote", fg='red'))
+                sys.exit(1)
         
         click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
     

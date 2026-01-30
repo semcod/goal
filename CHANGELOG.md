@@ -1,3 +1,14 @@
+## [2.1.23] - 2026-01-30
+
+### Summary
+
+feat(core): add database, testing and more
+
+### Core
+
+- update goal/cli.py
+
+
 ## [2.1.22] - 2026-01-30
 
 ### Summary
