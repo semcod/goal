@@ -196,6 +196,27 @@ def run_command(command: str, capture: bool = True) -> subprocess.CompletedProce
     )
 
 
+def run_command_tee(command: str) -> subprocess.CompletedProcess:
+    proc = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+
+    output: List[str] = []
+    if proc.stdout is not None:
+        for chunk in proc.stdout:
+            output.append(chunk)
+            click.echo(chunk, nl=False)
+            sys.stdout.flush()
+
+    returncode = proc.wait()
+    return subprocess.CompletedProcess(args=command, returncode=returncode, stdout=''.join(output), stderr='')
+
+
 def confirm(prompt: str, default: bool = True) -> bool:
     """Ask for user confirmation with Y/n prompt (Enter defaults to Yes)."""
     if default:
@@ -520,11 +541,6 @@ def categorize_file(filename: str) -> Optional[str]:
 
 def get_current_version() -> str:
     """Get current version from VERSION file or detect from project files."""
-    # First try VERSION file
-    version_file = Path('VERSION')
-    if version_file.exists():
-        return version_file.read_text().strip()
-    
     # Try to detect from project files
     if Path('package.json').exists():
         try:
@@ -539,6 +555,10 @@ def get_current_version() -> str:
         match = re.search(r'^version\s*=\s*["\'](\d+\.\d+\.\d+)["\']', content, re.MULTILINE)
         if match:
             return match.group(1)
+
+    version_file = Path('VERSION')
+    if version_file.exists():
+        return version_file.read_text().strip()
     
     return "1.0.0"
 
@@ -1002,21 +1022,42 @@ def publish_project(project_types: List[str], version: str) -> bool:
                 cmd = 'python -m twine upload ' + ' '.join(artifacts)
                 click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                 sys.stdout.flush()
-                result = run_command(cmd, capture=False)
+                result = run_command_tee(cmd)
             else:
                 cmd = PROJECT_TYPES[ptype]['publish_command']
                 click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                 sys.stdout.flush()
-                result = run_command(cmd, capture=False)
+                result = run_command_tee(cmd)
             sys.stdout.flush()
             
             if result.returncode != 0:
-                # Show registry configuration help
-                click.echo("")  # Ensure newline after npm output
+                out = ((result.stdout or '') + "\n" + (result.stderr or '')).strip()
+                out_l = out.lower()
+
+                click.echo("")
                 click.echo(click.style("=" * 77, fg='yellow'))
-                click.echo(click.style("⚠️  PUBLISH FAILED - Authentication Required", fg='yellow', bold=True))
-                click.echo(click.style("=" * 77, fg='yellow'))
-                click.echo(get_registry_help(ptype))
+                if 'file already exists' in out_l:
+                    click.echo(click.style("⚠️  PUBLISH FAILED - File already exists", fg='yellow', bold=True))
+                    click.echo(click.style("=" * 77, fg='yellow'))
+                    click.echo(click.style("This version (or filename) already exists in the registry.", fg='yellow'))
+                    click.echo(click.style("Bump the version and try again.", fg='yellow'))
+                else:
+                    auth_indicators = (
+                        'unauthorized',
+                        'forbidden',
+                        'invalid or non-existent authentication',
+                        'missing or invalid authentication',
+                        '403',
+                        '401',
+                        'invalid token',
+                    )
+                    if any(x in out_l for x in auth_indicators):
+                        click.echo(click.style("⚠️  PUBLISH FAILED - Authentication Required", fg='yellow', bold=True))
+                        click.echo(click.style("=" * 77, fg='yellow'))
+                        click.echo(get_registry_help(ptype))
+                    else:
+                        click.echo(click.style("⚠️  PUBLISH FAILED", fg='yellow', bold=True))
+                        click.echo(click.style("=" * 77, fg='yellow'))
                 click.echo(click.style("=" * 77, fg='yellow'))
                 return False
             
@@ -1657,6 +1698,41 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             actions=actions_performed
         )
         click.echo("\n" + md_output)
+
+
+def makefile_has_target(target: str) -> bool:
+    makefile = Path('Makefile')
+    if not makefile.exists() or not makefile.is_file():
+        return False
+    try:
+        content = makefile.read_text(errors='ignore')
+    except Exception:
+        return False
+    return re.search(rf'^\s*{re.escape(target)}\s*:', content, re.MULTILINE) is not None
+
+
+@main.command()
+@click.option('--make/--no-make', 'use_make', default=True, help='Use Makefile publish target if available')
+@click.option('--target', default='publish', help='Make target to run when using --make')
+@click.option('--version', default=None, help='Version to publish when not using Makefile')
+@click.pass_context
+def publish(ctx, use_make, target, version):
+    """Publish the current project (optionally using Makefile)."""
+    project_types = detect_project_types()
+
+    if use_make and shutil.which('make') and makefile_has_target(target):
+        cmd = f"make {target}"
+        click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
+        result = run_command_tee(cmd)
+        if result.returncode != 0:
+            sys.exit(result.returncode)
+        return
+
+    if version is None:
+        version = get_current_version()
+
+    if not publish_project(project_types, version):
+        sys.exit(1)
 
 
 @main.command()

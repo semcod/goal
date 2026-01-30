@@ -1,3 +1,14 @@
+## [2.1.21] - 2026-01-30
+
+### Summary
+
+feat(core): add Make support
+
+### Core
+
+- update goal/cli.py
+
+
 ## [2.1.20] - 2026-01-29
 
 ### Summary
