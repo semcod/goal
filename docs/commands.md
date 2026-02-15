@@ -164,6 +164,48 @@ goal version              # Show current and next versions
 goal version --bump minor # Show next minor version
 ```
 
+### `goal check-versions`
+
+Validate version consistency across project files, README badges, and published registry versions.
+
+```bash
+goal check-versions [OPTIONS]
+```
+
+**Options:**
+- `--update-badges`: Update README badges if they don't match current version
+
+**Behavior:**
+- Compares local version with registry versions (PyPI, npm, crates.io, RubyGems)
+- Validates README badge versions match current version
+- Checks version consistency across project files (package.json, pyproject.toml, etc.)
+- Warns about mismatches before publishing
+
+**Examples:**
+```bash
+goal check-versions                    # Check all versions
+goal check-versions --update-badges  # Check and update badges
+```
+
+**Output:**
+```
+🔍 Version Check for v2.1.33
+Detected project types: python
+
+📦 Registry Versions:
+  ✅ python: Version 2.1.33 is up to date
+
+🏷️  README Badges:
+  ✅ Badges are up to date
+
+📁 Local Version Files:
+  ✅ pyproject.toml: 2.1.33
+  ✅ All version files are consistent
+
+📋 Summary:
+  ✅ All versions are consistent and ready for publishing!
+```
+
 ### `goal publish`
 
 Publish the current version to package registries.

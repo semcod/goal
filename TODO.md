@@ -1,5 +1,15 @@
 # Goal - TODO & Roadmap
 
+## ✅ Completed (v2.1.33)
+
+### Version Validation & Registry Checking
+- [x] Version validation system (`goal/version_validation.py`)
+- [x] Registry version checking (PyPI, npm, crates.io, RubyGems)
+- [x] README badge validation and updating
+- [x] `goal check-versions` command
+- [x] Auto-validation before publishing
+- [x] YAML format for commit messages (replaced ASCII tree)
+
 ## ✅ Completed (v2.1.27)
 
 ### User Configuration System
@@ -189,4 +199,4 @@ Priority areas:
 - Feature requests tracked in GitHub Issues
 - Priority determined by community feedback
 
-Last updated: 2026-02-15
+Last updated: 2026-02-15 (v2.1.33)

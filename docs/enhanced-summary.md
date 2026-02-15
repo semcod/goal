@@ -36,7 +36,7 @@ Goal's Enhanced Summary system transforms raw code changes into **business-value
 ✅ AFTER: refactor(core): enterprise-grade commit intelligence engine
    - Clear business value
    - Capabilities with impacts
-   - Metrics and relations
+   - Metrics and relations (YAML format)
 ```
 
 ---
@@ -66,30 +66,41 @@ Added files:
 - +1404 lines = size, not meaning
 - Developer value: 2/10
 
-### Enhanced Commit (Business-Value)
+### Enhanced Commit (Business-Value YAML)
 
-```text
+```yaml
 refactor(core): enterprise-grade commit intelligence engine
 
-🎯 NEW CAPABILITIES:
-├── DeepAnalyzer: AST-based code analysis pipeline
-├── EnhancedSummary: Functional value extraction (85% accuracy)
-├── RelationMapper: config→cli→commit dependency chains
-└── QualityMetrics: Complexity tracking, test coverage delta
+new_capabilities:
+  - capability: DeepAnalyzer
+    impact: AST-based code analysis pipeline
+  - capability: EnhancedSummary
+    impact: Functional value extraction (85% accuracy)
+  - capability: RelationMapper
+    impact: config→cli→commit dependency chains
+  - capability: QualityMetrics
+    impact: Complexity tracking, test coverage delta
 
-💎 BUSINESS IMPACT:
-📊 Commit quality: 85/100 value score
-🔗 Relations detected: cli→formatter chain
-📉 Complexity delta: +549 (new features)
-🚀 Analysis speed: <200ms per file
+impact:
+  value_score: 85
+  relations: "cli→formatter"
+  complexity_delta: +549
 
-📁 CHANGE PIPELINE:
-deep_analyzer.py ──────┐
-       │                │
-       ▼                ▼  
-config.py → cli.py → commit_generator.py → enhanced_summary.py
+architecture:
+  - category: analysis
+    files: 1
+    names: [deep_analyzer.py]
+  - category: core
+    files: 2
+    names: [commit_generator.py, enhanced_summary.py]
 
-Files: analysis: deep_analyzer.py; core: commit_generator.py, enhanced_summary.py
+dependency_flow:
+  chain: config→cli→generator
+  relations:
+    - from: config.py
+      to: cli.py
+    - from: cli.py
+      to: generator.py
 ```
 
 **Improvements:**
@@ -189,11 +200,14 @@ VALUE_PATTERNS = {
 ```
 
 **Output:**
-```
-NEW CAPABILITIES:
-├── deep code analysis engine: intelligent change detection
-├── code relationship mapping: architecture understanding
-└── code quality metrics: maintainability tracking
+```yaml
+new_capabilities:
+  - capability: deep code analysis engine
+    impact: intelligent change detection
+  - capability: code relationship mapping
+    impact: architecture understanding
+  - capability: code quality metrics
+    impact: maintainability tracking
 ```
 
 ### 3. Relation Detection (File Dependencies)
@@ -227,13 +241,14 @@ def detect_file_relations(self, files: List[str]) -> Dict[str, Any]:
 ```
 
 **Output:**
-```
-RELATIONS:
-Chain: cli→commit_generator→smart_commit
-
-CHANGE PIPELINE:
-cli.py ──┬──> commit_generator.py
-         └──> formatter.py
+```yaml
+dependency_flow:
+  chain: cli→commit_generator→smart_commit
+  relations:
+    - from: cli.py
+      to: commit_generator.py
+    - from: cli.py
+      to: formatter.py
 ```
 
 ### 4. Quality Metrics

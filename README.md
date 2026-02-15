@@ -1,7 +1,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.33-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.34-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -27,12 +27,17 @@ Automated git push with **enterprise-grade commit intelligence**, smart changelo
 ❌ BEFORE: refactor(core): add testing, logging, validation
 ✅ AFTER:  feat(goal): enterprise-grade commit intelligence engine
 
-NEW CAPABILITIES:
-├── deep code analysis engine: intelligent change detection
-├── code relationship mapping: architecture understanding
-└── code quality metrics: maintainability tracking
+new_capabilities:
+  - capability: deep code analysis engine
+    impact: intelligent change detection
+  - capability: code relationship mapping
+    impact: architecture understanding
+  - capability: code quality metrics
+    impact: maintainability tracking
 
-IMPACT: ⭐ Value score: 85/100 | 🔗 Relations: cli→generator
+impact:
+  value_score: 85
+  relations: "cli→generator"
 ```
 
 📖 [Full Documentation](docs/enhanced-summary.md) | 📂 [Examples](examples/enhanced-summary/)
@@ -45,6 +50,7 @@ IMPACT: ⭐ Value score: 85/100 | 🔗 Relations: cli→generator
 - 👤 **User configuration** - Auto-detects git user info and license preferences (stored in `~/.goal`)
 - 📄 **Smart metadata management** - Automatically updates author and license in project files
 - 📝 **README automation** - Updates license badges and author sections automatically
+- 🔍 **Version validation** - Checks registry versions and README badge consistency
 - 📦 **Multi-language support** - Python, Node.js, Rust, Go, Ruby, PHP, .NET, Java
 - 🏷️ **Version management** - Automatic version bumping and synchronization across project files
 - 📝 **Changelog updates** - Maintains CHANGELOG.md with version history

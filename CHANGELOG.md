@@ -1,3 +1,23 @@
+## [2.1.34] - 2026-02-15
+
+### Summary
+
+feat(docs): configuration management system
+
+### Docs
+
+- docs: update README
+- docs: update TODO.md
+- docs: update commands.md
+- docs: update enhanced-summary.md
+
+### Other
+
+- update project.functions.toon
+- scripts: update project.sh
+- update project.toon-schema.json
+
+
 ## [2.1.33] - 2026-02-15
 
 ### Summary

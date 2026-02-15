@@ -1,0 +1,253 @@
+project: goal
+generated: "2026-02-15T09:28:12.411762"
+modules[13]{path,lang,items}:
+  test_version_validation.py,python,14
+  tests/test_cli_options.py,python,4
+  goal/config.py,python,25
+  goal/enhanced_summary.py,python,32
+  goal/cli.py,python,52
+  goal/user_config.py,python,12
+  goal/version_validation.py,python,10
+  goal/commit_generator.py,python,17
+  goal/__init__.py,python,0
+  goal/deep_analyzer.py,python,15
+  goal/__main__.py,python,0
+  goal/smart_commit.py,python,21
+  goal/formatter.py,python,11
+
+function_details:
+  test_version_validation.py:
+    functions[14]{name,kind,sig,loc,async,lines,cc,does}:
+      TestVersionValidation.setUp,method,(),21-35,false,15,1,updates up
+      TestVersionValidation.test_extract_badge_versions,method,(),37-63,false,27,7,Test extracting version badges from README.
+      TestVersionValidation.test_update_badge_versions,method,(),65-78,false,14,1,Test updating version badges in README.
+      TestVersionValidation.test_check_readme_badges,method,(),80-90,false,11,2,Test checking README badges.
+      TestVersionValidation.test_check_readme_badges_up_to_date,method,(),92-96,false,5,1,Test checking README badges when they're up to date.
+      TestVersionValidation.test_check_readme_no_file,method,(),98-104,false,7,1,Test checking README badges when file doesn't exist.
+      TestVersionValidation.test_get_pypi_version_success,method,(mock_urlopen),107-115,false,9,1,Test successful PyPI version fetch.
+      TestVersionValidation.test_get_pypi_version_failure,method,(mock_urlopen),118-127,false,10,2,Test failed PyPI version fetch.
+      TestVersionValidation.test_get_npm_version_success,method,(mock_urlopen),130-138,false,9,1,Test successful npm version fetch.
+      TestVersionValidation.test_get_cargo_version_success,method,(mock_urlopen),141-149,false,9,1,Test successful Cargo version fetch.
+      TestVersionValidation.test_get_rubygems_version_success,method,(mock_urlopen),152-160,false,9,1,Test successful RubyGems version fetch.
+      TestVersionValidation.test_validate_python_project,method,"(mock_path, mock_pypi)",164-183,false,20,1,Test validating Python project version.
+      TestVersionValidation.test_validate_nodejs_project,method,"(mock_open, mock_path, mock_npm)",188-206,false,19,1,Test validating Node.js project version.
+      TestVersionValidation.test_format_validation_results,method,(),208-242,false,35,1,Test formatting validation results.
+  tests/test_cli_options.py:
+    functions[4]{name,kind,sig,loc,async,lines,cc,does}:
+      run_cli,function,(),4-9,false,6,1,starts cli
+      test_push_help_includes_markdown_ascii_split_ticket,function,(),12-18,false,7,1,checks push help includes markdown ascii split ticket
+      test_status_help_includes_markdown_ascii,function,(),21-24,false,4,1,checks status help includes markdown ascii
+      test_commit_help_includes_ticket,function,(),27-30,false,4,1,checks commit help includes ticket
+  goal/config.py:
+    functions[25]{name,kind,sig,loc,async,lines,cc,does}:
+      init_config,function,"(force:bool=False) -> GoalConfig",735-752,false,18,3,Initialize a new goal.yaml configuration file.
+      load_config,function,"(config_path:Optional[str]=None) -> GoalConfig",755-766,false,12,1,Load configuration from file or create default.
+      ensure_config,function,"(auto_update:bool=True) -> GoalConfig",769-795,false,27,5,Ensure configuration exists and is up-to-date.
+      GoalConfig.__init__,method,"(config_path:Optional[str]=None)",365-374,false,10,1,Initialize config manager.
+      GoalConfig._find_config,method,"(config_path:Optional[str]=None) -> Path",376-395,false,20,5,Find the configuration file.
+      GoalConfig._find_git_root,method,"() -> Optional[Path]",397-404,false,8,3,Find the git repository root.
+      GoalConfig.exists,method,() -> bool,406-408,false,3,1,Check if config file exists.
+      GoalConfig.load,method,"() -> Dict[str, Any]",410-427,false,18,5,Load configuration from file.
+      GoalConfig._get_default_config,method,"() -> Dict[str, Any]",429-446,false,18,2,Get default configuration with auto-detected values.
+      GoalConfig._deep_copy,method,"(obj:Any) -> Any",448-454,false,7,5,Deep copy a nested dict/list structure.
+      GoalConfig._merge_configs,method,"(base:Dict, override:Dict) -> Dict",456-466,false,11,5,"Deep merge two configurations, with override taking precedence."
+      GoalConfig._detect_project_name,method,() -> str,468-501,false,34,10,Detect project name from various sources.
+      GoalConfig._detect_project_types,method,"() -> List[str]",503-528,false,26,6,Detect project types from files.
+      GoalConfig._detect_description,method,() -> str,530-552,false,23,7,Detect project description from various sources.
+      GoalConfig._detect_version_files,method,"() -> List[str]",554-586,false,33,10,Detect version files in the project.
+      GoalConfig.save,method,"(config:Optional[Dict[str,Any]]=None) -> None",588-613,false,26,3,Save configuration to file.
+      GoalConfig.get,method,"(key:str, default:Any=None) -> Any",615-632,false,18,5,Get a configuration value by dot-notation key.
+      GoalConfig.set,method,"(key:str, value:Any) -> None",634-650,false,17,4,Set a configuration value by dot-notation key.
+      GoalConfig.update_from_detection,method,() -> bool,652-675,false,24,4,Update config based on current project state.
+      GoalConfig.validate,method,"() -> List[str]",677-707,false,31,8,Validate the configuration.
+      GoalConfig.get_commit_template,method,"(commit_type:str) -> str",709-712,false,4,1,Get commit message template for a given type.
+      GoalConfig.get_strategy,method,"(project_type:str) -> Dict[str, Any]",714-717,false,4,1,Get build/test/publish strategy for a project type.
+      GoalConfig.get_registry,method,"(registry_name:str) -> Dict[str, Any]",719-722,false,4,1,Get registry configuration.
+      GoalConfig.should_auto_update,method,() -> bool,724-726,false,3,1,Check if config should be auto-updated.
+      GoalConfig.to_dict,method,"() -> Dict[str, Any]",728-732,false,5,2,Return the full configuration as a dictionary.
+  goal/enhanced_summary.py:
+    functions[32]{name,kind,sig,loc,async,lines,cc,does}:
+      generate_business_summary,function,"(files:List[str], diff_content:str='', config:Dict=None) -> Dict[str, Any]",1184-1188,false,5,1,Convenience function to generate enhanced summary.
+      validate_summary,function,"(summary:Dict[str,Any], files:List[str]=None, config:Dict=None) -> Dict[str, Any]",1191-1199,false,9,2,Validate summary against quality gates.
+      auto_fix_summary,function,"(summary:Dict[str,Any], files:List[str]=None, config:Dict=None) -> Dict[str, Any]",1202-1210,false,9,2,Auto-fix summary issues and return corrected summary.
+      SummaryQualityFilter.__init__,method,(),93-97,false,5,5,creates
+      SummaryQualityFilter.is_noise,method,"(entity_name:str, role:str='') -> bool",99-103,false,5,3,Check if entity should be filtered as noise.
+      SummaryQualityFilter.filter_entities,method,"(entities:List[Dict]) -> List[Dict]",105-109,false,5,3,Filter out noise entities.
+      SummaryQualityFilter.has_banned_words,method,"(title:str) -> List[str]",111-117,false,7,4,Check if title contains banned words.
+      SummaryQualityFilter.classify_intent,method,"(files:List[str], entities:List[Dict]) -> str",119-140,false,22,14,"Classify commit intent: feat, fix, refactor, docs, chore."
+      SummaryQualityFilter.prioritize_capabilities,method,"(capabilities:List[Dict]) -> List[Dict]",142-148,false,7,1,"Sort capabilities by priority, highest first."
+      SummaryQualityFilter.format_complexity_delta,method,"(old_complexity:int, new_complexity:int) -> Tuple[str, str]",150-172,false,23,6,Format complexity change as interpretable metric with sane caps.
+      SummaryQualityFilter.dedupe_relations,method,"(relations:List[Dict]) -> List[Dict]",174-183,false,10,4,"Remove duplicate relations, keep unique edges only."
+      SummaryQualityFilter.dedupe_files,method,"(files:List[str]) -> List[str]",185-194,false,10,3,"Remove duplicate files, preserve order."
+      SummaryQualityFilter.categorize_files,method,"(files:List[str]) -> Dict[str, List[str]]",196-223,false,28,11,Smart domain-based file categorization.
+      SummaryQualityFilter.filter_generic_nodes,method,"(relations:List[Dict]) -> List[Dict]",225-231,false,7,4,Remove generic nodes from dependency graph.
+      SummaryQualityFilter.format_net_lines,method,"(added:int, deleted:int) -> Tuple[str, str]",233-265,false,33,12,Format NET lines change with proper interpretation.
+      SummaryQualityFilter.classify_intent_smart,method,"(files:List[str], entities:List[Dict], added:int=0, deleted:int=0) -> str",267-308,false,42,25,Smart intent classification using multiple signals.
+      SummaryQualityFilter.generate_architecture_title,method,"(files:List[str], categories:Dict) -> str",310-332,false,23,12,Generate architecture-aware title based on file patterns.
+      QualityValidator.__init__,method,"(config:Dict[str,Any]=None)",347-368,false,22,6,creates
+      QualityValidator.validate,method,"(summary:Dict[str,Any], files:List[str]) -> Dict[str, Any]",370-498,false,129,35,Validate summary against all quality gates.
+      QualityValidator.auto_fix,method,"(summary:Dict[str,Any], files:List[str], added:int=0, deleted:int=0) -> Dict[str, Any]",500-585,false,86,14,Auto-fix summary issues and return corrected summary.
+      EnhancedSummaryGenerator.__init__,method,"(config:Dict[str,Any]=None)",680-684,false,5,2,creates
+      EnhancedSummaryGenerator.map_entity_to_role,method,"(entity_name:str) -> str",686-714,false,29,13,Map a code entity name to its functional role.
+      EnhancedSummaryGenerator.detect_capabilities,method,"(files:List[str], diff_content:str) -> List[Dict[str, str]]",716-734,false,19,5,Detect capabilities from files and diff content.
+      EnhancedSummaryGenerator.detect_file_relations,method,"(files:List[str], diff_content:str='') -> Dict[str, Any]",736-780,false,45,10,Detect import/dependency relations between changed files.
+      EnhancedSummaryGenerator._infer_domain,method,"(filepath:str) -> str",782-803,false,22,14,Infer domain/area from filepath.
+      EnhancedSummaryGenerator._build_relation_chain,method,"(relations:List[Dict]) -> str",805-836,false,32,8,Build a chain representation of relations.
+      EnhancedSummaryGenerator._render_relations_ascii,method,"(relations:List[Dict], files:List[str]) -> str",838-860,false,23,6,Render file relations as ASCII art (deduplicated).
+      EnhancedSummaryGenerator.calculate_quality_metrics,method,"(analysis:Dict[str,Any], files:List[str]) -> Dict[str, Any]",862-904,false,43,6,Calculate quality metrics for the changes.
+      EnhancedSummaryGenerator.generate_value_title,method,"(capabilities:List[Dict], analysis:Dict[str,Any], files:List[str]=None) -> str",906-954,false,49,19,Generate a business-value focused title.
+      EnhancedSummaryGenerator.generate_enhanced_summary,method,"(files:List[str], diff_content:str='', lines_added:int=0, lines_deleted:int=0) -> Dict[str, Any]",956-1051,false,96,11,Generate complete enhanced summary with business value focus.
+      EnhancedSummaryGenerator._format_enhanced_body,method,"(capabilities:List[Dict], roles:List[Dict], relations:Dict, metrics:Dict, files:List[str], aggregated:Dict) -> str",1053-1146,false,94,25,Format the enhanced commit body.
+      EnhancedSummaryGenerator.validate_summary_quality,method,"(title:str, body:str) -> Dict[str, Any]",1148-1181,false,34,8,Validate summary against quality thresholds.
+  goal/cli.py:
+    functions[52]{name,kind,sig,loc,async,lines,cc,does}:
+      strip_ansi,function,"(text:str) -> str",34-38,false,5,2,strip ansi
+      read_tickert,function,"(path:Path=Path('TICKET')) -> Dict[str, str]",41-57,false,17,7,Read TICKET configuration file (key=value).
+      apply_ticket_prefix,function,"(title:str, ticket:Optional[str]) -> str",60-70,false,11,6,Apply ticket prefix (from CLI or TICKERT) to commit title.
+      split_paths_by_type,function,"(paths:List[str]) -> Dict[str, List[str]]",73-89,false,17,15,Split file paths into groups (code/docs/ci/examples/other).
+      stage_paths,function,"(paths:List[str])",92-103,false,12,5,stage paths
+      run_git,function,(),194-201,false,8,1,Run a git command and return the result.
+      run_command,function,"(command:str, capture:bool=True) -> subprocess.CompletedProcess",204-211,false,8,1,Run a shell command and return the result.
+      run_command_tee,function,"(command:str) -> subprocess.CompletedProcess",214-232,false,19,3,starts command tee
+      confirm,function,"(prompt:str, default:bool=True) -> bool",235-253,false,19,6,Ask for user confirmation with Y/n prompt (Enter defaults to Yes).
+      detect_project_types,function,"() -> List[str]",256-268,false,13,6,Detect what type(s) of project this is.
+      find_version_files,function,"() -> Dict[str, Path]",271-281,false,11,6,Find all version-containing files in the project.
+      get_version_from_file,function,"(filepath:Path, pattern:str) -> Optional[str]",284-293,false,10,3,Extract version from a file using regex pattern.
+      update_version_in_file,function,"(filepath:Path, pattern:str, old_version:str, new_version:str) -> bool",296-313,false,18,3,Update version in a specific file.
+      update_json_version,function,"(filepath:Path, new_version:str) -> bool",316-326,false,11,3,"Update version in JSON files (package.json, composer.json)."
+      update_project_metadata,function,"(filepath:Path, user_config) -> bool",329-458,false,130,26,Update author and license in project files based on user config.
+      update_readme_metadata,function,(user_config) -> bool,461-552,false,92,10,Update license badges and author info in README.md based on user config.
+      sync_all_versions,function,"(new_version:str, user_config=None) -> List[str]",555-650,false,96,27,"Update version, author, and license in all detected project files."
+      get_staged_files,function,"() -> List[str]",657-660,false,4,2,Get list of staged files.
+      get_unstaged_files,function,"() -> List[str]",663-666,false,4,3,Get list of unstaged/untracked files.
+      get_working_tree_files,function,"() -> List[str]",669-681,false,13,5,Get list of files changed in working tree (unstaged + untracked).
+      get_diff_stats,function,"(cached:bool=True) -> Dict[str, Tuple[int, int]]",684-695,false,12,7,Get additions/deletions per file.
+      get_diff_content,function,"(cached:bool=True) -> str",698-701,false,4,2,Get the actual diff content for analysis.
+      analyze_diff_for_type,function,"(diff_content:str, files:List[str]) -> str",704-738,false,35,18,Analyze diff content to determine commit type.
+      extract_function_changes,function,"(diff_content:str) -> List[str]",741-757,false,17,2,Extract changed function/method names from diff.
+      generate_smart_commit_message,function,"(files:List[str], diff_content:str) -> str",760-767,false,8,2,Generate intelligent commit message based on diff analysis.
+      categorize_file,function,"(filename:str) -> Optional[str]",770-798,false,29,11,Categorize file and return appropriate description.
+      get_current_version,function,() -> str,805-826,false,22,7,Get current version from VERSION file or detect from project files.
+      bump_version,function,"(version:str, bump_type:str='patch') -> str",829-850,false,22,5,"Bump version based on type (major, minor, patch)."
+      update_changelog,function,"(version:str, files:List[str], commit_msg:str, config:Dict=None, changelog_entry:Dict=None)",857-948,false,92,27,Update CHANGELOG.md with new version and changes.
+      get_remote_branch,function,() -> str,951-954,false,4,2,Get the current branch name.
+      run_tests,function,"(project_types:List[str]) -> bool",957-1104,false,148,14,Run tests for detected project types.
+      get_registry_help,function,"(project_type:str) -> str",1107-1213,false,107,1,Get help message for configuring registry authentication.
+      publish_project,function,"(project_types:List[str], version:str, yes:bool=False) -> bool",1216-1446,false,231,70,Publish project for detected project types.
+      main,function,"(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction)",1462-1494,false,33,7,Goal - Automated git push with smart commit messages.
+      push,function,"(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes)",1512-2108,false,597,159,"Add, commit, tag, and push changes to remote."
+      makefile_has_target,function,"(target:str) -> bool",2111-2119,false,9,4,makefile has target
+      publish,function,"(ctx, use_make, target, version)",2127-2143,false,17,7,Publish the current project (optionally using Makefile).
+      status,function,"(ctx, markdown)",2149-2187,false,39,11,Show current git status and version info.
+      commit,function,"(ctx, detailed, unstaged, markdown, ticket, abstraction)",2198-2233,false,36,11,Generate a smart commit message for current changes.
+      version,function,(bump_type),2239-2244,false,6,1,Show or bump version.
+      init,function,"(ctx, force)",2250-2317,false,68,17,"Initialize goal in current repository (creates VERSION, CHANGELOG.md, and goal.y..."
+      info,function,(),2321-2392,false,72,20,Show detailed project information and version status.
+      config,function,(ctx),2397-2399,false,3,1,Manage goal.yaml configuration.
+      config_show,function,"(ctx, key)",2405-2424,false,20,5,Show current configuration.
+      config_validate,function,(ctx),2429-2446,false,18,5,Validate goal.yaml configuration.
+      config_update,function,(ctx),2451-2465,false,15,4,Update goal.yaml based on project detection.
+      config_set,function,"(ctx, key, value)",2472-2491,false,20,4,Set a configuration value (dot notation key).
+      config_get,function,"(ctx, key)",2497-2513,false,17,4,Get a configuration value (dot notation key).
+      validate,function,"(ctx, fix, cached)",2521-2596,false,76,15,Validate commit summary against quality gates.
+      fix_summary,function,"(ctx, auto_fix, preview, cached)",2605-2669,false,65,11,Auto-fix commit summary quality issues.
+      check_versions_command,function,(update_badges),2674-2762,false,89,20,Check version consistency across registries and README badges.
+      config_command,function,"(reset, show)",2768-2782,false,15,2,Manage goal user configuration.
+  goal/user_config.py:
+    functions[12]{name,kind,sig,loc,async,lines,cc,does}:
+      get_git_user_name,function,"() -> Optional[str]",72-85,false,14,3,Get git user.name from git config.
+      get_git_user_email,function,"() -> Optional[str]",88-101,false,14,3,Get git user.email from git config.
+      prompt_for_license,function,"() -> Dict[str, str]",104-132,false,29,4,Interactive prompt for license selection.
+      initialize_user_config,function,"(force:bool=False) -> UserConfig",135-211,false,77,11,Initialize user configuration interactively if not already done.
+      get_user_config,function,() -> UserConfig,214-223,false,10,2,"Get user configuration, initializing if necessary."
+      show_user_config,function,(),226-247,false,22,2,Display current user configuration.
+      UserConfig.__init__,method,(),33-36,false,4,1,creates
+      UserConfig._load,method,(),38-47,false,10,3,Load configuration from ~/.goal file.
+      UserConfig._save,method,(),49-56,false,8,2,Save configuration to ~/.goal file.
+      UserConfig.get,method,"(key:str, default:Any=None) -> Any",58-60,false,3,1,Get configuration value.
+      UserConfig.set,method,"(key:str, value:Any)",62-65,false,4,1,Set configuration value and save.
+      UserConfig.is_initialized,method,() -> bool,67-69,false,3,3,Check if user configuration is initialized.
+  goal/version_validation.py:
+    functions[10]{name,kind,sig,loc,async,lines,cc,does}:
+      get_pypi_version,function,"(package_name:str) -> Optional[str]",12-20,false,9,2,Get latest version of a package from PyPI.
+      get_npm_version,function,"(package_name:str) -> Optional[str]",23-31,false,9,2,Get latest version of a package from npm registry.
+      get_cargo_version,function,"(package_name:str) -> Optional[str]",34-42,false,9,2,Get latest version of a crate from crates.io.
+      get_rubygems_version,function,"(package_name:str) -> Optional[str]",45-53,false,9,2,Get latest version of a gem from RubyGems.
+      get_registry_version,function,"(registry:str, package_name:str) -> Optional[str]",64-69,false,6,2,Get latest version from specified registry.
+      extract_badge_versions,function,"(readme_path:Path) -> List[Tuple[str, str, str]]",72-100,false,29,4,Extract version badges from README.md.
+      update_badge_versions,function,"(readme_path:Path, new_version:str) -> bool",103-129,false,27,3,Update version badges in README.md to new version.
+      validate_project_versions,function,"(project_types:List[str], current_version:str) -> Dict[str, Dict]",132-249,false,118,30,Validate versions across different registries.
+      check_readme_badges,function,"(current_version:str) -> Dict[str, any]",252-282,false,31,5,Check if README badges are up to date with current version.
+      format_validation_results,function,"(results:Dict[str,Dict]) -> List[str]",285-301,false,17,5,Format validation results for display.
+  goal/commit_generator.py:
+    functions[17]{name,kind,sig,loc,async,lines,cc,does}:
+      generate_smart_commit_message,function,"(cached:bool=True) -> str",782-785,false,4,1,Generate a smart commit message.
+      CommitMessageGenerator.__init__,method,"(config:Dict[str,Any]=None)",81-93,false,13,5,creates
+      CommitMessageGenerator.get_diff_stats,method,"(cached:bool=True) -> Dict[str, int]",95-132,false,38,9,Get diff statistics using git command.
+      CommitMessageGenerator.get_name_status,method,"(cached:bool=True, paths:Optional[List[str]]=None) -> List[Tuple[str, str]]",134-164,false,31,9,"Return list of (status, path) from git diff --name-status."
+      CommitMessageGenerator.get_numstat_map,method,"(cached:bool=True, paths:Optional[List[str]]=None) -> Dict[str, Tuple[int, int]]",166-197,false,32,11,"Return map path -> (added, deleted) from git diff --numstat."
+      CommitMessageGenerator.get_changed_files,method,"(cached:bool=True, paths:Optional[List[str]]=None) -> List[str]",199-222,false,24,8,Get list of changed files.
+      CommitMessageGenerator.get_diff_content,method,"(cached:bool=True, paths:Optional[List[str]]=None) -> str",224-246,false,23,6,Get diff content for analysis.
+      CommitMessageGenerator.classify_change_type,method,"(files:List[str], diff_content:str, stats:Dict[str,int]) -> str",248-364,false,117,58,Classify the type of change using pattern matching and heuristics.
+      CommitMessageGenerator.detect_scope,method,"(files:List[str]) -> Optional[str]",366-391,false,26,14,Detect the scope of changes based on file paths.
+      CommitMessageGenerator.extract_functions_changed,method,"(diff_content:str) -> List[str]",393-414,false,22,3,Extract function/method names from diff.
+      CommitMessageGenerator._short_action_summary,method,"(files:List[str], diff_content:str) -> str",416-470,false,55,34,Return a short 2–6 word action summary (no LLM).
+      CommitMessageGenerator._per_file_notes,method,"(path:str, cached:bool=True) -> List[str]",472-531,false,60,29,Generate small descriptive notes for a file based on added lines heuristics.
+      CommitMessageGenerator.generate_commit_message,method,"(cached:bool=True, paths:Optional[List[str]]=None, abstraction_level:str=None) -> str",533-577,false,45,7,Generate a conventional commit message.
+      CommitMessageGenerator.generate_abstraction_message,method,"(level:str='auto', cached:bool=True) -> Optional[Dict[str, Any]]",579-614,false,36,6,Generate commit message with abstraction-based analysis.
+      CommitMessageGenerator.generate_changelog_entry,method,"(cached:bool=True, commit_hash:str=None) -> Optional[Dict[str, Any]]",616-634,false,19,4,Generate structured changelog entry using smart abstraction.
+      CommitMessageGenerator.generate_enhanced_summary,method,"(cached:bool=True, paths:Optional[List[str]]=None) -> Optional[Dict[str, Any]]",636-679,false,44,8,Generate enhanced business-value focused summary.
+      CommitMessageGenerator.generate_detailed_message,method,"(cached:bool=True, paths:Optional[List[str]]=None) -> Dict[str, str]",681-778,false,98,28,Generate a detailed commit message with body.
+  goal/deep_analyzer.py:
+    functions[15]{name,kind,sig,loc,async,lines,cc,does}:
+      CodeChangeAnalyzer.__init__,method,(),82-83,false,2,1,creates
+      CodeChangeAnalyzer.analyze_file_diff,method,"(filepath:str, old_content:str, new_content:str) -> Dict[str, Any]",85-111,false,27,3,Analyze changes between two versions of a file.
+      CodeChangeAnalyzer._detect_language,method,"(filepath:str) -> str",113-132,false,20,1,Detect programming language from file extension.
+      CodeChangeAnalyzer._analyze_python_diff,method,"(old_content:str, new_content:str) -> Dict[str, Any]",134-198,false,65,15,Analyze Python code changes using AST.
+      CodeChangeAnalyzer._extract_python_entities,method,"(tree:Any) -> Dict[str, Dict]",200-225,false,26,13,"Extract functions, classes, and their metadata from AST."
+      CodeChangeAnalyzer._get_decorator_name,method,(decorator) -> str,227-235,false,9,4,Extract decorator name from AST node.
+      CodeChangeAnalyzer._calculate_complexity,method,(node) -> int,237-246,false,10,4,Calculate cyclomatic complexity of a function/method.
+      CodeChangeAnalyzer._analyze_js_diff,method,"(old_content:str, new_content:str) -> Dict[str, Any]",248-280,false,33,13,Analyze JavaScript/TypeScript changes using regex patterns.
+      CodeChangeAnalyzer._analyze_generic_diff,method,"(old_content:str, new_content:str) -> Dict[str, Any]",282-298,false,17,1,Generic diff analysis for non-code files.
+      CodeChangeAnalyzer._detect_functional_areas,method,"(entities:List[Dict], content:str) -> List[str]",300-317,false,18,7,Detect which functional areas are affected by changes.
+      CodeChangeAnalyzer.aggregate_changes,method,"(file_analyses:List[Dict[str,Any]]) -> Dict[str, Any]",319-348,false,30,3,Aggregate analysis results across multiple files.
+      CodeChangeAnalyzer.infer_functional_value,method,"(aggregated:Dict[str,Any], files:List[str]) -> str",350-425,false,76,38,Infer the functional value/impact of the changes.
+      CodeChangeAnalyzer.detect_relations,method,"(file_analyses:List[Dict[str,Any]]) -> List[Tuple[str, str, str]]",427-444,false,18,6,Detect relations between changed modules.
+      CodeChangeAnalyzer.generate_functional_summary,method,"(files:List[str]) -> Dict[str, Any]",446-481,false,36,5,Generate a complete functional summary of changes.
+      CodeChangeAnalyzer._build_summary,method,"(aggregated:Dict, value:str, relations:List) -> str",483-515,false,33,16,Build human-readable summary.
+  goal/smart_commit.py:
+    functions[21]{name,kind,sig,loc,async,lines,cc,does}:
+      create_smart_generator,function,"(config:Dict[str,Any]) -> SmartCommitGenerator",733-735,false,3,1,Factory function to create SmartCommitGenerator.
+      CodeAbstraction.__init__,method,"(config:Dict[str,Any])",26-33,false,8,1,Initialize with goal.yaml configuration.
+      CodeAbstraction.get_domain,method,"(filepath:str) -> str",35-55,false,21,12,Map filepath to domain using goal.yaml domain_mapping.
+      CodeAbstraction.get_language,method,"(filepath:str) -> str",57-60,false,4,1,Get programming language from file extension.
+      CodeAbstraction.extract_entities,method,"(filepath:str, diff_content:str) -> List[str]",62-111,false,50,20,"Extract code entities (functions, classes, etc.) from diff."
+      CodeAbstraction.extract_markdown_topics,method,"(diff_content:str) -> List[str]",113-140,false,28,9,"Extract meaningful topics from markdown changes, filtering out noise."
+      CodeAbstraction.infer_benefit,method,"(entities:List[str], domain:str, commit_type:str, files:List[str]=None, features:List[str]=None) -> str",142-196,false,55,11,"Infer business benefit from entities, files, and detected features."
+      CodeAbstraction.detect_features,method,"(files:List[str], entities:List[str]) -> List[str]",198-234,false,37,7,Detect high-level features from files and entities.
+      CodeAbstraction.determine_abstraction_level,method,"(analysis:Dict[str,Any]) -> str",236-256,false,21,6,Determine the best abstraction level based on analysis.
+      CodeAbstraction.get_action_verb,method,"(commit_type:str) -> str",258-271,false,14,1,Get action verb for commit type.
+      SmartCommitGenerator.__init__,method,"(config:Dict[str,Any])",277-281,false,5,1,Initialize with goal.yaml configuration.
+      SmartCommitGenerator.deep_analyzer,method,(),284-292,false,9,4,Lazy-load deep analyzer to avoid circular imports.
+      SmartCommitGenerator.analyze_changes,method,"(staged_files:List[str]=None) -> Dict[str, Any]",294-404,false,111,24,Analyze staged changes and extract abstractions.
+      SmartCommitGenerator._generate_functional_summary,method,"(analysis:Dict[str,Any]) -> str",406-454,false,49,22,Generate a human-readable functional summary of changes.
+      SmartCommitGenerator._get_staged_files,method,"() -> List[str]",456-465,false,10,4,Get list of staged files.
+      SmartCommitGenerator._get_file_diff,method,"(filepath:str) -> str",467-476,false,10,2,Get diff content for a specific file.
+      SmartCommitGenerator._infer_commit_type,method,"(analysis:Dict[str,Any]) -> str",478-514,false,37,11,Infer commit type from analysis.
+      SmartCommitGenerator.generate_message,method,"(analysis:Dict[str,Any]=None, level:str=None) -> str",516-618,false,103,46,Generate commit message based on analysis.
+      SmartCommitGenerator.generate_functional_body,method,"(analysis:Dict[str,Any]=None) -> str",620-667,false,48,13,"Generate a functional, human-readable commit body."
+      SmartCommitGenerator.generate_changelog_entry,method,"(analysis:Dict[str,Any]=None, commit_hash:str=None) -> Dict[str, Any]",669-711,false,43,4,Generate structured changelog entry.
+      SmartCommitGenerator.format_changelog_entry,method,"(entry:Dict[str,Any]) -> str",713-730,false,18,4,Format changelog entry as markdown.
+  goal/formatter.py:
+    functions[11]{name,kind,sig,loc,async,lines,cc,does}:
+      format_push_result,function,"(project_types:List[str], files:List[str], stats:Dict[str,tuple], current_version:str, new_version:str, commit_msg:str, commit_body:Optional[str]=None, test_result:Optional[str]=None) -> str",77-221,false,145,34,Format push command result as markdown.
+      format_enhanced_summary,function,"(commit_title:str, commit_body:str, capabilities:List[Dict[str,str]]=None, roles:List[Dict[str,str]]=None, relations:Dict[str,Any]=None, metrics:Dict[str,Any]=None, files:List[str]=None, stats:Dict[str,tuple]=None) -> str",224-317,false,94,29,Format enhanced business-value summary as markdown.
+      format_status_output,function,"(version:str, branch:str, staged_files:List[str], unstaged_files:List[str]) -> str",320-361,false,42,4,Format status command output as markdown.
+      MarkdownFormatter.__init__,method,(),11-13,false,3,1,creates
+      MarkdownFormatter.add_header,method,"(title:str, level:int=1)",15-17,false,3,1,Add markdown header.
+      MarkdownFormatter.add_metadata,method,(),19-21,false,3,1,Add metadata section.
+      MarkdownFormatter.add_section,method,"(title:str, content:str, code_block:bool=False, language:str='')",23-29,false,7,2,Add a section with optional code block.
+      MarkdownFormatter.add_list,method,"(title:str, items:List[str], ordered:bool=False)",31-36,false,6,3,Add a bulleted or numbered list.
+      MarkdownFormatter.add_command_output,method,"(command:str, output:str, exit_code:int=0)",38-44,false,7,2,Add command execution result.
+      MarkdownFormatter.add_summary,method,"(actions_taken:List[str], next_steps:List[str])",46-56,false,11,4,Add summary of actions and next steps.
+      MarkdownFormatter.render,method,() -> str,58-74,false,17,4,Render the complete markdown output.
