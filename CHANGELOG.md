@@ -1,3 +1,18 @@
+## [2.1.35] - 2026-02-15
+
+### Summary
+
+feat(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+
+### Build
+
+- update pyproject.toml
+
+
 ## [2.1.34] - 2026-02-15
 
 ### Summary

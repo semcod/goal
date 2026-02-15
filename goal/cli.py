@@ -15,6 +15,13 @@ from typing import Optional, List, Dict, Tuple
 
 import click
 try:
+    import nfo
+    from nfo.terminal import TerminalSink
+    _HAS_NFO = True
+except ImportError:
+    _HAS_NFO = False
+
+try:
     from .formatter import format_push_result, format_status_output, format_enhanced_summary
     from .commit_generator import CommitMessageGenerator
     from .config import GoalConfig, ensure_config, init_config, load_config
@@ -26,6 +33,31 @@ except ImportError:
     from config import GoalConfig, ensure_config, init_config, load_config
     from user_config import get_user_config, initialize_user_config, show_user_config
     from version_validation import validate_project_versions, check_readme_badges, update_badge_versions, format_validation_results
+
+
+def _setup_nfo_logging(nfo_format: str = "markdown", nfo_sink: str = ""):
+    """Configure nfo logging for the goal CLI session."""
+    if not _HAS_NFO:
+        return
+    sinks = [f"terminal:{nfo_format}"]
+    if nfo_sink:
+        sinks.append(nfo_sink)
+    nfo.configure(
+        name="goal",
+        level=os.environ.get("NFO_LEVEL", "INFO"),
+        sinks=sinks,
+        propagate_stdlib=False,
+        force=True,
+    )
+
+
+def _nfo_log_call(**kwargs):
+    """Conditional @nfo.log_call — no-op decorator when nfo is not installed."""
+    if _HAS_NFO:
+        return nfo.log_call(**kwargs)
+    def _passthrough(fn):
+        return fn
+    return _passthrough
 
 
 ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
@@ -253,6 +285,7 @@ def confirm(prompt: str, default: bool = True) -> bool:
             click.echo(click.style("Please respond with 'y' or 'n'", fg='red'))
 
 
+@_nfo_log_call(level='INFO')
 def detect_project_types() -> List[str]:
     """Detect what type(s) of project this is."""
     detected = []
@@ -552,6 +585,7 @@ def update_readme_metadata(user_config) -> bool:
     return False
 
 
+@_nfo_log_call(level='INFO')
 def sync_all_versions(new_version: str, user_config=None) -> List[str]:
     """Update version, author, and license in all detected project files."""
     updated = []
@@ -757,6 +791,7 @@ def extract_function_changes(diff_content: str) -> List[str]:
     return list(set(functions))[:5]  # Limit to 5
 
 
+@_nfo_log_call(level='INFO')
 def generate_smart_commit_message(files: List[str], diff_content: str) -> str:
     """Generate intelligent commit message based on diff analysis."""
     if not files:
@@ -802,6 +837,7 @@ def categorize_file(filename: str) -> Optional[str]:
 # Version Management
 # =============================================================================
 
+@_nfo_log_call(level='DEBUG')
 def get_current_version() -> str:
     """Get current version from VERSION file or detect from project files."""
     # Try to detect from project files
@@ -826,6 +862,7 @@ def get_current_version() -> str:
     return "1.0.0"
 
 
+@_nfo_log_call(level='INFO')
 def bump_version(version: str, bump_type: str = 'patch') -> str:
     """Bump version based on type (major, minor, patch)."""
     parts = version.split('.')
@@ -854,6 +891,7 @@ def bump_version(version: str, bump_type: str = 'patch') -> str:
 # Changelog Management
 # =============================================================================
 
+@_nfo_log_call(level='INFO')
 def update_changelog(version: str, files: List[str], commit_msg: str, 
                      config: Dict = None, changelog_entry: Dict = None):
     """Update CHANGELOG.md with new version and changes.
@@ -954,6 +992,7 @@ def get_remote_branch() -> str:
     return result.stdout.strip() if result.returncode == 0 else 'main'
 
 
+@_nfo_log_call(level='INFO')
 def run_tests(project_types: List[str]) -> bool:
     """Run tests for detected project types."""
     def is_poetry_project() -> bool:
@@ -1213,6 +1252,7 @@ def get_registry_help(project_type: str) -> str:
 """)
 
 
+@_nfo_log_call(level='INFO')
 def publish_project(project_types: List[str], version: str, yes: bool = False) -> bool:
     """Publish project for detected project types."""
     import sys
@@ -1458,9 +1498,17 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
               help='Path to goal.yaml config file')
 @click.option('--abstraction', type=click.Choice(['auto', 'high', 'medium', 'low', 'legacy']), 
               default='auto', help='Commit message abstraction level (default: auto)')
+@click.option('--nfo-format', default='markdown',
+              type=click.Choice(['ascii', 'color', 'markdown', 'toon', 'table']),
+              envvar='NFO_FORMAT', help='nfo log format (default: markdown)')
+@click.option('--nfo-sink', default='', envvar='NFO_SINK',
+              help='nfo sink spec for log persistence (e.g. sqlite:goal.db, md:goal-log.md)')
 @click.pass_context
-def main(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction):
+def main(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink):
     """Goal - Automated git push with smart commit messages."""
+    # Initialize nfo structured logging
+    _setup_nfo_logging(nfo_format=nfo_format, nfo_sink=nfo_sink)
+
     # Store output preference in context
     ctx.ensure_object(dict)
     ctx.obj['markdown'] = markdown
