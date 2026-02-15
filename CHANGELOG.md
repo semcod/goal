@@ -1,3 +1,14 @@
+## [2.1.30] - 2026-02-15
+
+### Summary
+
+feat(tests): deep code analysis engine with 3 supporting modules
+
+### Test
+
+- update test_version_validation.py
+
+
 ## [2.1.29] - 2026-02-15
 
 ### Summary
