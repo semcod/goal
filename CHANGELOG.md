@@ -1,3 +1,45 @@
+## [2.1.33] - 2026-02-15
+
+### Summary
+
+refactor(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+- update goal/enhanced_summary.py
+
+
+## [2.1.33] - 2026-02-15
+
+### Summary
+
+feat(goal): version validation and registry checking
+
+### Added
+
+- **Version validation system** (`goal/version_validation.py`) - Validates version consistency across project files
+- **Registry version checking** - Checks PyPI, npm, crates.io, RubyGems for published versions
+- **README badge validation** - Verifies and updates version badges in README.md
+- **`goal check-versions` command** - Manual version validation with `--update-badges` flag
+- **Auto-validation in publish** - Warns about version mismatches before publishing
+
+### Changed
+
+- **Commit message format** - Changed from ASCII tree to valid YAML structure
+- **CLI improvements** - Better `--all` mode feedback with "🤖 AUTO" indicators
+
+### Core
+
+- Add `goal/version_validation.py` - Registry API integration and badge management
+- Update `goal/cli.py` - Integrate version validation into publish workflow
+- Update `goal/enhanced_summary.py` - YAML format for commit messages
+
+### Test
+
+- Add `test_version_validation.py` - Comprehensive test suite for validation
+
+
 ## [2.1.32] - 2026-02-15
 
 ### Summary

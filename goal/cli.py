@@ -1253,11 +1253,14 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
         if badge_check["needs_update"]:
             click.echo(click.style(f"  ⚠️  {badge_check['message']}", fg='yellow'))
             if confirm("Update README badges now?", default=True):
+                click.echo(click.style("  🤖 AUTO: Updating README badges (user chose Y)", fg='cyan'))
                 if update_badge_versions(Path('README.md'), version):
                     click.echo(click.style("  ✅ README badges updated", fg='green'))
                     run_git('add', 'README.md')
                 else:
                     click.echo(click.style("  ❌ Failed to update README badges", fg='red'))
+            else:
+                click.echo(click.style("  🤖 AUTO: Skipping README badges update (user chose N)", fg='cyan'))
         else:
             click.echo(click.style(f"  ✅ {badge_check['message']}", fg='green'))
     else:
@@ -1648,7 +1651,12 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                     if suggested_title and suggested_title.strip() and suggested_title != commit_msg:
                         apply_fix = True
                         if not yes:
-                            apply_fix = confirm(f"Apply suggested title?\n\nCurrent: {commit_msg}\nSuggested: {suggested_title}")
+                            if confirm(f"Apply suggested title?\n\nCurrent: {commit_msg}\nSuggested: {suggested_title}"):
+                                click.echo(click.style("  🤖 AUTO: Applying suggested title (user chose Y)", fg='cyan'))
+                                apply_fix = True
+                            else:
+                                click.echo(click.style("  🤖 AUTO: Keeping original title (user chose N)", fg='cyan'))
+                                apply_fix = False
 
                         if apply_fix:
                             commit_msg = suggested_title
@@ -1845,6 +1853,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             if not test_success:
                 test_exit_code = 1
                 if not confirm("Tests failed. Continue anyway?", default=False):
+                    click.echo(click.style("  🤖 AUTO: Aborting due to test failures (user chose N)", fg='cyan'))
                     # Output markdown if requested
                     if markdown or ctx.obj.get('markdown'):
                         md_output = format_push_result(
@@ -1864,7 +1873,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                     click.echo(click.style("Aborted.", fg='red'))
                     sys.exit(1)
         else:
-            click.echo(click.style("Skipping tests.", fg='yellow'))
+            click.echo(click.style("  🤖 AUTO: Skipping tests (user chose N)", fg='cyan'))
     else:
         # When --yes or --all is used, run tests automatically
         click.echo(click.style("\n🤖 AUTO: Running tests (--all mode)", fg='cyan'))
@@ -1893,6 +1902,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     # Commit stage
     if not yes:
         if not confirm("Commit changes?"):
+            click.echo(click.style("  🤖 AUTO: Aborting commit (user chose N)", fg='cyan'))
             click.echo(click.style("Aborted.", fg='red'))
             sys.exit(1)
     else:
@@ -2033,7 +2043,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             
             click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
         else:
-            click.echo(click.style("Skipping push.", fg='yellow'))
+            click.echo(click.style("  🤖 AUTO: Skipping push (user chose N)", fg='yellow'))
     else:
         # Auto-push
         click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg='cyan'))
@@ -2060,7 +2070,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                 sys.exit(1)
             click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
         else:
-            click.echo(click.style("Skipping publish.", fg='yellow'))
+            click.echo(click.style("  🤖 AUTO: Skipping publish (user chose N)", fg='yellow'))
     else:
         # Auto-publish when --yes or --all is used
         click.echo(click.style(f"\n🤖 AUTO: Publishing version {new_version} (--all mode)", fg='cyan'))
