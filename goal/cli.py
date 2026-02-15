@@ -408,8 +408,8 @@ def update_project_metadata(filepath: Path, user_config) -> bool:
                         if line and not line.startswith('#'):
                             author_entries.append(line.rstrip(','))
                     
-                    # Add new author
-                    new_author = f'{{name = "{author_name}", email = "{author_email}"}}'
+                    # Add new author in Poetry format (string, not table)
+                    new_author = f'"{author_name} <{author_email}>"'
                     author_entries.append(new_author)
                     
                     # Rebuild authors list

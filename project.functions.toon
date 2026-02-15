@@ -1,11 +1,11 @@
 project: goal
-generated: "2026-02-15T09:28:12.411762"
+generated: "2026-02-15T10:09:31.160099"
 modules[13]{path,lang,items}:
   test_version_validation.py,python,14
   tests/test_cli_options.py,python,4
   goal/config.py,python,25
   goal/enhanced_summary.py,python,32
-  goal/cli.py,python,52
+  goal/cli.py,python,54
   goal/user_config.py,python,12
   goal/version_validation.py,python,10
   goal/commit_generator.py,python,17
@@ -100,59 +100,61 @@ function_details:
       EnhancedSummaryGenerator._format_enhanced_body,method,"(capabilities:List[Dict], roles:List[Dict], relations:Dict, metrics:Dict, files:List[str], aggregated:Dict) -> str",1053-1146,false,94,25,Format the enhanced commit body.
       EnhancedSummaryGenerator.validate_summary_quality,method,"(title:str, body:str) -> Dict[str, Any]",1148-1181,false,34,8,Validate summary against quality thresholds.
   goal/cli.py:
-    functions[52]{name,kind,sig,loc,async,lines,cc,does}:
-      strip_ansi,function,"(text:str) -> str",34-38,false,5,2,strip ansi
-      read_tickert,function,"(path:Path=Path('TICKET')) -> Dict[str, str]",41-57,false,17,7,Read TICKET configuration file (key=value).
-      apply_ticket_prefix,function,"(title:str, ticket:Optional[str]) -> str",60-70,false,11,6,Apply ticket prefix (from CLI or TICKERT) to commit title.
-      split_paths_by_type,function,"(paths:List[str]) -> Dict[str, List[str]]",73-89,false,17,15,Split file paths into groups (code/docs/ci/examples/other).
-      stage_paths,function,"(paths:List[str])",92-103,false,12,5,stage paths
-      run_git,function,(),194-201,false,8,1,Run a git command and return the result.
-      run_command,function,"(command:str, capture:bool=True) -> subprocess.CompletedProcess",204-211,false,8,1,Run a shell command and return the result.
-      run_command_tee,function,"(command:str) -> subprocess.CompletedProcess",214-232,false,19,3,starts command tee
-      confirm,function,"(prompt:str, default:bool=True) -> bool",235-253,false,19,6,Ask for user confirmation with Y/n prompt (Enter defaults to Yes).
-      detect_project_types,function,"() -> List[str]",256-268,false,13,6,Detect what type(s) of project this is.
-      find_version_files,function,"() -> Dict[str, Path]",271-281,false,11,6,Find all version-containing files in the project.
-      get_version_from_file,function,"(filepath:Path, pattern:str) -> Optional[str]",284-293,false,10,3,Extract version from a file using regex pattern.
-      update_version_in_file,function,"(filepath:Path, pattern:str, old_version:str, new_version:str) -> bool",296-313,false,18,3,Update version in a specific file.
-      update_json_version,function,"(filepath:Path, new_version:str) -> bool",316-326,false,11,3,"Update version in JSON files (package.json, composer.json)."
-      update_project_metadata,function,"(filepath:Path, user_config) -> bool",329-458,false,130,26,Update author and license in project files based on user config.
-      update_readme_metadata,function,(user_config) -> bool,461-552,false,92,10,Update license badges and author info in README.md based on user config.
-      sync_all_versions,function,"(new_version:str, user_config=None) -> List[str]",555-650,false,96,27,"Update version, author, and license in all detected project files."
-      get_staged_files,function,"() -> List[str]",657-660,false,4,2,Get list of staged files.
-      get_unstaged_files,function,"() -> List[str]",663-666,false,4,3,Get list of unstaged/untracked files.
-      get_working_tree_files,function,"() -> List[str]",669-681,false,13,5,Get list of files changed in working tree (unstaged + untracked).
-      get_diff_stats,function,"(cached:bool=True) -> Dict[str, Tuple[int, int]]",684-695,false,12,7,Get additions/deletions per file.
-      get_diff_content,function,"(cached:bool=True) -> str",698-701,false,4,2,Get the actual diff content for analysis.
-      analyze_diff_for_type,function,"(diff_content:str, files:List[str]) -> str",704-738,false,35,18,Analyze diff content to determine commit type.
-      extract_function_changes,function,"(diff_content:str) -> List[str]",741-757,false,17,2,Extract changed function/method names from diff.
-      generate_smart_commit_message,function,"(files:List[str], diff_content:str) -> str",760-767,false,8,2,Generate intelligent commit message based on diff analysis.
-      categorize_file,function,"(filename:str) -> Optional[str]",770-798,false,29,11,Categorize file and return appropriate description.
-      get_current_version,function,() -> str,805-826,false,22,7,Get current version from VERSION file or detect from project files.
-      bump_version,function,"(version:str, bump_type:str='patch') -> str",829-850,false,22,5,"Bump version based on type (major, minor, patch)."
-      update_changelog,function,"(version:str, files:List[str], commit_msg:str, config:Dict=None, changelog_entry:Dict=None)",857-948,false,92,27,Update CHANGELOG.md with new version and changes.
-      get_remote_branch,function,() -> str,951-954,false,4,2,Get the current branch name.
-      run_tests,function,"(project_types:List[str]) -> bool",957-1104,false,148,14,Run tests for detected project types.
-      get_registry_help,function,"(project_type:str) -> str",1107-1213,false,107,1,Get help message for configuring registry authentication.
-      publish_project,function,"(project_types:List[str], version:str, yes:bool=False) -> bool",1216-1446,false,231,70,Publish project for detected project types.
-      main,function,"(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction)",1462-1494,false,33,7,Goal - Automated git push with smart commit messages.
-      push,function,"(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes)",1512-2108,false,597,159,"Add, commit, tag, and push changes to remote."
-      makefile_has_target,function,"(target:str) -> bool",2111-2119,false,9,4,makefile has target
-      publish,function,"(ctx, use_make, target, version)",2127-2143,false,17,7,Publish the current project (optionally using Makefile).
-      status,function,"(ctx, markdown)",2149-2187,false,39,11,Show current git status and version info.
-      commit,function,"(ctx, detailed, unstaged, markdown, ticket, abstraction)",2198-2233,false,36,11,Generate a smart commit message for current changes.
-      version,function,(bump_type),2239-2244,false,6,1,Show or bump version.
-      init,function,"(ctx, force)",2250-2317,false,68,17,"Initialize goal in current repository (creates VERSION, CHANGELOG.md, and goal.y..."
-      info,function,(),2321-2392,false,72,20,Show detailed project information and version status.
-      config,function,(ctx),2397-2399,false,3,1,Manage goal.yaml configuration.
-      config_show,function,"(ctx, key)",2405-2424,false,20,5,Show current configuration.
-      config_validate,function,(ctx),2429-2446,false,18,5,Validate goal.yaml configuration.
-      config_update,function,(ctx),2451-2465,false,15,4,Update goal.yaml based on project detection.
-      config_set,function,"(ctx, key, value)",2472-2491,false,20,4,Set a configuration value (dot notation key).
-      config_get,function,"(ctx, key)",2497-2513,false,17,4,Get a configuration value (dot notation key).
-      validate,function,"(ctx, fix, cached)",2521-2596,false,76,15,Validate commit summary against quality gates.
-      fix_summary,function,"(ctx, auto_fix, preview, cached)",2605-2669,false,65,11,Auto-fix commit summary quality issues.
-      check_versions_command,function,(update_badges),2674-2762,false,89,20,Check version consistency across registries and README badges.
-      config_command,function,"(reset, show)",2768-2782,false,15,2,Manage goal user configuration.
+    functions[54]{name,kind,sig,loc,async,lines,cc,does}:
+      _setup_nfo_logging,function,"(nfo_format:str='markdown', nfo_sink:str='')",38-51,false,14,3,Configure nfo logging for the goal CLI session.
+      _nfo_log_call,function,(),54-60,false,7,2,Conditional @nfo.log_call — no-op decorator when nfo is not installed.
+      strip_ansi,function,"(text:str) -> str",66-70,false,5,2,strip ansi
+      read_tickert,function,"(path:Path=Path('TICKET')) -> Dict[str, str]",73-89,false,17,7,Read TICKET configuration file (key=value).
+      apply_ticket_prefix,function,"(title:str, ticket:Optional[str]) -> str",92-102,false,11,6,Apply ticket prefix (from CLI or TICKERT) to commit title.
+      split_paths_by_type,function,"(paths:List[str]) -> Dict[str, List[str]]",105-121,false,17,15,Split file paths into groups (code/docs/ci/examples/other).
+      stage_paths,function,"(paths:List[str])",124-135,false,12,5,stage paths
+      run_git,function,(),226-233,false,8,1,Run a git command and return the result.
+      run_command,function,"(command:str, capture:bool=True) -> subprocess.CompletedProcess",236-243,false,8,1,Run a shell command and return the result.
+      run_command_tee,function,"(command:str) -> subprocess.CompletedProcess",246-264,false,19,3,starts command tee
+      confirm,function,"(prompt:str, default:bool=True) -> bool",267-285,false,19,6,Ask for user confirmation with Y/n prompt (Enter defaults to Yes).
+      detect_project_types,function,"() -> List[str]",289-301,false,13,6,Detect what type(s) of project this is.
+      find_version_files,function,"() -> Dict[str, Path]",304-314,false,11,6,Find all version-containing files in the project.
+      get_version_from_file,function,"(filepath:Path, pattern:str) -> Optional[str]",317-326,false,10,3,Extract version from a file using regex pattern.
+      update_version_in_file,function,"(filepath:Path, pattern:str, old_version:str, new_version:str) -> bool",329-346,false,18,3,Update version in a specific file.
+      update_json_version,function,"(filepath:Path, new_version:str) -> bool",349-359,false,11,3,"Update version in JSON files (package.json, composer.json)."
+      update_project_metadata,function,"(filepath:Path, user_config) -> bool",362-491,false,130,26,Update author and license in project files based on user config.
+      update_readme_metadata,function,(user_config) -> bool,494-585,false,92,10,Update license badges and author info in README.md based on user config.
+      sync_all_versions,function,"(new_version:str, user_config=None) -> List[str]",589-684,false,96,27,"Update version, author, and license in all detected project files."
+      get_staged_files,function,"() -> List[str]",691-694,false,4,2,Get list of staged files.
+      get_unstaged_files,function,"() -> List[str]",697-700,false,4,3,Get list of unstaged/untracked files.
+      get_working_tree_files,function,"() -> List[str]",703-715,false,13,5,Get list of files changed in working tree (unstaged + untracked).
+      get_diff_stats,function,"(cached:bool=True) -> Dict[str, Tuple[int, int]]",718-729,false,12,7,Get additions/deletions per file.
+      get_diff_content,function,"(cached:bool=True) -> str",732-735,false,4,2,Get the actual diff content for analysis.
+      analyze_diff_for_type,function,"(diff_content:str, files:List[str]) -> str",738-772,false,35,18,Analyze diff content to determine commit type.
+      extract_function_changes,function,"(diff_content:str) -> List[str]",775-791,false,17,2,Extract changed function/method names from diff.
+      generate_smart_commit_message,function,"(files:List[str], diff_content:str) -> str",795-802,false,8,2,Generate intelligent commit message based on diff analysis.
+      categorize_file,function,"(filename:str) -> Optional[str]",805-833,false,29,11,Categorize file and return appropriate description.
+      get_current_version,function,() -> str,841-862,false,22,7,Get current version from VERSION file or detect from project files.
+      bump_version,function,"(version:str, bump_type:str='patch') -> str",866-887,false,22,5,"Bump version based on type (major, minor, patch)."
+      update_changelog,function,"(version:str, files:List[str], commit_msg:str, config:Dict=None, changelog_entry:Dict=None)",895-986,false,92,27,Update CHANGELOG.md with new version and changes.
+      get_remote_branch,function,() -> str,989-992,false,4,2,Get the current branch name.
+      run_tests,function,"(project_types:List[str]) -> bool",996-1143,false,148,14,Run tests for detected project types.
+      get_registry_help,function,"(project_type:str) -> str",1146-1252,false,107,1,Get help message for configuring registry authentication.
+      publish_project,function,"(project_types:List[str], version:str, yes:bool=False) -> bool",1256-1486,false,231,70,Publish project for detected project types.
+      main,function,"(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction)",1507-1542,false,36,7,Goal - Automated git push with smart commit messages.
+      push,function,"(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes)",1560-2156,false,597,159,"Add, commit, tag, and push changes to remote."
+      makefile_has_target,function,"(target:str) -> bool",2159-2167,false,9,4,makefile has target
+      publish,function,"(ctx, use_make, target, version)",2175-2191,false,17,7,Publish the current project (optionally using Makefile).
+      status,function,"(ctx, markdown)",2197-2235,false,39,11,Show current git status and version info.
+      commit,function,"(ctx, detailed, unstaged, markdown, ticket, abstraction)",2246-2281,false,36,11,Generate a smart commit message for current changes.
+      version,function,(bump_type),2287-2292,false,6,1,Show or bump version.
+      init,function,"(ctx, force)",2298-2365,false,68,17,"Initialize goal in current repository (creates VERSION, CHANGELOG.md, and goal.y..."
+      info,function,(),2369-2440,false,72,20,Show detailed project information and version status.
+      config,function,(ctx),2445-2447,false,3,1,Manage goal.yaml configuration.
+      config_show,function,"(ctx, key)",2453-2472,false,20,5,Show current configuration.
+      config_validate,function,(ctx),2477-2494,false,18,5,Validate goal.yaml configuration.
+      config_update,function,(ctx),2499-2513,false,15,4,Update goal.yaml based on project detection.
+      config_set,function,"(ctx, key, value)",2520-2539,false,20,4,Set a configuration value (dot notation key).
+      config_get,function,"(ctx, key)",2545-2561,false,17,4,Get a configuration value (dot notation key).
+      validate,function,"(ctx, fix, cached)",2569-2644,false,76,15,Validate commit summary against quality gates.
+      fix_summary,function,"(ctx, auto_fix, preview, cached)",2653-2717,false,65,11,Auto-fix commit summary quality issues.
+      check_versions_command,function,(update_badges),2722-2810,false,89,20,Check version consistency across registries and README badges.
+      config_command,function,"(reset, show)",2816-2830,false,15,2,Manage goal user configuration.
   goal/user_config.py:
     functions[12]{name,kind,sig,loc,async,lines,cc,does}:
       get_git_user_name,function,"() -> Optional[str]",72-85,false,14,3,Get git user.name from git config.
