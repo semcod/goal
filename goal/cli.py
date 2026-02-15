@@ -1243,7 +1243,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                 click.echo(click.style("Publishing cancelled due to version conflicts.", fg='yellow'))
                 return False
         else:
-            click.echo(click.style("  Auto-continuing due to auto-publish mode", fg='cyan'))
+            click.echo(click.style("  🤖 AUTO: Accepting version conflict and continuing (--all mode)", fg='cyan'))
     
     # Check README badges
     click.echo(click.style("\n🔍 Checking README badges...", fg='cyan', bold=True))
@@ -1867,7 +1867,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             click.echo(click.style("Skipping tests.", fg='yellow'))
     else:
         # When --yes or --all is used, run tests automatically
-        click.echo(click.style("\nRunning tests...", fg='cyan'))
+        click.echo(click.style("\n🤖 AUTO: Running tests (--all mode)", fg='cyan'))
         test_success = run_tests(project_types)
         if not test_success:
             test_exit_code = 1
@@ -1895,6 +1895,8 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         if not confirm("Commit changes?"):
             click.echo(click.style("Aborted.", fg='red'))
             sys.exit(1)
+    else:
+        click.echo(click.style("🤖 AUTO: Committing changes (--all mode)", fg='cyan'))
 
     # Split commits per group if requested (single push at end)
     if split and not message:
@@ -2034,6 +2036,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             click.echo(click.style("Skipping push.", fg='yellow'))
     else:
         # Auto-push
+        click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg='cyan'))
         branch = get_remote_branch()
         result = run_git('push', 'origin', branch, capture=False)
         
@@ -2060,7 +2063,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             click.echo(click.style("Skipping publish.", fg='yellow'))
     else:
         # Auto-publish when --yes or --all is used
-        click.echo(click.style(f"\nPublishing version {new_version}...", fg='cyan'))
+        click.echo(click.style(f"\n🤖 AUTO: Publishing version {new_version} (--all mode)", fg='cyan'))
         if not publish_project(project_types, new_version, yes):
             click.echo(click.style("Publish failed. Check the output above.", fg='red'))
             sys.exit(1)
