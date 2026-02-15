@@ -1213,7 +1213,7 @@ def get_registry_help(project_type: str) -> str:
 """)
 
 
-def publish_project(project_types: List[str], version: str) -> bool:
+def publish_project(project_types: List[str], version: str, yes: bool = False) -> bool:
     """Publish project for detected project types."""
     import sys
     
@@ -1238,9 +1238,12 @@ def publish_project(project_types: List[str], version: str) -> bool:
     
     if has_conflicts:
         click.echo(click.style("\n⚠️  Version conflicts detected!", fg='yellow', bold=True))
-        if not confirm("Continue publishing anyway?", default=False):
-            click.echo(click.style("Publishing cancelled due to version conflicts.", fg='yellow'))
-            return False
+        if not yes:
+            if not confirm("Continue publishing anyway?", default=False):
+                click.echo(click.style("Publishing cancelled due to version conflicts.", fg='yellow'))
+                return False
+        else:
+            click.echo(click.style("  Auto-continuing due to auto-publish mode", fg='cyan'))
     
     # Check README badges
     click.echo(click.style("\n🔍 Checking README badges...", fg='cyan', bold=True))
@@ -2049,7 +2052,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     # Publish stage
     if not yes:
         if confirm(f"Publish version {new_version}?"):
-            if not publish_project(project_types, new_version):
+            if not publish_project(project_types, new_version, yes):
                 click.echo(click.style("Publish failed. Check the output above.", fg='red'))
                 sys.exit(1)
             click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
@@ -2058,7 +2061,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     else:
         # Auto-publish when --yes or --all is used
         click.echo(click.style(f"\nPublishing version {new_version}...", fg='cyan'))
-        if not publish_project(project_types, new_version):
+        if not publish_project(project_types, new_version, yes):
             click.echo(click.style("Publish failed. Check the output above.", fg='red'))
             sys.exit(1)
         click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
@@ -2123,7 +2126,7 @@ def publish(ctx, use_make, target, version):
     if version is None:
         version = get_current_version()
 
-    if not publish_project(project_types, version):
+    if not publish_project(project_types, version, False):
         sys.exit(1)
 
 

@@ -1062,34 +1062,20 @@ class EnhancedSummaryGenerator:
         # NEW CAPABILITIES section
         if capabilities:
             cap_lines = ["NEW CAPABILITIES:"]
-            for i, cap in enumerate(capabilities[:5]):
-                prefix = "├──" if i < len(capabilities) - 1 else "└──"
-                cap_lines.append(f"{prefix} {cap['capability']}: {cap['impact']}")
+            for cap in capabilities[:5]:
+                cap_lines.append(f"  - {cap['capability']}: {cap['impact']}")
             sections.append('\n'.join(cap_lines))
         
         # FUNCTIONAL ROLES section (instead of raw entity names)
         if roles:
             role_lines = ["FUNCTIONAL COMPONENTS:"]
             for role in roles[:5]:
-                role_lines.append(f"✅ {role['role']} ({role['name']})")
+                role_lines.append(f"  - {role['role']} ({role['name']})")
             sections.append('\n'.join(role_lines))
 
         # ARCHITECTURE section - show concrete file names per category
         categorized = self.quality_filter.categorize_files(files)
         if categorized:
-            icon_map = {
-                'analyzer': '🔬',
-                'cli': '🤖',
-                'quality': '📊',
-                'test': '🧪',
-                'config': '⚙️',
-                'docs': '📚',
-                'api': '🌐',
-                'service': '🧠',
-                'model': '📦',
-                'util': '🔧',
-                'core': '🧩',
-            }
             layer_keys = {'analyzer', 'cli', 'quality'}
             header = "3-LAYER ARCHITECTURE:" if (set(categorized.keys()) & layer_keys) else "ARCHITECTURE:"
             arch_lines = [header]
@@ -1097,8 +1083,7 @@ class EnhancedSummaryGenerator:
                 names = [Path(f).name for f in cat_files]
                 shown = names[:4]
                 suffix = f", +{len(names) - 4} more" if len(names) > 4 else ""
-                icon = icon_map.get(category, '📦')
-                arch_lines.append(f"{icon} {category} ({len(names)} files): {', '.join(shown)}{suffix}")
+                arch_lines.append(f"  - {category} ({len(names)} files): {', '.join(shown)}{suffix}")
             sections.append('\n'.join(arch_lines))
         
         # IMPACT METRICS section
@@ -1110,24 +1095,24 @@ class EnhancedSummaryGenerator:
             deleted = metrics.get('lines_deleted', 0)
             if added or deleted:
                 emoji, desc = self.quality_filter.format_net_lines(added, deleted)
-                metric_lines.append(f"{emoji} {desc}")
+                metric_lines.append(f"  lines: {desc}")
             
             # Show relation count 
             rel_count = len(relations.get('relations', []))
             if rel_count > 0:
                 chain = relations.get('chain', '')
                 if chain:
-                    metric_lines.append(f"🔗 {chain} ({rel_count} clean relations)")
+                    metric_lines.append(f"  relations: {chain} ({rel_count} clean relations)")
                 else:
-                    metric_lines.append(f"🔗 Relations: {rel_count} clean relations")
+                    metric_lines.append(f"  relations: {rel_count} clean relations")
             
             # Test coverage
             test_files = sum(1 for f in files if 'test' in f.lower())
             if test_files > 0:
                 coverage_pct = int(test_files / len(files) * 100) if files else 0
-                metric_lines.append(f"🧪 Test coverage: {test_files}/{len(files)} files ({coverage_pct}%)")
+                metric_lines.append(f"  test_coverage: {test_files}/{len(files)} files ({coverage_pct}%)")
             
-            metric_lines.append(f"⭐ Framework score: {metrics['value_score']}/100")
+            metric_lines.append(f"  framework_score: {metrics['value_score']}/100")
             sections.append('\n'.join(metric_lines))
         
         # RELATIONS section - show concrete dependency paths
@@ -1135,18 +1120,12 @@ class EnhancedSummaryGenerator:
             rel_lines = ["DEPENDENCY FLOW:"]
             chain = relations.get('chain', '')
             if chain:
-                rel_lines.append(f"  Chain: {chain}")
+                rel_lines.append(f"  chain: {chain}")
 
             # Show concrete edges (not just counts)
-            rel_lines.append("  Relations:")
+            rel_lines.append("  relations:")
             for r in relations.get('relations', [])[:8]:
-                rel_lines.append(f"  - {r.get('from')}.py → {r.get('to')}.py")
-
-            # Add ASCII visualization if available
-            if relations.get('ascii') and len(relations['relations']) > 1:
-                rel_lines.append("")
-                for line in relations['ascii'].split('\n'):
-                    rel_lines.append(f"  {line}")
+                rel_lines.append(f"    - {r.get('from')}.py → {r.get('to')}.py")
             sections.append('\n'.join(rel_lines))
         
         # FILES section (summary counts)
