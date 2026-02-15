@@ -18,10 +18,12 @@ try:
     from .formatter import format_push_result, format_status_output, format_enhanced_summary
     from .commit_generator import CommitMessageGenerator
     from .config import GoalConfig, ensure_config, init_config, load_config
+    from .user_config import get_user_config, initialize_user_config, show_user_config
 except ImportError:
     from formatter import format_push_result, format_status_output, format_enhanced_summary
     from commit_generator import CommitMessageGenerator
     from config import GoalConfig, ensure_config, init_config, load_config
+    from user_config import get_user_config, initialize_user_config, show_user_config
 
 
 ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
@@ -322,8 +324,234 @@ def update_json_version(filepath: Path, new_version: str) -> bool:
     return False
 
 
-def sync_all_versions(new_version: str) -> List[str]:
-    """Update version in all detected project files."""
+def update_project_metadata(filepath: Path, user_config) -> bool:
+    """Update author and license in project files based on user config.
+    
+    Intelligently adds authors if not present, preserving existing authors.
+    """
+    if not user_config:
+        return False
+    
+    try:
+        author_name = user_config.get('author_name')
+        author_email = user_config.get('author_email')
+        license_id = user_config.get('license')
+        license_classifier = user_config.get('license_classifier')
+        
+        if not all([author_name, author_email, license_id]):
+            return False
+        
+        content = filepath.read_text()
+        original_content = content
+        
+        # Update pyproject.toml
+        if filepath.name == 'pyproject.toml':
+            # Update license
+            content = re.sub(
+                r'^license\s*=\s*[{\[].*?[}\]]',
+                f'license = {{text = "{license_id}"}}',
+                content,
+                flags=re.MULTILINE
+            )
+            content = re.sub(
+                r'^license\s*=\s*["\'].*?["\']',
+                f'license = "{license_id}"',
+                content,
+                flags=re.MULTILINE
+            )
+            
+            # Smart author update - add if not present
+            authors_match = re.search(r'authors\s*=\s*\[(.*?)\]', content, re.DOTALL)
+            if authors_match:
+                existing_authors = authors_match.group(1)
+                # Check if this author already exists
+                if author_email not in existing_authors:
+                    # Parse existing authors
+                    author_entries = []
+                    for line in existing_authors.split('\n'):
+                        line = line.strip()
+                        if line and not line.startswith('#'):
+                            author_entries.append(line.rstrip(','))
+                    
+                    # Add new author
+                    new_author = f'{{name = "{author_name}", email = "{author_email}"}}'
+                    author_entries.append(new_author)
+                    
+                    # Rebuild authors list
+                    authors_block = 'authors = [\n'
+                    for entry in author_entries:
+                        authors_block += f'    {entry},\n'
+                    authors_block += ']'
+                    
+                    content = re.sub(
+                        r'authors\s*=\s*\[.*?\]',
+                        authors_block,
+                        content,
+                        flags=re.DOTALL
+                    )
+            
+            # Update license classifier if present
+            if license_classifier:
+                content = re.sub(
+                    r'"License :: OSI Approved :: .*?"',
+                    f'"{license_classifier}"',
+                    content
+                )
+        
+        # Update package.json
+        elif filepath.name == 'package.json':
+            data = json.loads(content)
+            new_author = f"{author_name} <{author_email}>"
+            
+            # Check if author field exists and is different
+            if 'author' not in data or data['author'] != new_author:
+                # If author exists but is different, create contributors array
+                if 'author' in data and data['author'] and data['author'] != new_author:
+                    if 'contributors' not in data:
+                        data['contributors'] = []
+                    if new_author not in data['contributors']:
+                        data['contributors'].append(new_author)
+                else:
+                    data['author'] = new_author
+            
+            data['license'] = license_id
+            content = json.dumps(data, indent=2) + '\n'
+        
+        # Update Cargo.toml
+        elif filepath.name == 'Cargo.toml':
+            # Update license
+            content = re.sub(
+                r'^license\s*=\s*".*?"',
+                f'license = "{license_id}"',
+                content,
+                flags=re.MULTILINE
+            )
+            
+            # Smart author update
+            authors_match = re.search(r'^authors\s*=\s*\[(.*?)\]', content, re.MULTILINE | re.DOTALL)
+            if authors_match:
+                existing_authors = authors_match.group(1)
+                new_author_entry = f'"{author_name} <{author_email}>"'
+                
+                if author_email not in existing_authors:
+                    # Parse existing
+                    author_list = [a.strip().rstrip(',') for a in existing_authors.split('\n') if a.strip()]
+                    author_list.append(new_author_entry)
+                    
+                    authors_block = 'authors = [' + ', '.join(author_list) + ']'
+                    content = re.sub(
+                        r'^authors\s*=\s*\[.*?\]',
+                        authors_block,
+                        content,
+                        flags=re.MULTILINE | re.DOTALL
+                    )
+        
+        if content != original_content:
+            filepath.write_text(content)
+            return True
+            
+    except Exception:
+        pass
+    
+    return False
+
+
+def update_readme_metadata(user_config) -> bool:
+    """Update license badges and author info in README.md based on user config."""
+    if not user_config:
+        return False
+    
+    readme_path = Path('README.md')
+    if not readme_path.exists():
+        return False
+    
+    try:
+        author_name = user_config.get('author_name')
+        author_email = user_config.get('author_email')
+        license_id = user_config.get('license')
+        license_name = user_config.get('license_name')
+        
+        if not all([author_name, author_email, license_id]):
+            return False
+        
+        content = readme_path.read_text()
+        original_content = content
+        
+        # Badge patterns for different licenses
+        license_badges = {
+            'Apache-2.0': '[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)',
+            'MIT': '[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)',
+            'GPL-3.0': '[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)',
+            'BSD-3-Clause': '[![License: BSD-3](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)',
+            'GPL-2.0': '[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)',
+            'LGPL-3.0': '[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)',
+            'AGPL-3.0': '[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)',
+            'MPL-2.0': '[![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)',
+        }
+        
+        new_badge = license_badges.get(license_id, f'[![License]](https://img.shields.io/badge/License-{license_id}-blue.svg)')
+        
+        # Update license badges
+        content = re.sub(
+            r'\[!\[License[^\]]*\]\([^\)]+\)\]\([^\)]+\)',
+            new_badge,
+            content
+        )
+        
+        # Update ## License section
+        license_section_pattern = r'(## License\s*\n\s*\n)([^\n#]+)'
+        if re.search(license_section_pattern, content):
+            license_text = f'{license_name} - see [LICENSE](LICENSE) for details.'
+            content = re.sub(
+                license_section_pattern,
+                rf'\1{license_text}',
+                content
+            )
+        else:
+            # Add License section if missing (before last line or ## Author if exists)
+            if '## Author' in content:
+                content = re.sub(
+                    r'(## Author)',
+                    f'## License\n\n{license_name} - see [LICENSE](LICENSE) for details.\n\n\\1',
+                    content
+                )
+            else:
+                # Add at the end
+                content = content.rstrip() + f'\n\n## License\n\n{license_name} - see [LICENSE](LICENSE) for details.\n'
+        
+        # Update or add ## Author section
+        author_section = f'## Author\n\nCreated by **{author_name}** - [{author_email}](mailto:{author_email})'
+        
+        if re.search(r'## Author', content):
+            # Update existing
+            content = re.sub(
+                r'## Author\s*\n\s*\n[^\n#]+',
+                author_section,
+                content
+            )
+        else:
+            # Add after License section or at the end
+            if '## License' in content:
+                content = re.sub(
+                    r'(## License\s*\n\s*\n[^\n#]+)',
+                    rf'\1\n\n{author_section}',
+                    content
+                )
+            else:
+                content = content.rstrip() + f'\n\n{author_section}\n'
+        
+        if content != original_content:
+            readme_path.write_text(content)
+            return True
+            
+    except Exception:
+        pass
+    
+    return False
+
+
+def sync_all_versions(new_version: str, user_config=None) -> List[str]:
+    """Update version, author, and license in all detected project files."""
     updated = []
     
     # Always update VERSION file
@@ -334,6 +562,10 @@ def sync_all_versions(new_version: str) -> List[str]:
     if Path('package.json').exists():
         if update_json_version(Path('package.json'), new_version):
             updated.append('package.json')
+        # Update metadata
+        if user_config and update_project_metadata(Path('package.json'), user_config):
+            if 'package.json' not in updated:
+                updated.append('package.json')
     
     # Update composer.json
     if Path('composer.json').exists():
@@ -353,6 +585,10 @@ def sync_all_versions(new_version: str) -> List[str]:
         if new_content != content:
             Path('pyproject.toml').write_text(new_content)
             updated.append('pyproject.toml')
+        # Update metadata
+        if user_config and update_project_metadata(Path('pyproject.toml'), user_config):
+            if 'pyproject.toml' not in updated:
+                updated.append('pyproject.toml')
     
     # Update Cargo.toml
     if Path('Cargo.toml').exists():
@@ -367,6 +603,10 @@ def sync_all_versions(new_version: str) -> List[str]:
         if new_content != content:
             Path('Cargo.toml').write_text(new_content)
             updated.append('Cargo.toml')
+        # Update metadata
+        if user_config and update_project_metadata(Path('Cargo.toml'), user_config):
+            if 'Cargo.toml' not in updated:
+                updated.append('Cargo.toml')
     
     # Update *.csproj
     for csproj in Path('.').glob('*.csproj'):
@@ -394,6 +634,11 @@ def sync_all_versions(new_version: str) -> List[str]:
         if new_content != content:
             Path('pom.xml').write_text(new_content)
             updated.append('pom.xml')
+    
+    # Update README.md with license badges and author info
+    if user_config and update_readme_metadata(user_config):
+        if Path('README.md').exists():
+            updated.append('README.md')
     
     return updated
 
@@ -1165,6 +1410,16 @@ def main(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction):
     ctx.obj['config_path'] = config_path
     ctx.obj['abstraction'] = abstraction
     
+    # Initialize user configuration (first-time setup if needed)
+    # Skip for 'config' command to avoid recursion
+    if ctx.invoked_subcommand != 'config':
+        try:
+            user_config = get_user_config()
+            ctx.obj['user_config'] = user_config
+        except Exception as e:
+            click.echo(click.style(f"Warning: Could not load user config: {e}", fg='yellow'))
+            ctx.obj['user_config'] = None
+    
     # Load configuration (creates goal.yaml if it doesn't exist)
     try:
         if config_path:
@@ -1625,7 +1880,8 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         if (not no_version_sync) or (not no_changelog):
             # Sync versions to all project files
             if not no_version_sync:
-                updated_files = sync_all_versions(new_version)
+                user_config = ctx.obj.get('user_config')
+                updated_files = sync_all_versions(new_version, user_config)
                 stage_paths(updated_files)
                 for f in updated_files:
                     click.echo(click.style(f"✓ Updated {f} to {new_version}", fg='green'))
@@ -1657,7 +1913,8 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     
     # Sync versions to all project files
     if not no_version_sync:
-        updated_files = sync_all_versions(new_version)
+        user_config = ctx.obj.get('user_config')
+        updated_files = sync_all_versions(new_version, user_config)
         for f in updated_files:
             run_git('add', f)
             click.echo(click.style(f"✓ Updated {f} to {new_version}", fg='green'))
@@ -2343,6 +2600,26 @@ def fix_summary(ctx, auto_fix, preview, cached):
         click.echo(click.style("\n(Preview mode - no changes applied)", fg='yellow'))
     else:
         click.echo(click.style("\n✓ SUMMARY FIXED", fg='green', bold=True))
+
+
+@main.command('config')
+@click.option('--reset', is_flag=True, help='Reset user configuration and re-run setup')
+@click.option('--show', is_flag=True, help='Show current configuration')
+def config_command(reset, show):
+    """Manage goal user configuration.
+    
+    View or modify your user preferences stored in ~/.goal:
+    - Author name and email (from git config)
+    - Default license preference
+    
+    Examples:
+        goal config              # Show current configuration
+        goal config --reset      # Re-run interactive setup
+    """
+    if reset:
+        initialize_user_config(force=True)
+    else:
+        show_user_config()
 
 
 if __name__ == '__main__':

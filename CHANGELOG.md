@@ -1,3 +1,53 @@
+## [2.1.27] - 2026-02-15
+
+### Summary
+
+refactor(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+- update goal/user_config.py
+
+### Docs
+
+- docs: update README
+
+
+## [2.1.27] - 2026-02-15
+
+### Summary
+
+feat(core): user configuration and smart metadata management system
+
+### Added
+
+- **User configuration system** (`~/.goal`) - Stores git author info and license preferences
+- **Auto-detection** of git `user.name` and `user.email` on first run
+- **Interactive license selection** - 8 popular open source licenses (Apache-2.0, MIT, GPL-3.0, etc.)
+- **Smart author management** - Adds authors to projects instead of replacing them
+- **Automatic README updates** - Updates license badges, License section, and Author section
+- **Multi-file metadata sync** - Updates pyproject.toml, package.json, Cargo.toml with user info
+- **`goal config` command** - View and manage user configuration
+
+### Core
+
+- Add `goal/user_config.py` - User configuration management module
+- Update `goal/cli.py` - Integrate user config initialization and metadata updates
+- Add `update_project_metadata()` - Smart author and license updates for project files
+- Add `update_readme_metadata()` - Automatic README.md badge and section updates
+- Enhance `sync_all_versions()` - Now updates version, authors, and license together
+
+### Docs
+
+- Update README.md with User Configuration section
+- Add comprehensive examples of configuration workflow
+- Document smart author management behavior
+
+### Build
+
+- Update pyproject.toml with new author and license from user config
+
 ## [2.1.26] - 2026-02-15
 
 ### Summary

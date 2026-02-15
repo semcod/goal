@@ -42,6 +42,9 @@ IMPACT: ⭐ Value score: 85/100 | 🔗 Relations: cli→generator
 - 🚀 **Interactive workflow** - Confirms each stage (test, commit, push, publish) with Y/n prompts
 - 🧠 **Smart commit messages** - Generates conventional commits based on diff analysis
 - 🎯 **Enhanced Summary** - Business-value focused messages with capabilities, metrics, relations
+- 👤 **User configuration** - Auto-detects git user info and license preferences (stored in `~/.goal`)
+- 📄 **Smart metadata management** - Automatically updates author and license in project files
+- 📝 **README automation** - Updates license badges and author sections automatically
 - 📦 **Multi-language support** - Python, Node.js, Rust, Go, Ruby, PHP, .NET, Java
 - 🏷️ **Version management** - Automatic version bumping and synchronization across project files
 - 📝 **Changelog updates** - Maintains CHANGELOG.md with version history
@@ -915,6 +918,107 @@ git:
       feat: "feat({scope}): {description}"
 ```
 
+## User Configuration
+
+Goal automatically manages your project metadata using your git configuration and license preferences.
+
+### First-time Setup
+
+On first run, Goal will:
+1. **Auto-detect** your git `user.name` and `user.email`
+2. **Ask for license preference** (8 popular open source licenses)
+3. **Save to** `~/.goal` for future use
+
+```bash
+$ goal
+
+======================================================================
+  🎯 Goal - First Time Setup
+======================================================================
+
+✓ Detected git user.name: Tom Sapletta
+✓ Detected git user.email: info@softreck.com
+
+======================================================================
+  📄 License Selection
+======================================================================
+
+  1. Apache License 2.0
+  2. MIT License
+  3. GNU General Public License v3.0
+  4. BSD 3-Clause License
+  5. GNU General Public License v2.0
+  6. GNU Lesser General Public License v3.0
+  7. GNU Affero General Public License v3.0
+  8. Mozilla Public License 2.0
+
+Enter your choice [1]: 1
+
+✓ Configuration saved to ~/.goal
+```
+
+### What Gets Updated Automatically
+
+Every time you run `goal`, it updates:
+
+**Project Files:**
+- `pyproject.toml` - authors, license, classifier
+- `package.json` - author, license, contributors
+- `Cargo.toml` - authors, license
+- `VERSION` - version number
+
+**README.md:**
+- License badges (Apache-2.0, MIT, GPL, etc.)
+- `## License` section
+- `## Author` section
+
+### Smart Author Management
+
+Goal **adds** authors instead of replacing them:
+
+```python
+# Before (existing author)
+authors = [{name = "Original Author", email = "original@example.com"}]
+
+# After (Goal adds you)
+authors = [
+    {name = "Original Author", email = "original@example.com"},
+    {name = "Tom Sapletta", email = "info@softreck.com"},
+]
+```
+
+### Managing Your Configuration
+
+```bash
+# View current configuration
+goal config
+
+# Reset and reconfigure
+goal config --reset
+
+# Configuration file location
+~/.goal
+```
+
+### Example Output
+
+```bash
+$ goal config
+
+======================================================================
+  📋 Goal User Configuration
+======================================================================
+
+Config file: /home/tom/.goal
+
+Current settings:
+  Author name:  Tom Sapletta
+  Author email: info@softreck.com
+  License:      Apache License 2.0 (Apache-2.0)
+
+💡 Tip: Run 'goal config --reset' to reconfigure
+```
+
 ## Tips & Tricks
 
 ### 1. Use with aliases
@@ -972,11 +1076,11 @@ jobs:
 
 ## License
 
-Apache License 2.0
+Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 ## Author
 
-Created by **Tom Sapletta** - [info@softreck.com](mailto:info@softreck.com)
+Created by **Tom Sapletta** - [tom@sapletta.com](mailto:tom@sapletta.com)
 
 ---
 
