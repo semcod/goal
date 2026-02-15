@@ -1,3 +1,18 @@
+## [2.1.26] - 2026-02-15
+
+### Summary
+
+feat(docs): configuration management system
+
+### Docs
+
+- docs: update README
+
+### Build
+
+- update pyproject.toml
+
+
 ## [2.1.23] - 2026-01-30
 
 ### Summary

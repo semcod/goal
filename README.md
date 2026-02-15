@@ -7,6 +7,14 @@
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
   <a href="https://github.com/wronai/goal/actions"><img src="https://github.com/wronai/goal/workflows/CI/badge.svg" alt="CI"></a>
   <a href="https://coveralls.io/github/wronai/goal"><img src="https://coveralls.io/repos/github/wronai/goal/badge.svg" alt="Coverage"></a>
+  <a href="https://github.com/wronai/goal/stargazers"><img src="https://img.shields.io/github/stars/wronai/goal?style=social" alt="Stars"></a>
+  <a href="https://github.com/wronai/goal/network/members"><img src="https://img.shields.io/github/forks/wronai/goal?style=social" alt="Forks"></a>
+  <a href="https://github.com/wronai/goal/issues"><img src="https://img.shields.io/github/issues/wronai/goal" alt="Issues"></a>
+  <a href="https://github.com/wronai/goal/pulls"><img src="https://img.shields.io/github/issues-pr/wronai/goal" alt="Pull Requests"></a>
+  <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code Style"></a>
+  <a href="http://mypy-lang.org/"><img src="https://img.shields.io/badge/type%20checking-mypy-blue.svg" alt="Type Checking"></a>
+  <a href="https://github.com/wronai/goal"><img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey" alt="Platform"></a>
+  <a href="https://github.com/wronai/goal"><img src="https://img.shields.io/badge/dependencies-git%20%7C%20click-blue" alt="Dependencies"></a>
 </p>
 
 Automated git push with **enterprise-grade commit intelligence**, smart changelog updates, version tagging, and interactive workflow.
@@ -965,6 +973,10 @@ jobs:
 ## License
 
 Apache License 2.0
+
+## Author
+
+Created by **Tom Sapletta** - [info@softreck.com](mailto:info@softreck.com)
 
 ---
 

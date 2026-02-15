@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.1.25"
+version = "2.1.26"
 description = "Automated git push with smart commit messages, changelog updates, and version tagging"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [
-    {name = "wronai", email = "wronai@example.com"}
+    {name = "Tom Sapletta", email = "info@softreck.com"}
 ]
 keywords = ["git", "automation", "commit", "changelog", "versioning", "cli"]
 classifiers = [
