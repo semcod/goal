@@ -21,6 +21,7 @@ Welcome to the Goal documentation! Goal is an automated git push tool with **ent
 ### Configuration
 | Guide | Description |
 |-------|-------------|
+| **[User Configuration](user-config.md)** | 🆕 Auto-detect git user & license preferences |
 | [Configuration Guide](configuration.md) | Complete goal.yaml reference |
 | [Project Strategies](strategies.md) | Configure for Python, Node.js, Rust |
 | [Registry Setup](registries.md) | Configure PyPI, npm, crates.io |

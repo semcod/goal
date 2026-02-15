@@ -91,6 +91,45 @@ goal init                # Initialize if not exists
 goal init --force        # Regenerate config
 ```
 
+### `goal config`
+
+View or manage user configuration stored in `~/.goal`.
+
+```bash
+goal config [OPTIONS]
+```
+
+**Options:**
+- `--reset`: Reset configuration and run setup again
+- `--show`: Show current configuration (default)
+
+**Configuration includes:**
+- Author name and email (from git config)
+- Default license preference
+- License classifier for package managers
+
+**Examples:**
+```bash
+goal config                  # Show current configuration
+goal config --reset          # Reset and reconfigure
+```
+
+**What it shows:**
+```
+======================================================================
+  📋 Goal User Configuration
+======================================================================
+
+Config file: /home/tom/.goal
+
+Current settings:
+  Author name:  Tom Sapletta
+  Author email: info@softreck.com
+  License:      Apache License 2.0 (Apache-2.0)
+
+💡 Tip: Run 'goal config --reset' to reconfigure
+```
+
 ### `goal status`
 
 Show current git status and version info.

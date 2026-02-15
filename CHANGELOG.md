@@ -1,3 +1,17 @@
+## [2.1.28] - 2026-02-15
+
+### Summary
+
+docs(docs): configuration management system
+
+### Docs
+
+- docs: update TODO.md
+- docs: update README
+- docs: update commands.md
+- docs: update user-config.md
+
+
 ## [2.1.27] - 2026-02-15
 
 ### Summary
