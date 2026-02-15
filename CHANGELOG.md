@@ -1,3 +1,19 @@
+## [2.1.29] - 2026-02-15
+
+### Summary
+
+feat(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+- update goal/version_validation.py
+
+### Test
+
+- update test_version_validation.py
+
+
 ## [2.1.28] - 2026-02-15
 
 ### Summary

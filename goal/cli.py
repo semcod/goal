@@ -19,11 +19,13 @@ try:
     from .commit_generator import CommitMessageGenerator
     from .config import GoalConfig, ensure_config, init_config, load_config
     from .user_config import get_user_config, initialize_user_config, show_user_config
+    from .version_validation import validate_project_versions, check_readme_badges, update_badge_versions, format_validation_results
 except ImportError:
     from formatter import format_push_result, format_status_output, format_enhanced_summary
     from commit_generator import CommitMessageGenerator
     from config import GoalConfig, ensure_config, init_config, load_config
     from user_config import get_user_config, initialize_user_config, show_user_config
+    from version_validation import validate_project_versions, check_readme_badges, update_badge_versions, format_validation_results
 
 
 ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
@@ -640,6 +642,11 @@ def sync_all_versions(new_version: str, user_config=None) -> List[str]:
         if Path('README.md').exists():
             updated.append('README.md')
     
+    # Update version badges in README.md
+    if update_badge_versions(Path('README.md'), new_version):
+        if 'README.md' not in updated:
+            updated.append('README.md')
+    
     return updated
 
 
@@ -1209,6 +1216,50 @@ def get_registry_help(project_type: str) -> str:
 def publish_project(project_types: List[str], version: str) -> bool:
     """Publish project for detected project types."""
     import sys
+    
+    # Validate versions against registries before publishing
+    click.echo(click.style("\n🔍 Checking registry versions...", fg='cyan', bold=True))
+    validation_results = validate_project_versions(project_types, version)
+    validation_messages = format_validation_results(validation_results)
+    
+    for msg in validation_messages:
+        if "❌" in msg:
+            click.echo(click.style(f"  {msg}", fg='red'))
+        elif "⚠️" in msg:
+            click.echo(click.style(f"  {msg}", fg='yellow'))
+        else:
+            click.echo(click.style(f"  {msg}", fg='green'))
+    
+    # Check if any project has version conflicts
+    has_conflicts = any(
+        not result.get("is_latest", True) and result.get("registry_version")
+        for result in validation_results.values()
+    )
+    
+    if has_conflicts:
+        click.echo(click.style("\n⚠️  Version conflicts detected!", fg='yellow', bold=True))
+        if not confirm("Continue publishing anyway?", default=False):
+            click.echo(click.style("Publishing cancelled due to version conflicts.", fg='yellow'))
+            return False
+    
+    # Check README badges
+    click.echo(click.style("\n🔍 Checking README badges...", fg='cyan', bold=True))
+    badge_check = check_readme_badges(version)
+    
+    if badge_check["exists"]:
+        if badge_check["needs_update"]:
+            click.echo(click.style(f"  ⚠️  {badge_check['message']}", fg='yellow'))
+            if confirm("Update README badges now?", default=True):
+                if update_badge_versions(Path('README.md'), version):
+                    click.echo(click.style("  ✅ README badges updated", fg='green'))
+                    run_git('add', 'README.md')
+                else:
+                    click.echo(click.style("  ❌ Failed to update README badges", fg='red'))
+        else:
+            click.echo(click.style(f"  ✅ {badge_check['message']}", fg='green'))
+    else:
+        click.echo(click.style("  ℹ️  README.md not found", fg='yellow'))
+    
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'publish_command' in PROJECT_TYPES[ptype]:
             if ptype == 'python':
@@ -2600,6 +2651,99 @@ def fix_summary(ctx, auto_fix, preview, cached):
         click.echo(click.style("\n(Preview mode - no changes applied)", fg='yellow'))
     else:
         click.echo(click.style("\n✓ SUMMARY FIXED", fg='green', bold=True))
+
+
+@main.command('check-versions')
+@click.option('--update-badges', is_flag=True, help='Update README badges if needed')
+def check_versions_command(update_badges):
+    """Check version consistency across registries and README badges.
+    
+    Validates that:
+    - Local version matches published registry versions
+    - README badges show current version
+    - All project files have consistent versions
+    
+    Examples:
+        goal check-versions              # Check all versions
+        goal check-versions --update-badges  # Update badges if needed
+    """
+    current_version = get_current_version()
+    project_types = detect_project_types()
+    
+    click.echo(click.style(f"🔍 Version Check for v{current_version}", fg='cyan', bold=True))
+    click.echo(f"Detected project types: {', '.join(project_types)}")
+    
+    # Check registry versions
+    click.echo(click.style("\n📦 Registry Versions:", fg='cyan', bold=True))
+    validation_results = validate_project_versions(project_types, current_version)
+    validation_messages = format_validation_results(validation_results)
+    
+    for msg in validation_messages:
+        if "❌" in msg:
+            click.echo(click.style(f"  {msg}", fg='red'))
+        elif "⚠️" in msg:
+            click.echo(click.style(f"  {msg}", fg='yellow'))
+        else:
+            click.echo(click.style(f"  {msg}", fg='green'))
+    
+    # Check README badges
+    click.echo(click.style("\n🏷️  README Badges:", fg='cyan', bold=True))
+    badge_check = check_readme_badges(current_version)
+    
+    if badge_check["exists"]:
+        if badge_check["needs_update"]:
+            click.echo(click.style(f"  ⚠️  {badge_check['message']}", fg='yellow'))
+            for badge in badge_check["badges"]:
+                if badge["needs_update"]:
+                    click.echo(click.style(f"    - {badge['url']} (shows {badge['current_version']})", fg='yellow'))
+            
+            if update_badges or confirm("Update README badges now?", default=True):
+                if update_badge_versions(Path('README.md'), current_version):
+                    click.echo(click.style("  ✅ README badges updated", fg='green'))
+                    run_git('add', 'README.md')
+                    click.echo(click.style("  ✓ README.md staged for commit", fg='green'))
+                else:
+                    click.echo(click.style("  ❌ Failed to update README badges", fg='red'))
+        else:
+            click.echo(click.style(f"  ✅ {badge_check['message']}", fg='green'))
+    else:
+        click.echo(click.style("  ℹ️  README.md not found", fg='yellow'))
+    
+    # Check local version files
+    click.echo(click.style("\n📁 Local Version Files:", fg='cyan', bold=True))
+    version_files = find_version_files()
+    
+    if not version_files:
+        click.echo(click.style("  ℹ️  No version files found", fg='yellow'))
+    else:
+        all_consistent = True
+        for file_path, (filepath, pattern) in version_files.items():
+            file_version = get_version_from_file(filepath, pattern)
+            if file_version:
+                if file_version == current_version:
+                    click.echo(click.style(f"  ✅ {file_path}: {file_version}", fg='green'))
+                else:
+                    click.echo(click.style(f"  ⚠️  {file_path}: {file_version} (expected {current_version})", fg='yellow'))
+                    all_consistent = False
+            else:
+                click.echo(click.style(f"  ❌ {file_path}: could not read version", fg='red'))
+                all_consistent = False
+        
+        if all_consistent:
+            click.echo(click.style("  ✅ All version files are consistent", fg='green'))
+    
+    # Summary
+    click.echo(click.style("\n📋 Summary:", fg='cyan', bold=True))
+    has_issues = (
+        any("❌" in msg or "⚠️" in msg for msg in validation_messages) or
+        badge_check.get("needs_update", False)
+    )
+    
+    if has_issues:
+        click.echo(click.style("  ⚠️  Issues found. Consider fixing before publishing.", fg='yellow'))
+        click.echo("  Run 'goal check-versions --update-badges' to fix badge issues.")
+    else:
+        click.echo(click.style("  ✅ All versions are consistent and ready for publishing!", fg='green'))
 
 
 @main.command('config')
