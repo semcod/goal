@@ -1,3 +1,14 @@
+## [2.1.52] - 2026-02-16
+
+### Summary
+
+feat(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+
+
 ## [2.1.51] - 2026-02-16
 
 ### Summary

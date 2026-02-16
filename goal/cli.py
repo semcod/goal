@@ -977,6 +977,93 @@ def update_changelog(version: str, files: List[str], commit_msg: str,
 
 
 
+def _has_usable_test_script(project_dir: Path, project_type: str) -> bool:
+    """Check if a project directory has a usable test configuration.
+
+    For nodejs: checks if package.json has a real test script.
+    For php: checks if composer.json has a test script.
+    For other types: returns True (assumes test command will work).
+    """
+    if project_type == 'nodejs':
+        pkg_json = project_dir / 'package.json'
+        if not pkg_json.exists():
+            return False
+        try:
+            data = json.loads(pkg_json.read_text(errors='ignore'))
+            test_script = data.get('scripts', {}).get('test', '')
+            return bool(test_script) and 'no test specified' not in test_script
+        except Exception:
+            return False
+    if project_type == 'php':
+        composer_json = project_dir / 'composer.json'
+        if not composer_json.exists():
+            return False
+        try:
+            data = json.loads(composer_json.read_text(errors='ignore'))
+            return 'test' in data.get('scripts', {})
+        except Exception:
+            return False
+    return True
+
+
+def _run_tests_in_subdirs(project_type: str, base_cmd: str) -> Optional[bool]:
+    """Try running tests in subdirectories that have usable test configurations.
+
+    Returns:
+        True  — tests ran and all passed.
+        False — tests ran and at least one failed.
+        None  — no testable subdirectories were found.
+    """
+    try:
+        deep = detect_project_types_deep()
+    except Exception:
+        return None
+
+    root = Path('.').resolve()
+    sub_dirs = [
+        d for d in deep.get(project_type, [])
+        if d != root and _has_usable_test_script(d, project_type)
+    ]
+
+    if not sub_dirs:
+        return None
+
+    all_passed = True
+    tested_any = False
+
+    for sub_dir in sub_dirs:
+        try:
+            rel = sub_dir.relative_to(root)
+        except ValueError:
+            rel = sub_dir
+
+        click.echo(f"\n{click.style(f'Running tests in {rel}:', fg='cyan', bold=True)} {base_cmd}")
+        result = run_command_tee(f'cd {sub_dir} && {base_cmd}')
+
+        if result.returncode != 0:
+            output_lower = (result.stdout or '').lower()
+            # Detect missing test script
+            if 'missing script' in output_lower or 'no test specified' in output_lower:
+                click.echo(click.style(f"  ⚠ No test script in {rel}. Skipping.", fg='yellow'))
+                continue
+            # Detect missing test tool (exit 127 = command not found)
+            if result.returncode == 127 or 'not found' in output_lower or 'command not found' in output_lower:
+                tool_name = base_cmd.split()[0] if base_cmd else 'test tool'
+                click.echo(click.style(f"  ⚠ '{tool_name}' not available in PATH. Skipping {rel}.", fg='yellow'))
+                continue
+            tested_any = True
+            click.echo(click.style(f"  ✗ Tests failed in {rel} (exit code {result.returncode})", fg='red'))
+            all_passed = False
+        else:
+            tested_any = True
+            click.echo(click.style(f"  ✓ Tests passed in {rel}", fg='green'))
+
+    if not tested_any:
+        return None
+
+    return all_passed
+
+
 @_nfo_log_call(level='INFO')
 def run_tests(project_types: List[str]) -> bool:
     """Run tests for detected project types."""
@@ -1096,8 +1183,10 @@ def run_tests(project_types: List[str]) -> bool:
                 return True
         return False
 
+    any_type_matched = False
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'test_command' in PROJECT_TYPES[ptype]:
+            any_type_matched = True
             cmd = wrap_python_test_cmd(PROJECT_TYPES[ptype]['test_command'])
 
             if 'pytest' in cmd:
@@ -1113,8 +1202,20 @@ def run_tests(project_types: List[str]) -> bool:
                         result = run_command(install_cmd, capture=False)
                         if result.returncode != 0:
                             return False
+
+            # Pre-check: does root directory have a usable test script?
+            if not _has_usable_test_script(Path('.'), ptype):
+                # Try running tests in subdirectories that have test scripts
+                sub_result = _run_tests_in_subdirs(ptype, cmd)
+                if sub_result is not None:
+                    return sub_result
+                click.echo(click.style(
+                    f"\n⚠ No test script configured for {ptype} in root or subdirectories. Skipping tests.",
+                    fg='yellow'))
+                continue
+
             click.echo(f"\n{click.style('Running tests:', fg='cyan', bold=True)} {cmd}")
-            result = run_command(cmd, capture=False)
+            result = run_command_tee(cmd)
             if result.returncode == 0:
                 return True
 
@@ -1122,9 +1223,32 @@ def run_tests(project_types: List[str]) -> bool:
                 click.echo(click.style("No tests collected (pytest exit code 5). Continuing.", fg='yellow'))
                 return True
 
+            # Safety net: detect "Missing script" from captured output
+            output_lower = (result.stdout or '').lower()
+            if 'missing script' in output_lower or 'no test specified' in output_lower:
+                click.echo(click.style(
+                    f"\n⚠ Test script not properly configured for {ptype}. Trying subdirectories...",
+                    fg='yellow'))
+                sub_result = _run_tests_in_subdirs(ptype, cmd)
+                if sub_result is not None:
+                    return sub_result
+                click.echo(click.style(
+                    f"  ⚠ No testable subdirectories found. Skipping tests for {ptype}.",
+                    fg='yellow'))
+                continue
+
+            # Detect missing test tool (exit 127 = command not found)
+            if result.returncode == 127 or 'not found' in output_lower or 'command not found' in output_lower:
+                tool_name = cmd.split()[0] if cmd else 'test tool'
+                click.echo(click.style(
+                    f"\n⚠ '{tool_name}' not available in PATH. Skipping tests for {ptype}.",
+                    fg='yellow'))
+                continue
+
             return False
-    
-    click.echo(click.style("\nNo test command configured for this project type", fg='yellow'))
+
+    if not any_type_matched:
+        click.echo(click.style("\nNo test command configured for this project type", fg='yellow'))
     return True
 
 
