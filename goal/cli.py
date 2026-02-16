@@ -1562,6 +1562,14 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                 out = ((result.stdout or '') + "\n" + (result.stderr or '')).strip()
                 out_l = strip_ansi(out).lower()
 
+                # Detect missing publish tool (exit 127 = command not found)
+                if result.returncode == 127 or 'not found' in out_l or 'command not found' in out_l:
+                    tool_name = cmd.split()[0] if cmd else 'publish tool'
+                    click.echo(click.style(
+                        f"\n⚠ '{tool_name}' not available in PATH. Skipping publish for {ptype}.",
+                        fg='yellow'))
+                    return True
+
                 click.echo("")
                 click.echo(click.style("=" * 77, fg='yellow'))
                 if re.search(r'file[^a-z0-9]+already[^a-z0-9]+exists', out_l) is not None:
