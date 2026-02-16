@@ -14,6 +14,8 @@ from goal.cli import (
     validate_repo_url,
     clone_repository,
     ensure_git_repository,
+    ensure_remote,
+    list_remotes,
     main,
 )
 
@@ -140,21 +142,30 @@ class TestEnsureGitRepository:
             os.chdir(old)
 
     def test_exit_option(self, tmp_path):
-        """User chooses option 3 (exit) → returns False."""
+        """User chooses option 4 (exit) → returns False."""
         old = os.getcwd()
         try:
             os.chdir(tmp_path)
-            with mock.patch("click.prompt", return_value=3):
+            with mock.patch("click.prompt", return_value=4):
                 assert ensure_git_repository() is False
         finally:
             os.chdir(old)
 
-    def test_init_option(self, tmp_path):
-        """User chooses option 2 (git init) → initializes repo."""
+    def test_auto_mode_skips(self, tmp_path):
+        """auto=True skips interactive prompts and returns False."""
         old = os.getcwd()
         try:
             os.chdir(tmp_path)
-            with mock.patch("click.prompt", return_value=2):
+            assert ensure_git_repository(auto=True) is False
+        finally:
+            os.chdir(old)
+
+    def test_init_option(self, tmp_path):
+        """User chooses option 3 (local-only git init) → initializes repo."""
+        old = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            with mock.patch("click.prompt", return_value=3):
                 result = ensure_git_repository()
             assert result is True
             assert (tmp_path / ".git").exists()
@@ -162,7 +173,7 @@ class TestEnsureGitRepository:
             os.chdir(old)
 
     def test_clone_option_with_valid_url(self, tmp_path):
-        """User chooses option 1 (clone) with a valid local bare repo."""
+        """User chooses option 2 (clone) with a valid local bare repo."""
         bare = tmp_path / "bare.git"
         bare.mkdir()
         subprocess.run(["git", "init", "--bare", str(bare)], check=True,
@@ -174,7 +185,7 @@ class TestEnsureGitRepository:
         try:
             os.chdir(work)
             url = f"file://{bare}"
-            with mock.patch("click.prompt", side_effect=[1, url]), \
+            with mock.patch("click.prompt", side_effect=[2, url]), \
                  mock.patch("goal.cli.validate_repo_url", return_value=True):
                 result = ensure_git_repository()
             assert result is True
@@ -184,13 +195,38 @@ class TestEnsureGitRepository:
             os.chdir(old)
 
     def test_clone_option_invalid_url(self, tmp_path):
-        """User chooses option 1 but provides an invalid URL."""
+        """User chooses option 2 but provides an invalid URL."""
         old = os.getcwd()
         try:
             os.chdir(tmp_path)
-            with mock.patch("click.prompt", side_effect=[1, "not-a-url"]):
+            with mock.patch("click.prompt", side_effect=[2, "not-a-url"]):
                 result = ensure_git_repository()
             assert result is False
+        finally:
+            os.chdir(old)
+
+    def test_init_and_add_remote(self, tmp_path):
+        """User chooses option 1 (init + remote) with empty remote."""
+        bare = tmp_path / "bare.git"
+        bare.mkdir()
+        subprocess.run(["git", "init", "--bare", str(bare)], check=True,
+                        capture_output=True)
+
+        work = tmp_path / "work"
+        work.mkdir()
+        (work / "hello.txt").write_text("hello")
+        old = os.getcwd()
+        try:
+            os.chdir(work)
+            url = f"file://{bare}"
+            # Option 1 (init+remote), URL, then merge-action 1 (keep local)
+            with mock.patch("click.prompt", side_effect=[1, url, 1]), \
+                 mock.patch("goal.cli.validate_repo_url", return_value=True):
+                result = ensure_git_repository()
+            assert result is True
+            assert is_git_repository() is True
+            # Remote should be configured
+            assert list_remotes()
         finally:
             os.chdir(old)
 

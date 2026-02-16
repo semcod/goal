@@ -331,8 +331,75 @@ def clone_repository(url: str, target_dir: Optional[str] = None) -> Tuple[bool, 
         return False, "Failed to clone repository. Check the URL and your access permissions."
 
 
-def ensure_git_repository() -> bool:
-    """Check for a git repo; if missing, interactively offer to clone one.
+def _echo_cmd(args: List[str]) -> None:
+    """Display a git command that is about to run, for transparency."""
+    cmd_str = ' '.join(args)
+    click.echo(click.style(f"  → {cmd_str}", fg='bright_black'))
+
+
+def _run_git_verbose(*args, capture=True) -> subprocess.CompletedProcess:
+    """Run a git command, display it first, and return the result."""
+    _echo_cmd(['git'] + list(args))
+    return run_git(*args, capture=capture)
+
+
+def get_remote_url(remote: str = 'origin') -> Optional[str]:
+    """Get the URL of a named remote, or None."""
+    result = run_git('remote', 'get-url', remote)
+    if result.returncode == 0:
+        return result.stdout.strip()
+    return None
+
+
+def list_remotes() -> List[Tuple[str, str]]:
+    """Return list of (name, url) for all configured remotes."""
+    result = run_git('remote', '-v')
+    if result.returncode != 0 or not result.stdout.strip():
+        return []
+    seen = {}
+    for line in result.stdout.strip().splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[0] not in seen:
+            seen[parts[0]] = parts[1]
+    return list(seen.items())
+
+
+def _prompt_remote_url() -> Optional[str]:
+    """Ask the user for a remote URL with examples. Returns URL or None."""
+    click.echo()
+    click.echo(click.style("Enter repository URL:", fg='cyan'))
+    click.echo(click.style("  SSH   example: git@github.com:user/repo.git", fg='bright_black'))
+    click.echo(click.style("  HTTP  example: https://github.com/user/repo.git", fg='bright_black'))
+    url = click.prompt("URL", default='', show_default=False).strip()
+    if not url:
+        return None
+    if not validate_repo_url(url):
+        click.echo(click.style("✗ Invalid repository URL format.", fg='red'))
+        return None
+    return url
+
+
+def _list_remote_branches(remote: str = 'origin') -> List[str]:
+    """Fetch and list branches on a remote."""
+    _echo_cmd(['git', 'ls-remote', '--heads', remote])
+    result = run_git('ls-remote', '--heads', remote)
+    if result.returncode != 0 or not result.stdout.strip():
+        return []
+    branches = []
+    for line in result.stdout.strip().splitlines():
+        parts = line.split('\t')
+        if len(parts) == 2:
+            ref = parts[1]
+            branch = ref.replace('refs/heads/', '')
+            branches.append(branch)
+    return branches
+
+
+def ensure_git_repository(auto: bool = False) -> bool:
+    """Check for a git repo; if missing, interactively offer options.
+
+    When *auto* is True (``goal -a``), skip interactive prompts and return
+    False so the caller can abort gracefully.
 
     Returns True if we end up inside a valid git repository, False otherwise.
     """
@@ -340,27 +407,112 @@ def ensure_git_repository() -> bool:
         return True
 
     click.echo(click.style("⚠  Not a git repository.", fg='yellow', bold=True))
+
+    if auto:
+        click.echo(click.style("  Skipping (--all mode, no interactive prompts).", fg='yellow'))
+        return False
+
     click.echo()
+    # Detect local project files to give context
+    has_files = any(Path('.').iterdir())
+    cwd_name = Path('.').resolve().name
 
     action = click.prompt(
         click.style("What would you like to do?", fg='cyan')
-        + "\n  [1] Clone an existing repository (HTTP/SSH)"
-        + "\n  [2] Initialize a new git repository here"
-        + "\n  [3] Exit"
+        + f"\n  [1] Initialize git here and connect to a remote  (keeps local files in '{cwd_name}/')"
+        + "\n  [2] Clone a remote repository into this directory  (downloads remote files)"
+        + "\n  [3] Initialize a local-only git repository        (no remote)"
+        + "\n  [4] Exit"
         + "\nChoose",
-        type=click.IntRange(1, 3),
+        type=click.IntRange(1, 4),
         default=1,
     )
 
+    # ── Option 1: git init + add remote ──
     if action == 1:
-        click.echo()
-        click.echo(click.style("Enter repository URL:", fg='cyan'))
-        click.echo(click.style("  HTTP  example: https://github.com/user/repo.git", fg='bright_black'))
-        click.echo(click.style("  SSH   example: git@github.com:user/repo.git", fg='bright_black'))
-        url = click.prompt("URL")
+        result = _run_git_verbose('init')
+        if result.returncode != 0:
+            click.echo(click.style("✗ Failed to initialize git repository.", fg='red'))
+            return False
+        click.echo(click.style("✓ Initialized git repository.", fg='green'))
 
-        if not validate_repo_url(url):
-            click.echo(click.style("Error: Invalid repository URL format.", fg='red'))
+        url = _prompt_remote_url()
+        if url:
+            result = _run_git_verbose('remote', 'add', 'origin', url)
+            if result.returncode != 0:
+                click.echo(click.style(f"✗ Could not add remote: {result.stderr.strip()}", fg='red'))
+            else:
+                click.echo(click.style(f"✓ Remote 'origin' → {url}", fg='green'))
+
+            # Offer to fetch and choose merge strategy
+            click.echo()
+            click.echo(click.style("Fetching remote branches...", fg='cyan'))
+            fetch_result = _run_git_verbose('fetch', 'origin')
+            if fetch_result.returncode == 0:
+                branches = _list_remote_branches('origin')
+                if branches:
+                    click.echo(click.style(f"  Remote branches: {', '.join(branches)}", fg='bright_black'))
+                    click.echo()
+
+                    merge_action = click.prompt(
+                        click.style("How should goal combine local and remote files?", fg='cyan')
+                        + "\n  [1] Keep local files, push to remote later     (recommended for new projects)"
+                        + "\n  [2] Merge remote branch into local files       (combine both)"
+                        + "\n  [3] Reset local to remote branch               (overwrite local with remote)"
+                        + "\n  [4] Skip — just keep the remote configured"
+                        + "\nChoose",
+                        type=click.IntRange(1, 4),
+                        default=1,
+                    )
+
+                    if merge_action in (2, 3) and branches:
+                        if len(branches) == 1:
+                            branch = branches[0]
+                            click.echo(click.style(f"  Using branch: {branch}", fg='bright_black'))
+                        else:
+                            branch_list = '\n'.join(f"  [{i+1}] {b}" for i, b in enumerate(branches))
+                            idx = click.prompt(
+                                click.style("Select branch:", fg='cyan') + '\n' + branch_list + '\nChoose',
+                                type=click.IntRange(1, len(branches)),
+                                default=1,
+                            )
+                            branch = branches[idx - 1]
+
+                        if merge_action == 2:
+                            # Merge: allow unrelated histories for first-time connect
+                            if has_files:
+                                _run_git_verbose('add', '-A')
+                                _run_git_verbose('commit', '-m', 'chore: initial local state before merge')
+                            result = _run_git_verbose('merge', f'origin/{branch}', '--allow-unrelated-histories', '--no-edit')
+                            if result.returncode != 0:
+                                click.echo(click.style(
+                                    f"⚠  Merge conflict detected. Resolve manually, then run goal again.",
+                                    fg='yellow', bold=True
+                                ))
+                                click.echo(click.style(f"  Hint: git status  →  resolve  →  git add .  →  git merge --continue", fg='bright_black'))
+                                return True  # repo exists, user can fix
+                            click.echo(click.style(f"✓ Merged origin/{branch} into local files.", fg='green'))
+
+                        elif merge_action == 3:
+                            # Reset local to remote
+                            result = _run_git_verbose('checkout', f'origin/{branch}', '-B', branch)
+                            if result.returncode == 0:
+                                click.echo(click.style(f"✓ Local files replaced with origin/{branch}.", fg='green'))
+                            else:
+                                click.echo(click.style(f"✗ Failed to checkout: {result.stderr.strip()}", fg='red'))
+                else:
+                    click.echo(click.style("  Remote is empty (no branches yet). Your local files will be the first push.", fg='bright_black'))
+            else:
+                click.echo(click.style(f"⚠  Could not fetch remote: {fetch_result.stderr.strip()}", fg='yellow'))
+                click.echo(click.style("  Remote is configured but unreachable. Check URL and credentials.", fg='bright_black'))
+
+        click.echo(click.style(f"\n✓ Ready. Run 'goal' again to commit and push.", fg='green', bold=True))
+        return True
+
+    # ── Option 2: Clone remote into current dir ──
+    elif action == 2:
+        url = _prompt_remote_url()
+        if not url:
             return False
 
         success, msg = clone_repository(url)
@@ -370,20 +522,70 @@ def ensure_git_repository() -> bool:
             click.echo(click.style(f"✓ Cloned and entered '{repo_dir}'", fg='green', bold=True))
             return True
         else:
-            click.echo(click.style(f"Error: {msg}", fg='red'))
+            click.echo(click.style(f"✗ {msg}", fg='red'))
             return False
 
-    elif action == 2:
-        result = run_git('init')
+    # ── Option 3: Local-only init ──
+    elif action == 3:
+        result = _run_git_verbose('init')
         if result.returncode == 0:
-            click.echo(click.style("✓ Initialized empty git repository.", fg='green', bold=True))
+            click.echo(click.style("✓ Initialized local git repository (no remote).", fg='green', bold=True))
             return True
         else:
-            click.echo(click.style("Error: Failed to initialize git repository.", fg='red'))
+            click.echo(click.style("✗ Failed to initialize git repository.", fg='red'))
             return False
 
+    # ── Option 4: Exit ──
     else:
         return False
+
+
+def ensure_remote(auto: bool = False) -> bool:
+    """Ensure a git remote is configured. Offers interactive setup if missing.
+
+    When *auto* is True, silently returns False if no remote is found.
+    Returns True if a remote is available, False otherwise.
+    """
+    remotes = list_remotes()
+    if remotes:
+        return True
+
+    click.echo(click.style("⚠  No git remote configured.", fg='yellow', bold=True))
+
+    if auto:
+        click.echo(click.style("  Skipping remote setup (--all mode). Commit will be local only.", fg='yellow'))
+        return False
+
+    click.echo()
+    action = click.prompt(
+        click.style("Would you like to add a remote?", fg='cyan')
+        + "\n  [1] Add remote origin (connect to GitHub/GitLab/etc.)"
+        + "\n  [2] Skip — commit locally without pushing"
+        + "\nChoose",
+        type=click.IntRange(1, 2),
+        default=1,
+    )
+
+    if action == 1:
+        url = _prompt_remote_url()
+        if not url:
+            return False
+        result = _run_git_verbose('remote', 'add', 'origin', url)
+        if result.returncode != 0:
+            click.echo(click.style(f"✗ Could not add remote: {result.stderr.strip()}", fg='red'))
+            return False
+        click.echo(click.style(f"✓ Remote 'origin' → {url}", fg='green', bold=True))
+
+        # Verify connectivity
+        click.echo(click.style("  Verifying connection...", fg='bright_black'))
+        verify = run_git('ls-remote', '--exit-code', 'origin')
+        if verify.returncode == 0:
+            click.echo(click.style("  ✓ Remote is reachable.", fg='green'))
+        else:
+            click.echo(click.style("  ⚠  Remote is not reachable (check URL/credentials). Push may fail.", fg='yellow'))
+        return True
+
+    return False
 
 
 def run_command_tee(command: str) -> subprocess.CompletedProcess:
@@ -823,6 +1025,28 @@ def sync_all_versions(new_version: str, user_config=None) -> List[str]:
     if update_badge_versions(Path('README.md'), new_version):
         if 'README.md' not in updated:
             updated.append('README.md')
+    
+    # Update __version__ in __init__.py files
+    for init_file in Path('.').rglob('__init__.py'):
+        # Skip venv / build / egg-info directories
+        parts = init_file.parts
+        if any(p in parts for p in ('venv', '.venv', 'build', 'dist', 'node_modules'))  \
+                or '.egg-info' in str(init_file):
+            continue
+        try:
+            content = init_file.read_text()
+            new_content = re.sub(
+                r'^(__version__\s*=\s*["\'])\d+\.\d+\.\d+(["\'])',
+                rf'\g<1>{new_version}\g<2>',
+                content,
+                count=1,
+                flags=re.MULTILINE,
+            )
+            if new_content != content:
+                init_file.write_text(new_content)
+                updated.append(str(init_file))
+        except Exception:
+            pass
     
     return updated
 
@@ -1712,7 +1936,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     """
     
     # Check if we're in a git repository (interactive clone/init if missing)
-    if not ensure_git_repository():
+    if not ensure_git_repository(auto=yes):
+        if yes:
+            click.echo(click.style("No git repository. Skipping.", fg='yellow'))
+            return
         sys.exit(1)
     
     # Detect project types
@@ -2220,42 +2447,55 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             else:
                 click.echo(click.style(f"✓ Created tag: {tag_name}", fg='green'))
     
-    # Push stage
-    if not yes:
-        if confirm("Push to remote?"):
-            branch = get_remote_branch()
-            result = run_git('push', 'origin', branch, capture=False)
-            
-            if result.returncode != 0:
-                click.echo(click.style("Error pushing to remote", fg='red'))
-                sys.exit(1)
+    # Push stage — ensure a remote is configured first
+    has_remote = ensure_remote(auto=yes)
 
-            if (not no_tag) and tag_name:
-                result = run_git('push', 'origin', tag_name, capture=False)
-                if result.returncode != 0:
-                    click.echo(click.style("Error pushing tag to remote", fg='red'))
+    if has_remote:
+        if not yes:
+            if confirm("Push to remote?"):
+                branch = get_remote_branch()
+                try:
+                    _echo_cmd(['git', 'push', 'origin', branch])
+                    result = run_git('push', 'origin', branch, capture=False)
+                    if result.returncode != 0:
+                        click.echo(click.style(f"✗ Push failed (exit {result.returncode}). Check remote access.", fg='red'))
+                        sys.exit(1)
+
+                    if (not no_tag) and tag_name:
+                        _echo_cmd(['git', 'push', 'origin', tag_name])
+                        result = run_git('push', 'origin', tag_name, capture=False)
+                        if result.returncode != 0:
+                            click.echo(click.style(f"⚠  Could not push tag {tag_name}.", fg='yellow'))
+
+                    click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
+                except Exception as e:
+                    click.echo(click.style(f"✗ Push error: {e}", fg='red'))
                     sys.exit(1)
-            
-            click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
+            else:
+                click.echo(click.style("  Skipping push (user chose N).", fg='yellow'))
         else:
-            click.echo(click.style("  🤖 AUTO: Skipping push (user chose N)", fg='yellow'))
-    else:
-        # Auto-push
-        click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg='cyan'))
-        branch = get_remote_branch()
-        result = run_git('push', 'origin', branch, capture=False)
-        
-        if result.returncode != 0:
-            click.echo(click.style("Error pushing to remote", fg='red'))
-            sys.exit(1)
+            # Auto-push
+            click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg='cyan'))
+            branch = get_remote_branch()
+            try:
+                _echo_cmd(['git', 'push', 'origin', branch])
+                result = run_git('push', 'origin', branch, capture=False)
+                if result.returncode != 0:
+                    click.echo(click.style(f"✗ Push failed (exit {result.returncode}). Check remote access.", fg='red'))
+                    sys.exit(1)
 
-        if (not no_tag) and tag_name:
-            result = run_git('push', 'origin', tag_name, capture=False)
-            if result.returncode != 0:
-                click.echo(click.style("Error pushing tag to remote", fg='red'))
+                if (not no_tag) and tag_name:
+                    _echo_cmd(['git', 'push', 'origin', tag_name])
+                    result = run_git('push', 'origin', tag_name, capture=False)
+                    if result.returncode != 0:
+                        click.echo(click.style(f"⚠  Could not push tag {tag_name}.", fg='yellow'))
+
+                click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
+            except Exception as e:
+                click.echo(click.style(f"✗ Push error: {e}", fg='red'))
                 sys.exit(1)
-        
-        click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
+    else:
+        click.echo(click.style("  ℹ  No remote configured — commit saved locally.", fg='yellow'))
     
     # Publish stage
     if not yes:

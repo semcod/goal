@@ -10,7 +10,6 @@ readme = "README.md"
 license = "Apache-2.0"
 authors = [
     {name = "Tom Sapletta", email = "tom@sapletta.com"},
-    {name = "Tom Sapletta", email = "tom@sapletta.com"},
 ]
 keywords = ["git", "automation", "commit", "changelog", "versioning", "cli"]
 classifiers = [

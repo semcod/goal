@@ -21,23 +21,44 @@ Automated git push with **enterprise-grade commit intelligence**, smart changelo
 
 ## 🆕 What's New in v2.1
 
-> **Enterprise-Grade Commit Intelligence** - Transform statistical commit messages into business-value summaries
+> **Smart Commit Intelligence** — commit bodies that answer *what changed, what was tested, and at what scale*
 
 ```
 ❌ BEFORE: refactor(core): add testing, logging, validation
-✅ AFTER:  feat(goal): enterprise-grade commit intelligence engine
+✅ AFTER:  feat(goal): intelligent code analysis pipeline
 
-new_capabilities:
-  - capability: deep code analysis engine
-    impact: intelligent change detection
-  - capability: code relationship mapping
-    impact: architecture understanding
-  - capability: code quality metrics
-    impact: maintainability tracking
+changes:
+  - file: cli.py
+    area: cli
+    added: [ensure_git_repository, ensure_remote, _run_git_verbose]
+    modified: [push]
+  - file: test_clone_repo.py
+    area: test
+    new_tests: 3
 
-impact:
-  value_score: 85
-  relations: "cli→generator"
+testing:
+  new_tests: 3
+  scenarios:
+    - auto_mode_skips
+    - init_and_add_remote
+    - clone_option_with_valid_url
+
+stats:
+  lines: "+210/-45 (net +165)"
+  files: 2
+  complexity: "Stable complexity"
+```
+
+> **Interactive Git Setup** — `goal` now guides you through repository configuration when no git repo is found
+
+```
+⚠  Not a git repository.
+
+What would you like to do?
+  [1] Initialize git here and connect to a remote  (keeps local files in 'myproject/')
+  [2] Clone a remote repository into this directory  (downloads remote files)
+  [3] Initialize a local-only git repository        (no remote)
+  [4] Exit
 ```
 
 📖 [Full Documentation](docs/enhanced-summary.md) | 📂 [Examples](examples/enhanced-summary/)
@@ -72,27 +93,90 @@ pip install goal
 pip install goal
 ```
 
-### 2. Initialize your repository
+### 2. Run `goal` in any project directory
 
 ```bash
-goal init
-```
-
-Creates `VERSION`, `CHANGELOG.md`, and `goal.yaml` with auto-detected settings.
-
-### 3. Run the interactive workflow
-
-```bash
+cd my-project/
 goal
 ```
 
-This will guide you through:
-- ✅ Run tests? [Y/n]
-- ✅ Commit changes? [Y/n]
-- ✅ Push to remote? [Y/n]
-- ✅ Publish version X.X.X? [Y/n]
+Goal detects your situation and guides you interactively:
 
-Press Enter to accept the default (Yes) for any step.
+#### Scenario A: No git repository yet
+
+```
+⚠  Not a git repository.
+
+What would you like to do?
+  [1] Initialize git here and connect to a remote  (keeps local files in 'my-project/')
+  [2] Clone a remote repository into this directory  (downloads remote files)
+  [3] Initialize a local-only git repository        (no remote)
+  [4] Exit
+Choose [1]: 1
+
+  → git init
+✓ Initialized git repository.
+
+Enter repository URL:
+  SSH   example: git@github.com:user/repo.git
+  HTTP  example: https://github.com/user/repo.git
+URL: git@github.com:wronai/my-project.git
+
+  → git remote add origin git@github.com:wronai/my-project.git
+✓ Remote 'origin' → git@github.com:wronai/my-project.git
+
+Fetching remote branches...
+  → git fetch origin
+  Remote is empty (no branches yet). Your local files will be the first push.
+
+✓ Ready. Run 'goal' again to commit and push.
+```
+
+#### Scenario B: Git repo exists, no remote configured
+
+```
+⚠  No git remote configured.
+
+Would you like to add a remote?
+  [1] Add remote origin (connect to GitHub/GitLab/etc.)
+  [2] Skip — commit locally without pushing
+Choose [1]: 1
+
+  → git remote add origin git@github.com:wronai/my-project.git
+  Verifying connection...
+  ✓ Remote is reachable.
+✓ Remote 'origin' → git@github.com:wronai/my-project.git
+```
+
+#### Scenario C: Everything configured — the normal workflow
+
+```
+Detected project types: python
+Will commit 5 files (+120/-15 lines, NET 105, 11% churn deletions)
+Commit message: feat(api): add user authentication endpoint
+
+Run tests? [Y/n]
+Commit changes? [Y/n]
+Push to remote? [Y/n]
+Publish version 1.2.3? [Y/n]
+```
+
+Every git command is shown transparently (lines starting with `→`) so you always know what goal is doing.
+
+### 3. Automation modes
+
+```bash
+# Full automation — tests, commit, push, publish (skips if no repo/remote)
+goal -a
+
+# Skip prompts but don't auto-publish
+goal --yes
+
+# Preview what would happen
+goal --dry-run
+```
+
+> **Note:** `goal -a` in a directory without a git repository will **skip gracefully** instead of failing. This is safe for CI/CD pipelines.
 
 ### Running from a local clone
 
