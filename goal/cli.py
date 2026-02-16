@@ -1882,7 +1882,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                                         click.echo("")
                                         for w in validation.get('warnings', []):
                                             click.echo(f"  ⚠ {w}")
-                                sys.exit(1)
+                                if not yes:
+                                    sys.exit(1)
+                                else:
+                                    click.echo(click.style(f"  🤖 AUTO: Continuing despite failed quality gates (--all mode)", fg="cyan"))
                         else:
                             if markdown or ctx.obj.get('markdown'):
                                 click.echo("\n### Suggested Fix")
@@ -1891,7 +1894,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                             else:
                                 click.echo(click.style(f"Suggested title: {suggested_title}", fg='cyan'))
                                 click.echo(click.style("Run: goal validate --fix OR goal fix-summary --auto", fg='cyan'))
-                            sys.exit(1)
+                            if not yes:
+                                sys.exit(1)
+                            else:
+                                click.echo(click.style(f"  🤖 AUTO: Continuing despite missing title fix (--all mode)", fg="cyan"))
 
                     if validation.get('valid', True):
                         commit_title = commit_msg
@@ -1922,7 +1928,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                             click.echo(click.style(f"Suggested title: {suggested.get('title', '')}", fg='cyan'))
                             click.echo(click.style("Run: goal validate --fix OR goal fix-summary --auto", fg='cyan'))
 
-                        sys.exit(1)
+                        if not yes:
+                            sys.exit(1)
+                        else:
+                            click.echo(click.style(f"  🤖 AUTO: Continuing despite failed quality gates (--all mode)", fg="cyan"))
 
                 quality_enforced = True
             except Exception:
@@ -2118,7 +2127,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             result = run_git('commit', '-m', title, '-m', body)
             if result.returncode != 0:
                 click.echo(click.style(f"Error committing split group {gname}: {result.stderr}", fg='red'))
-                sys.exit(1)
+                if not yes:
+                    sys.exit(1)
+                else:
+                    click.echo(click.style(f"  🤖 AUTO: Continuing despite commit error in split group", fg="cyan"))
             click.echo(click.style(f"✓ Committed ({gname}): {title}", fg='green'))
 
         # Release meta commit: version sync + changelog
@@ -2148,7 +2160,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             result = run_git('commit', '-m', release_title, '-m', release_body)
             if result.returncode != 0:
                 click.echo(click.style(f"Error committing release metadata: {result.stderr}", fg='red'))
-                sys.exit(1)
+                if not yes:
+                    sys.exit(1)
+                else:
+                    click.echo(click.style(f"  🤖 AUTO: Continuing despite release metadata commit error", fg="cyan"))
             click.echo(click.style(f"✓ Committed (release): {release_title}", fg='green'))
 
         # Continue with tagging/pushing/publishing below
@@ -2186,7 +2201,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         result = run_git('commit', '-m', commit_msg)
     if result.returncode != 0:
         click.echo(click.style(f"Error committing: {result.stderr}", fg='red'))
-        sys.exit(1)
+        if not yes:
+            sys.exit(1)
+        else:
+            click.echo(click.style(f"  🤖 AUTO: Continuing despite commit error", fg="cyan"))
     if message != "__split__":
         click.echo(click.style(f"✓ Committed: {commit_msg}", fg='green'))
     
@@ -2216,7 +2234,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                     result = run_git('push', 'origin', branch, capture=False)
                     if result.returncode != 0:
                         click.echo(click.style(f"✗ Push failed (exit {result.returncode}). Check remote access.", fg='red'))
-                        sys.exit(1)
+                        if not yes:
+                            sys.exit(1)
+                        else:
+                            click.echo(click.style(f"  🤖 AUTO: Continuing despite push failure", fg="cyan"))
 
                     if (not no_tag) and tag_name:
                         _echo_cmd(['git', 'push', 'origin', tag_name])
@@ -2227,7 +2248,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                     click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
                 except Exception as e:
                     click.echo(click.style(f"✗ Push error: {e}", fg='red'))
-                    sys.exit(1)
+                    if not yes:
+                        sys.exit(1)
+                    else:
+                        click.echo(click.style(f"  🤖 AUTO: Continuing despite push error", fg="cyan"))
             else:
                 click.echo(click.style("  Skipping push (user chose N).", fg='yellow'))
         else:
@@ -2239,7 +2263,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                 result = run_git('push', 'origin', branch, capture=False)
                 if result.returncode != 0:
                     click.echo(click.style(f"✗ Push failed (exit {result.returncode}). Check remote access.", fg='red'))
-                    sys.exit(1)
+                    if not yes:
+                        sys.exit(1)
+                    else:
+                        click.echo(click.style(f"  🤖 AUTO: Continuing despite push failure", fg="cyan"))
 
                 if (not no_tag) and tag_name:
                     _echo_cmd(['git', 'push', 'origin', tag_name])
@@ -2250,7 +2277,10 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
                 click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
             except Exception as e:
                 click.echo(click.style(f"✗ Push error: {e}", fg='red'))
-                sys.exit(1)
+                if not yes:
+                    sys.exit(1)
+                else:
+                    click.echo(click.style(f"  🤖 AUTO: Continuing despite push error", fg="cyan"))
     else:
         click.echo(click.style("  ℹ  No remote configured — commit saved locally.", fg='yellow'))
     
