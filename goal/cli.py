@@ -31,6 +31,7 @@ try:
         detect_project_types_deep, bootstrap_all_projects, bootstrap_project,
         ensure_project_environment, find_existing_tests, scaffold_test,
     )
+    from .project_doctor import diagnose_and_report, diagnose_project, DoctorReport
 except ImportError:
     from formatter import format_push_result, format_status_output, format_enhanced_summary
     from commit_generator import CommitMessageGenerator
@@ -41,6 +42,7 @@ except ImportError:
         detect_project_types_deep, bootstrap_all_projects, bootstrap_project,
         ensure_project_environment, find_existing_tests, scaffold_test,
     )
+    from project_doctor import diagnose_and_report, diagnose_project, DoctorReport
 
 
 def _setup_nfo_logging(nfo_format: str = "markdown", nfo_sink: str = ""):
@@ -2992,6 +2994,62 @@ def bootstrap_command(yes, path):
         status = click.style("✓", fg='green') if r['env_ok'] else click.style("✗", fg='red')
         tests = len(r['tests_found'])
         click.echo(f"  {status} {r['project_type']:>8s}  {rel}  ({tests} test file{'s' if tests != 1 else ''})")
+
+
+@main.command('doctor')
+@click.option('--fix/--no-fix', default=True, help='Auto-fix issues (default: yes)')
+@click.option('--path', '-p', type=click.Path(exists=True), default='.', help='Root directory to scan')
+def doctor_command(fix, path):
+    """Diagnose and auto-fix common project configuration issues.
+
+    Scans the current directory (and 1-level-deep subfolders) for known project
+    types and checks for common problems:
+
+    \b
+    Python:  PEP 639 classifiers, missing build-system, broken backend,
+             duplicate authors, deprecated license format
+    Node.js: invalid package.json, missing version/test script
+    Rust:    missing [package], no edition
+    Go:      invalid go.mod, missing go.sum
+    Ruby:    missing Gemfile.lock
+    PHP:     invalid composer.json, missing autoload
+    .NET:    missing TargetFramework
+    Java:    missing modelVersion in pom.xml
+
+    Examples:
+        goal doctor              # Diagnose and auto-fix
+        goal doctor --no-fix     # Diagnose only (report without changes)
+        goal doctor -p ./myapp   # Scan a specific directory
+    """
+    from goal.project_bootstrap import detect_project_types_deep
+
+    root = Path(path).resolve()
+    detected = detect_project_types_deep(root)
+    if not detected:
+        click.echo(click.style("No known project types detected.", fg='yellow'))
+        return
+
+    all_reports = []
+    for ptype, dirs in detected.items():
+        for project_dir in dirs:
+            report = diagnose_and_report(project_dir, ptype, auto_fix=fix)
+            all_reports.append(report)
+
+    # Final summary
+    total_issues = sum(len(r.issues) for r in all_reports)
+    total_fixed = sum(len(r.fixed) for r in all_reports)
+    total_errors = sum(len(r.errors) for r in all_reports)
+
+    click.echo(click.style("\n" + "=" * 60, fg='cyan'))
+    if total_issues == 0:
+        click.echo(click.style("✓ All projects are healthy!", fg='green', bold=True))
+    else:
+        click.echo(click.style(f"🩺 Doctor summary: {total_issues} issue(s) found", fg='cyan', bold=True))
+        if total_fixed:
+            click.echo(click.style(f"   ✓ {total_fixed} auto-fixed", fg='green'))
+        remaining = total_errors - sum(1 for r in all_reports for i in r.errors if i.fixed)
+        if remaining > 0:
+            click.echo(click.style(f"   ✗ {remaining} error(s) need manual attention", fg='red'))
 
 
 @main.command('config')

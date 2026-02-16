@@ -13,6 +13,11 @@ from typing import Dict, List, Optional, Tuple
 
 import click
 
+try:
+    from .project_doctor import diagnose_and_report
+except ImportError:
+    from project_doctor import diagnose_and_report
+
 
 # =============================================================================
 # Project bootstrap configuration per language/framework
@@ -524,7 +529,7 @@ def scaffold_test(project_dir: Path, project_type: str, yes: bool = False) -> Op
 # =============================================================================
 
 def bootstrap_project(project_dir: Path, project_type: str, yes: bool = False) -> Dict:
-    """Full bootstrap: ensure environment + scaffold tests if missing.
+    """Full bootstrap: diagnose & fix config, ensure environment, scaffold tests.
 
     Returns a dict with status info:
         {
@@ -533,6 +538,7 @@ def bootstrap_project(project_dir: Path, project_type: str, yes: bool = False) -
             'env_ok': bool,
             'tests_found': list[Path],
             'test_created': Path | None,
+            'doctor_report': DoctorReport | None,
         }
     """
     result = {
@@ -541,9 +547,16 @@ def bootstrap_project(project_dir: Path, project_type: str, yes: bool = False) -
         'env_ok': False,
         'tests_found': [],
         'test_created': None,
+        'doctor_report': None,
     }
 
+    # Step 1: Diagnose and auto-fix project configuration issues
+    result['doctor_report'] = diagnose_and_report(project_dir, project_type, auto_fix=yes)
+
+    # Step 2: Ensure environment (venv, deps)
     result['env_ok'] = ensure_project_environment(project_dir, project_type, yes=yes)
+
+    # Step 3: Find or scaffold tests
     result['tests_found'] = find_existing_tests(project_dir, project_type)
 
     if not result['tests_found']:

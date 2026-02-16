@@ -1,3 +1,16 @@
+## [2.1.44] - 2026-02-16
+
+### Summary
+
+fix(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+- update goal/project_bootstrap.py
+- update goal/project_doctor.py
+
+
 ## [2.1.43] - 2026-02-16
 
 ### Summary
