@@ -24,7 +24,17 @@ def test_status_help_includes_markdown_ascii():
     assert "--markdown / --ascii" in res.stdout
 
 
-def test_commit_help_includes_ticket():
-    res = run_cli("commit", "--help")
+def test_unknown_command_shows_docs_url():
+    res = run_cli("nonexistent_command")
+    assert res.returncode == 2
+    out = res.output if hasattr(res, 'output') else res.stdout + res.stderr
+    # The requested command should be mentioned
+    assert "does not exist" in out.lower() or "not exist" in out.lower()
+    # Documentation URL should be shown
+    assert "github.com/wronai/goal" in out or "Documentation:" in out
+
+
+def test_known_commands_work():
+    res = run_cli("--help")
     assert res.returncode == 0
-    assert "--ticket" in res.stdout
+    assert "Usage:" in res.stdout

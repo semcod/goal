@@ -70,6 +70,29 @@ def _nfo_log_call(**kwargs):
     return _passthrough
 
 
+# =============================================================================
+# Documentation URL for unknown command handling
+# =============================================================================
+
+DOCS_URL = "https://github.com/wronai/goal#readme"
+
+
+class GoalGroup(click.Group):
+    """Custom Click Group that shows docs URL for unknown commands (like Poetry)."""
+    
+    def get_command(self, ctx, cmd_name):
+        rv = super().get_command(ctx, cmd_name)
+        if rv is not None:
+            return rv
+        # Unknown command - show helpful message with docs URL
+        click.echo(click.style(f"The requested command {cmd_name} does not exist.\n", fg='red', bold=True))
+        click.echo(click.style(f"Documentation: {DOCS_URL}", fg='cyan'))
+        click.echo()
+        click.echo(click.style("Available commands:", fg='cyan', bold=True))
+        self.list_commands(ctx)
+        ctx.exit(2)
+
+
 ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
 
 
@@ -1606,7 +1629,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
     return True
 
 
-@click.group(invoke_without_command=True)
+@click.group(invoke_without_command=True, cls=GoalGroup)
 @click.version_option()
 @click.option('--bump', '-b', type=click.Choice(['patch', 'minor', 'major']), default='patch',
               help='Version bump type (default: patch)')
