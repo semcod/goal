@@ -243,6 +243,116 @@ def run_command(command: str, capture: bool = True) -> subprocess.CompletedProce
     )
 
 
+def is_git_repository() -> bool:
+    """Check if the current directory is inside a git repository."""
+    if Path('.git').exists():
+        return True
+    result = run_git('rev-parse', '--git-dir')
+    return result.returncode == 0
+
+
+def validate_repo_url(url: str) -> bool:
+    """Validate that a URL looks like a git repository (HTTP/HTTPS/SSH)."""
+    url = url.strip()
+    # SSH format: git@host:user/repo.git
+    if re.match(r'^git@[\w.\-]+:[\w.\-/]+(?:\.git)?$', url):
+        return True
+    # HTTP(S) format
+    if re.match(r'^https?://[\w.\-]+/[\w.\-/]+(?:\.git)?$', url):
+        return True
+    return False
+
+
+def clone_repository(url: str, target_dir: Optional[str] = None) -> Tuple[bool, str]:
+    """Clone a git repository from a URL.
+
+    Args:
+        url: Repository URL (HTTP/HTTPS/SSH).
+        target_dir: Optional target directory name. If None, git decides.
+
+    Returns:
+        Tuple of (success, message).
+    """
+    url = url.strip()
+    if not validate_repo_url(url):
+        return False, f"Invalid repository URL: {url}\nExpected format: https://... or git@host:user/repo.git"
+
+    args = ['clone', url]
+    if target_dir:
+        args.append(target_dir)
+
+    click.echo(click.style(f"Cloning {url} ...", fg='cyan'))
+    result = run_git(*args, capture=False)
+    if result.returncode == 0:
+        # Determine the directory name that was created
+        if target_dir:
+            repo_dir = target_dir
+        else:
+            # Extract repo name from URL
+            repo_name = url.rstrip('/').rsplit('/', 1)[-1]
+            if repo_name.endswith('.git'):
+                repo_name = repo_name[:-4]
+            repo_dir = repo_name
+        return True, repo_dir
+    else:
+        return False, "Failed to clone repository. Check the URL and your access permissions."
+
+
+def ensure_git_repository() -> bool:
+    """Check for a git repo; if missing, interactively offer to clone one.
+
+    Returns True if we end up inside a valid git repository, False otherwise.
+    """
+    if is_git_repository():
+        return True
+
+    click.echo(click.style("⚠  Not a git repository.", fg='yellow', bold=True))
+    click.echo()
+
+    action = click.prompt(
+        click.style("What would you like to do?", fg='cyan')
+        + "\n  [1] Clone an existing repository (HTTP/SSH)"
+        + "\n  [2] Initialize a new git repository here"
+        + "\n  [3] Exit"
+        + "\nChoose",
+        type=click.IntRange(1, 3),
+        default=1,
+    )
+
+    if action == 1:
+        click.echo()
+        click.echo(click.style("Enter repository URL:", fg='cyan'))
+        click.echo(click.style("  HTTP  example: https://github.com/user/repo.git", fg='bright_black'))
+        click.echo(click.style("  SSH   example: git@github.com:user/repo.git", fg='bright_black'))
+        url = click.prompt("URL")
+
+        if not validate_repo_url(url):
+            click.echo(click.style("Error: Invalid repository URL format.", fg='red'))
+            return False
+
+        success, msg = clone_repository(url)
+        if success:
+            repo_dir = msg
+            os.chdir(repo_dir)
+            click.echo(click.style(f"✓ Cloned and entered '{repo_dir}'", fg='green', bold=True))
+            return True
+        else:
+            click.echo(click.style(f"Error: {msg}", fg='red'))
+            return False
+
+    elif action == 2:
+        result = run_git('init')
+        if result.returncode == 0:
+            click.echo(click.style("✓ Initialized empty git repository.", fg='green', bold=True))
+            return True
+        else:
+            click.echo(click.style("Error: Failed to initialize git repository.", fg='red'))
+            return False
+
+    else:
+        return False
+
+
 def run_command_tee(command: str) -> subprocess.CompletedProcess:
     proc = subprocess.Popen(
         command,
@@ -1568,12 +1678,9 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     - Pushes to remote
     """
     
-    # Check if we're in a git repository
-    if not Path('.git').exists():
-        result = run_git('rev-parse', '--git-dir')
-        if result.returncode != 0:
-            click.echo(click.style("Error: Not a git repository", fg='red'))
-            sys.exit(1)
+    # Check if we're in a git repository (interactive clone/init if missing)
+    if not ensure_git_repository():
+        sys.exit(1)
     
     # Detect project types
     project_types = detect_project_types()
@@ -2808,6 +2915,33 @@ def check_versions_command(update_badges):
         click.echo("  Run 'goal check-versions --update-badges' to fix badge issues.")
     else:
         click.echo(click.style("  ✅ All versions are consistent and ready for publishing!", fg='green'))
+
+
+@main.command('clone')
+@click.argument('url')
+@click.argument('directory', required=False, default=None)
+def clone_command(url, directory):
+    """Clone an external git repository.
+
+    Accepts HTTP(S) and SSH URLs.
+
+    Examples:
+        goal clone https://github.com/user/repo.git
+        goal clone git@github.com:user/repo.git
+        goal clone https://github.com/user/repo.git my-folder
+    """
+    if not validate_repo_url(url):
+        click.echo(click.style("Error: Invalid repository URL format.", fg='red'))
+        click.echo(click.style("  HTTP  example: https://github.com/user/repo.git", fg='bright_black'))
+        click.echo(click.style("  SSH   example: git@github.com:user/repo.git", fg='bright_black'))
+        sys.exit(1)
+
+    success, msg = clone_repository(url, target_dir=directory)
+    if success:
+        click.echo(click.style(f"✓ Repository cloned into '{msg}'", fg='green', bold=True))
+    else:
+        click.echo(click.style(f"Error: {msg}", fg='red'))
+        sys.exit(1)
 
 
 @main.command('config')

@@ -1,3 +1,22 @@
+## [2.1.37] - 2026-02-16
+
+### Summary
+
+refactor(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+
+### Test
+
+- update tests/test_clone_repo.py
+
+### Build
+
+- update pyproject.toml
+
+
 ## [2.1.35] - 2026-02-15
 
 ### Summary
