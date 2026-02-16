@@ -2256,21 +2256,24 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         click.echo(click.style("  ℹ  No remote configured — commit saved locally.", fg='yellow'))
     
     # Publish stage
+    publish_success = False
     if not yes:
         if confirm(f"Publish version {new_version}?"):
-            if not publish_project(project_types, new_version, yes):
-                click.echo(click.style("Publish failed. Check the output above.", fg='red'))
-                sys.exit(1)
-            click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
+            publish_success = publish_project(project_types, new_version, yes)
+            if not publish_success:
+                click.echo(click.style("Publish failed. Continuing with remaining tasks.", fg='yellow'))
+            else:
+                click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
         else:
             click.echo(click.style("  🤖 AUTO: Skipping publish (user chose N)", fg='yellow'))
     else:
         # Auto-publish when --yes or --all is used
         click.echo(click.style(f"\n🤖 AUTO: Publishing version {new_version} (--all mode)", fg='cyan'))
-        if not publish_project(project_types, new_version, yes):
-            click.echo(click.style("Publish failed. Check the output above.", fg='red'))
-            sys.exit(1)
-        click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
+        publish_success = publish_project(project_types, new_version, yes)
+        if not publish_success:
+            click.echo(click.style("Publish failed. Continuing with remaining tasks.", fg='yellow'))
+        else:
+            click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
     
     # Output markdown if requested
     if markdown or ctx.obj.get('markdown'):
@@ -2283,8 +2286,11 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             "Updated changelog",
             f"Created tag v{new_version}" if not no_tag else "Skipped tag creation",
             "Pushed to remote" if not no_tag else "Pushed to remote without tags",
-            f"Published version {new_version}"
         ]
+        if publish_success:
+            actions_performed.append(f"Published version {new_version}")
+        else:
+            actions_performed.append("Publish failed or skipped")
         
         md_output = format_push_result(
             project_types=project_types,
@@ -2333,7 +2339,10 @@ def publish(ctx, use_make, target, version):
         version = get_current_version()
 
     if not publish_project(project_types, version, False):
-        sys.exit(1)
+        click.echo(click.style("Publish failed. Continuing.", fg='yellow'))
+        # We don't exit with 1 here because the user wants to continue with tasks
+        # although in the standalone 'publish' command there might not be "further" tasks
+        # in the same process, but it aligns with the requested behavior.
 
 
 @main.command()
