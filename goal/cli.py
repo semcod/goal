@@ -1417,6 +1417,14 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
     
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'publish_command' in PROJECT_TYPES[ptype]:
+            # Check if publishing is enabled for this project type in config
+            from .config import ensure_config
+            config = ensure_config()
+            strategy = config.get_strategy(ptype)
+            if strategy and not strategy.get('publish_enabled', True):
+                click.echo(click.style(f"\nℹ️  Publishing disabled for {ptype} in goal.yaml. Skipping.", fg='yellow'))
+                continue
+
             if ptype == 'python':
                 package_name = None
                 pyproject_path = Path('pyproject.toml')

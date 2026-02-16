@@ -203,6 +203,7 @@ DEFAULT_CONFIG = {
             'test': 'pytest tests/ -v',
             'build': 'python -m build',
             'publish': 'twine upload dist/goal-{version}*',
+            'publish_enabled': True,
             'dependencies': {
                 'file': 'requirements.txt',
                 'lock': 'pip freeze > requirements.txt',
@@ -212,6 +213,7 @@ DEFAULT_CONFIG = {
             'test': 'npm test',
             'build': 'npm run build',
             'publish': 'npm publish',
+            'publish_enabled': True,
             'dependencies': {
                 'file': 'package-lock.json',
                 'lock': 'npm install',
@@ -221,6 +223,7 @@ DEFAULT_CONFIG = {
             'test': 'cargo test',
             'build': 'cargo build --release',
             'publish': 'cargo publish',
+            'publish_enabled': True,
             'dependencies': {
                 'file': 'Cargo.lock',
                 'lock': 'cargo update',
