@@ -2985,7 +2985,10 @@ def bootstrap_command(yes, path):
 
     click.echo(click.style("\n✓ Bootstrap complete!", fg='green', bold=True))
     for r in results:
-        rel = r['project_dir'].relative_to(root) if r['project_dir'] != root else Path('.')
+        try:
+            rel = r['project_dir'].relative_to(root)
+        except ValueError:
+            rel = r['project_dir']
         status = click.style("✓", fg='green') if r['env_ok'] else click.style("✗", fg='red')
         tests = len(r['tests_found'])
         click.echo(f"  {status} {r['project_type']:>8s}  {rel}  ({tests} test file{'s' if tests != 1 else ''})")

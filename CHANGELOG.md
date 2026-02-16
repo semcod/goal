@@ -1,3 +1,18 @@
+## [2.1.43] - 2026-02-16
+
+### Summary
+
+feat(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+
+### Test
+
+- update tests/test_project_bootstrap.py
+
+
 ## [2.1.37] - 2026-02-16
 
 ### Summary
