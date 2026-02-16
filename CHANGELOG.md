@@ -1,3 +1,18 @@
+## [2.1.45] - 2026-02-16
+
+### Summary
+
+fix(goal): configuration management system
+
+### Core
+
+- update goal/enhanced_summary.py
+
+### Test
+
+- update tests/test_project_doctor.py
+
+
 ## [2.1.44] - 2026-02-16
 
 ### Summary

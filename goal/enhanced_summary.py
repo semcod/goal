@@ -469,7 +469,7 @@ class QualityValidator:
         # 6. Check that the body exposes metrics (enterprise-grade preview)
         body = summary.get('body', '')
         if body:
-            metric_keywords = ['NET', 'Relations:', 'Test coverage', 'score', '%', 'deletions']
+            metric_keywords = ['changes:', 'testing:', 'stats:', 'net', 'complexity', 'dependencies:']
             metric_count = sum(1 for kw in metric_keywords if kw.lower() in body.lower())
             if metric_count < self.required_metrics:
                 errors.append(f"Only {metric_count} metrics found in body (need {self.required_metrics})")
@@ -1027,7 +1027,8 @@ class EnhancedSummaryGenerator:
             relations=relations,
             metrics=metrics,
             files=files,
-            aggregated=aggregated
+            aggregated=aggregated,
+            file_analyses=analysis.get('file_analyses', [])
         )
         
         # Classify intent (use line stats so refactors can't become "feat")
@@ -1055,94 +1056,125 @@ class EnhancedSummaryGenerator:
                                relations: Dict,
                                metrics: Dict,
                                files: List[str],
-                               aggregated: Dict) -> str:
-        """Format the enhanced commit body."""
+                               aggregated: Dict,
+                               file_analyses: List[Dict] = None) -> str:
+        """Format the enhanced commit body.
+        
+        Produces a YAML structure optimised for git log / GitHub readers:
+        - changes:      per-file concrete additions/modifications/removals
+        - testing:      new test scenarios (only when tests are present)
+        - dependencies: import flow between changed files (only when present)
+        - stats:        concise line/complexity metrics
+        """
+        file_analyses = file_analyses or []
         sections = []
-        
-        # NEW CAPABILITIES section
-        if capabilities:
-            cap_lines = ["new_capabilities:"]
-            for cap in capabilities[:5]:
-                cap_lines.append(f"  - capability: {cap['capability']}")
-                cap_lines.append(f"    impact: {cap['impact']}")
-            sections.append('\n'.join(cap_lines))
-        
-        # FUNCTIONAL ROLES section (instead of raw entity names)
-        if roles:
-            role_lines = ["functional_components:"]
-            for role in roles[:5]:
-                role_lines.append(f"  - role: {role['role']}")
-                role_lines.append(f"    name: {role['name']}")
-            sections.append('\n'.join(role_lines))
 
-        # ARCHITECTURE section - show concrete file names per category
+        # ── CHANGES section: per-file breakdown of what was touched ──
         categorized = self.quality_filter.categorize_files(files)
-        if categorized:
-            layer_keys = {'analyzer', 'cli', 'quality'}
-            header = "architecture:" if (set(categorized.keys()) & layer_keys) else "structure:"
-            arch_lines = [header]
-            for category, cat_files in sorted(categorized.items(), key=lambda kv: (-len(kv[1]), kv[0])):
-                names = [Path(f).name for f in cat_files]
-                shown = names[:4]
-                suffix = f", +{len(names) - 4} more" if len(names) > 4 else ""
-                arch_lines.append(f"  - category: {category}")
-                arch_lines.append(f"    files: {len(names)}")
-                arch_lines.append(f"    names: [{', '.join(shown)}{suffix}]")
-            sections.append('\n'.join(arch_lines))
-        
-        # IMPACT METRICS section
+        # Build filepath→analysis lookup
+        analysis_map = {}
+        for fa in file_analyses:
+            fp = fa.get('filepath', '')
+            analysis_map[fp] = fa
+            # Also index by basename for fuzzy matching
+            analysis_map[Path(fp).name] = fa
+
+        change_lines = ["changes:"]
+        has_changes = False
+        test_scenarios = []
+
+        for f in files:
+            fname = Path(f).name
+            fa = analysis_map.get(f) or analysis_map.get(fname) or {}
+
+            added_ents = fa.get('added_entities', [])
+            modified_ents = fa.get('modified_entities', [])
+            removed_ents = fa.get('removed_entities', [])
+
+            if not added_ents and not modified_ents and not removed_ents:
+                continue
+
+            has_changes = True
+            # Determine area from categorization
+            area = 'core'
+            for cat, cat_files in categorized.items():
+                if f in cat_files:
+                    area = cat
+                    break
+
+            change_lines.append(f"  - file: {fname}")
+            change_lines.append(f"    area: {area}")
+
+            if added_ents:
+                names = [e['name'] for e in added_ents]
+                # Collect test names for the testing section
+                tests = [n for n in names if n.startswith('test_')]
+                non_tests = [n for n in names if not n.startswith('test_')]
+                test_scenarios.extend(tests)
+
+                if non_tests:
+                    shown = non_tests[:6]
+                    suffix = f", +{len(non_tests) - 6} more" if len(non_tests) > 6 else ""
+                    change_lines.append(f"    added: [{', '.join(shown)}{suffix}]")
+                if tests:
+                    change_lines.append(f"    new_tests: {len(tests)}")
+
+            if modified_ents:
+                names = [e['name'] for e in modified_ents[:6]]
+                suffix = f", +{len(modified_ents) - 6} more" if len(modified_ents) > 6 else ""
+                change_lines.append(f"    modified: [{', '.join(names)}{suffix}]")
+
+            if removed_ents:
+                names = [e['name'] for e in removed_ents[:6]]
+                suffix = f", +{len(removed_ents) - 6} more" if len(removed_ents) > 6 else ""
+                change_lines.append(f"    removed: [{', '.join(names)}{suffix}]")
+
+        if has_changes:
+            sections.append('\n'.join(change_lines))
+
+        # ── TESTING section: concrete test scenarios added ──
+        if test_scenarios:
+            test_lines = ["testing:"]
+            test_lines.append(f"  new_tests: {len(test_scenarios)}")
+            test_lines.append("  scenarios:")
+            for t in test_scenarios[:10]:
+                # Strip test_ prefix for readability
+                readable = t[5:] if t.startswith('test_') else t
+                test_lines.append(f"    - {readable}")
+            if len(test_scenarios) > 10:
+                test_lines.append(f"    # +{len(test_scenarios) - 10} more")
+            sections.append('\n'.join(test_lines))
+
+        # ── DEPENDENCIES section: import flow (only when non-trivial) ──
+        if relations.get('relations'):
+            dep_lines = ["dependencies:"]
+            chain = relations.get('chain', '')
+            if chain:
+                dep_lines.append(f"  flow: \"{chain}\"")
+            for r in relations.get('relations', [])[:8]:
+                dep_lines.append(f"  - {r.get('from')}.py -> {r.get('to')}.py")
+            sections.append('\n'.join(dep_lines))
+
+        # ── STATS section: concise metrics ──
         if metrics:
-            metric_lines = ["impact:"]
-            
-            # NET lines change (primary metric for refactors)
+            stat_lines = ["stats:"]
             added = metrics.get('lines_added', 0)
             deleted = metrics.get('lines_deleted', 0)
             if added or deleted:
-                emoji, desc = self.quality_filter.format_net_lines(added, deleted)
-                metric_lines.append(f"  lines: \"{desc}\"")
-            
-            # Show relation count 
-            rel_count = len(relations.get('relations', []))
-            if rel_count > 0:
-                chain = relations.get('chain', '')
-                if chain:
-                    metric_lines.append(f"  relations: \"{chain} ({rel_count} clean relations)\"")
-                else:
-                    metric_lines.append(f"  relations: {rel_count} clean relations")
-            
-            # Test coverage
-            test_files = sum(1 for f in files if 'test' in f.lower())
-            if test_files > 0:
-                coverage_pct = int(test_files / len(files) * 100) if files else 0
-                metric_lines.append(f"  test_coverage: \"{test_files}/{len(files)} files ({coverage_pct}%)\"")
-            
-            metric_lines.append(f"  framework_score: {metrics['value_score']}")
-            sections.append('\n'.join(metric_lines))
-        
-        # RELATIONS section - show concrete dependency paths
-        if relations.get('relations'):
-            rel_lines = ["dependency_flow:"]
-            chain = relations.get('chain', '')
-            if chain:
-                rel_lines.append(f"  chain: {chain}")
+                net = added - deleted
+                sign = '+' if net >= 0 else ''
+                stat_lines.append(f"  lines: \"+{added}/-{deleted} (net {sign}{net})\"")
+            stat_lines.append(f"  files: {len(files)}")
 
-            # Show concrete edges (not just counts)
-            rel_lines.append("  relations:")
-            for r in relations.get('relations', [])[:8]:
-                rel_lines.append(f"    - from: {r.get('from')}.py")
-                rel_lines.append(f"      to: {r.get('to')}.py")
-            sections.append('\n'.join(rel_lines))
-        
-        # FILES section (summary counts)
-        file_parts = []
-        for category, cat_files in categorized.items():
-            count = len(cat_files)
-            if count > 0:
-                file_parts.append(f"{category}: {count}")
-        
-        if file_parts:
-            sections.append(f"files:\n  " + "\n  ".join(file_parts))
-        
+            # Complexity change (human-readable interpretation)
+            old_cc = metrics.get('old_complexity', 1)
+            new_cc = metrics.get('new_complexity', old_cc)
+            if old_cc and old_cc > 0:
+                emoji, desc = self.quality_filter.format_complexity_delta(old_cc, new_cc)
+                stat_lines.append(f"  complexity: \"{desc}\"")
+
+            sections.append('\n'.join(stat_lines))
+
         return '\n\n'.join(sections)
     
     def validate_summary_quality(self, title: str, body: str) -> Dict[str, Any]:
