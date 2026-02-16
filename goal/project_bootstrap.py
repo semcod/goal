@@ -566,7 +566,10 @@ def bootstrap_all_projects(root: Optional[Path] = None, yes: bool = False) -> Li
     results = []
     for ptype, dirs in detected.items():
         for project_dir in dirs:
-            rel = project_dir.relative_to(Path('.').resolve()) if project_dir != Path('.').resolve() else Path('.')
+            try:
+                rel = project_dir.relative_to(root.resolve() if root else Path('.').resolve())
+            except ValueError:
+                rel = project_dir
             click.echo(click.style(f"\n📦 Bootstrapping {ptype} project in {rel}", fg='cyan', bold=True))
             res = bootstrap_project(project_dir, ptype, yes=yes)
             results.append(res)

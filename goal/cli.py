@@ -27,12 +27,20 @@ try:
     from .config import GoalConfig, ensure_config, init_config, load_config
     from .user_config import get_user_config, initialize_user_config, show_user_config
     from .version_validation import validate_project_versions, check_readme_badges, update_badge_versions, format_validation_results
+    from .project_bootstrap import (
+        detect_project_types_deep, bootstrap_all_projects, bootstrap_project,
+        ensure_project_environment, find_existing_tests, scaffold_test,
+    )
 except ImportError:
     from formatter import format_push_result, format_status_output, format_enhanced_summary
     from commit_generator import CommitMessageGenerator
     from config import GoalConfig, ensure_config, init_config, load_config
     from user_config import get_user_config, initialize_user_config, show_user_config
     from version_validation import validate_project_versions, check_readme_badges, update_badge_versions, format_validation_results
+    from project_bootstrap import (
+        detect_project_types_deep, bootstrap_all_projects, bootstrap_project,
+        ensure_project_environment, find_existing_tests, scaffold_test,
+    )
 
 
 def _setup_nfo_logging(nfo_format: str = "markdown", nfo_sink: str = ""):
@@ -1686,7 +1694,14 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     project_types = detect_project_types()
     if project_types and not dry_run:
         click.echo(f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}")
-    
+
+    # Bootstrap project environments (venv, deps, scaffold tests if missing)
+    if not dry_run and project_types:
+        deep_detected = detect_project_types_deep()
+        for ptype, dirs in deep_detected.items():
+            for pdir in dirs:
+                bootstrap_project(pdir, ptype, yes=yes)
+
     # Stage all changes
     if not dry_run:
         run_git('add', '-A')
@@ -2942,6 +2957,38 @@ def clone_command(url, directory):
     else:
         click.echo(click.style(f"Error: {msg}", fg='red'))
         sys.exit(1)
+
+
+@main.command('bootstrap')
+@click.option('--yes', '-y', is_flag=True, help='Skip prompts (auto-accept)')
+@click.option('--path', '-p', type=click.Path(exists=True), default='.', help='Root directory to scan')
+def bootstrap_command(yes, path):
+    """Bootstrap project environments and scaffold tests.
+
+    Scans the current directory (and 1-level-deep subfolders) for known project
+    types, then for each detected project:
+      - Creates virtual environments / installs dependencies
+      - Scaffolds a sample test file when no tests are found
+
+    Supported: Python, Node.js, Rust, Go, Ruby, PHP, .NET, Java.
+
+    Examples:
+        goal bootstrap              # Interactive bootstrap
+        goal bootstrap -y           # Auto-accept all prompts
+        goal bootstrap -p ./myapp   # Bootstrap a specific directory
+    """
+    root = Path(path).resolve()
+    results = bootstrap_all_projects(root, yes=yes)
+    if not results:
+        click.echo(click.style("No known project types detected.", fg='yellow'))
+        return
+
+    click.echo(click.style("\n✓ Bootstrap complete!", fg='green', bold=True))
+    for r in results:
+        rel = r['project_dir'].relative_to(root) if r['project_dir'] != root else Path('.')
+        status = click.style("✓", fg='green') if r['env_ok'] else click.style("✗", fg='red')
+        tests = len(r['tests_found'])
+        click.echo(f"  {status} {r['project_type']:>8s}  {rel}  ({tests} test file{'s' if tests != 1 else ''})")
 
 
 @main.command('config')
