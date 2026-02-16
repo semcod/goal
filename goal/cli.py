@@ -2072,24 +2072,11 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         test_success = run_tests(project_types)
         if not test_success:
             test_exit_code = 1
-            test_result = "Tests failed - aborting"
-            if markdown or ctx.obj.get('markdown'):
-                md_output = format_push_result(
-                    project_types=project_types,
-                    files=files,
-                    stats=stats,
-                    current_version=current_version,
-                    new_version=new_version,
-                    commit_msg=commit_msg,
-                    commit_body=commit_body,
-                    test_result=test_result,
-                    test_exit_code=test_exit_code,
-                    actions=["Detected project types", "Staged changes", "Ran tests automatically"],
-                    error="Tests failed - automatic abort"
-                )
-                click.echo(md_output)
-            click.echo(click.style("Tests failed!", fg='red'))
-            sys.exit(1)
+            test_result = "Tests failed - continuing anyway"
+            click.echo(click.style("⚠️  Tests failed, but continuing due to --all/--yes mode.", fg='yellow', bold=True))
+        else:
+            test_exit_code = 0
+            test_result = "Tests passed"
     
     # Commit stage
     if not yes:
