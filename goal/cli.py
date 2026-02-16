@@ -1477,7 +1477,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                     if importlib.util.find_spec(m) is None
                 ]
                 if missing:
-                    cmd = 'python -m pip install --upgrade build twine'
+                    cmd = f'{sys.executable} -m pip install --upgrade build twine'
                     click.echo(f"\n{click.style('Preparing publish:', fg='cyan', bold=True)} {cmd}")
                     sys.stdout.flush()
                     result = run_command(cmd, capture=False)
@@ -1487,7 +1487,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                         click.echo(click.style("Failed to install build dependencies.", fg='red'))
                         return False
 
-                cmd = 'python -m build'
+                cmd = f'{sys.executable} -m build'
                 click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                 sys.stdout.flush()
                 result = run_command(cmd, capture=False)
