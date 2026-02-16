@@ -1415,6 +1415,9 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
     else:
         click.echo(click.style("  ℹ️  README.md not found", fg='yellow'))
     
+    all_success = True
+    any_attempted = False
+    
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'publish_command' in PROJECT_TYPES[ptype]:
             # Check if publishing is enabled for this project type in config
@@ -1425,6 +1428,8 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                 click.echo(click.style(f"\nℹ️  Publishing disabled for {ptype} in goal.yaml. Skipping.", fg='yellow'))
                 continue
 
+            any_attempted = True
+            current_success = True
             if ptype == 'python':
                 package_name = None
                 pyproject_path = Path('pyproject.toml')
@@ -1493,68 +1498,71 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                     if result.returncode != 0:
                         click.echo("")
                         click.echo(click.style("Failed to install build dependencies.", fg='red'))
-                        return False
-
-                cmd = f'{sys.executable} -m build'
-                click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
-                sys.stdout.flush()
-                result = run_command(cmd, capture=False)
-
-                if result.returncode != 0:
+                        current_success = False
+                
+                if current_success:
+                    cmd = f'{sys.executable} -m build'
+                    click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                     sys.stdout.flush()
-                    click.echo("")
-                    click.echo(click.style("Build failed. Check the output above.", fg='red'))
-                    return False
+                    result = run_command(cmd, capture=False)
 
-                artifacts = []
-                if dist.exists():
-                    for f in dist.iterdir():
-                        if not f.is_file():
-                            continue
-                        if not (f.name.endswith('.whl') or f.name.endswith('.tar.gz')):
-                            continue
+                    if result.returncode != 0:
+                        sys.stdout.flush()
+                        click.echo("")
+                        click.echo(click.style("Build failed. Check the output above.", fg='red'))
+                        current_success = False
 
-                        dist_name = None
-                        dist_version = None
-                        if f.name.endswith('.whl'):
-                            stem = f.name[:-len('.whl')]
-                            parts = stem.split('-')
-                            if len(parts) >= 2:
-                                dist_name = parts[0]
-                                dist_version = parts[1]
-                        else:
-                            stem = f.name[:-len('.tar.gz')]
-                            if '-' in stem:
-                                dist_name, dist_version = stem.rsplit('-', 1)
-
-                        if not dist_name or not dist_version:
-                            continue
-                        if dist_version != version:
-                            continue
-
-                        if name_variants:
-                            norm = dist_name.replace('_', '-').lower()
-                            allowed = {n.replace('_', '-').lower() for n in name_variants}
-                            if norm not in allowed:
+                if current_success:
+                    artifacts = []
+                    if dist.exists():
+                        for f in dist.iterdir():
+                            if not f.is_file():
+                                continue
+                            if not (f.name.endswith('.whl') or f.name.endswith('.tar.gz')):
                                 continue
 
-                        artifacts.append(f)
+                            dist_name = None
+                            dist_version = None
+                            if f.name.endswith('.whl'):
+                                stem = f.name[:-len('.whl')]
+                                parts = stem.split('-')
+                                if len(parts) >= 2:
+                                    dist_name = parts[0]
+                                    dist_version = parts[1]
+                            else:
+                                stem = f.name[:-len('.tar.gz')]
+                                if '-' in stem:
+                                    dist_name, dist_version = stem.rsplit('-', 1)
 
-                artifacts = sorted({str(a) for a in artifacts})
-                if not artifacts:
-                    click.echo(click.style(f"No dist artifacts found for version {version}", fg='red'))
-                    if dist.exists():
-                        dist_listing = sorted(p.name for p in dist.iterdir() if p.is_file())
-                        if dist_listing:
-                            click.echo(click.style("Dist directory contains:", fg='yellow'))
-                            for name in dist_listing[:20]:
-                                click.echo(f"  - {name}")
-                    return False
+                            if not dist_name or not dist_version:
+                                continue
+                            if dist_version != version:
+                                continue
 
-                cmd = 'python -m twine upload ' + ' '.join(artifacts)
-                click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
-                sys.stdout.flush()
-                result = run_command_tee(cmd)
+                            if name_variants:
+                                norm = dist_name.replace('_', '-').lower()
+                                allowed = {n.replace('_', '-').lower() for n in name_variants}
+                                if norm not in allowed:
+                                    continue
+
+                            artifacts.append(f)
+
+                    artifacts = sorted({str(a) for a in artifacts})
+                    if not artifacts:
+                        click.echo(click.style(f"No dist artifacts found for version {version}", fg='red'))
+                        if dist.exists():
+                            dist_listing = sorted(p.name for p in dist.iterdir() if p.is_file())
+                            if dist_listing:
+                                click.echo(click.style("Dist directory contains:", fg='yellow'))
+                                for name in dist_listing[:20]:
+                                    click.echo(f"  - {name}")
+                        current_success = False
+
+                if current_success:
+                    cmd = 'python -m twine upload ' + ' '.join(artifacts)
+                    click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
+                    sys.stdout.flush()
+                    result = run_command_tee(cmd)
             else:
                 cmd = PROJECT_TYPES[ptype]['publish_command']
                 try:
@@ -1566,7 +1574,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                 result = run_command_tee(cmd)
             sys.stdout.flush()
             
-            if result.returncode != 0:
+            if current_success and result.returncode != 0:
                 out = ((result.stdout or '') + "\n" + (result.stderr or '')).strip()
                 out_l = strip_ansi(out).lower()
 
@@ -1576,39 +1584,43 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                     click.echo(click.style(
                         f"\n⚠ '{tool_name}' not available in PATH. Skipping publish for {ptype}.",
                         fg='yellow'))
-                    return True
-
-                click.echo("")
-                click.echo(click.style("=" * 77, fg='yellow'))
-                if re.search(r'file[^a-z0-9]+already[^a-z0-9]+exists', out_l) is not None:
-                    click.echo(click.style("⚠️  PUBLISH FAILED - File already exists", fg='yellow', bold=True))
-                    click.echo(click.style("=" * 77, fg='yellow'))
-                    click.echo(click.style("This version (or filename) already exists in the registry.", fg='yellow'))
-                    click.echo(click.style("Bump the version and try again.", fg='yellow'))
+                    # This is considered success in terms of continuing
                 else:
-                    auth_indicators = (
-                        'unauthorized',
-                        'forbidden',
-                        'invalid or non-existent authentication',
-                        'missing or invalid authentication',
-                        '403',
-                        '401',
-                        'invalid token',
-                    )
-                    if any(x in out_l for x in auth_indicators):
-                        click.echo(click.style("⚠️  PUBLISH FAILED - Authentication Required", fg='yellow', bold=True))
+                    click.echo("")
+                    click.echo(click.style("=" * 77, fg='yellow'))
+                    if re.search(r'file[^a-z0-9]+already[^a-z0-9]+exists', out_l) is not None:
+                        click.echo(click.style("⚠️  PUBLISH FAILED - File already exists", fg='yellow', bold=True))
                         click.echo(click.style("=" * 77, fg='yellow'))
-                        click.echo(get_registry_help(ptype))
+                        click.echo(click.style("This version (or filename) already exists in the registry.", fg='yellow'))
+                        click.echo(click.style("Bump the version and try again.", fg='yellow'))
                     else:
-                        click.echo(click.style("⚠️  PUBLISH FAILED", fg='yellow', bold=True))
-                        click.echo(click.style("=" * 77, fg='yellow'))
-                click.echo(click.style("=" * 77, fg='yellow'))
-                return False
+                        auth_indicators = (
+                            'unauthorized',
+                            'forbidden',
+                            'invalid or non-existent authentication',
+                            'missing or invalid authentication',
+                            '403',
+                            '401',
+                            'invalid token',
+                        )
+                        if any(x in out_l for x in auth_indicators):
+                            click.echo(click.style("⚠️  PUBLISH FAILED - Authentication Required", fg='yellow', bold=True))
+                            click.echo(click.style("=" * 77, fg='yellow'))
+                            click.echo(get_registry_help(ptype))
+                        else:
+                            click.echo(click.style("⚠️  PUBLISH FAILED", fg='yellow', bold=True))
+                            click.echo(click.style("=" * 77, fg='yellow'))
+                    click.echo(click.style("=" * 77, fg='yellow'))
+                    current_success = False
             
-            return True
+            if not current_success:
+                all_success = False
+
+    if not any_attempted:
+        click.echo(click.style("\nNo publish command configured or enabled for detected project types", fg='yellow'))
+        return True
     
-    click.echo(click.style("\nNo publish command configured for this project type", fg='yellow'))
-    return True
+    return all_success
 
 
 @click.group(invoke_without_command=True, cls=GoalGroup)
