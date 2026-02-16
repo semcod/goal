@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.1.48"
+version = "2.1.49"
 description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
 readme = "README.md"
 license = "Apache-2.0"

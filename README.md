@@ -1,7 +1,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.46-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.49-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -1056,6 +1056,7 @@ Every time you run `goal`, it updates:
 - `package.json` - author, license, contributors
 - `Cargo.toml` - authors, license
 - `VERSION` - version number
+- `__init__.py` - `__version__` variable (in all packages)
 
 **README.md:**
 - License badges (Apache-2.0, MIT, GPL, etc.)

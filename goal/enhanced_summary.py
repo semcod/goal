@@ -330,6 +330,8 @@ class SummaryQualityFilter:
         if categories:
             dominant = max(categories.items(), key=lambda x: len(x[1]))
             return f"{dominant[0]} module improvements"
+        
+        return "configuration and maintenance updates"
 
 
 class QualityValidator:
@@ -539,6 +541,24 @@ class QualityValidator:
                 fixed['intent'] = smart_intent
                 applied_fixes.append(f"Fixed intent: {current_intent} → {smart_intent}")
         
+        # 1c. Expand short title if description has fewer words than min_value_words
+        title = fixed.get('title', '')
+        desc = title.split(':', 1)[1].strip() if ':' in title else title
+        desc_word_count = len(re.findall(r"[a-zA-Z]+", desc.lower()))
+        if desc_word_count < self.min_value_words:
+            arch_title = self.filter.generate_architecture_title(files, categories)
+            if arch_title:
+                m2 = re.match(r'^(\w+)\(([^)]*)\):', title)
+                if m2:
+                    fixed['title'] = f"{m2.group(1)}({m2.group(2)}): {arch_title}"
+                else:
+                    # No conventional commit prefix — add one
+                    entities = summary.get('analysis', {}).get('aggregated', {}).get('added_entities', [])
+                    intent = self.filter.classify_intent_smart(files, entities, added, deleted)
+                    dominant_cat = max(categories.items(), key=lambda x: len(x[1]))[0] if categories else 'core'
+                    fixed['title'] = f"{intent}({dominant_cat}): {arch_title}"
+                applied_fixes.append(f"Fixed title: \"{desc}\" → \"{arch_title}\"")
+
         # 2. Dedupe and clean relations (remove generic nodes)
         if 'relations' in fixed and 'relations' in fixed['relations']:
             original_count = len(fixed['relations']['relations'])

@@ -9,15 +9,15 @@ from unittest import mock
 import pytest
 from click.testing import CliRunner
 
-from goal.cli import (
+from goal.git_ops import (
     is_git_repository,
     validate_repo_url,
     clone_repository,
     ensure_git_repository,
     ensure_remote,
     list_remotes,
-    main,
 )
+from goal.cli import main
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ class TestCloneRepository:
         try:
             os.chdir(tmp_path)
             # Use file:// protocol which matches http pattern after we patch validation
-            with mock.patch("goal.cli.validate_repo_url", return_value=True):
+            with mock.patch("goal.git_ops.validate_repo_url", return_value=True):
                 success, repo_dir = clone_repository(f"file://{bare}", target_dir="cloned")
             assert success is True
             assert repo_dir == "cloned"
@@ -119,7 +119,7 @@ class TestCloneRepository:
         old = os.getcwd()
         try:
             os.chdir(tmp_path)
-            with mock.patch("goal.cli.validate_repo_url", return_value=True):
+            with mock.patch("goal.git_ops.validate_repo_url", return_value=True):
                 success, msg = clone_repository("https://invalid.example.com/no/repo.git")
             assert success is False
             assert "Failed to clone" in msg
@@ -186,7 +186,7 @@ class TestEnsureGitRepository:
             os.chdir(work)
             url = f"file://{bare}"
             with mock.patch("click.prompt", side_effect=[2, url]), \
-                 mock.patch("goal.cli.validate_repo_url", return_value=True):
+                 mock.patch("goal.git_ops.validate_repo_url", return_value=True):
                 result = ensure_git_repository()
             assert result is True
             # We should now be inside the cloned repo
@@ -221,7 +221,7 @@ class TestEnsureGitRepository:
             url = f"file://{bare}"
             # Option 1 (init+remote), URL, then merge-action 1 (keep local)
             with mock.patch("click.prompt", side_effect=[1, url, 1]), \
-                 mock.patch("goal.cli.validate_repo_url", return_value=True):
+                 mock.patch("goal.git_ops.validate_repo_url", return_value=True):
                 result = ensure_git_repository()
             assert result is True
             assert is_git_repository() is True
@@ -257,7 +257,8 @@ class TestCloneCommand:
 
         runner = CliRunner()
         target = str(tmp_path / "cloned")
-        with mock.patch("goal.cli.validate_repo_url", return_value=True):
+        with mock.patch("goal.git_ops.validate_repo_url", return_value=True), \
+             mock.patch("goal.cli.validate_repo_url", return_value=True):
             result = runner.invoke(main, ["clone", f"file://{bare}", target])
         assert result.exit_code == 0
         assert "cloned" in result.output.lower() or "✓" in result.output

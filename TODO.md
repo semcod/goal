@@ -1,5 +1,15 @@
 # Goal - TODO & Roadmap
 
+## ✅ Completed (v2.1.46)
+
+### CLI & Git Workflow
+- [x] Interactive git repository initialization (`ensure_git_repository` refactor)
+- [x] Git remote management (`ensure_remote`)
+- [x] Verbose git command logging (`_echo_cmd`)
+- [x] `__init__.py` version synchronization
+- [x] Refactor git operations to `goal/git_ops.py`
+- [x] Unknown command suggestion with docs URL
+
 ## ✅ Completed (v2.1.33)
 
 ### Version Validation & Registry Checking

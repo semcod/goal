@@ -1,16 +1,54 @@
-## [2.1.46] - 2026-02-16
+## [2.1.49] - 2026-02-16
 
 ### Summary
 
-feat(goal): CLI interface improvements
+refactor(goal): CLI interface improvements
 
 ### Core
 
 - update goal/cli.py
+- update goal/enhanced_summary.py
+- update goal/git_ops.py
+
+### Docs
+
+- docs: update README
+- docs: update TODO.md
 
 ### Test
 
-- update tests/test_cli_options.py
+- update tests/test_clone_repo.py
+- update tests/test_version_sync.py
+
+
+## [2.1.46] - 2026-02-16
+
+### Summary
+
+feat(goal): interactive git workflow and verbose logging
+
+### New Features
+
+- **Interactive Git Setup**: New 4-option menu when no git repo is found:
+  1. Initialize & connect to remote (keeps local files)
+  2. Clone existing repo
+  3. Initialize local-only repo
+  4. Exit
+- **Verbose Logging**: All git commands are now echoed to the console (`→ git ...`) for full transparency.
+- **Remote Configuration**: New `ensure_remote()` flow helps configure upstream if missing.
+- **Version Sync**: Now updates `__version__` in `__init__.py` files (excluding venvs/build dirs).
+- **Auto Mode**: `goal -a/--all` now gracefully skips interactive prompts in non-git directories (exit code 1).
+
+### Core
+
+- add `goal/git_ops.py` - Extract git operations into dedicated module.
+- update `goal/cli.py` - Major refactor of `ensure_git_repository` and git command execution.
+- update `pyproject.toml` - Bump version to 2.1.46.
+
+### Test
+
+- update `tests/test_clone_repo.py` - Add tests for new interactive options and auto mode.
+- update `tests/test_cli_options.py` - Verify unknown command handling.
 
 
 ## [2.1.45] - 2026-02-16
