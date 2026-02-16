@@ -1096,32 +1096,9 @@ def run_tests(project_types: List[str]) -> bool:
                 return True
         return False
 
-    def has_npm_test_script() -> bool:
-        """Check if package.json has a usable test script (not the npm default placeholder)."""
-        pkg = Path('package.json')
-        if not pkg.exists():
-            return False
-        try:
-            data = json.loads(pkg.read_text(errors='ignore'))
-        except (json.JSONDecodeError, Exception):
-            return False
-        scripts = data.get('scripts', {})
-        test_script = scripts.get('test', '')
-        if not test_script:
-            return False
-        # npm init sets: echo "Error: no test specified" && exit 1
-        if 'no test specified' in test_script:
-            return False
-        return True
-
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'test_command' in PROJECT_TYPES[ptype]:
             cmd = wrap_python_test_cmd(PROJECT_TYPES[ptype]['test_command'])
-
-            # Smart skip: nodejs project without a usable test script
-            if ptype == 'nodejs' and cmd == 'npm test' and not has_npm_test_script():
-                click.echo(click.style("\nNo test script in package.json (or default npm placeholder). Skipping tests.", fg='yellow'))
-                return True
 
             if 'pytest' in cmd:
                 if not ensure_pytest_available(cmd):
@@ -1144,14 +1121,6 @@ def run_tests(project_types: List[str]) -> bool:
             if 'pytest' in cmd and result.returncode == 5:
                 click.echo(click.style("No tests collected (pytest exit code 5). Continuing.", fg='yellow'))
                 return True
-
-            # Fallback: detect npm "Missing script" error via a captured re-run
-            if ptype == 'nodejs' and result.returncode != 0:
-                probe = run_command(cmd, capture=True)
-                combined = (probe.stderr or '') + (probe.stdout or '')
-                if 'Missing script' in combined or 'missing script' in combined.lower():
-                    click.echo(click.style("npm reports missing test script. Skipping tests.", fg='yellow'))
-                    return True
 
             return False
     

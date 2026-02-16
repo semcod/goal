@@ -1,3 +1,14 @@
+## [2.1.51] - 2026-02-16
+
+### Summary
+
+refactor(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+
+
 ## [2.1.50] - 2026-02-16
 
 ### Summary
