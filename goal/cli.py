@@ -1535,7 +1535,13 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
     for ptype in project_types:
         if ptype in PROJECT_TYPES and 'publish_command' in PROJECT_TYPES[ptype]:
             # Check if publishing is enabled for this project type in config
-            from .config import ensure_config
+            try:
+                from .config import ensure_config
+            except ImportError:
+                import sys
+                from pathlib import Path
+                sys.path.append(str(Path(__file__).parent))
+                from config import ensure_config
             config = ensure_config()
             strategy = config.get_strategy(ptype)
             if strategy and not strategy.get('publish_enabled', True):
@@ -1678,6 +1684,18 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                     sys.stdout.flush()
                     result = run_command_tee(cmd)
             else:
+                # Check if package.json exists and is private for nodejs projects
+                if ptype == 'nodejs':
+                    package_json = Path('package.json')
+                    if package_json.exists():
+                        try:
+                            data = json.loads(package_json.read_text())
+                            if data.get('private', False):
+                                click.echo(click.style(f"\nℹ️  Skipping publish for {ptype} - package is marked as private", fg='yellow'))
+                                continue
+                        except Exception:
+                            pass  # Continue with normal publish if we can't read package.json
+                
                 cmd = PROJECT_TYPES[ptype]['publish_command']
                 try:
                     cmd = cmd.format(version=version)
