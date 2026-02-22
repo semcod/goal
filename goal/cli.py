@@ -190,9 +190,29 @@ def stage_paths(paths: List[str]):
 # Project Type Detection & Version File Management
 # =============================================================================
 
+# Import package manager system
+try:
+    from .package_managers import (
+        detect_package_managers, 
+        get_preferred_package_manager,
+        format_package_manager_command,
+        get_available_package_managers
+    )
+except ImportError:
+    # Handle relative import when running as script
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent))
+    from package_managers import (
+        detect_package_managers, 
+        get_preferred_package_manager,
+        format_package_manager_command,
+        get_available_package_managers
+    )
+
 PROJECT_TYPES = {
     'python': {
-        'files': ['pyproject.toml', 'setup.py', 'setup.cfg'],
+        'files': ['pyproject.toml', 'setup.py', 'setup.cfg', 'requirements.txt', 'Pipfile', 'environment.yml', 'poetry.lock', 'uv.lock', 'Pipfile.lock'],
         'version_patterns': {
             'pyproject.toml': r'^version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
             'setup.py': r'version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
@@ -202,7 +222,7 @@ PROJECT_TYPES = {
         'publish_command': 'python -m build && python -m twine upload dist/goal-{version}*',
     },
     'nodejs': {
-        'files': ['package.json'],
+        'files': ['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb'],
         'version_patterns': {
             'package.json': r'"version"\s*:\s*"(\d+\.\d+\.\d+)"',
         },
@@ -210,7 +230,7 @@ PROJECT_TYPES = {
         'publish_command': 'npm publish',
     },
     'rust': {
-        'files': ['Cargo.toml'],
+        'files': ['Cargo.toml', 'Cargo.lock'],
         'version_patterns': {
             'Cargo.toml': r'^version\s*=\s*"(\d+\.\d+\.\d+)"',
         },
@@ -218,13 +238,13 @@ PROJECT_TYPES = {
         'publish_command': 'cargo publish',
     },
     'go': {
-        'files': ['go.mod'],
+        'files': ['go.mod', 'go.sum'],
         'version_patterns': {},  # Go uses git tags
         'test_command': 'go test ./...',
         'publish_command': 'git push origin --tags',
     },
     'ruby': {
-        'files': ['Gemfile', '*.gemspec'],
+        'files': ['Gemfile', '*.gemspec', 'Gemfile.lock'],
         'version_patterns': {
             '*.gemspec': r'\.version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
         },
@@ -232,7 +252,7 @@ PROJECT_TYPES = {
         'publish_command': 'gem build *.gemspec && gem push *.gem',
     },
     'php': {
-        'files': ['composer.json'],
+        'files': ['composer.json', 'composer.lock'],
         'version_patterns': {
             'composer.json': r'"version"\s*:\s*"(\d+\.\d+\.\d+)"',
         },
@@ -240,7 +260,7 @@ PROJECT_TYPES = {
         'publish_command': 'composer publish',
     },
     'dotnet': {
-        'files': ['*.csproj', '*.fsproj'],
+        'files': ['*.csproj', '*.fsproj', 'packages.lock.json'],
         'version_patterns': {
             '*.csproj': r'<Version>(\d+\.\d+\.\d+)</Version>',
             '*.fsproj': r'<Version>(\d+\.\d+\.\d+)</Version>',
@@ -249,7 +269,7 @@ PROJECT_TYPES = {
         'publish_command': 'dotnet pack && dotnet nuget push *.nupkg',
     },
     'java': {
-        'files': ['pom.xml', 'build.gradle', 'build.gradle.kts'],
+        'files': ['pom.xml', 'build.gradle', 'build.gradle.kts', 'gradle.lockfile'],
         'version_patterns': {
             'pom.xml': r'<version>(\d+\.\d+\.\d+)</version>',
             'build.gradle': r'version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
@@ -257,6 +277,47 @@ PROJECT_TYPES = {
         },
         'test_command': 'mvn test',
         'publish_command': 'mvn deploy',
+    },
+    'elixir': {
+        'files': ['mix.exs', 'mix.lock'],
+        'version_patterns': {
+            'mix.exs': r'version:\s*"(\d+\.\d+\.\d+)"',
+        },
+        'test_command': 'mix test',
+        'publish_command': 'mix hex.publish',
+    },
+    'haskell': {
+        'files': ['*.cabal', 'cabal.project', 'cabal.project.freeze', 'stack.yaml', 'stack.yaml.lock'],
+        'version_patterns': {
+            '*.cabal': r'version:\s*(\d+\.\d+\.\d+)',
+            'cabal.project': r'version:\s*(\d+\.\d+\.\d+)',
+        },
+        'test_command': 'cabal test',
+        'publish_command': 'cabal sdist',
+    },
+    'swift': {
+        'files': ['Package.swift', 'Package.resolved'],
+        'version_patterns': {
+            'Package.swift': r'let version = "(\d+\.\d+\.\d+)"',
+        },
+        'test_command': 'swift test',
+        'publish_command': 'swift package publish',
+    },
+    'dart': {
+        'files': ['pubspec.yaml', 'pubspec.lock'],
+        'version_patterns': {
+            'pubspec.yaml': r'^version:\s*(\d+\.\d+\.\d+)',
+        },
+        'test_command': 'dart test',
+        'publish_command': 'pub publish',
+    },
+    'kotlin': {
+        'files': ['build.gradle.kts'],
+        'version_patterns': {
+            'build.gradle.kts': r'version\s*=\s*"(\d+\.\d+\.\d+)"',
+        },
+        'test_command': 'gradle test',
+        'publish_command': 'gradle publish',
     },
 }
 
@@ -1066,7 +1127,7 @@ def _run_tests_in_subdirs(project_type: str, base_cmd: str) -> Optional[bool]:
 
 @_nfo_log_call(level='INFO')
 def run_tests(project_types: List[str]) -> bool:
-    """Run tests for detected project types."""
+    """Run tests for detected project types using appropriate package managers."""
     def is_poetry_project() -> bool:
         if Path('poetry.lock').exists():
             return True
@@ -1079,13 +1140,41 @@ def run_tests(project_types: List[str]) -> bool:
             return False
         return ('[tool.poetry]' in content) or ('[tool.poetry.dependencies]' in content)
 
+    def is_uv_project() -> bool:
+        if Path('uv.lock').exists():
+            return True
+        pyproject = Path('pyproject.toml')
+        if not pyproject.exists():
+            return False
+        try:
+            content = pyproject.read_text(errors='ignore')
+        except Exception:
+            return False
+        return '[tool.uv]' in content or 'uv = ' in content
+
+    def is_conda_project() -> bool:
+        return Path('environment.yml').exists() or Path('conda-lock.yml').exists()
+
+    def is_pipenv_project() -> bool:
+        return Path('Pipfile').exists() or Path('Pipfile.lock').exists()
+
     def wrap_python_test_cmd(cmd: str) -> str:
-        """Run pytest in the repo's intended environment (Poetry / .venv) instead of the active shell venv."""
+        """Run pytest in the repo's intended environment using detected package manager."""
         if 'pytest' not in cmd:
             return cmd
 
+        # Check for modern Python package managers in priority order
+        if is_uv_project() and shutil.which('uv'):
+            return f"uv run {cmd}"
+        
         if is_poetry_project() and shutil.which('poetry'):
             return f"poetry run {cmd}"
+        
+        if is_conda_project() and shutil.which('conda'):
+            return f"conda run {cmd}"
+        
+        if is_pipenv_project() and shutil.which('pipenv'):
+            return f"pipenv run {cmd}"
 
         # Prefer the currently active environment over a hardcoded .venv path.
         # This prevents running tests with a stale/unrelated .venv.
@@ -1112,6 +1201,9 @@ def run_tests(project_types: List[str]) -> bool:
         return cmd
 
     def wrap_install_cmd(cmd: str) -> str:
+        """Wrap install command using detected package manager."""
+        if is_uv_project() and shutil.which('uv'):
+            return f"uv {cmd.replace('python -m pip install --upgrade', 'pip install')}"
         if is_poetry_project() and shutil.which('poetry'):
             return f"poetry run {cmd}"
         return cmd
@@ -1126,9 +1218,22 @@ def run_tests(project_types: List[str]) -> bool:
         check_cmd = None
         install_cmd = None
 
-        if test_cmd.startswith('poetry run '):
+        # Determine package manager for pytest availability check
+        if is_uv_project() and shutil.which('uv'):
+            check_cmd = 'uv run python -c "import pytest"'
+            install_cmd = 'uv pip install --upgrade pytest'
+        elif test_cmd.startswith('poetry run '):
             check_cmd = 'poetry run python -c "import pytest"'
             install_cmd = 'poetry run python -m pip install --upgrade pytest'
+        elif test_cmd.startswith('uv run '):
+            check_cmd = 'uv run python -c "import pytest"'
+            install_cmd = 'uv pip install --upgrade pytest'
+        elif test_cmd.startswith('conda run '):
+            check_cmd = 'conda run python -c "import pytest"'
+            install_cmd = 'conda install pytest'
+        elif test_cmd.startswith('pipenv run '):
+            check_cmd = 'pipenv run python -c "import pytest"'
+            install_cmd = 'pipenv install pytest'
         else:
             try:
                 parts = shlex.split(test_cmd)
@@ -1159,6 +1264,9 @@ def run_tests(project_types: List[str]) -> bool:
         return True
 
     def has_pytest_cov() -> bool:
+        if is_uv_project() and shutil.which('uv'):
+            result = run_command('uv run python -c "import pytest_cov"', capture=True)
+            return result.returncode == 0
         if is_poetry_project() and shutil.which('poetry'):
             result = run_command('poetry run python -c "import pytest_cov"', capture=True)
             return result.returncode == 0
@@ -1215,37 +1323,43 @@ def run_tests(project_types: List[str]) -> bool:
                 continue
 
             click.echo(f"\n{click.style('Running tests:', fg='cyan', bold=True)} {cmd}")
-            result = run_command_tee(cmd)
-            if result.returncode == 0:
-                return True
+            try:
+                result = run_command_tee(cmd)
+                if result.returncode == 0:
+                    click.echo(click.style(f"✓ Tests passed for {ptype}", fg='green'))
+                    return True
 
-            if 'pytest' in cmd and result.returncode == 5:
-                click.echo(click.style("No tests collected (pytest exit code 5). Continuing.", fg='yellow'))
-                return True
+                if 'pytest' in cmd and result.returncode == 5:
+                    click.echo(click.style("ℹ No tests collected (pytest exit code 5). Continuing.", fg='yellow'))
+                    return True
 
-            # Safety net: detect "Missing script" from captured output
-            output_lower = (result.stdout or '').lower()
-            if 'missing script' in output_lower or 'no test specified' in output_lower:
-                click.echo(click.style(
-                    f"\n⚠ Test script not properly configured for {ptype}. Trying subdirectories...",
-                    fg='yellow'))
-                sub_result = _run_tests_in_subdirs(ptype, cmd)
-                if sub_result is not None:
-                    return sub_result
-                click.echo(click.style(
-                    f"  ⚠ No testable subdirectories found. Skipping tests for {ptype}.",
-                    fg='yellow'))
+                # Safety net: detect "Missing script" from captured output
+                output_lower = (result.stdout or '').lower()
+                if 'missing script' in output_lower or 'no test specified' in output_lower:
+                    click.echo(click.style(
+                        f"\n⚠ Test script not properly configured for {ptype}. Trying subdirectories...",
+                        fg='yellow'))
+                    sub_result = _run_tests_in_subdirs(ptype, cmd)
+                    if sub_result is not None:
+                        return sub_result
+                    click.echo(click.style(
+                        f"  ⚠ No testable subdirectories found. Skipping tests for {ptype}.",
+                        fg='yellow'))
+                    continue
+
+                # Detect missing test tool (exit 127 = command not found)
+                if result.returncode == 127 or 'not found' in output_lower or 'command not found' in output_lower:
+                    tool_name = cmd.split()[0] if cmd else 'test tool'
+                    click.echo(click.style(
+                        f"\n⚠ '{tool_name}' not available in PATH. Skipping tests for {ptype}.",
+                        fg='yellow'))
+                    continue
+
+                click.echo(click.style(f"✗ Tests failed for {ptype} (exit code: {result.returncode})", fg='red'))
+                return False
+            except Exception as e:
+                click.echo(click.style(f"⚠ Error running tests for {ptype}: {str(e)}. Continuing...", fg='yellow'))
                 continue
-
-            # Detect missing test tool (exit 127 = command not found)
-            if result.returncode == 127 or 'not found' in output_lower or 'command not found' in output_lower:
-                tool_name = cmd.split()[0] if cmd else 'test tool'
-                click.echo(click.style(
-                    f"\n⚠ '{tool_name}' not available in PATH. Skipping tests for {ptype}.",
-                    fg='yellow'))
-                continue
-
-            return False
 
     if not any_type_matched:
         click.echo(click.style("\nNo test command configured for this project type", fg='yellow'))
@@ -2078,14 +2192,20 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     else:
         # When --yes or --all is used, run tests automatically
         click.echo(click.style("\n🤖 AUTO: Running tests (--all mode)", fg='cyan'))
-        test_success = run_tests(project_types)
-        if not test_success:
+        try:
+            test_success = run_tests(project_types)
+            if not test_success:
+                test_exit_code = 1
+                test_result = "Tests failed - continuing anyway"
+                click.echo(click.style("⚠️  Tests failed, but continuing due to --all/--yes mode.", fg='yellow', bold=True))
+            else:
+                test_exit_code = 0
+                test_result = "Tests passed"
+                click.echo(click.style("✓ All tests passed successfully", fg='green', bold=True))
+        except Exception as e:
             test_exit_code = 1
-            test_result = "Tests failed - continuing anyway"
-            click.echo(click.style("⚠️  Tests failed, but continuing due to --all/--yes mode.", fg='yellow', bold=True))
-        else:
-            test_exit_code = 0
-            test_result = "Tests passed"
+            test_result = f"Test execution error: {str(e)}"
+            click.echo(click.style(f"⚠️  Error running tests: {str(e)}. Continuing...", fg='yellow', bold=True))
     
     # Commit stage
     if not yes:
@@ -2126,11 +2246,12 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             body = d.get('body')
             result = run_git('commit', '-m', title, '-m', body)
             if result.returncode != 0:
-                click.echo(click.style(f"Error committing split group {gname}: {result.stderr}", fg='red'))
+                click.echo(click.style(f"✗ Error committing split group {gname}: {result.stderr}", fg='red'))
                 if not yes:
                     sys.exit(1)
                 else:
                     click.echo(click.style(f"  🤖 AUTO: Continuing despite commit error in split group", fg="cyan"))
+                    continue
             click.echo(click.style(f"✓ Committed ({gname}): {title}", fg='green'))
 
         # Release meta commit: version sync + changelog
@@ -2200,13 +2321,13 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     else:
         result = run_git('commit', '-m', commit_msg)
     if result.returncode != 0:
-        click.echo(click.style(f"Error committing: {result.stderr}", fg='red'))
+        click.echo(click.style(f"✗ Error committing: {result.stderr}", fg='red'))
         if not yes:
             sys.exit(1)
         else:
             click.echo(click.style(f"  🤖 AUTO: Continuing despite commit error", fg="cyan"))
     if message != "__split__":
-        click.echo(click.style(f"✓ Committed: {commit_msg}", fg='green'))
+        click.echo(click.style(f"✓ Committed successfully: {commit_msg}", fg='green'))
     
     # Create tag
     tag_name = None
@@ -2218,7 +2339,7 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         else:
             result = run_git('tag', '-a', tag_name, '-m', f"Release {new_version}")
             if result.returncode != 0:
-                click.echo(click.style(f"Warning: Could not create tag: {result.stderr}", fg='yellow'))
+                click.echo(click.style(f"⚠ Warning: Could not create tag: {result.stderr}", fg='yellow'))
             else:
                 click.echo(click.style(f"✓ Created tag: {tag_name}", fg='green'))
     
@@ -2288,24 +2409,36 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     publish_success = False
     if not yes:
         if confirm(f"Publish version {new_version}?"):
-            publish_success = publish_project(project_types, new_version, yes)
-            if not publish_success:
-                click.echo(click.style("Publish failed. Continuing with remaining tasks.", fg='yellow'))
-            else:
-                click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
+            try:
+                publish_success = publish_project(project_types, new_version, yes)
+                if not publish_success:
+                    click.echo(click.style("⚠ Publish failed. Continuing with remaining tasks.", fg='yellow'))
+                else:
+                    click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
+            except Exception as e:
+                click.echo(click.style(f"⚠ Publish error: {str(e)}. Continuing...", fg='yellow'))
+                publish_success = False
         else:
             click.echo(click.style("  🤖 AUTO: Skipping publish (user chose N)", fg='yellow'))
     else:
         # Auto-publish when --yes or --all is used
         click.echo(click.style(f"\n🤖 AUTO: Publishing version {new_version} (--all mode)", fg='cyan'))
-        publish_success = publish_project(project_types, new_version, yes)
-        if not publish_success:
-            click.echo(click.style("Publish failed. Continuing with remaining tasks.", fg='yellow'))
-        else:
-            click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
+        try:
+            publish_success = publish_project(project_types, new_version, yes)
+            if not publish_success:
+                click.echo(click.style("⚠ Publish failed. Continuing with remaining tasks.", fg='yellow'))
+            else:
+                click.echo(click.style(f"\n✓ Published version {new_version}", fg='green', bold=True))
+        except Exception as e:
+            click.echo(click.style(f"⚠ Publish error: {str(e)}. Continuing...", fg='yellow'))
+            publish_success = False
     
     # Output markdown if requested
     if markdown or ctx.obj.get('markdown'):
+        # Show final success summary
+        success_emoji = "🎉" if test_exit_code == 0 and publish_success else "✅"
+        click.echo(click.style(f"\n{success_emoji} Process completed successfully!", fg='green', bold=True))
+        
         actions_performed = [
             "Detected project types",
             "Staged changes",
@@ -2473,6 +2606,258 @@ def version(bump_type):
     new = bump_version(current, bump_type)
     click.echo(f"Current: {current}")
     click.echo(f"Next ({bump_type}): {new}")
+
+
+@main.command()
+@click.option('--language', help='Filter by programming language')
+@click.option('--available', is_flag=True, help='Show only available package managers')
+@click.pass_context
+def package_managers(ctx, language, available):
+    """Show detected and available package managers for the current project."""
+    try:
+        from .package_managers import (
+            detect_package_managers, 
+            get_available_package_managers,
+            get_package_managers_by_language,
+            list_all_package_managers,
+            suggest_package_managers,
+            detect_project_language
+        )
+    except ImportError:
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent))
+        from package_managers import (
+            detect_package_managers, 
+            get_available_package_managers,
+            get_package_managers_by_language,
+            list_all_package_managers,
+            suggest_package_managers,
+            detect_project_language
+        )
+    
+    click.echo(click.style("🔧 Package Manager Detection", fg='cyan', bold=True))
+    click.echo()
+    
+    # Detect project languages
+    languages = detect_project_language()
+    if languages:
+        click.echo(click.style(f"Detected languages: {', '.join(languages)}", fg='green'))
+    else:
+        click.echo(click.style("No specific language detected", fg='yellow'))
+    click.echo()
+    
+    # Show detected package managers
+    detected = detect_package_managers()
+    if detected:
+        click.echo(click.style("📦 Detected package managers:", fg='cyan', bold=True))
+        for pm in detected:
+            status = "✅ Available" if shutil.which(pm.name) else "❌ Not in PATH"
+            priority_icon = "⭐" if pm.priority >= 8 else "📌" if pm.priority >= 5 else "📝"
+            click.echo(f"  {priority_icon} {pm.name} ({pm.language}) - {status}")
+            if pm.lock_files:
+                click.echo(f"    Lock files: {', '.join(pm.lock_files)}")
+            if pm.config_files:
+                click.echo(f"    Config files: {', '.join(pm.config_files)}")
+    else:
+        click.echo(click.style("No package managers detected", fg='yellow'))
+    click.echo()
+    
+    # Show available package managers
+    if available:
+        available_pms = get_available_package_managers()
+        if available_pms:
+            click.echo(click.style("✅ Available package managers (in PATH):", fg='green', bold=True))
+            for pm in available_pms:
+                click.echo(f"  • {pm.name} ({pm.language}) - Priority: {pm.priority}")
+        else:
+            click.echo(click.style("No package managers available in PATH", fg='yellow'))
+        click.echo()
+    
+    # Show suggestions
+    suggestions = suggest_package_managers()
+    if suggestions:
+        click.echo(click.style("💡 Suggested package managers:", fg='cyan', bold=True))
+        for pm in suggestions[:5]:  # Top 5 suggestions
+            click.echo(f"  🎯 {pm.name} ({pm.language}) - Recommended choice")
+    click.echo()
+    
+    # Filter by language if requested
+    if language:
+        lang_pms = get_package_managers_by_language(language)
+        if lang_pms:
+            click.echo(click.style(f"🔍 {language.title()} package managers:", fg='cyan', bold=True))
+            for pm in lang_pms:
+                status = "✅ Available" if shutil.which(pm.name) else "❌ Not in PATH"
+                click.echo(f"  • {pm.name} - {status}")
+        else:
+            click.echo(click.style(f"No package managers found for {language}", fg='yellow'))
+
+
+@main.command()
+@click.argument('package_name')
+@click.option('--manager', help='Package manager to use (auto-detect if not specified)')
+@click.option('--dev', is_flag=True, help='Add as development dependency')
+@click.option('--exact', is_flag=True, help='Install exact version')
+@click.pass_context
+def add_package(ctx, package_name, manager, dev, exact):
+    """Add a package using the appropriate package manager."""
+    try:
+        from .package_managers import get_preferred_package_manager, format_package_manager_command, get_package_manager
+    except ImportError:
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent))
+        from package_managers import get_preferred_package_manager, format_package_manager_command, get_package_manager
+    
+    if manager:
+        pm = get_package_manager(manager)
+        if not pm:
+            click.echo(click.style(f"Package manager '{manager}' not supported", fg='red'))
+            return
+    else:
+        pm = get_preferred_package_manager()
+        if not pm:
+            click.echo(click.style("No suitable package manager detected", fg='red'))
+            return
+    
+    click.echo(click.style(f"Using {pm.name} package manager", fg='cyan'))
+    
+    # Format the add command
+    add_cmd = format_package_manager_command(pm, 'add', package=package_name)
+    
+    # Add dev flag if supported
+    if dev and pm.name in ['poetry', 'npm', 'yarn', 'pnpm']:
+        if pm.name == 'poetry':
+            add_cmd = add_cmd.replace('--', '--dev --')
+        else:
+            add_cmd = add_cmd.replace('install', 'install --save-dev')
+    
+    # Add exact flag if supported
+    if exact and pm.name in ['poetry', 'npm', 'yarn', 'pnpm']:
+        if pm.name == 'poetry':
+            add_cmd = f"poetry add {package_name} --exact"
+        else:
+            add_cmd = f"{pm.name} install {package_name} --save-exact"
+    
+    click.echo(click.style(f"Installing: {add_cmd}", fg='cyan'))
+    
+    try:
+        result = run_command_tee(add_cmd)
+        if result.returncode == 0:
+            click.echo(click.style(f"✅ Successfully added {package_name}", fg='green'))
+        else:
+            click.echo(click.style(f"❌ Failed to add {package_name}", fg='red'))
+    except Exception as e:
+        click.echo(click.style(f"⚠ Error adding package: {str(e)}", fg='yellow'))
+
+
+@main.command()
+@click.option('--manager', help='Package manager to use (auto-detect if not specified)')
+@click.pass_context
+def install_deps(ctx, manager):
+    """Install dependencies using the appropriate package manager."""
+    try:
+        from .package_managers import get_preferred_package_manager, format_package_manager_command, get_package_manager
+    except ImportError:
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent))
+        from package_managers import get_preferred_package_manager, format_package_manager_command, get_package_manager
+    
+    if manager:
+        pm = get_package_manager(manager)
+        if not pm:
+            click.echo(click.style(f"Package manager '{manager}' not supported", fg='red'))
+            return
+    else:
+        pm = get_preferred_package_manager()
+        if not pm:
+            click.echo(click.style("No suitable package manager detected", fg='red'))
+            return
+    
+    click.echo(click.style(f"Using {pm.name} package manager", fg='cyan'))
+    
+    try:
+        install_cmd = format_package_manager_command(pm, 'install')
+        click.echo(click.style(f"Installing dependencies: {install_cmd}", fg='cyan'))
+        result = run_command_tee(install_cmd)
+        if result.returncode == 0:
+            click.echo(click.style("✅ Dependencies installed successfully", fg='green'))
+        else:
+            click.echo(click.style("❌ Failed to install dependencies", fg='red'))
+    except Exception as e:
+        click.echo(click.style(f"⚠ Error installing dependencies: {str(e)}", fg='yellow'))
+
+
+@main.command()
+@click.pass_context
+def package_doctor(ctx):
+    """Diagnose and suggest improvements for package manager setup."""
+    try:
+        from .package_managers import (
+            detect_package_managers,
+            get_available_package_managers,
+            suggest_package_managers,
+            detect_project_language
+        )
+    except ImportError:
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent))
+        from package_managers import (
+            detect_package_managers,
+            get_available_package_managers,
+            suggest_package_managers,
+            detect_project_language
+        )
+    
+    click.echo(click.style("🏥 Package Manager Doctor", fg='cyan', bold=True))
+    click.echo()
+    
+    # Check project detection
+    languages = detect_project_language()
+    detected_pms = detect_package_managers()
+    available_pms = get_available_package_managers()
+    suggestions = suggest_package_managers()
+    
+    # Diagnose issues
+    issues = []
+    recommendations = []
+    
+    if not detected_pms:
+        issues.append("No package managers detected in project")
+        if suggestions:
+            recommendations.append(f"Consider using: {', '.join(pm.name for pm in suggestions[:3])}")
+    
+    if detected_pms and not available_pms:
+        issues.append("Package managers detected but none available in PATH")
+        for pm in detected_pms:
+            recommendations.append(f"Install {pm.name} to use it")
+    
+    if available_pms and detected_pms:
+        preferred = detected_pms[0]  # Highest priority detected
+        if preferred not in available_pms:
+            issues.append(f"Preferred package manager {preferred.name} not available")
+            recommendations.append(f"Install {preferred.name} or use available: {', '.join(pm.name for pm in available_pms)}")
+    
+    # Report findings
+    if issues:
+        click.echo(click.style("🚨 Issues found:", fg='red', bold=True))
+        for issue in issues:
+            click.echo(click.style(f"  ❌ {issue}", fg='red'))
+        click.echo()
+    
+    if recommendations:
+        click.echo(click.style("💡 Recommendations:", fg='yellow', bold=True))
+        for rec in recommendations:
+            click.echo(click.style(f"  💡 {rec}", fg='yellow'))
+        click.echo()
+    
+    if not issues:
+        click.echo(click.style("✅ No issues found! Your package manager setup looks good.", fg='green', bold=True))
+        if available_pms:
+            click.echo(click.style(f"Using: {available_pms[0].name}", fg='green'))
 
 
 @main.command()

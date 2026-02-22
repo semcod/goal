@@ -1,3 +1,15 @@
+## [2.1.59] - 2026-02-22
+
+### Summary
+
+feat(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+- update goal/package_managers.py
+
+
 ## [2.1.58] - 2026-02-16
 
 ### Summary
