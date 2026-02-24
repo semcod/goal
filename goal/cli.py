@@ -1763,7 +1763,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
               help='Version bump type (default: patch)')
 @click.option('--yes', '-y', is_flag=True, help='Skip all prompts (run automatically)')
 @click.option('--all', '-a', is_flag=True, help='Automate all stages including tests, commit, push, and publish')
-@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md during doctor phase (default: no)')
+@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md and create TICKET/TODO.md/CHANGELOG.md files if missing (default: no)')
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without doing it')
 @click.option('--config', '-c', 'config_path', type=click.Path(), default=None,
@@ -1835,7 +1835,7 @@ def main(ctx, bump, version, yes, all, todo, markdown, dry_run, config_path, abs
 @click.option('--ticket', help='Ticket prefix to include in commit titles (overrides TICKET)')
 @click.option('--abstraction', type=click.Choice(['auto', 'high', 'medium', 'low', 'legacy']), 
               default='auto', help='Commit message abstraction level')
-@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md during doctor phase (default: no)')
+@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md and create TICKET/TODO.md/CHANGELOG.md files if missing (default: no)')
 @click.pass_context
 def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo):
     """Add, commit, tag, and push changes to remote.
@@ -1858,6 +1858,89 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     # Doctor phase - diagnose and optionally add issues to TODO.md
     if todo:
         click.echo(click.style("\n🩺 Running diagnostics with TODO tracking...", fg='cyan', bold=True))
+        
+        # Ensure TICKET file exists
+        ticket_file = Path('TICKET')
+        if not ticket_file.exists():
+            click.echo(click.style("📝 Creating TICKET file...", fg='yellow'))
+            ticket_content = """# TICKET
+#
+# Configuration for ticket prefixing in commit messages.
+#
+# Supported keys:
+# - prefix: ticket prefix to prepend to commit titles (e.g. ABC-123)
+# - format: formatting template. Available variables:
+#     {ticket} - value of prefix
+#     {title}  - generated conventional commit title
+#
+# Examples:
+# prefix=ABC-123
+# format=[{ticket}] {title}
+
+prefix=
+format=[{ticket}] {title}
+"""
+            ticket_file.write_text(ticket_content)
+            click.echo(click.style("✓ TICKET file created", fg='green'))
+        
+        # Ensure TODO.md exists
+        todo_file = Path('TODO.md')
+        if not todo_file.exists():
+            click.echo(click.style("📝 Creating TODO.md file...", fg='yellow'))
+            todo_content = """# TODO
+
+## 🎯 Current Tasks
+
+### High Priority
+- [ ] Add your high priority tasks here
+
+### Medium Priority
+- [ ] Add your medium priority tasks here
+
+### Low Priority
+- [ ] Add your low priority tasks here
+
+## 🐛 Issues Found
+
+<!-- Issues will be automatically added here when using goal -t -->
+
+## 📝 Notes
+
+- This TODO list is managed by Goal
+- Use `goal -t` to add detected issues automatically
+- Use `goal doctor --todo` to diagnose and track issues
+
+Last updated: """ + datetime.now().strftime('%Y-%m-%d')
+            todo_file.write_text(todo_content)
+            click.echo(click.style("✓ TODO.md file created", fg='green'))
+        
+        # Ensure CHANGELOG.md exists
+        changelog_file = Path('CHANGELOG.md')
+        if not changelog_file.exists():
+            click.echo(click.style("📝 Creating CHANGELOG.md file...", fg='yellow'))
+            changelog_content = """# CHANGELOG
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Initial project setup
+
+### Changed
+
+### Fixed
+
+### Removed
+
+---
+
+Last updated: """ + datetime.now().strftime('%Y-%m-%d')
+            changelog_file.write_text(changelog_content)
+            click.echo(click.style("✓ CHANGELOG.md file created", fg='green'))
         
         root = Path('.').resolve()
         detected = detect_project_types_deep(root)
@@ -3497,7 +3580,7 @@ def bootstrap_command(yes, path):
 @main.command('doctor')
 @click.option('--fix/--no-fix', default=True, help='Auto-fix issues (default: yes)')
 @click.option('--path', '-p', type=click.Path(exists=True), default='.', help='Root directory to scan')
-@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md (default: no)')
+@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md and create TICKET/TODO.md/CHANGELOG.md files if missing (default: no)')
 def doctor_command(fix, path, todo):
     """Diagnose and auto-fix common project configuration issues.
 
@@ -3524,6 +3607,92 @@ def doctor_command(fix, path, todo):
     from goal.project_bootstrap import detect_project_types_deep
 
     root = Path(path).resolve()
+    
+    # If todo flag is used, ensure required files exist
+    if todo:
+        # Ensure TICKET file exists
+        ticket_file = root / 'TICKET'
+        if not ticket_file.exists():
+            click.echo(click.style("📝 Creating TICKET file...", fg='yellow'))
+            ticket_content = """# TICKET
+#
+# Configuration for ticket prefixing in commit messages.
+#
+# Supported keys:
+# - prefix: ticket prefix to prepend to commit titles (e.g. ABC-123)
+# - format: formatting template. Available variables:
+#     {ticket} - value of prefix
+#     {title}  - generated conventional commit title
+#
+# Examples:
+# prefix=ABC-123
+# format=[{ticket}] {title}
+
+prefix=
+format=[{ticket}] {title}
+"""
+            ticket_file.write_text(ticket_content)
+            click.echo(click.style("✓ TICKET file created", fg='green'))
+        
+        # Ensure TODO.md exists
+        todo_file = root / 'TODO.md'
+        if not todo_file.exists():
+            click.echo(click.style("📝 Creating TODO.md file...", fg='yellow'))
+            todo_content = """# TODO
+
+## 🎯 Current Tasks
+
+### High Priority
+- [ ] Add your high priority tasks here
+
+### Medium Priority
+- [ ] Add your medium priority tasks here
+
+### Low Priority
+- [ ] Add your low priority tasks here
+
+## 🐛 Issues Found
+
+<!-- Issues will be automatically added here when using goal -t -->
+
+## 📝 Notes
+
+- This TODO list is managed by Goal
+- Use `goal -t` to add detected issues automatically
+- Use `goal doctor --todo` to diagnose and track issues
+
+Last updated: """ + datetime.now().strftime('%Y-%m-%d')
+            todo_file.write_text(todo_content)
+            click.echo(click.style("✓ TODO.md file created", fg='green'))
+        
+        # Ensure CHANGELOG.md exists
+        changelog_file = root / 'CHANGELOG.md'
+        if not changelog_file.exists():
+            click.echo(click.style("📝 Creating CHANGELOG.md file...", fg='yellow'))
+            changelog_content = """# CHANGELOG
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Initial project setup
+
+### Changed
+
+### Fixed
+
+### Removed
+
+---
+
+Last updated: """ + datetime.now().strftime('%Y-%m-%d')
+            changelog_file.write_text(changelog_content)
+            click.echo(click.style("✓ CHANGELOG.md file created", fg='green'))
+    
     detected = detect_project_types_deep(root)
     if not detected:
         click.echo(click.style("No known project types detected.", fg='yellow'))
