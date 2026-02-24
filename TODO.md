@@ -210,3 +210,9 @@ Priority areas:
 - Priority determined by community feedback
 
 Last updated: 2026-02-15 (v2.1.33)
+## Issues Found - 2026-02-24
+
+- [PY002-missingbuildsysteminpyprojecttoml] 🔴 **Missing [build-system] in pyproject.toml** (`pyproject.toml`)
+  - pyproject.toml has no [build-system] section.
+pip and build tools need this to know how to build your package.
+Adding a default setuptools build-system.
