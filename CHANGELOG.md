@@ -1,3 +1,18 @@
+## [2.1.68] - 2026-02-24
+
+### Summary
+
+feat(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+
+### Docs
+
+- docs: update README
+
+
 ## [2.1.67] - 2026-02-24
 
 ### Summary
@@ -17,6 +32,7 @@ feat(goal): CLI interface improvements
 
 ### Added
 - **CLI shortcuts**: Added `-t` flag as shorthand for `--todo` in both `goal` and `goal doctor` commands
+- **Version shortcut**: Added `-v` flag as shorthand for `--version` command
 - **Full workflow TODO tracking**: `goal -a -t` now runs complete workflow with automatic issue tracking
 - **Doctor phase integration**: TODO tracking integrated into main push workflow when `-t/--todo` is used
 
@@ -27,6 +43,9 @@ feat(goal): CLI interface improvements
 
 ### Examples
 ```bash
+# Quick version check
+goal -v
+
 # Quick TODO tracking with full automation
 goal -a -t
 

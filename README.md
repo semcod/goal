@@ -1,7 +1,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.67-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.68-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -69,6 +69,9 @@ goal --all --bump minor   # Non-interactive; perfect for nightly builds or relea
 ### 📋 Example Usage
 
 ```bash
+# Check version
+goal -v
+
 # Diagnose and track issues
 goal doctor --todo
 goal doctor -t
@@ -589,6 +592,7 @@ See [docs/markdown-output.md](docs/markdown-output.md) for detailed examples.
 Main command for the complete workflow.
 
 **Options:**
+- `-v, --version`: Show version and exit
 - `--bump, -b`: Version bump type [patch|minor|major] (default: patch)
 - `--yes, -y`: Skip all prompts (run automatically)
 - `--all, -a`: Automate all stages including tests, commit, push, and publish

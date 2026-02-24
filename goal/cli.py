@@ -1758,7 +1758,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
 
 
 @click.group(invoke_without_command=True, cls=GoalGroup)
-@click.version_option('-v')
+@click.option('-v', '--version', is_flag=True, help='Show version and exit')
 @click.option('--bump', '-b', type=click.Choice(['patch', 'minor', 'major']), default='patch',
               help='Version bump type (default: patch)')
 @click.option('--yes', '-y', is_flag=True, help='Skip all prompts (run automatically)')
@@ -1776,8 +1776,15 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
 @click.option('--nfo-sink', default='', envvar='NFO_SINK',
               help='nfo sink spec for log persistence (e.g. sqlite:goal.db, md:goal-log.md)')
 @click.pass_context
-def main(ctx, bump, yes, all, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink):
+def main(ctx, bump, version, yes, all, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink):
     """Goal - Automated git push with smart commit messages."""
+    
+    # Handle version flag
+    if version:
+        from . import __version__
+        click.echo(f"goal {__version__}")
+        return
+    
     # Initialize nfo structured logging
     _setup_nfo_logging(nfo_format=nfo_format, nfo_sink=nfo_sink)
 
