@@ -31,7 +31,7 @@ try:
         detect_project_types_deep, bootstrap_all_projects, bootstrap_project,
         ensure_project_environment, find_existing_tests, scaffold_test,
     )
-    from .project_doctor import diagnose_and_report, diagnose_project, DoctorReport
+    from .project_doctor import diagnose_and_report, diagnose_project, DoctorReport, diagnose_and_report_with_todo
     from .git_ops import (
         run_git, run_command, run_command_tee, is_git_repository, validate_repo_url,
         clone_repository, ensure_git_repository, ensure_remote, get_remote_url,
@@ -54,7 +54,7 @@ except ImportError:
         detect_project_types_deep, bootstrap_all_projects, bootstrap_project,
         ensure_project_environment, find_existing_tests, scaffold_test,
     )
-    from project_doctor import diagnose_and_report, diagnose_project, DoctorReport
+    from project_doctor import diagnose_and_report, diagnose_project, DoctorReport, diagnose_and_report_with_todo
     from git_ops import (
         run_git, run_command, run_command_tee, is_git_repository, validate_repo_url,
         clone_repository, ensure_git_repository, ensure_remote, get_remote_url,
@@ -3461,7 +3461,8 @@ def bootstrap_command(yes, path):
 @main.command('doctor')
 @click.option('--fix/--no-fix', default=True, help='Auto-fix issues (default: yes)')
 @click.option('--path', '-p', type=click.Path(exists=True), default='.', help='Root directory to scan')
-def doctor_command(fix, path):
+@click.option('--todo/--no-todo', default=False, help='Add unfixed issues to TODO.md (default: no)')
+def doctor_command(fix, path, todo):
     """Diagnose and auto-fix common project configuration issues.
 
     Scans the current directory (and 1-level-deep subfolders) for known project
@@ -3482,6 +3483,7 @@ def doctor_command(fix, path):
         goal doctor              # Diagnose and auto-fix
         goal doctor --no-fix     # Diagnose only (report without changes)
         goal doctor -p ./myapp   # Scan a specific directory
+        goal doctor --todo       # Diagnose and add unfixed issues to TODO.md
     """
     from goal.project_bootstrap import detect_project_types_deep
 
@@ -3494,7 +3496,10 @@ def doctor_command(fix, path):
     all_reports = []
     for ptype, dirs in detected.items():
         for project_dir in dirs:
-            report = diagnose_and_report(project_dir, ptype, auto_fix=fix)
+            if todo:
+                report = diagnose_and_report_with_todo(project_dir, ptype, auto_fix=fix)
+            else:
+                report = diagnose_and_report(project_dir, ptype, auto_fix=fix)
             all_reports.append(report)
 
     # Final summary

@@ -1,3 +1,15 @@
+## [2.1.62] - 2026-02-24
+
+### Summary
+
+fix(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+- update goal/project_doctor.py
+
+
 ## [2.1.61] - 2026-02-24
 
 ### Summary
