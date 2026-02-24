@@ -1,3 +1,32 @@
+## [2.1.69] - 2026-02-24
+
+### Summary
+
+refactor(goal): intelligent code analysis pipeline
+
+### Core
+
+- update goal/cli.py
+
+### Docs
+
+- docs: update README
+
+### Other
+
+- update goal-2.1.68/LICENSE
+- update goal-2.1.68/PKG-INFO
+- update goal-2.1.68/goal/__init__.py
+- update goal-2.1.68/goal/__main__.py
+- update goal-2.1.68/goal/cli.py
+- update goal-2.1.68/goal/commit_generator.py
+- update goal-2.1.68/goal/config.py
+- update goal-2.1.68/goal/deep_analyzer.py
+- update goal-2.1.68/goal/enhanced_summary.py
+- update goal-2.1.68/goal/formatter.py
+- ... and 14 more
+
+
 ## [2.1.68] - 2026-02-24
 
 ### Summary

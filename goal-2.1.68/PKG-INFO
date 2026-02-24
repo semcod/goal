@@ -1,7 +1,32 @@
+Metadata-Version: 2.4
+Name: goal
+Version: 2.1.68
+Summary: Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management.
+Author-email: Tom Sapletta <tom@sapletta.com>
+License-Expression: Apache-2.0
+Project-URL: Homepage, https://github.com/wronai/goal
+Project-URL: Repository, https://github.com/wronai/goal
+Project-URL: Issues, https://github.com/wronai/goal/issues
+Keywords: git,automation,commit,changelog,versioning,cli
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: click>=8.0.0
+Requires-Dist: PyYAML>=6.0
+Provides-Extra: nfo
+Requires-Dist: nfo>=0.3.0; extra == "nfo"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: build; extra == "dev"
+Requires-Dist: twine; extra == "dev"
+Dynamic: license-file
+
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.69-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.68-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
