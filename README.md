@@ -1,7 +1,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.65-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.66-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -19,11 +19,48 @@
 
 Automated git push with **enterprise-grade commit intelligence**, smart changelog updates, version tagging, and interactive workflow.
 
-## 🆕 What's New in v2.1
+## 🆕 What's New in v2.1.65
+
+> **TODO Management & Publishing Fixes** — Automatic issue tracking and reliable PyPI publishing
+
+### ✨ New Features
+
+**🎫 Automatic TODO Management**
+- `goal doctor --todo` adds detected issues to `TODO.md`
+- Unique ticket IDs prevent duplicates
+- Rich formatting with severity icons
+- Timestamped sections for tracking
+
+**🔧 Publishing Improvements**
+- Fixed "cannot access local variable 'Path'" error
+- Better handling of `~/.pypirc` authentication
+- Improved error messages and debugging
+- Support for both token and config-based auth
+
+**🛠️ Enhanced Diagnostics**
+- Better error detection in project configuration
+- More reliable build process
+- Improved artifact management
+
+### 📋 Example Usage
+
+```bash
+# Diagnose and track issues
+goal doctor --todo
+
+# Full workflow with publishing
+goal --all
+
+# Check project health
+goal doctor
+```
+
+```
+
+## 📚 Previous Features (v2.1)
 
 > **Smart Commit Intelligence** — commit bodies that answer *what changed, what was tested, and at what scale*
 
-```
 ❌ BEFORE: refactor(core): add testing, logging, validation
 ✅ AFTER:  feat(goal): intelligent code analysis pipeline
 
@@ -535,6 +572,22 @@ Main command for the complete workflow.
 - `--message, -m`: Custom commit message
 - `--dry-run`: Show what would be done without doing it
 
+### `goal doctor`
+
+Diagnose and auto-fix common project configuration issues.
+
+**Options:**
+- `--fix/--no-fix`: Auto-fix issues (default: yes)
+- `--path, -p`: Root directory to scan (default: .)
+- `--todo/--no-todo`: Add unfixed issues to TODO.md (default: no)
+
+**Examples:**
+```bash
+goal doctor              # Diagnose and auto-fix
+goal doctor --no-fix     # Diagnose only
+goal doctor --todo       # Add issues to TODO.md
+```
+
 ## Split commits (per type)
 
 When `--split` is enabled, Goal will create multiple commits:
@@ -957,17 +1010,58 @@ Tests failed. Continue anyway? [y/N]
 
 If Goal doesn't detect your test command correctly, you can run them manually before using `goal push --yes`.
 
+### TODO Management
+
+Goal can automatically add detected issues to `TODO.md` without duplicates:
+
+```bash
+# Diagnose and add unfixed issues to TODO.md
+goal doctor --todo
+
+# Diagnose without auto-fix but add to TODO.md
+goal doctor --todo --no-fix
+```
+
+**Features:**
+- 🎫 **Unique ticket IDs** - Format `[CODE-identifier]` for each issue
+- 🚫 **No duplicates** - Checks existing tickets before adding
+- 🎨 **Rich formatting** - Icons, severity levels, file references
+- 📅 **Timestamped sections** - Groups issues by detection date
+
+**Example TODO.md entry:**
+```markdown
+## Issues Found - 2026-02-24
+
+- [PY002-missingbuildsysteminpyprojecttoml] 🔴 **Missing [build-system] in pyproject.toml** (`pyproject.toml`)
+  - pyproject.toml has no [build-system] section.
+  - pip and build tools need this to know how to build your package.
+  - Adding a default setuptools build-system.
+```
+
 ### Publishing fails
 
 Ensure you're authenticated with the appropriate package manager:
-- PyPI: Set `PYPI_TOKEN` environment variable or run `twine configure`
+
+**PyPI Authentication Options:**
+- **Recommended**: Configure `~/.pypirc` file (development)
+- **CI/CD**: Set `PYPI_TOKEN` environment variable
+- **Interactive**: Run `twine configure`
+
+**~/.pypirc setup (recommended for development):**
+```ini
+[pypi]
+  username = __token__
+  password = pypi-AgEIcHlwaS5vcmcC...
+```
+
+**Environment variable setup (for CI/CD):**
+```bash
+export PYPI_TOKEN=your_token_here
+```
+
+**Other package managers:**
 - npm: `npm login`
 - crates.io: `cargo login`
-
-**PyPI Token Setup:**
-1. Go to https://pypi.org/manage/account/token/
-2. Create a new token
-3. Set environment variable: `export PYPI_TOKEN=your_token_here`
 
 ### Common Issues
 

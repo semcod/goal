@@ -1,19 +1,44 @@
-## [2.1.65] - 2026-02-24
+## [2.1.66] - 2026-02-24
 
 ### Summary
 
-refactor(goal): CLI interface improvements
+docs(docs): configuration management system
 
-### Core
+### Docs
 
-- update goal/cli.py
+- docs: update README
 
 
 ## [2.1.65] - 2026-02-24
 
-### Summary
+### Added
+- **TODO Management**: `goal doctor --todo` automatically adds detected issues to TODO.md
+- **Unique ticket IDs**: Generate `[CODE-identifier]` format for issue tracking
+- **Duplicate prevention**: Checks existing tickets before adding new ones
+- **Rich formatting**: Severity icons, file references, and timestamps in TODO entries
 
-refactor(goal): CLI interface improvements
+### Fixed
+- **Publishing error**: Fixed "cannot access local variable 'Path'" in publish_project
+- **Artifact handling**: Proper initialization of artifacts variable
+- **Python path**: Use sys.executable instead of hardcoded 'python' command
+- **Authentication**: Better support for ~/.pypirc configuration files
+
+### Improved
+- **Documentation**: Updated publishing guide with ~/.pypirc instructions
+- **Error messages**: More descriptive error reporting for publishing failures
+- **Build process**: More reliable artifact detection and cleanup
+
+### Examples
+```bash
+# Diagnose and track issues
+goal doctor --todo
+
+# Full workflow with reliable publishing
+goal --all
+
+# Check project health
+goal doctor
+```
 
 ### Core
 
