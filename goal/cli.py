@@ -1479,6 +1479,9 @@ def get_registry_help(project_type: str) -> str:
 def publish_project(project_types: List[str], version: str, yes: bool = False) -> bool:
     """Publish project for detected project types."""
     import sys
+    import shutil
+    import importlib.util
+    from pathlib import Path
     
     # Validate versions against registries before publishing
     click.echo(click.style("\n🔍 Checking registry versions...", fg='cyan', bold=True))
@@ -1550,6 +1553,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
 
             any_attempted = True
             current_success = True
+            artifacts = []  # Initialize artifacts for all project types
             if ptype == 'python':
                 package_name = None
                 pyproject_path = Path('pyproject.toml')
