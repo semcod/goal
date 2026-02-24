@@ -1,3 +1,18 @@
+## [2.1.61] - 2026-02-24
+
+### Summary
+
+feat(docs): configuration management system
+
+### Docs
+
+- docs: update README
+
+### Config
+
+- config: update goal.yaml
+
+
 ## [2.1.60] - 2026-02-22
 
 ### Summary

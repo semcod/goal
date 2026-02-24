@@ -66,7 +66,8 @@ strategies:
   python:
     test: pytest tests/ -v
     build: python -m build
-    publish: twine upload dist/goal-{version}*
+    publish: twine upload dist/*
+    publish_enabled: true
     dependencies:
       file: requirements.txt
       lock: pip freeze > requirements.txt

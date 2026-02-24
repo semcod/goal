@@ -1,7 +1,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.60-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.61-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -960,9 +960,14 @@ If Goal doesn't detect your test command correctly, you can run them manually be
 ### Publishing fails
 
 Ensure you're authenticated with the appropriate package manager:
-- PyPI: `twine configure` or use `__token__`
+- PyPI: Set `PYPI_TOKEN` environment variable or run `twine configure`
 - npm: `npm login`
 - crates.io: `cargo login`
+
+**PyPI Token Setup:**
+1. Go to https://pypi.org/manage/account/token/
+2. Create a new token
+3. Set environment variable: `export PYPI_TOKEN=your_token_here`
 
 ### Common Issues
 
