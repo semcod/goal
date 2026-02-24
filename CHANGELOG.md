@@ -1,8 +1,41 @@
-## [2.1.66] - 2026-02-24
+## [2.1.67] - 2026-02-24
 
 ### Summary
 
-docs(docs): configuration management system
+feat(goal): CLI interface improvements
+
+### Core
+
+- update goal/cli.py
+
+### Docs
+
+- docs: update README
+
+
+## [2.1.66] - 2026-02-24
+
+### Added
+- **CLI shortcuts**: Added `-t` flag as shorthand for `--todo` in both `goal` and `goal doctor` commands
+- **Full workflow TODO tracking**: `goal -a -t` now runs complete workflow with automatic issue tracking
+- **Doctor phase integration**: TODO tracking integrated into main push workflow when `-t/--todo` is used
+
+### Improved
+- **User experience**: Shorter commands for common TODO tracking workflows
+- **Documentation**: Updated examples and command reference with new flags
+- **Workflow integration**: Seamless TODO tracking during full automation
+
+### Examples
+```bash
+# Quick TODO tracking with full automation
+goal -a -t
+
+# Doctor with TODO tracking (short form)
+goal doctor -t
+
+# Full workflow with TODO tracking
+goal --all --todo
+```
 
 ### Docs
 

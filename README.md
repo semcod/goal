@@ -1,7 +1,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.66-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.67-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -17,7 +17,31 @@
   <a href="https://github.com/wronai/goal"><img src="https://img.shields.io/badge/dependencies-git%20%7C%20click-blue" alt="Dependencies"></a>
 </p>
 
-Automated git push with **enterprise-grade commit intelligence**, smart changelog updates, version tagging, and interactive workflow.
+Goal is your **release autopilot**: a CLI that runs tests, writes conventional commits, updates changelogs, bumps versions, and publishes packages for you—while keeping you in control with clear prompts or full automation.
+
+### Why you might need Goal
+- **Solo dev finishing a feature** → run one command, get a polished commit, synced versions, and a tagged release without memorizing git plumbing.
+- **Team ready for a patch fix** → ensure the changelog, VERSION file, and package registry stay in lockstep, even when multiple people touch the repo.
+- **CI/CD pipeline** → same command powers nightly builds, preview releases, or fully automated publishing.
+
+### What you get out of the box
+1. 🔍 **Context-aware diagnostics** – detects repo state, project types, missing remotes, config drift.
+2. 🧠 **Commit intelligence** – auto-scoped conventional messages that explain what changed, what was tested, and the scale of work.
+3. 🏷️ **Release hygiene** – synchronized VERSION files, changelog updates, git tags, and optional registry publish.
+4. ⚙️ **Multi-language support** – Python, Node.js, Rust, Go, Java, .NET, PHP, Ruby, and hybrid repos.
+5. 🤖 **Prompted or headless** – run interactively (`goal`) or fire-and-forget in CI with `goal --all`.
+
+### Three real-life flows
+```bash
+# 1. First-time setup in a folder without git
+goal           # Goal offers to init git, add a remote, then re-run the workflow.
+
+# 2. Everyday feature release
+goal push      # Runs tests, suggests a commit, bumps patch, updates changelog, pushes, tags.
+
+# 3. CI/CD or cron-driven release
+goal --all --bump minor   # Non-interactive; perfect for nightly builds or release pipelines.
+```
 
 ## 🆕 What's New in v2.1.65
 
@@ -47,8 +71,13 @@ Automated git push with **enterprise-grade commit intelligence**, smart changelo
 ```bash
 # Diagnose and track issues
 goal doctor --todo
+goal doctor -t
 
-# Full workflow with publishing
+# Full workflow with TODO tracking
+goal --all --todo
+goal -a -t
+
+# Standard workflow
 goal --all
 
 # Check project health
@@ -563,6 +592,7 @@ Main command for the complete workflow.
 - `--bump, -b`: Version bump type [patch|minor|major] (default: patch)
 - `--yes, -y`: Skip all prompts (run automatically)
 - `--all, -a`: Automate all stages including tests, commit, push, and publish
+- `--todo/--no-todo, -t`: Add unfixed issues to TODO.md during doctor phase (default: no)
 - `--markdown/--ascii`: Output format (default: markdown)
 - `--split`: Create separate commits per change type (docs/code/ci/examples)
 - `--ticket`: Ticket prefix to include in commit titles (overrides TICKERT)
@@ -579,13 +609,14 @@ Diagnose and auto-fix common project configuration issues.
 **Options:**
 - `--fix/--no-fix`: Auto-fix issues (default: yes)
 - `--path, -p`: Root directory to scan (default: .)
-- `--todo/--no-todo`: Add unfixed issues to TODO.md (default: no)
+- `--todo/--no-todo, -t`: Add unfixed issues to TODO.md (default: no)
 
 **Examples:**
 ```bash
 goal doctor              # Diagnose and auto-fix
 goal doctor --no-fix     # Diagnose only
 goal doctor --todo       # Add issues to TODO.md
+goal doctor -t           # Add issues to TODO.md (short form)
 ```
 
 ## Split commits (per type)
@@ -1017,9 +1048,15 @@ Goal can automatically add detected issues to `TODO.md` without duplicates:
 ```bash
 # Diagnose and add unfixed issues to TODO.md
 goal doctor --todo
+goal doctor -t
 
 # Diagnose without auto-fix but add to TODO.md
 goal doctor --todo --no-fix
+goal doctor -t --no-fix
+
+# Full workflow with TODO tracking
+goal --all --todo
+goal -a -t
 ```
 
 **Features:**

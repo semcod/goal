@@ -1481,7 +1481,6 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
     import sys
     import shutil
     import importlib.util
-    from pathlib import Path
     
     # Validate versions against registries before publishing
     click.echo(click.style("\n🔍 Checking registry versions...", fg='cyan', bold=True))
@@ -1542,7 +1541,6 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                 from .config import ensure_config
             except ImportError:
                 import sys
-                from pathlib import Path
                 sys.path.append(str(Path(__file__).parent))
                 from config import ensure_config
             config = ensure_config()
@@ -1760,11 +1758,12 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
 
 
 @click.group(invoke_without_command=True, cls=GoalGroup)
-@click.version_option()
+@click.version_option('-v')
 @click.option('--bump', '-b', type=click.Choice(['patch', 'minor', 'major']), default='patch',
               help='Version bump type (default: patch)')
 @click.option('--yes', '-y', is_flag=True, help='Skip all prompts (run automatically)')
 @click.option('--all', '-a', is_flag=True, help='Automate all stages including tests, commit, push, and publish')
+@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md during doctor phase (default: no)')
 @click.option('--markdown/--ascii', default=True, help='Output format (default: markdown)')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without doing it')
 @click.option('--config', '-c', 'config_path', type=click.Path(), default=None,
@@ -1777,7 +1776,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
 @click.option('--nfo-sink', default='', envvar='NFO_SINK',
               help='nfo sink spec for log persistence (e.g. sqlite:goal.db, md:goal-log.md)')
 @click.pass_context
-def main(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink):
+def main(ctx, bump, yes, all, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink):
     """Goal - Automated git push with smart commit messages."""
     # Initialize nfo structured logging
     _setup_nfo_logging(nfo_format=nfo_format, nfo_sink=nfo_sink)
@@ -1810,9 +1809,9 @@ def main(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction, nfo_f
     if ctx.invoked_subcommand is None:
         # Run interactive push by default
         if all:
-            ctx.invoke(push, bump=bump, yes=True, markdown=markdown, dry_run=dry_run, abstraction=abstraction)
+            ctx.invoke(push, bump=bump, yes=True, todo=todo, markdown=markdown, dry_run=dry_run, abstraction=abstraction)
         else:
-            ctx.invoke(push, bump=bump, yes=yes, markdown=markdown, dry_run=dry_run, abstraction=abstraction)
+            ctx.invoke(push, bump=bump, yes=yes, todo=todo, markdown=markdown, dry_run=dry_run, abstraction=abstraction)
 
 
 @main.command()
@@ -1829,8 +1828,9 @@ def main(ctx, bump, yes, all, markdown, dry_run, config_path, abstraction, nfo_f
 @click.option('--ticket', help='Ticket prefix to include in commit titles (overrides TICKET)')
 @click.option('--abstraction', type=click.Choice(['auto', 'high', 'medium', 'low', 'legacy']), 
               default='auto', help='Commit message abstraction level')
+@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md during doctor phase (default: no)')
 @click.pass_context
-def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction):
+def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo):
     """Add, commit, tag, and push changes to remote.
     
     Automatically:
@@ -1847,6 +1847,32 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
             click.echo(click.style("No git repository. Skipping.", fg='yellow'))
             return
         sys.exit(1)
+    
+    # Doctor phase - diagnose and optionally add issues to TODO.md
+    if todo:
+        click.echo(click.style("\n🩺 Running diagnostics with TODO tracking...", fg='cyan', bold=True))
+        from goal.project_bootstrap import detect_project_types_deep
+        
+        root = Path('.').resolve()
+        detected = detect_project_types_deep(root)
+        if detected:
+            all_reports = []
+            for ptype, dirs in detected.items():
+                for project_dir in dirs:
+                    report = diagnose_and_report_with_todo(project_dir, ptype, auto_fix=True)
+                    all_reports.append(report)
+            
+            total_issues = sum(len(r.issues) for r in all_reports)
+            total_fixed = sum(len(r.fixed) for r in all_reports)
+            
+            if total_issues > 0 or total_fixed > 0:
+                click.echo(click.style("\n" + "=" * 60, fg='cyan'))
+                if total_issues == 0:
+                    click.echo(click.style("✓ All projects are healthy!", fg='green', bold=True))
+                else:
+                    click.echo(click.style(f"🩺 Doctor summary: {total_issues} issue(s) found", fg='cyan', bold=True))
+        else:
+            click.echo(click.style("No known project types detected for diagnostics.", fg='yellow'))
     
     # Detect project types
     project_types = detect_project_types()
@@ -3465,7 +3491,7 @@ def bootstrap_command(yes, path):
 @main.command('doctor')
 @click.option('--fix/--no-fix', default=True, help='Auto-fix issues (default: yes)')
 @click.option('--path', '-p', type=click.Path(exists=True), default='.', help='Root directory to scan')
-@click.option('--todo/--no-todo', default=False, help='Add unfixed issues to TODO.md (default: no)')
+@click.option('--todo/--no-todo', '-t', default=False, help='Add unfixed issues to TODO.md (default: no)')
 def doctor_command(fix, path, todo):
     """Diagnose and auto-fix common project configuration issues.
 
