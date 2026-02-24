@@ -1683,7 +1683,7 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                         current_success = False
 
                 if current_success:
-                    cmd = 'python -m twine upload ' + ' '.join(artifacts)
+                    cmd = f'{sys.executable} -m twine upload ' + ' '.join(artifacts)
                     click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
                     sys.stdout.flush()
                     result = run_command_tee(cmd)
