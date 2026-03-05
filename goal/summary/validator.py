@@ -46,34 +46,61 @@ class QualityValidator:
     
     def validate(self, summary: Dict[str, Any], files: List[str]) -> Dict[str, Any]:
         """Validate summary against all quality gates.
-        
+
         Returns: {valid: bool, errors: [], warnings: [], score: int, fixes: []}
         """
         errors = []
         warnings = []
         fixes = []
-        
+
+        # Extract common data
         title = summary.get('title', '')
         metrics = summary.get('metrics', {})
         relations = summary.get('relations', {}).get('relations', [])
         capabilities = summary.get('capabilities', [])
-        
+        added = metrics.get('lines_added', 0)
+        deleted = metrics.get('lines_deleted', 0)
+        intent = self._extract_intent(title, summary)
+
+        # Run validation categories
+        self._validate_title(title, errors, fixes)
+        self._validate_intent(intent, files, summary, added, deleted, errors, fixes)
+        self._validate_metrics(metrics, warnings, fixes)
+        self._validate_relations(relations, errors, fixes)
+        self._validate_files(files, errors, fixes)
+        self._validate_capabilities(capabilities, errors, fixes)
+        self._validate_body(summary, errors, fixes)
+        self._validate_value_score(summary, metrics, errors, fixes)
+
+        # Calculate final score
+        score = self._calculate_score(errors, warnings)
+
+        return {
+            'valid': len(errors) == 0,
+            'errors': errors,
+            'warnings': warnings,
+            'fixes': fixes,
+            'score': score
+        }
+
+    def _extract_intent(self, title: str, summary: Dict[str, Any]) -> str:
+        """Extract intent from title or summary."""
         intent = summary.get('intent')
         if not intent and title:
             m = re.match(r'^(\w+)\([^)]*\):', title)
             if m:
-                intent = m.group(1)
-        
-        added = metrics.get('lines_added', 0)
-        deleted = metrics.get('lines_deleted', 0)
-        
-        # 1. Check banned words
+                return m.group(1)
+        return intent or ''
+
+    def _validate_title(self, title: str, errors: List[str], fixes: List[tuple]) -> None:
+        """Validate title quality."""
+        # Check banned words
         banned = self.filter.has_banned_words(title)
         if banned:
             errors.append(f"Banned words in title: {banned}")
             fixes.append(('remove_banned_words', banned))
 
-        # 1a. Check generic term count in the title description
+        # Check generic terms
         generic_terms = self.config.get('quality', {}).get('commit_summary', {}).get('generic_terms')
         if isinstance(generic_terms, list) and generic_terms:
             desc = title.split(':', 1)[1] if ':' in title else title
@@ -83,29 +110,33 @@ class QualityValidator:
                 errors.append(f"Title contains {generic_count} generic terms (max {self.max_generic_terms})")
                 fixes.append(('reduce_generic_terms', generic_count))
 
-        # 1c. Minimum value words
+        # Check minimum word count
         desc = title.split(':', 1)[1] if ':' in title else title
         desc_word_count = len(re.findall(r"[a-zA-Z]+", desc.lower()))
         if desc_word_count < self.min_value_words:
             errors.append(f"Title too short ({desc_word_count} words, need {self.min_value_words})")
             fixes.append(('expand_title', desc_word_count))
-        
-        # 1b. Wrong intent vs refactor signals
+
+    def _validate_intent(self, intent: str, files: List[str], summary: Dict[str, Any],
+                         added: int, deleted: int, errors: List[str], fixes: List[tuple]) -> None:
+        """Validate intent classification."""
         try:
-            entities = []
             agg = summary.get('analysis', {}).get('aggregated', {}) if isinstance(summary.get('analysis'), dict) else {}
             entities = agg.get('added_entities', []) if isinstance(agg, dict) else []
             smart_intent = self.filter.classify_intent_smart(files, entities, added, deleted)
+
             if intent == 'feat' and smart_intent == 'refactor':
                 errors.append("Wrong intent: feat → refactor (refactor patterns or code reduction detected)")
                 fixes.append(('reclassify_intent', 'refactor'))
+
             if intent in ('feat', 'fix') and (deleted >= 250 and smart_intent == 'refactor'):
                 errors.append("Hidden refactor: large deletions with non-refactor intent")
                 fixes.append(('fix_hidden_refactor', deleted))
         except Exception:
             pass
-        
-        # 2. Check complexity (already capped in format_complexity_delta)
+
+    def _validate_metrics(self, metrics: Dict[str, Any], warnings: List[str], fixes: List[tuple]) -> None:
+        """Validate complexity metrics."""
         old_cc = metrics.get('old_complexity', 1)
         new_cc = metrics.get('new_complexity', old_cc)
         if old_cc > 0:
@@ -113,23 +144,25 @@ class QualityValidator:
             if delta_pct > self.max_complexity_percent:
                 warnings.append(f"Complexity {delta_pct:.0f}% > {self.max_complexity_percent}% (will be normalized)")
                 fixes.append(('normalize_complexity', delta_pct))
-        
-        # 3. Check duplicate relations
+
+    def _validate_relations(self, relations: List[Any], errors: List[str], fixes: List[tuple]) -> None:
+        """Validate relations quality."""
+        # Check duplicates
         unique_relations = self.filter.dedupe_relations(relations)
         duplicates = len(relations) - len(unique_relations)
         if duplicates > self.max_duplicate_relations:
             errors.append(f"Duplicate relations: {duplicates}")
             fixes.append(('dedupe_relations', duplicates))
-        
-        # 3b. Check generic nodes in relations
+
+        # Check generic nodes
         clean_relations = self.filter.filter_generic_nodes(relations)
         generic_count = len(relations) - len(clean_relations)
-        
-        if generic_count > 1:  # Allow max 1 generic node
+        if generic_count > 1:
             errors.append(f"Generic nodes in graph: {generic_count} (base, utils, etc.)")
             fixes.append(('filter_generic_nodes', generic_count))
-        
-        # 4. Check duplicate files
+
+    def _validate_files(self, files: List[str], errors: List[str], fixes: List[tuple]) -> None:
+        """Validate file list quality."""
         unique_files = self.filter.dedupe_files(files)
         if len(files) > 0:
             unique_ratio = len(unique_files) / len(files)
@@ -137,13 +170,15 @@ class QualityValidator:
                 dup_count = len(files) - len(unique_files)
                 errors.append(f"Duplicate files: {dup_count}")
                 fixes.append(('dedupe_files', dup_count))
-        
-        # 5. Check capabilities
+
+    def _validate_capabilities(self, capabilities: List[Any], errors: List[str], fixes: List[tuple]) -> None:
+        """Validate capabilities requirements."""
         if len(capabilities) < self.min_capabilities:
             errors.append(f"Only {len(capabilities)} capabilities (need {self.min_capabilities})")
             fixes.append(('add_capabilities', len(capabilities)))
 
-        # 6. Check that the body exposes metrics (enterprise-grade preview)
+    def _validate_body(self, summary: Dict[str, Any], errors: List[str], fixes: List[tuple]) -> None:
+        """Validate summary body metrics exposure."""
         body = summary.get('body', '')
         if body:
             metric_keywords = ['changes:', 'testing:', 'stats:', 'net', 'complexity', 'dependencies:']
@@ -152,27 +187,22 @@ class QualityValidator:
                 errors.append(f"Only {metric_count} metrics found in body (need {self.required_metrics})")
                 fixes.append(('expose_metrics', metric_count))
 
-        # 7. Enhanced summary minimum value score
+    def _validate_value_score(self, summary: Dict[str, Any], metrics: Dict[str, Any],
+                              errors: List[str], fixes: List[tuple]) -> None:
+        """Validate enhanced summary value score."""
         min_value_score = self.config.get('quality', {}).get('enhanced_summary', {}).get('min_value_score')
         if isinstance(min_value_score, int):
             value_score = metrics.get('value_score')
             if isinstance(value_score, int) and value_score < min_value_score:
                 errors.append(f"Value score {value_score}/100 < {min_value_score}/100")
                 fixes.append(('raise_value_score', value_score))
-        
-        # Calculate score
+
+    def _calculate_score(self, errors: List[str], warnings: List[str]) -> int:
+        """Calculate quality score from errors and warnings."""
         score = 100
         score -= len(errors) * 20
         score -= len(warnings) * 5
-        score = max(0, min(100, score))
-        
-        return {
-            'valid': len(errors) == 0,
-            'errors': errors,
-            'warnings': warnings,
-            'fixes': fixes,
-            'score': score
-        }
+        return max(0, min(100, score))
     
     def auto_fix(self, summary: Dict[str, Any], files: List[str], 
                  added: int = 0, deleted: int = 0) -> Dict[str, Any]:

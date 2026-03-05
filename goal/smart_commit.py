@@ -517,99 +517,150 @@ class SmartCommitGenerator:
         """Generate commit message based on analysis."""
         if analysis is None:
             analysis = self.analyze_changes()
-        
+
         if level is None:
             level = self.abstraction.determine_abstraction_level(analysis)
-        
-        commit_type = analysis.get('commit_type', 'feat')
-        domain = analysis.get('primary_domain', 'core')
-        entities = analysis.get('entities', [])
-        features = analysis.get('features', [])
-        benefit = analysis.get('benefit', 'improved functionality')
-        summary = analysis.get('summary', '')
-        file_count = analysis.get('file_count', 0)
-        added = analysis.get('added', 0)
-        deleted = analysis.get('deleted', 0)
+
         files = analysis.get('files', [])
-        
-        # Check if this is a docs-only change
-        is_docs_only = all(
-            f.lower().endswith(('.md', '.rst', '.txt')) or 
-            'readme' in f.lower() or 
+        is_docs_only = self._is_docs_only_change(files)
+
+        # For docs-only changes, use simpler functional descriptions
+        if is_docs_only:
+            return self._generate_docs_message(analysis)
+
+        # Route to appropriate abstraction level generator
+        if level == 'high':
+            return self._generate_high_abstraction_message(analysis)
+        if level == 'medium':
+            return self._generate_medium_abstraction_message(analysis)
+
+        return self._generate_low_abstraction_message(analysis)
+
+    def _is_docs_only_change(self, files: List[str]) -> bool:
+        """Check if this is a documentation-only change."""
+        if not files:
+            return False
+        return all(
+            f.lower().endswith(('.md', '.rst', '.txt')) or
+            'readme' in f.lower() or
             f.startswith('docs/')
             for f in files
-        ) if files else False
-        
-        # For docs-only changes, use simpler functional descriptions
-        if is_docs_only and commit_type == 'docs':
-            if any('readme' in f.lower() for f in files):
-                if added > 100:
-                    return f"docs({domain}): expand README with detailed examples"
-                return f"docs({domain}): update README"
-            if any('changelog' in f.lower() for f in files):
-                return f"docs({domain}): update changelog"
-            if file_count == 1:
-                fname = Path(files[0]).stem.lower()
-                return f"docs({domain}): update {fname} documentation"
-            return f"docs({domain}): update documentation"
-        
-        # For high abstraction, prefer features/benefit over entities
-        if level == 'high' and features:
+        )
+
+    def _generate_docs_message(self, analysis: Dict[str, Any]) -> str:
+        """Generate commit message for documentation-only changes."""
+        commit_type = analysis.get('commit_type', 'feat')
+        domain = analysis.get('primary_domain', 'core')
+        files = analysis.get('files', [])
+        file_count = analysis.get('file_count', 0)
+        added = analysis.get('added', 0)
+
+        if any('readme' in f.lower() for f in files):
+            if added > 100:
+                return f"docs({domain}): expand README with detailed examples"
+            return f"docs({domain}): update README"
+        if any('changelog' in f.lower() for f in files):
+            return f"docs({domain}): update changelog"
+        if file_count == 1:
+            fname = Path(files[0]).stem.lower()
+            return f"docs({domain}): update {fname} documentation"
+        return f"docs({domain}): update documentation"
+
+    def _generate_high_abstraction_message(self, analysis: Dict[str, Any]) -> str:
+        """Generate message for high abstraction level."""
+        commit_type = analysis.get('commit_type', 'feat')
+        domain = analysis.get('primary_domain', 'core')
+        features = analysis.get('features', [])
+        benefit = analysis.get('benefit', 'improved functionality')
+
+        # Prefer features over entities for high abstraction
+        if features:
             if len(features) == 1:
                 return f"{commit_type}({domain}): add {features[0]} support"
             elif len(features) == 2:
                 return f"{commit_type}({domain}): add {features[0]} and {features[1]} support"
             else:
                 return f"{commit_type}({domain}): add {features[0]}, {features[1]} and more"
-        
-        # Use benefit for high abstraction
-        if level == 'high':
-            return f"{commit_type}({domain}): {benefit}"
-        
-        # For medium abstraction, use meaningful entities or features
-        if level == 'medium':
-            if features:
-                feature_str = ', '.join(features[:3])
-                return f"{commit_type}({domain}): add {feature_str}"
-            elif entities:
-                # Filter out noise from entities
-                meaningful = [
-                    e for e in entities 
-                    if len(e) > 2 
-                    and not e.startswith('test_')
-                    and not re.match(r'^\[.*\]$', e)  # Skip [version] patterns
-                    and not re.match(r'^\d', e)  # Skip entities starting with numbers
-                ][:3]
-                if meaningful:
-                    return f"{commit_type}({domain}): add {', '.join(meaningful)}"
-            return f"{commit_type}({domain}): {benefit}"
-        
-        # Low abstraction - still prefer functional description over raw stats
-        # Use benefit or infer from context
+
+        return f"{commit_type}({domain}): {benefit}"
+
+    def _generate_medium_abstraction_message(self, analysis: Dict[str, Any]) -> str:
+        """Generate message for medium abstraction level."""
+        commit_type = analysis.get('commit_type', 'feat')
+        domain = analysis.get('primary_domain', 'core')
+        entities = analysis.get('entities', [])
+        features = analysis.get('features', [])
+        benefit = analysis.get('benefit', 'improved functionality')
+
+        if features:
+            feature_str = ', '.join(features[:3])
+            return f"{commit_type}({domain}): add {feature_str}"
+
+        if entities:
+            meaningful = self._filter_meaningful_entities(entities)[:3]
+            if meaningful:
+                return f"{commit_type}({domain}): add {', '.join(meaningful)}"
+
+        return f"{commit_type}({domain}): {benefit}"
+
+    def _generate_low_abstraction_message(self, analysis: Dict[str, Any]) -> str:
+        """Generate message for low abstraction level (fallback)."""
+        commit_type = analysis.get('commit_type', 'feat')
+        domain = analysis.get('primary_domain', 'core')
+        entities = analysis.get('entities', [])
+        files = analysis.get('files', [])
+        benefit = analysis.get('benefit', 'improved functionality')
+        added = analysis.get('added', 0)
+        deleted = analysis.get('deleted', 0)
+
+        # Prefer benefit if meaningful
         if benefit and benefit != 'improved functionality':
             return f"{commit_type}({domain}): {benefit}"
-        
+
         # Try to create functional description from entities
         if entities:
             meaningful = [e for e in entities if len(e) > 2][:2]
             if meaningful:
-                verb = self.abstraction._get_verb_for_commit_type(commit_type)
+                verb = self.abstraction.get_action_verb(commit_type)
                 return f"{commit_type}({domain}): {verb} {', '.join(meaningful)}"
-        
+
         # Infer from file patterns
-        if files:
-            # Check for common patterns
-            if any('cli' in f.lower() for f in files):
-                return f"{commit_type}({domain}): improve CLI functionality"
-            if any('config' in f.lower() for f in files):
-                return f"{commit_type}({domain}): update configuration handling"
-            if any('test' in f.lower() for f in files):
-                return f"{commit_type}({domain}): improve test coverage"
-            if any(f.endswith('.md') for f in files):
-                return f"{commit_type}({domain}): update documentation"
-        
-        # Final fallback - use verb-based description
-        verb = self.abstraction._get_verb_for_commit_type(commit_type)
+        return self._infer_message_from_files(analysis)
+
+    def _filter_meaningful_entities(self, entities: List[str]) -> List[str]:
+        """Filter out noise from entity names."""
+        return [
+            e for e in entities
+            if len(e) > 2
+            and not e.startswith('test_')
+            and not re.match(r'^\[.*\]$', e)  # Skip [version] patterns
+            and not re.match(r'^\d', e)  # Skip entities starting with numbers
+        ]
+
+    def _infer_message_from_files(self, analysis: Dict[str, Any]) -> str:
+        """Infer commit message from file patterns."""
+        commit_type = analysis.get('commit_type', 'feat')
+        domain = analysis.get('primary_domain', 'core')
+        files = analysis.get('files', [])
+        added = analysis.get('added', 0)
+        deleted = analysis.get('deleted', 0)
+
+        if not files:
+            verb = self.abstraction.get_action_verb(commit_type)
+            return f"{commit_type}({domain}): {verb} code structure"
+
+        # Check for common patterns
+        if any('cli' in f.lower() for f in files):
+            return f"{commit_type}({domain}): improve CLI functionality"
+        if any('config' in f.lower() for f in files):
+            return f"{commit_type}({domain}): update configuration handling"
+        if any('test' in f.lower() for f in files):
+            return f"{commit_type}({domain}): improve test coverage"
+        if any(f.endswith('.md') for f in files):
+            return f"{commit_type}({domain}): update documentation"
+
+        # Fallback based on stats
+        verb = self.abstraction.get_action_verb(commit_type)
         if added > deleted * 2:
             return f"{commit_type}({domain}): {verb} new functionality"
         elif deleted > added:

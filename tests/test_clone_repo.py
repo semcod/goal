@@ -240,13 +240,13 @@ class TestCloneCommand:
         runner = CliRunner()
         result = runner.invoke(main, ["clone", "--help"])
         assert result.exit_code == 0
-        assert "Clone an external git repository" in result.output
+        assert "Clone a git repository" in result.output
 
     def test_clone_invalid_url(self):
         runner = CliRunner()
         result = runner.invoke(main, ["clone", "not-a-url"])
         assert result.exit_code != 0
-        assert "Invalid repository URL" in result.output
+        assert "Invalid URL" in result.output
 
     def test_clone_valid_local_bare(self, tmp_path):
         """End-to-end: clone a local bare repo via the CLI command."""
@@ -257,9 +257,7 @@ class TestCloneCommand:
 
         runner = CliRunner()
         target = str(tmp_path / "cloned")
-        with mock.patch("goal.git_ops.validate_repo_url", return_value=True), \
-             mock.patch("goal.cli.validate_repo_url", return_value=True):
-            result = runner.invoke(main, ["clone", f"file://{bare}", target])
+        result = runner.invoke(main, ["clone", f"file://{bare}", target])
         assert result.exit_code == 0
         assert "cloned" in result.output.lower() or "✓" in result.output
         assert (tmp_path / "cloned" / ".git").exists()

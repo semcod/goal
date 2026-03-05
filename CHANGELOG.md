@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [2.1.73] - 2026-03-05
+
+### Test
+- Update tests/test_cli_options.py
+- Update tests/test_clone_repo.py
+- Update tests/test_project_bootstrap.py
+- Update tests/test_project_doctor.py
+
 ## [2.1.72] - 2026-03-05
 
 ### Docs

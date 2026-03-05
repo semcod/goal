@@ -67,107 +67,147 @@ class ChangeAnalyzer:
         """Classify the type of change using pattern matching and heuristics."""
         scores = defaultdict(int)
 
-        # Strong signal: code changes in main package should not become docs
-        has_package_code = any(
+        # Detect signal types from files and diff
+        signals = self._detect_signals(files, diff_content)
+
+        # Score based on file patterns and diff content
+        self._score_by_file_patterns(scores, files)
+        self._score_by_diff_content(scores, diff_content)
+        self._score_by_statistics(scores, files, stats)
+        self._score_by_signals(scores, signals, files, diff_content)
+
+        # Apply preference rules and return final type
+        return self._resolve_change_type(scores, signals, files, diff_content)
+
+    def _detect_signals(self, files: List[str], diff_content: str) -> Dict[str, bool]:
+        """Detect key signals from files and diff content."""
+        return {
+            'has_package_code': self._has_package_code(files),
+            'has_docs_only': self._is_docs_only(files),
+            'has_ci_only': self._is_ci_only(files),
+            'has_new_goal_python_file': self._has_new_goal_python_file(files, diff_content),
+        }
+
+    def _has_package_code(self, files: List[str]) -> bool:
+        """Check if changes include code in main package directories."""
+        return any(
             (f.startswith('goal/') or f.startswith('src/') or f.startswith('lib/'))
             and (f.endswith('.py') or f.endswith('.js') or f.endswith('.ts'))
             for f in files
         )
-        has_docs_only = all(
+
+    def _is_docs_only(self, files: List[str]) -> bool:
+        """Check if changes are documentation-only."""
+        return all(
             f.endswith(('.md', '.rst', '.txt')) or 'docs/' in f or 'readme' in f.lower()
             for f in files
         )
 
-        has_ci_only = all(
-            f.startswith('.github/')
-            or f.startswith('.gitlab/')
-            or f.endswith(('.yml', '.yaml'))
+    def _is_ci_only(self, files: List[str]) -> bool:
+        """Check if changes are CI/CD-only."""
+        return all(
+            f.startswith('.github/') or f.startswith('.gitlab/') or f.endswith(('.yml', '.yaml'))
             for f in files
         )
 
-        has_new_goal_python_file = (
+    def _has_new_goal_python_file(self, files: List[str], diff_content: str) -> bool:
+        """Check if a new Python file is being added to goal/."""
+        return (
             'new file mode' in diff_content
             and any(f.startswith('goal/') and f.endswith('.py') for f in files)
         )
-        
-        # Analyze file paths
+
+    def _score_by_file_patterns(self, scores: defaultdict, files: List[str]) -> None:
+        """Score change types based on file path patterns."""
         for file_path in files:
             file_lower = file_path.lower()
             for change_type, patterns in self.TYPE_PATTERNS.items():
                 for pattern in patterns:
                     if re.search(pattern, file_lower):
                         scores[change_type] += 2
-        
-        # Analyze diff content
+
+    def _score_by_diff_content(self, scores: defaultdict, diff_content: str) -> None:
+        """Score change types based on diff content patterns."""
         diff_lower = diff_content.lower()
         for change_type, patterns in self.TYPE_PATTERNS.items():
             for pattern in patterns:
                 matches = len(re.findall(pattern, diff_lower))
                 scores[change_type] += matches
-        
-        # Heuristic based on statistics
+
+    def _score_by_statistics(self, scores: defaultdict, files: List[str], stats: Dict[str, int]) -> None:
+        """Apply scoring heuristics based on change statistics."""
+        # Single file heuristics
         if stats['files'] == 1:
-            # Single file changes
             file = files[0]
             if any(test in file for test in ['test', 'spec']):
                 scores['test'] += 3
             elif file.endswith('.md'):
                 scores['docs'] += 3
-        
+
         # Add/delete ratio heuristics
         ratio = stats['added'] / max(stats['deleted'], 1)
         if ratio > 5:
-            scores['feat'] += 2  # Lots of additions = new feature
+            scores['feat'] += 2
         elif ratio < 0.5:
-            scores['refactor'] += 2  # Lots of deletions = refactoring
+            scores['refactor'] += 2
         elif stats['deleted'] > stats['added']:
-            scores['fix'] += 1  # More deletions might be bug fix
+            scores['fix'] += 1
 
-        # If code exists, down-weight docs a bit to prevent wrong type
-        if has_package_code:
+    def _score_by_signals(self, scores: defaultdict, signals: Dict[str, bool], files: List[str], diff_content: str) -> None:
+        """Apply scoring based on detected signals."""
+        if signals['has_package_code']:
             scores['docs'] = max(0, scores['docs'] - 5)
             scores['chore'] += 1
+            self._score_new_functionality(scores, signals, diff_content)
 
-        # New functionality signals
-        if has_package_code:
-            if re.search(r'^\+\s*def\s+\w+\s*\(', diff_content, re.MULTILINE):
-                scores['feat'] += 3
-            if re.search(r'^\+\s*@click\.(command|group|option)\b', diff_content, re.MULTILINE):
-                scores['feat'] += 4
-            if 'new command' in diff_lower or 'add command' in diff_lower:
-                scores['feat'] += 2
-
-        if has_new_goal_python_file:
+        if signals['has_new_goal_python_file']:
             scores['feat'] += 4
 
-        # Prefer fix when diff mentions bug/error explicitly
-        if any(k in diff_lower for k in ['fix', 'bug', 'error', 'exception', 'crash']):
+        # Explicit bug fix mentions
+        if any(k in diff_content.lower() for k in ['fix', 'bug', 'error', 'exception', 'crash']):
             scores['fix'] += 2
 
-        if has_docs_only:
+        if signals['has_docs_only']:
             scores['docs'] += 5
 
-        if has_ci_only:
+        if signals['has_ci_only']:
             scores['build'] += 5
-        
-        # Special cases
+
+        # Version/config file signals
         if any('version' in f or 'package' in f or 'pyproject' in f for f in files):
             scores['chore'] += 3
-        
+
         if any('docker' in f or 'ci' in f or 'cd' in f for f in files):
             scores['build'] += 3
-        
-        # Prefer fix when we clearly fix something
+
+    def _score_new_functionality(self, scores: defaultdict, signals: Dict[str, bool], diff_content: str) -> None:
+        """Score for new functionality signals in code."""
+        if re.search(r'^\+\s*def\s+\w+\s*\(', diff_content, re.MULTILINE):
+            scores['feat'] += 3
+        if re.search(r'^\+\s*@click\.(command|group|option)\b', diff_content, re.MULTILINE):
+            scores['feat'] += 4
+        if 'new command' in diff_content.lower() or 'add command' in diff_content.lower():
+            scores['feat'] += 2
+
+    def _resolve_change_type(self, scores: defaultdict, signals: Dict[str, bool],
+                             files: List[str], diff_content: str) -> str:
+        """Resolve the final change type from scores and signals."""
+        has_package_code = signals['has_package_code']
+        has_docs_only = signals['has_docs_only']
+        has_ci_only = signals['has_ci_only']
+        has_new_goal_python_file = signals['has_new_goal_python_file']
+
+        # Prefer fix when clearly fixing something
         if scores.get('fix', 0) >= max(scores.get('feat', 0), scores.get('chore', 0), scores.get('docs', 0)) + 1:
             return 'fix'
 
-        # If changes are docs-only or CI-only, force the expected type
+        # Force docs/build for exclusive changes
         if has_docs_only and not has_package_code:
             return 'docs'
         if has_ci_only and not has_package_code:
             return 'build'
 
-        # Prefer feat when we clearly add new capabilities (avoid defaulting to chore)
+        # Prefer feat for new capabilities
         if has_package_code and (
             re.search(r'^\+\s*@click\.(command|group|option)\b', diff_content, re.MULTILINE)
             or has_new_goal_python_file
@@ -175,11 +215,11 @@ class ChangeAnalyzer:
         ):
             return 'feat'
 
-        # Return the type with highest score
+        # Return highest scoring type
         if scores:
             return max(scores.items(), key=lambda x: x[1])[0]
-        
-        return 'chore'  # Default
+
+        return 'chore'
     
     def detect_scope(self, files: List[str]) -> Optional[str]:
         """Detect the scope of changes based on file paths."""

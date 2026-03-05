@@ -172,11 +172,12 @@ def check_versions(update_badges):
 @main.command()
 @click.argument('url')
 @click.argument('directory', required=False)
-def clone(url, directory):
+@click.pass_context
+def clone(ctx, url, directory):
     """Clone a git repository."""
     if not validate_repo_url(url):
         click.echo(click.style(f"Invalid URL: {url}", fg='red'))
-        return
+        ctx.exit(1)
     
     target = directory or url.split('/')[-1].replace('.git', '')
     
