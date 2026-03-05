@@ -50,6 +50,8 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                 timeout=300  # 5 minute timeout
             )
             if result.returncode != 0:
+                import click
+                click.echo(click.style(f"  Publish error: {result.stderr}", fg='red'), err=True)
                 success = False
         except Exception:
             success = False

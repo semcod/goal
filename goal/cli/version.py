@@ -23,7 +23,7 @@ PROJECT_TYPES = {
             'setup.cfg': r'^version\s*=\s*(\d+\.\d+\.\d+)',
         },
         'test_command': 'pytest',
-        'publish_command': 'python -m build && python -m twine upload dist/goal-{version}*',
+        'publish_command': 'python -m build && python -m twine upload dist/*',
     },
     'nodejs': {
         'files': ['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb'],
