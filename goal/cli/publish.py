@@ -53,7 +53,9 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
                 import click
                 click.echo(click.style(f"  Publish error: {result.stderr}", fg='red'), err=True)
                 success = False
-        except Exception:
+        except Exception as e:
+            import click
+            click.echo(click.style(f"  Publish exception: {e}", fg='red'), err=True)
             success = False
     
     return success
