@@ -49,6 +49,14 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
             # Use run_command_tee to show output in real-time
             result = run_command_tee(publish_cmd)
             if result.returncode != 0:
+                already_exists_msg = "File already exists"
+                combined_output = f"{result.stdout or ''}\n{result.stderr or ''}"
+                if already_exists_msg in combined_output:
+                    click.echo(click.style(
+                        "  ⚠  Artifact already exists on registry; skipping upload.",
+                        fg='yellow',
+                    ))
+                    continue
                 click.echo(click.style(f"  Publish failed with exit code {result.returncode}", fg='red'), err=True)
                 if result.stderr:
                     click.echo(click.style(f"  stderr: {result.stderr}", fg='red'), err=True)

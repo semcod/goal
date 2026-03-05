@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from goal.cli import sync_all_versions
+from goal.cli.version import PROJECT_TYPES
 
 def test_sync_updates_init_py(tmp_path):
     """Test that sync_all_versions updates __version__ in __init__.py files."""
@@ -52,3 +53,9 @@ def test_sync_updates_init_py(tmp_path):
         
     finally:
         os.chdir(old_cwd)
+
+
+def test_python_publish_command_skips_existing():
+    cmd = PROJECT_TYPES["python"]["publish_command"]
+    assert "python -m twine upload" in cmd
+    assert "--skip-existing" in cmd

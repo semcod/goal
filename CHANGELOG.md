@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [2.1.78] - 2026-03-05
+
+### Test
+- Update tests/test_version_sync.py
+
 ## [2.1.77] - 2026-03-05
 
 ## [2.1.76] - 2026-03-05
