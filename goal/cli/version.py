@@ -22,7 +22,7 @@ PROJECT_TYPES = {
             'setup.py': r'version\s*=\s*["\'](\d+\.\d+\.\d+)["\']',
             'setup.cfg': r'^version\s*=\s*(\d+\.\d+\.\d+)',
         },
-        'test_command': 'pytest',
+        'test_command': 'python -m pytest',
         'publish_command': 'python -m build && python -m twine upload dist/*',
     },
     'nodejs': {

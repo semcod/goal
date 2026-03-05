@@ -5,6 +5,8 @@ import shutil
 from pathlib import Path
 from typing import List
 
+import click
+
 try:
     from ..git_ops import run_command_tee
     from .version import PROJECT_TYPES
@@ -41,20 +43,21 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
         if '{version}' in publish_cmd:
             publish_cmd = publish_cmd.replace('{version}', version)
         
+        click.echo(f"  Publishing {ptype}: {publish_cmd}")
+        
         try:
-            result = subprocess.run(
-                publish_cmd,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
-            )
+            # Use run_command_tee to show output in real-time
+            result = run_command_tee(publish_cmd)
             if result.returncode != 0:
-                import click
-                click.echo(click.style(f"  Publish error: {result.stderr}", fg='red'), err=True)
+                click.echo(click.style(f"  Publish failed with exit code {result.returncode}", fg='red'), err=True)
+                if result.stderr:
+                    click.echo(click.style(f"  stderr: {result.stderr}", fg='red'), err=True)
+                if result.stdout:
+                    click.echo(click.style(f"  stdout: {result.stdout}", fg='yellow'), err=True)
                 success = False
+            else:
+                click.echo(click.style(f"  ✓ Published {ptype} successfully", fg='green'))
         except Exception as e:
-            import click
             click.echo(click.style(f"  Publish exception: {e}", fg='red'), err=True)
             success = False
     

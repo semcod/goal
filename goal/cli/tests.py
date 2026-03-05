@@ -2,6 +2,7 @@
 
 import subprocess
 import os
+import shutil
 from pathlib import Path
 from typing import List, Dict
 
@@ -47,8 +48,17 @@ def _run_tests_in_subdirs(project_type: str, base_cmd: List[str]) -> bool:
                     test_dirs.append(root)
     
     elif project_type == 'nodejs':
+        # Skip node tests if npm is not available
+        if shutil.which('npm') is None:
+            return True
+
         # Find directories with package.json that have test scripts
         for package_json in Path('.').rglob('package.json'):
+            # Avoid picking up package.json in virtualenvs, build artifacts or dependencies
+            parts = set(package_json.parts)
+            if parts.intersection({'venv', '.venv', 'node_modules', 'build', 'dist', '__pycache__'}):
+                continue
+
             if _has_usable_test_script(package_json.parent, 'nodejs'):
                 if str(package_json.parent) != '.':
                     test_dirs.append(str(package_json.parent))
