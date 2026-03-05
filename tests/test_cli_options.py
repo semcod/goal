@@ -3,7 +3,7 @@ import subprocess
 
 def run_cli(*args):
     return subprocess.run(
-        ["python3", "-m", "goal.cli", *args],
+        ["python3", "-m", "goal", *args],
         capture_output=True,
         text=True,
     )

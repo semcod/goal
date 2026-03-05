@@ -78,13 +78,16 @@ def is_git_repository() -> bool:
 
 
 def validate_repo_url(url: str) -> bool:
-    """Validate that a URL looks like a git repository (HTTP/HTTPS/SSH)."""
+    """Validate that a URL looks like a git repository (HTTP/HTTPS/SSH/file)."""
     url = url.strip()
     # SSH format: git@host:user/repo.git
     if re.match(r'^git@[\w.\-]+:[\w.\-/]+(?:\.git)?$', url):
         return True
     # HTTP(S) format
     if re.match(r'^https?://[\w.\-]+/[\w.\-/]+(?:\.git)?$', url):
+        return True
+    # File protocol format
+    if re.match(r'^file://.*$', url):
         return True
     return False
 

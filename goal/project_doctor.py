@@ -716,7 +716,7 @@ def diagnose_and_report_with_todo(project_dir: Path, project_type: str,
     report = diagnose_and_report(project_dir, project_type, auto_fix)
     
     # Add unfixed issues to TODO.md
-    if report.issues:
+    if report.issues and todo_file is not None:
         unfixed_issues = [i for i in report.issues if not i.fixed]
         if unfixed_issues:
             add_issues_to_todo(project_dir, unfixed_issues, todo_file)

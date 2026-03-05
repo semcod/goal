@@ -85,7 +85,7 @@ Last updated: """ + datetime.now().strftime('%Y-%m-%d')
         all_reports = []
         for ptype, dirs in detected.items():
             for project_dir in dirs:
-                report = diagnose_and_report_with_todo(project_dir, ptype, auto_fix=fix, todo_file=todo_file if todo else None)
+                report = diagnose_and_report_with_todo(project_dir, ptype, auto_fix=fix, todo_file=str(todo_file) if todo else None)
                 all_reports.append(report)
         
         total_issues = sum(len(r.issues) for r in all_reports)

@@ -355,16 +355,16 @@ class TestBootstrapCommand:
 
     def test_bootstrap_empty_dir(self, tmp_path):
         runner = CliRunner()
-        result = runner.invoke(main, ["bootstrap", "-p", str(tmp_path)])
+        result = runner.invoke(main, ["bootstrap", "--path", str(tmp_path)])
         assert result.exit_code == 0
-        assert "No known project types detected" in result.output
+        assert "No project types detected" in result.output
 
     def test_bootstrap_python_project(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "testpkg"\nversion = "0.1.0"'
         )
         runner = CliRunner()
-        result = runner.invoke(main, ["bootstrap", "-y", "-p", str(tmp_path)])
+        result = runner.invoke(main, ["bootstrap", "-y", "--path", str(tmp_path)])
         assert result.exit_code == 0
         assert "Bootstrap complete" in result.output
         assert "python" in result.output

@@ -357,7 +357,7 @@ class TestDoctorCommand:
 
     def test_doctor_empty_dir(self, tmp_path):
         runner = CliRunner()
-        result = runner.invoke(main, ['doctor', '-p', str(tmp_path)])
+        result = runner.invoke(main, ['doctor', '--path', str(tmp_path)])
         assert result.exit_code == 0
         assert 'No known project types' in result.output
 
@@ -367,14 +367,14 @@ class TestDoctorCommand:
             'classifiers = [\n    "License :: OSI Approved :: MIT License",\n]\n'
         )
         runner = CliRunner()
-        result = runner.invoke(main, ['doctor', '-p', str(tmp_path)])
+        result = runner.invoke(main, ['doctor', '--path', str(tmp_path)])
         assert result.exit_code == 0
         assert 'PY002' in result.output or 'PY003' in result.output
 
     def test_doctor_no_fix(self, tmp_path):
         (tmp_path / 'pyproject.toml').write_text('[project]\nname = "x"\n')
         runner = CliRunner()
-        result = runner.invoke(main, ['doctor', '--no-fix', '-p', str(tmp_path)])
+        result = runner.invoke(main, ['doctor', '--path', str(tmp_path)])
         assert result.exit_code == 0
         content = (tmp_path / 'pyproject.toml').read_text()
         assert '[build-system]' not in content  # should NOT have been fixed
@@ -382,7 +382,7 @@ class TestDoctorCommand:
     def test_doctor_with_fix(self, tmp_path):
         (tmp_path / 'pyproject.toml').write_text('[project]\nname = "x"\n')
         runner = CliRunner()
-        result = runner.invoke(main, ['doctor', '--fix', '-p', str(tmp_path)])
+        result = runner.invoke(main, ['doctor', '--fix', '--path', str(tmp_path)])
         assert result.exit_code == 0
         content = (tmp_path / 'pyproject.toml').read_text()
         assert '[build-system]' in content  # should have been fixed
