@@ -1,0 +1,20 @@
+You are an AI assistant helping me understand and improve a codebase.
+Use the attached/generated files as the authoritative context.
+
+we are in project path: .
+
+Files for analysis:
+- project/analysis.toon  (Health diagnostics - complexity metrics, god modules, coupling issues, refactoring priorities)
+- project/context.md  (LLM narrative - architecture summary, key entry points, process flows, public API surface)
+- project/evolution.toon  (Refactoring queue - ranked actions by impact/effort, risks, metrics targets, history)
+- project/project.toon  (Project logic - compact module view from code2logic, file sizes, dependencies overview)
+- project/README.md  (Documentation - complete guide to all generated files, usage examples, interpretation)
+
+Task:
+- Summarize the architecture and main flows.
+- Identify the highest-risk areas and propose a refactoring plan.
+- If you suggest changes, keep behavior backward compatible and provide concrete steps.
+
+Constraints:
+- Prefer minimal, incremental changes.
+- If uncertain, ask clarifying questions.

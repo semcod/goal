@@ -1,0 +1,58 @@
+# code2llm/evolution | 270 func | 27f | 2026-03-05
+
+NEXT[10] (ranked by impact):
+  [1] !! SPLIT           goal/smart_commit.py
+      WHY: 735L, 2 classes, max CC=46
+      EFFORT: ~4h  IMPACT: 33810
+
+  [2] !! SPLIT           goal/project_doctor.py
+      WHY: 724L, 2 classes, max CC=34
+      EFFORT: ~4h  IMPACT: 24616
+
+  [3] !! SPLIT           goal/config.py
+      WHY: 798L, 1 classes, max CC=10
+      EFFORT: ~4h  IMPACT: 7980
+
+  [4] !! SPLIT-FUNC      push  CC=29  fan=37
+      WHY: CC=29 exceeds 15
+      EFFORT: ~1h  IMPACT: 1073
+
+  [5] !! SPLIT-FUNC      _diagnose_python  CC=34  fan=30
+      WHY: CC=34 exceeds 15
+      EFFORT: ~1h  IMPACT: 1020
+
+  [6] !! SPLIT-FUNC      QualityValidator.validate  CC=35  fan=28
+      WHY: CC=35 exceeds 15
+      EFFORT: ~1h  IMPACT: 980
+
+  [7] !! SPLIT-FUNC      ChangeAnalyzer.classify_change_type  CC=58  fan=16
+      WHY: CC=58 exceeds 15
+      EFFORT: ~1h  IMPACT: 928
+
+  [8] !! SPLIT-FUNC      EnhancedSummaryGenerator._format_enhanced_body  CC=40  fan=19
+      WHY: CC=40 exceeds 15
+      EFFORT: ~1h  IMPACT: 760
+
+  [9] !! SPLIT-FUNC      format_push_result  CC=34  fan=22
+      WHY: CC=34 exceeds 15
+      EFFORT: ~1h  IMPACT: 748
+
+  [10] !! SPLIT-FUNC      SmartCommitGenerator.generate_message  CC=46  fan=16
+      WHY: CC=46 exceeds 15
+      EFFORT: ~1h  IMPACT: 736
+
+
+RISKS[3]:
+  ⚠ Splitting goal/config.py may break 25 import paths
+  ⚠ Splitting goal/smart_commit.py may break 20 import paths
+  ⚠ Splitting goal/project_doctor.py may break 17 import paths
+
+METRICS-TARGET:
+  CC̄:          7.3 → ≤5.0
+  max-CC:      58 → ≤20
+  god-modules: 9 → 0
+  high-CC(≥15): 32 → ≤16
+  hub-types:   0 → ≤0
+
+HISTORY:
+  prev CC̄=7.3 → now CC̄=7.3

@@ -1,0 +1,292 @@
+# goal | 40f 11581L | python:40
+# Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
+M[40]:
+  goal/__init__.py,2
+  goal/__main__.py,11
+  goal/changelog.py,93
+  goal/cli.py,48
+  goal/cli/__init__.py,192
+  goal/cli/commit_cmd.py,153
+  goal/cli/config_cmd.py,92
+  goal/cli/doctor_cmd.py,62
+  goal/cli/publish.py,49
+  goal/cli/publish_cmd.py,35
+  goal/cli/push_cmd.py,517
+  goal/cli/tests.py,84
+  goal/cli/utils_cmd.py,172
+  goal/cli/version.py,477
+  goal/commit_generator.py,42
+  goal/config.py,667
+  goal/deep_analyzer.py,415
+  goal/enhanced_summary.py,30
+  goal/formatter.py,271
+  goal/generator/__init__.py,11
+  goal/generator/analyzer.py,267
+  goal/generator/generator.py,261
+  goal/generator/git_ops.py,139
+  goal/git_ops.py,329
+  goal/package_managers.py,543
+  goal/project_bootstrap.py,471
+  goal/project_doctor.py,531
+  goal/smart_commit.py,555
+  goal/summary/__init__.py,30
+  goal/summary/generator.py,481
+  goal/summary/quality_filter.py,248
+  goal/summary/validator.py,206
+  goal/user_config.py,198
+  goal/version_validation.py,235
+  test_version_validation.py,187
+  tests/test_cli_options.py,28
+  tests/test_clone_repo.py,208
+  tests/test_project_bootstrap.py,282
+  tests/test_project_doctor.py,284
+  tests/test_version_sync.py,32
+D:
+  goal/changelog.py:
+    i: re,datetime,git_ops.run_git,pathlib.Path,typing.{Dict,List,Optional}
+    e: update_changelog
+    update_changelog(version:str;files:List[str];commit_msg:str;config:Dict=None;changelog_entry:Dict=None)
+  goal/cli/__init__.py:
+    i: subprocess,os,sys,re,click,nfo,pathlib.Path,typing.{Dict,List,Optional}
+    e: DOCS_URL,ANSI_ESCAPE_RE,strip_ansi,read_tickert,apply_ticket_prefix,split_paths_by_type,stage_paths,confirm
+    GoalGroup: get_command(2),parse_args(2)  # Custom Click Group that shows docs UR...
+    _setup_nfo_logging(nfo_format:str='markdown';nfo_sink:str='')
+    _nfo_log_call()
+    strip_ansi(text:str)->str
+    read_tickert(path:Path=Path('TICKET'))->Dict[str, str]
+    apply_ticket_prefix(title:str;ticket:Optional[str])->str
+    split_paths_by_type(paths:List[str])->Dict[str, List[str]]
+    stage_paths(paths:List[str])
+    confirm(prompt:str;default:bool=True)->bool
+  goal/cli/commit_cmd.py:
+    i: click,sys,main,apply_ticket_prefix,commit_generator.CommitMessageGenerator,enhanced_summary.EnhancedSummaryGenerator,formatter.format_enhanced_summary,git_ops.{get_diff_content,get_diff_stats,get_staged_files}
+    e: commit,fix_summary,validate
+    commit(ctx;detailed;unstaged;markdown;ticket;abstraction)
+    fix_summary(ctx;fix;preview;cached)
+    validate(ctx;fix;cached)
+  goal/cli/config_cmd.py:
+    i: click,main,config.{GoalConfig,ensure_config,load_config},user_config.{get_user_config,initialize_user_config,show_user_config}
+    e: config,config_show,config_validate,config_update,config_set,config_get,setup
+    config()
+    config_show(ctx;key)
+    config_validate(ctx)
+    config_update(ctx)
+    config_set(ctx;key;value)
+    config_get(ctx;key)
+    setup(reset;show_config)
+  goal/cli/doctor_cmd.py:
+    i: click,datetime,main,pathlib.Path,project_bootstrap.{bootstrap_all_projects,detect_project_types_deep},project_doctor.{DoctorReport,diagnose_and_report_with_todo}
+    e: doctor
+    doctor(ctx;fix;path;todo)
+  goal/cli/publish.py:
+    i: subprocess,shutil,git_ops.run_command_tee,pathlib.Path,typing.List,version.PROJECT_TYPES
+    e: makefile_has_target,publish_project
+    makefile_has_target(target:str)->bool
+    publish_project(project_types:List[str];version:str;yes:bool=False)->bool
+  goal/cli/publish_cmd.py:
+    i: click,shutil,main,git_ops.run_command_tee,pathlib.Path,publish.{makefile_has_target,publish_project},version.{detect_project_types,get_current_version}
+    e: publish
+    publish(ctx;use_make;target;version_arg)
+  goal/cli/push_cmd.py:
+    i: click,sys,git_ops.{get_diff_content,get_staged_files,run_git},pathlib.Path,typing.{Any,Dict,List,Optional}
+    e: push
+    _get_commit_message(ctx;files:List[str];diff_content:str;message:Optional[str];ticket:Optional[str];abstraction:Optional[str])->tuple
+    _enforce_quality_gates(ctx;commit_msg:str;detailed_result:Dict;files:List[str];total_adds:int;total_dels:int;...+1)->str
+    _handle_dry_run(ctx;project_types;files;stats;current_version;new_version;...+1)
+    _show_workflow_preview(files;stats;current_version;new_version;commit_msg;commit_body;...+1)
+    _run_test_stage(project_types;yes;markdown;ctx;files;stats;...+1)
+    _handle_split_commits(ctx;files;ticket;new_version;current_version;no_version_sync;...+1)
+    _handle_single_commit(commit_title;commit_body;commit_msg;message;yes)
+    _handle_version_sync(new_version;no_version_sync;user_config;yes)
+  goal/cli/tests.py:
+    i: subprocess,os,git_ops.{run_command,run_git},pathlib.Path,typing.{Dict,List},version.PROJECT_TYPES
+    e: run_tests
+    _has_usable_test_script(project_dir:Path;project_type:str)->bool
+    _run_tests_in_subdirs(project_type:str;base_cmd:List[str])->bool
+    run_tests(project_types:List[str])->bool
+  goal/cli/utils_cmd.py:
+    i: click,formatter.format_status_output,git_ops,pathlib.Path
+    e: status,init,info,version,package_managers,check_versions,clone,bootstrap
+    status(ctx;markdown)
+    init(ctx;force)
+    info()
+    version(bump_type)
+    package_managers(language;available)
+    check_versions(update_badges)
+    clone(url;directory)
+    bootstrap(yes;path)
+  goal/cli/version.py:
+    i: re,json,git_ops.run_git,pathlib.Path,typing.{Dict,List,Optional,Tuple},version_validation.update_badge_versions
+    e: PROJECT_TYPES,detect_project_types,find_version_files,get_version_from_file,get_current_version,bump_version,update_version_in_file,update_json_version
+    detect_project_types()->List[str]
+    find_version_files()->Dict[str, Path]
+    get_version_from_file(filepath:Path;pattern:str)->Optional[str]
+    get_current_version()->str
+    bump_version(version:str;bump_type:str)->str
+    update_version_in_file(filepath:Path;pattern:str;old_version:str;new_version:str)->bool
+    update_json_version(filepath:Path;new_version:str)->bool
+    update_project_metadata(filepath:Path;user_config)->bool
+  goal/config.py:
+    i: os,re,datetime,yaml,pathlib.Path,typing.{Any,Dict,List,Optional,Union}
+    e: DEFAULT_CONFIG,GoalConfig,init_config,load_config,ensure_config
+    GoalConfig: __init__(1),_find_config(1),_find_git_root(0),exists(0),load(0)  # Manages goal.yaml configuration file.
+    init_config(force:bool=False)->GoalConfig
+    load_config(config_path:Optional[str]=None)->GoalConfig
+    ensure_config(auto_update:bool=True)->GoalConfig
+  goal/deep_analyzer.py:
+    i: ast,re,subprocess,collections.Counter,pathlib.Path,typing.{Any,Dict,List,Optional,Tuple}
+    e: CodeChangeAnalyzer
+    CodeChangeAnalyzer: __init__(0),analyze_file_diff(3),_detect_language(1),_analyze_python_diff(2),_extract_python_entities(1)  # Analyzes code changes to extract func...
+  goal/formatter.py:
+    i: json,datetime,typing.{Any,Dict,List,Optional}
+    e: MarkdownFormatter,format_push_result,format_enhanced_summary,format_status_output
+    MarkdownFormatter: __init__(0),add_header(2),add_metadata(0),add_section(4),add_list(3)  # Formats Goal output as structured mar...
+    format_push_result(project_types:List[str];files:List[str];stats:Dict[str;tuple];current_version:str;new_version:str;commit_msg:str;...+1)->str
+    format_enhanced_summary(commit_title:str;commit_body:str;capabilities:List[Dict[str;str]]=None;roles:List[Dict[str;str]]=None;relations:Dict[str;Any]=None;metrics:Dict[str;Any]=None;...+1)->str
+    format_status_output(version:str;branch:str;staged_files:List[str];unstaged_files:List[str])->str
+  goal/generator/analyzer.py:
+    i: re,os,collections.{Counter,defaultdict},pathlib.Path,typing.{Dict,List,Optional,Tuple}
+    e: ChangeAnalyzer,ContentAnalyzer
+    ChangeAnalyzer: classify_change_type(3),detect_scope(1),extract_functions_changed(1)  # Analyze git changes to classify type,...
+    ContentAnalyzer: short_action_summary(2),per_file_notes(2)  # Analyze content for short summaries a...
+  goal/generator/generator.py:
+    i: subprocess,os,collections.Counter,git_ops.GitDiffOperations,pathlib.Path,typing.{Any,Dict,List,Optional,Tuple}
+    e: CommitMessageGenerator,generate_smart_commit_message
+    CommitMessageGenerator: __init__(1),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2)  # Generate conventional commit messages...
+    generate_smart_commit_message(cached:bool=True)->str
+  goal/generator/git_ops.py:
+    i: subprocess,typing.{Dict,List,Optional,Tuple}
+    e: GitDiffOperations
+    GitDiffOperations: __init__(0),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2)  # Git diff operations with caching.
+  goal/git_ops.py:
+    i: subprocess,os,sys,re,click,pathlib.Path,typing.{Dict,List,Optional,Tuple}
+    e: run_git,run_command,run_command_tee,is_git_repository,validate_repo_url,get_remote_url,list_remotes,get_remote_branch
+    run_git()
+    run_command(command:str;capture:bool=True)->subprocess.CompletedProcess
+    _echo_cmd(args:List[str])->None
+    _run_git_verbose()->subprocess.CompletedProcess
+    run_command_tee(command:str)->subprocess.CompletedProcess
+    is_git_repository()->bool
+    validate_repo_url(url:str)->bool
+    get_remote_url(remote:str='origin')->Optional[str]
+  goal/package_managers.py:
+    i: os,shutil,re,dataclasses.dataclass,pathlib.Path,typing.{Dict,List,Optional,Tuple,Union}
+    e: PackageManager,PACKAGE_MANAGERS,detect_package_managers,get_package_manager,get_package_managers_by_language,is_package_manager_available,get_available_package_managers,get_preferred_package_manager
+    PackageManager: __post_init__(0)  # Package manager configuration and cap...
+    detect_package_managers(project_path:str='.')->List[PackageManager]
+    get_package_manager(name:str)->Optional[PackageManager]
+    get_package_managers_by_language(language:str)->List[PackageManager]
+    is_package_manager_available(pm:PackageManager)->bool
+    get_available_package_managers(project_path:str='.')->List[PackageManager]
+    get_preferred_package_manager(project_path:str='.';language:Optional[str]=None)->Optional[PackageManager]
+    format_package_manager_command(pm:PackageManager;command_type:str)->str
+    get_package_manager_info(pm:PackageManager)->Dict[str, Union[str, List[str]]]
+  goal/project_bootstrap.py:
+    i: os,subprocess,shutil,json,click,pathlib.Path,typing.{Dict,List,Optional,Tuple}
+    e: PROJECT_BOOTSTRAP,detect_project_types_deep,guess_package_name,ensure_project_environment,find_existing_tests,scaffold_test,bootstrap_project,bootstrap_all_projects
+    _match_marker(base:Path;pattern:str)->bool
+    detect_project_types_deep(root:Optional[Path]=None;max_depth:int=1)->Dict[str, List[Path]]
+    guess_package_name(project_dir:Path;project_type:str)->str
+    _find_python_bin(project_dir:Path)->str
+    ensure_project_environment(project_dir:Path;project_type:str;yes:bool=False)->bool
+    find_existing_tests(project_dir:Path;project_type:str)->List[Path]
+    scaffold_test(project_dir:Path;project_type:str;yes:bool=False)->Optional[Path]
+    bootstrap_project(project_dir:Path;project_type:str;yes:bool=False)->Dict
+  goal/project_doctor.py:
+    i: json,re,subprocess,sys,dataclasses.{dataclass,field},pathlib.Path,typing.{Dict,List,Optional}
+    e: Issue,DoctorReport,_SEVERITY_STYLE,LICENSE_CLASSIFIERS_RE,DEPRECATED_BACKENDS,_DIAGNOSTICS,diagnose_project,diagnose_and_report
+    Issue:   # A single diagnosed issue.
+    DoctorReport: errors(0),warnings(0),fixed(0),has_problems(0)  # Aggregated report from a doctor run.
+    _log_issue(issue:Issue)
+    _log_fix(issue:Issue)
+    _diagnose_python(project_dir:Path;auto_fix:bool=True)->List[Issue]
+    _diagnose_nodejs(project_dir:Path;auto_fix:bool=True)->List[Issue]
+    _diagnose_rust(project_dir:Path;auto_fix:bool=True)->List[Issue]
+    _diagnose_go(project_dir:Path;auto_fix:bool=True)->List[Issue]
+    _diagnose_ruby(project_dir:Path;auto_fix:bool=True)->List[Issue]
+    _diagnose_php(project_dir:Path;auto_fix:bool=True)->List[Issue]
+  goal/smart_commit.py:
+    i: fnmatch,re,subprocess,collections.{Counter,defaultdict},pathlib.Path,typing.{Any,Dict,List,Optional}
+    e: CodeAbstraction,SmartCommitGenerator,create_smart_generator
+    CodeAbstraction: __init__(1),get_domain(1),get_language(1),extract_entities(2),extract_markdown_topics(1)  # Extracts meaningful abstractions from...
+    SmartCommitGenerator: __init__(1),deep_analyzer(0),analyze_changes(1),_generate_functional_summary(1),_get_staged_files(0)  # Generates smart commit messages using...
+    create_smart_generator(config:Dict[str;Any])->SmartCommitGenerator
+  goal/summary/__init__.py:
+    i: generator.EnhancedSummaryGenerator,quality_filter.SummaryQualityFilter,validator.QualityValidator
+    e: generate_business_summary,validate_summary,auto_fix_summary
+    generate_business_summary(files;diff_content='';config=None)
+    validate_summary(summary;files=None;config=None)
+    auto_fix_summary(summary;files=None;config=None)
+  goal/summary/generator.py:
+    i: re,collections.defaultdict,deep_analyzer.CodeChangeAnalyzer,pathlib.Path,quality_filter.SummaryQualityFilter,typing.{Any,Dict,List}
+    e: EnhancedSummaryGenerator
+    EnhancedSummaryGenerator: __init__(1),map_entity_to_role(1),detect_capabilities(2),detect_file_relations(2),_infer_domain(1)  # Generate business-value focused commi...
+  goal/summary/quality_filter.py:
+    i: re,collections.defaultdict,pathlib.Path,typing.{Dict,List,Tuple}
+    e: SummaryQualityFilter
+    SummaryQualityFilter: __init__(0),is_noise(2),filter_entities(1),has_banned_words(1),classify_intent(2)  # Filter noise and improve summary qual...
+  goal/summary/validator.py:
+    i: re,quality_filter.SummaryQualityFilter,typing.{Any,Dict,List}
+    e: QualityValidator
+    QualityValidator: __init__(1),validate(2),auto_fix(4)  # Validate commit summary against quali...
+  goal/user_config.py:
+    i: json,subprocess,click,pathlib.Path,typing.{Any,Dict,Optional}
+    e: AVAILABLE_LICENSES,UserConfig,get_git_user_name,get_git_user_email,prompt_for_license,initialize_user_config,get_user_config,show_user_config
+    UserConfig: __init__(0),_load(0),_save(0),get(2),set(2)  # Manages user-specific configuration s...
+    get_git_user_name()->Optional[str]
+    get_git_user_email()->Optional[str]
+    prompt_for_license()->Dict[str, str]
+    initialize_user_config(force:bool=False)->UserConfig
+    get_user_config()->UserConfig
+    show_user_config()
+  goal/version_validation.py:
+    i: re,json,pathlib.Path,typing.{Dict,List,Optional,Tuple},urllib.{error,request}
+    e: get_pypi_version,get_npm_version,get_cargo_version,get_rubygems_version,REGISTRY_HANDLERS,get_registry_version,extract_badge_versions,update_badge_versions
+    get_pypi_version(package_name:str)->Optional[str]
+    get_npm_version(package_name:str)->Optional[str]
+    get_cargo_version(package_name:str)->Optional[str]
+    get_rubygems_version(package_name:str)->Optional[str]
+    get_registry_version(registry:str;package_name:str)->Optional[str]
+    extract_badge_versions(readme_path:Path)->List[Tuple[str, str, str]]
+    update_badge_versions(readme_path:Path;new_version:str)->bool
+    validate_project_versions(project_types:List[str];current_version:str)->Dict[str, Dict]
+  test_version_validation.py:
+    i: unittest,json,sys,goal.version_validation.{check_readme_badges,extract_badge_versions,update_badge_versions,validate_project_versions},pathlib.Path,unittest.mock.{mock_open,patch}
+    e: TestVersionValidation
+    TestVersionValidation: setUp(0),test_extract_badge_versions(0),test_update_badge_versions(0),test_check_readme_badges(0),test_check_readme_badges_up_to_date(0)
+  tests/test_cli_options.py:
+    i: subprocess
+    e: run_cli,test_push_help_includes_markdown_ascii_split_ticket,test_status_help_includes_markdown_ascii,test_unknown_command_shows_docs_url,test_known_commands_work
+    run_cli()
+    test_push_help_includes_markdown_ascii_split_ticket()
+    test_status_help_includes_markdown_ascii()
+    test_unknown_command_shows_docs_url()
+    test_known_commands_work()
+  tests/test_clone_repo.py:
+    i: os,subprocess,tempfile,pytest,click.testing.CliRunner,goal.git_ops.{clone_repository,is_git_repository,validate_repo_url},pathlib.Path,unittest.mock
+    e: TestValidateRepoUrl,TestIsGitRepository,TestCloneRepository,TestEnsureGitRepository,TestCloneCommand
+    TestValidateRepoUrl: test_valid_http_urls(1),test_valid_ssh_urls(1),test_invalid_urls(1),test_whitespace_is_stripped(0)  # Tests for URL validation (HTTP/HTTPS/...
+    TestIsGitRepository: test_true_inside_git_repo(1),test_false_outside_git_repo(1)
+    TestCloneRepository: test_invalid_url_returns_failure(0),test_clone_success(1),test_clone_failure_bad_remote(1)
+    TestEnsureGitRepository: test_returns_true_when_already_in_repo(1),test_exit_option(1),test_auto_mode_skips(1),test_init_option(1),test_clone_option_with_valid_url(1)
+    TestCloneCommand: test_clone_help(0),test_clone_invalid_url(0),test_clone_valid_local_bare(1)
+  tests/test_project_bootstrap.py:
+    i: json,os,subprocess,pytest,click.testing.CliRunner,goal.project_bootstrap.{PROJECT_BOOTSTRAP,detect_project_types_deep,guess_package_name},pathlib.Path,unittest.mock
+    e: TestMatchMarker,TestDetectProjectTypesDeep,TestGuessPackageName,TestFindExistingTests,TestScaffoldTest,TestEnsureProjectEnvironmentPython,TestEnsureProjectEnvironmentGeneric,TestBootstrapProject
+    TestMatchMarker: test_exact_file(1),test_glob_pattern(1)
+    TestDetectProjectTypesDeep: test_root_python(1),test_subfolder_nodejs(1),test_ignores_hidden_dirs(1),test_multiple_types(1),test_empty_dir(1)
+    TestGuessPackageName: test_python_from_pyproject(1),test_nodejs_from_package_json(1),test_rust_from_cargo(1),test_go_from_gomod(1),test_fallback_to_dirname(1)
+    TestFindExistingTests: test_finds_python_tests(1),test_finds_nodejs_tests(1),test_no_tests_returns_empty(1),test_finds_go_tests(1),test_finds_ruby_specs(1)
+    TestScaffoldTest: test_creates_python_test(1),test_creates_nodejs_test(1),test_creates_rust_test(1),test_creates_go_test(1),test_creates_ruby_spec(1)
+  tests/test_project_doctor.py:
+    i: json,pytest,click.testing.CliRunner,goal.project_doctor.{DoctorReport,Issue,_diagnose_python,diagnose_and_report,diagnose_project},pathlib.Path,unittest.mock
+    e: TestDoctorReport,TestDiagnosePython,TestDiagnoseNodejs,TestDiagnoseRust,TestDiagnoseGo,TestDiagnoseRuby,TestDiagnosePhp,TestDiagnoseDotnet
+    TestDoctorReport: test_properties(0),test_no_problems(0)
+    TestDiagnosePython: test_no_pyproject(1),test_only_requirements_txt(1),test_missing_build_system(1),test_missing_build_system_no_fix(1),test_deprecated_license_classifier(1)
+    TestDiagnoseNodejs: test_no_package_json(1),test_invalid_json(1),test_missing_version(1),test_missing_test_script(1),test_no_test_specified(1)
+    TestDiagnoseRust: test_no_cargo(1),test_missing_package(1),test_missing_edition(1)
+    TestDiagnoseGo: test_no_gomod(1),test_invalid_gomod(1),test_missing_gosum(1)
+  tests/test_version_sync.py:
+    i: os,goal.cli.sync_all_versions,pathlib.Path
+    e: test_sync_updates_init_py
+    test_sync_updates_init_py(tmp_path)

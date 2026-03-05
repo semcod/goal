@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>goal — Health Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1e293b; --border: #334155;
+    --text: #e2e8f0; --muted: #94a3b8;
+    --green: #22c55e; --yellow: #eab308; --red: #ef4444; --blue: #3b82f6;
+    --orange: #f97316;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f8fafc; --surface: #ffffff; --border: #e2e8f0;
+      --text: #1e293b; --muted: #64748b;
+    }
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); padding:2rem; }
+  h1 { font-size:1.5rem; margin-bottom:.5rem; }
+  h2 { font-size:1.1rem; color:var(--muted); margin:1.5rem 0 .75rem; border-bottom:1px solid var(--border); padding-bottom:.25rem; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin:1rem 0; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:.5rem; padding:1rem; }
+  .card .value { font-size:1.8rem; font-weight:700; }
+  .card .label { color:var(--muted); font-size:.8rem; text-transform:uppercase; }
+  .chart-container { background:var(--surface); border:1px solid var(--border); border-radius:.5rem; padding:1rem; margin:1rem 0; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  th { text-align:left; color:var(--muted); padding:.5rem; border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:.5rem; border-bottom:1px solid var(--border); }
+  .badge { padding:.15rem .5rem; border-radius:.25rem; font-size:.75rem; font-weight:600; }
+  .badge.critical { background:var(--red); color:#fff; }
+  .badge.error { background:var(--orange); color:#fff; }
+  .badge.warning { background:var(--yellow); color:#000; }
+  .badge.high { background:var(--red); color:#fff; }
+  .badge.medium { background:var(--yellow); color:#000; }
+  .badge.low { background:var(--green); color:#fff; }
+  tr.critical td { background:rgba(239,68,68,.08); }
+  tr.error td { background:rgba(249,115,22,.06); }
+  tr.warning td { background:rgba(234,179,8,.05); }
+  .health-indicator { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:.5rem; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .evo-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.75rem; }
+  .evo-cards .card { text-align:center; }
+  .trend { font-size:.75rem; color:var(--muted); }
+  @media (max-width:768px) { .two-col { grid-template-columns:1fr; } }
+  footer { margin-top:2rem; color:var(--muted); font-size:.75rem; text-align:center; }
+</style>
+</head>
+<body>
+<h1>
+  <span class="health-indicator" style="background:#eab308"></span>
+  goal — Warning
+</h1>
+<p style="color:var(--muted);font-size:.85rem;">
+  Analyzed 2026-03-05 by code2llm
+</p>
+
+<div class="grid">
+  <div class="card"><div class="value">7.3</div><div class="label">Avg CC</div></div>
+  <div class="card"><div class="value">63</div><div class="label">Critical (CC≥10)</div></div>
+  <div class="card"><div class="value">270</div><div class="label">Functions</div></div>
+  <div class="card"><div class="value">17</div><div class="label">Classes</div></div>
+  <div class="card"><div class="value">27</div><div class="label">Files</div></div>
+  <div class="card"><div class="value">11541</div><div class="label">Lines</div></div>
+  <div class="card"><div class="value">0</div><div class="label">Duplicates</div></div>
+  <div class="card"><div class="value">0</div><div class="label">Cycles</div></div>
+</div>
+
+<div class="two-col">
+  <div class="chart-container">
+    <h2 style="border:none;margin:0 0 .5rem;">Evolution (2026-03-05)</h2>
+    <div class="evo-cards">
+      <div class="card"><div class="value">7.3</div><div class="label">CC̄ →</div></div>
+      <div class="card"><div class="value">63</div><div class="label">Critical →</div></div>
+      <div class="card"><div class="value">11541</div><div class="label">Lines</div></div>
+    </div>
+    <p class="trend" style="margin-top:.5rem;">Run analysis multiple times to build a trend chart (≥3 data points needed).</p>
+  </div>
+  <div class="chart-container">
+    <h2 style="border:none;margin:0 0 .5rem;">Module CC (top 15)</h2>
+    <canvas id="modChart" height="200"></canvas>
+  </div>
+</div>
+
+<h2>Alerts (20)</h2>
+<div class="card"><div class="table-wrap">
+<table>
+  <thead><tr><th>Severity</th><th>Target</th><th>Type</th><th>Value</th><th>Limit</th></tr></thead>
+  <tbody>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>ChangeAnalyzer.classify_change_type</td>
+                <td>cc_exceeded</td>
+                <td>58</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>SmartCommitGenerator.generate_message</td>
+                <td>cc_exceeded</td>
+                <td>46</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>EnhancedSummaryGenerator._format_enhanced_body</td>
+                <td>cc_exceeded</td>
+                <td>40</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>CodeChangeAnalyzer.infer_functional_value</td>
+                <td>cc_exceeded</td>
+                <td>38</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>push</td>
+                <td>high_fan_out</td>
+                <td>37</td>
+                <td>10</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>QualityValidator.validate</td>
+                <td>cc_exceeded</td>
+                <td>35</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>format_push_result</td>
+                <td>cc_exceeded</td>
+                <td>34</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>ContentAnalyzer.short_action_summary</td>
+                <td>cc_exceeded</td>
+                <td>34</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>_diagnose_python</td>
+                <td>cc_exceeded</td>
+                <td>34</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>sync_all_versions</td>
+                <td>cc_exceeded</td>
+                <td>33</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>validate_project_versions</td>
+                <td>cc_exceeded</td>
+                <td>30</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>_diagnose_python</td>
+                <td>high_fan_out</td>
+                <td>30</td>
+                <td>10</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>format_enhanced_summary</td>
+                <td>cc_exceeded</td>
+                <td>29</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>ContentAnalyzer.per_file_notes</td>
+                <td>cc_exceeded</td>
+                <td>29</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>push</td>
+                <td>cc_exceeded</td>
+                <td>29</td>
+                <td>15</td>
+            </tr></tbody>
+</table>
+</div></div>
+
+<div class="two-col">
+<div>
+<h2>Hotspots (10)</h2>
+<div class="card"><div class="table-wrap">
+<table>
+  <thead><tr><th>Function</th><th>Fan-out</th><th>Note</th></tr></thead>
+  <tbody>
+            <tr>
+                <td><strong>push</strong></td>
+                <td>37</td>
+                <td>Add, commit, tag, and push changes to remote.</td>
+            </tr>
+            <tr>
+                <td><strong>_diagnose_python</strong></td>
+                <td>30</td>
+                <td>Run all Python-specific diagnostics.</td>
+            </tr>
+            <tr>
+                <td><strong>QualityValidator.validate</strong></td>
+                <td>28</td>
+                <td>Validate summary against all quality gates.
+
+Returns: {valid: bool, errors: [], </td>
+            </tr>
+            <tr>
+                <td><strong>SmartCommitGenerator.analyze_changes</strong></td>
+                <td>27</td>
+                <td>Analysis pipeline, 27 stages</td>
+            </tr>
+            <tr>
+                <td><strong>QualityValidator.auto_fix</strong></td>
+                <td>27</td>
+                <td>Auto-fix summary issues and return corrected summary.</td>
+            </tr>
+            <tr>
+                <td><strong>EnhancedSummaryGenerator.generate_enhanced_summary</strong></td>
+                <td>24</td>
+                <td>Generate complete enhanced summary with business value focus.</td>
+            </tr>
+            <tr>
+                <td><strong>update_changelog</strong></td>
+                <td>23</td>
+                <td>Update CHANGELOG.md with new version and changes.
+
+Args:
+    version: New versio</td>
+            </tr>
+            <tr>
+                <td><strong>CommitMessageGenerator.generate_detailed_message</strong></td>
+                <td>23</td>
+                <td>Generate a detailed commit message with body.</td>
+            </tr>
+            <tr>
+                <td><strong>guess_package_name</strong></td>
+                <td>22</td>
+                <td>Best-effort guess of the package/module name for scaffold templates.</td>
+            </tr>
+            <tr>
+                <td><strong>format_push_result</strong></td>
+                <td>22</td>
+                <td>22-way dispatch</td>
+            </tr></tbody>
+</table>
+</div></div>
+</div>
+
+<div>
+<h2>Refactoring Priorities (15)</h2>
+<div class="card"><div class="table-wrap">
+<table>
+  <thead><tr><th>#</th><th>Action</th><th>Impact</th><th>Effort</th></tr></thead>
+  <tbody>
+            <tr>
+                <td>1</td>
+                <td>Split validate_project_versions (CC=30 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Split ensure_project_environment (CC=25 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Split format_push_result (CC=34 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Split format_enhanced_summary (CC=29 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>Split CodeChangeAnalyzer.infer_functional_value (CC=38 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>Split SmartCommitGenerator.generate_message (CC=46 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>Split ChangeAnalyzer.classify_change_type (CC=58 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>Split CommitMessageGenerator.generate_detailed_message (CC=28 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr></tbody>
+</table>
+</div></div>
+</div>
+</div>
+
+<footer>Generated by code2llm on 2026-03-05 10:05</footer>
+
+<script>
+// Evolution chart disabled — fewer than 3 data points
+
+const modCtx = document.getElementById('modChart').getContext('2d');
+new Chart(modCtx, {
+  type: 'bar',
+  data: {
+    labels: ['analyzer.py', 'smart_commit.py', 'generator.py', 'deep_analyzer.py', 'validator.py', 'formatter.py', 'project_doctor.py', 'version.py', 'version_validation.py', 'push_cmd.py', 'generator.py', 'project_bootstrap.py', 'quality_filter.py', 'changelog.py', 'git_ops.py'],
+    datasets: [{ label: 'Max CC', data: [58, 46, 40, 38, 35, 34, 34, 33, 30, 29, 28, 25, 25, 24, 23],
+      backgroundColor: [58, 46, 40, 38, 35, 34, 34, 33, 30, 29, 28, 25, 25, 24, 23].map(v => v >= 15 ? '#ef4444' : v >= 10 ? '#eab308' : '#22c55e')
+    }]
+  },
+  options: {
+    responsive: true, indexAxis: 'y',
+    scales: {
+      x: { grid:{color:'#334155'}, ticks:{color:'#94a3b8'} },
+      y: { grid:{color:'#334155'}, ticks:{color:'#94a3b8',font:{size:10}} }
+    },
+    plugins: { legend: { display:false } }
+  }
+});
+</script>
+</body>
+</html>

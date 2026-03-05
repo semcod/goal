@@ -1,3 +1,20 @@
+## [Unreleased]
+
+## [2.1.72] - 2026-03-05
+
+### Docs
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update project.sh
+- Update project/analysis.toon
+- Update project/dashboard.html
+- Update project/evolution.toon
+- Update project/project.toon
+- Update project/project.yaml
+- Update project/prompt.txt
+
 ## [2.1.71] - 2026-02-24
 
 ### Summary
