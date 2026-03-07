@@ -347,81 +347,120 @@ class CodeChangeAnalyzer:
             'indicator_counts': dict(indicator_counts)
         }
     
-    def infer_functional_value(self, aggregated: Dict[str, Any], files: List[str]) -> str:
-        """Infer the functional value/impact of the changes."""
-        areas = aggregated.get('functional_areas', [])
-        added = aggregated.get('added_entities', [])
-        modified = aggregated.get('modified_entities', [])
-        complexity = aggregated.get('complexity_change', 0)
-        primary_indicator = aggregated.get('primary_indicator')
-        
-        # Check for specific patterns in files
-        file_patterns = {
+    def _detect_file_patterns(self, files: List[str]) -> Dict[str, bool]:
+        """Detect specific patterns in file paths."""
+        return {
             'analyzer': any('analyzer' in f.lower() for f in files),
             'deep': any('deep' in f.lower() for f in files),
             'smart': any('smart' in f.lower() for f in files),
             'config': any('config' in f.lower() for f in files),
             'cli': any('cli' in f.lower() for f in files),
         }
-        
-        # Priority-based value inference
+
+    def _check_analyzer_value(self, file_patterns: Dict[str, bool], added: List[Dict]) -> Optional[str]:
+        """Check for analyzer/deep pattern values."""
         if file_patterns['analyzer'] or file_patterns['deep']:
             if len(added) > 0:
                 return "enhanced code analysis capabilities"
             return "improved code analysis"
-        
+        return None
+
+    def _check_cli_value(self, areas: List[str], added: List[Dict]) -> Optional[str]:
+        """Check for CLI-related value."""
         if 'cli' in areas and added:
-            cli_entities = [e for e in added if any(d in str(e.get('decorators', [])) 
+            cli_entities = [e for e in added if any(d in str(e.get('decorators', []))
                                                     for d in ['click', 'command'])]
             if cli_entities:
                 return f"new CLI commands: {', '.join(e['name'] for e in cli_entities[:3])}"
-        
+        return None
+
+    def _check_area_values(self, areas: List[str], added: List[Dict]) -> Optional[str]:
+        """Check area-based values (configuration, api, auth, testing, formatting)."""
         if 'configuration' in areas:
             config_entities = [e for e in added if 'config' in e.get('name', '').lower()]
             if config_entities:
                 return "improved configuration management"
-        
+
         if 'api' in areas:
             return "new API capabilities"
-        
+
         if 'auth' in areas:
             return "security enhancements"
-        
+
         if 'testing' in areas:
             test_count = len([e for e in added if e.get('name', '').startswith('test_')])
             if test_count > 0:
                 return f"added {test_count} tests for better coverage"
             return "improved test coverage"
-        
+
         if 'formatting' in areas:
             return "improved output formatting"
-        
-        # Check for refactor patterns
+
+        return None
+
+    def _check_complexity_value(self, complexity: int) -> Optional[str]:
+        """Check complexity-based value."""
         if complexity < -5:
             return "simplified code structure"
         if complexity > 10:
             return "new functionality"
-        
-        # Check for architecture improvements
+        return None
+
+    def _check_architecture_value(self, added: List[Dict]) -> Optional[str]:
+        """Check for architecture improvement values."""
         if len(added) >= 2 and any('analyzer' in e.get('name', '').lower() for e in added):
             return "enhanced architecture with deep analysis"
-        
-        # Fallback based on added entities
+        return None
+
+    def _build_entity_fallback(self, added: List[Dict], modified: List[Dict]) -> str:
+        """Build fallback value based on added/modified entities."""
         if len(added) >= 3:
             names = [e['name'] for e in added[:3]]
             return f"added {', '.join(names)}"
-        
+
         if len(modified) >= 2:
             names = [e['name'] for e in modified[:2]]
             return f"enhanced {', '.join(names)}"
-        
+
         if added:
             return f"added {added[0]['name']}"
-        
+
         if modified:
             return f"updated {modified[0]['name']}"
-        
-        # Generic fallback
+
+        return "code improvements"
+
+    def infer_functional_value(self, aggregated: Dict[str, Any], files: List[str]) -> str:
+        """Infer the functional value/impact of the changes."""
+        areas = aggregated.get('functional_areas', [])
+        added = aggregated.get('added_entities', [])
+        modified = aggregated.get('modified_entities', [])
+        complexity = aggregated.get('complexity_change', 0)
+
+        file_patterns = self._detect_file_patterns(files)
+
+        # Priority-based value inference
+        value = self._check_analyzer_value(file_patterns, added)
+        if value:
+            return value
+
+        value = self._check_cli_value(areas, added)
+        if value:
+            return value
+
+        value = self._check_area_values(areas, added)
+        if value:
+            return value
+
+        value = self._check_complexity_value(complexity)
+        if value:
+            return value
+
+        value = self._check_architecture_value(added)
+        if value:
+            return value
+
+        return self._build_entity_fallback(added, modified)
         return "code improvements"
     
     def detect_relations(self, file_analyses: List[Dict[str, Any]]) -> List[Tuple[str, str, str]]:

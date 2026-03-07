@@ -233,24 +233,126 @@ class CommitMessageGenerator:
         except Exception:
             return None
     
+    def _try_enhanced_summary(self, cached: bool, paths: Optional[List[str]]) -> Optional[Dict[str, str]]:
+        """Try to generate enhanced summary if available."""
+        if not self._enhanced_generator:
+            return None
+        enhanced = self.generate_enhanced_summary(cached, paths)
+        if not enhanced:
+            return None
+        return {
+            'title': enhanced['title'],
+            'body': enhanced['body'],
+            'enhanced': True,
+            'metrics': enhanced.get('metrics'),
+            'capabilities': enhanced.get('capabilities'),
+            'roles': enhanced.get('roles'),
+            'relations': enhanced.get('relations'),
+            'intent': enhanced.get('intent'),
+            'analysis': enhanced.get('analysis'),
+            'files': enhanced.get('files')
+        }
+
+    def _classify_files(self, name_status: List[Tuple[str, str]], files: List[str]) -> Tuple[List[str], List[str], List[str]]:
+        """Classify files into added, deleted, modified."""
+        added_files = [p for s, p in name_status if s.startswith('A')]
+        deleted_files = [p for s, p in name_status if s.startswith('D')]
+        modified_files = [p for s, p in name_status if s.startswith('M') or s.startswith('R') or s.startswith('C')]
+        # Fallback: treat unknown as modified
+        known = set(added_files + deleted_files + modified_files)
+        modified_files.extend([f for f in files if f not in known])
+        return added_files, deleted_files, modified_files
+
+    def _build_statistics_section(self, stats: Dict[str, int]) -> str:
+        """Build statistics line for commit body."""
+        return f"Statistics: {stats['files']} files changed, {stats['added']} insertions, {stats['deleted']} deletions"
+
+    def _build_summary_section(
+        self,
+        files: List[str],
+        added_files: List[str],
+        modified_files: List[str],
+        deleted_files: List[str],
+        symbols: List[str]
+    ) -> List[str]:
+        """Build high-level summary section."""
+        from collections import Counter
+        dir_counter = Counter((f.split('/')[0] if '/' in f else '.') for f in files)
+        ext_counter = Counter((Path(f).suffix or 'other') for f in files)
+        
+        parts = ["\nSummary:"]
+        parts.append("- Dirs: " + ", ".join(f"{k}={v}" for k, v in dir_counter.most_common(6)))
+        parts.append("- Exts: " + ", ".join(f"{k}={v}" for k, v in ext_counter.most_common(6)))
+        parts.append(f"- A/M/D: {len(added_files)}/{len(modified_files)}/{len(deleted_files)}")
+        if added_files:
+            parts.append("- Added: " + ", ".join(added_files[:8]) + (" ..." if len(added_files) > 8 else ""))
+        if deleted_files:
+            parts.append("- Deleted: " + ", ".join(deleted_files[:8]) + (" ..." if len(deleted_files) > 8 else ""))
+        if symbols:
+            parts.append("- Symbols: " + ", ".join(symbols))
+        return parts
+
+    def _build_file_lists(
+        self,
+        added_files: List[str],
+        modified_files: List[str],
+        deleted_files: List[str],
+        numstat_map: Dict[str, Tuple[int, int]]
+    ) -> List[str]:
+        """Build file list sections with per-file stats."""
+        parts = []
+        
+        def fmt_file_list(title: str, items: List[str]):
+            if not items:
+                return
+            parts.append(f"\n{title}:")
+            for p in items[:20]:
+                a, d = numstat_map.get(p, (0, 0))
+                parts.append(f"- {p} (+{a}/-{d})")
+            if len(items) > 20:
+                parts.append(f"- ... and {len(items) - 20} more")
+        
+        fmt_file_list('Added files', added_files)
+        fmt_file_list('Modified files', modified_files)
+        fmt_file_list('Deleted files', deleted_files)
+        return parts
+
+    def _build_per_file_notes(
+        self,
+        files: List[str],
+        numstat_map: Dict[str, Tuple[int, int]],
+        cached: bool
+    ) -> List[str]:
+        """Build per-file descriptive notes for small changes."""
+        if len(files) > 6:
+            return []
+        
+        parts = ["\nChanges (notes):"]
+        for p in files:
+            a, d = numstat_map.get(p, (0, 0))
+            notes = self._per_file_notes(p, cached=cached)
+            if notes:
+                parts.append(f"- {p} (+{a}/-{d}): " + '; '.join(notes))
+            else:
+                parts.append(f"- {p} (+{a}/-{d}): update")
+        return parts
+
+    def _build_implementation_notes(self) -> List[str]:
+        """Build implementation notes section."""
+        return [
+            "\nImplementation notes (heuristics):",
+            "- Type inferred from file paths + diff keywords + add/delete ratio",
+            "- Scope prefers 'goal' when goal/* is touched; otherwise based on top-level dirs",
+            "- For <=6 files: generate short per-file notes from added lines (defs/classes/click options/headings)",
+            "- A/M/D derived from git name-status; per-file +X/-X from git numstat"
+        ]
+
     def generate_detailed_message(self, cached: bool = True, paths: Optional[List[str]] = None) -> Dict[str, str]:
         """Generate a detailed commit message with body."""
         # Try enhanced summary first if available
-        if self._enhanced_generator:
-            enhanced = self.generate_enhanced_summary(cached, paths)
-            if enhanced:
-                return {
-                    'title': enhanced['title'],
-                    'body': enhanced['body'],
-                    'enhanced': True,
-                    'metrics': enhanced.get('metrics'),
-                    'capabilities': enhanced.get('capabilities'),
-                    'roles': enhanced.get('roles'),
-                    'relations': enhanced.get('relations'),
-                    'intent': enhanced.get('intent'),
-                    'analysis': enhanced.get('analysis'),
-                    'files': enhanced.get('files')
-                }
+        enhanced_result = self._try_enhanced_summary(cached, paths)
+        if enhanced_result:
+            return enhanced_result
         
         main_msg = self.generate_commit_message(cached, paths=paths)
         if not main_msg:
@@ -263,69 +365,16 @@ class CommitMessageGenerator:
         name_status = self.get_name_status(cached, paths=paths)
         numstat_map = self.get_numstat_map(cached, paths=paths)
 
-        added_files = [p for s, p in name_status if s.startswith('A')]
-        deleted_files = [p for s, p in name_status if s.startswith('D')]
-        modified_files = [p for s, p in name_status if s.startswith('M') or s.startswith('R') or s.startswith('C')]
-        # Fallback: treat unknown as modified
-        known = set(added_files + deleted_files + modified_files)
-        modified_files.extend([f for f in files if f not in known])
-
-        # Group files by top-level dir and by extension for better summary
-        dir_counter = Counter((f.split('/')[0] if '/' in f else '.') for f in files)
-        ext_counter = Counter((Path(f).suffix or 'other') for f in files)
-
+        added_files, deleted_files, modified_files = self._classify_files(name_status, files)
         symbols = self.extract_functions_changed(diff_content)
         
         # Build body with file details
         body_parts = []
-        
-        # Add statistics
-        body_parts.append(f"Statistics: {stats['files']} files changed, {stats['added']} insertions, {stats['deleted']} deletions")
-
-        # High-level summary
-        body_parts.append("\nSummary:")
-        body_parts.append("- Dirs: " + ", ".join(f"{k}={v}" for k, v in dir_counter.most_common(6)))
-        body_parts.append("- Exts: " + ", ".join(f"{k}={v}" for k, v in ext_counter.most_common(6)))
-        body_parts.append(f"- A/M/D: {len(added_files)}/{len(modified_files)}/{len(deleted_files)}")
-        if added_files:
-            body_parts.append("- Added: " + ", ".join(added_files[:8]) + (" ..." if len(added_files) > 8 else ""))
-        if deleted_files:
-            body_parts.append("- Deleted: " + ", ".join(deleted_files[:8]) + (" ..." if len(deleted_files) > 8 else ""))
-        if symbols:
-            body_parts.append("- Symbols: " + ", ".join(symbols))
-
-        # File status lists with per-file +X/-X
-        def fmt_file_list(title: str, items: List[str]):
-            if not items:
-                return
-            body_parts.append(f"\n{title}:")
-            for p in items[:20]:
-                a, d = numstat_map.get(p, (0, 0))
-                body_parts.append(f"- {p} (+{a}/-{d})")
-            if len(items) > 20:
-                body_parts.append(f"- ... and {len(items) - 20} more")
-
-        fmt_file_list('Added files', added_files)
-        fmt_file_list('Modified files', modified_files)
-        fmt_file_list('Deleted files', deleted_files)
-
-        # Per-file descriptive notes for small changes
-        if len(files) <= 6:
-            body_parts.append("\nChanges (notes):")
-            for p in files:
-                a, d = numstat_map.get(p, (0, 0))
-                notes = self._per_file_notes(p, cached=cached)
-                if notes:
-                    body_parts.append(f"- {p} (+{a}/-{d}): " + '; '.join(notes))
-                else:
-                    body_parts.append(f"- {p} (+{a}/-{d}): update")
-        
-        # Implementation notes (heuristics, no LLM)
-        body_parts.append("\nImplementation notes (heuristics):")
-        body_parts.append("- Type inferred from file paths + diff keywords + add/delete ratio")
-        body_parts.append("- Scope prefers 'goal' when goal/* is touched; otherwise based on top-level dirs")
-        body_parts.append("- For <=6 files: generate short per-file notes from added lines (defs/classes/click options/headings)")
-        body_parts.append("- A/M/D derived from git name-status; per-file +X/-X from git numstat")
+        body_parts.append(self._build_statistics_section(stats))
+        body_parts.extend(self._build_summary_section(files, added_files, modified_files, deleted_files, symbols))
+        body_parts.extend(self._build_file_lists(added_files, modified_files, deleted_files, numstat_map))
+        body_parts.extend(self._build_per_file_notes(files, numstat_map, cached))
+        body_parts.extend(self._build_implementation_notes())
         
         return {
             'title': main_msg,

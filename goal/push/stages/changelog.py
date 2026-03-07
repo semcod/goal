@@ -18,7 +18,11 @@ def handle_changelog(
     """Update changelog."""
     if not no_changelog:
         _update_changelog(new_version, files, commit_msg, config=config)
-        from ..core import run_git_local
+        # Lazy import to avoid circular dependency
+        try:
+            from ..core import run_git_local
+        except ImportError:
+            from goal.push.core import run_git_local
         run_git_local('add', 'CHANGELOG.md')
         click.echo(click.style(f"✓ Updated CHANGELOG.md", fg='green'))
 

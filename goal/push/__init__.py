@@ -30,8 +30,8 @@ from .stages import (
     handle_dry_run,
 )
 
-# CLI command
-from .commands import push
+# Note: CLI command 'push' is registered via click decorator in commands.py
+# Import it directly from .commands if needed: from goal.push.commands import push
 
 __all__ = [
     # Core
@@ -53,6 +53,4 @@ __all__ = [
     'push_to_remote',
     'handle_publish',
     'handle_dry_run',
-    # CLI
-    'push',
 ]

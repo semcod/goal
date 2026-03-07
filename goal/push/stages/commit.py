@@ -9,12 +9,12 @@ try:
     from ...git_ops import run_git
     from ...commit_generator import CommitMessageGenerator
     from ...enhanced_summary import QualityValidator
-    from ....cli import apply_ticket_prefix, confirm, stage_paths, split_paths_by_type
+    from ...cli import apply_ticket_prefix, split_paths_by_type, stage_paths, confirm
 except ImportError:
     from goal.git_ops import run_git
     from goal.commit_generator import CommitMessageGenerator
     from goal.enhanced_summary import QualityValidator
-    from goal.cli import apply_ticket_prefix, confirm, stage_paths, split_paths_by_type
+    from goal.cli import apply_ticket_prefix, split_paths_by_type, stage_paths, confirm
 
 
 def get_commit_message(

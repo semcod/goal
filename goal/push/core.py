@@ -9,7 +9,6 @@ import click
 try:
     from ..git_ops import run_git, get_staged_files, get_diff_content, get_diff_stats
     from ..project_bootstrap import detect_project_types_deep, bootstrap_project
-    from ..cli.version import detect_project_types
     from .stages import (
         get_commit_message, enforce_quality_gates, handle_single_commit,
         handle_split_commits, handle_version_sync, get_version_info,
@@ -19,7 +18,6 @@ try:
 except ImportError:
     from goal.git_ops import run_git, get_staged_files, get_diff_content, get_diff_stats
     from goal.project_bootstrap import detect_project_types_deep, bootstrap_project
-    from goal.cli.version import detect_project_types
     from goal.push.stages import (
         get_commit_message, enforce_quality_gates, handle_single_commit,
         handle_split_commits, handle_version_sync, get_version_info,
@@ -148,7 +146,11 @@ def execute_push_workflow(
     ctx_obj['message'] = message
     ctx_obj['markdown'] = markdown or ctx_obj.get('markdown', False)
     
-    # Detect project types
+    # Detect project types (lazy import to avoid circular dependency)
+    try:
+        from ..cli.version import detect_project_types
+    except ImportError:
+        from goal.cli.version import detect_project_types
     project_types = detect_project_types()
     if project_types and not dry_run:
         click.echo(f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}")
