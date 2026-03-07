@@ -5,12 +5,8 @@ import json
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 
-try:
-    from ..git_ops import run_git
-    from ..version_validation import update_badge_versions
-except ImportError:
-    from goal.git_ops import run_git
-    from goal.version_validation import update_badge_versions
+from goal.git_ops import run_git
+from goal.version_validation import update_badge_versions
 
 
 # Project type definitions with version patterns

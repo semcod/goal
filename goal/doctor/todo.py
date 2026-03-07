@@ -6,10 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Set
 
-try:
-    from ..doctor.models import Issue
-except ImportError:
-    from goal.doctor.models import Issue
+from goal.doctor.models import Issue
 
 
 def _generate_ticket_id(issue: Issue) -> str:

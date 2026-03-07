@@ -4,10 +4,7 @@ import re
 from pathlib import Path
 from typing import List, Tuple
 
-try:
-    from ..doctor.models import Issue
-except ImportError:
-    from goal.doctor.models import Issue
+from goal.doctor.models import Issue
 
 
 LICENSE_CLASSIFIERS_RE = re.compile(
