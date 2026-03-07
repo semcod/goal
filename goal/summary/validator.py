@@ -3,10 +3,7 @@
 import re
 from typing import Dict, List, Any
 
-try:
-    from .quality_filter import SummaryQualityFilter
-except ImportError:
-    from goal.summary.quality_filter import SummaryQualityFilter
+from goal.summary.quality_filter import SummaryQualityFilter
 
 
 class QualityValidator:

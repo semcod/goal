@@ -4,18 +4,11 @@ from typing import Dict, List, Any, Optional
 
 import click
 
-try:
-    from ....cli import apply_ticket_prefix, split_paths_by_type
-    from ....cli.version import get_current_version
-    from ...commit_generator import CommitMessageGenerator
-    from ...formatter import format_enhanced_summary, format_push_result
-    from .commit import get_commit_message
-except ImportError:
-    from goal.cli import apply_ticket_prefix, split_paths_by_type
-    from goal.cli.version import get_current_version
-    from goal.commit_generator import CommitMessageGenerator
-    from goal.formatter import format_enhanced_summary, format_push_result
-    from goal.push.stages.commit import get_commit_message
+from goal.cli import apply_ticket_prefix, split_paths_by_type
+from goal.cli.version import get_current_version
+from goal.commit_generator import CommitMessageGenerator
+from goal.formatter import format_enhanced_summary, format_push_result
+from goal.push.stages.commit import get_commit_message
 
 
 def handle_dry_run(

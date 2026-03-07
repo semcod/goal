@@ -8,10 +8,7 @@ from datetime import datetime
 
 import yaml
 
-try:
-    from .constants import DEFAULT_CONFIG
-except ImportError:
-    from goal.config.constants import DEFAULT_CONFIG
+from goal.config.constants import DEFAULT_CONFIG
 
 
 class GoalConfig:

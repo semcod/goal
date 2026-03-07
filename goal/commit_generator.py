@@ -5,23 +5,13 @@ The actual implementation has been split into the goal.generator package.
 """
 
 # Re-export everything from the new generator package for backward compatibility
-try:
-    from .generator import (
-        CommitMessageGenerator,
-        generate_smart_commit_message,
-        GitDiffOperations,
-        ChangeAnalyzer,
-        ContentAnalyzer,
-    )
-except ImportError:
-    # Fallback if relative imports fail
-    from goal.generator import (
-        CommitMessageGenerator,
-        generate_smart_commit_message,
-        GitDiffOperations,
-        ChangeAnalyzer,
-        ContentAnalyzer,
-    )
+from goal.generator import (
+    CommitMessageGenerator,
+    generate_smart_commit_message,
+    GitDiffOperations,
+    ChangeAnalyzer,
+    ContentAnalyzer,
+)
 
 
 # Maintain backward compatibility for direct function access

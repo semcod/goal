@@ -2,14 +2,9 @@
 
 import click
 
-try:
-    from ..config import GoalConfig, load_config, ensure_config
-    from ..user_config import get_user_config, show_user_config, initialize_user_config
-    from . import main
-except ImportError:
-    from goal.config import GoalConfig, load_config, ensure_config
-    from goal.user_config import get_user_config, show_user_config, initialize_user_config
-    from goal.cli import main
+from goal.config import GoalConfig, load_config, ensure_config
+from goal.user_config import get_user_config, show_user_config, initialize_user_config
+from goal.cli import main
 
 
 @main.group()

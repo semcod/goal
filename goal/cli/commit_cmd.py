@@ -3,18 +3,11 @@
 import click
 import sys
 
-try:
-    from ..commit_generator import CommitMessageGenerator
-    from ..git_ops import get_staged_files, get_diff_content, get_diff_stats
-    from ..enhanced_summary import EnhancedSummaryGenerator
-    from ..formatter import format_enhanced_summary
-    from . import main, apply_ticket_prefix
-except ImportError:
-    from goal.commit_generator import CommitMessageGenerator
-    from goal.git_ops import get_staged_files, get_diff_content, get_diff_stats
-    from goal.enhanced_summary import EnhancedSummaryGenerator
-    from goal.formatter import format_enhanced_summary
-    from goal.cli import main, apply_ticket_prefix
+from goal.commit_generator import CommitMessageGenerator
+from goal.git_ops import get_staged_files, get_diff_content, get_diff_stats
+from goal.enhanced_summary import EnhancedSummaryGenerator
+from goal.formatter import format_enhanced_summary
+from goal.cli import main, apply_ticket_prefix
 
 
 @main.command()

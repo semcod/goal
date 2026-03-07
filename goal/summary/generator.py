@@ -5,12 +5,8 @@ from typing import Dict, List, Any
 from collections import defaultdict
 from pathlib import Path
 
-try:
-    from ..deep_analyzer import CodeChangeAnalyzer
-    from .quality_filter import SummaryQualityFilter
-except ImportError:
-    from goal.deep_analyzer import CodeChangeAnalyzer
-    from goal.summary.quality_filter import SummaryQualityFilter
+from goal.deep_analyzer import CodeChangeAnalyzer
+from goal.summary.quality_filter import SummaryQualityFilter
 
 
 class EnhancedSummaryGenerator:
