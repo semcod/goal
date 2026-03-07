@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-03-07 09:26:11
+# Generated: 2026-03-07 09:34:35
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -273,10 +273,12 @@ quality:
     generate.*message: commit message generator
     EnhancedSummaryGenerator: enterprise changelog generator
     GoalConfig: configuration manager
-    '@click\\.command': CLI command
-    '@click\\.option': CLI option
+    '@click\.command': CLI command
+    '@click\.option': CLI option
     format_.*result: output formatter
     _calculate_complexity: complexity analyzer
+    '@click\\.command': CLI command
+    '@click\\.option': CLI option
   value_patterns:
     ast_analysis:
       signatures:
