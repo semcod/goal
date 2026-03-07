@@ -7,12 +7,8 @@ from typing import List
 
 import click
 
-try:
-    from ..git_ops import run_command_tee
-    from .version import PROJECT_TYPES
-except ImportError:
-    from goal.git_ops import run_command_tee
-    from goal.cli.version import PROJECT_TYPES
+from goal.git_ops import run_command_tee
+from goal.cli.version import PROJECT_TYPES
 
 
 def makefile_has_target(target: str) -> bool:

@@ -3,32 +3,18 @@
 import click
 from pathlib import Path
 
-try:
-    from ..git_ops import (
-        get_remote_branch, get_staged_files, get_unstaged_files,
-        run_git, ensure_git_repository, validate_repo_url, clone_repository
-    )
-    from ..formatter import format_status_output
-    from ..config import ensure_config, init_config
-    from ..user_config import get_user_config, show_user_config, initialize_user_config
-    from ..project_bootstrap import detect_project_types_deep, bootstrap_project
-    from ..package_managers import detect_package_managers, detect_project_language, suggest_package_managers
-    from ..version_validation import validate_project_versions, format_validation_results
-    from . import main, confirm, apply_ticket_prefix
-    from .version import get_current_version, bump_version, detect_project_types, sync_all_versions
-except ImportError:
-    from goal.git_ops import (
-        get_remote_branch, get_staged_files, get_unstaged_files,
-        run_git, ensure_git_repository, validate_repo_url, clone_repository
-    )
-    from goal.formatter import format_status_output
-    from goal.config import ensure_config, init_config
-    from goal.user_config import get_user_config, show_user_config, initialize_user_config
-    from goal.project_bootstrap import detect_project_types_deep, bootstrap_project
-    from goal.package_managers import detect_package_managers, detect_project_language, suggest_package_managers
-    from goal.version_validation import validate_project_versions, format_validation_results
-    from goal.cli import main, confirm, apply_ticket_prefix
-    from goal.cli.version import get_current_version, bump_version, detect_project_types, sync_all_versions
+from goal.git_ops import (
+    get_remote_branch, get_staged_files, get_unstaged_files,
+    run_git, ensure_git_repository, validate_repo_url, clone_repository
+)
+from goal.formatter import format_status_output
+from goal.config import ensure_config, init_config
+from goal.user_config import get_user_config, show_user_config, initialize_user_config
+from goal.project_bootstrap import detect_project_types_deep, bootstrap_project
+from goal.package_managers import detect_package_managers, detect_project_language, suggest_package_managers
+from goal.version_validation import validate_project_versions, format_validation_results
+from goal.cli import main, confirm, apply_ticket_prefix
+from goal.cli.version import get_current_version, bump_version, detect_project_types, sync_all_versions
 
 
 @main.command()
