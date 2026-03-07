@@ -435,3 +435,39 @@ def get_diff_content(cached: bool = True) -> str:
     """Get the actual diff content for analysis."""
     result = run_git('diff', '--cached', '-U3') if cached else run_git('diff', '-U3')
     return result.stdout
+
+
+def read_ticket(path: Path = Path('TICKET')) -> Dict[str, str]:
+    """Read TICKET configuration file (key=value)."""
+    cfg: Dict[str, str] = {'prefix': '', 'format': '[{ticket}] {title}'}
+    if not path.exists():
+        return cfg
+    try:
+        for raw in path.read_text().splitlines():
+            line = raw.strip()
+            if not line or line.startswith('#'):
+                continue
+            if '=' not in line:
+                continue
+            k, v = line.split('=', 1)
+            cfg[k.strip()] = v.strip()
+    except Exception:
+        return cfg
+    return cfg
+
+
+# Backward-compatible alias for the old typo name
+read_tickert = read_ticket
+
+
+def apply_ticket_prefix(title: str, ticket: Optional[str]) -> str:
+    """Apply ticket prefix (from CLI or TICKET file) to commit title."""
+    cfg = read_ticket()
+    ticket_value = (ticket or cfg.get('prefix') or '').strip()
+    if not ticket_value:
+        return title
+    fmt = cfg.get('format') or '[{ticket}] {title}'
+    try:
+        return fmt.format(ticket=ticket_value, title=title)
+    except Exception:
+        return f"[{ticket_value}] {title}"

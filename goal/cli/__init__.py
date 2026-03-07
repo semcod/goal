@@ -17,11 +17,11 @@ except ImportError:
 
 # Try both relative and absolute imports for flexibility
 try:
-    from ..git_ops import run_git
+    from ..git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
     from ..config import GoalConfig, ensure_config, init_config, load_config
     from ..user_config import get_user_config, initialize_user_config, show_user_config
 except ImportError:
-    from goal.git_ops import run_git
+    from goal.git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
     from goal.config import GoalConfig, ensure_config, init_config, load_config
     from goal.user_config import get_user_config, initialize_user_config, show_user_config
 
@@ -62,42 +62,6 @@ def strip_ansi(text: str) -> str:
         return ANSI_ESCAPE_RE.sub('', text)
     except Exception:
         return text
-
-
-def read_ticket(path: Path = Path('TICKET')) -> Dict[str, str]:
-    """Read TICKET configuration file (key=value)."""
-    cfg: Dict[str, str] = {'prefix': '', 'format': '[{ticket}] {title}'}
-    if not path.exists():
-        return cfg
-    try:
-        for raw in path.read_text().splitlines():
-            line = raw.strip()
-            if not line or line.startswith('#'):
-                continue
-            if '=' not in line:
-                continue
-            k, v = line.split('=', 1)
-            cfg[k.strip()] = v.strip()
-    except Exception:
-        return cfg
-    return cfg
-
-
-# Backward-compatible alias for the old typo name
-read_tickert = read_ticket
-
-
-def apply_ticket_prefix(title: str, ticket: Optional[str]) -> str:
-    """Apply ticket prefix (from CLI or TICKET file) to commit title."""
-    cfg = read_ticket()
-    ticket_value = (ticket or cfg.get('prefix') or '').strip()
-    if not ticket_value:
-        return title
-    fmt = cfg.get('format') or '[{ticket}] {title}'
-    try:
-        return fmt.format(ticket=ticket_value, title=title)
-    except Exception:
-        return f"[{ticket_value}] {title}"
 
 
 def split_paths_by_type(paths: List[str]) -> Dict[str, List[str]]:
