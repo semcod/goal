@@ -3,10 +3,7 @@
 from pathlib import Path
 from typing import List
 
-try:
-    from ..doctor.models import Issue
-except ImportError:
-    from goal.doctor.models import Issue
+from goal.doctor.models import Issue
 
 
 def diagnose_go(project_dir: Path, auto_fix: bool = True) -> List[Issue]:

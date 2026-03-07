@@ -45,44 +45,24 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
 
 
 # Re-export workflow functions for backward compatibility
-try:
-    from ..push import (
-        execute_push_workflow as _execute_push_workflow,
-        PushContext as _PushContext,
-        get_commit_message as _get_commit_message,
-        enforce_quality_gates as _enforce_quality_gates,
-        handle_single_commit as _handle_single_commit,
-        handle_split_commits as _handle_split_commits,
-        handle_version_sync as _handle_version_sync,
-        get_version_info as _get_version_info,
-        handle_changelog as _handle_changelog,
-        run_test_stage as _run_test_stage,
-        create_tag as _create_tag,
-        push_to_remote as _push_to_remote,
-        handle_publish as _handle_publish,
-        handle_dry_run as _handle_dry_run,
-        show_workflow_preview as _show_workflow_preview,
-        output_final_summary as _output_final_summary,
-    )
-except ImportError:
-    from goal.push import (
-        execute_push_workflow as _execute_push_workflow,
-        PushContext as _PushContext,
-        get_commit_message as _get_commit_message,
-        enforce_quality_gates as _enforce_quality_gates,
-        handle_single_commit as _handle_single_commit,
-        handle_split_commits as _handle_split_commits,
-        handle_version_sync as _handle_version_sync,
-        get_version_info as _get_version_info,
-        handle_changelog as _handle_changelog,
-        run_test_stage as _run_test_stage,
-        create_tag as _create_tag,
-        push_to_remote as _push_to_remote,
-        handle_publish as _handle_publish,
-        handle_dry_run as _handle_dry_run,
-        show_workflow_preview as _show_workflow_preview,
-        output_final_summary as _output_final_summary,
-    )
+from goal.push import (
+    execute_push_workflow as _execute_push_workflow,
+    PushContext as _PushContext,
+    get_commit_message as _get_commit_message,
+    enforce_quality_gates as _enforce_quality_gates,
+    handle_single_commit as _handle_single_commit,
+    handle_split_commits as _handle_split_commits,
+    handle_version_sync as _handle_version_sync,
+    get_version_info as _get_version_info,
+    handle_changelog as _handle_changelog,
+    run_test_stage as _run_test_stage,
+    create_tag as _create_tag,
+    push_to_remote as _push_to_remote,
+    handle_publish as _handle_publish,
+    handle_dry_run as _handle_dry_run,
+    show_workflow_preview as _show_workflow_preview,
+    output_final_summary as _output_final_summary,
+)
 
 # Expose for backward compatibility
 execute_push_workflow = _execute_push_workflow
