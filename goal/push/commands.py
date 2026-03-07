@@ -3,12 +3,8 @@
 import click
 from typing import Any
 
-try:
-    from ..cli import main, confirm, apply_ticket_prefix, stage_paths, split_paths_by_type
-    from .core import execute_push_workflow
-except ImportError:
-    from goal.cli import main, confirm, apply_ticket_prefix, stage_paths, split_paths_by_type
-    from goal.push.core import execute_push_workflow
+from goal.cli import main, confirm, apply_ticket_prefix, stage_paths, split_paths_by_type
+from goal.push.core import execute_push_workflow
 
 
 @main.command()

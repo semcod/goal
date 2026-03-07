@@ -5,14 +5,9 @@ from typing import Dict, List, Any, Tuple
 
 import click
 
-try:
-    from ....cli import confirm
-    from ....cli.tests import run_tests
-    from ...formatter import format_push_result
-except ImportError:
-    from goal.cli import confirm
-    from goal.cli.tests import run_tests
-    from goal.formatter import format_push_result
+from goal.cli import confirm
+from goal.cli.tests import run_tests
+from goal.formatter import format_push_result
 
 
 def run_test_stage(

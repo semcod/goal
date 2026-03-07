@@ -6,10 +6,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-try:
-    from .abstraction import CodeAbstraction
-except ImportError:
-    from goal.smart_commit.abstraction import CodeAbstraction
+from goal.smart_commit.abstraction import CodeAbstraction
 
 
 class SmartCommitGenerator:

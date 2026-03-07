@@ -13,10 +13,7 @@ from typing import Dict, List, Optional, Tuple
 
 import click
 
-try:
-    from .project_doctor import diagnose_and_report
-except ImportError:
-    from project_doctor import diagnose_and_report
+from goal.project_doctor import diagnose_and_report
 
 
 # =============================================================================

@@ -5,32 +5,18 @@ from typing import Dict, List, Callable
 
 import click
 
-try:
-    from ..doctor.models import Issue, DoctorReport
-    from ..doctor.logging import _log_issue, _log_fix
-except ImportError:
-    from goal.doctor.models import Issue, DoctorReport
-    from goal.doctor.logging import _log_issue, _log_fix
+from goal.doctor.models import Issue, DoctorReport
+from goal.doctor.logging import _log_issue, _log_fix
 
 # Import language-specific diagnostics
-try:
-    from .python import diagnose_python
-    from .nodejs import diagnose_nodejs
-    from .rust import diagnose_rust
-    from .go import diagnose_go
-    from .ruby import diagnose_ruby
-    from .php import diagnose_php
-    from .dotnet import diagnose_dotnet
-    from .java import diagnose_java
-except ImportError:
-    from goal.doctor.python import diagnose_python
-    from goal.doctor.nodejs import diagnose_nodejs
-    from goal.doctor.rust import diagnose_rust
-    from goal.doctor.go import diagnose_go
-    from goal.doctor.ruby import diagnose_ruby
-    from goal.doctor.php import diagnose_php
-    from goal.doctor.dotnet import diagnose_dotnet
-    from goal.doctor.java import diagnose_java
+from goal.doctor.python import diagnose_python
+from goal.doctor.nodejs import diagnose_nodejs
+from goal.doctor.rust import diagnose_rust
+from goal.doctor.go import diagnose_go
+from goal.doctor.ruby import diagnose_ruby
+from goal.doctor.php import diagnose_php
+from goal.doctor.dotnet import diagnose_dotnet
+from goal.doctor.java import diagnose_java
 
 
 # Dispatcher mapping project types to diagnostic functions

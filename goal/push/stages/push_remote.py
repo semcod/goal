@@ -5,12 +5,8 @@ from typing import Optional
 
 import click
 
-try:
-    from ...git_ops import run_git, ensure_remote, get_remote_branch, _echo_cmd
-    from ....cli import confirm
-except ImportError:
-    from goal.git_ops import run_git, ensure_remote, get_remote_branch, _echo_cmd
-    from goal.cli import confirm
+from goal.git_ops import run_git, ensure_remote, get_remote_branch, _echo_cmd
+from goal.cli import confirm
 
 
 def push_to_remote(

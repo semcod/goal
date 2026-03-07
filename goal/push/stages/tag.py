@@ -4,10 +4,7 @@ from typing import Optional
 
 import click
 
-try:
-    from ...git_ops import run_git
-except ImportError:
-    from goal.git_ops import run_git
+from goal.git_ops import run_git
 
 
 def create_tag(new_version: str, no_tag: bool) -> Optional[str]:

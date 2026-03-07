@@ -5,25 +5,14 @@ The actual implementation has been split into the goal.summary package.
 """
 
 # Re-export everything from the new summary package for backward compatibility
-try:
-    from .summary import (
-        SummaryQualityFilter,
-        QualityValidator,
-        EnhancedSummaryGenerator,
-        generate_business_summary,
-        validate_summary,
-        auto_fix_summary,
-    )
-except ImportError:
-    # Fallback if relative imports fail
-    from goal.summary import (
-        SummaryQualityFilter,
-        QualityValidator,
-        EnhancedSummaryGenerator,
-        generate_business_summary,
-        validate_summary,
-        auto_fix_summary,
-    )
+from goal.summary import (
+    SummaryQualityFilter,
+    QualityValidator,
+    EnhancedSummaryGenerator,
+    generate_business_summary,
+    validate_summary,
+    auto_fix_summary,
+)
 
 
 # Maintain backward compatibility for direct function access

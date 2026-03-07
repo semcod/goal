@@ -2,12 +2,8 @@
 
 import click
 
-try:
-    from ....cli.publish import publish_project
-    from ....cli import confirm
-except ImportError:
-    from goal.cli.publish import publish_project
-    from goal.cli import confirm
+from goal.cli.publish import publish_project
+from goal.cli import confirm
 
 
 def handle_publish(

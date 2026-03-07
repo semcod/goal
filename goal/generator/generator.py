@@ -7,26 +7,18 @@ from collections import Counter
 import os
 
 try:
-    from .git_ops import GitDiffOperations
-    from .analyzer import ChangeAnalyzer, ContentAnalyzer
-    from ..smart_commit import SmartCommitGenerator
-    from ..summary import EnhancedSummaryGenerator
+    from goal.generator.git_ops import GitDiffOperations
+    from goal.generator.analyzer import ChangeAnalyzer, ContentAnalyzer
+    from goal.smart_commit import SmartCommitGenerator
+    from goal.summary import EnhancedSummaryGenerator
     HAS_SMART_COMMIT = True
     HAS_ENHANCED_SUMMARY = True
 except ImportError:
-    try:
-        from goal.generator.git_ops import GitDiffOperations
-        from goal.generator.analyzer import ChangeAnalyzer, ContentAnalyzer
-        from goal.smart_commit import SmartCommitGenerator
-        from goal.summary import EnhancedSummaryGenerator
-        HAS_SMART_COMMIT = True
-        HAS_ENHANCED_SUMMARY = True
-    except ImportError:
-        HAS_SMART_COMMIT = False
-        HAS_ENHANCED_SUMMARY = False
-        GitDiffOperations = None
-        ChangeAnalyzer = None
-        ContentAnalyzer = None
+    HAS_SMART_COMMIT = False
+    HAS_ENHANCED_SUMMARY = False
+    GitDiffOperations = None
+    ChangeAnalyzer = None
+    ContentAnalyzer = None
 
 
 class CommitMessageGenerator:

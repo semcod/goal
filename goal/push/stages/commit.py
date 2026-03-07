@@ -5,16 +5,10 @@ from typing import Dict, List, Optional, Any, Tuple
 
 import click
 
-try:
-    from ...git_ops import run_git, apply_ticket_prefix
-    from ...commit_generator import CommitMessageGenerator
-    from ...enhanced_summary import QualityValidator
-    from ...cli import split_paths_by_type, stage_paths, confirm
-except ImportError:
-    from goal.git_ops import run_git, apply_ticket_prefix
-    from goal.commit_generator import CommitMessageGenerator
-    from goal.enhanced_summary import QualityValidator
-    from goal.cli import split_paths_by_type, stage_paths, confirm
+from goal.git_ops import run_git, apply_ticket_prefix
+from goal.commit_generator import CommitMessageGenerator
+from goal.enhanced_summary import QualityValidator
+from goal.cli import split_paths_by_type, stage_paths, confirm
 
 
 def get_commit_message(

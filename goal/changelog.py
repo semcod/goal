@@ -5,10 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
 
-try:
-    from ..git_ops import run_git
-except ImportError:
-    from goal.git_ops import run_git
+from goal.git_ops import run_git
 
 
 def update_changelog(version: str, files: List[str], commit_msg: str, 
