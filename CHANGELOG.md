@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [2.1.84] - 2026-03-07
+
+### Docs
+- Update README.md
+
+### Other
+- Update VERSION
+
 ## [2.1.81] - 2026-03-07
 
 ## [2.1.80] - 2026-03-07
