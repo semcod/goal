@@ -25,13 +25,13 @@ def handle_version_sync(
     """Sync versions to all project files."""
     if not no_version_sync:
         updated_files = sync_all_versions(new_version, user_config)
-        from ...core import run_git_local
+        from ..core import run_git_local
         for f in updated_files:
             run_git_local('add', f)
             click.echo(click.style(f"✓ Updated {f} to {new_version}", fg='green'))
     else:
         Path('VERSION').write_text(new_version + '\n')
-        from ...core import run_git_local
+        from ..core import run_git_local
         run_git_local('add', 'VERSION')
         click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg='green'))
 

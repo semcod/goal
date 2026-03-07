@@ -74,6 +74,112 @@ class MarkdownFormatter:
         return "".join(output)
 
 
+def _build_functional_overview(
+    features: List[str],
+    summary: str,
+    entities: List[str],
+    files: List[str],
+    stats: Dict[str, tuple],
+    current_version: str,
+    new_version: str,
+    commit_msg: str,
+    project_types: List[str]
+) -> tuple:
+    """Build the functional overview section and key entities.
+    
+    Returns:
+        Tuple of (section_title, section_content, key_entities_list)
+    """
+    total_adds = sum(s[0] for s in stats.values())
+    total_dels = sum(s[1] for s in stats.values())
+    
+    if features or summary:
+        functional_overview = f"**What Changed:** "
+        if features:
+            if len(features) == 1:
+                functional_overview += f"Added {features[0]} support"
+            elif len(features) == 2:
+                functional_overview += f"Added {features[0]} and {features[1]} support"
+            else:
+                functional_overview += f"Added {features[0]}, {features[1]}, and {len(features)-2} more features"
+        elif summary:
+            functional_overview += summary
+        else:
+            functional_overview += f"Updated {len(files)} files"
+        
+        functional_overview += f"\n**Scope:** {len(files)} files (+{total_adds}/-{total_dels} lines)"
+        functional_overview += f"\n**Version:** {current_version} → {new_version}"
+        functional_overview += f"\n**Commit:** `{commit_msg}`"
+        
+        # Key changes (entities)
+        meaningful = []
+        if entities:
+            meaningful = [e for e in entities if len(e) > 2][:6]
+        
+        return "Summary", functional_overview, meaningful
+    else:
+        # Fallback to traditional overview
+        overview = f"""**Project Type:** {', '.join(project_types)}
+**Files Changed:** {len(files)} (+{total_adds}/-{total_dels} lines)
+**Version:** {current_version} → {new_version}
+**Commit Message:** `{commit_msg}`""".strip()
+        
+        return "Overview", overview, []
+
+
+def _build_files_section(
+    formatter,
+    files: List[str],
+    stats: Dict[str, tuple],
+    analysis: Optional[Dict[str, Any]]
+) -> None:
+    """Build the files/domains section."""
+    # Group files by domain if analysis available
+    if analysis and analysis.get('domains'):
+        domains = analysis['domains']
+        domain_summary = []
+        for domain, domain_files in domains.items():
+            if domain_files:
+                domain_summary.append(f"**{domain.title()}:** {len(domain_files)} files")
+        if domain_summary:
+            formatter.add_list("Changes by Area", domain_summary)
+    else:
+        # Files list (fallback)
+        file_details = []
+        for f in files[:10]:  # Limit to 10 files
+            adds, dels = stats.get(f, (0, 0))
+            file_details.append(f"{f} (+{adds}/-{dels})")
+        
+        if len(files) > 10:
+            file_details.append(f"... and {len(files) - 10} more files")
+        
+        formatter.add_list("Changed Files", file_details)
+
+
+def _determine_next_steps(error: Optional[str], test_exit_code: int, new_version: str) -> List[str]:
+    """Determine appropriate next steps based on outcome."""
+    if not error and test_exit_code == 0:
+        return [
+            "Changes committed successfully",
+            f"Version updated to {new_version}",
+            "Run `goal push --yes` to retry without prompts",
+            "Run `goal --all` for full automation including publish"
+        ]
+    elif test_exit_code != 0:
+        return [
+            "Fix failing tests",
+            "Run tests manually: pytest",
+            "Retry with: goal push",
+            "Or skip tests: goal push --yes -m 'chore: skip tests'"
+        ]
+    else:
+        return [
+            "Review the error above",
+            "Check git status: goal status",
+            "Retry when ready"
+        ]
+
+
 def format_push_result(
     project_types: List[str],
     files: List[str],
@@ -110,70 +216,24 @@ def format_push_result(
     # Header
     formatter.add_header("Goal Push Result", 1)
     
-    # Functional Summary (new - shows what was actually done)
-    total_adds = sum(s[0] for s in stats.values())
-    total_dels = sum(s[1] for s in stats.values())
+    # Functional Summary
+    section_title, section_content, key_entities = _build_functional_overview(
+        features, summary, entities, files, stats,
+        current_version, new_version, commit_msg, project_types
+    )
+    formatter.add_section(section_title, section_content)
     
-    if features or summary:
-        functional_overview = f"**What Changed:** "
-        if features:
-            if len(features) == 1:
-                functional_overview += f"Added {features[0]} support"
-            elif len(features) == 2:
-                functional_overview += f"Added {features[0]} and {features[1]} support"
-            else:
-                functional_overview += f"Added {features[0]}, {features[1]}, and {len(features)-2} more features"
-        elif summary:
-            functional_overview += summary
-        else:
-            functional_overview += f"Updated {len(files)} files"
-        
-        functional_overview += f"\n**Scope:** {len(files)} files (+{total_adds}/-{total_dels} lines)"
-        functional_overview += f"\n**Version:** {current_version} → {new_version}"
-        functional_overview += f"\n**Commit:** `{commit_msg}`"
-        
-        formatter.add_section("Summary", functional_overview)
-        
-        # Key changes (entities/features)
-        if entities:
-            meaningful = [e for e in entities if len(e) > 2][:6]
-            if meaningful:
-                formatter.sections.append("\n**Key Functions/Classes:**\n")
-                for e in meaningful:
-                    formatter.sections.append(f"- `{e}`\n")
-    else:
-        # Fallback to traditional overview
-        overview = f"""
-**Project Type:** {', '.join(project_types)}
-**Files Changed:** {len(files)} (+{total_adds}/-{total_dels} lines)
-**Version:** {current_version} → {new_version}
-**Commit Message:** `{commit_msg}`
-        """.strip()
-        formatter.add_section("Overview", overview)
-
+    # Add key entities if present
+    if key_entities:
+        formatter.sections.append("\n**Key Functions/Classes:**\n")
+        for e in key_entities:
+            formatter.sections.append(f"- `{e}`\n")
+    
     if commit_body:
         formatter.add_section("Commit Body", commit_body, code_block=True)
     
-    # Group files by domain if analysis available
-    if analysis and analysis.get('domains'):
-        domains = analysis['domains']
-        domain_summary = []
-        for domain, domain_files in domains.items():
-            if domain_files:
-                domain_summary.append(f"**{domain.title()}:** {len(domain_files)} files")
-        if domain_summary:
-            formatter.add_list("Changes by Area", domain_summary)
-    else:
-        # Files list (fallback)
-        file_details = []
-        for f in files[:10]:  # Limit to 10 files
-            adds, dels = stats.get(f, (0, 0))
-            file_details.append(f"{f} (+{adds}/-{dels})")
-        
-        if len(files) > 10:
-            file_details.append(f"... and {len(files) - 10} more files")
-        
-        formatter.add_list("Changed Files", file_details)
+    # Files/domains section
+    _build_files_section(formatter, files, stats, analysis)
     
     # Test results if available
     if test_result is not None:
@@ -192,26 +252,7 @@ def format_push_result(
         formatter.add_section("Error", error, code_block=True)
     
     # Next steps
-    if not error and test_exit_code == 0:
-        next_steps = [
-            "Changes committed successfully",
-            f"Version updated to {new_version}",
-            "Run `goal push --yes` to retry without prompts",
-            "Run `goal --all` for full automation including publish"
-        ]
-    elif test_exit_code != 0:
-        next_steps = [
-            "Fix failing tests",
-            "Run tests manually: pytest",
-            "Retry with: goal push",
-            "Or skip tests: goal push --yes -m 'chore: skip tests'"
-        ]
-    else:
-        next_steps = [
-            "Review the error above",
-            "Check git status: goal status",
-            "Retry when ready"
-        ]
+    next_steps = _determine_next_steps(error, test_exit_code, new_version)
     
     formatter.add_summary(
         actions_taken=actions or [],
