@@ -321,9 +321,11 @@ def guess_package_name(project_dir: Path, project_type: str) -> str:
 
 def _find_python_bin(project_dir: Path) -> str:
     """Return the best python binary path for a project directory."""
-    venv_python = project_dir / '.venv' / 'bin' / 'python'
-    if venv_python.exists():
-        return str(venv_python)
+    # Check common venv names in order of preference
+    for venv_name in ['.venv', 'venv', 'env']:
+        venv_python = project_dir / venv_name / 'bin' / 'python'
+        if venv_python.exists():
+            return str(venv_python)
     # Check active virtualenv
     venv_env = os.environ.get('VIRTUAL_ENV')
     if venv_env:
