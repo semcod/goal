@@ -6,12 +6,8 @@ This file maintains backward compatibility for imports.
 
 import click
 
-try:
-    from ..cli import main
-    from ..push.core import execute_push_workflow
-except ImportError:
-    from goal.cli import main
-    from goal.push.core import execute_push_workflow
+from goal.cli import main
+from goal.push.core import execute_push_workflow
 
 
 @main.command()

@@ -8,10 +8,7 @@ import click
 
 def _get_version_module():
     """Lazy import version functions to avoid circular imports."""
-    try:
-        from ....cli.version import get_current_version, bump_version, sync_all_versions
-    except ImportError:
-        from goal.cli.version import get_current_version, bump_version, sync_all_versions
+    from goal.cli.version import get_current_version, bump_version, sync_all_versions
     return get_current_version, bump_version, sync_all_versions
 
 
@@ -33,20 +30,14 @@ def handle_version_sync(
     if not no_version_sync:
         updated_files = sync_all_versions(new_version, user_config)
         # Lazy import to avoid circular dependency
-        try:
-            from ..core import run_git_local
-        except ImportError:
-            from goal.push.core import run_git_local
+        from goal.push.core import run_git_local
         for f in updated_files:
             run_git_local('add', f)
             click.echo(click.style(f"✓ Updated {f} to {new_version}", fg='green'))
     else:
         Path('VERSION').write_text(new_version + '\n')
         # Lazy import to avoid circular dependency
-        try:
-            from ..core import run_git_local
-        except ImportError:
-            from goal.push.core import run_git_local
+        from goal.push.core import run_git_local
         run_git_local('add', 'VERSION')
         click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg='green'))
 
