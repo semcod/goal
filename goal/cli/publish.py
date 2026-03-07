@@ -26,12 +26,14 @@ def makefile_has_target(target: str) -> bool:
 
 def _get_python_bin() -> str:
     """Get the Python binary to use for publishing."""
-    try:
-        from goal.project_bootstrap import _find_python_bin
-        return _find_python_bin(Path('.'))
-    except ImportError:
-        import sys
-        return sys.executable
+    # Check for venv in current directory (priority order: .venv, venv, env)
+    for venv_name in ['.venv', 'venv', 'env']:
+        venv_python = Path('.') / venv_name / 'bin' / 'python'
+        if venv_python.exists():
+            return str(venv_python.resolve())
+    # Fall back to sys.executable
+    import sys
+    return sys.executable
 
 
 def _ensure_publish_deps(python_bin: str) -> bool:
@@ -44,12 +46,14 @@ def _ensure_publish_deps(python_bin: str) -> bool:
     if result.returncode != 0:
         click.echo(click.style(f"  Installing build module...", fg='cyan'))
         install_result = subprocess.run(
-            [python_bin, '-m', 'pip', 'install', 'build'],
-            capture_output=True, text=True
+            [python_bin, '-m', 'pip', 'install', '--quiet', 'build'],
+            capture_output=True, text=True,
+            cwd=str(Path('.'))
         )
         if install_result.returncode != 0:
-            click.echo(click.style(f"  ✗ Failed to install build module", fg='red'))
+            click.echo(click.style(f"  ✗ Failed to install build module: {install_result.stderr}", fg='red'))
             return False
+        click.echo(click.style(f"  ✓ build installed", fg='green'))
 
     # Check if twine is available
     result = subprocess.run(
@@ -59,12 +63,14 @@ def _ensure_publish_deps(python_bin: str) -> bool:
     if result.returncode != 0:
         click.echo(click.style(f"  Installing twine...", fg='cyan'))
         install_result = subprocess.run(
-            [python_bin, '-m', 'pip', 'install', 'twine'],
-            capture_output=True, text=True
+            [python_bin, '-m', 'pip', 'install', '--quiet', 'twine'],
+            capture_output=True, text=True,
+            cwd=str(Path('.'))
         )
         if install_result.returncode != 0:
-            click.echo(click.style(f"  ✗ Failed to install twine", fg='red'))
+            click.echo(click.style(f"  ✗ Failed to install twine: {install_result.stderr}", fg='red'))
             return False
+        click.echo(click.style(f"  ✓ twine installed", fg='green'))
 
     return True
 
@@ -83,11 +89,13 @@ def publish_project(project_types: List[str], version: str, yes: bool = False) -
         # Handle Python projects specially to ensure deps are available
         if ptype == 'python':
             python_bin = _get_python_bin()
+            click.echo(click.style(f"  Using Python: {python_bin}", fg='cyan'))
             if not _ensure_publish_deps(python_bin):
                 success = False
                 continue
             # Replace 'python' with the actual Python path in the command
             publish_cmd = publish_cmd.replace('python ', f'{python_bin} ')
+            click.echo(click.style(f"  Command: {publish_cmd}", fg='cyan'))
 
         # Skip if dry-run would be triggered
         if '{version}' in publish_cmd:
