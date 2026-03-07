@@ -4,16 +4,10 @@ import click
 import shutil
 from pathlib import Path
 
-try:
-    from ..git_ops import run_command_tee
-    from . import main
-    from .version import get_current_version, detect_project_types
-    from .publish import makefile_has_target, publish_project
-except ImportError:
-    from goal.git_ops import run_command_tee
-    from goal.cli import main
-    from goal.cli.version import get_current_version, detect_project_types
-    from goal.cli.publish import makefile_has_target, publish_project
+from goal.git_ops import run_command_tee
+from goal.cli import main
+from goal.cli.version import get_current_version, detect_project_types
+from goal.cli.publish import makefile_has_target, publish_project
 
 
 @main.command()

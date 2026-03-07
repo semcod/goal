@@ -6,12 +6,8 @@ import shutil
 from pathlib import Path
 from typing import List, Dict
 
-try:
-    from ..git_ops import run_git, run_command
-    from .version import PROJECT_TYPES
-except ImportError:
-    from goal.git_ops import run_git, run_command
-    from goal.cli.version import PROJECT_TYPES
+from goal.git_ops import run_git, run_command
+from goal.cli.version import PROJECT_TYPES
 
 
 def _has_usable_test_script(project_dir: Path, project_type: str) -> bool:

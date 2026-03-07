@@ -4,14 +4,9 @@ import click
 from pathlib import Path
 from datetime import datetime
 
-try:
-    from ..project_bootstrap import detect_project_types_deep, bootstrap_all_projects
-    from ..project_doctor import diagnose_and_report_with_todo, DoctorReport
-    from . import main
-except ImportError:
-    from goal.project_bootstrap import detect_project_types_deep, bootstrap_all_projects
-    from goal.project_doctor import diagnose_and_report_with_todo, DoctorReport
-    from goal.cli import main
+from goal.project_bootstrap import detect_project_types_deep, bootstrap_all_projects
+from goal.project_doctor import diagnose_and_report_with_todo, DoctorReport
+from goal.cli import main
 
 
 @main.command()
