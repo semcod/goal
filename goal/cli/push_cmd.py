@@ -120,7 +120,8 @@ def _handle_dry_run(ctx, project_types, files, stats, current_version, new_versi
     if split and not ctx.obj.get('message'):
         config_dict = (ctx.obj.get('config') or {}).to_dict() if ctx.obj.get('config') else None
         generator = CommitMessageGenerator(config=config_dict)
-        groups = stage_paths.__module__ and __import__('goal.cli', fromlist=['split_paths_by_type']).split_paths_by_type(files)
+        from . import split_paths_by_type
+        groups = split_paths_by_type(files)
         
         plan_lines = []
         for gname in ['code', 'docs', 'ci', 'examples', 'other']:
@@ -646,136 +647,6 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
     _output_final_summary(ctx, markdown, project_types, files, stats, current_version,
                          new_version, commit_msg, commit_body, test_exit_code,
                          publish_success, no_tag)
-
-
-def _prepare_project(ctx, dry_run: bool) -> tuple:
-    """Detect project types, bootstrap environments, and stage files."""
-    project_types = detect_project_types()
-    yes = ctx.obj.get('yes', False)
-
-    if project_types and not dry_run:
-        click.echo(f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}")
-
-    # Bootstrap project environments
-    if not dry_run and project_types:
-        deep_detected = detect_project_types_deep()
-        for ptype, dirs in deep_detected.items():
-            for pdir in dirs:
-                bootstrap_project(pdir, ptype, yes=yes)
-
-    # Stage all changes
-    if not dry_run:
-        run_git('add', '-A')
-
-    # Get staged files
-    files = get_staged_files()
-    if not files or files == ['']:
-        if ctx.obj.get('markdown'):
-            from ..formatter import format_push_result
-            md_output = format_push_result(
-                project_types=project_types or [],
-                files=[],
-                stats={},
-                current_version=get_current_version(),
-                new_version=get_current_version(),
-                commit_msg="(none)",
-                commit_body="No staged changes detected.",
-                test_result="Not executed",
-                test_exit_code=0,
-                actions=["Detected project types"],
-                error="No changes to commit"
-            )
-            click.echo(md_output)
-        else:
-            click.echo(click.style("No changes to commit.", fg='yellow'))
-        return None, project_types
-
-    return files, project_types
-
-
-def _generate_commit_data(ctx, files: List[str], message: Optional[str],
-                          ticket: Optional[str], abstraction: Optional[str]) -> Dict[str, Any]:
-    """Generate commit message, version info, and stats."""
-    diff_content = get_diff_content()
-    yes = ctx.obj.get('yes', False)
-    markdown = ctx.obj.get('markdown', False)
-
-    # Generate commit message
-    commit_title, commit_body, detailed_result = _get_commit_message(
-        ctx, files, diff_content, message, ticket, abstraction
-    )
-
-    # Get version info
-    current_version = get_current_version()
-    bump = ctx.obj.get('bump', 'patch')
-    new_version = bump_version(current_version, bump)
-
-    # Get diff stats
-    stats = get_diff_stats()
-    total_adds = sum(s[0] for s in stats.values())
-    total_dels = sum(s[1] for s in stats.values())
-
-    # Enforce quality gates
-    commit_msg = commit_title
-    if not message and detailed_result and detailed_result.get('enhanced'):
-        commit_msg = _enforce_quality_gates(
-            ctx, commit_msg, detailed_result, files, total_adds, total_dels, yes, markdown
-        )
-
-    # Interactive workflow preview
-    if not yes:
-        _show_workflow_preview(files, stats, current_version, new_version,
-                              commit_msg, commit_body, markdown, ctx)
-
-    # Test stage
-    project_types = detect_project_types()
-    _run_test_stage(project_types, yes, markdown, ctx, files, stats,
-                   current_version, new_version, commit_msg, commit_body)
-
-    # Commit confirmation
-    if not yes:
-        if not confirm("Commit changes?"):
-            click.echo(click.style("  AUTO: Aborting commit (user chose N)", fg='cyan'))
-            click.echo(click.style("Aborted.", fg='red'))
-            sys.exit(1)
-    else:
-        click.echo(click.style("AUTO: Committing changes (--all mode)", fg='cyan'))
-
-    return {
-        'title': commit_title,
-        'body': commit_body,
-        'msg': commit_msg,
-        'detailed': detailed_result,
-        'current_version': current_version,
-        'new_version': new_version,
-        'stats': stats,
-    }
-
-
-def _execute_commit_phase(ctx, files: List[str], commit_data: Dict[str, Any],
-                          split: bool, no_version_sync: bool, no_changelog: bool) -> None:
-    """Execute the commit phase (split or single commit)."""
-    yes = ctx.obj.get('yes', False)
-    message = ctx.obj.get('message')
-    ticket = ctx.obj.get('ticket')
-    user_config = ctx.obj.get('user_config')
-    config_dict = (ctx.obj.get('config') or {}).to_dict() if ctx.obj.get('config') else None
-
-    if split and not message:
-        run_git('reset')  # Unstage everything
-        _handle_split_commits(ctx, files, ticket, commit_data['new_version'],
-                             commit_data['current_version'], no_version_sync, no_changelog, yes)
-    else:
-        # Version sync
-        _handle_version_sync(commit_data['new_version'], no_version_sync, user_config, yes)
-
-        # Changelog
-        _handle_changelog(commit_data['new_version'], files, commit_data['msg'],
-                         config_dict, no_changelog)
-
-        # Single commit
-        _handle_single_commit(commit_data['title'], commit_data['body'],
-                             commit_data['msg'], message, yes)
 
 
 __all__ = ['push']

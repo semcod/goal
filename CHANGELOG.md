@@ -1,5 +1,27 @@
 ## [Unreleased]
 
+## [2.1.79] - 2026-03-07
+
+### Docs
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_version_validation.py
+
+### Other
+- Update project.sh
+- Update project/analysis.toon
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/dashboard.html
+- Update project/evolution.toon
+- Update project/flow.mmd
+- Update project/flow.png
+- ... and 4 more files
+
 ## [2.1.78] - 2026-03-05
 
 ### Test

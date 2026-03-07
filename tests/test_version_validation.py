@@ -8,7 +8,7 @@ import json
 
 # Import the module we're testing
 import sys
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from goal.version_validation import (
     extract_badge_versions, update_badge_versions, check_readme_badges,
     validate_project_versions, format_validation_results,

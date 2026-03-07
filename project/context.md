@@ -4,22 +4,22 @@
 
 - **Project**: /home/tom/github/wronai/goal
 - **Analysis Mode**: static
-- **Total Functions**: 270
+- **Total Functions**: 298
 - **Total Classes**: 17
 - **Modules**: 32
-- **Entry Points**: 176
+- **Entry Points**: 204
 
 ## Architecture by Module
+
+### goal.smart_commit
+- **Functions**: 27
+- **Classes**: 2
+- **File**: `smart_commit.py`
 
 ### goal.config
 - **Functions**: 25
 - **Classes**: 1
 - **File**: `config.py`
-
-### goal.smart_commit
-- **Functions**: 20
-- **Classes**: 2
-- **File**: `smart_commit.py`
 
 ### goal.git_ops
 - **Functions**: 20
@@ -35,6 +35,11 @@
 - **Classes**: 2
 - **File**: `project_doctor.py`
 
+### goal.generator.analyzer
+- **Functions**: 16
+- **Classes**: 2
+- **File**: `analyzer.py`
+
 ### goal.deep_analyzer
 - **Functions**: 15
 - **Classes**: 1
@@ -48,6 +53,11 @@
 - **Functions**: 14
 - **Classes**: 1
 - **File**: `quality_filter.py`
+
+### goal.summary.validator
+- **Functions**: 13
+- **Classes**: 1
+- **File**: `validator.py`
 
 ### goal.user_config
 - **Functions**: 12
@@ -95,24 +105,9 @@
 - **Classes**: 1
 - **File**: `git_ops.py`
 
-### goal.cli.config_cmd
-- **Functions**: 7
-- **File**: `config_cmd.py`
-
-### goal.generator.analyzer
-- **Functions**: 5
-- **Classes**: 2
-- **File**: `analyzer.py`
-
 ## Key Entry Points
 
 Main execution flows into the system:
-
-### goal.summary.validator.QualityValidator.validate
-> Validate summary against all quality gates.
-
-Returns: {valid: bool, errors: [], warnings: [], score: int, fixes: []}
-- **Calls**: summary.get, summary.get, None.get, summary.get, summary.get, metrics.get, metrics.get, self.filter.has_banned_words
 
 ### goal.cli.push_cmd.push
 > Add, commit, tag, and push changes to remote.
@@ -140,14 +135,6 @@ Produces a YAML structure optimised for git log / GitHub readers:
 ### goal.cli.commit_cmd.validate
 > Validate commit summary against quality gates.
 - **Calls**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats, ctx.obj.get, CommitMessageGenerator, generator.generate_detailed_message
-
-### goal.generator.analyzer.ChangeAnalyzer.classify_change_type
-> Classify the type of change using pattern matching and heuristics.
-- **Calls**: defaultdict, any, all, all, diff_content.lower, self.TYPE_PATTERNS.items, any, any
-
-### goal.smart_commit.SmartCommitGenerator.generate_message
-> Generate commit message based on analysis.
-- **Calls**: analysis.get, analysis.get, analysis.get, analysis.get, analysis.get, analysis.get, analysis.get, analysis.get
 
 ### goal.generator.analyzer.ContentAnalyzer.per_file_notes
 > Generate small descriptive notes for a file based on added lines heuristics.
@@ -208,6 +195,10 @@ Produces a YAML structure optimised for git log / GitHub readers:
 > Show current git status and version info.
 - **Calls**: main.command, click.option, goal.cli.version.get_current_version, goal.git_ops.get_remote_branch, goal.git_ops.get_staged_files, goal.git_ops.get_unstaged_files, ctx.obj.get, goal.formatter.format_status_output
 
+### goal.summary.validator.QualityValidator._validate_title
+> Validate title quality.
+- **Calls**: self.filter.has_banned_words, None.get, len, errors.append, fixes.append, isinstance, goal.user_config.UserConfig.set, sum
+
 ### goal.config.GoalConfig._detect_version_files
 > Detect version files in the project.
 - **Calls**: None.exists, None.exists, None.exists, None.exists, None.exists, None.rglob, version_files.append, version_files.append
@@ -227,64 +218,81 @@ Produces a YAML structure optimised for git log / GitHub readers:
 ### goal.summary.validator.QualityValidator.__init__
 - **Calls**: SummaryQualityFilter, self.config.get, quality.get, quality.get, commit_summary.get, commit_summary.get, commit_summary.get, commit_summary.get
 
+### goal.summary.validator.QualityValidator.validate
+> Validate summary against all quality gates.
+
+Returns: {valid: bool, errors: [], warnings: [], score: int, fixes: []}
+- **Calls**: summary.get, summary.get, None.get, summary.get, metrics.get, metrics.get, self._extract_intent, self._validate_title
+
 ### goal.summary.quality_filter.SummaryQualityFilter.classify_intent_smart
 > Smart intent classification using multiple signals.
 - **Calls**: sum, sum, sum, all, all, max, None.join, max
+
+### goal.deep_analyzer.CodeChangeAnalyzer._extract_python_entities
+> Extract functions, classes, and their metadata from AST.
+- **Calls**: ast.walk, isinstance, isinstance, isinstance, self._calculate_complexity, hash, self._get_decorator_name, ast.get_docstring
 
 ## Process Flows
 
 Key execution flows identified:
 
-### Flow 1: validate
-```
-validate [goal.summary.validator.QualityValidator]
-```
-
-### Flow 2: push
+### Flow 1: push
 ```
 push [goal.cli.push_cmd]
 ```
 
-### Flow 3: generate_detailed_message
+### Flow 2: generate_detailed_message
 ```
 generate_detailed_message [goal.generator.generator.CommitMessageGenerator]
 ```
 
-### Flow 4: _format_enhanced_body
+### Flow 3: _format_enhanced_body
 ```
 _format_enhanced_body [goal.summary.generator.EnhancedSummaryGenerator]
 ```
 
-### Flow 5: _diagnose_python
+### Flow 4: _diagnose_python
 ```
 _diagnose_python [goal.project_doctor]
 ```
 
-### Flow 6: auto_fix
+### Flow 5: auto_fix
 ```
 auto_fix [goal.summary.validator.QualityValidator]
 ```
 
-### Flow 7: classify_change_type
+### Flow 6: validate
 ```
-classify_change_type [goal.generator.analyzer.ChangeAnalyzer]
+validate [goal.cli.commit_cmd]
+  └─ →> get_staged_files
+      └─> run_git
+  └─ →> get_diff_stats
+      └─> run_git
+      └─> run_git
 ```
 
-### Flow 8: generate_message
-```
-generate_message [goal.smart_commit.SmartCommitGenerator]
-```
-
-### Flow 9: per_file_notes
+### Flow 7: per_file_notes
 ```
 per_file_notes [goal.generator.analyzer.ContentAnalyzer]
 ```
 
-### Flow 10: fix_summary
+### Flow 8: fix_summary
 ```
 fix_summary [goal.cli.commit_cmd]
   └─ →> get_staged_files
       └─> run_git
+```
+
+### Flow 9: _analyze_python_diff
+```
+_analyze_python_diff [goal.deep_analyzer.CodeChangeAnalyzer]
+  └─ →> set
+  └─ →> set
+```
+
+### Flow 10: generate_enhanced_summary
+```
+generate_enhanced_summary [goal.summary.generator.EnhancedSummaryGenerator]
 ```
 
 ## Key Classes
@@ -293,6 +301,11 @@ fix_summary [goal.cli.commit_cmd]
 > Manages goal.yaml configuration file.
 - **Methods**: 22
 - **Key Methods**: goal.config.GoalConfig.__init__, goal.config.GoalConfig._find_config, goal.config.GoalConfig._find_git_root, goal.config.GoalConfig.exists, goal.config.GoalConfig.load, goal.config.GoalConfig._get_default_config, goal.config.GoalConfig._deep_copy, goal.config.GoalConfig._merge_configs, goal.config.GoalConfig._detect_project_name, goal.config.GoalConfig._detect_project_types
+
+### goal.smart_commit.SmartCommitGenerator
+> Generates smart commit messages using code abstraction.
+- **Methods**: 18
+- **Key Methods**: goal.smart_commit.SmartCommitGenerator.__init__, goal.smart_commit.SmartCommitGenerator.deep_analyzer, goal.smart_commit.SmartCommitGenerator.analyze_changes, goal.smart_commit.SmartCommitGenerator._generate_functional_summary, goal.smart_commit.SmartCommitGenerator._get_staged_files, goal.smart_commit.SmartCommitGenerator._get_file_diff, goal.smart_commit.SmartCommitGenerator._infer_commit_type, goal.smart_commit.SmartCommitGenerator.generate_message, goal.smart_commit.SmartCommitGenerator._is_docs_only_change, goal.smart_commit.SmartCommitGenerator._generate_docs_message
 
 ### goal.generator.generator.CommitMessageGenerator
 > Generate conventional commit messages using diff analysis and lightweight classification.
@@ -304,20 +317,25 @@ fix_summary [goal.cli.commit_cmd]
 - **Methods**: 15
 - **Key Methods**: goal.deep_analyzer.CodeChangeAnalyzer.__init__, goal.deep_analyzer.CodeChangeAnalyzer.analyze_file_diff, goal.deep_analyzer.CodeChangeAnalyzer._detect_language, goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff, goal.deep_analyzer.CodeChangeAnalyzer._extract_python_entities, goal.deep_analyzer.CodeChangeAnalyzer._get_decorator_name, goal.deep_analyzer.CodeChangeAnalyzer._calculate_complexity, goal.deep_analyzer.CodeChangeAnalyzer._analyze_js_diff, goal.deep_analyzer.CodeChangeAnalyzer._analyze_generic_diff, goal.deep_analyzer.CodeChangeAnalyzer._detect_functional_areas
 
+### goal.generator.analyzer.ChangeAnalyzer
+> Analyze git changes to classify type, detect scope, and extract functions.
+- **Methods**: 14
+- **Key Methods**: goal.generator.analyzer.ChangeAnalyzer.classify_change_type, goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_package_code, goal.generator.analyzer.ChangeAnalyzer._is_docs_only, goal.generator.analyzer.ChangeAnalyzer._is_ci_only, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file, goal.generator.analyzer.ChangeAnalyzer._score_by_file_patterns, goal.generator.analyzer.ChangeAnalyzer._score_by_diff_content, goal.generator.analyzer.ChangeAnalyzer._score_by_statistics, goal.generator.analyzer.ChangeAnalyzer._score_by_signals
+
 ### goal.summary.quality_filter.SummaryQualityFilter
 > Filter noise and improve summary quality.
 - **Methods**: 14
 - **Key Methods**: goal.summary.quality_filter.SummaryQualityFilter.__init__, goal.summary.quality_filter.SummaryQualityFilter.is_noise, goal.summary.quality_filter.SummaryQualityFilter.filter_entities, goal.summary.quality_filter.SummaryQualityFilter.has_banned_words, goal.summary.quality_filter.SummaryQualityFilter.classify_intent, goal.summary.quality_filter.SummaryQualityFilter.prioritize_capabilities, goal.summary.quality_filter.SummaryQualityFilter.format_complexity_delta, goal.summary.quality_filter.SummaryQualityFilter.dedupe_relations, goal.summary.quality_filter.SummaryQualityFilter.dedupe_files, goal.summary.quality_filter.SummaryQualityFilter.categorize_files
 
+### goal.summary.validator.QualityValidator
+> Validate commit summary against quality gates.
+- **Methods**: 13
+- **Key Methods**: goal.summary.validator.QualityValidator.__init__, goal.summary.validator.QualityValidator.validate, goal.summary.validator.QualityValidator._extract_intent, goal.summary.validator.QualityValidator._validate_title, goal.summary.validator.QualityValidator._validate_intent, goal.summary.validator.QualityValidator._validate_metrics, goal.summary.validator.QualityValidator._validate_relations, goal.summary.validator.QualityValidator._validate_files, goal.summary.validator.QualityValidator._validate_capabilities, goal.summary.validator.QualityValidator._validate_body
+
 ### goal.summary.generator.EnhancedSummaryGenerator
 > Generate business-value focused commit summaries.
 - **Methods**: 12
 - **Key Methods**: goal.summary.generator.EnhancedSummaryGenerator.__init__, goal.summary.generator.EnhancedSummaryGenerator.map_entity_to_role, goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations, goal.summary.generator.EnhancedSummaryGenerator._infer_domain, goal.summary.generator.EnhancedSummaryGenerator._build_relation_chain, goal.summary.generator.EnhancedSummaryGenerator._render_relations_ascii, goal.summary.generator.EnhancedSummaryGenerator.calculate_quality_metrics, goal.summary.generator.EnhancedSummaryGenerator.generate_value_title, goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary
-
-### goal.smart_commit.SmartCommitGenerator
-> Generates smart commit messages using code abstraction.
-- **Methods**: 11
-- **Key Methods**: goal.smart_commit.SmartCommitGenerator.__init__, goal.smart_commit.SmartCommitGenerator.deep_analyzer, goal.smart_commit.SmartCommitGenerator.analyze_changes, goal.smart_commit.SmartCommitGenerator._generate_functional_summary, goal.smart_commit.SmartCommitGenerator._get_staged_files, goal.smart_commit.SmartCommitGenerator._get_file_diff, goal.smart_commit.SmartCommitGenerator._infer_commit_type, goal.smart_commit.SmartCommitGenerator.generate_message, goal.smart_commit.SmartCommitGenerator.generate_functional_body, goal.smart_commit.SmartCommitGenerator.generate_changelog_entry
 
 ### goal.smart_commit.CodeAbstraction
 > Extracts meaningful abstractions from code changes.
@@ -343,16 +361,6 @@ fix_summary [goal.cli.commit_cmd]
 > Aggregated report from a doctor run.
 - **Methods**: 4
 - **Key Methods**: goal.project_doctor.DoctorReport.errors, goal.project_doctor.DoctorReport.warnings, goal.project_doctor.DoctorReport.fixed, goal.project_doctor.DoctorReport.has_problems
-
-### goal.generator.analyzer.ChangeAnalyzer
-> Analyze git changes to classify type, detect scope, and extract functions.
-- **Methods**: 3
-- **Key Methods**: goal.generator.analyzer.ChangeAnalyzer.classify_change_type, goal.generator.analyzer.ChangeAnalyzer.detect_scope, goal.generator.analyzer.ChangeAnalyzer.extract_functions_changed
-
-### goal.summary.validator.QualityValidator
-> Validate commit summary against quality gates.
-- **Methods**: 3
-- **Key Methods**: goal.summary.validator.QualityValidator.__init__, goal.summary.validator.QualityValidator.validate, goal.summary.validator.QualityValidator.auto_fix
 
 ### goal.generator.analyzer.ContentAnalyzer
 > Analyze content for short summaries and per-file notes.
@@ -413,8 +421,8 @@ Returns a list of validation errors (empty if valid).
 - **Output to**: entry.get, entry.get, entry.get, None.join
 
 ### goal.git_ops.validate_repo_url
-> Validate that a URL looks like a git repository (HTTP/HTTPS/SSH).
-- **Output to**: url.strip, re.match, re.match
+> Validate that a URL looks like a git repository (HTTP/HTTPS/SSH/file).
+- **Output to**: url.strip, re.match, re.match, re.match
 
 ### goal.cli.commit_cmd.validate
 > Validate commit summary against quality gates.
@@ -428,7 +436,39 @@ Returns a list of validation errors (empty if valid).
 > Validate summary against all quality gates.
 
 Returns: {valid: bool, errors: [], warnings: [], score:
-- **Output to**: summary.get, summary.get, None.get, summary.get, summary.get
+- **Output to**: summary.get, summary.get, None.get, summary.get, metrics.get
+
+### goal.summary.validator.QualityValidator._validate_title
+> Validate title quality.
+- **Output to**: self.filter.has_banned_words, None.get, len, errors.append, fixes.append
+
+### goal.summary.validator.QualityValidator._validate_intent
+> Validate intent classification.
+- **Output to**: self.filter.classify_intent_smart, isinstance, None.get, isinstance, agg.get
+
+### goal.summary.validator.QualityValidator._validate_metrics
+> Validate complexity metrics.
+- **Output to**: metrics.get, metrics.get, abs, warnings.append, fixes.append
+
+### goal.summary.validator.QualityValidator._validate_relations
+> Validate relations quality.
+- **Output to**: self.filter.dedupe_relations, self.filter.filter_generic_nodes, len, len, errors.append
+
+### goal.summary.validator.QualityValidator._validate_files
+> Validate file list quality.
+- **Output to**: self.filter.dedupe_files, len, len, len, errors.append
+
+### goal.summary.validator.QualityValidator._validate_capabilities
+> Validate capabilities requirements.
+- **Output to**: len, errors.append, fixes.append, len, len
+
+### goal.summary.validator.QualityValidator._validate_body
+> Validate summary body metrics exposure.
+- **Output to**: summary.get, sum, errors.append, fixes.append, kw.lower
+
+### goal.summary.validator.QualityValidator._validate_value_score
+> Validate enhanced summary value score.
+- **Output to**: None.get, isinstance, metrics.get, None.get, isinstance
 
 ### goal.summary.generator.EnhancedSummaryGenerator._format_enhanced_body
 > Format the enhanced commit body.
@@ -447,6 +487,14 @@ Produces a YAML structure optimised for git log / GitHub readers:
 Returns: {valid: bool, errors: [], warnings: [], score: int
 - **Output to**: QualityValidator, validator.validate, summary.get
 
+### goal.package_managers.format_package_manager_command
+> Format a package manager command with the given parameters.
+
+Args:
+    pm: Package manager instance
+
+- **Output to**: getattr, ValueError, command_template.format, ValueError
+
 ### goal.summary.quality_filter.SummaryQualityFilter.format_complexity_delta
 > Format complexity change as interpretable metric with sane caps.
 
@@ -458,26 +506,10 @@ Returns: (emoji, description)
 
 Returns: (emoji, description)
 
-### goal.package_managers.format_package_manager_command
-> Format a package manager command with the given parameters.
-
-Args:
-    pm: Package manager instance
-
-- **Output to**: getattr, ValueError, command_template.format, ValueError
-
-### goal.cli.GoalGroup.parse_args
-- **Output to**: any, None.parse_args, super, a.startswith
-
-### goal.project_doctor._format_todo_entry
-> Format issue as TODO.md entry.
-- **Output to**: goal.project_doctor._generate_ticket_id, None.get
-
 ## Public API Surface
 
 Functions exposed as public API (no underscore prefix):
 
-- `goal.summary.validator.QualityValidator.validate` - 89 calls
 - `goal.git_ops.ensure_git_repository` - 83 calls
 - `goal.cli.version.sync_all_versions` - 69 calls
 - `goal.cli.push_cmd.push` - 69 calls
@@ -487,21 +519,19 @@ Functions exposed as public API (no underscore prefix):
 - `goal.user_config.initialize_user_config` - 52 calls
 - `goal.cli.commit_cmd.validate` - 45 calls
 - `goal.formatter.format_push_result` - 44 calls
-- `goal.generator.analyzer.ChangeAnalyzer.classify_change_type` - 44 calls
-- `goal.smart_commit.SmartCommitGenerator.generate_message` - 43 calls
 - `goal.generator.analyzer.ContentAnalyzer.per_file_notes` - 43 calls
 - `goal.formatter.format_enhanced_summary` - 39 calls
 - `goal.cli.commit_cmd.fix_summary` - 38 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary` - 36 calls
 - `goal.changelog.update_changelog` - 35 calls
-- `goal.cli.doctor_cmd.doctor` - 34 calls
+- `goal.cli.doctor_cmd.doctor` - 35 calls
 - `goal.deep_analyzer.CodeChangeAnalyzer.infer_functional_value` - 33 calls
 - `goal.smart_commit.SmartCommitGenerator.analyze_changes` - 33 calls
 - `goal.cli.commit_cmd.commit` - 33 calls
 - `goal.cli.version.update_project_metadata` - 32 calls
 - `goal.user_config.show_user_config` - 31 calls
-- `goal.version_validation.validate_project_versions` - 28 calls
 - `goal.project_bootstrap.guess_package_name` - 28 calls
+- `goal.version_validation.validate_project_versions` - 28 calls
 - `goal.smart_commit.SmartCommitGenerator.generate_functional_body` - 27 calls
 - `goal.generator.analyzer.ContentAnalyzer.short_action_summary` - 26 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.calculate_quality_metrics` - 26 calls
@@ -513,10 +543,13 @@ Functions exposed as public API (no underscore prefix):
 - `goal.cli.version.update_readme_metadata` - 19 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.validate_summary_quality` - 19 calls
 - `goal.project_doctor.add_issues_to_todo` - 19 calls
+- `goal.summary.validator.QualityValidator.validate` - 18 calls
 - `goal.summary.quality_filter.SummaryQualityFilter.classify_intent_smart` - 18 calls
-- `goal.cli.split_paths_by_type` - 18 calls
+- `goal.cli.publish.publish_project` - 17 calls
 - `goal.summary.quality_filter.SummaryQualityFilter.classify_intent` - 17 calls
+- `goal.cli.split_paths_by_type` - 17 calls
 - `goal.cli.main` - 17 calls
+- `goal.deep_analyzer.CodeChangeAnalyzer.aggregate_changes` - 16 calls
 
 ## System Interactions
 
@@ -524,7 +557,6 @@ How components interact:
 
 ```mermaid
 graph TD
-    validate --> get
     push --> command
     push --> option
     generate_detailed_me --> generate_commit_mess
@@ -546,14 +578,15 @@ graph TD
     validate --> option
     validate --> get_staged_files
     validate --> get_diff_stats
-    classify_change_type --> defaultdict
-    classify_change_type --> any
-    classify_change_type --> all
-    classify_change_type --> lower
-    generate_message --> get
     per_file_notes --> extend
     per_file_notes --> endswith
     per_file_notes --> append
+    fix_summary --> command
+    fix_summary --> option
+    fix_summary --> get_staged_files
+    _analyze_python_diff --> _extract_python_enti
+    _analyze_python_diff --> set
+    _analyze_python_diff --> sum
 ```
 
 ## Reverse Engineering Guidelines

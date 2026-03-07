@@ -9,7 +9,7 @@ The actual implementation has been split into the goal.cli package.
 try:
     from .cli import (
         main, GoalGroup, _setup_nfo_logging, _nfo_log_call,
-        strip_ansi, read_tickert, apply_ticket_prefix,
+        strip_ansi, read_ticket, read_tickert, apply_ticket_prefix,
         split_paths_by_type, stage_paths, confirm,
         DOCS_URL,
     )
@@ -27,8 +27,9 @@ try:
     from .cli.doctor_cmd import doctor
     from .cli.config_cmd import config, config_show, config_validate, config_update, config_set, config_get, setup
     from .cli.commit_cmd import commit, fix_summary, validate
-except ImportError:
-    # Fallback to local imports if package import fails
+except ImportError as _exc:
+    import sys as _sys
+    print(f"Warning: goal.cli shim failed to import: {_exc}", file=_sys.stderr)
     pass
 
 

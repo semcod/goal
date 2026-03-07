@@ -1,19 +1,20 @@
-# goal | 40f 11581L | python:40
+# goal | 40f 11742L | python:41
 # Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
 M[40]:
+  tests/test_version_validation.py,187
   goal/__init__.py,2
   goal/__main__.py,11
   goal/changelog.py,93
-  goal/cli.py,48
-  goal/cli/__init__.py,192
+  goal/cli.py,50
+  goal/cli/__init__.py,193
   goal/cli/commit_cmd.py,153
   goal/cli/config_cmd.py,92
   goal/cli/doctor_cmd.py,62
-  goal/cli/publish.py,49
+  goal/cli/publish.py,61
   goal/cli/publish_cmd.py,35
-  goal/cli/push_cmd.py,517
-  goal/cli/tests.py,84
-  goal/cli/utils_cmd.py,172
+  goal/cli/push_cmd.py,518
+  goal/cli/tests.py,90
+  goal/cli/utils_cmd.py,173
   goal/cli/version.py,477
   goal/commit_generator.py,42
   goal/config.py,667
@@ -21,39 +22,42 @@ M[40]:
   goal/enhanced_summary.py,30
   goal/formatter.py,271
   goal/generator/__init__.py,11
-  goal/generator/analyzer.py,267
+  goal/generator/analyzer.py,304
   goal/generator/generator.py,261
   goal/generator/git_ops.py,139
-  goal/git_ops.py,329
+  goal/git_ops.py,331
   goal/package_managers.py,543
   goal/project_bootstrap.py,471
   goal/project_doctor.py,531
-  goal/smart_commit.py,555
+  goal/smart_commit.py,597
   goal/summary/__init__.py,30
   goal/summary/generator.py,481
   goal/summary/quality_filter.py,248
-  goal/summary/validator.py,206
+  goal/summary/validator.py,238
   goal/user_config.py,198
   goal/version_validation.py,235
-  test_version_validation.py,187
   tests/test_cli_options.py,28
-  tests/test_clone_repo.py,208
+  tests/test_clone_repo.py,206
   tests/test_project_bootstrap.py,282
   tests/test_project_doctor.py,284
-  tests/test_version_sync.py,32
+  tests/test_version_sync.py,37
 D:
+  tests/test_version_validation.py:
+    i: unittest,json,sys,goal.version_validation.{check_readme_badges,extract_badge_versions,update_badge_versions,validate_project_versions},pathlib.Path,unittest.mock.{mock_open,patch}
+    e: TestVersionValidation
+    TestVersionValidation: setUp(0),test_extract_badge_versions(0),test_update_badge_versions(0),test_check_readme_badges(0),test_check_readme_badges_up_to_date(0)
   goal/changelog.py:
     i: re,datetime,git_ops.run_git,pathlib.Path,typing.{Dict,List,Optional}
     e: update_changelog
     update_changelog(version:str;files:List[str];commit_msg:str;config:Dict=None;changelog_entry:Dict=None)
   goal/cli/__init__.py:
-    i: subprocess,os,sys,re,click,nfo,pathlib.Path,typing.{Dict,List,Optional}
-    e: DOCS_URL,ANSI_ESCAPE_RE,strip_ansi,read_tickert,apply_ticket_prefix,split_paths_by_type,stage_paths,confirm
+    i: os,sys,re,click,nfo,nfo.terminal.TerminalSink,pathlib.Path,typing.{Dict,List,Optional}
+    e: DOCS_URL,ANSI_ESCAPE_RE,strip_ansi,read_ticket,apply_ticket_prefix,split_paths_by_type,stage_paths,confirm
     GoalGroup: get_command(2),parse_args(2)  # Custom Click Group that shows docs UR...
     _setup_nfo_logging(nfo_format:str='markdown';nfo_sink:str='')
     _nfo_log_call()
     strip_ansi(text:str)->str
-    read_tickert(path:Path=Path('TICKET'))->Dict[str, str]
+    read_ticket(path:Path=Path('TICKET'))->Dict[str, str]
     apply_ticket_prefix(title:str;ticket:Optional[str])->str
     split_paths_by_type(paths:List[str])->Dict[str, List[str]]
     stage_paths(paths:List[str])
@@ -79,7 +83,7 @@ D:
     e: doctor
     doctor(ctx;fix;path;todo)
   goal/cli/publish.py:
-    i: subprocess,shutil,git_ops.run_command_tee,pathlib.Path,typing.List,version.PROJECT_TYPES
+    i: subprocess,shutil,click,git_ops.run_command_tee,pathlib.Path,typing.List,version.PROJECT_TYPES
     e: makefile_has_target,publish_project
     makefile_has_target(target:str)->bool
     publish_project(project_types:List[str];version:str;yes:bool=False)->bool
@@ -99,7 +103,7 @@ D:
     _handle_single_commit(commit_title;commit_body;commit_msg;message;yes)
     _handle_version_sync(new_version;no_version_sync;user_config;yes)
   goal/cli/tests.py:
-    i: subprocess,os,git_ops.{run_command,run_git},pathlib.Path,typing.{Dict,List},version.PROJECT_TYPES
+    i: subprocess,os,shutil,git_ops.{run_command,run_git},pathlib.Path,typing.{Dict,List},version.PROJECT_TYPES
     e: run_tests
     _has_usable_test_script(project_dir:Path;project_type:str)->bool
     _run_tests_in_subdirs(project_type:str;base_cmd:List[str])->bool
@@ -113,7 +117,7 @@ D:
     version(bump_type)
     package_managers(language;available)
     check_versions(update_badges)
-    clone(url;directory)
+    clone(ctx;url;directory)
     bootstrap(yes;path)
   goal/cli/version.py:
     i: re,json,git_ops.run_git,pathlib.Path,typing.{Dict,List,Optional,Tuple},version_validation.update_badge_versions
@@ -147,7 +151,7 @@ D:
   goal/generator/analyzer.py:
     i: re,os,collections.{Counter,defaultdict},pathlib.Path,typing.{Dict,List,Optional,Tuple}
     e: ChangeAnalyzer,ContentAnalyzer
-    ChangeAnalyzer: classify_change_type(3),detect_scope(1),extract_functions_changed(1)  # Analyze git changes to classify type,...
+    ChangeAnalyzer: classify_change_type(3),_detect_signals(2),_has_package_code(1),_is_docs_only(1),_is_ci_only(1)  # Analyze git changes to classify type,...
     ContentAnalyzer: short_action_summary(2),per_file_notes(2)  # Analyze content for short summaries a...
   goal/generator/generator.py:
     i: subprocess,os,collections.Counter,git_ops.GitDiffOperations,pathlib.Path,typing.{Any,Dict,List,Optional,Tuple}
@@ -228,7 +232,7 @@ D:
   goal/summary/validator.py:
     i: re,quality_filter.SummaryQualityFilter,typing.{Any,Dict,List}
     e: QualityValidator
-    QualityValidator: __init__(1),validate(2),auto_fix(4)  # Validate commit summary against quali...
+    QualityValidator: __init__(1),validate(2),_extract_intent(2),_validate_title(3),_validate_intent(7)  # Validate commit summary against quali...
   goal/user_config.py:
     i: json,subprocess,click,pathlib.Path,typing.{Any,Dict,Optional}
     e: AVAILABLE_LICENSES,UserConfig,get_git_user_name,get_git_user_email,prompt_for_license,initialize_user_config,get_user_config,show_user_config
@@ -250,10 +254,6 @@ D:
     extract_badge_versions(readme_path:Path)->List[Tuple[str, str, str]]
     update_badge_versions(readme_path:Path;new_version:str)->bool
     validate_project_versions(project_types:List[str];current_version:str)->Dict[str, Dict]
-  test_version_validation.py:
-    i: unittest,json,sys,goal.version_validation.{check_readme_badges,extract_badge_versions,update_badge_versions,validate_project_versions},pathlib.Path,unittest.mock.{mock_open,patch}
-    e: TestVersionValidation
-    TestVersionValidation: setUp(0),test_extract_badge_versions(0),test_update_badge_versions(0),test_check_readme_badges(0),test_check_readme_badges_up_to_date(0)
   tests/test_cli_options.py:
     i: subprocess
     e: run_cli,test_push_help_includes_markdown_ascii_split_ticket,test_status_help_includes_markdown_ascii,test_unknown_command_shows_docs_url,test_known_commands_work
@@ -287,6 +287,7 @@ D:
     TestDiagnoseRust: test_no_cargo(1),test_missing_package(1),test_missing_edition(1)
     TestDiagnoseGo: test_no_gomod(1),test_invalid_gomod(1),test_missing_gosum(1)
   tests/test_version_sync.py:
-    i: os,goal.cli.sync_all_versions,pathlib.Path
-    e: test_sync_updates_init_py
+    i: os,goal.cli.sync_all_versions,goal.cli.version.PROJECT_TYPES,pathlib.Path
+    e: test_sync_updates_init_py,test_python_publish_command_skips_existing
     test_sync_updates_init_py(tmp_path)
+    test_python_publish_command_skips_existing()

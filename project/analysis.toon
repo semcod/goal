@@ -1,12 +1,12 @@
-# code2llm | 32f 9983L | py:32 | 2026-03-05
-# CC̄=7.3 | critical:63/270 | dups:0 | cycles:0
+# code2llm | 32f 10128L | py:32 | 2026-03-07
+# CC̄=6.7 | critical:65/298 | dups:0 | cycles:0
 
 HEALTH[20]:
-  🟡 CC    validate_project_versions CC=30 (limit:15)
   🟡 CC    guess_package_name CC=20 (limit:15)
   🟡 CC    ensure_project_environment CC=25 (limit:15)
   🟡 CC    scaffold_test CC=15 (limit:15)
   🟡 CC    update_changelog CC=24 (limit:15)
+  🟡 CC    validate_project_versions CC=30 (limit:15)
   🟡 CC    format_push_result CC=34 (limit:15)
   🟡 CC    format_enhanced_summary CC=29 (limit:15)
   🟡 CC    _analyze_python_diff CC=15 (limit:15)
@@ -15,54 +15,54 @@ HEALTH[20]:
   🟡 CC    extract_entities CC=20 (limit:15)
   🟡 CC    analyze_changes CC=24 (limit:15)
   🟡 CC    _generate_functional_summary CC=22 (limit:15)
-  🟡 CC    generate_message CC=46 (limit:15)
   🟡 CC    ensure_git_repository CC=23 (limit:15)
-  🟡 CC    classify_change_type CC=58 (limit:15)
+  🟡 CC    _score_by_signals CC=15 (limit:15)
   🟡 CC    short_action_summary CC=34 (limit:15)
   🟡 CC    per_file_notes CC=29 (limit:15)
   🟡 CC    generate_detailed_message CC=28 (limit:15)
   🟡 CC    update_project_metadata CC=26 (limit:15)
+  🟡 CC    sync_all_versions CC=33 (limit:15)
 
 REFACTOR[1]:
   1. split 20 high-CC methods  (CC>15)
 
 COUPLING:
                             goal        goal.cli    goal.summary  goal.generator
-            goal              ──             ←88              ←6              ←4  hub
-        goal.cli              88              ──                                  !! fan-out
+            goal              ──             ←90              ←6              ←4  hub
+        goal.cli              90              ──                                  !! fan-out
     goal.summary               6                              ──                
   goal.generator               4                                              ──
   CYCLES: none
-  HUB: goal/ (fan-in=98)
-  SMELL: goal.cli/ fan-out=88 → split needed
+  HUB: goal/ (fan-in=100)
+  SMELL: goal.cli/ fan-out=90 → split needed
 
 LAYERS:
-  goal/                           CC̄=7.3    ←in:98  →out:0
+  goal/                           CC̄=6.7    ←in:100  →out:0
   │ !! config                     798L  1C   25m  CC=10     ←3
-  │ !! smart_commit               735L  2C   20m  CC=46     ←0
+  │ !! smart_commit               786L  2C   27m  CC=24     ←0
   │ !! project_doctor             724L  2C   17m  CC=34     ←2
-  │ !! push_cmd                   651L  0C   14m  CC=29     ←0
+  │ !! push_cmd                   652L  0C   14m  CC=29     ←0
   │ !! generator                  644L  1C   12m  CC=40     ←0
   │ !! package_managers           631L  1C   12m  CC=11     ←1
   │ !! version                    591L  0C   10m  CC=33     ←3
   │ !! project_bootstrap          590L  0C    9m  CC=25     ←3
   │ !! deep_analyzer              515L  1C   15m  CC=38     ←0
-  │ !! git_ops                    434L  0C   20m  CC=23     ←5
+  │ !! git_ops                    437L  0C   20m  CC=23     ←6
+  │ !! analyzer                   396L  2C   16m  CC=34     ←0
   │ !! formatter                  361L  1C   11m  CC=34     ←2
-  │ !! analyzer                   356L  2C    5m  CC=58     ←0
   │ !! generator                  343L  1C   17m  CC=28     ←0
   │ !! quality_filter             328L  1C   14m  CC=25     ←0
+  │ !! validator                  313L  1C   13m  CC=19     ←0
   │ !! version_validation         301L  0C   10m  CC=30     ←2
-  │ !! validator                  283L  1C    3m  CC=35     ←0
+  │ !  __init__                   248L  1C   11m  CC=14     ←2
   │ !  user_config                247L  1C   12m  CC=11     ←12
-  │ !! __init__                   244L  1C   11m  CC=15     ←2
-  │ !  utils_cmd                  220L  0C    8m  CC=10     ←0
+  │ !  utils_cmd                  221L  0C    8m  CC=10     ←0
   │ !  commit_cmd                 194L  0C    3m  CC=13     ←0
   │ !  git_ops                    171L  1C    7m  CC=11     ←0
   │ !! changelog                  128L  0C    1m  CC=24     ←1
   │ config_cmd                 115L  0C    7m  CC=4      ←0
   │ !  doctor_cmd                 104L  0C    1m  CC=12     ←0
-  │ publish                     63L  0C    2m  CC=6      ←2
+  │ !  publish                     78L  0C    2m  CC=11     ←2
   │ commit_generator            55L  0C    0m  CC=0.0    ←0
   │ publish_cmd                 44L  0C    1m  CC=7      ←0
   │ __init__                    42L  0C    3m  CC=2      ←0
@@ -74,12 +74,9 @@ LAYERS:
 
 DUPLICATES[0]: none
 
-FUNCTIONS (CC≥10, 63 of 270):
-   58.0  ChangeAnalyzer.classify_change_type        57n   7exit  loops+cond+ret  !! split
-   46.0  SmartCommitGenerator.generate_message      73n  22exit  cond+ret  !! split
+FUNCTIONS (CC≥10, 65 of 298):
    40.0  EnhancedSummaryGenerator._format_enhanced_body   38n   2exit  loops+cond+ret  !! split
    38.0  CodeChangeAnalyzer.infer_functional_value   55n  18exit  cond+ret  !! split
-   35.0  QualityValidator.validate                  37n   2exit  cond+ret  !! split
    34.0  format_push_result                         40n   2exit  loops+cond+ret  !! split
    34.0  ContentAnalyzer.short_action_summary       44n  13exit  cond+ret  !! split
    34.0  _diagnose_python                           50n   4exit  loops+cond+ret  !! split
@@ -98,18 +95,19 @@ FUNCTIONS (CC≥10, 63 of 270):
    22.0  SmartCommitGenerator._generate_functional_summary   25n   2exit  cond+ret  !! split
    20.0  guess_package_name                         21n   2exit  cond+ret  !! split
    20.0  CodeAbstraction.extract_entities           12n   2exit  loops+cond+ret  !! split
-   20.0  _handle_dry_run                            17n   1exit  loops+cond  !! split
+   19.0  _handle_dry_run                            17n   1exit  loops+cond  !! split
    19.0  _handle_split_commits                      24n   1exit  loops+cond  !! split
    19.0  QualityValidator.auto_fix                  25n   2exit  cond+ret  !! split
    19.0  EnhancedSummaryGenerator.generate_value_title   27n  10exit  cond+ret  !! split
    16.0  CodeChangeAnalyzer._build_summary          17n   2exit  cond+ret  !! split
    15.0  scaffold_test                              27n   6exit  cond+ret  !! split
    15.0  CodeChangeAnalyzer._analyze_python_diff    15n   2exit  loops+cond+ret  !! split
+   15.0  ChangeAnalyzer._score_by_signals           16n   1exit  cond  !! split
    15.0  _enforce_quality_gates                      5n   2exit  cond+ret  !! split
-   15.0  split_paths_by_type                        10n   2exit  loops+cond+ret  !! split
    14.0  ChangeAnalyzer.detect_scope                18n   5exit  loops+cond+ret
    14.0  EnhancedSummaryGenerator._infer_domain     27n  10exit  cond+ret
    14.0  SummaryQualityFilter.classify_intent       12n   5exit  cond+ret
+   14.0  split_paths_by_type                        10n   2exit  loops+cond+ret
    13.0  CodeChangeAnalyzer._extract_python_entities    8n   2exit  loops+cond+ret
    13.0  CodeChangeAnalyzer._analyze_js_diff         7n   2exit  loops+ret
    13.0  SmartCommitGenerator.generate_functional_body   20n   2exit  loops+cond+ret
@@ -117,44 +115,46 @@ FUNCTIONS (CC≥10, 63 of 270):
    13.0  EnhancedSummaryGenerator.map_entity_to_role   37n  13exit  loops+cond+ret
    13.0  _diagnose_nodejs                           18n   3exit  cond+ret
    12.0  CodeAbstraction.get_domain                 22n   8exit  loops+cond+ret
+   12.0  SmartCommitGenerator._infer_message_from_files   24n   9exit  cond+ret
    12.0  doctor                                     14n   1exit  loops+cond
    12.0  fix_summary                                18n   4exit  loops+cond+ret
    12.0  _push_to_remote                            12n   3exit  cond+ret
    12.0  SummaryQualityFilter.format_net_lines      27n  10exit  cond+ret
    12.0  SummaryQualityFilter.generate_architecture_title   21n   8exit  cond+ret
-   11.0  initialize_user_config                     20n   3exit  cond+ret
    11.0  detect_project_types_deep                  10n   2exit  loops+cond+ret
+   11.0  initialize_user_config                     20n   3exit  cond+ret
    11.0  CodeAbstraction.infer_benefit              28n   9exit  loops+cond+ret
+   11.0  SmartCommitGenerator._infer_commit_type    24n   9exit  cond+ret
 
   summary:
-    critical(≥10): 63 | high(5-10): 64 | medium(2-5): 106 | low(<2): 37
-    23% CC≥10  47% CC≥5
+    critical(≥10): 65 | high(5-10): 75 | medium(2-5): 117 | low(<2): 41
+    22% CC≥10  47% CC≥5
 
 HOTSPOTS:
   #1  push                                 fan=37   "calls 37 functions"
   #2  _diagnose_python                     fan=30   "calls 30 functions"
-  #3  QualityValidator.validate            fan=28   "QualityValidator method, fan-out=28"
-  #4  SmartCommitGenerator.analyze_changes  fan=27   "analysis pipeline, 27 stages"
-  #5  QualityValidator.auto_fix            fan=27   "QualityValidator method, fan-out=27"
-  #6  EnhancedSummaryGenerator.generate_enhanced_summary  fan=24   "EnhancedSummaryGenerator method, fan-out=24"
-  #7  update_changelog                     fan=23   "calls 23 functions"
-  #8  CommitMessageGenerator.generate_detailed_message  fan=23   "CommitMessageGenerator method, fan-out=23"
-  #9  guess_package_name                   fan=22   "calls 22 functions"
-  #10 format_push_result                   fan=22   "22-way dispatch"
+  #3  SmartCommitGenerator.analyze_changes  fan=27   "analysis pipeline, 27 stages"
+  #4  QualityValidator.auto_fix            fan=27   "QualityValidator method, fan-out=27"
+  #5  EnhancedSummaryGenerator.generate_enhanced_summary  fan=24   "EnhancedSummaryGenerator method, fan-out=24"
+  #6  update_changelog                     fan=23   "calls 23 functions"
+  #7  CommitMessageGenerator.generate_detailed_message  fan=23   "CommitMessageGenerator method, fan-out=23"
+  #8  guess_package_name                   fan=22   "calls 22 functions"
+  #9  format_push_result                   fan=22   "22-way dispatch"
+  #10 CodeChangeAnalyzer._analyze_python_diff  fan=20   "analysis pipeline, 20 stages"
 
 CLASSES:
   GoalConfig                     ████████████████████████  22m  CC̄=4.1   max=10  
+  SmartCommitGenerator           ██████████████████        17m  CC̄=8.0   max=24    !!
   CommitMessageGenerator         █████████████████         16m  CC̄=5.1   max=28    !!
   CodeChangeAnalyzer             ████████████████          15m  CC̄=8.7   max=38    !!
+  ChangeAnalyzer                 ███████████████           14m  CC̄=6.1   max=15    !!
   SummaryQualityFilter           ███████████████           14m  CC̄=7.6   max=25    !!
+  QualityValidator               ██████████████            13m  CC̄=5.5   max=19    !!
   EnhancedSummaryGenerator       █████████████             12m  CC̄=11.8  max=40    !!
-  SmartCommitGenerator           ██████████                10m  CC̄=13.1  max=46    !!
   CodeAbstraction                █████████                  9m  CC̄=7.6   max=20    !!
   MarkdownFormatter              ████████                   8m  CC̄=2.2   max=4   
   GitDiffOperations              ███████                    7m  CC̄=6.4   max=11  
   UserConfig                     ██████                     6m  CC̄=1.8   max=3   
-  ChangeAnalyzer                 ███                        3m  CC̄=25.0  max=58    !!
-  QualityValidator               ███                        3m  CC̄=20.0  max=35    !!
   ContentAnalyzer                ██                         2m  CC̄=31.5  max=34    !!
   GoalGroup                      ██                         2m  CC̄=4.0   max=6   
   PackageManager                 █                          1m  CC̄=2.0   max=2   
@@ -162,19 +162,6 @@ CLASSES:
   DoctorReport                                              0m  CC̄=0.0   max=0.0 
 
 D:
-  goal/generator/analyzer.py:
-    e: ChangeAnalyzer,ContentAnalyzer
-    ChangeAnalyzer  # Analyze git changes to classify type, detect scope, and extr...
-      classify_change_type(3)  CC=58.0  !
-    ContentAnalyzer  # Analyze content for short summaries and per-file notes....
-      short_action_summary(2)  CC=34.0  !
-  goal/smart_commit.py:
-    e: CodeAbstraction,SmartCommitGenerator,create_smart_generator
-    CodeAbstraction  # Extracts meaningful abstractions from code changes....
-      __init__(1)  CC=1.0
-    SmartCommitGenerator  # Generates smart commit messages using code abstraction....
-      __init__(1)  CC=1.0
-    create_smart_generator(config)
   goal/summary/generator.py:
     e: EnhancedSummaryGenerator
     EnhancedSummaryGenerator  # Generate business-value focused commit summaries....
@@ -183,10 +170,6 @@ D:
     e: CodeChangeAnalyzer
     CodeChangeAnalyzer  # Analyzes code changes to extract functional meaning....
       __init__(0)  CC=1.0
-  goal/summary/validator.py:
-    e: QualityValidator
-    QualityValidator  # Validate commit summary against quality gates....
-      __init__(1)  CC=6.0
   goal/formatter.py:
     e: MarkdownFormatter,format_push_result,format_enhanced_summary,format_status_output
     MarkdownFormatter  # Formats Goal output as structured markdown for LLM consumpti...
@@ -194,6 +177,23 @@ D:
     format_push_result(project_types,files,stats,current_version,new_version,commit_msg,commit_body,test_result,test_exit_code,actions,error,analysis)
     format_enhanced_summary(commit_title,commit_body,capabilities,roles,relations,metrics,files,stats,current_version,new_version)
     format_status_output(version,branch,staged_files,unstaged_files)
+  goal/generator/analyzer.py:
+    e: ChangeAnalyzer,ContentAnalyzer
+    ChangeAnalyzer  # Analyze git changes to classify type, detect scope, and extr...
+      classify_change_type(3)  CC=1.0
+        → _detect_signals(2)  CC=1.0
+        → _has_package_code(1)  CC=7.0
+        → _is_docs_only(1)  CC=4.0
+        → _is_ci_only(1)  CC=4.0
+        → _has_new_goal_python_file(2)  CC=4.0
+        → _score_by_file_patterns(2)  CC=5.0
+        → _score_by_diff_content(2)  CC=3.0
+        → _score_by_statistics(3)  CC=8.0
+        → _score_by_signals(4)  CC=15.0  !
+        → _score_new_functionality(3)  CC=5.0
+        → _resolve_change_type(4)  CC=11.0
+    ContentAnalyzer  # Analyze content for short summaries and per-file notes....
+      short_action_summary(2)  CC=34.0  !
   goal/project_doctor.py:
     e: Issue,DoctorReport,_log_issue,_log_fix,_diagnose_python,_diagnose_nodejs,_diagnose_rust,_diagnose_go,_diagnose_ruby,_diagnose_php,_diagnose_dotnet,_diagnose_java,diagnose_project,diagnose_and_report,_generate_ticket_id,_read_existing_tickets,_format_todo_entry,add_issues_to_todo,diagnose_and_report_with_todo
     Issue  # A single diagnosed issue....
@@ -278,6 +278,13 @@ D:
   goal/changelog.py:
     e: update_changelog
     update_changelog(version,files,commit_msg,config,changelog_entry)
+  goal/smart_commit.py:
+    e: CodeAbstraction,SmartCommitGenerator,create_smart_generator
+    CodeAbstraction  # Extracts meaningful abstractions from code changes....
+      __init__(1)  CC=1.0
+    SmartCommitGenerator  # Generates smart commit messages using code abstraction....
+      __init__(1)  CC=1.0
+    create_smart_generator(config)
   goal/git_ops.py:
     e: run_git,run_command,_echo_cmd,_run_git_verbose,run_command_tee,is_git_repository,validate_repo_url,get_remote_url,list_remotes,_prompt_remote_url,_list_remote_branches,get_remote_branch,clone_repository,ensure_git_repository,ensure_remote,get_staged_files,get_unstaged_files,get_working_tree_files,get_diff_stats,get_diff_content
     run_git()
@@ -300,15 +307,19 @@ D:
     get_working_tree_files()
     get_diff_stats(cached)
     get_diff_content(cached)
+  goal/summary/validator.py:
+    e: QualityValidator
+    QualityValidator  # Validate commit summary against quality gates....
+      __init__(1)  CC=6.0
   goal/cli/__init__.py:
-    e: GoalGroup,_setup_nfo_logging,_nfo_log_call,strip_ansi,read_tickert,apply_ticket_prefix,split_paths_by_type,stage_paths,confirm,main
+    e: GoalGroup,_setup_nfo_logging,_nfo_log_call,strip_ansi,read_ticket,apply_ticket_prefix,split_paths_by_type,stage_paths,confirm,main
     GoalGroup  # Custom Click Group that shows docs URL for unknown commands ...
       get_command(2)  CC=2.0
         → get_command(2)  CC=2.0
     _setup_nfo_logging(nfo_format,nfo_sink)
     _nfo_log_call()
     strip_ansi(text)
-    read_tickert(path)
+    read_ticket(path)
     apply_ticket_prefix(title,ticket)
     split_paths_by_type(paths)
     stage_paths(paths)
@@ -337,6 +348,10 @@ D:
     e: GitDiffOperations
     GitDiffOperations  # Git diff operations with caching....
       __init__(0)  CC=1.0
+  goal/cli/publish.py:
+    e: makefile_has_target,publish_project
+    makefile_has_target(target)
+    publish_project(project_types,version,yes)
   goal/package_managers.py:
     e: PackageManager,detect_package_managers,get_package_manager,get_package_managers_by_language,is_package_manager_available,get_available_package_managers,get_preferred_package_manager,format_package_manager_command,get_package_manager_info,list_all_package_managers,detect_project_language,suggest_package_managers
     PackageManager  # Package manager configuration and capabilities....
@@ -370,15 +385,11 @@ D:
     version(bump_type)
     package_managers(language,available)
     check_versions(update_badges)
-    clone(url,directory)
+    clone(ctx,url,directory)
     bootstrap(yes,path)
   goal/cli/publish_cmd.py:
     e: publish
     publish(ctx,use_make,target,version_arg)
-  goal/cli/publish.py:
-    e: makefile_has_target,publish_project
-    makefile_has_target(target)
-    publish_project(project_types,version,yes)
   goal/cli/config_cmd.py:
     e: config,config_show,config_validate,config_update,config_set,config_get,setup
     config()

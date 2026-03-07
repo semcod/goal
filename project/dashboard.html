@@ -56,27 +56,27 @@
   goal — Warning
 </h1>
 <p style="color:var(--muted);font-size:.85rem;">
-  Analyzed 2026-03-05 by code2llm
+  Analyzed 2026-03-07 by code2llm
 </p>
 
 <div class="grid">
-  <div class="card"><div class="value">7.3</div><div class="label">Avg CC</div></div>
-  <div class="card"><div class="value">63</div><div class="label">Critical (CC≥10)</div></div>
-  <div class="card"><div class="value">270</div><div class="label">Functions</div></div>
+  <div class="card"><div class="value">6.7</div><div class="label">Avg CC</div></div>
+  <div class="card"><div class="value">65</div><div class="label">Critical (CC≥10)</div></div>
+  <div class="card"><div class="value">298</div><div class="label">Functions</div></div>
   <div class="card"><div class="value">17</div><div class="label">Classes</div></div>
   <div class="card"><div class="value">27</div><div class="label">Files</div></div>
-  <div class="card"><div class="value">11541</div><div class="label">Lines</div></div>
+  <div class="card"><div class="value">11702</div><div class="label">Lines</div></div>
   <div class="card"><div class="value">0</div><div class="label">Duplicates</div></div>
   <div class="card"><div class="value">0</div><div class="label">Cycles</div></div>
 </div>
 
 <div class="two-col">
   <div class="chart-container">
-    <h2 style="border:none;margin:0 0 .5rem;">Evolution (2026-03-05)</h2>
+    <h2 style="border:none;margin:0 0 .5rem;">Evolution (2026-03-07)</h2>
     <div class="evo-cards">
-      <div class="card"><div class="value">7.3</div><div class="label">CC̄ →</div></div>
-      <div class="card"><div class="value">63</div><div class="label">Critical →</div></div>
-      <div class="card"><div class="value">11541</div><div class="label">Lines</div></div>
+      <div class="card"><div class="value">6.7</div><div class="label">CC̄ ↓</div></div>
+      <div class="card"><div class="value">65</div><div class="label">Critical ↑</div></div>
+      <div class="card"><div class="value">11702</div><div class="label">Lines</div></div>
     </div>
     <p class="trend" style="margin-top:.5rem;">Run analysis multiple times to build a trend chart (≥3 data points needed).</p>
   </div>
@@ -91,20 +91,6 @@
 <table>
   <thead><tr><th>Severity</th><th>Target</th><th>Type</th><th>Value</th><th>Limit</th></tr></thead>
   <tbody>
-            <tr class="critical">
-                <td><span class="badge critical">critical</span></td>
-                <td>ChangeAnalyzer.classify_change_type</td>
-                <td>cc_exceeded</td>
-                <td>58</td>
-                <td>15</td>
-            </tr>
-            <tr class="critical">
-                <td><span class="badge critical">critical</span></td>
-                <td>SmartCommitGenerator.generate_message</td>
-                <td>cc_exceeded</td>
-                <td>46</td>
-                <td>15</td>
-            </tr>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
                 <td>EnhancedSummaryGenerator._format_enhanced_body</td>
@@ -125,13 +111,6 @@
                 <td>high_fan_out</td>
                 <td>37</td>
                 <td>10</td>
-            </tr>
-            <tr class="critical">
-                <td><span class="badge critical">critical</span></td>
-                <td>QualityValidator.validate</td>
-                <td>cc_exceeded</td>
-                <td>35</td>
-                <td>15</td>
             </tr>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
@@ -195,6 +174,27 @@
                 <td>cc_exceeded</td>
                 <td>29</td>
                 <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>CommitMessageGenerator.generate_detailed_message</td>
+                <td>cc_exceeded</td>
+                <td>28</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>SmartCommitGenerator.analyze_changes</td>
+                <td>high_fan_out</td>
+                <td>27</td>
+                <td>10</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>QualityValidator.auto_fix</td>
+                <td>high_fan_out</td>
+                <td>27</td>
+                <td>10</td>
             </tr></tbody>
 </table>
 </div></div>
@@ -215,13 +215,6 @@
                 <td><strong>_diagnose_python</strong></td>
                 <td>30</td>
                 <td>Run all Python-specific diagnostics.</td>
-            </tr>
-            <tr>
-                <td><strong>QualityValidator.validate</strong></td>
-                <td>28</td>
-                <td>Validate summary against all quality gates.
-
-Returns: {valid: bool, errors: [], </td>
             </tr>
             <tr>
                 <td><strong>SmartCommitGenerator.analyze_changes</strong></td>
@@ -260,6 +253,11 @@ Args:
                 <td><strong>format_push_result</strong></td>
                 <td>22</td>
                 <td>22-way dispatch</td>
+            </tr>
+            <tr>
+                <td><strong>CodeChangeAnalyzer._analyze_python_diff</strong></td>
+                <td>20</td>
+                <td>Analysis pipeline, 20 stages</td>
             </tr></tbody>
 </table>
 </div></div>
@@ -273,13 +271,13 @@ Args:
   <tbody>
             <tr>
                 <td>1</td>
-                <td>Split validate_project_versions (CC=30 → target CC<10)</td>
+                <td>Split ensure_project_environment (CC=25 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
                 <td>2</td>
-                <td>Split ensure_project_environment (CC=25 → target CC<10)</td>
+                <td>Split validate_project_versions (CC=30 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
@@ -303,31 +301,31 @@ Args:
             </tr>
             <tr>
                 <td>6</td>
-                <td>Split SmartCommitGenerator.generate_message (CC=46 → target CC<10)</td>
-                <td><span class="badge high">high</span></td>
-                <td>low</td>
-            </tr>
-            <tr>
-                <td>7</td>
-                <td>Split ChangeAnalyzer.classify_change_type (CC=58 → target CC<10)</td>
-                <td><span class="badge high">high</span></td>
-                <td>low</td>
-            </tr>
-            <tr>
-                <td>8</td>
                 <td>Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>9</td>
+                <td>7</td>
                 <td>Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>10</td>
+                <td>8</td>
                 <td>Split CommitMessageGenerator.generate_detailed_message (CC=28 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>Split update_project_metadata (CC=26 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>Split sync_all_versions (CC=33 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr></tbody>
@@ -336,7 +334,7 @@ Args:
 </div>
 </div>
 
-<footer>Generated by code2llm on 2026-03-05 10:05</footer>
+<footer>Generated by code2llm on 2026-03-07 09:20</footer>
 
 <script>
 // Evolution chart disabled — fewer than 3 data points
@@ -345,9 +343,9 @@ const modCtx = document.getElementById('modChart').getContext('2d');
 new Chart(modCtx, {
   type: 'bar',
   data: {
-    labels: ['analyzer.py', 'smart_commit.py', 'generator.py', 'deep_analyzer.py', 'validator.py', 'formatter.py', 'project_doctor.py', 'version.py', 'version_validation.py', 'push_cmd.py', 'generator.py', 'project_bootstrap.py', 'quality_filter.py', 'changelog.py', 'git_ops.py'],
-    datasets: [{ label: 'Max CC', data: [58, 46, 40, 38, 35, 34, 34, 33, 30, 29, 28, 25, 25, 24, 23],
-      backgroundColor: [58, 46, 40, 38, 35, 34, 34, 33, 30, 29, 28, 25, 25, 24, 23].map(v => v >= 15 ? '#ef4444' : v >= 10 ? '#eab308' : '#22c55e')
+    labels: ['generator.py', 'deep_analyzer.py', 'formatter.py', 'analyzer.py', 'project_doctor.py', 'version.py', 'version_validation.py', 'push_cmd.py', 'generator.py', 'project_bootstrap.py', 'quality_filter.py', 'changelog.py', 'smart_commit.py', 'git_ops.py', 'validator.py'],
+    datasets: [{ label: 'Max CC', data: [40, 38, 34, 34, 34, 33, 30, 29, 28, 25, 25, 24, 24, 23, 19],
+      backgroundColor: [40, 38, 34, 34, 34, 33, 30, 29, 28, 25, 25, 24, 24, 23, 19].map(v => v >= 15 ? '#ef4444' : v >= 10 ? '#eab308' : '#22c55e')
     }]
   },
   options: {

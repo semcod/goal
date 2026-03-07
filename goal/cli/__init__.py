@@ -1,6 +1,5 @@
 """Goal CLI package - Split from monolithic cli.py for better maintainability."""
 
-import subprocess
 import os
 import sys
 import re
@@ -65,7 +64,7 @@ def strip_ansi(text: str) -> str:
         return text
 
 
-def read_tickert(path: Path = Path('TICKET')) -> Dict[str, str]:
+def read_ticket(path: Path = Path('TICKET')) -> Dict[str, str]:
     """Read TICKET configuration file (key=value)."""
     cfg: Dict[str, str] = {'prefix': '', 'format': '[{ticket}] {title}'}
     if not path.exists():
@@ -84,9 +83,13 @@ def read_tickert(path: Path = Path('TICKET')) -> Dict[str, str]:
     return cfg
 
 
+# Backward-compatible alias for the old typo name
+read_tickert = read_ticket
+
+
 def apply_ticket_prefix(title: str, ticket: Optional[str]) -> str:
-    """Apply ticket prefix (from CLI or TICKERT) to commit title."""
-    cfg = read_tickert()
+    """Apply ticket prefix (from CLI or TICKET file) to commit title."""
+    cfg = read_ticket()
     ticket_value = (ticket or cfg.get('prefix') or '').strip()
     if not ticket_value:
         return title
@@ -108,7 +111,7 @@ def split_paths_by_type(paths: List[str]) -> Dict[str, List[str]]:
             groups['docs'].append(p)
         elif pl.startswith('.github/') or pl.startswith('.gitlab/') or pl.endswith(('.yml', '.yaml')):
             groups['ci'].append(p)
-        elif pl.startswith('goal/') or pl.startswith('src/') or pl.startswith('lib/') or pl.endswith('.py'):
+        elif pl.startswith('src/') or pl.startswith('lib/') or pl.endswith('.py'):
             groups['code'].append(p)
         else:
             groups['other'].append(p)
@@ -234,6 +237,7 @@ __all__ = [
     '_setup_nfo_logging',
     '_nfo_log_call',
     'strip_ansi',
+    'read_ticket',
     'read_tickert',
     'apply_ticket_prefix',
     'split_paths_by_type',

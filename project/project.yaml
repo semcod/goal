@@ -3,30 +3,20 @@ project:
   name: goal
   repo: /home/tom/github/wronai/goal
   language: python
-  analyzed_at: '2026-03-05T10:05:36Z'
+  analyzed_at: '2026-03-07T09:20:49Z'
   tool: code2llm
   stats:
     files: 27
-    lines: 11541
-    functions: 270
+    lines: 11702
+    functions: 298
     classes: 17
 health:
-  cc_avg: 7.3
-  critical_count: 63
+  cc_avg: 6.7
+  critical_count: 65
   critical_limit: 10
   duplicates: 0
   cycles: 0
   alerts:
-  - type: cc_exceeded
-    target: ChangeAnalyzer.classify_change_type
-    value: 58
-    limit: 15
-    severity: critical
-  - type: cc_exceeded
-    target: SmartCommitGenerator.generate_message
-    value: 46
-    limit: 15
-    severity: critical
   - type: cc_exceeded
     target: EnhancedSummaryGenerator._format_enhanced_body
     value: 40
@@ -41,11 +31,6 @@ health:
     target: push
     value: 37
     limit: 10
-    severity: critical
-  - type: cc_exceeded
-    target: QualityValidator.validate
-    value: 35
-    limit: 15
     severity: critical
   - type: cc_exceeded
     target: format_push_result
@@ -98,11 +83,6 @@ health:
     limit: 15
     severity: critical
   - type: high_fan_out
-    target: QualityValidator.validate
-    value: 28
-    limit: 10
-    severity: critical
-  - type: high_fan_out
     target: SmartCommitGenerator.analyze_changes
     value: 27
     limit: 10
@@ -117,77 +97,27 @@ health:
     value: 26
     limit: 15
     severity: critical
+  - type: cc_exceeded
+    target: ensure_project_environment
+    value: 25
+    limit: 15
+    severity: critical
+  - type: cc_exceeded
+    target: SummaryQualityFilter.classify_intent_smart
+    value: 25
+    limit: 15
+    severity: critical
+  - type: high_fan_out
+    target: EnhancedSummaryGenerator.generate_enhanced_summary
+    value: 24
+    limit: 10
+    severity: critical
+  - type: high_fan_out
+    target: update_changelog
+    value: 23
+    limit: 10
+    severity: critical
 modules:
-- path: goal/generator/analyzer.py
-  lines: 356
-  classes: 2
-  methods: 5
-  cc_max: 58
-  inbound_deps: 0
-  exports:
-  - name: ChangeAnalyzer
-    type: class
-    cc_avg: 25.0
-    methods:
-    - name: classify_change_type
-      cc: 58
-      flag: split
-      fan_out: 16
-    - name: detect_scope
-      cc: 14
-      fan_out: 10
-  - name: ContentAnalyzer
-    type: class
-    cc_avg: 31.5
-    methods:
-    - name: short_action_summary
-      cc: 34
-      flag: split
-    - name: per_file_notes
-      cc: 29
-      flag: split
-      fan_out: 20
-- path: goal/smart_commit.py
-  lines: 735
-  classes: 2
-  methods: 20
-  cc_max: 46
-  inbound_deps: 0
-  exports:
-  - name: CodeAbstraction
-    type: class
-    cc_avg: 7.6
-    methods:
-    - name: get_domain
-      cc: 12
-    - name: extract_entities
-      cc: 20
-      flag: split
-      fan_out: 17
-    - name: infer_benefit
-      cc: 11
-  - name: SmartCommitGenerator
-    type: class
-    cc_avg: 13.1
-    methods:
-    - name: analyze_changes
-      cc: 24
-      flag: split
-      fan_out: 27
-    - name: _generate_functional_summary
-      cc: 22
-      flag: split
-    - name: _infer_commit_type
-      cc: 11
-    - name: generate_message
-      cc: 46
-      flag: split
-      fan_out: 16
-    - name: generate_functional_body
-      cc: 13
-  - name: create_smart_generator
-    type: function
-    cc: 1
 - path: goal/summary/generator.py
   lines: 644
   classes: 1
@@ -252,28 +182,6 @@ modules:
     - name: _build_summary
       cc: 16
       flag: split
-- path: goal/summary/validator.py
-  lines: 283
-  classes: 1
-  methods: 3
-  cc_max: 35
-  inbound_deps: 0
-  exports:
-  - name: QualityValidator
-    type: class
-    cc_avg: 20.0
-    methods:
-    - name: __init__
-      cc: 6
-      fan_out: 12
-    - name: validate
-      cc: 35
-      flag: split
-      fan_out: 28
-    - name: auto_fix
-      cc: 19
-      flag: split
-      fan_out: 27
 - path: goal/formatter.py
   lines: 361
   classes: 1
@@ -297,6 +205,36 @@ modules:
   - name: format_status_output
     type: function
     cc: 4
+- path: goal/generator/analyzer.py
+  lines: 396
+  classes: 2
+  methods: 16
+  cc_max: 34
+  inbound_deps: 0
+  exports:
+  - name: ChangeAnalyzer
+    type: class
+    cc_avg: 6.1
+    methods:
+    - name: _score_by_signals
+      cc: 15
+      flag: split
+    - name: _resolve_change_type
+      cc: 11
+    - name: detect_scope
+      cc: 14
+      fan_out: 10
+  - name: ContentAnalyzer
+    type: class
+    cc_avg: 31.5
+    methods:
+    - name: short_action_summary
+      cc: 34
+      flag: split
+    - name: per_file_notes
+      cc: 29
+      flag: split
+      fan_out: 20
 - path: goal/project_doctor.py
   lines: 724
   classes: 2
@@ -323,7 +261,7 @@ modules:
     fan_out: 17
   - name: diagnose_and_report_with_todo
     type: function
-    cc: 5
+    cc: 6
 - path: goal/cli/version.py
   lines: 591
   classes: 0
@@ -406,7 +344,7 @@ modules:
     type: function
     cc: 5
 - path: goal/cli/push_cmd.py
-  lines: 651
+  lines: 652
   classes: 0
   methods: 14
   cc_max: 29
@@ -510,12 +448,51 @@ modules:
     cc: 24
     flag: split
     fan_out: 23
+- path: goal/smart_commit.py
+  lines: 786
+  classes: 2
+  methods: 27
+  cc_max: 24
+  inbound_deps: 0
+  exports:
+  - name: CodeAbstraction
+    type: class
+    cc_avg: 7.6
+    methods:
+    - name: get_domain
+      cc: 12
+    - name: extract_entities
+      cc: 20
+      flag: split
+      fan_out: 17
+    - name: infer_benefit
+      cc: 11
+  - name: SmartCommitGenerator
+    type: class
+    cc_avg: 8.0
+    methods:
+    - name: analyze_changes
+      cc: 24
+      flag: split
+      fan_out: 27
+    - name: _generate_functional_summary
+      cc: 22
+      flag: split
+    - name: _infer_commit_type
+      cc: 11
+    - name: _infer_message_from_files
+      cc: 12
+    - name: generate_functional_body
+      cc: 13
+  - name: create_smart_generator
+    type: function
+    cc: 1
 - path: goal/git_ops.py
-  lines: 434
+  lines: 437
   classes: 0
   methods: 20
   cc_max: 23
-  inbound_deps: 5
+  inbound_deps: 6
   exports:
   - name: run_git
     type: function
@@ -531,7 +508,7 @@ modules:
     cc: 2
   - name: validate_repo_url
     type: function
-    cc: 3
+    cc: 4
   - name: get_remote_url
     type: function
     cc: 2
@@ -567,11 +544,35 @@ modules:
   - name: get_diff_content
     type: function
     cc: 2
+- path: goal/summary/validator.py
+  lines: 313
+  classes: 1
+  methods: 13
+  cc_max: 19
+  inbound_deps: 0
+  exports:
+  - name: QualityValidator
+    type: class
+    cc_avg: 5.5
+    methods:
+    - name: __init__
+      cc: 6
+      fan_out: 12
+    - name: validate
+      cc: 1
+      fan_out: 14
+    - name: _validate_title
+      cc: 10
+      fan_out: 13
+    - name: auto_fix
+      cc: 19
+      flag: split
+      fan_out: 27
 - path: goal/cli/__init__.py
-  lines: 244
+  lines: 248
   classes: 1
   methods: 11
-  cc_max: 15
+  cc_max: 14
   inbound_deps: 2
   exports:
   - name: GoalGroup
@@ -580,7 +581,7 @@ modules:
   - name: strip_ansi
     type: function
     cc: 2
-  - name: read_tickert
+  - name: read_ticket
     type: function
     cc: 7
   - name: apply_ticket_prefix
@@ -588,8 +589,7 @@ modules:
     cc: 6
   - name: split_paths_by_type
     type: function
-    cc: 15
-    flag: split
+    cc: 14
   - name: stage_paths
     type: function
     cc: 5
@@ -628,7 +628,20 @@ modules:
   - name: doctor
     type: function
     cc: 12
-    fan_out: 18
+    fan_out: 19
+- path: goal/cli/publish.py
+  lines: 78
+  classes: 0
+  methods: 2
+  cc_max: 11
+  inbound_deps: 2
+  exports:
+  - name: makefile_has_target
+    type: function
+    cc: 4
+  - name: publish_project
+    type: function
+    cc: 11
 - path: goal/generator/git_ops.py
   lines: 171
   classes: 1
@@ -717,7 +730,7 @@ modules:
     type: function
     cc: 2
 - path: goal/cli/utils_cmd.py
-  lines: 220
+  lines: 221
   classes: 0
   methods: 8
   cc_max: 10
@@ -785,19 +798,6 @@ modules:
     type: function
     cc: 7
     fan_out: 11
-- path: goal/cli/publish.py
-  lines: 63
-  classes: 0
-  methods: 2
-  cc_max: 6
-  inbound_deps: 2
-  exports:
-  - name: makefile_has_target
-    type: function
-    cc: 4
-  - name: publish_project
-    type: function
-    cc: 6
 - path: goal/cli/config_cmd.py
   lines: 115
   classes: 0
@@ -879,12 +879,6 @@ hotspots:
 - name: _diagnose_python
   fan_out: 30
   note: Run all Python-specific diagnostics.
-- name: QualityValidator.validate
-  fan_out: 28
-  note: 'Validate summary against all quality gates.
-
-
-    Returns: {valid: bool, errors: [], '
 - name: SmartCommitGenerator.analyze_changes
   fan_out: 27
   note: Analysis pipeline, 27 stages
@@ -907,16 +901,19 @@ hotspots:
 - name: format_push_result
   fan_out: 22
   note: 22-way dispatch
+- name: CodeChangeAnalyzer._analyze_python_diff
+  fan_out: 20
+  note: Analysis pipeline, 20 stages
 refactoring:
   priorities:
-  - action: Split validate_project_versions (CC=30 → target CC<10)
-    impact: high
-    effort: low
-    module: version_validation.py
   - action: Split ensure_project_environment (CC=25 → target CC<10)
     impact: high
     effort: low
     module: project_bootstrap.py
+  - action: Split validate_project_versions (CC=30 → target CC<10)
+    impact: high
+    effort: low
+    module: version_validation.py
   - action: Split format_push_result (CC=34 → target CC<10)
     impact: high
     effort: low
@@ -929,14 +926,6 @@ refactoring:
     impact: high
     effort: low
     module: deep_analyzer.py
-  - action: Split SmartCommitGenerator.generate_message (CC=46 → target CC<10)
-    impact: high
-    effort: low
-    module: smart_commit.py
-  - action: Split ChangeAnalyzer.classify_change_type (CC=58 → target CC<10)
-    impact: high
-    effort: low
-    module: analyzer.py
   - action: Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)
     impact: high
     effort: low
@@ -962,17 +951,29 @@ refactoring:
     impact: high
     effort: low
     module: push_cmd.py
-  - action: Split QualityValidator.validate (CC=35 → target CC<10)
-    impact: high
-    effort: low
-    module: validator.py
   - action: Split EnhancedSummaryGenerator._format_enhanced_body (CC=40 → target CC<10)
     impact: high
     effort: low
     module: generator.py
+  - action: Split SummaryQualityFilter.classify_intent_smart (CC=25 → target CC<10)
+    impact: high
+    effort: low
+    module: quality_filter.py
+  - action: Split _diagnose_python (CC=34 → target CC<10)
+    impact: high
+    effort: low
+    module: project_doctor.py
+  - action: Split god module goal/summary/generator.py (644L, 1 classes)
+    impact: high
+    effort: high
 evolution:
 - date: '2026-03-05'
   cc_avg: 7.3
   critical: 63
   lines: 11541
+  note: Automated analysis
+- date: '2026-03-07'
+  cc_avg: 6.7
+  critical: 65
+  lines: 11702
   note: Automated analysis
