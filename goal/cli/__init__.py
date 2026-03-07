@@ -15,15 +15,9 @@ try:
 except ImportError:
     _HAS_NFO = False
 
-# Try both relative and absolute imports for flexibility
-try:
-    from ..git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
-    from ..config import GoalConfig, ensure_config, init_config, load_config
-    from ..user_config import get_user_config, initialize_user_config, show_user_config
-except ImportError:
-    from goal.git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
-    from goal.config import GoalConfig, ensure_config, init_config, load_config
-    from goal.user_config import get_user_config, initialize_user_config, show_user_config
+from goal.git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
+from goal.config import GoalConfig, ensure_config, init_config, load_config
+from goal.user_config import get_user_config, initialize_user_config, show_user_config
 
 
 DOCS_URL = "https://github.com/wronai/goal#readme"
