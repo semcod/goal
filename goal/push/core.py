@@ -6,24 +6,14 @@ from pathlib import Path
 
 import click
 
-try:
-    from ..git_ops import run_git, get_staged_files, get_diff_content, get_diff_stats
-    from ..project_bootstrap import detect_project_types_deep, bootstrap_project
-    from .stages import (
-        get_commit_message, enforce_quality_gates, handle_single_commit,
-        handle_split_commits, handle_version_sync, get_version_info,
-        handle_changelog, run_test_stage, create_tag, push_to_remote,
-        handle_publish, handle_dry_run
-    )
-except ImportError:
-    from goal.git_ops import run_git, get_staged_files, get_diff_content, get_diff_stats
-    from goal.project_bootstrap import detect_project_types_deep, bootstrap_project
-    from goal.push.stages import (
-        get_commit_message, enforce_quality_gates, handle_single_commit,
-        handle_split_commits, handle_version_sync, get_version_info,
-        handle_changelog, run_test_stage, create_tag, push_to_remote,
-        handle_publish, handle_dry_run
-    )
+from goal.git_ops import run_git, get_staged_files, get_diff_content, get_diff_stats
+from goal.project_bootstrap import detect_project_types_deep, bootstrap_project
+from goal.push.stages import (
+    get_commit_message, enforce_quality_gates, handle_single_commit,
+    handle_split_commits, handle_version_sync, get_version_info,
+    handle_changelog, run_test_stage, create_tag, push_to_remote,
+    handle_publish, handle_dry_run
+)
 
 
 def run_git_local(*args, **kwargs):
@@ -74,10 +64,7 @@ def output_final_summary(
     if not (markdown or ctx_obj.get('markdown')):
         return
     
-    try:
-        from ..formatter import format_push_result
-    except ImportError:
-        from goal.formatter import format_push_result
+    from goal.formatter import format_push_result
     
     success_emoji = "🎉" if test_exit_code == 0 and publish_success else "✅"
     click.echo(click.style(f"\n{success_emoji} Process completed successfully!", fg='green', bold=True))
@@ -147,10 +134,7 @@ def execute_push_workflow(
     ctx_obj['markdown'] = markdown or ctx_obj.get('markdown', False)
     
     # Detect project types (lazy import to avoid circular dependency)
-    try:
-        from ..cli.version import detect_project_types
-    except ImportError:
-        from goal.cli.version import detect_project_types
+    from goal.cli.version import detect_project_types
     project_types = detect_project_types()
     if project_types and not dry_run:
         click.echo(f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}")
@@ -170,12 +154,8 @@ def execute_push_workflow(
     files = get_staged_files()
     if not files or files == ['']:
         if markdown or ctx_obj.get('markdown'):
-            try:
-                from ..cli.version import get_current_version
-                from ..formatter import format_push_result
-            except ImportError:
-                from goal.cli.version import get_current_version
-                from goal.formatter import format_push_result
+            from goal.cli.version import get_current_version
+            from goal.formatter import format_push_result
             
             current_version = get_current_version()
             md_output = format_push_result(
@@ -243,10 +223,7 @@ def execute_push_workflow(
         current_version, new_version, commit_msg, commit_body
     )
     
-    try:
-        from ..cli import confirm
-    except ImportError:
-        from goal.cli import confirm
+    from goal.cli import confirm
     
     # Commit confirmation
     if not ctx_obj['yes']:
@@ -280,10 +257,7 @@ def execute_push_workflow(
     tag_name = create_tag(new_version, no_tag)
     
     # Push to remote
-    try:
-        from ..git_ops import get_remote_branch
-    except ImportError:
-        from goal.git_ops import get_remote_branch
+    from goal.git_ops import get_remote_branch
     
     branch = get_remote_branch()
     push_to_remote(branch, tag_name, no_tag, ctx_obj['yes'])
