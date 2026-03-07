@@ -479,25 +479,12 @@ class EnhancedSummaryGenerator:
             'files': files  # Include deduped files for validation
         }
     
-    def _format_enhanced_body(self, capabilities: List[Dict],
-                               roles: List[Dict],
-                               relations: Dict,
-                               metrics: Dict,
-                               files: List[str],
-                               aggregated: Dict,
-                               file_analyses: List[Dict] = None) -> str:
-        """Format the enhanced commit body.
+    def _format_changes_section(self, files: List[str], file_analyses: List[Dict]) -> tuple:
+        """Format the CHANGES section with per-file breakdown.
         
-        Produces a YAML structure optimised for git log / GitHub readers:
-        - changes:      per-file concrete additions/modifications/removals
-        - testing:      new test scenarios (only when tests are present)
-        - dependencies: import flow between changed files (only when present)
-        - stats:        concise line/complexity metrics
+        Returns:
+            Tuple of (section_text, test_scenarios, has_changes)
         """
-        file_analyses = file_analyses or []
-        sections = []
-
-        # ── CHANGES section: per-file breakdown of what was touched ──
         categorized = self.quality_filter.categorize_files(files)
         # Build filepath→analysis lookup
         analysis_map = {}
@@ -558,50 +545,98 @@ class EnhancedSummaryGenerator:
                 change_lines.append(f"    removed: [{', '.join(names)}{suffix}]")
 
         if has_changes:
-            sections.append('\n'.join(change_lines))
+            return '\n'.join(change_lines), test_scenarios, True
+        return "", [], False
+
+    def _format_testing_section(self, test_scenarios: List[str]) -> str:
+        """Format the TESTING section with concrete test scenarios."""
+        if not test_scenarios:
+            return ""
+        
+        test_lines = ["testing:"]
+        test_lines.append(f"  new_tests: {len(test_scenarios)}")
+        test_lines.append("  scenarios:")
+        for t in test_scenarios[:10]:
+            # Strip test_ prefix for readability
+            readable = t[5:] if t.startswith('test_') else t
+            test_lines.append(f"    - {readable}")
+        if len(test_scenarios) > 10:
+            test_lines.append(f"    # +{len(test_scenarios) - 10} more")
+        return '\n'.join(test_lines)
+
+    def _format_dependencies_section(self, relations: Dict) -> str:
+        """Format the DEPENDENCIES section with import flow."""
+        if not relations.get('relations'):
+            return ""
+        
+        dep_lines = ["dependencies:"]
+        chain = relations.get('chain', '')
+        if chain:
+            dep_lines.append(f"  flow: \"{chain}\"")
+        for r in relations.get('relations', [])[:8]:
+            dep_lines.append(f"  - {r.get('from')}.py -> {r.get('to')}.py")
+        return '\n'.join(dep_lines)
+
+    def _format_stats_section(self, metrics: Dict, files: List[str]) -> str:
+        """Format the STATS section with concise metrics."""
+        if not metrics:
+            return ""
+        
+        stat_lines = ["stats:"]
+        added = metrics.get('lines_added', 0)
+        deleted = metrics.get('lines_deleted', 0)
+        if added or deleted:
+            net = added - deleted
+            sign = '+' if net >= 0 else ''
+            stat_lines.append(f"  lines: \"+{added}/-{deleted} (net {sign}{net})\"")
+        stat_lines.append(f"  files: {len(files)}")
+
+        # Complexity change (human-readable interpretation)
+        old_cc = metrics.get('old_complexity', 1)
+        new_cc = metrics.get('new_complexity', old_cc)
+        if old_cc and old_cc > 0:
+            emoji, desc = self.quality_filter.format_complexity_delta(old_cc, new_cc)
+            stat_lines.append(f"  complexity: \"{desc}\"")
+
+        return '\n'.join(stat_lines)
+
+    def _format_enhanced_body(self, capabilities: List[Dict],
+                               roles: List[Dict],
+                               relations: Dict,
+                               metrics: Dict,
+                               files: List[str],
+                               aggregated: Dict,
+                               file_analyses: List[Dict] = None) -> str:
+        """Format the enhanced commit body.
+        
+        Produces a YAML structure optimised for git log / GitHub readers:
+        - changes:      per-file concrete additions/modifications/removals
+        - testing:      new test scenarios (only when tests are present)
+        - dependencies: import flow between changed files (only when present)
+        - stats:        concise line/complexity metrics
+        """
+        file_analyses = file_analyses or []
+        sections = []
+
+        # ── CHANGES section: per-file breakdown of what was touched ──
+        changes_section, test_scenarios, has_changes = self._format_changes_section(files, file_analyses)
+        if has_changes:
+            sections.append(changes_section)
 
         # ── TESTING section: concrete test scenarios added ──
-        if test_scenarios:
-            test_lines = ["testing:"]
-            test_lines.append(f"  new_tests: {len(test_scenarios)}")
-            test_lines.append("  scenarios:")
-            for t in test_scenarios[:10]:
-                # Strip test_ prefix for readability
-                readable = t[5:] if t.startswith('test_') else t
-                test_lines.append(f"    - {readable}")
-            if len(test_scenarios) > 10:
-                test_lines.append(f"    # +{len(test_scenarios) - 10} more")
-            sections.append('\n'.join(test_lines))
+        testing_section = self._format_testing_section(test_scenarios)
+        if testing_section:
+            sections.append(testing_section)
 
         # ── DEPENDENCIES section: import flow (only when non-trivial) ──
-        if relations.get('relations'):
-            dep_lines = ["dependencies:"]
-            chain = relations.get('chain', '')
-            if chain:
-                dep_lines.append(f"  flow: \"{chain}\"")
-            for r in relations.get('relations', [])[:8]:
-                dep_lines.append(f"  - {r.get('from')}.py -> {r.get('to')}.py")
-            sections.append('\n'.join(dep_lines))
+        deps_section = self._format_dependencies_section(relations)
+        if deps_section:
+            sections.append(deps_section)
 
         # ── STATS section: concise metrics ──
-        if metrics:
-            stat_lines = ["stats:"]
-            added = metrics.get('lines_added', 0)
-            deleted = metrics.get('lines_deleted', 0)
-            if added or deleted:
-                net = added - deleted
-                sign = '+' if net >= 0 else ''
-                stat_lines.append(f"  lines: \"+{added}/-{deleted} (net {sign}{net})\"")
-            stat_lines.append(f"  files: {len(files)}")
-
-            # Complexity change (human-readable interpretation)
-            old_cc = metrics.get('old_complexity', 1)
-            new_cc = metrics.get('new_complexity', old_cc)
-            if old_cc and old_cc > 0:
-                emoji, desc = self.quality_filter.format_complexity_delta(old_cc, new_cc)
-                stat_lines.append(f"  complexity: \"{desc}\"")
-
-            sections.append('\n'.join(stat_lines))
+        stats_section = self._format_stats_section(metrics, files)
+        if stats_section:
+            sections.append(stats_section)
 
         return '\n\n'.join(sections)
     
