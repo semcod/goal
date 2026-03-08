@@ -1,31 +1,37 @@
 flowchart TD
     goal_changelog["goal.changelog<br/>1 funcs"]
-    goal_cli["goal.cli<br/>57 funcs"]
+    goal_cli["goal.cli<br/>52 funcs"]
     goal_config["goal.config<br/>25 funcs"]
-    goal_deep_analyzer["goal.deep_analyzer<br/>15 funcs"]
-    goal_formatter["goal.formatter<br/>11 funcs"]
-    goal_generator["goal.generator<br/>40 funcs"]
-    goal_git_ops["goal.git_ops<br/>20 funcs"]
+    goal_deep_analyzer["goal.deep_analyzer<br/>22 funcs"]
+    goal_doctor["goal.doctor<br/>28 funcs"]
+    goal_formatter["goal.formatter<br/>14 funcs"]
+    goal_generator["goal.generator<br/>47 funcs"]
+    goal_git_ops["goal.git_ops<br/>22 funcs"]
     goal_package_managers["goal.package_managers<br/>12 funcs"]
     goal_project_bootstrap["goal.project_bootstrap<br/>9 funcs"]
-    goal_project_doctor["goal.project_doctor<br/>17 funcs"]
+    goal_push["goal.push<br/>21 funcs"]
     goal_smart_commit["goal.smart_commit<br/>27 funcs"]
-    goal_summary["goal.summary<br/>42 funcs"]
+    goal_summary["goal.summary<br/>46 funcs"]
     goal_user_config["goal.user_config<br/>12 funcs"]
     goal_version_validation["goal.version_validation<br/>10 funcs"]
-    goal_cli ==>|37| goal_git_ops
+    goal_push ==>|26| goal_git_ops
+    goal_cli ==>|19| goal_git_ops
+    goal_push ==>|17| goal_cli
     goal_deep_analyzer ==>|11| goal_user_config
     goal_cli ==>|8| goal_config
     goal_cli ==>|7| goal_user_config
-    goal_cli ==>|6| goal_formatter
     goal_summary ==>|6| goal_user_config
-    goal_cli ==>|5| goal_project_bootstrap
     goal_generator ==>|4| goal_user_config
+    goal_push ==>|4| goal_formatter
+    goal_cli ==>|4| goal_version_validation
     goal_cli ==>|4| goal_package_managers
-    goal_cli -->|3| goal_version_validation
-    goal_project_doctor -->|3| goal_user_config
+    goal_cli -->|3| goal_project_bootstrap
+    goal_doctor -->|3| goal_user_config
+    goal_push -->|2| goal_project_bootstrap
     goal_smart_commit -->|2| goal_user_config
-    goal_cli -->|2| goal_changelog
-    goal_project_bootstrap -->|1| goal_project_doctor
-    goal_cli -->|1| goal_project_doctor
+    goal_project_bootstrap -->|1| goal_doctor
+    goal_cli -->|1| goal_doctor
+    goal_cli -->|1| goal_formatter
+    goal_cli -->|1| goal_push
     goal_package_managers -->|1| goal_user_config
+    goal_push -->|1| goal_changelog

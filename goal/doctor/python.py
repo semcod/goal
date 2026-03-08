@@ -219,6 +219,64 @@ class PythonDiagnostics:
             file='pyproject.toml',
         ))
     
+    def check_py009_string_authors(self) -> None:
+        """PY009: Check for authors in deprecated string format (PEP 621 requires objects)."""
+        authors_match = re.search(r'authors\s*=\s*\[(.*?)\]', self.content, re.DOTALL)
+        if not authors_match:
+            return
+        
+        authors_block = authors_match.group(1)
+        # Pattern to match string format: "Name <email>" or 'Name <email>'
+        string_author_pattern = re.compile(r'^\s*["\']([^"\']+)<([^>]+)>["\']\s*,?\s*$')
+        
+        lines = authors_block.strip().splitlines()
+        new_lines = []
+        has_string_format = False
+        
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                new_lines.append(line)
+                continue
+                
+            match = string_author_pattern.match(line)
+            if match:
+                has_string_format = True
+                name = match.group(1).strip()
+                email = match.group(2).strip()
+                # Replace with object format, preserving indentation
+                indent = line[:len(line) - len(line.lstrip())]
+                new_lines.append(f'{indent}{{name = "{name}", email = "{email}"}},')
+            else:
+                new_lines.append(line)
+        
+        if not has_string_format:
+            return
+        
+        detail = (
+            'authors field uses deprecated string format like "Name <email>".\n'
+            'PEP 621 requires object format: {name = "...", email = "..."}.\n'
+            'Newer setuptools will REJECT the string format.'
+        )
+        issue = Issue(
+            severity='error', code='PY009',
+            title='Authors use deprecated string format',
+            detail=detail, file='pyproject.toml',
+        )
+        if self.auto_fix:
+            new_block = '\n'.join(new_lines)
+            self.content = re.sub(
+                r'authors\s*=\s*\[.*?\]',
+                f'authors = [\n{new_block}\n]',
+                self.content,
+                flags=re.DOTALL
+            )
+            # Clean up any double newlines that might have been introduced
+            self.content = re.sub(r'\n{3,}', '\n\n', self.content)
+            issue.fixed = True
+            issue.fix_description = 'Converted string-format authors to PEP 621 object format'
+        self.issues.append(issue)
+    
     def write_fixes(self, pyproject: Path) -> None:
         """Write fixes back to file if content changed."""
         if self.content != self.original_content and self.auto_fix:
@@ -258,6 +316,7 @@ def diagnose_python(project_dir: Path, auto_fix: bool = True) -> List[Issue]:
     diag.check_py006_duplicate_authors()
     diag.check_py007_requires_python()
     diag.check_py008_empty_classifiers()
+    diag.check_py009_string_authors()
     
     # Write fixes
     diag.write_fixes(pyproject)

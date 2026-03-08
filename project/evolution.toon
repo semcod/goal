@@ -1,58 +1,58 @@
-# code2llm/evolution | 298 func | 27f | 2026-03-07
+# code2llm/evolution | 348 func | 47f | 2026-03-08
 
 NEXT[10] (ranked by impact):
-  [1] !! SPLIT           goal/project_doctor.py
-      WHY: 724L, 2 classes, max CC=34
-      EFFORT: ~4h  IMPACT: 24616
+  [1] !! SPLIT           goal/cli/version.py
+      WHY: 730L, 0 classes, max CC=33
+      EFFORT: ~4h  IMPACT: 24090
 
-  [2] !! SPLIT           goal/smart_commit.py
-      WHY: 786L, 2 classes, max CC=24
-      EFFORT: ~4h  IMPACT: 18864
+  [2] !! SPLIT           goal/summary/generator.py
+      WHY: 675L, 1 classes, max CC=26
+      EFFORT: ~4h  IMPACT: 17550
 
-  [3] !! SPLIT           goal/config.py
-      WHY: 798L, 1 classes, max CC=10
-      EFFORT: ~4h  IMPACT: 7980
+  [3] !! SPLIT           goal/package_managers.py
+      WHY: 631L, 1 classes, max CC=11
+      EFFORT: ~4h  IMPACT: 6941
 
-  [4] !! SPLIT-FUNC      push  CC=29  fan=37
+  [4] !! SPLIT-FUNC      execute_push_workflow  CC=29  fan=35
       WHY: CC=29 exceeds 15
-      EFFORT: ~1h  IMPACT: 1073
+      EFFORT: ~1h  IMPACT: 1015
 
-  [5] !! SPLIT-FUNC      _diagnose_python  CC=34  fan=30
-      WHY: CC=34 exceeds 15
-      EFFORT: ~1h  IMPACT: 1020
-
-  [6] !! SPLIT-FUNC      EnhancedSummaryGenerator._format_enhanced_body  CC=40  fan=19
-      WHY: CC=40 exceeds 15
-      EFFORT: ~1h  IMPACT: 760
-
-  [7] !! SPLIT-FUNC      format_push_result  CC=34  fan=22
-      WHY: CC=34 exceeds 15
-      EFFORT: ~1h  IMPACT: 748
-
-  [8] !  SPLIT-FUNC      SmartCommitGenerator.analyze_changes  CC=24  fan=27
+  [5] !  SPLIT-FUNC      SmartCommitGenerator.analyze_changes  CC=24  fan=27
       WHY: CC=24 exceeds 15
       EFFORT: ~1h  IMPACT: 648
 
-  [9] !! SPLIT-FUNC      CommitMessageGenerator.generate_detailed_message  CC=28  fan=23
-      WHY: CC=28 exceeds 15
-      EFFORT: ~1h  IMPACT: 644
-
-  [10] !! SPLIT-FUNC      sync_all_versions  CC=33  fan=18
+  [6] !! SPLIT-FUNC      sync_all_versions  CC=33  fan=18
       WHY: CC=33 exceeds 15
       EFFORT: ~1h  IMPACT: 594
 
+  [7] !! SPLIT-FUNC      ContentAnalyzer.per_file_notes  CC=29  fan=20
+      WHY: CC=29 exceeds 15
+      EFFORT: ~1h  IMPACT: 580
+
+  [8] !! SPLIT-FUNC      validate_project_versions  CC=30  fan=19
+      WHY: CC=30 exceeds 15
+      EFFORT: ~1h  IMPACT: 570
+
+  [9] !  SPLIT-FUNC      update_changelog  CC=24  fan=23
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 552
+
+  [10] !  SPLIT-FUNC      QualityValidator.auto_fix  CC=19  fan=27
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 513
+
 
 RISKS[3]:
-  ⚠ Splitting goal/config.py may break 25 import paths
-  ⚠ Splitting goal/smart_commit.py may break 27 import paths
-  ⚠ Splitting goal/project_doctor.py may break 17 import paths
+  ⚠ Splitting goal/cli/version.py may break 18 import paths
+  ⚠ Splitting goal/summary/generator.py may break 16 import paths
+  ⚠ Splitting goal/package_managers.py may break 12 import paths
 
 METRICS-TARGET:
-  CC̄:          6.7 → ≤4.7
-  max-CC:      40 → ≤20
-  god-modules: 9 → 0
-  high-CC(≥15): 29 → ≤14
+  CC̄:          6.0 → ≤4.2
+  max-CC:      34 → ≤17
+  god-modules: 6 → 0
+  high-CC(≥15): 25 → ≤12
   hub-types:   0 → ≤0
 
 HISTORY:
-  prev CC̄=6.7 → now CC̄=6.7
+  prev CC̄=6.0 → now CC̄=6.0

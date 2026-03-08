@@ -1,5 +1,27 @@
 ## [Unreleased]
 
+## [2.1.95] - 2026-03-08
+
+### Docs
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_project_doctor.py
+
+### Other
+- Update project.sh
+- Update project/analysis.toon
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/dashboard.html
+- Update project/evolution.toon
+- Update project/flow.mmd
+- Update project/flow.png
+- ... and 5 more files
+
 ## [2.1.94] - 2026-03-07
 
 ## [2.1.93] - 2026-03-07

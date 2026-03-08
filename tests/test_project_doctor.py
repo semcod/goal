@@ -165,6 +165,22 @@ class TestDiagnosePython:
         issues = _diagnose_python(tmp_path)
         assert all(i.severity != 'error' for i in issues)
 
+    def test_string_format_authors(self, tmp_path):
+        (tmp_path / 'pyproject.toml').write_text(
+            '[build-system]\nrequires = ["setuptools"]\nbuild-backend = "setuptools.build_meta"\n\n'
+            '[project]\nname = "x"\nversion = "0.1.0"\n'
+            'authors = [\n'
+            '    "Tom Sapletta <tom@sapletta.com>",\n'
+            ']\n'
+        )
+        issues = _diagnose_python(tmp_path, auto_fix=True)
+        py009 = [i for i in issues if i.code == 'PY009']
+        assert len(py009) == 1
+        assert py009[0].fixed is True
+        content = (tmp_path / 'pyproject.toml').read_text()
+        assert '{name = "Tom Sapletta", email = "tom@sapletta.com"}' in content
+        assert '<tom@sapletta.com>"' not in content  # old string format removed
+
 
 # ---------------------------------------------------------------------------
 # Node.js diagnostics

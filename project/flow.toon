@@ -1,6 +1,15 @@
-# goal/flow | 298 func | 12 pipelines | 6 hub-types | 2026-03-07
+# goal/flow | 348 func | 12 pipelines | 6 hub-types | 2026-03-08
 
-PIPELINES[12] (Analysis:1, Core:8, IO:1, Unknown:2):
+PIPELINES[12] (Analysis:1, Core:7, IO:4):
+  Goal [IO]: ctx → bool
+              → push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo) CC=1    pure ▶
+              → execute_push_workflow(ctx_obj:Dict[str, Any], bump:str, no_tag:bool, no_changelog:bool, no_version_sync:bool, message:Optional[str], dry_run:bool, yes:bool, markdown:bool, split:bool, ticket:Optional[str], abstraction:Optional[str], todo:bool) → None CC=29   pure  !!
+              → handle_split_commits(ctx_obj:Dict[str, Any], files:List[str], ticket:Optional[str], new_version:str, current_version:str, no_version_sync:bool, no_changelog:bool, yes:bool) → None CC=17   IO  !!
+              → sync_all_versions_wrapper(new_version:str, user_config:Optional[Dict]) → List[str] CC=1    pure
+              → sync_all_versions(new_version:str, user_config) → List[str] CC=33   IO  !!
+              → update_project_metadata(filepath:Path, user_config) → bool CC=26   IO  !! ■
+              PURITY: 3/6 pure  BOTTLENECK: sync_all_versions(CC=33)
+
   Goal [IO]: ctx → ?
               → doctor(ctx, fix, path, todo)            CC=12   IO ▶
               → diagnose_and_report_with_todo(project_dir:Path, project_type:str, auto_fix:bool, todo_file:str) → DoctorReport CC=6    pure
@@ -9,6 +18,39 @@ PIPELINES[12] (Analysis:1, Core:8, IO:1, Unknown:2):
               → set(key:str, value:Any)                 CC=1    pure
               → _save()                                 CC=2    IO ■
               PURITY: 2/6 pure  BOTTLENECK: doctor(CC=12)
+
+  Goal [IO]: ctx → bool
+              → push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo) CC=1    pure ▶
+              → execute_push_workflow(ctx_obj:Dict[str, Any], bump:str, no_tag:bool, no_changelog:bool, no_version_sync:bool, message:Optional[str], dry_run:bool, yes:bool, markdown:bool, split:bool, ticket:Optional[str], abstraction:Optional[str], todo:bool) → None CC=29   pure  !!
+              → handle_split_commits(ctx_obj:Dict[str, Any], files:List[str], ticket:Optional[str], new_version:str, current_version:str, no_version_sync:bool, no_changelog:bool, yes:bool) → None CC=17   IO  !!
+              → sync_all_versions_wrapper(new_version:str, user_config:Optional[Dict]) → List[str] CC=1    pure
+              → sync_all_versions(new_version:str, user_config) → List[str] CC=33   IO  !!
+              → update_project_metadata(filepath:Path, user_config) → bool CC=26   IO  !! ■
+              PURITY: 3/6 pure  BOTTLENECK: sync_all_versions(CC=33)
+
+  Goal [Analysis]: List[str] → ?
+              → generate_functional_summary(files:List[str]) → Dict[str, Any] CC=5    IO ▶
+              → analyze_file_diff(filepath:str, old_content:str, new_content:str) → Dict[str, Any] CC=3    mutation
+              → _analyze_generic_diff(old_content:str, new_content:str) → Dict[str, Any] CC=1    pure
+              → set(key:str, value:Any)                 CC=1    pure
+              → _save()                                 CC=2    IO ■
+              PURITY: 2/5 pure  BOTTLENECK: generate_functional_summary(CC=5)
+
+  Generator [IO]: str → ?
+              → generate_abstraction_message(level:str, cached:bool) → Optional[Dict[str, Any]] CC=6    pure ▶
+              → generate_detailed_message(cached:bool, paths:Optional[List[str]]) → Dict[str, str] CC=3    mutation
+              → _classify_files(name_status:List[Tuple[str, str]], files:List[str]) → Tuple[List[str], List[str], List[str]] CC=11   mutation
+              → set(key:str, value:Any)                 CC=1    pure
+              → _save()                                 CC=2    IO ■
+              PURITY: 2/5 pure  BOTTLENECK: _classify_files(CC=11)
+
+  Goal [Core]: language → ?
+              → package_managers(language, available)   CC=8    pure ▶
+              → suggest_package_managers(project_path:str) → List[PackageManager] CC=5    mutation
+              → detect_project_language(project_path:str) → List[str] CC=4    mutation
+              → set(key:str, value:Any)                 CC=1    pure
+              → _save()                                 CC=2    IO ■
+              PURITY: 2/5 pure  BOTTLENECK: package_managers(CC=8)
 
   Goal [Core]: ? → Any
               → update_from_detection() → bool          CC=4    IO ▶
@@ -58,63 +100,57 @@ PIPELINES[12] (Analysis:1, Core:8, IO:1, Unknown:2):
               → _deep_copy(obj:Any) → Any               CC=5    pure ■
               PURITY: 3/5 pure  BOTTLENECK: get(CC=5)
 
-  Goal [Analysis]: List[str] → ?
-              → generate_functional_summary(files:List[str]) → Dict[str, Any] CC=5    IO ▶
-              → analyze_file_diff(filepath:str, old_content:str, new_content:str) → Dict[str, Any] CC=3    mutation
-              → _analyze_generic_diff(old_content:str, new_content:str) → Dict[str, Any] CC=1    pure
-              → set(key:str, value:Any)                 CC=1    pure
-              → _save()                                 CC=2    IO ■
-              PURITY: 2/5 pure  BOTTLENECK: generate_functional_summary(CC=5)
-
-  Goal [Core]: language → ?
-              → package_managers(language, available)   CC=8    pure ▶
-              → suggest_package_managers(project_path:str) → List[PackageManager] CC=5    mutation
-              → detect_project_language(project_path:str) → List[str] CC=4    mutation
-              → set(key:str, value:Any)                 CC=1    pure
-              → _save()                                 CC=2    IO ■
-              PURITY: 2/5 pure  BOTTLENECK: package_managers(CC=8)
-
-  Goal [Unknown]: ctx → ?
-              → push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo) CC=29   pure  !! ▶
-              → _push_to_remote(branch, tag_name, no_tag, yes) CC=12   pure
-              → ensure_remote(auto:bool) → bool         CC=7    pure
-              → _run_git_verbose(*args) → subprocess.CompletedProcess CC=1    pure
-              → run_git(*args)                          CC=1    pure ■
-              PURITY: 5/5 pure  BOTTLENECK: push(CC=29)
-
-  Goal [Unknown]: Optional[Path] → str
-              → bootstrap_all_projects(root:Optional[Path], yes:bool) → List[Dict] CC=6    mutation ▶
-              → bootstrap_project(project_dir:Path, project_type:str, yes:bool) → Dict CC=3    pure
-              → scaffold_test(project_dir:Path, project_type:str, yes:bool) → Optional[Path] CC=15   IO  !!
-              → guess_package_name(project_dir:Path, project_type:str) → str CC=20   IO  !! ■
-              PURITY: 1/4 pure  BOTTLENECK: guess_package_name(CC=20)
-
-  Goal [Core]: Optional[Dict[str, Any]] → Any
-              → save(config:Optional[Dict[str, Any]]) → None CC=3    IO ▶
-              → load() → Dict[str, Any]                 CC=5    IO
-              → _merge_configs(base:Dict, override:Dict) → Dict CC=5    pure
-              → _deep_copy(obj:Any) → Any               CC=5    pure ■
-              PURITY: 2/4 pure  BOTTLENECK: load(CC=5)
-
 
 TRANSFORMS (fan-out ≥10):
-  push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo) fan=37   !! mutation-heavy
-  _diagnose_python(project_dir:Path, auto_fix:bool) → List[Issue] fan=30   !! mutation-heavy
-  analyze_changes(staged_files:List[str]) → Dict[str, Any] fan=27   !! side-effects
+  execute_push_workflow(ctx_obj:Dict[str, Any], bump:str, no_tag:bool, no_changelog:bool, no_version_sync:bool, message:Optional[str], dry_run:bool, yes:bool, markdown:bool, split:bool, ticket:Optional[str], abstraction:Optional[str], todo:bool) → None fan=35   !! mutation-heavy
   auto_fix(summary:Dict[str, Any], files:List[str], added:int, deleted:int) → Dict[str, Any] fan=27   !! side-effects
+  analyze_changes(staged_files:List[str]) → Dict[str, Any] fan=27   !! side-effects
   generate_enhanced_summary(files:List[str], diff_content:str, lines_added:int, lines_deleted:int) → Dict[str, Any] fan=24   !! side-effects
   update_changelog(version:str, files:List[str], commit_msg:str, config:Dict, changelog_entry:Dict) fan=23   !! side-effects
-  generate_detailed_message(cached:bool, paths:Optional[List[str]]) → Dict[str, str] fan=23   !! side-effects
   guess_package_name(project_dir:Path, project_type:str) → str fan=22   !! side-effects
-  format_push_result(project_types:List[str], files:List[str], stats:Dict[str, tuple], current_version:str, new_version:str, commit_msg:str, commit_body:Optional[str], test_result:Optional[str], test_exit_code:int, actions:List[str], error:Optional[str], analysis:Optional[Dict[str, Any]]) → str fan=22   !! side-effects
   _analyze_python_diff(old_content:str, new_content:str) → Dict[str, Any] fan=20   !! side-effects
   per_file_notes(path:str, cached:bool) → List[str]       fan=20   !! side-effects
-  ensure_project_environment(project_dir:Path, project_type:str, yes:bool) → bool fan=19   fan=19
   validate_project_versions(project_types:List[str], current_version:str) → Dict[str, Dict] fan=19   fan=19
+  ensure_project_environment(project_dir:Path, project_type:str, yes:bool) → bool fan=19   fan=19
   ensure_git_repository(auto:bool) → bool                 fan=19   fan=19
   doctor(ctx, fix, path, todo)                            fan=19   fan=19
+  update_project_metadata(filepath:Path, user_config) → bool fan=19   fan=19
+  fix_summary(ctx, fix, preview, cached)                  fan=18   fan=18
+  validate(ctx, fix, cached)                              fan=18   fan=18
 
 CONTRACTS:
+  Pipeline: Goal
+    push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo)
+      IN:  ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo
+      OUT: None
+
+    execute_push_workflow(ctx_obj:Dict[str, Any], bump:str, no_tag:bool, no_changelog:bool, no_version_sync:bool, message:Optional[str], dry_run:bool, yes:bool, markdown:bool, split:bool, ticket:Optional[str], abstraction:Optional[str], todo:bool) → None
+      IN:  ctx_obj:Dict[str, Any], bump:str, no_tag:bool, no_changelog:bool, no_version_sync:bool, message:Optional[str], dry_run:bool, yes:bool, markdown:bool, split:bool, ticket:Optional[str], abstraction:Optional[str], todo:bool
+      OUT: None
+      SMELL: CC=29 → split
+
+    handle_split_commits(ctx_obj:Dict[str, Any], files:List[str], ticket:Optional[str], new_version:str, current_version:str, no_version_sync:bool, no_changelog:bool, yes:bool) → None
+      IN:  ctx_obj:Dict[str, Any], files:List[str], ticket:Optional[str], new_version:str, current_version:str, no_version_sync:bool, no_changelog:bool, yes:bool
+      OUT: None
+      SIDE-EFFECT: IO(write_text)
+      SMELL: CC=17 → split
+
+    sync_all_versions_wrapper(new_version:str, user_config:Optional[Dict]) → List[str]
+      IN:  new_version:str, user_config:Optional[Dict]
+      OUT: List[str]
+
+    sync_all_versions(new_version:str, user_config) → List[str]
+      IN:  new_version:str, user_config
+      OUT: List[str]
+      SIDE-EFFECT: IO(write_text, read_text, read_text)
+      SMELL: CC=33 → split
+
+    update_project_metadata(filepath:Path, user_config) → bool
+      IN:  filepath:Path, user_config
+      OUT: bool
+      SIDE-EFFECT: IO(read_text, write_text, loads)
+      SMELL: CC=26 → split
+
   Pipeline: Goal
     doctor(ctx, fix, path, todo)
       IN:  ctx, fix, path, todo
@@ -134,6 +170,110 @@ CONTRACTS:
       IN:  todo_file:Path
       OUT: Set[str]
       SIDE-EFFECT: IO(read_text)
+
+    set(key:str, value:Any)
+      IN:  key:str, value:Any
+      OUT: None
+
+    _save()
+      IN:  ()
+      OUT: None
+      SIDE-EFFECT: IO(mkdir, open, dump)
+
+  Pipeline: Goal
+    push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo)
+      IN:  ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo
+      OUT: None
+
+    execute_push_workflow(ctx_obj:Dict[str, Any], bump:str, no_tag:bool, no_changelog:bool, no_version_sync:bool, message:Optional[str], dry_run:bool, yes:bool, markdown:bool, split:bool, ticket:Optional[str], abstraction:Optional[str], todo:bool) → None
+      IN:  ctx_obj:Dict[str, Any], bump:str, no_tag:bool, no_changelog:bool, no_version_sync:bool, message:Optional[str], dry_run:bool, yes:bool, markdown:bool, split:bool, ticket:Optional[str], abstraction:Optional[str], todo:bool
+      OUT: None
+      SMELL: CC=29 → split
+
+    handle_split_commits(ctx_obj:Dict[str, Any], files:List[str], ticket:Optional[str], new_version:str, current_version:str, no_version_sync:bool, no_changelog:bool, yes:bool) → None
+      IN:  ctx_obj:Dict[str, Any], files:List[str], ticket:Optional[str], new_version:str, current_version:str, no_version_sync:bool, no_changelog:bool, yes:bool
+      OUT: None
+      SIDE-EFFECT: IO(write_text)
+      SMELL: CC=17 → split
+
+    sync_all_versions_wrapper(new_version:str, user_config:Optional[Dict]) → List[str]
+      IN:  new_version:str, user_config:Optional[Dict]
+      OUT: List[str]
+
+    sync_all_versions(new_version:str, user_config) → List[str]
+      IN:  new_version:str, user_config
+      OUT: List[str]
+      SIDE-EFFECT: IO(write_text, read_text, read_text)
+      SMELL: CC=33 → split
+
+    update_project_metadata(filepath:Path, user_config) → bool
+      IN:  filepath:Path, user_config
+      OUT: bool
+      SIDE-EFFECT: IO(read_text, write_text, loads)
+      SMELL: CC=26 → split
+
+  Pipeline: Goal
+    generate_functional_summary(files:List[str]) → Dict[str, Any]
+      IN:  files:List[str]
+      OUT: Dict[str, Any]
+      SIDE-EFFECT: IO(open, read)
+
+    analyze_file_diff(filepath:str, old_content:str, new_content:str) → Dict[str, Any]
+      IN:  filepath:str, old_content:str, new_content:str
+      OUT: Dict[str, Any]
+      SIDE-EFFECT: pure
+
+    _analyze_generic_diff(old_content:str, new_content:str) → Dict[str, Any]
+      IN:  old_content:str, new_content:str
+      OUT: Dict[str, Any]
+
+    set(key:str, value:Any)
+      IN:  key:str, value:Any
+      OUT: None
+
+    _save()
+      IN:  ()
+      OUT: None
+      SIDE-EFFECT: IO(mkdir, open, dump)
+
+  Pipeline: Generator
+    generate_abstraction_message(level:str, cached:bool) → Optional[Dict[str, Any]]
+      IN:  level:str, cached:bool
+      OUT: Optional[Dict[str, Any]]
+
+    generate_detailed_message(cached:bool, paths:Optional[List[str]]) → Dict[str, str]
+      IN:  cached:bool, paths:Optional[List[str]]
+      OUT: Dict[str, str]
+      SIDE-EFFECT: pure
+
+    _classify_files(name_status:List[Tuple[str, str]], files:List[str]) → Tuple[List[str], List[str], List[str]]
+      IN:  name_status:List[Tuple[str, str]], files:List[str]
+      OUT: Tuple[List[str], List[str], List[str]]
+      SIDE-EFFECT: pure
+
+    set(key:str, value:Any)
+      IN:  key:str, value:Any
+      OUT: None
+
+    _save()
+      IN:  ()
+      OUT: None
+      SIDE-EFFECT: IO(mkdir, open, dump)
+
+  Pipeline: Goal
+    package_managers(language, available)
+      IN:  language, available
+      OUT: None
+
+    suggest_package_managers(project_path:str) → List[PackageManager]
+      IN:  project_path:str
+      OUT: List[PackageManager]
+      SIDE-EFFECT: pure
+
+    detect_project_language(project_path:str) → List[str]
+      IN:  project_path:str
+      OUT: List[str]
+      SIDE-EFFECT: pure
 
     set(key:str, value:Any)
       IN:  key:str, value:Any
@@ -285,170 +425,59 @@ CONTRACTS:
       IN:  obj:Any
       OUT: Any
 
-  Pipeline: Goal
-    generate_functional_summary(files:List[str]) → Dict[str, Any]
-      IN:  files:List[str]
-      OUT: Dict[str, Any]
-      SIDE-EFFECT: IO(open, read)
 
-    analyze_file_diff(filepath:str, old_content:str, new_content:str) → Dict[str, Any]
-      IN:  filepath:str, old_content:str, new_content:str
-      OUT: Dict[str, Any]
-      SIDE-EFFECT: pure
-
-    _analyze_generic_diff(old_content:str, new_content:str) → Dict[str, Any]
-      IN:  old_content:str, new_content:str
-      OUT: Dict[str, Any]
-
-    set(key:str, value:Any)
-      IN:  key:str, value:Any
-      OUT: None
-
-    _save()
-      IN:  ()
-      OUT: None
-      SIDE-EFFECT: IO(mkdir, open, dump)
-
-  Pipeline: Goal
-    package_managers(language, available)
-      IN:  language, available
-      OUT: None
-
-    suggest_package_managers(project_path:str) → List[PackageManager]
-      IN:  project_path:str
-      OUT: List[PackageManager]
-      SIDE-EFFECT: pure
-
-    detect_project_language(project_path:str) → List[str]
-      IN:  project_path:str
-      OUT: List[str]
-      SIDE-EFFECT: pure
-
-    set(key:str, value:Any)
-      IN:  key:str, value:Any
-      OUT: None
-
-    _save()
-      IN:  ()
-      OUT: None
-      SIDE-EFFECT: IO(mkdir, open, dump)
-
-  Pipeline: Goal
-    push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo)
-      IN:  ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, markdown, split, ticket, abstraction, todo
-      OUT: None
-      SMELL: CC=29 → split
-
-    _push_to_remote(branch, tag_name, no_tag, yes)
-      IN:  branch, tag_name, no_tag, yes
-      OUT: None
-
-    ensure_remote(auto:bool) → bool
-      IN:  auto:bool
-      OUT: bool
-
-    _run_git_verbose(*args) → subprocess.CompletedProcess
-      IN:  *args
-      OUT: subprocess.CompletedProcess
-
-    run_git(*args)
-      IN:  *args
-      OUT: None
-
-  Pipeline: Goal
-    bootstrap_all_projects(root:Optional[Path], yes:bool) → List[Dict]
-      IN:  root:Optional[Path], yes:bool
-      OUT: List[Dict]
-      SIDE-EFFECT: pure
-
-    bootstrap_project(project_dir:Path, project_type:str, yes:bool) → Dict
-      IN:  project_dir:Path, project_type:str, yes:bool
-      OUT: Dict
-
-    scaffold_test(project_dir:Path, project_type:str, yes:bool) → Optional[Path]
-      IN:  project_dir:Path, project_type:str, yes:bool
-      OUT: Optional[Path]
-      SIDE-EFFECT: IO(mkdir, write_text)
-      SMELL: CC=15 → split
-
-    guess_package_name(project_dir:Path, project_type:str) → str
-      IN:  project_dir:Path, project_type:str
-      OUT: str
-      SIDE-EFFECT: IO(read_text, read_text, loads)
-      SMELL: CC=20 → split
-
-  Pipeline: Goal
-    save(config:Optional[Dict[str, Any]]) → None
-      IN:  config:Optional[Dict[str, Any]]
-      OUT: None
-      SIDE-EFFECT: IO(open, write, dump); mutates self._config
-
-    load() → Dict[str, Any]
-      IN:  ()
-      OUT: Dict[str, Any]
-      SIDE-EFFECT: IO(open); mutates self._loaded, self._config, self._config
-
-    _merge_configs(base:Dict, override:Dict) → Dict
-      IN:  base:Dict, override:Dict
-      OUT: Dict
-
-    _deep_copy(obj:Any) → Any
-      IN:  obj:Any
-      OUT: Any
-
-
-DATA_TYPES (by cross-function usage) [259 annotated, 0 inferred / 298 functions]:
-  str                  consumed:220 produced:96   !! HUB-TYPE → split interface
-  bool                 consumed:47  produced:25   !! HUB-TYPE → split interface
-  str, Any             consumed:35  produced:22   !! HUB-TYPE → split interface
-  Path                 consumed:29  produced:4    !! HUB-TYPE → split interface
-  Dict                 consumed:23  produced:7    !! HUB-TYPE → split interface
-  int                  consumed:18  produced:3    !! HUB-TYPE → split interface
+DATA_TYPES (by cross-function usage) [312 annotated, 0 inferred / 348 functions]:
+  str                  consumed:308 produced:114  !! HUB-TYPE → split interface
+  bool                 consumed:77  produced:29   !! HUB-TYPE → split interface
+  str, Any             consumed:43  produced:22   !! HUB-TYPE → split interface
+  Dict                 consumed:37  produced:7    !! HUB-TYPE → split interface
+  Path                 consumed:35  produced:4    !! HUB-TYPE → split interface
+  int                  consumed:21  produced:3    !! HUB-TYPE → split interface
+  str, str             consumed:3   produced:10 
   Issue                consumed:5   produced:8  
-  str, str             consumed:2   produced:9  
+  tuple                consumed:8   produced:3  
   PackageManager       consumed:3   produced:6  
-  tuple                consumed:8   produced:1    input-heavy (read-only flow)
+  str, int             consumed:4   produced:2  
   defaultdict          consumed:6   produced:0    input-heavy (read-only flow)
-  str, int             consumed:3   produced:2  
-  str, bool            consumed:3   produced:1    narrow scope
-  str, Tuple[int, int] consumed:0   produced:3    narrow scope
-  DoctorReport         consumed:0   produced:3    narrow scope
-  str, Dict            consumed:1   produced:2    narrow scope
+  str, bool            consumed:4   produced:2  
+  str, Tuple[int, int] consumed:2   produced:3  
+  str, tuple           consumed:4   produced:0    narrow scope
   GoalConfig           consumed:0   produced:3    narrow scope
+  dict                 consumed:2   produced:1    narrow scope
+  list                 consumed:3   produced:0    narrow scope
   subprocess.CompletedProcess consumed:0   produced:3    narrow scope
-  str, tuple           consumed:2   produced:0    narrow scope
-  str, str, str        consumed:0   produced:2    narrow scope
+  DoctorReport         consumed:0   produced:3    narrow scope
 
   HUB TYPES (consumed ≥10):
-    str → 220 consumers → split into:
+    str → 308 consumers → split into:
       - (analyze consumers to suggest sub-interfaces)
-    bool → 47 consumers → split into:
+    bool → 77 consumers → split into:
       - (analyze consumers to suggest sub-interfaces)
-    str, Any → 35 consumers → split into:
+    str, Any → 43 consumers → split into:
       - (analyze consumers to suggest sub-interfaces)
-    Path → 29 consumers → split into:
+    Dict → 37 consumers → split into:
       - (analyze consumers to suggest sub-interfaces)
-    Dict → 23 consumers → split into:
+    Path → 35 consumers → split into:
       - (analyze consumers to suggest sub-interfaces)
-    int → 18 consumers → split into:
+    int → 21 consumers → split into:
       - (analyze consumers to suggest sub-interfaces)
 
 SIDE_EFFECTS:
-  IO:        guess_package_name, scaffold_test, UserConfig._load, UserConfig._save, update_changelog, get_pypi_version, get_npm_version, get_cargo_version, get_rubygems_version, extract_badge_versions
+  IO:        update_changelog, UserConfig._load, UserConfig._save, get_pypi_version, get_npm_version, get_cargo_version, get_rubygems_version, extract_badge_versions, update_badge_versions, validate_project_versions
   Cache:     GitDiffOperations.clear_cache
-  Mutation:  detect_project_types_deep, find_existing_tests, bootstrap_all_projects, UserConfig.__init__, format_validation_results, GoalConfig.__init__, GoalConfig._detect_project_types, MarkdownFormatter.__init__, MarkdownFormatter.add_header, MarkdownFormatter.add_metadata
-  Pure:      _match_marker, _find_python_bin, ensure_project_environment, bootstrap_project, UserConfig.get, UserConfig.set, UserConfig.is_initialized, get_git_user_name, get_git_user_email, prompt_for_license
+  Mutation:  UserConfig.__init__, format_validation_results, detect_project_types_deep, find_existing_tests, bootstrap_all_projects, MarkdownFormatter.__init__, MarkdownFormatter.add_header, MarkdownFormatter.add_metadata, MarkdownFormatter.add_section, MarkdownFormatter.add_list
+  Pure:      UserConfig.get, UserConfig.set, UserConfig.is_initialized, get_git_user_name, get_git_user_email, prompt_for_license, initialize_user_config, get_user_config, show_user_config, get_registry_version
 
   PIPELINE PURITY:
-    Goal            █░░░ 33% pure
-    Goal            █░░░ 40% pure
-    Goal            █░░░ 40% pure
-    Goal            ██░░ 60% pure
-    Goal            ██░░ 60% pure
-    Goal            ██░░ 60% pure
-    Goal            ██░░ 60% pure
-    Goal            █░░░ 40% pure
-    Goal            █░░░ 40% pure
-    Goal            ████ 100% pure
-    Goal            █░░░ 25% pure
     Goal            ██░░ 50% pure
+    Goal            █░░░ 33% pure
+    Goal            ██░░ 50% pure
+    Goal            █░░░ 40% pure
+    Generator       █░░░ 40% pure
+    Goal            █░░░ 40% pure
+    Goal            █░░░ 40% pure
+    Goal            █░░░ 40% pure
+    Goal            ██░░ 60% pure
+    Goal            ██░░ 60% pure
+    Goal            ██░░ 60% pure
+    Goal            ██░░ 60% pure

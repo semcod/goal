@@ -56,29 +56,24 @@
   goal — Warning
 </h1>
 <p style="color:var(--muted);font-size:.85rem;">
-  Analyzed 2026-03-07 by code2llm
+  Analyzed 2026-03-08 by code2llm
 </p>
 
 <div class="grid">
-  <div class="card"><div class="value">6.7</div><div class="label">Avg CC</div></div>
-  <div class="card"><div class="value">65</div><div class="label">Critical (CC≥10)</div></div>
-  <div class="card"><div class="value">298</div><div class="label">Functions</div></div>
-  <div class="card"><div class="value">17</div><div class="label">Classes</div></div>
-  <div class="card"><div class="value">27</div><div class="label">Files</div></div>
-  <div class="card"><div class="value">11702</div><div class="label">Lines</div></div>
+  <div class="card"><div class="value">6.0</div><div class="label">Avg CC</div></div>
+  <div class="card"><div class="value">66</div><div class="label">Critical (CC≥10)</div></div>
+  <div class="card"><div class="value">348</div><div class="label">Functions</div></div>
+  <div class="card"><div class="value">19</div><div class="label">Classes</div></div>
+  <div class="card"><div class="value">47</div><div class="label">Files</div></div>
+  <div class="card"><div class="value">12955</div><div class="label">Lines</div></div>
   <div class="card"><div class="value">0</div><div class="label">Duplicates</div></div>
   <div class="card"><div class="value">0</div><div class="label">Cycles</div></div>
 </div>
 
 <div class="two-col">
   <div class="chart-container">
-    <h2 style="border:none;margin:0 0 .5rem;">Evolution (2026-03-07)</h2>
-    <div class="evo-cards">
-      <div class="card"><div class="value">6.7</div><div class="label">CC̄ ↓</div></div>
-      <div class="card"><div class="value">65</div><div class="label">Critical ↑</div></div>
-      <div class="card"><div class="value">11702</div><div class="label">Lines</div></div>
-    </div>
-    <p class="trend" style="margin-top:.5rem;">Run analysis multiple times to build a trend chart (≥3 data points needed).</p>
+    <h2 style="border:none;margin:0 0 .5rem;">Evolution</h2>
+    <canvas id="evoChart" height="200"></canvas>
   </div>
   <div class="chart-container">
     <h2 style="border:none;margin:0 0 .5rem;">Module CC (top 15)</h2>
@@ -93,42 +88,14 @@
   <tbody>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
-                <td>EnhancedSummaryGenerator._format_enhanced_body</td>
-                <td>cc_exceeded</td>
-                <td>40</td>
-                <td>15</td>
-            </tr>
-            <tr class="critical">
-                <td><span class="badge critical">critical</span></td>
-                <td>CodeChangeAnalyzer.infer_functional_value</td>
-                <td>cc_exceeded</td>
-                <td>38</td>
-                <td>15</td>
-            </tr>
-            <tr class="critical">
-                <td><span class="badge critical">critical</span></td>
-                <td>push</td>
+                <td>execute_push_workflow</td>
                 <td>high_fan_out</td>
-                <td>37</td>
+                <td>35</td>
                 <td>10</td>
             </tr>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
-                <td>format_push_result</td>
-                <td>cc_exceeded</td>
-                <td>34</td>
-                <td>15</td>
-            </tr>
-            <tr class="critical">
-                <td><span class="badge critical">critical</span></td>
                 <td>ContentAnalyzer.short_action_summary</td>
-                <td>cc_exceeded</td>
-                <td>34</td>
-                <td>15</td>
-            </tr>
-            <tr class="critical">
-                <td><span class="badge critical">critical</span></td>
-                <td>_diagnose_python</td>
                 <td>cc_exceeded</td>
                 <td>34</td>
                 <td>15</td>
@@ -149,13 +116,6 @@
             </tr>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
-                <td>_diagnose_python</td>
-                <td>high_fan_out</td>
-                <td>30</td>
-                <td>10</td>
-            </tr>
-            <tr class="critical">
-                <td><span class="badge critical">critical</span></td>
                 <td>format_enhanced_summary</td>
                 <td>cc_exceeded</td>
                 <td>29</td>
@@ -170,17 +130,17 @@
             </tr>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
-                <td>push</td>
+                <td>execute_push_workflow</td>
                 <td>cc_exceeded</td>
                 <td>29</td>
                 <td>15</td>
             </tr>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
-                <td>CommitMessageGenerator.generate_detailed_message</td>
-                <td>cc_exceeded</td>
-                <td>28</td>
-                <td>15</td>
+                <td>QualityValidator.auto_fix</td>
+                <td>high_fan_out</td>
+                <td>27</td>
+                <td>10</td>
             </tr>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
@@ -191,9 +151,44 @@
             </tr>
             <tr class="critical">
                 <td><span class="badge critical">critical</span></td>
-                <td>QualityValidator.auto_fix</td>
+                <td>update_project_metadata</td>
+                <td>cc_exceeded</td>
+                <td>26</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>EnhancedSummaryGenerator._format_changes_section</td>
+                <td>cc_exceeded</td>
+                <td>26</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>ensure_project_environment</td>
+                <td>cc_exceeded</td>
+                <td>25</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>SummaryQualityFilter.classify_intent_smart</td>
+                <td>cc_exceeded</td>
+                <td>25</td>
+                <td>15</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>EnhancedSummaryGenerator.generate_enhanced_summary</td>
                 <td>high_fan_out</td>
-                <td>27</td>
+                <td>24</td>
+                <td>10</td>
+            </tr>
+            <tr class="critical">
+                <td><span class="badge critical">critical</span></td>
+                <td>update_changelog</td>
+                <td>high_fan_out</td>
+                <td>23</td>
                 <td>10</td>
             </tr></tbody>
 </table>
@@ -207,24 +202,19 @@
   <thead><tr><th>Function</th><th>Fan-out</th><th>Note</th></tr></thead>
   <tbody>
             <tr>
-                <td><strong>push</strong></td>
-                <td>37</td>
-                <td>Add, commit, tag, and push changes to remote.</td>
-            </tr>
-            <tr>
-                <td><strong>_diagnose_python</strong></td>
-                <td>30</td>
-                <td>Run all Python-specific diagnostics.</td>
-            </tr>
-            <tr>
-                <td><strong>SmartCommitGenerator.analyze_changes</strong></td>
-                <td>27</td>
-                <td>Analysis pipeline, 27 stages</td>
+                <td><strong>execute_push_workflow</strong></td>
+                <td>35</td>
+                <td>Execute the complete push workflow.</td>
             </tr>
             <tr>
                 <td><strong>QualityValidator.auto_fix</strong></td>
                 <td>27</td>
                 <td>Auto-fix summary issues and return corrected summary.</td>
+            </tr>
+            <tr>
+                <td><strong>SmartCommitGenerator.analyze_changes</strong></td>
+                <td>27</td>
+                <td>Analysis pipeline, 27 stages</td>
             </tr>
             <tr>
                 <td><strong>EnhancedSummaryGenerator.generate_enhanced_summary</strong></td>
@@ -240,24 +230,34 @@ Args:
     version: New versio</td>
             </tr>
             <tr>
-                <td><strong>CommitMessageGenerator.generate_detailed_message</strong></td>
-                <td>23</td>
-                <td>Generate a detailed commit message with body.</td>
-            </tr>
-            <tr>
                 <td><strong>guess_package_name</strong></td>
                 <td>22</td>
                 <td>Best-effort guess of the package/module name for scaffold templates.</td>
             </tr>
             <tr>
-                <td><strong>format_push_result</strong></td>
-                <td>22</td>
-                <td>22-way dispatch</td>
-            </tr>
-            <tr>
                 <td><strong>CodeChangeAnalyzer._analyze_python_diff</strong></td>
                 <td>20</td>
                 <td>Analysis pipeline, 20 stages</td>
+            </tr>
+            <tr>
+                <td><strong>ContentAnalyzer.per_file_notes</strong></td>
+                <td>20</td>
+                <td>Generate small descriptive notes for a file based on added lines heuristics.</td>
+            </tr>
+            <tr>
+                <td><strong>validate_project_versions</strong></td>
+                <td>19</td>
+                <td>Validate versions across different registries.
+
+Returns:
+    Dict with validatio</td>
+            </tr>
+            <tr>
+                <td><strong>ensure_project_environment</strong></td>
+                <td>19</td>
+                <td>Ensure the project environment is properly set up.
+
+For Python: creates .venv if</td>
             </tr></tbody>
 </table>
 </div></div>
@@ -271,61 +271,61 @@ Args:
   <tbody>
             <tr>
                 <td>1</td>
-                <td>Split ensure_project_environment (CC=25 → target CC<10)</td>
-                <td><span class="badge high">high</span></td>
-                <td>low</td>
-            </tr>
-            <tr>
-                <td>2</td>
                 <td>Split validate_project_versions (CC=30 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>3</td>
-                <td>Split format_push_result (CC=34 → target CC<10)</td>
+                <td>2</td>
+                <td>Split ensure_project_environment (CC=25 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>4</td>
+                <td>3</td>
                 <td>Split format_enhanced_summary (CC=29 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>5</td>
-                <td>Split CodeChangeAnalyzer.infer_functional_value (CC=38 → target CC<10)</td>
-                <td><span class="badge high">high</span></td>
-                <td>low</td>
-            </tr>
-            <tr>
-                <td>6</td>
+                <td>4</td>
                 <td>Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>7</td>
+                <td>5</td>
                 <td>Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>8</td>
-                <td>Split CommitMessageGenerator.generate_detailed_message (CC=28 → target CC<10)</td>
+                <td>6</td>
+                <td>Split execute_push_workflow (CC=29 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>9</td>
+                <td>7</td>
                 <td>Split update_project_metadata (CC=26 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
-                <td>10</td>
+                <td>8</td>
                 <td>Split sync_all_versions (CC=33 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>Split EnhancedSummaryGenerator._format_changes_section (CC=26 → target CC<10)</td>
+                <td><span class="badge high">high</span></td>
+                <td>low</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>Split SummaryQualityFilter.classify_intent_smart (CC=25 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr></tbody>
@@ -334,18 +334,37 @@ Args:
 </div>
 </div>
 
-<footer>Generated by code2llm on 2026-03-07 09:20</footer>
+<footer>Generated by code2llm on 2026-03-08 07:40</footer>
 
 <script>
-// Evolution chart disabled — fewer than 3 data points
+const evoCtx = document.getElementById('evoChart').getContext('2d');
+new Chart(evoCtx, {
+  type: 'line',
+  data: {
+    labels: ['2026-03-05', '2026-03-07', '2026-03-08'],
+    datasets: [
+      { label: 'CC avg', data: [7.3, 6.7, 6.0], borderColor: '#3b82f6', tension: .3, yAxisID: 'y' },
+      { label: 'Critical', data: [63, 65, 66], borderColor: '#ef4444', tension: .3, yAxisID: 'y1' }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { position:'left', grid:{color:'#334155'}, ticks:{color:'#94a3b8'} },
+      y1: { position:'right', grid:{drawOnChartArea:false}, ticks:{color:'#94a3b8'} },
+      x: { ticks:{color:'#94a3b8'}, grid:{color:'#334155'} }
+    },
+    plugins: { legend: { labels: { color:'#e2e8f0' } } }
+  }
+});
 
 const modCtx = document.getElementById('modChart').getContext('2d');
 new Chart(modCtx, {
   type: 'bar',
   data: {
-    labels: ['generator.py', 'deep_analyzer.py', 'formatter.py', 'analyzer.py', 'project_doctor.py', 'version.py', 'version_validation.py', 'push_cmd.py', 'generator.py', 'project_bootstrap.py', 'quality_filter.py', 'changelog.py', 'smart_commit.py', 'git_ops.py', 'validator.py'],
-    datasets: [{ label: 'Max CC', data: [40, 38, 34, 34, 34, 33, 30, 29, 28, 25, 25, 24, 24, 23, 19],
-      backgroundColor: [40, 38, 34, 34, 34, 33, 30, 29, 28, 25, 25, 24, 24, 23, 19].map(v => v >= 15 ? '#ef4444' : v >= 10 ? '#eab308' : '#22c55e')
+    labels: ['analyzer.py', 'version.py', 'version_validation.py', 'formatter.py', 'core.py', 'generator.py', 'project_bootstrap.py', 'quality_filter.py', 'changelog.py', 'generator.py', 'git_ops.py', 'abstraction.py', 'dry_run.py', 'validator.py', 'commit.py'],
+    datasets: [{ label: 'Max CC', data: [34, 33, 30, 29, 29, 26, 25, 25, 24, 24, 23, 20, 19, 19, 17],
+      backgroundColor: [34, 33, 30, 29, 29, 26, 25, 25, 24, 24, 23, 20, 19, 19, 17].map(v => v >= 15 ? '#ef4444' : v >= 10 ? '#eab308' : '#22c55e')
     }]
   },
   options: {

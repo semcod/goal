@@ -4,17 +4,34 @@ Use the attached/generated files as the authoritative context.
 we are in project path: .
 
 Files for analysis:
-- project/analysis.toon  (Health diagnostics - complexity metrics, god modules, coupling issues, refactoring priorities)
-- project/context.md  (LLM narrative - architecture summary, key entry points, process flows, public API surface)
-- project/evolution.toon  (Refactoring queue - ranked actions by impact/effort, risks, metrics targets, history)
-- project/project.toon  (Project logic - compact module view from code2logic, file sizes, dependencies overview)
-- project/README.md  (Documentation - complete guide to all generated files, usage examples, interpretation)
+- project/analysis.toon  (Health diagnostics - complexity metrics, god modules, coupling issues, refactoring priorities) [28KB]
+- project/context.md  (LLM narrative - architecture summary, key entry points, process flows, public API surface) [29KB]
+- project/evolution.toon  (Refactoring queue - ranked actions by impact/effort, risks, metrics targets, history) [1KB]
+- project/project.toon  (Project logic - compact module view from code2logic, file sizes, dependencies overview) [26KB]
+- project/README.md  (Documentation - complete guide to all generated files, usage examples, interpretation) [9KB]
 
 Task:
 - Summarize the architecture and main flows.
 - Identify the highest-risk areas and propose a refactoring plan.
 - If you suggest changes, keep behavior backward compatible and provide concrete steps.
+- Highlight critical functions (CC ≥ 10) and god modules from analysis.toon.
+- Prioritize refactoring actions by impact/effort ratio from evolution.toon.
+- Validate entry points and public API surface match the architecture described.
+
+Focus Areas for Analysis:
+1. **Code Health Analysis** - Review complexity metrics, god modules, coupling issues from analysis.toon
+2. **Refactoring Priorities** - Examine ranked refactoring actions and risk assessment from evolution.toon
+3. **Architecture Overview** - Understand main flows, entry points, and public API from context.md
+4. **Project Structure** - Analyze module organization and dependencies from project.toon
+5. **Structured Data** - Use machine-readable formats for automated analysis and metrics extraction
+6. **Visual Flow** - Review control flow diagrams and call graphs for architectural insights
+
+Analysis Strategy:
+- Start with analysis.toon for health metrics, then evolution.toon for action priorities
+- Reference analysis.yaml for precise metrics and programmatic data
 
 Constraints:
 - Prefer minimal, incremental changes.
+- Maintain full backward compatibility.
+- Base recommendations on concrete metrics from the provided files.
 - If uncertain, ask clarifying questions.

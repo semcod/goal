@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-03-07 21:46:17
+# Generated: 2026-03-08 07:39:22
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -14,13 +14,16 @@
 version: '1.0'
 project:
   name: goal
-  type: []
+  type:
+  - python
   description: Automated git push with smart commit messages, changelog updates, and
     version tagging
 versioning:
   strategy: semver
   files:
   - VERSION
+  - pyproject.toml:version
+  - goal/__init__.py:__version__
   bump_rules:
     patch: 10
     minor: 50
