@@ -425,7 +425,7 @@ class PythonDiagnostics:
         if self.auto_fix:
             # Replace entire publish value, not just first word
             new_content = re.sub(
-                r'(publish:\s*)(.+?)(?:\s*$|\s+\w+:|\n\w+)',
+                r'(publish:\s*)(.+?)(\s*$|\s+\w+:|\n\w+)',
                 rf'\1{expected}\3',
                 goal_content,
                 flags=re.MULTILINE
