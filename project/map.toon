@@ -1,6 +1,8 @@
-# goal | 60f 11049L | python:60
+# goal | 65f 11547L | python:60,shell:5
 # Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
-M[60]:
+M[65]:
+  examples/git-hooks/install.sh,31
+  examples/markdown-demo.sh,70
   goal/__init__.py,3
   goal/__main__.py,17
   goal/changelog.py,125
@@ -27,7 +29,7 @@ M[60]:
   goal/doctor/models.py,41
   goal/doctor/nodejs.py,77
   goal/doctor/php.py,45
-  goal/doctor/python.py,324
+  goal/doctor/python.py,486
   goal/doctor/ruby.py,25
   goal/doctor/rust.py,35
   goal/doctor/todo.py,127
@@ -61,6 +63,9 @@ M[60]:
   goal/summary/validator.py,310
   goal/user_config.py,247
   goal/version_validation.py,301
+  integration/run_docker_matrix.sh,5
+  integration/run_matrix.sh,216
+  project.sh,14
 D:
   goal/generator/analyzer.py:
     e: ChangeAnalyzer,ContentAnalyzer
@@ -178,6 +183,10 @@ D:
     enforce_quality_gates(ctx_obj;commit_msg;detailed_result;files;total_adds;total_dels;yes;markdown)
     handle_single_commit(commit_title;commit_body;commit_msg;message;yes)
     handle_split_commits(ctx_obj;files;ticket;new_version;current_version;no_version_sync;no_changelog;yes)
+  goal/doctor/python.py:
+    e: PythonDiagnostics,diagnose_python
+    PythonDiagnostics: __init__(3),check_py001_missing_config(4),check_py002_build_system(0),check_py003_license_classifiers(0),check_py004_deprecated_backends(0),check_py005_license_table(0),check_py006_duplicate_authors(0),check_py007_requires_python(0),check_py008_empty_classifiers(0),check_py009_string_authors(0),check_py010_project_name_consistency(0),check_py011_version_consistency(0),check_py012_dist_cleanup(0),check_py013_goal_publish_pattern(0),write_fixes(1)  # Container for Python diagnostic checks with shared state...
+    diagnose_python(project_dir;auto_fix)
   goal/deep_analyzer.py:
     e: CodeChangeAnalyzer
     CodeChangeAnalyzer: __init__(0),analyze_file_diff(3),_detect_language(1),_analyze_python_diff(2),_extract_python_entities(1),_get_decorator_name(1),_calculate_complexity(1),_analyze_js_diff(2),_analyze_generic_diff(2),_detect_functional_areas(2),aggregate_changes(1),_detect_file_patterns(1),_check_analyzer_value(2),_check_cli_value(2),_check_area_values(2),_check_complexity_value(1),_check_architecture_value(1),_build_entity_fallback(2),infer_functional_value(2),detect_relations(1),generate_functional_summary(1),_build_summary(3)  # Analyzes code changes to extract functional meaning...
@@ -268,10 +277,6 @@ D:
     e: diagnose_project,diagnose_and_report
     diagnose_project(project_dir;project_type;auto_fix)
     diagnose_and_report(project_dir;project_type;auto_fix)
-  goal/doctor/python.py:
-    e: PythonDiagnostics,diagnose_python
-    PythonDiagnostics: __init__(3),check_py001_missing_config(4),check_py002_build_system(0),check_py003_license_classifiers(0),check_py004_deprecated_backends(0),check_py005_license_table(0),check_py006_duplicate_authors(0),check_py007_requires_python(0),check_py008_empty_classifiers(0),check_py009_string_authors(0),write_fixes(1)  # Container for Python diagnostic checks with shared state...
-    diagnose_python(project_dir;auto_fix)
   goal/cli/publish_cmd.py:
     e: publish
     publish(ctx;use_make;target;version_arg)
@@ -344,8 +349,19 @@ D:
   goal/push/__init__.py:
   goal/config/constants.py:
   goal/doctor/__init__.py:
-  goal/push/stages/__init__.py:
   goal/doctor/models.py:
     e: Issue,DoctorReport
     Issue:  # A single diagnosed issue...
     DoctorReport:  # Aggregated report from a doctor run...
+  goal/push/stages/__init__.py:
+  project.sh:
+  examples/markdown-demo.sh:
+  integration/run_docker_matrix.sh:
+  integration/run_matrix.sh:
+    e: App,run_case,print,main,self
+    App:
+    run_case()
+    print()
+    main()
+    self()
+  examples/git-hooks/install.sh:

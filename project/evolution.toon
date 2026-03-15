@@ -1,4 +1,4 @@
-# code2llm/evolution | 348 func | 47f | 2026-03-08
+# code2llm/evolution | 356 func | 48f | 2026-03-15
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           goal/cli/version.py
@@ -51,7 +51,7 @@ METRICS-TARGET:
   CC̄:          6.0 → ≤4.2
   max-CC:      34 → ≤17
   god-modules: 6 → 0
-  high-CC(≥15): 25 → ≤12
+  high-CC(≥15): 26 → ≤13
   hub-types:   0 → ≤0
 
 HISTORY:

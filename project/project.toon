@@ -1,4 +1,4 @@
-# goal | 72f 13027L | python:72
+# goal | 72f 13189L | python:72
 # Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
 M[72]:
   goal/__init__.py,2
@@ -30,7 +30,7 @@ M[72]:
   goal/doctor/models.py,32
   goal/doctor/nodejs.py,60
   goal/doctor/php.py,37
-  goal/doctor/python.py,274
+  goal/doctor/python.py,407
   goal/doctor/ruby.py,19
   goal/doctor/rust.py,27
   goal/doctor/todo.py,85

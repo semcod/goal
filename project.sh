@@ -9,3 +9,6 @@ code2llm ./ -f all -o ./project --no-chunk
 #code2llm report --format all       # → all views
 rm project/analysis.json
 rm project/analysis.yaml
+
+pip install code2docs --upgrade
+code2docs ./ --readme-only

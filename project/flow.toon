@@ -1,4 +1,4 @@
-# goal/flow | 348 func | 12 pipelines | 6 hub-types | 2026-03-08
+# goal/flow | 356 func | 12 pipelines | 6 hub-types | 2026-03-15
 
 PIPELINES[12] (Analysis:1, Core:7, IO:4):
   Goal [IO]: ctx → bool
@@ -108,15 +108,15 @@ TRANSFORMS (fan-out ≥10):
   generate_enhanced_summary(files:List[str], diff_content:str, lines_added:int, lines_deleted:int) → Dict[str, Any] fan=24   !! side-effects
   update_changelog(version:str, files:List[str], commit_msg:str, config:Dict, changelog_entry:Dict) fan=23   !! side-effects
   guess_package_name(project_dir:Path, project_type:str) → str fan=22   !! side-effects
+  check_py011_version_consistency() → None                fan=21   !! side-effects
+  diagnose_python(project_dir:Path, auto_fix:bool) → List[Issue] fan=21   !! side-effects
   _analyze_python_diff(old_content:str, new_content:str) → Dict[str, Any] fan=20   !! side-effects
   per_file_notes(path:str, cached:bool) → List[str]       fan=20   !! side-effects
-  validate_project_versions(project_types:List[str], current_version:str) → Dict[str, Dict] fan=19   fan=19
   ensure_project_environment(project_dir:Path, project_type:str, yes:bool) → bool fan=19   fan=19
+  validate_project_versions(project_types:List[str], current_version:str) → Dict[str, Dict] fan=19   fan=19
   ensure_git_repository(auto:bool) → bool                 fan=19   fan=19
   doctor(ctx, fix, path, todo)                            fan=19   fan=19
   update_project_metadata(filepath:Path, user_config) → bool fan=19   fan=19
-  fix_summary(ctx, fix, preview, cached)                  fan=18   fan=18
-  validate(ctx, fix, cached)                              fan=18   fan=18
 
 CONTRACTS:
   Pipeline: Goal
@@ -426,27 +426,27 @@ CONTRACTS:
       OUT: Any
 
 
-DATA_TYPES (by cross-function usage) [312 annotated, 0 inferred / 348 functions]:
+DATA_TYPES (by cross-function usage) [316 annotated, 0 inferred / 356 functions]:
   str                  consumed:308 produced:114  !! HUB-TYPE → split interface
   bool                 consumed:77  produced:29   !! HUB-TYPE → split interface
   str, Any             consumed:43  produced:22   !! HUB-TYPE → split interface
   Dict                 consumed:37  produced:7    !! HUB-TYPE → split interface
   Path                 consumed:35  produced:4    !! HUB-TYPE → split interface
   int                  consumed:21  produced:3    !! HUB-TYPE → split interface
-  str, str             consumed:3   produced:10 
   Issue                consumed:5   produced:8  
+  str, str             consumed:3   produced:10 
   tuple                consumed:8   produced:3  
   PackageManager       consumed:3   produced:6  
   str, int             consumed:4   produced:2  
-  defaultdict          consumed:6   produced:0    input-heavy (read-only flow)
   str, bool            consumed:4   produced:2  
+  defaultdict          consumed:6   produced:0    input-heavy (read-only flow)
   str, Tuple[int, int] consumed:2   produced:3  
   str, tuple           consumed:4   produced:0    narrow scope
-  GoalConfig           consumed:0   produced:3    narrow scope
   dict                 consumed:2   produced:1    narrow scope
   list                 consumed:3   produced:0    narrow scope
-  subprocess.CompletedProcess consumed:0   produced:3    narrow scope
+  GoalConfig           consumed:0   produced:3    narrow scope
   DoctorReport         consumed:0   produced:3    narrow scope
+  subprocess.CompletedProcess consumed:0   produced:3    narrow scope
 
   HUB TYPES (consumed ≥10):
     str → 308 consumers → split into:
@@ -463,10 +463,10 @@ DATA_TYPES (by cross-function usage) [312 annotated, 0 inferred / 348 functions]
       - (analyze consumers to suggest sub-interfaces)
 
 SIDE_EFFECTS:
-  IO:        update_changelog, UserConfig._load, UserConfig._save, get_pypi_version, get_npm_version, get_cargo_version, get_rubygems_version, extract_badge_versions, update_badge_versions, validate_project_versions
+  IO:        update_changelog, guess_package_name, scaffold_test, get_pypi_version, get_npm_version, get_cargo_version, get_rubygems_version, extract_badge_versions, update_badge_versions, validate_project_versions
   Cache:     GitDiffOperations.clear_cache
-  Mutation:  UserConfig.__init__, format_validation_results, detect_project_types_deep, find_existing_tests, bootstrap_all_projects, MarkdownFormatter.__init__, MarkdownFormatter.add_header, MarkdownFormatter.add_metadata, MarkdownFormatter.add_section, MarkdownFormatter.add_list
-  Pure:      UserConfig.get, UserConfig.set, UserConfig.is_initialized, get_git_user_name, get_git_user_email, prompt_for_license, initialize_user_config, get_user_config, show_user_config, get_registry_version
+  Mutation:  detect_project_types_deep, find_existing_tests, bootstrap_all_projects, format_validation_results, UserConfig.__init__, MarkdownFormatter.__init__, MarkdownFormatter.add_header, MarkdownFormatter.add_metadata, MarkdownFormatter.add_section, MarkdownFormatter.add_list
+  Pure:      _match_marker, _find_python_bin, ensure_project_environment, bootstrap_project, get_registry_version, check_readme_badges, UserConfig.get, UserConfig.set, UserConfig.is_initialized, get_git_user_name
 
   PIPELINE PURITY:
     Goal            ██░░ 50% pure

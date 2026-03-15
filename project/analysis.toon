@@ -1,16 +1,16 @@
-# code2llm | 60f 11049L | py:60 | 2026-03-08
-# CC̄=6.0 | critical:66/348 | dups:0 | cycles:0
+# code2llm | 63f 11446L | python:60,shell:3 | 2026-03-15
+# CC̄=6.0 | critical:68/356 | dups:0 | cycles:0
 
 HEALTH[20]:
   🟡 CC    update_changelog CC=24 (limit:15)
-  🟡 CC    validate_project_versions CC=30 (limit:15)
   🟡 CC    guess_package_name CC=20 (limit:15)
   🟡 CC    ensure_project_environment CC=25 (limit:15)
   🟡 CC    scaffold_test CC=15 (limit:15)
+  🟡 CC    validate_project_versions CC=30 (limit:15)
   🟡 CC    format_enhanced_summary CC=29 (limit:15)
+  🟡 CC    ensure_git_repository CC=23 (limit:15)
   🟡 CC    _analyze_python_diff CC=15 (limit:15)
   🟡 CC    _build_summary CC=16 (limit:15)
-  🟡 CC    ensure_git_repository CC=23 (limit:15)
   🟡 CC    _score_by_signals CC=15 (limit:15)
   🟡 CC    short_action_summary CC=34 (limit:15)
   🟡 CC    per_file_notes CC=29 (limit:15)
@@ -38,19 +38,20 @@ COUPLING:
   goal.smart_commit                  2                                                                                                                                   ──
   CYCLES: none
   HUB: goal.cli/ (fan-in=7)
-  HUB: goal/ (fan-in=93)
   HUB: goal.config/ (fan-in=8)
+  HUB: goal/ (fan-in=93)
   SMELL: goal.cli/ fan-out=43 → split needed
   SMELL: goal.push/ fan-out=50 → split needed
 
 LAYERS:
-  goal/                           CC̄=6.0    ←in:93  →out:3
+  goal/                           CC̄=6.1    ←in:93  →out:3
   │ !! version                    730L  0C   18m  CC=33     ←4
   │ !! generator                  675L  1C   16m  CC=26     ←0
   │ !! package_managers           631L  1C   12m  CC=11     ←1
   │ !! project_bootstrap          589L  0C    9m  CC=25     ←3
   │ !! deep_analyzer              554L  1C   22m  CC=16     ←0
   │ !! generator                  524L  1C   18m  CC=24     ←0
+  │ !! python                     486L  1C   16m  CC=17     ←0
   │ !! git_ops                    473L  0C   22m  CC=23     ←10
   │ !  manager                    449L  1C   25m  CC=10     ←3
   │ !! formatter                  402L  1C   14m  CC=29     ←3
@@ -58,7 +59,6 @@ LAYERS:
   │ !  generator                  384L  1C   24m  CC=12     ←0
   │ constants                  351L  0C    0m  CC=0.0    ←0
   │ !! quality_filter             328L  1C   14m  CC=25     ←0
-  │ python                     324L  1C   12m  CC=8      ←0
   │ !! validator                  310L  1C   13m  CC=19     ←0
   │ !! version_validation         301L  0C   10m  CC=30     ←2
   │ !! core                       271L  1C    6m  CC=29     ←4
@@ -106,10 +106,17 @@ LAYERS:
   │ __init__                    14L  0C    0m  CC=0.0    ←0
   │ __init__                     3L  0C    0m  CC=0.0    ←0
   │
+  integration/                    CC̄=0.0    ←in:0  →out:0
+  │ run_matrix.sh              216L  1C    4m  CC=0.0    ←0
+  │ run_docker_matrix.sh         5L  0C    0m  CC=0.0    ←0
+  │
+  ./                              CC̄=0.0    ←in:0  →out:0
+  │ project.sh                  14L  0C    0m  CC=0.0    ←0
+  │
 
 DUPLICATES[0]: none
 
-FUNCTIONS (CC≥10, 66 of 348):
+FUNCTIONS (CC≥10, 68 of 356):
    34.0  ContentAnalyzer.short_action_summary       44n  13exit  cond+ret  !! split
    33.0  sync_all_versions                          49n   2exit  loops+cond+ret  !! split
    30.0  validate_project_versions                  20n   2exit  loops+cond+ret  !! split
@@ -130,6 +137,7 @@ FUNCTIONS (CC≥10, 66 of 348):
    19.0  EnhancedSummaryGenerator.generate_value_title   27n  10exit  cond+ret  !! split
    19.0  handle_dry_run                             17n   1exit  loops+cond  !! split
    17.0  handle_split_commits                       24n   1exit  loops+cond  !! split
+   17.0  PythonDiagnostics.check_py011_version_consistency   30n   3exit  cond+ret  !! split
    16.0  CodeChangeAnalyzer._build_summary          17n   2exit  cond+ret  !! split
    15.0  scaffold_test                              27n   6exit  cond+ret  !! split
    15.0  CodeChangeAnalyzer._analyze_python_diff    15n   2exit  loops+cond+ret  !! split
@@ -157,12 +165,11 @@ FUNCTIONS (CC≥10, 66 of 348):
    12.0  CodeAbstraction.get_domain                 22n   8exit  loops+cond+ret
    12.0  SmartCommitGenerator._infer_message_from_files   24n   9exit  cond+ret
    12.0  push_to_remote                             12n   3exit  cond+ret
-   11.0  initialize_user_config                     20n   3exit  cond+ret
+   12.0  PythonDiagnostics.check_py010_project_name_consistency   22n   3exit  cond+ret
    11.0  detect_project_types_deep                  10n   2exit  loops+cond+ret
-   11.0  ChangeAnalyzer._resolve_change_type        18n   7exit  cond+ret
 
   summary:
-    critical(≥10): 66 | high(5-10): 95 | medium(2-5): 133 | low(<2): 54
+    critical(≥10): 68 | high(5-10): 97 | medium(2-5): 133 | low(<2): 58
     19% CC≥10  46% CC≥5
 
 HOTSPOTS:
@@ -172,10 +179,10 @@ HOTSPOTS:
   #4  EnhancedSummaryGenerator.generate_enhanced_summary  fan=24   "EnhancedSummaryGenerator method, fan-out=24"
   #5  update_changelog                     fan=23   "calls 23 functions"
   #6  guess_package_name                   fan=22   "calls 22 functions"
-  #7  CodeChangeAnalyzer._analyze_python_diff  fan=20   "analysis pipeline, 20 stages"
-  #8  ContentAnalyzer.per_file_notes       fan=20   "ContentAnalyzer method, fan-out=20"
-  #9  validate_project_versions            fan=19   "calls 19 functions"
-  #10 ensure_project_environment           fan=19   "calls 19 functions"
+  #7  PythonDiagnostics.check_py011_version_consistency  fan=21   "PythonDiagnostics method, fan-out=21"
+  #8  diagnose_python                      fan=21   "calls 21 functions"
+  #9  CodeChangeAnalyzer._analyze_python_diff  fan=20   "analysis pipeline, 20 stages"
+  #10 ContentAnalyzer.per_file_notes       fan=20   "ContentAnalyzer method, fan-out=20"
 
 CLASSES:
   CommitMessageGenerator         ████████████████████████  23m  CC̄=3.9   max=12  
@@ -183,10 +190,10 @@ CLASSES:
   GoalConfig                     ██████████████████████    22m  CC̄=4.1   max=10  
   SmartCommitGenerator           █████████████████         17m  CC̄=8.0   max=24    !!
   EnhancedSummaryGenerator       ████████████████          16m  CC̄=9.4   max=26    !!
+  PythonDiagnostics              ███████████████           15m  CC̄=6.4   max=17    !!
   ChangeAnalyzer                 ██████████████            14m  CC̄=6.1   max=15    !!
   SummaryQualityFilter           ██████████████            14m  CC̄=7.6   max=25    !!
   QualityValidator               █████████████             13m  CC̄=5.5   max=19    !!
-  PythonDiagnostics              ███████████               11m  CC̄=4.5   max=8   
   CodeAbstraction                █████████                  9m  CC̄=7.6   max=20    !!
   MarkdownFormatter              ████████                   8m  CC̄=2.2   max=4   
   GitDiffOperations              ███████                    7m  CC̄=6.4   max=11  
@@ -197,6 +204,7 @@ CLASSES:
   PackageManager                 █                          1m  CC̄=2.0   max=2   
   Issue                                                     0m  CC̄=0.0   max=0.0 
   DoctorReport                                              0m  CC̄=0.0   max=0.0 
+  App                                                       0m  CC̄=0.0   max=0.0 
 
 D:
   goal/generator/analyzer.py:
@@ -335,6 +343,11 @@ D:
     enforce_quality_gates(ctx_obj,commit_msg,detailed_result,files,total_adds,total_dels,yes,markdown)
     handle_single_commit(commit_title,commit_body,commit_msg,message,yes)
     handle_split_commits(ctx_obj,files,ticket,new_version,current_version,no_version_sync,no_changelog,yes)
+  goal/doctor/python.py:
+    e: PythonDiagnostics,diagnose_python
+    PythonDiagnostics  # Container for Python diagnostic checks with shared state....
+      __init__(3)  CC=1.0
+    diagnose_python(project_dir,auto_fix)
   goal/deep_analyzer.py:
     e: CodeChangeAnalyzer
     CodeChangeAnalyzer  # Analyzes code changes to extract functional meaning....
@@ -437,11 +450,6 @@ D:
     e: diagnose_project,diagnose_and_report
     diagnose_project(project_dir,project_type,auto_fix)
     diagnose_and_report(project_dir,project_type,auto_fix)
-  goal/doctor/python.py:
-    e: PythonDiagnostics,diagnose_python
-    PythonDiagnostics  # Container for Python diagnostic checks with shared state....
-      __init__(3)  CC=1.0
-    diagnose_python(project_dir,auto_fix)
   goal/cli/publish_cmd.py:
     e: publish
     publish(ctx,use_make,target,version_arg)
@@ -514,8 +522,19 @@ D:
   goal/push/__init__.py:
   goal/config/constants.py:
   goal/doctor/__init__.py:
-  goal/push/stages/__init__.py:
   goal/doctor/models.py:
     e: Issue,DoctorReport
     Issue  # A single diagnosed issue....
     DoctorReport  # Aggregated report from a doctor run....
+  goal/push/stages/__init__.py:
+  project.sh:
+  examples/markdown-demo.sh:
+  integration/run_docker_matrix.sh:
+  integration/run_matrix.sh:
+    e: App,run_case,print,main,self
+    App
+    run_case()
+    print()
+    main()
+    self()
+  examples/git-hooks/install.sh:

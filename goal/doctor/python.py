@@ -276,7 +276,165 @@ class PythonDiagnostics:
             issue.fixed = True
             issue.fix_description = 'Converted string-format authors to PEP 621 object format'
         self.issues.append(issue)
-    
+
+    def check_py010_project_name_consistency(self) -> None:
+        """PY010: Check for consistent project name across all config files."""
+        name_match = re.search(r'^name\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
+        if not name_match:
+            return
+        pyproject_name = name_match.group(1)
+        
+        inconsistencies = []
+        setup_py = self.project_dir / 'setup.py'
+        goal_yaml = self.project_dir / 'goal.yaml'
+        
+        if setup_py.exists():
+            setup_content = setup_py.read_text(errors='ignore')
+            setup_name_match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', setup_content)
+            if setup_name_match and setup_name_match.group(1) != pyproject_name:
+                inconsistencies.append(f"setup.py: '{setup_name_match.group(1)}'")
+        
+        if goal_yaml.exists():
+            goal_content = goal_yaml.read_text(errors='ignore')
+            goal_name_match = re.search(r'^\s*name:\s*(\S+)', goal_content, re.MULTILINE)
+            if goal_name_match and goal_name_match.group(1) != pyproject_name:
+                inconsistencies.append(f"goal.yaml: '{goal_name_match.group(1)}'")
+        
+        if not inconsistencies:
+            return
+        
+        detail = f"Project name inconsistency. pyproject.toml: '{pyproject_name}', others: {', '.join(inconsistencies)}"
+        issue = Issue(severity='error', code='PY010', title='Inconsistent project name', detail=detail, file='pyproject.toml')
+        
+        if self.auto_fix:
+            if setup_py.exists():
+                setup_content = re.sub(r'(name\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_name}"', setup_py.read_text(errors='ignore'))
+                setup_py.write_text(setup_content, encoding='utf-8')
+            if goal_yaml.exists():
+                goal_content = re.sub(r'^(\s*name:\s*)\S+', rf'\1{pyproject_name}', goal_yaml.read_text(errors='ignore'), flags=re.MULTILINE)
+                goal_yaml.write_text(goal_content, encoding='utf-8')
+            issue.fixed = True
+            issue.fix_description = f"Synchronized name to '{pyproject_name}'"
+        self.issues.append(issue)
+
+    def check_py011_version_consistency(self) -> None:
+        """PY011: Check for consistent version across all config files."""
+        version_match = re.search(r'^version\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
+        if not version_match:
+            return
+        pyproject_version = version_match.group(1)
+        
+        inconsistencies = []
+        setup_py = self.project_dir / 'setup.py'
+        version_file = self.project_dir / 'VERSION'
+        init_py = None
+        
+        if setup_py.exists():
+            setup_content = setup_py.read_text(errors='ignore')
+            setup_ver_match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', setup_content)
+            if setup_ver_match and setup_ver_match.group(1) != pyproject_version:
+                inconsistencies.append(f"setup.py: '{setup_ver_match.group(1)}'")
+        
+        name_match = re.search(r'^name\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
+        if name_match:
+            pkg_name = name_match.group(1).replace('-', '_')
+            init_py = self.project_dir / pkg_name / '__init__.py'
+            if init_py.exists():
+                init_content = init_py.read_text(errors='ignore')
+                init_ver_match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', init_content)
+                if init_ver_match and init_ver_match.group(1) != pyproject_version:
+                    inconsistencies.append(f"{pkg_name}/__init__.py: '{init_ver_match.group(1)}'")
+        
+        if version_file.exists():
+            file_version = version_file.read_text().strip()
+            if file_version != pyproject_version:
+                inconsistencies.append(f"VERSION: '{file_version}'")
+        
+        if not inconsistencies:
+            return
+        
+        detail = f"Version inconsistency. pyproject.toml: '{pyproject_version}', others: {', '.join(inconsistencies)}"
+        issue = Issue(severity='error', code='PY011', title='Inconsistent version', detail=detail, file='pyproject.toml')
+        
+        if self.auto_fix:
+            if setup_py.exists():
+                setup_content = re.sub(r'(version\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_version}"', setup_py.read_text(errors='ignore'))
+                setup_py.write_text(setup_content, encoding='utf-8')
+            if init_py and init_py.exists():
+                init_content = re.sub(r'(__version__\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_version}"', init_py.read_text(errors='ignore'))
+                init_py.write_text(init_content, encoding='utf-8')
+            if version_file.exists():
+                version_file.write_text(pyproject_version + '\n', encoding='utf-8')
+            issue.fixed = True
+            issue.fix_description = f"Synchronized version to '{pyproject_version}'"
+        self.issues.append(issue)
+
+    def check_py012_dist_cleanup(self) -> None:
+        """PY012: Check for stale package files in dist/ directory."""
+        dist_dir = self.project_dir / 'dist'
+        if not dist_dir.exists():
+            return
+        
+        name_match = re.search(r'^name\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
+        if not name_match:
+            return
+        project_name = name_match.group(1)
+        
+        stale_files = [f.name for f in dist_dir.iterdir() if f.is_file() and not f.name.startswith(f'{project_name}-')]
+        if not stale_files:
+            return
+        
+        detail = f"Found {len(stale_files)} stale file(s) in dist/: {', '.join(stale_files)}"
+        issue = Issue(severity='error', code='PY012', title='Stale files in dist/', detail=detail, file='dist/')
+        
+        if self.auto_fix:
+            for fname in stale_files:
+                (dist_dir / fname).unlink()
+            issue.fixed = True
+            issue.fix_description = f"Removed {len(stale_files)} stale file(s)"
+        self.issues.append(issue)
+
+    def check_py013_goal_publish_pattern(self) -> None:
+        """PY013: Check for correct publish pattern in goal.yaml."""
+        goal_yaml = self.project_dir / 'goal.yaml'
+        if not goal_yaml.exists():
+            return
+        
+        goal_content = goal_yaml.read_text(errors='ignore')
+        name_match = re.search(r'^name\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
+        if not name_match:
+            return
+        
+        project_name = name_match.group(1)
+        # Match publish pattern to end of line (YAML value can contain spaces)
+        publish_match = re.search(r'publish:\s*(.+?)(?:\s*$|\s+\w+:|\n\w+)', goal_content, re.MULTILINE)
+        if not publish_match:
+            return
+        
+        publish_pattern = publish_match.group(1).strip()
+        expected = f'twine upload dist/{project_name}-{{version}}*'
+        
+        if publish_pattern == expected:
+            return
+        if project_name in publish_pattern and 'goal-' not in publish_pattern:
+            return
+        
+        detail = f"Incorrect publish pattern: '{publish_pattern}'. Expected: '{expected}'"
+        issue = Issue(severity='error', code='PY013', title='Wrong publish pattern', detail=detail, file='goal.yaml')
+        
+        if self.auto_fix:
+            # Replace entire publish value, not just first word
+            new_content = re.sub(
+                r'(publish:\s*)(.+?)(?:\s*$|\s+\w+:|\n\w+)',
+                rf'\1{expected}\3',
+                goal_content,
+                flags=re.MULTILINE
+            )
+            goal_yaml.write_text(new_content, encoding='utf-8')
+            issue.fixed = True
+            issue.fix_description = f"Fixed pattern to '{expected}'"
+        self.issues.append(issue)
+
     def write_fixes(self, pyproject: Path) -> None:
         """Write fixes back to file if content changed."""
         if self.content != self.original_content and self.auto_fix:
@@ -317,6 +475,10 @@ def diagnose_python(project_dir: Path, auto_fix: bool = True) -> List[Issue]:
     diag.check_py007_requires_python()
     diag.check_py008_empty_classifiers()
     diag.check_py009_string_authors()
+    diag.check_py010_project_name_consistency()
+    diag.check_py011_version_consistency()
+    diag.check_py012_dist_cleanup()
+    diag.check_py013_goal_publish_pattern()
     
     # Write fixes
     diag.write_fixes(pyproject)
