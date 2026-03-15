@@ -22,7 +22,7 @@
   body { font-family: 'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); padding:2rem; }
   h1 { font-size:1.5rem; margin-bottom:.5rem; }
   h2 { font-size:1.1rem; color:var(--muted); margin:1.5rem 0 .75rem; border-bottom:1px solid var(--border); padding-bottom:.25rem; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin:1rem 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin:1rem 0; }
   .card { background:var(--surface); border:1px solid var(--border); border-radius:.5rem; padding:1rem; }
   .card .value { font-size:1.8rem; font-weight:700; }
   .card .label { color:var(--muted); font-size:.8rem; text-transform:uppercase; }
@@ -43,10 +43,12 @@
   tr.warning td { background:rgba(234,179,8,.05); }
   .health-indicator { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:.5rem; }
   .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
   .evo-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.75rem; }
   .evo-cards .card { text-align:center; }
   .trend { font-size:.75rem; color:var(--muted); }
-  @media (max-width:768px) { .two-col { grid-template-columns:1fr; } }
+  .lang-tag { display:inline-block; padding:.1rem .4rem; border-radius:.2rem; font-size:.7rem; font-weight:600; margin-right:.25rem; color:#fff; }
+  @media (max-width:768px) { .two-col,.three-col { grid-template-columns:1fr; } }
   footer { margin-top:2rem; color:var(--muted); font-size:.75rem; text-align:center; }
 </style>
 </head>
@@ -56,18 +58,36 @@
   goal — Warning
 </h1>
 <p style="color:var(--muted);font-size:.85rem;">
-  Analyzed 2026-03-08 by code2llm
+  Analyzed 2026-03-15 by code2llm
+  &nbsp;·&nbsp; Primary language: <strong>python</strong>
+  &nbsp;·&nbsp; Python: 60, Shell: 3
 </p>
 
 <div class="grid">
+  <div class="card"><div class="value">356</div><div class="label">Functions</div></div>
+  <div class="card"><div class="value">20</div><div class="label">Classes</div></div>
+  <div class="card"><div class="value">48</div><div class="label">Files</div></div>
+  <div class="card"><div class="value">13,352</div><div class="label">Lines</div></div>
+  <div class="card"><div class="value">2</div><div class="label">Languages</div></div>
   <div class="card"><div class="value">6.0</div><div class="label">Avg CC</div></div>
-  <div class="card"><div class="value">66</div><div class="label">Critical (CC≥10)</div></div>
-  <div class="card"><div class="value">348</div><div class="label">Functions</div></div>
-  <div class="card"><div class="value">19</div><div class="label">Classes</div></div>
-  <div class="card"><div class="value">47</div><div class="label">Files</div></div>
-  <div class="card"><div class="value">12955</div><div class="label">Lines</div></div>
+  <div class="card"><div class="value">68</div><div class="label">Critical (CC≥10)</div></div>
   <div class="card"><div class="value">0</div><div class="label">Duplicates</div></div>
   <div class="card"><div class="value">0</div><div class="label">Cycles</div></div>
+</div>
+
+<div class="three-col">
+  <div class="chart-container">
+    <h2 style="border:none;margin:0 0 .5rem;">Language Distribution</h2>
+    <canvas id="langChart" height="200"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2 style="border:none;margin:0 0 .5rem;">Largest Modules (lines)</h2>
+    <canvas id="modLinesChart" height="200"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2 style="border:none;margin:0 0 .5rem;">Most Complex Modules (functions)</h2>
+    <canvas id="modFuncsChart" height="200"></canvas>
+  </div>
 </div>
 
 <div class="two-col">
@@ -75,9 +95,174 @@
     <h2 style="border:none;margin:0 0 .5rem;">Evolution</h2>
     <canvas id="evoChart" height="200"></canvas>
   </div>
-  <div class="chart-container">
-    <h2 style="border:none;margin:0 0 .5rem;">Module CC (top 15)</h2>
-    <canvas id="modChart" height="200"></canvas>
+  <div>
+    <h2>Top Modules (63)</h2>
+    <div class="card"><div class="table-wrap">
+    <table>
+      <thead><tr><th>Module</th><th>Path</th><th style="text-align:right">Lines</th><th style="text-align:right">Funcs</th><th style="text-align:right">Classes</th><th style="text-align:right">CC max</th></tr></thead>
+      <tbody>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>version.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/cli</td>
+                <td style="text-align:right">730</td>
+                <td style="text-align:right">18</td>
+                <td style="text-align:right">0</td>
+                <td style="text-align:right">33</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>generator.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/summary</td>
+                <td style="text-align:right">675</td>
+                <td style="text-align:right">16</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">26</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>package_managers.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal</td>
+                <td style="text-align:right">631</td>
+                <td style="text-align:right">12</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">11</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>project_bootstrap.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal</td>
+                <td style="text-align:right">589</td>
+                <td style="text-align:right">9</td>
+                <td style="text-align:right">0</td>
+                <td style="text-align:right">25</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>deep_analyzer.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal</td>
+                <td style="text-align:right">554</td>
+                <td style="text-align:right">22</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">16</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>generator.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/smart_commit</td>
+                <td style="text-align:right">524</td>
+                <td style="text-align:right">18</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">24</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>python.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/doctor</td>
+                <td style="text-align:right">486</td>
+                <td style="text-align:right">16</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">17</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>git_ops.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal</td>
+                <td style="text-align:right">473</td>
+                <td style="text-align:right">22</td>
+                <td style="text-align:right">0</td>
+                <td style="text-align:right">23</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>manager.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/config</td>
+                <td style="text-align:right">449</td>
+                <td style="text-align:right">25</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">10</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>formatter.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal</td>
+                <td style="text-align:right">402</td>
+                <td style="text-align:right">14</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">29</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>analyzer.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/generator</td>
+                <td style="text-align:right">396</td>
+                <td style="text-align:right">16</td>
+                <td style="text-align:right">2</td>
+                <td style="text-align:right">34</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>generator.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/generator</td>
+                <td style="text-align:right">384</td>
+                <td style="text-align:right">24</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">12</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>constants.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/config</td>
+                <td style="text-align:right">351</td>
+                <td style="text-align:right">0</td>
+                <td style="text-align:right">0</td>
+                <td style="text-align:right">0</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>quality_filter.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/summary</td>
+                <td style="text-align:right">328</td>
+                <td style="text-align:right">14</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">25</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>validator.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/summary</td>
+                <td style="text-align:right">310</td>
+                <td style="text-align:right">13</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">19</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>version_validation.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal</td>
+                <td style="text-align:right">301</td>
+                <td style="text-align:right">10</td>
+                <td style="text-align:right">0</td>
+                <td style="text-align:right">30</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>core.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/push</td>
+                <td style="text-align:right">271</td>
+                <td style="text-align:right">6</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">29</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>abstraction.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal/smart_commit</td>
+                <td style="text-align:right">269</td>
+                <td style="text-align:right">9</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">20</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3572A5;margin-right:6px"></span>user_config.py</td>
+                <td style="color:var(--muted);font-size:.75rem">goal</td>
+                <td style="text-align:right">247</td>
+                <td style="text-align:right">12</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">11</td>
+            </tr>
+            <tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#89e051;margin-right:6px"></span>run_matrix.sh</td>
+                <td style="color:var(--muted);font-size:.75rem">integration</td>
+                <td style="text-align:right">216</td>
+                <td style="text-align:right">4</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">0</td>
+            </tr></tbody>
+    </table>
+    </div></div>
   </div>
 </div>
 
@@ -235,6 +420,16 @@ Args:
                 <td>Best-effort guess of the package/module name for scaffold templates.</td>
             </tr>
             <tr>
+                <td><strong>PythonDiagnostics.check_py011_version_consistency</strong></td>
+                <td>21</td>
+                <td>PY011: Check for consistent version across all config files.</td>
+            </tr>
+            <tr>
+                <td><strong>diagnose_python</strong></td>
+                <td>21</td>
+                <td>Run all Python-specific diagnostics.</td>
+            </tr>
+            <tr>
                 <td><strong>CodeChangeAnalyzer._analyze_python_diff</strong></td>
                 <td>20</td>
                 <td>Analysis pipeline, 20 stages</td>
@@ -243,21 +438,6 @@ Args:
                 <td><strong>ContentAnalyzer.per_file_notes</strong></td>
                 <td>20</td>
                 <td>Generate small descriptive notes for a file based on added lines heuristics.</td>
-            </tr>
-            <tr>
-                <td><strong>validate_project_versions</strong></td>
-                <td>19</td>
-                <td>Validate versions across different registries.
-
-Returns:
-    Dict with validatio</td>
-            </tr>
-            <tr>
-                <td><strong>ensure_project_environment</strong></td>
-                <td>19</td>
-                <td>Ensure the project environment is properly set up.
-
-For Python: creates .venv if</td>
             </tr></tbody>
 </table>
 </div></div>
@@ -271,13 +451,13 @@ For Python: creates .venv if</td>
   <tbody>
             <tr>
                 <td>1</td>
-                <td>Split validate_project_versions (CC=30 → target CC<10)</td>
+                <td>Split ensure_project_environment (CC=25 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
             <tr>
                 <td>2</td>
-                <td>Split ensure_project_environment (CC=25 → target CC<10)</td>
+                <td>Split validate_project_versions (CC=30 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
             </tr>
@@ -328,23 +508,53 @@ For Python: creates .venv if</td>
                 <td>Split SummaryQualityFilter.classify_intent_smart (CC=25 → target CC<10)</td>
                 <td><span class="badge high">high</span></td>
                 <td>low</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>Split god module goal/cli/version.py (730L, 0 classes)</td>
+                <td><span class="badge high">high</span></td>
+                <td>high</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>Split god module goal/summary/generator.py (675L, 1 classes)</td>
+                <td><span class="badge high">high</span></td>
+                <td>high</td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td>Split god module goal/project_bootstrap.py (589L, 0 classes)</td>
+                <td><span class="badge high">high</span></td>
+                <td>high</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td>Split god module goal/smart_commit/generator.py (524L, 1 classes)</td>
+                <td><span class="badge high">high</span></td>
+                <td>high</td>
+            </tr>
+            <tr>
+                <td>15</td>
+                <td>Split god module goal/deep_analyzer.py (554L, 1 classes)</td>
+                <td><span class="badge high">high</span></td>
+                <td>high</td>
             </tr></tbody>
 </table>
 </div></div>
 </div>
 </div>
 
-<footer>Generated by code2llm on 2026-03-08 07:40</footer>
+<footer>Generated by code2llm on 2026-03-15 16:59</footer>
 
 <script>
 const evoCtx = document.getElementById('evoChart').getContext('2d');
 new Chart(evoCtx, {
   type: 'line',
   data: {
-    labels: ['2026-03-05', '2026-03-07', '2026-03-08'],
+    labels: ['2026-03-05', '2026-03-07', '2026-03-08', '2026-03-15'],
     datasets: [
-      { label: 'CC avg', data: [7.3, 6.7, 6.0], borderColor: '#3b82f6', tension: .3, yAxisID: 'y' },
-      { label: 'Critical', data: [63, 65, 66], borderColor: '#ef4444', tension: .3, yAxisID: 'y1' }
+      { label: 'CC avg', data: [7.3, 6.7, 6.0, 6.0], borderColor: '#3b82f6', tension: .3, yAxisID: 'y' },
+      { label: 'Critical', data: [63, 65, 66, 68], borderColor: '#ef4444', tension: .3, yAxisID: 'y1' }
     ]
   },
   options: {
@@ -358,13 +568,54 @@ new Chart(evoCtx, {
   }
 });
 
-const modCtx = document.getElementById('modChart').getContext('2d');
-new Chart(modCtx, {
+// Language distribution pie chart
+const langCtx = document.getElementById('langChart').getContext('2d');
+new Chart(langCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Python', 'Shell'],
+    datasets: [{
+      data: [60, 3],
+      backgroundColor: ['#3572A5', '#89e051'],
+      borderColor: 'var(--border)', borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'right', labels: { color: '#e2e8f0', font: {size: 11} } }
+    }
+  }
+});
+
+// Module lines bar chart
+const modLinesCtx = document.getElementById('modLinesChart').getContext('2d');
+new Chart(modLinesCtx, {
   type: 'bar',
   data: {
-    labels: ['analyzer.py', 'version.py', 'version_validation.py', 'formatter.py', 'core.py', 'generator.py', 'project_bootstrap.py', 'quality_filter.py', 'changelog.py', 'generator.py', 'git_ops.py', 'abstraction.py', 'dry_run.py', 'validator.py', 'commit.py'],
-    datasets: [{ label: 'Max CC', data: [34, 33, 30, 29, 29, 26, 25, 25, 24, 24, 23, 20, 19, 19, 17],
-      backgroundColor: [34, 33, 30, 29, 29, 26, 25, 25, 24, 24, 23, 20, 19, 19, 17].map(v => v >= 15 ? '#ef4444' : v >= 10 ? '#eab308' : '#22c55e')
+    labels: ['version.py', 'generator.py', 'package_managers.py', 'project_bootstrap.py', 'deep_analyzer.py', 'generator.py', 'python.py', 'git_ops.py', 'manager.py', 'formatter.py', 'analyzer.py', 'generator.py', 'constants.py', 'quality_filter.py', 'validator.py'],
+    datasets: [{ label: 'Lines', data: [730, 675, 631, 589, 554, 524, 486, 473, 449, 402, 396, 384, 351, 328, 310],
+      backgroundColor: '#3b82f6'
+    }]
+  },
+  options: {
+    responsive: true, indexAxis: 'y',
+    scales: {
+      x: { grid:{color:'#334155'}, ticks:{color:'#94a3b8'} },
+      y: { grid:{color:'#334155'}, ticks:{color:'#94a3b8',font:{size:10}} }
+    },
+    plugins: { legend: { display:false } }
+  }
+});
+
+// Module functions bar chart
+const modFuncsCtx = document.getElementById('modFuncsChart').getContext('2d');
+new Chart(modFuncsCtx, {
+  type: 'bar',
+  data: {
+    labels: ['manager.py', 'generator.py', 'git_ops.py', 'deep_analyzer.py', 'version.py', 'generator.py', 'analyzer.py', 'generator.py', 'python.py', 'formatter.py', 'quality_filter.py', 'validator.py', 'package_managers.py', 'user_config.py', 'version_validation.py'],
+    datasets: [{ label: 'Functions', data: [25, 24, 22, 22, 18, 18, 16, 16, 16, 14, 14, 13, 12, 12, 10],
+      backgroundColor: '#22c55e'
     }]
   },
   options: {

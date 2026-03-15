@@ -112,17 +112,16 @@ flowchart TD
         goal__doctor__ruby__diagnose_ruby["diagnose_ruby"]
         goal__doctor__dotnet__diagnose_dotnet["diagnose_dotnet"]
         goal__doctor__go__diagnose_go["diagnose_go"]
+        goal__doctor__logging___log_issue["_log_issue"]
+        goal__doctor__logging___log_fix["_log_fix"]
         goal__doctor__todo___generate_ticket_id["_generate_ticket_id"]
         goal__doctor__todo___read_existing_tickets["_read_existing_tickets"]
         goal__doctor__todo___format_todo_entry["_format_todo_entry"]
         goal__doctor__todo__add_issues_to_todo("add_issues_to_todo CC=9")
         goal__doctor__todo__diagnose_and_report_with_todo["diagnose_and_report_with_todo"]
-        goal__doctor__logging___log_issue["_log_issue"]
-        goal__doctor__logging___log_fix["_log_fix"]
         goal__doctor__php__diagnose_php["diagnose_php"]
-        goal__doctor__core__diagnose_project["diagnose_project"]
-        goal__doctor__core__diagnose_and_report("diagnose_and_report CC=8")
         goal__doctor__java__diagnose_java["diagnose_java"]
+        goal__doctor__nodejs__diagnose_nodejs("diagnose_nodejs CC=13")
         goal__doctor__python__PythonDiagnostics____init__["__init__"]
         goal__check_py001_missing_config["check_py001_missing_config"]
         goal__check_py002_build_system["check_py002_build_system"]
@@ -133,9 +132,14 @@ flowchart TD
         goal__check_py007_requires_python["check_py007_requires_python"]
         goal__check_py008_empty_classifiers["check_py008_empty_classifiers"]
         goal__check_py009_string_authors("check_py009_string_authors CC=8")
+        goal__check_py010_project_name_consistency("check_py010_project_name_consistenc CC=12")
+        goal__check_py011_version_consistency{{check_py011_version_consistency CC=17}}
+        goal__check_py012_dist_cleanup("check_py012_dist_cleanup CC=9")
+        goal__check_py013_goal_publish_pattern("check_py013_goal_publish_pattern CC=8")
         goal__write_fixes["write_fixes"]
         goal__doctor__python__diagnose_python["diagnose_python"]
-        goal__doctor__nodejs__diagnose_nodejs("diagnose_nodejs CC=13")
+        goal__doctor__core__diagnose_project["diagnose_project"]
+        goal__doctor__core__diagnose_and_report("diagnose_and_report CC=8")
     end
     subgraph goal_formatter
         goal__formatter__MarkdownFormatter____init__["__init__"]
@@ -154,6 +158,13 @@ flowchart TD
         goal__formatter__format_status_output["format_status_output"]
     end
     subgraph goal_generator
+        goal____init__["__init__"]
+        goal__get_diff_stats("get_diff_stats CC=9")
+        goal__get_name_status("get_name_status CC=9")
+        goal__get_numstat_map("get_numstat_map CC=11")
+        goal__get_changed_files("get_changed_files CC=8")
+        goal__get_diff_content["get_diff_content"]
+        goal__clear_cache["clear_cache"]
         goal__classify_change_type["classify_change_type"]
         goal___detect_signals["_detect_signals"]
         goal___has_package_code["_has_package_code"]
@@ -170,13 +181,6 @@ flowchart TD
         goal__extract_functions_changed["extract_functions_changed"]
         goal__short_action_summary{{short_action_summary CC=34}}
         goal__per_file_notes{{per_file_notes CC=29}}
-        goal____init__["__init__"]
-        goal__get_diff_stats("get_diff_stats CC=9")
-        goal__get_name_status("get_name_status CC=9")
-        goal__get_numstat_map("get_numstat_map CC=11")
-        goal__get_changed_files("get_changed_files CC=8")
-        goal__get_diff_content["get_diff_content"]
-        goal__clear_cache["clear_cache"]
         goal____init__("__init__ CC=8")
         goal__get_diff_stats["get_diff_stats"]
         goal__get_name_status["get_name_status"]
@@ -377,14 +381,12 @@ flowchart TD
         goal__version_validation__check_readme_badges["check_readme_badges"]
         goal__format_validation_results["format_validation_results"]
     end
-    goal__user_config__initialize_user_config --> goal__user_config__get_git_user_name
-    goal__user_config__initialize_user_config --> goal__user_config__get_git_user_email
-    goal__user_config__initialize_user_config --> goal__user_config__prompt_for_license
-    goal__user_config__get_user_config --> goal__user_config__initialize_user_config
-    goal__validate_project_versions --> goal__version_validation__get_pypi_version
-    goal__validate_project_versions --> goal__version_validation__get_npm_version
-    goal__validate_project_versions --> goal__version_validation__get_cargo_version
-    goal__version_validation__check_readme_badges --> goal__version_validation__extract_badge_versions
+    subgraph integration_run_matrix
+        integration__run_matrix__run_case["run_case"]
+        integration__run_matrix__print["print"]
+        integration__run_matrix__main["main"]
+        integration__run_matrix__self["self"]
+    end
     goal__project_bootstrap__detect_project_types_deep --> goal__project_bootstrap___match_marker
     goal__ensure_project_environment --> goal__project_bootstrap___find_python_bin
     goal__ensure_project_environment --> goal__project_bootstrap___match_marker
@@ -396,15 +398,17 @@ flowchart TD
     goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__scaffold_test
     goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__detect_project_types_deep
     goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__bootstrap_project
+    goal__validate_project_versions --> goal__version_validation__get_pypi_version
+    goal__validate_project_versions --> goal__version_validation__get_npm_version
+    goal__validate_project_versions --> goal__version_validation__get_cargo_version
+    goal__version_validation__check_readme_badges --> goal__version_validation__extract_badge_versions
+    goal__user_config__initialize_user_config --> goal__user_config__get_git_user_name
+    goal__user_config__initialize_user_config --> goal__user_config__get_git_user_email
+    goal__user_config__initialize_user_config --> goal__user_config__prompt_for_license
+    goal__user_config__get_user_config --> goal__user_config__initialize_user_config
     goal__formatter__format_push_result --> goal__formatter___build_functional_overview
     goal__formatter__format_push_result --> goal__formatter___build_files_section
     goal__formatter__format_push_result --> goal__formatter___determine_next_steps
-    goal___analyze_python_diff --> goal__user_config__UserConfig__set
-    goal___analyze_js_diff --> goal__user_config__UserConfig__set
-    goal___analyze_generic_diff --> goal__user_config__UserConfig__set
-    goal___detect_functional_areas --> goal__user_config__UserConfig__set
-    goal__aggregate_changes --> goal__user_config__UserConfig__set
-    goal__detect_relations --> goal__user_config__UserConfig__set
     goal__git_ops___run_git_verbose --> goal__git_ops___echo_cmd
     goal__git_ops___run_git_verbose --> goal__git_ops__run_git
     goal__git_ops__is_git_repository --> goal__git_ops__run_git
@@ -429,8 +433,14 @@ flowchart TD
     goal__git_ops__get_diff_stats --> goal__git_ops__run_git
     goal__git_ops__get_diff_content --> goal__git_ops__run_git
     goal__git_ops__apply_ticket_prefix --> goal__git_ops__read_ticket
-    goal__extract_functions_changed --> goal__user_config__UserConfig__set
+    goal___analyze_python_diff --> goal__user_config__UserConfig__set
+    goal___analyze_js_diff --> goal__user_config__UserConfig__set
+    goal___analyze_generic_diff --> goal__user_config__UserConfig__set
+    goal___detect_functional_areas --> goal__user_config__UserConfig__set
+    goal__aggregate_changes --> goal__user_config__UserConfig__set
+    goal__detect_relations --> goal__user_config__UserConfig__set
     goal__push__commands__push --> goal__push__core__execute_push_workflow
+    goal__extract_functions_changed --> goal__user_config__UserConfig__set
     goal___classify_files --> goal__user_config__UserConfig__set
     goal__cli__doctor_cmd__doctor --> goal__project_bootstrap__detect_project_types_deep
     goal__push__core__run_git_local --> goal__git_ops__run_git
@@ -522,17 +532,15 @@ flowchart TD
     goal__package_managers__suggest_package_managers --> goal__package_managers__detect_project_language
     goal__package_managers__suggest_package_managers --> goal__get_package_managers_by_language
     goal__package_managers__suggest_package_managers --> goal__is_package_manager_available
+    goal__cli__stage_paths --> goal__git_ops__run_git
+    goal__cli__main --> goal__cli___setup_nfo_logging
+    goal__cli__main --> goal__user_config__get_user_config
     goal__doctor__todo___read_existing_tickets --> goal__user_config__UserConfig__set
     goal__doctor__todo___format_todo_entry --> goal__doctor__todo___generate_ticket_id
     goal__doctor__todo__add_issues_to_todo --> goal__doctor__todo___read_existing_tickets
     goal__doctor__todo__add_issues_to_todo --> goal__doctor__todo___generate_ticket_id
     goal__doctor__todo__diagnose_and_report_with_todo --> goal__doctor__core__diagnose_and_report
     goal__doctor__todo__diagnose_and_report_with_todo --> goal__doctor__todo__add_issues_to_todo
-    goal__cli__stage_paths --> goal__git_ops__run_git
-    goal__cli__main --> goal__cli___setup_nfo_logging
-    goal__cli__main --> goal__user_config__get_user_config
-    goal__doctor__core__diagnose_and_report --> goal__doctor__core__diagnose_project
-    goal__doctor__core__diagnose_and_report --> goal__doctor__logging___log_issue
     goal__extract_entities --> goal__user_config__UserConfig__set
     goal__analyze_changes --> goal__user_config__UserConfig__set
     goal__sync_all_versions_wrapper --> goal__push__stages__version___get_version_module
@@ -560,8 +568,10 @@ flowchart TD
     goal__push__stages__publish__handle_publish --> goal__cli__publish__publish_project
     goal__push__stages__publish__handle_publish --> goal__cli__confirm
     goal__check_py006_duplicate_authors --> goal__user_config__UserConfig__set
+    goal__doctor__core__diagnose_and_report --> goal__doctor__core__diagnose_project
+    goal__doctor__core__diagnose_and_report --> goal__doctor__logging___log_issue
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class goal__changelog__update_changelog,goal__validate_project_versions,goal__project_bootstrap__guess_package_name,goal__ensure_project_environment,goal__project_bootstrap__scaffold_test,goal__formatter__format_enhanced_summary,goal___analyze_python_diff,goal___build_summary,goal__git_ops__ensure_git_repository,goal___score_by_signals,goal__short_action_summary,goal__per_file_notes,goal__push__core__execute_push_workflow,goal__cli__version__update_project_metadata,goal__cli__version__sync_all_versions,goal__auto_fix,goal__generate_value_title,goal___format_changes_section,goal__classify_intent_smart,goal__extract_entities,goal__analyze_changes,goal___generate_functional_summary,goal__push__stages__commit__enforce_quality_gates,goal__push__stages__commit__handle_split_commits,goal__push__stages__dry_run__handle_dry_run highCC
-    class goal__user_config__initialize_user_config,goal__project_bootstrap__detect_project_types_deep,goal__formatter___build_functional_overview,goal__formatter___build_files_section,goal__formatter__format_push_result,goal___extract_python_entities,goal___analyze_js_diff,goal___check_cli_value,goal___check_area_values,goal___score_by_statistics,goal___resolve_change_type,goal__detect_scope,goal__get_diff_stats,goal__get_name_status,goal__get_numstat_map,goal__get_changed_files,goal____init__,goal__generate_enhanced_summary,goal___classify_files,goal___build_summary_section,goal__cli__doctor_cmd__doctor,goal__push__core__show_workflow_preview,goal__push__core__output_final_summary,goal__cli__commit_cmd__commit,goal__cli__commit_cmd__fix_summary,goal__cli__commit_cmd__validate,goal__cli__version__update_readme_metadata,goal__cli__utils_cmd__status,goal__cli__utils_cmd__package_managers,goal__cli__publish__publish_project medCC
+    class goal__changelog__update_changelog,goal__project_bootstrap__guess_package_name,goal__ensure_project_environment,goal__project_bootstrap__scaffold_test,goal__validate_project_versions,goal__formatter__format_enhanced_summary,goal__git_ops__ensure_git_repository,goal___analyze_python_diff,goal___build_summary,goal___score_by_signals,goal__short_action_summary,goal__per_file_notes,goal__push__core__execute_push_workflow,goal__cli__version__update_project_metadata,goal__cli__version__sync_all_versions,goal__auto_fix,goal__generate_value_title,goal___format_changes_section,goal__classify_intent_smart,goal__extract_entities,goal__analyze_changes,goal___generate_functional_summary,goal__push__stages__commit__enforce_quality_gates,goal__push__stages__commit__handle_split_commits,goal__push__stages__dry_run__handle_dry_run,goal__check_py011_version_consistency highCC
+    class goal__project_bootstrap__detect_project_types_deep,goal__user_config__initialize_user_config,goal__formatter___build_functional_overview,goal__formatter___build_files_section,goal__formatter__format_push_result,goal___extract_python_entities,goal___analyze_js_diff,goal___check_cli_value,goal___check_area_values,goal__get_diff_stats,goal__get_name_status,goal__get_numstat_map,goal__get_changed_files,goal___score_by_statistics,goal___resolve_change_type,goal__detect_scope,goal____init__,goal__generate_enhanced_summary,goal___classify_files,goal___build_summary_section,goal__cli__doctor_cmd__doctor,goal__push__core__show_workflow_preview,goal__push__core__output_final_summary,goal__cli__commit_cmd__commit,goal__cli__commit_cmd__fix_summary,goal__cli__commit_cmd__validate,goal__cli__version__update_readme_metadata,goal__cli__utils_cmd__status,goal__cli__utils_cmd__package_managers,goal__cli__publish__publish_project medCC

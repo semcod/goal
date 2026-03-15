@@ -3,16 +3,16 @@ project:
   name: goal
   repo: /home/tom/github/wronai/goal
   language: python
-  analyzed_at: '2026-03-08T07:40:21Z'
+  analyzed_at: '2026-03-15T16:59:24Z'
   tool: code2llm
   stats:
-    files: 47
-    lines: 12955
-    functions: 348
-    classes: 19
+    files: 48
+    lines: 13352
+    functions: 356
+    classes: 20
 health:
   cc_avg: 6.0
-  critical_count: 66
+  critical_count: 68
   critical_limit: 10
   duplicates: 0
   cycles: 0
@@ -98,6 +98,16 @@ health:
     limit: 10
     severity: critical
   - type: high_fan_out
+    target: PythonDiagnostics.check_py011_version_consistency
+    value: 21
+    limit: 10
+    severity: critical
+  - type: high_fan_out
+    target: diagnose_python
+    value: 21
+    limit: 10
+    severity: critical
+  - type: high_fan_out
     target: CodeChangeAnalyzer._analyze_python_diff
     value: 20
     limit: 10
@@ -107,16 +117,6 @@ health:
     value: 20
     limit: 10
     severity: critical
-  - type: cc_exceeded
-    target: update_changelog
-    value: 24
-    limit: 15
-    severity: error
-  - type: cc_exceeded
-    target: SmartCommitGenerator.analyze_changes
-    value: 24
-    limit: 15
-    severity: error
 modules:
 - path: goal/generator/analyzer.py
   lines: 396
@@ -525,6 +525,43 @@ modules:
       cc: 19
       flag: split
       fan_out: 27
+- path: goal/doctor/python.py
+  lines: 486
+  classes: 1
+  methods: 16
+  cc_max: 17
+  inbound_deps: 0
+  exports:
+  - name: PythonDiagnostics
+    type: class
+    cc_avg: 6.4
+    methods:
+    - name: check_py003_license_classifiers
+      cc: 7
+      fan_out: 10
+    - name: check_py006_duplicate_authors
+      cc: 8
+      fan_out: 14
+    - name: check_py009_string_authors
+      cc: 8
+      fan_out: 17
+    - name: check_py010_project_name_consistency
+      cc: 12
+      fan_out: 15
+    - name: check_py011_version_consistency
+      cc: 17
+      flag: split
+      fan_out: 21
+    - name: check_py012_dist_cleanup
+      cc: 9
+      fan_out: 11
+    - name: check_py013_goal_publish_pattern
+      cc: 8
+      fan_out: 10
+  - name: diagnose_python
+    type: function
+    cc: 6
+    fan_out: 21
 - path: goal/push/stages/commit.py
   lines: 213
   classes: 0
@@ -864,30 +901,6 @@ modules:
     type: function
     cc: 8
     fan_out: 11
-- path: goal/doctor/python.py
-  lines: 324
-  classes: 1
-  methods: 12
-  cc_max: 8
-  inbound_deps: 0
-  exports:
-  - name: PythonDiagnostics
-    type: class
-    cc_avg: 4.5
-    methods:
-    - name: check_py003_license_classifiers
-      cc: 7
-      fan_out: 10
-    - name: check_py006_duplicate_authors
-      cc: 8
-      fan_out: 14
-    - name: check_py009_string_authors
-      cc: 8
-      fan_out: 17
-  - name: diagnose_python
-    type: function
-    cc: 6
-    fan_out: 17
 - path: goal/cli/publish_cmd.py
   lines: 38
   classes: 0
@@ -1163,6 +1176,40 @@ modules:
   methods: 0
   cc_max: 0
   inbound_deps: 0
+- path: integration/run_docker_matrix.sh
+  lines: 5
+  classes: 0
+  methods: 0
+  cc_max: 0
+  inbound_deps: 0
+- path: integration/run_matrix.sh
+  lines: 216
+  classes: 1
+  methods: 4
+  cc_max: 0
+  inbound_deps: 0
+  exports:
+  - name: App
+    type: class
+    cc_avg: 0.0
+  - name: run_case
+    type: function
+    cc: 0
+  - name: print
+    type: function
+    cc: 0
+  - name: main
+    type: function
+    cc: 0
+  - name: self
+    type: function
+    cc: 0
+- path: project.sh
+  lines: 14
+  classes: 0
+  methods: 0
+  cc_max: 0
+  inbound_deps: 0
 hotspots:
 - name: execute_push_workflow
   fan_out: 35
@@ -1183,32 +1230,28 @@ hotspots:
 - name: guess_package_name
   fan_out: 22
   note: Best-effort guess of the package/module name for scaffold templates.
+- name: PythonDiagnostics.check_py011_version_consistency
+  fan_out: 21
+  note: 'PY011: Check for consistent version across all config files.'
+- name: diagnose_python
+  fan_out: 21
+  note: Run all Python-specific diagnostics.
 - name: CodeChangeAnalyzer._analyze_python_diff
   fan_out: 20
   note: Analysis pipeline, 20 stages
 - name: ContentAnalyzer.per_file_notes
   fan_out: 20
   note: Generate small descriptive notes for a file based on added lines heuristics.
-- name: validate_project_versions
-  fan_out: 19
-  note: "Validate versions across different registries.\n\nReturns:\n    Dict with\
-    \ validatio"
-- name: ensure_project_environment
-  fan_out: 19
-  note: 'Ensure the project environment is properly set up.
-
-
-    For Python: creates .venv if'
 refactoring:
   priorities:
-  - action: Split validate_project_versions (CC=30 → target CC<10)
-    impact: high
-    effort: low
-    module: version_validation.py
   - action: Split ensure_project_environment (CC=25 → target CC<10)
     impact: high
     effort: low
     module: project_bootstrap.py
+  - action: Split validate_project_versions (CC=30 → target CC<10)
+    impact: high
+    effort: low
+    module: version_validation.py
   - action: Split format_enhanced_summary (CC=29 → target CC<10)
     impact: high
     effort: low
@@ -1272,4 +1315,9 @@ evolution:
   cc_avg: 6.0
   critical: 66
   lines: 12955
+  note: Automated analysis
+- date: '2026-03-15'
+  cc_avg: 6.0
+  critical: 68
+  lines: 13352
   note: Automated analysis
