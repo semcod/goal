@@ -7,15 +7,15 @@ WHITE  := $(shell tput -Txterm setaf 7)
 RESET  := $(shell tput -Txterm sgr0)
 
 # Project information
-PACKAGE = weekly
-PYTHON = poetry run python
-PIP = poetry run pip
-PYTEST = poetry run pytest
-MYPY = poetry run mypy
-BLACK = poetry run black
-ISORT = poetry run isort
-FLAKE8 = poetry run flake8
-COVERAGE = poetry run coverage
+PACKAGE = goal
+PYTHON = python3
+PIP = pip3
+PYTEST = python3 -m pytest
+MYPY = python3 -m mypy
+BLACK = python3 -m black
+ISORT = python3 -m isort
+FLAKE8 = python3 -m flake8
+COVERAGE = python3 -m coverage
 PART = patch
 
 .PHONY: help install dev test build publish clean push
@@ -69,13 +69,23 @@ bump-version:
 		exit 1; \
 	fi
 	@echo "${YELLOW}Bumping $(PART) version...${RESET}"
-	poetry version $(PART)
-	git add pyproject.toml
-	@VERSION=$$(poetry version -s); \
-	git commit -m "Bump version to $$VERSION"; \
-	if git rev-parse "v$$VERSION" >/dev/null 2>&1; then \
-		echo "${YELLOW}Error: tag 'v$$VERSION' already exists${RESET}"; \
+	@current_version=$$(grep '^version = ' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/'); \
+	echo "Current version: $$current_version"; \
+	IFS='.' read -r major minor patch <<< "$$current_version"; \
+	case "$(PART)" in \
+		major) major=$$((major + 1)); minor=0; patch=0 ;; \
+		minor) minor=$$((minor + 1)); patch=0 ;; \
+		patch) patch=$$((patch + 1)) ;; \
+		*) echo "${YELLOW}Error: PART must be major, minor, or patch${RESET}"; exit 1 ;; \
+	esac; \
+	new_version="$${major}.$${minor}.$${patch}"; \
+	sed -i "s/^version = \"$$current_version\"/version = \"$$new_version\"/" pyproject.toml; \
+	echo "${GREEN}Version bumped to $$new_version${RESET}"; \
+	git add pyproject.toml; \
+	git commit -m "Bump version to $$new_version"; \
+	if git rev-parse "v$$new_version" >/dev/null 2>&1; then \
+		echo "${YELLOW}Error: tag 'v$$new_version' already exists${RESET}"; \
 		exit 1; \
 	fi; \
-	git tag -a "v$$VERSION" -m "Version $$VERSION"; \
-	echo "${GREEN}Version bumped to $$VERSION${RESET}"
+	git tag -a "v$$new_version" -m "Version $$new_version"; \
+	echo "${GREEN}Created tag v$$new_version${RESET}"
