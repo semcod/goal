@@ -249,6 +249,7 @@ DEFAULT_CONFIG = {
             'detect_api_tokens': True,
             'auto_manage_gitignore': True,
             'auto_add_dot_folders': True,
+            'auto_handle_large_files': True,  # Auto-exclude large files
             'known_dot_folders': [
                 '.idea', '.vscode', '.DS_Store', 'Thumbs.db', '.pytest_cache',
                 '.coverage', '.mypy_cache', '.tox', '.nox', '.venv', '.env',

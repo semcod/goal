@@ -274,8 +274,9 @@ def validate_files(
     block_large_files: bool = True,
     token_patterns: Optional[List[str]] = None,
     detect_tokens: bool = True,
-    exclude_patterns: Optional[Set[str]] = None
-) -> None:
+    exclude_patterns: Optional[Set[str]] = None,
+    auto_handle_large: bool = True
+) -> List[str]:
     """Validate files before commit.
     
     Args:
@@ -285,6 +286,10 @@ def validate_files(
         token_patterns: List of regex patterns for token detection
         detect_tokens: Whether to check for tokens
         exclude_patterns: Set of file patterns to exclude from validation
+        auto_handle_large: Whether to automatically handle large files
+        
+    Returns:
+        List of large files that were handled
         
     Raises:
         FileSizeError: If a file exceeds size limit and blocking is enabled
@@ -296,6 +301,8 @@ def validate_files(
             '*.pyc', '*.pyo', '__pycache__/', '.pytest_cache/',
             'node_modules/', '.npm/', '.cache/', '*.log', '*.tmp'
         }
+    
+    large_files_found = []
     
     # Default token patterns if not provided
     if token_patterns is None:
@@ -338,7 +345,11 @@ def validate_files(
         # Check file size
         size_mb = get_file_size_mb(file_path)
         if size_mb > max_size_mb:
-            if block_large_files:
+            large_files_found.append(file_path)
+            if auto_handle_large and not block_large_files:
+                # Auto-handle by adding to gitignore
+                continue
+            elif block_large_files:
                 raise FileSizeError(file_path, size_mb, max_size_mb)
             else:
                 click.echo(
@@ -365,6 +376,49 @@ def validate_files(
             except PermissionError:
                 # Skip files we can't read
                 pass
+    
+    # Auto-handle large files if found
+    if large_files_found and auto_handle_large:
+        handle_large_files(large_files_found)
+    
+    return large_files_found
+
+
+def handle_large_files(large_files: List[str]) -> None:
+    """Automatically handle large files by adding them to .gitignore and unstaging.
+    
+    Args:
+        large_files: List of large file paths to handle
+    """
+    if not large_files:
+        return
+    
+    # Load current ignored patterns
+    ignored, _ = load_gitignore()
+    
+    # Add large files to gitignore
+    for file_path in large_files:
+        ignored.add(file_path)
+    
+    # Save updated .gitignore
+    save_gitignore(ignored)
+    
+    click.echo(click.style(
+        f"✅ Added {len(large_files)} large file(s) to .gitignore: {', '.join(large_files)}",
+        fg='green'
+    ))
+    
+    # Re-stage files to unstage the large files
+    from goal.git_ops import run_git
+    run_git('add', '.gitignore')
+    run_git('update-index', '--refresh')
+    
+    # Show which files were unstaged
+    for file_path in large_files:
+        if os.path.exists(file_path):
+            run_git('reset', '--', file_path)
+            size_mb = get_file_size_mb(file_path)
+            click.echo(click.style(f"  → Unstaged: {file_path} ({size_mb:.1f}MB)", fg='yellow'))
 
 
 def validate_staged_files(config) -> None:
@@ -400,6 +454,7 @@ def validate_staged_files(config) -> None:
         block_large_files = True
         detect_tokens = True
         token_patterns = []
+        auto_handle_large = True
     else:
         # Get validation settings from config
         validation_config = config.get('advanced.file_validation', {})
@@ -407,12 +462,20 @@ def validate_staged_files(config) -> None:
         block_large_files = validation_config.get('block_large_files', True)
         detect_tokens = validation_config.get('detect_api_tokens', True)
         token_patterns = validation_config.get('token_patterns', [])
+        auto_handle_large = validation_config.get('auto_handle_large_files', True)
     
-    # Run validation
-    validate_files(
+    # Run validation with auto-handling
+    large_files = validate_files(
         files=files,
         max_size_mb=max_size_mb,
         block_large_files=block_large_files,
         token_patterns=token_patterns,
-        detect_tokens=detect_tokens
+        detect_tokens=detect_tokens,
+        auto_handle_large=auto_handle_large
     )
+    
+    # If large files were handled, refresh the file list
+    if large_files and auto_handle_large:
+        files = get_staged_files()
+        if not files or files == ['']:
+            return

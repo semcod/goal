@@ -1,17 +1,17 @@
-# code2llm | 70f 13126L | python:67,shell:3 | 2026-03-27
+# code2llm | 70f 13135L | python:67,shell:3 | 2026-03-27
 # CC̄=5.7 | critical:30/420 | dups:0 | cycles:0
 
 HEALTH[20]:
   🔴 GOD   goal/recovery/strategies.py = 541L, 7 classes, 27m, max CC=9
-  🟡 CC    update_changelog CC=24 (limit:15)
   🟡 CC    validate_project_versions CC=30 (limit:15)
+  🟡 CC    update_changelog CC=24 (limit:15)
   🟡 CC    guess_package_name CC=20 (limit:15)
   🟡 CC    ensure_project_environment CC=25 (limit:15)
   🟡 CC    scaffold_test CC=15 (limit:15)
   🟡 CC    format_enhanced_summary CC=29 (limit:15)
+  🟡 CC    ensure_git_repository CC=23 (limit:15)
   🟡 CC    _analyze_python_diff CC=15 (limit:15)
   🟡 CC    _build_summary CC=16 (limit:15)
-  🟡 CC    ensure_git_repository CC=23 (limit:15)
   🟡 CC    _score_by_signals CC=15 (limit:15)
   🟡 CC    short_action_summary CC=34 (limit:15)
   🟡 CC    per_file_notes CC=29 (limit:15)
@@ -28,15 +28,15 @@ REFACTOR[2]:
   2. split 19 high-CC methods  (CC>15)
 
 PIPELINES[290]:
-  [1] Src [get_registry_version]: get_registry_version
+  [1] Src [__init__]: __init__
       PURITY: 100% pure
-  [2] Src [check_readme_badges]: check_readme_badges → extract_badge_versions
+  [2] Src [_load]: _load
       PURITY: 100% pure
-  [3] Src [__init__]: __init__
+  [3] Src [_save]: _save
       PURITY: 100% pure
-  [4] Src [_load]: _load
+  [4] Src [get]: get
       PURITY: 100% pure
-  [5] Src [_save]: _save
+  [5] Src [get_registry_version]: get_registry_version
       PURITY: 100% pure
 
 LAYERS:
@@ -70,8 +70,8 @@ LAYERS:
   │ git_ops                    171L  1C    7m  CC=11     ←0
   │ publish                    136L  0C    4m  CC=13     ←2
   │ todo                       127L  0C    5m  CC=9      ←1
+  │ recover_cmd                126L  0C    2m  CC=6      ←0
   │ !! changelog                  125L  0C    1m  CC=24     ←1
-  │ recover_cmd                125L  0C    2m  CC=6      ←0
   │ config_cmd                 110L  0C    7m  CC=4      ←0
   │ push_cmd                   103L  0C    1m  CC=1      ←0
   │ !! push_remote                102L  0C    2m  CC=15     ←1
@@ -114,7 +114,7 @@ LAYERS:
   │ run_docker_matrix.sh         5L  0C    0m  CC=0.0    ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
-  │ project.sh                  14L  0C    0m  CC=0.0    ←0
+  │ project.sh                  22L  0C    0m  CC=0.0    ←0
   │
 
 COUPLING:
@@ -131,8 +131,8 @@ COUPLING:
       goal.recovery                  1                                                                                                                                                                         ──
   CYCLES: none
   HUB: goal.config/ (fan-in=8)
-  HUB: goal.cli/ (fan-in=7)
   HUB: goal/ (fan-in=102)
+  HUB: goal.cli/ (fan-in=7)
   SMELL: goal.push/ fan-out=52 → split needed
   SMELL: goal.cli/ fan-out=43 → split needed
 

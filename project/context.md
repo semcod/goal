@@ -28,14 +28,14 @@
 - **Classes**: 1
 - **File**: `generator.py`
 
+### goal.git_ops
+- **Functions**: 22
+- **File**: `git_ops.py`
+
 ### goal.deep_analyzer
 - **Functions**: 22
 - **Classes**: 1
 - **File**: `deep_analyzer.py`
-
-### goal.git_ops
-- **Functions**: 22
-- **File**: `git_ops.py`
 
 ### goal.cli.version
 - **Functions**: 19
@@ -199,7 +199,7 @@ This command automatically detects and attempts to recover from common
 git push failures including:
 
 - Authentication
-- **Calls**: click.command, click.option, click.option, click.option, click.option, click.option, os.getcwd, goal.cli.recover_cmd._get_error_output
+- **Calls**: main.command, click.option, click.option, click.option, click.option, click.option, os.getcwd, goal.cli.recover_cmd._get_error_output
 
 ### goal.doctor.python.PythonDiagnostics.check_py009_string_authors
 > PY009: Check for authors in deprecated string format (PEP 621 requires objects).
