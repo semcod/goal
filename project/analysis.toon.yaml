@@ -1,47 +1,47 @@
-# code2llm | 96f 17753L | python:93,shell:3 | 2026-03-27
+# code2llm | 96f 17759L | python:93,shell:3 | 2026-03-27
 # CC̄=5.1 | critical:32/598 | dups:0 | cycles:0
 
 HEALTH[20]:
-  🔴 GOD   goal/recovery/strategies.py = 687L, 7 classes, 30m, max CC=11
-  🟡 CC    validate_project_versions CC=30 (limit:15)
+  🔴 GOD   goal/recovery/strategies.py = 685L, 7 classes, 30m, max CC=11
   🟡 CC    update_changelog CC=24 (limit:15)
-  🟡 CC    _analyze_python_diff CC=15 (limit:15)
-  🟡 CC    _build_summary CC=16 (limit:15)
-  🟡 CC    format_enhanced_summary CC=29 (limit:15)
+  🟡 CC    validate_project_versions CC=30 (limit:15)
   🟡 CC    guess_package_name CC=20 (limit:15)
   🟡 CC    ensure_project_environment CC=25 (limit:15)
   🟡 CC    scaffold_test CC=15 (limit:15)
+  🟡 CC    format_enhanced_summary CC=29 (limit:15)
+  🟡 CC    _analyze_python_diff CC=15 (limit:15)
+  🟡 CC    _build_summary CC=16 (limit:15)
+  🟡 CC    ensure_git_repository CC=23 (limit:15)
   🟡 CC    _score_by_signals CC=15 (limit:15)
   🟡 CC    short_action_summary CC=34 (limit:15)
   🟡 CC    per_file_notes CC=29 (limit:15)
-  🟡 CC    ensure_git_repository CC=23 (limit:15)
-  🟡 CC    detect_tokens_in_content CC=15 (limit:15)
+  🟡 CC    detect_tokens_in_content CC=16 (limit:15)
   🟡 CC    check_dot_folders CC=23 (limit:15)
   🟡 CC    validate_files CC=18 (limit:15)
   🟡 CC    commit CC=17 (limit:15)
   🟡 CC    update_project_metadata CC=18 (limit:15)
   🟡 CC    _validate_advanced_section CC=21 (limit:15)
-  🟡 CC    auto_fix CC=19 (limit:15)
+  🟡 CC    generate_value_title CC=19 (limit:15)
 
 REFACTOR[2]:
   1. split goal/recovery/strategies.py  (god module)
   2. split 19 high-CC methods  (CC>15)
 
 PIPELINES[391]:
-  [1] Src [get_registry_version]: get_registry_version
+  [1] Src [__init__]: __init__
       PURITY: 100% pure
-  [2] Src [check_readme_badges]: check_readme_badges → extract_badge_versions
+  [2] Src [_load]: _load
       PURITY: 100% pure
-  [3] Src [__init__]: __init__
+  [3] Src [_save]: _save
       PURITY: 100% pure
-  [4] Src [_load]: _load
+  [4] Src [get]: get
       PURITY: 100% pure
-  [5] Src [_save]: _save
+  [5] Src [get_registry_version]: get_registry_version
       PURITY: 100% pure
 
 LAYERS:
   goal/                           CC̄=5.2    ←in:116  →out:3
-  │ !! strategies                 687L  7C   30m  CC=11     ←0
+  │ !! strategies                 685L  7C   30m  CC=11     ←0
   │ !! generator                  675L  1C   16m  CC=26     ←0
   │ !! package_managers           628L  1C   12m  CC=11     ←1
   │ !! project_bootstrap          589L  0C    9m  CC=25     ←3
@@ -49,7 +49,7 @@ LAYERS:
   │ !! git_ops                    566L  0C   23m  CC=23     ←13
   │ !! deep_analyzer              554L  1C   22m  CC=16     ←0
   │ !! generator                  524L  1C   18m  CC=24     ←0
-  │ !! file_validator             487L  4C   12m  CC=23     ←2
+  │ !! file_validator             495L  4C   12m  CC=23     ←2
   │ !! python                     486L  1C   16m  CC=17     ←0
   │ !! validation                 483L  2C   13m  CC=21     ←2
   │ manager                    448L  1C   25m  CC=10     ←6
@@ -61,7 +61,7 @@ LAYERS:
   │ wizard_cmd                 340L  0C    7m  CC=12     ←0
   │ !! quality_filter             328L  1C   14m  CC=25     ←0
   │ core                       321L  1C   11m  CC=12     ←4
-  │ manager                    317L  1C   14m  CC=6      ←0
+  │ manager                    315L  1C   14m  CC=6      ←0
   │ manager                    315L  1C   12m  CC=7      ←0
   │ !! validator                  310L  1C   13m  CC=19     ←0
   │ manager                    302L  1C   14m  CC=4      ←1
@@ -92,7 +92,7 @@ LAYERS:
   │ config                     105L  0C    2m  CC=8      ←0
   │ push_cmd                   103L  0C    1m  CC=1      ←0
   │ doctor_cmd                  99L  0C    1m  CC=12     ←0
-  │ !! dry_run                     96L  0C    1m  CC=19     ←1
+  │ !! dry_run                     98L  0C    1m  CC=19     ←1
   │ core                        87L  0C    2m  CC=8      ←2
   │ validation_cmd              85L  0C    5m  CC=7      ←0
   │ postcommit_cmd              82L  0C    5m  CC=6      ←0
@@ -160,13 +160,13 @@ COUPLING:
     goal.validation                  2                                                                                                                                                                                                                                  ──                   
       goal.recovery                  1                                                                                                                                                                                                                                                     ──
   CYCLES: none
-  HUB: goal/ (fan-in=116)
-  HUB: goal.config/ (fan-in=14)
-  HUB: goal.license/ (fan-in=7)
   HUB: goal.cli/ (fan-in=7)
-  SMELL: goal.push/ fan-out=52 → split needed
+  HUB: goal.config/ (fan-in=14)
+  HUB: goal/ (fan-in=116)
+  HUB: goal.license/ (fan-in=7)
   SMELL: goal.cli/ fan-out=65 → split needed
   SMELL: goal.validators/ fan-out=11 → split needed
+  SMELL: goal.push/ fan-out=52 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

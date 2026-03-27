@@ -1,12 +1,12 @@
-# redup/duplication | 10 groups | 72f 15988L | 2026-03-27
+# redup/duplication | 10 groups | 72f 15997L | 2026-03-27
 
 SUMMARY:
   files_scanned: 72
-  total_lines:   15988
+  total_lines:   15997
   dup_groups:    10
   dup_fragments: 37
   saved_lines:   216
-  scan_ms:       15514
+  scan_ms:       2659
 
 DUPLICATES[10] (ranked by impact):
   [4093ed9ae3929a54] ! STRU  hooks_status  L=8 N=6 saved=40 sim=1.00
@@ -21,8 +21,8 @@ DUPLICATES[10] (ranked by impact):
       goal/cli/authors_cmd.py:0-6  (authors)
       goal/cli/postcommit_cmd.py:0-6  (postcommit)
       goal/cli/license_cmd.py:0-6  (license)
-      goal/cli/validation_cmd.py:0-6  (validation)
       goal/cli/config_cmd.py:0-6  (config)
+      goal/cli/validation_cmd.py:0-6  (validation)
   [e8e1ba5d936993f1] ! STRU  get_name  L=4 N=9 saved=32 sim=1.00
       goal/postcommit/actions.py:0-3  (get_name)
       goal/postcommit/actions.py:0-3  (get_name)
@@ -54,8 +54,8 @@ DUPLICATES[10] (ranked by impact):
       goal/postcommit/actions.py:0-5  (get_name)
       goal/validation/rules.py:0-5  (get_name)
   [b25039a06bd76f94]   EXAC  __init__  L=4 N=2 saved=4 sim=1.00
-      goal/deep_analyzer.py:0-3  (__init__)
       goal/generator/git_ops.py:0-3  (__init__)
+      goal/deep_analyzer.py:0-3  (__init__)
 
 REFACTOR[10] (ranked by priority):
   [1] ○ extract_function   → goal/cli/utils/hooks_status.py

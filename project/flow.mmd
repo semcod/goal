@@ -23,21 +23,21 @@ flowchart TD
     end
 
     subgraph Core
-        goal__version_validation__get_registry_version["get_registry_version"]
-        goal__version_validation__validate_project_versions{{validate_project_versions CC=30}}
-        goal__version_validation__check_readme_badges["check_readme_badges"]
+        goal__changelog__update_changelog{{update_changelog CC=24}}
         goal__user_config__UserConfig___load["_load"]
         goal__user_config__UserConfig___save["_save"]
         goal__user_config__UserConfig__get["get"]
         goal__user_config__UserConfig__set["set"]
         goal__user_config__UserConfig__is_initialized["is_initialized"]
-        goal__changelog__update_changelog{{update_changelog CC=24}}
-        goal__deep_analyzer__CodeChangeAnalyzer__analyze_file_diff["analyze_file_diff"]
-        goal__deep_analyzer__CodeChangeAnalyzer___detect_language["_detect_language"]
-        goal__deep_analyzer__CodeChangeAnalyzer___analyze_python_diff["_analyze_python_diff"]
-        goal__deep_analyzer__CodeChangeAnalyzer___extract_python_entities["_extract_python_entities"]
-        goal__deep_analyzer__CodeChangeAnalyzer___get_decorator_name["_get_decorator_name"]
-        goal__deep_analyzer__CodeChangeAnalyzer___calculate_complexity["_calculate_complexity"]
+        goal__version_validation__get_registry_version["get_registry_version"]
+        goal__version_validation__validate_project_versions{{validate_project_versions CC=30}}
+        goal__version_validation__check_readme_badges["check_readme_badges"]
+        goal__project_bootstrap__guess_package_name{{guess_package_name CC=20}}
+        goal__project_bootstrap__ensure_project_environment{{ensure_project_environment CC=25}}
+        goal__project_bootstrap__scaffold_test{{scaffold_test CC=15}}
+        goal__project_bootstrap__bootstrap_all_projects["bootstrap_all_projects"]
+        goal__formatter__MarkdownFormatter__add_header["add_header"]
+        goal__formatter__MarkdownFormatter__add_metadata["add_metadata"]
         ...["+342 more"]
     end
 
@@ -45,4 +45,4 @@ flowchart TD
         goal__authors__manager__AuthorsManager__export_to_contributors["export_to_contributors"]
     end
 
-    class goal__version_validation__get_registry_version,goal__version_validation__check_readme_badges,goal__user_config__UserConfig___load,goal__user_config__UserConfig___save,goal__user_config__UserConfig__get,goal__user_config__UserConfig__is_initialized,goal__deep_analyzer__CodeChangeAnalyzer__analyze_file_diff,goal__deep_analyzer__CodeChangeAnalyzer___detect_language,goal__deep_analyzer__CodeChangeAnalyzer___analyze_python_diff,goal__deep_analyzer__CodeChangeAnalyzer___extract_python_entities entry
+    class goal__user_config__UserConfig___load,goal__user_config__UserConfig___save,goal__user_config__UserConfig__get,goal__user_config__UserConfig__is_initialized,goal__version_validation__get_registry_version,goal__version_validation__check_readme_badges,goal__project_bootstrap__bootstrap_all_projects,goal__formatter__MarkdownFormatter__add_header,goal__formatter__MarkdownFormatter__add_metadata,goal__formatter__MarkdownFormatter__add_section entry

@@ -1,9 +1,17 @@
-# vallm batch | 174f | 92✓ 20⚠ 37✗ | 2026-03-27
+# vallm batch | 174f | 101✓ 20⚠ 28✗ | 2026-03-27
 
 SUMMARY:
-  scanned: 174  passed: 92 (52.9%)  warnings: 20  errors: 37  unsupported: 45
+  scanned: 174  passed: 101 (58.0%)  warnings: 20  errors: 28  unsupported: 45
 
 WARNINGS[20]{path,score}:
+  goal/validators/file_validator.py,0.90
+    issues[6]{rule,severity,message,line}:
+      complexity.cyclomatic,warning,detect_tokens_in_content has cyclomatic complexity 16 (max: 15),68
+      complexity.cyclomatic,warning,check_dot_folders has cyclomatic complexity 23 (max: 15),162
+      complexity.cyclomatic,warning,validate_files has cyclomatic complexity 18 (max: 15),285
+      complexity.lizard_cc,warning,detect_tokens_in_content: CC=16 exceeds limit 15,68
+      complexity.lizard_cc,warning,check_dot_folders: CC=23 exceeds limit 15,162
+      complexity.lizard_cc,warning,validate_files: CC=18 exceeds limit 15,285
   goal/generator/analyzer.py,0.93
     issues[5]{rule,severity,message,line}:
       complexity.cyclomatic,warning,ContentAnalyzer has cyclomatic complexity 33 (max: 15),274
@@ -40,12 +48,6 @@ WARNINGS[20]{path,score}:
       complexity.cyclomatic,warning,_format_changes_section has cyclomatic complexity 26 (max: 15),478
       complexity.lizard_cc,warning,generate_value_title: CC=19 exceeds limit 15,330
       complexity.lizard_cc,warning,_format_changes_section: CC=26 exceeds limit 15,478
-  goal/validators/file_validator.py,0.93
-    issues[4]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,check_dot_folders has cyclomatic complexity 23 (max: 15),154
-      complexity.cyclomatic,warning,validate_files has cyclomatic complexity 18 (max: 15),277
-      complexity.lizard_cc,warning,check_dot_folders: CC=23 exceeds limit 15,154
-      complexity.lizard_cc,warning,validate_files: CC=18 exceeds limit 15,277
   goal/deep_analyzer.py,0.96
     issues[3]{rule,severity,message,line}:
       complexity.cyclomatic,warning,_build_summary has cyclomatic complexity 16 (max: 15),522
@@ -99,7 +101,7 @@ WARNINGS[20]{path,score}:
     issues[1]{rule,severity,message,line}:
       complexity.lizard_length,warning,run_case: 175 lines exceeds limit 100,11
 
-ERRORS[37]{path,score}:
+ERRORS[28]{path,score}:
   goal/authors/__init__.py,0.57
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'manager' not found,9
@@ -193,15 +195,6 @@ ERRORS[37]{path,score}:
   goal/doctor/logging.py,0.79
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'models' not found,4
-  tests/test_formatter.py,0.79
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,2
-  tests/test_config_validation.py,0.86
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,3
-  tests/test_smart_commit_shim.py,0.86
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,2
   goal/cli/__init__.py,0.87
     issues[3]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'version' not found,195
@@ -232,33 +225,15 @@ ERRORS[37]{path,score}:
   goal/postcommit/manager.py,0.93
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'actions' not found,9
-  tests/test_user_config.py,0.93
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,6
   goal/validation/manager.py,0.94
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'rules' not found,10
-  tests/test_project_doctor.py,0.94
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,7
   goal/doctor/todo.py,0.95
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'core' not found,117
   goal/recovery/strategies.py,0.95
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'exceptions' not found,11
-  tests/test_clone_repo.py,0.95
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,9
-  tests/test_project_bootstrap.py,0.95
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,9
-  tests/test_git_ops.py,0.96
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,7
-  tests/test_push_e2e.py,0.98
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'pytest' not found,203
 
 UNSUPPORTED[5]{bucket,count}:
   *.md,29

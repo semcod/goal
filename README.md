@@ -4,7 +4,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.120-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.121-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -926,6 +926,9 @@ Licensed under Apache-2.0.
 Licensed under Apache-2.0.
 
 
+Licensed under Apache-2.0.
+
+
 # Check license compatibility
 goal license check MIT Apache-2.0
 ```
@@ -1516,6 +1519,9 @@ Licensed under Apache-2.0.
 Licensed under Apache-2.0.
 
 
+Licensed under Apache-2.0.
+
+
 ### Smart Author Management
 
 Goal **adds** authors instead of replacing them:
@@ -1629,9 +1635,15 @@ Licensed under Apache-2.0.
 Licensed under Apache-2.0.
 
 
+Licensed under Apache-2.0.
+
+
 Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 ## Author
+
+Tom Sapletta
+
 
 Tom Sapletta
 

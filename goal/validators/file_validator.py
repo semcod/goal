@@ -77,7 +77,15 @@ def detect_tokens_in_content(content: str, patterns: List[str]) -> List[Tuple[st
     for line_num, line in enumerate(lines, 1):
         for pattern in patterns:
             try:
-                if re.search(pattern, line, re.IGNORECASE):
+                # Check if pattern is marked as case-sensitive with 'CS:' prefix
+                if pattern.startswith('CS:'):
+                    # Remove the 'CS:' prefix and search case-sensitively
+                    actual_pattern = pattern[3:]
+                    match = re.search(actual_pattern, line)
+                else:
+                    match = re.search(pattern, line, re.IGNORECASE)
+                
+                if match:
                     # Determine token type from pattern
                     if 'ghp_' in pattern or 'gho_' in pattern or 'ghu_' in pattern:
                         token_type = "GitHub Personal Access"
@@ -327,14 +335,14 @@ def validate_files(
             r'pk_test_[a-zA-Z0-9]{24}',
             r'sk_live_[a-zA-Z0-9]{24}',
             r'sk_test_[a-zA-Z0-9]{24}',
-            r'[a-zA-Z0-9_-]{20,}=[a-zA-Z0-9_-]{20,}',
+            r'CS:^[A-Z][A-Z0-9_]{5,}=[a-zA-Z0-9_-]{20,}',
             r'Bearer\s+[a-zA-Z0-9_-]{20,}',
             r'Token\s+[a-zA-Z0-9_-]{20,}',
             r'-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----',
             r'-----BEGIN\s+EC\s+PRIVATE\s+KEY-----',
             r'-----BEGIN\s+OPENSSH\s+PRIVATE\s+KEY-----',
             r'-----BEGIN\s+DSA\s+PRIVATE\s+KEY-----',
-            r'^[A-Z_]+=[a-zA-Z0-9_-]{20,}',
+            r'CS:^[A-Z][A-Z0-9_]+=[a-zA-Z0-9_-]{20,}',
         ]
     
     # Check each file

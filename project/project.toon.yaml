@@ -1,4 +1,4 @@
-# goal | 598 func | 72f | 20791L | python | 2026-03-27
+# goal | 598 func | 72f | 20844L | python | 2026-03-27
 
 HEALTH:
   CC̄=5.1  critical=87 (limit:10)  dup=0  cycles=0
@@ -24,7 +24,7 @@ MODULES[96] (top by size):
   M[goal/git_ops.py] 566L C:0 F:23 CC↑23 D:13 (python)
   M[goal/deep_analyzer.py] 554L C:1 F:22 CC↑16 D:0 (python)
   M[goal/smart_commit/generator.py] 524L C:1 F:18 CC↑24 D:0 (python)
-  M[goal/validators/file_validator.py] 487L C:4 F:12 CC↑23 D:2 (python)
+  M[goal/validators/file_validator.py] 495L C:4 F:12 CC↑23 D:2 (python)
   M[goal/doctor/python.py] 486L C:1 F:16 CC↑17 D:0 (python)
   M[goal/config/validation.py] 483L C:2 F:13 CC↑21 D:2 (python)
   M[goal/config/manager.py] 448L C:1 F:25 CC↑10 D:6 (python)
@@ -45,12 +45,12 @@ Args:
 
 REFACTOR[15]:
   [1] H/L Split validate_project_versions (CC=30 → target CC<10)
-  [2] H/L Split format_enhanced_summary (CC=29 → target CC<10)
-  [3] H/L Split ensure_project_environment (CC=25 → target CC<10)
+  [2] H/L Split ensure_project_environment (CC=25 → target CC<10)
+  [3] H/L Split format_enhanced_summary (CC=29 → target CC<10)
   [4] H/L Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)
   [5] H/L Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-03-27 CC̄=5.1 crit=87 20791L // Automated analysis
+  2026-03-27 CC̄=5.1 crit=87 20844L // Automated analysis

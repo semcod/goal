@@ -32,6 +32,7 @@ def test_file_size_validation():
         assert True
     finally:
         os.unlink(large_file)
+    return True
 
 
 def test_token_detection():
@@ -64,6 +65,7 @@ def test_token_detection():
                 assert False, f"Wrong token type: {e}"
         finally:
             os.unlink(test_file)
+    return True
 
 
 def test_safe_files():
@@ -90,6 +92,50 @@ if __name__ == "__main__":
         assert False, f"Safe file failed: {e}"
     finally:
         os.unlink(safe_file)
+    return True
+
+
+def test_false_positive_prevention():
+    """Test that legitimate code doesn't trigger false positives."""
+    print("\nTesting false positive prevention...")
+    
+    test_cases = [
+        # Long lowercase parameter names should NOT trigger
+        ("param_test.txt", "enable_image_optimization=enable_image_optimization"),
+        ("param_test2.txt", "some_long_parameter_name=another_long_value"),
+        # Regular assignment to lowercase var should NOT trigger
+        ("var_test.txt", "my_variable=some_value_here"),
+    ]
+    
+    for filename, content in test_cases:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt', prefix=filename) as f:
+            f.write(content)
+            test_file = f.name
+        
+        try:
+            # Should NOT raise TokenDetectedError
+            validate_files([test_file], detect_tokens=True, auto_handle_large=False)
+            print(f"✅ No false positive for: {content[:40]}...")
+        except TokenDetectedError as e:
+            print(f"❌ False positive detected for '{content}': {e}")
+            assert False, f"False positive: {e}"
+        finally:
+            os.unlink(test_file)
+    
+    # But uppercase env vars SHOULD still trigger
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt', prefix="env_var.txt") as f:
+        f.write("API_KEY=abcdef12345678901234567890abcdef1234567890")
+        env_file = f.name
+    
+    try:
+        validate_files([env_file], detect_tokens=True, auto_handle_large=False)
+        print("❌ Should have detected uppercase env var")
+        assert False, "Expected TokenDetectedError for uppercase env var"
+    except TokenDetectedError:
+        print("✅ Correctly detected uppercase env var")
+    finally:
+        os.unlink(env_file)
+    return True
 
 
 def test_config_integration():
@@ -127,6 +173,7 @@ def test_config_integration():
     finally:
         os.unlink(small_file)
         os.unlink(large_file)
+    return True
 
 
 def main():
@@ -137,6 +184,7 @@ def main():
     results.append(test_file_size_validation())
     results.append(test_token_detection())
     results.append(test_safe_files())
+    results.append(test_false_positive_prevention())
     results.append(test_config_integration())
     
     print("\n" + "="*50)

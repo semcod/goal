@@ -3852,3 +3852,29 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
+  - id: ticket-0d22f91b
+    name: Fix string-concat issues
+    description: Resolve 4 string-concat issues in goal/cli/version_utils.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - goal/cli/version_utils.py
+    rule_id: string-concat
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-41f077a4
+    name: Fix ai-boilerplate issues
+    description: Resolve 4 ai-boilerplate issues in goal/cli/version_utils.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - goal/cli/version_utils.py
+    rule_id: ai-boilerplate
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
