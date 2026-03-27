@@ -1,0 +1,56 @@
+# goal | 362 func | 49f | 13819L | python | 2026-03-27
+
+HEALTH:
+  CC̄=6.0  critical=70 (limit:10)  dup=0  cycles=0
+
+ALERTS[20]:
+  !!! high_fan_out     execute_push_workflow = 37 (limit:10)
+  !!! cc_exceeded      ContentAnalyzer.short_action_summary = 34 (limit:15)
+  !!! cc_exceeded      execute_push_workflow = 34 (limit:15)
+  !!! cc_exceeded      sync_all_versions = 33 (limit:15)
+  !!! cc_exceeded      validate_project_versions = 30 (limit:15)
+  !!! cc_exceeded      format_enhanced_summary = 29 (limit:15)
+  !!! cc_exceeded      ContentAnalyzer.per_file_notes = 29 (limit:15)
+  !!! high_fan_out     QualityValidator.auto_fix = 27 (limit:10)
+  !!! high_fan_out     SmartCommitGenerator.analyze_changes = 27 (limit:10)
+  !!! cc_exceeded      update_project_metadata = 26 (limit:15)
+
+MODULES[65] (top by size):
+  M[goal/cli/version.py] 730L C:0 F:18 CC↑33 D:4 (python)
+  M[goal/summary/generator.py] 675L C:1 F:16 CC↑26 D:0 (python)
+  M[goal/package_managers.py] 631L C:1 F:12 CC↑11 D:1 (python)
+  M[goal/project_bootstrap.py] 589L C:0 F:9 CC↑25 D:3 (python)
+  M[goal/deep_analyzer.py] 554L C:1 F:22 CC↑16 D:0 (python)
+  M[goal/smart_commit/generator.py] 524L C:1 F:18 CC↑24 D:0 (python)
+  M[goal/doctor/python.py] 486L C:1 F:16 CC↑17 D:0 (python)
+  M[goal/git_ops.py] 473L C:0 F:22 CC↑23 D:11 (python)
+  M[goal/config/manager.py] 449L C:1 F:25 CC↑10 D:3 (python)
+  M[goal/formatter.py] 402L C:1 F:14 CC↑29 D:3 (python)
+  M[goal/generator/analyzer.py] 396L C:2 F:16 CC↑34 D:0 (python)
+  M[goal/config/constants.py] 387L C:0 F:0 CC↑0 D:0 (python)
+  M[goal/generator/generator.py] 384L C:1 F:24 CC↑12 D:0 (python)
+  M[goal/summary/quality_filter.py] 328L C:1 F:14 CC↑25 D:0 (python)
+  M[goal/summary/validator.py] 310L C:1 F:13 CC↑19 D:0 (python)
+  LANGS: python:62/shell:3
+
+HOTSPOTS[10]:
+  ★ execute_push_workflow fan=37  // Execute the complete push workflow.
+  ★ QualityValidator.auto_fix fan=27  // Auto-fix summary issues and return corrected summary.
+  ★ SmartCommitGenerator.analyze_changes fan=27  // Analysis pipeline, 27 stages
+  ★ EnhancedSummaryGenerator.generate_enhanced_summary fan=24  // Generate complete enhanced summary with business value focus.
+  ★ update_changelog fan=23  // Update CHANGELOG.md with new version and changes.
+
+Args:
+    version: New versio
+
+REFACTOR[15]:
+  [1] H/L Split ensure_project_environment (CC=25 → target CC<10)
+  [2] H/L Split validate_project_versions (CC=30 → target CC<10)
+  [3] H/L Split format_enhanced_summary (CC=29 → target CC<10)
+  [4] H/L Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)
+  [5] H/L Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)
+
+EVOLUTION:
+  2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
+  2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
+  2026-03-27 CC̄=6.0 crit=70 13819L // Automated analysis

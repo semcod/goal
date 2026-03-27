@@ -23,9 +23,10 @@ from goal.push.core import execute_push_workflow
 @click.option('--ticket', default=None, help='Ticket ID for commit prefix')
 @click.option('--abstraction', default=None, help='Abstraction level for commit message')
 @click.option('--todo', '-t', is_flag=True, help='Create TODO.md with detected issues')
+@click.option('--force', is_flag=True, help='Force commit, bypassing security validation (NOT RECOMMENDED)')
 @click.pass_context
 def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes, 
-         markdown, split, ticket, abstraction, todo):
+         markdown, split, ticket, abstraction, todo, force):
     """Add, commit, tag, and push changes to remote."""
     execute_push_workflow(
         ctx_obj=ctx.obj,
@@ -40,7 +41,8 @@ def push(ctx, bump, no_tag, no_changelog, no_version_sync, message, dry_run, yes
         split=split,
         ticket=ticket,
         abstraction=abstraction,
-        todo=todo
+        todo=todo,
+        force=force
     )
 
 

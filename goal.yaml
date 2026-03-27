@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-03-25 19:41:31
+# Generated: 2026-03-27 11:17:41
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -235,6 +235,34 @@ advanced:
   performance:
     max_files: 50
     timeout_test: 300
+  file_validation:
+    max_file_size_mb: 10
+    block_large_files: true
+    detect_api_tokens: true
+    token_patterns:
+    - ghp_[a-zA-Z0-9]{36}
+    - gho_[a-zA-Z0-9]{36}
+    - ghu_[a-zA-Z0-9]{36}
+    - ghs_[a-zA-Z0-9]{36}
+    - ghr_[a-zA-Z0-9]{36}
+    - ghs_[a-zA-Z0-9]{36}
+    - AKIA[0-9A-Z]{16}
+    - sk-[a-zA-Z0-9]{48}
+    - xoxb-[0-9]{13}-[0-9]{13}-[a-zA-Z0-9]{24}
+    - xoxp-[0-9]{13}-[0-9]{13}-[0-9]{13}-[a-zA-Z0-9]{24}
+    - glpat-[a-zA-Z0-9_-]{20}
+    - pk_live_[a-zA-Z0-9]{24}
+    - pk_test_[a-zA-Z0-9]{24}
+    - sk_live_[a-zA-Z0-9]{24}
+    - sk_test_[a-zA-Z0-9]{24}
+    - '[a-zA-Z0-9_-]{20,}=[a-zA-Z0-9_-]{20,}'
+    - Bearer\s+[a-zA-Z0-9_-]{20,}
+    - Token\s+[a-zA-Z0-9_-]{20,}
+    - '-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----'
+    - '-----BEGIN\s+EC\s+PRIVATE\s+KEY-----'
+    - '-----BEGIN\s+OPENSSH\s+PRIVATE\s+KEY-----'
+    - '-----BEGIN\s+DSA\s+PRIVATE\s+KEY-----'
+    - ^[A-Z_]+=[a-zA-Z0-9_-]{20,}
 quality:
   commit_summary:
     min_value_words: 3

@@ -122,7 +122,8 @@ def execute_push_workflow(
     split: bool,
     ticket: Optional[str],
     abstraction: Optional[str],
-    todo: bool
+    todo: bool,
+    force: bool = False
 ) -> None:
     """Execute the complete push workflow."""
     
@@ -175,6 +176,22 @@ def execute_push_workflow(
         else:
             click.echo(click.style("No changes to commit.", fg='yellow'))
         return
+    
+    # Validate staged files for security issues
+    if not dry_run and not force:
+        from goal.validators import validate_staged_files
+        try:
+            validate_staged_files(ctx_obj.get('config'))
+        except Exception as e:
+            click.echo(click.style(f"\n❌ Validation Error: {str(e)}", fg='red', bold=True))
+            click.echo(click.style("\nFor security reasons, the commit has been blocked.", fg='red'))
+            click.echo(click.style("\nTo bypass this check, you can:", fg='yellow'))
+            click.echo(click.style("1. Remove the sensitive/large file(s)", fg='yellow'))
+            click.echo(click.style("2. Add the file(s) to .gitignore", fg='yellow'))
+            click.echo(click.style("3. Use --force to bypass validation (not recommended)", fg='yellow'))
+            sys.exit(1)
+    elif force and not dry_run:
+        click.echo(click.style("⚠️  Security validation bypassed with --force", fg='yellow', bold=True))
     
     # Get diff content
     diff_content = get_diff_content()
