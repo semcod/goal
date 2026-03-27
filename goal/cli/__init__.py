@@ -75,7 +75,7 @@ def split_paths_by_type(paths: List[str]) -> Dict[str, List[str]]:
     return {k: v for k, v in groups.items() if v}
 
 
-def stage_paths(paths: List[str]):
+def stage_paths(paths: List[str]) -> None:
     if not paths:
         return
     # stage in chunks to avoid arg length issues
@@ -154,7 +154,7 @@ class GoalGroup(click.Group):
 @click.option('--nfo-format', default='markdown', help='nfo log format')
 @click.option('--nfo-sink', default='', help='Additional nfo sink')
 @click.pass_context
-def main(ctx, bump, version, yes, all_flags, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink):
+def main(ctx, bump, version, yes, all_flags, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink) -> None:
     """Goal - Automated git push with smart commit messages."""
     _setup_nfo_logging(nfo_format, nfo_sink)
     

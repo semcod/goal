@@ -41,7 +41,7 @@ class MarkdownFormatter:
         self.sections.append(f"\n### Command: `{command}`\n")
         self.sections.append(f"**Status:** {status} (exit code: {exit_code})\n")
         self.sections.append("**Output:**\n")
-        self.sections.append("```\n" + output + "\n```\n")
+        self.sections.append(f"```\n{output}\n```\n")
     
     def add_summary(self, actions_taken: List[str], next_steps: List[str]):
         """Add summary of actions and next steps."""

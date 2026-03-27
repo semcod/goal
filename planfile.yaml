@@ -3722,3 +3722,68 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
+  - id: ticket-0f634339
+    name: Fix wildcard-imports issues
+    description: Resolve 1 wildcard-imports issues in goal/changelog.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/changelog.py
+    rule_id: wildcard-imports
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-0d8f6000
+    name: Fix wildcard-imports issues
+    description: Resolve 1 wildcard-imports issues in goal/doctor/python.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/doctor/python.py
+    rule_id: wildcard-imports
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-212c0467
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in goal/doctor/todo.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/doctor/todo.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-0fd418e6
+    name: Fix wildcard-imports issues
+    description: Resolve 1 wildcard-imports issues in goal/push/stages/dry_run.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/push/stages/dry_run.py
+    rule_id: wildcard-imports
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-09656430
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in goal/config/validation.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/config/validation.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced

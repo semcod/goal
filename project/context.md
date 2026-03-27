@@ -198,13 +198,13 @@ Returns:
 > Attempt to recover from divergent history.
 - **Calls**: click.echo, self.run_git_with_output, click.echo, click.style, click.echo, self.run_git, click.echo, self.run_git_with_output
 
-### goal.smart_commit.abstraction.CodeAbstraction.extract_entities
-> Extract code entities (functions, classes, etc.) from diff.
-- **Calls**: self.get_language, self.code_parsers.get, parser.get, parser.get, parser.get, goal.user_config.UserConfig.set, None.strip, any
-
 ### goal.doctor.python.PythonDiagnostics.check_py010_project_name_consistency
 > PY010: Check for consistent project name across all config files.
 - **Calls**: re.search, name_match.group, setup_py.exists, goal_yaml.exists, Issue, self.issues.append, setup_py.read_text, re.search
+
+### goal.smart_commit.abstraction.CodeAbstraction.extract_entities
+> Extract code entities (functions, classes, etc.) from diff.
+- **Calls**: self.get_language, self.code_parsers.get, parser.get, parser.get, parser.get, goal.user_config.UserConfig.set, None.strip, any
 
 ### goal.config.validation.ConfigValidator._validate_project_section
 > Validate project configuration.
@@ -227,13 +227,13 @@ git push failures including:
 - Authentication
 - **Calls**: main.command, click.option, click.option, click.option, click.option, click.option, os.getcwd, goal.cli.recover_cmd._get_error_output
 
-### goal.doctor.nodejs.diagnose_nodejs
-> Run all Node.js-specific diagnostics.
-- **Calls**: json.dumps, data.get, json.dumps, pkg_json.exists, json.loads, data.get, issues.append, data.get
-
 ### goal.doctor.python.PythonDiagnostics.check_py009_string_authors
 > PY009: Check for authors in deprecated string format (PEP 621 requires objects).
 - **Calls**: re.search, authors_match.group, re.compile, None.splitlines, Issue, self.issues.append, line.strip, string_author_pattern.match
+
+### goal.doctor.nodejs.diagnose_nodejs
+> Run all Node.js-specific diagnostics.
+- **Calls**: json.dumps, data.get, json.dumps, pkg_json.exists, json.loads, data.get, issues.append, data.get
 
 ### goal.generator.generator.CommitMessageGenerator._build_summary_section
 > Build high-level summary section.
@@ -562,23 +562,23 @@ Functions exposed as public API (no underscore prefix):
 - `goal.smart_commit.generator.SmartCommitGenerator.analyze_changes` - 33 calls
 - `goal.cli.version.update_project_metadata` - 32 calls
 - `goal.user_config.show_user_config` - 31 calls
-- `goal.project_bootstrap.guess_package_name` - 28 calls
 - `goal.version_validation.validate_project_versions` - 28 calls
+- `goal.project_bootstrap.guess_package_name` - 28 calls
 - `goal.smart_commit.generator.SmartCommitGenerator.generate_functional_body` - 27 calls
 - `goal.generator.analyzer.ContentAnalyzer.short_action_summary` - 26 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.calculate_quality_metrics` - 26 calls
 - `goal.user_config.prompt_for_license` - 25 calls
 - `goal.recovery.strategies.DivergentHistoryStrategy.recover` - 25 calls
 - `goal.config.validation.validate_config_file` - 25 calls
-- `goal.smart_commit.abstraction.CodeAbstraction.extract_entities` - 25 calls
 - `goal.doctor.python.PythonDiagnostics.check_py010_project_name_consistency` - 25 calls
+- `goal.smart_commit.abstraction.CodeAbstraction.extract_entities` - 25 calls
 - `goal.validators.file_validator.check_dot_folders` - 24 calls
 - `goal.cli.publish.publish_project` - 24 calls
 - `goal.git_ops.ensure_remote` - 23 calls
 - `goal.recovery.manager.RecoveryManager.recover_from_push_failure` - 23 calls
 - `goal.cli.recover_cmd.recover` - 23 calls
-- `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
 - `goal.doctor.python.PythonDiagnostics.check_py009_string_authors` - 23 calls
+- `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
 
 ## System Interactions
 

@@ -1,5 +1,39 @@
 ## [Unreleased]
 
+## [2.1.116] - 2026-03-27
+
+### Docs
+- Update CHANGELOG.md
+- Update TODO.md
+- Update docs/README.md
+- Update project/context.md
+
+### Other
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/duplication.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- Update project/index.html
+- Update project/map.toon.yaml
+- ... and 2 more files
+
+## [0.1.10] - 2026-03-27
+
+### Fixed
+- Fix wildcard-imports issues (ticket-09656430)
+
+## [0.1.10] - 2026-03-27
+
+### Fixed
+- Fix wildcard-imports issues (ticket-0f634339)
+- Fix wildcard-imports issues (ticket-0d8f6000)
+- Fix wildcard-imports issues (ticket-212c0467)
+- Fix wildcard-imports issues (ticket-0fd418e6)
+
 ## [2.1.115] - 2026-03-27
 
 ## [2.1.114] - 2026-03-27

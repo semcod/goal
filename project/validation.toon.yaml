@@ -64,10 +64,9 @@ WARNINGS[21]{path,score}:
       complexity.maintainability,warning,Low maintainability index: 16.2 (threshold: 20),
       complexity.lizard_cc,warning,_build_summary: CC=16 exceeds limit 15,522
   goal/doctor/python.py,0.96
-    issues[3]{rule,severity,message,line}:
+    issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,check_py011_version_consistency has cyclomatic complexity 17 (max: 15),320
-      complexity.maintainability,warning,Low maintainability index: 18.9 (threshold: 20),
-      complexity.lizard_cc,warning,check_py011_version_consistency: CC=17 exceeds limit 15,320
+      complexity.maintainability,warning,Low maintainability index: 19.0 (threshold: 20),
   goal/changelog.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,update_changelog has cyclomatic complexity 24 (max: 15),9
@@ -78,8 +77,8 @@ WARNINGS[21]{path,score}:
       complexity.lizard_cc,warning,_run_tests_in_subdirs: CC=20 exceeds limit 15,32
   goal/config/validation.py,0.97
     issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,_validate_advanced_section has cyclomatic complexity 21 (max: 15),265
-      complexity.lizard_cc,warning,_validate_advanced_section: CC=21 exceeds limit 15,265
+      complexity.cyclomatic,warning,_validate_advanced_section has cyclomatic complexity 21 (max: 15),261
+      complexity.lizard_cc,warning,_validate_advanced_section: CC=21 exceeds limit 15,261
   goal/formatter.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,format_enhanced_summary has cyclomatic complexity 29 (max: 15),265
@@ -95,7 +94,7 @@ WARNINGS[21]{path,score}:
   goal/summary/quality_filter.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,classify_intent_smart has cyclomatic complexity 25 (max: 15),258
-      complexity.lizard_cc,warning,classify_intent_smart: CC=25 exceeds limit 15,258
+      complexity.lizard_cc,warning,classify_intent_smart: CC=24 exceeds limit 15,258
   goal/summary/validator.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,auto_fix has cyclomatic complexity 19 (max: 15),204

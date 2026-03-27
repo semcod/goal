@@ -349,9 +349,9 @@ class ContentAnalyzer:
             funcs = re.findall(r'^def\s+(\w+)\s*\(', '\n'.join(added_lines), re.MULTILINE)
             classes = re.findall(r'^class\s+(\w+)', '\n'.join(added_lines), re.MULTILINE)
             if classes:
-                notes.append('add classes: ' + ', '.join(sorted(set(classes))[:4]))
+                notes.append(f"add classes: {', '.join(sorted(set(classes))[:4])}")
             if funcs:
-                notes.append('add functions: ' + ', '.join(sorted(set(funcs))[:4]))
+                notes.append(f"add functions: {', '.join(sorted(set(funcs))[:4])}")
             if any('click.option' in l for l in added_lines):
                 notes.append('add/update cli options')
             if any('markdown' in l.lower() for l in added_lines):
@@ -374,7 +374,7 @@ class ContentAnalyzer:
                         if not any(re.match(p, h, re.IGNORECASE) for p in noise_patterns):
                             headings.append(h)
             if headings:
-                notes.append('update sections: ' + ', '.join(headings[:4]))
+                notes.append(f"update sections: {', '.join(headings[:4])}")
             elif 'changelog' in path.lower():
                 notes.append('update changelog entries')
             elif 'readme' in path.lower():

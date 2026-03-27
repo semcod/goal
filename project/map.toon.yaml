@@ -1,4 +1,4 @@
-# goal | 93f 17858L | python:90,shell:3 | 2026-03-27
+# goal | 93f 17853L | python:90,shell:3 | 2026-03-27
 # stats: 581 func | 0 cls | 93 mod | CC̄=5.3 | critical:35 | cycles:0
 # alerts[5]: CC _offer_recovery=41; fan-out execute_push_workflow=37; CC ContentAnalyzer.short_action_summary=34; CC execute_push_workflow=34; CC sync_all_versions=33
 # hotspots[5]: execute_push_workflow fan=37; QualityValidator.auto_fix fan=27; SmartCommitGenerator.analyze_changes fan=27; EnhancedSummaryGenerator.generate_enhanced_summary fan=24; update_changelog fan=23
@@ -13,10 +13,10 @@ M[93]:
   goal/changelog.py,123
   goal/cli/__init__.py,211
   goal/cli/authors_cmd.py,118
-  goal/cli/commit_cmd.py,208
+  goal/cli/commit_cmd.py,207
   goal/cli/config_cmd.py,129
   goal/cli/config_validate_cmd.py,50
-  goal/cli/doctor_cmd.py,97
+  goal/cli/doctor_cmd.py,99
   goal/cli/hooks_cmd.py,71
   goal/cli/license_cmd.py,198
   goal/cli/postcommit_cmd.py,82
@@ -32,7 +32,7 @@ M[93]:
   goal/config/__init__.py,36
   goal/config/constants.py,436
   goal/config/manager.py,448
-  goal/config/validation.py,487
+  goal/config/validation.py,483
   goal/deep_analyzer.py,554
   goal/doctor/__init__.py,55
   goal/doctor/core.py,87
@@ -74,7 +74,7 @@ M[93]:
   goal/push/stages/commit.py,220
   goal/push/stages/dry_run.py,98
   goal/push/stages/publish.py,31
-  goal/push/stages/push_remote.py,346
+  goal/push/stages/push_remote.py,344
   goal/push/stages/tag.py,28
   goal/push/stages/version.py,51
   goal/recovery/__init__.py,48
@@ -539,10 +539,10 @@ D:
   goal/cli/push_cmd.py:
     e: push
     push(ctx;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
-  goal/enhanced_summary.py:
-  goal/config/__init__.py:
   goal/commit_generator.py:
+  goal/enhanced_summary.py:
   goal/__init__.py:
+  goal/config/__init__.py:
   goal/__main__.py:
   goal/smart_commit/__init__.py:
   goal/project_doctor.py:

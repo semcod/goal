@@ -340,7 +340,7 @@ def update_project_metadata(filepath: Path, user_config) -> bool:
                     author_list = [a.strip().rstrip(',') for a in existing_authors.split('\n') if a.strip()]
                     author_list.append(new_author_entry)
                     
-                    authors_block = 'authors = [' + ', '.join(author_list) + ']'
+                    authors_block = f"authors = [{', '.join(author_list)}]"
                     content = re.sub(
                         r'^authors\s*=\s*\[.*?\]',
                         authors_block,

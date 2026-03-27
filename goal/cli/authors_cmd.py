@@ -13,7 +13,7 @@ def authors():
 
 
 @authors.command(name='list')
-def authors_list():
+def authors_list() -> None:
     """List all project authors."""
     manager = AuthorsManager()
     manager.list_authors()
@@ -24,7 +24,7 @@ def authors_list():
 @click.argument('email')
 @click.option('--role', '-r', help='Author role or title')
 @click.option('--alias', '-a', help='Short alias for reference')
-def authors_add(name, email, role, alias):
+def authors_add(name, email, role, alias) -> None:
     """Add an author to the project."""
     manager = AuthorsManager()
     manager.add_author(name, email, role, alias)
@@ -32,7 +32,7 @@ def authors_add(name, email, role, alias):
 
 @authors.command(name='remove')
 @click.argument('email')
-def authors_remove(email):
+def authors_remove(email) -> None:
     """Remove an author from the project."""
     manager = AuthorsManager()
     manager.remove_author(email)
@@ -43,14 +43,14 @@ def authors_remove(email):
 @click.option('--name', '-n', help='New name')
 @click.option('--role', '-r', help='New role')
 @click.option('--alias', '-a', help='New alias')
-def authors_update(email, name, role, alias):
+def authors_update(email, name, role, alias) -> None:
     """Update an author's information."""
     manager = AuthorsManager()
     manager.update_author(email, name, role, alias)
 
 
 @authors.command(name='import')
-def authors_import():
+def authors_import() -> None:
     """Import authors from git history."""
     manager = AuthorsManager()
     manager.import_from_git()

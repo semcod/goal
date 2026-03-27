@@ -241,7 +241,7 @@ def manage_dot_folders(files: List[str], config, dry_run: bool = False) -> None:
         for item in problematic:
             # Add directory pattern if it's a directory
             if os.path.isdir(item):
-                ignored.add(item + '/')
+                ignored.add(f"{item}/")
             else:
                 ignored.add(item)
         

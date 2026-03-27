@@ -1,215 +1,352 @@
-# Goal - TODO & Roadmap
-
-## ✅ Completed (v2.1.46)
-
-### CLI & Git Workflow
-- [x] Interactive git repository initialization (`ensure_git_repository` refactor)
-- [x] Git remote management (`ensure_remote`)
-- [x] Verbose git command logging (`_echo_cmd`)
-- [x] `__init__.py` version synchronization
-- [x] Refactor git operations to `goal/git_ops.py`
-- [x] Unknown command suggestion with docs URL
-
-## ✅ Completed (v2.1.33)
-
-### Version Validation & Registry Checking
-- [x] Version validation system (`goal/version_validation.py`)
-- [x] Registry version checking (PyPI, npm, crates.io, RubyGems)
-- [x] README badge validation and updating
-- [x] `goal check-versions` command
-- [x] Auto-validation before publishing
-- [x] YAML format for commit messages (replaced ASCII tree)
-
-## ✅ Completed (v2.1.27)
-
-### User Configuration System
-- [x] User configuration stored in `~/.goal`
-- [x] Auto-detect git `user.name` and `user.email`
-- [x] Interactive license selection (8 popular licenses)
-- [x] `goal config` command for managing user preferences
-- [x] Smart author management (adds instead of replacing)
-- [x] Automatic README.md updates (badges, License, Author sections)
-- [x] Multi-file metadata sync (pyproject.toml, package.json, Cargo.toml)
-
-### Enhanced Commit Intelligence
-- [x] Enterprise-grade commit message generation
-- [x] Deep code analysis engine
-- [x] Code relationship mapping
-- [x] Architecture-aware summaries
-- [x] Business value scoring
-- [x] Quality validation system
-
-### Core Features
-- [x] Interactive workflow with Y/n prompts
-- [x] Multi-language support (Python, Node.js, Rust, Go, Ruby, PHP, .NET, Java)
-- [x] Smart commit message generation
-- [x] Automatic version bumping
-- [x] Changelog management
-- [x] Test integration
-- [x] Publishing to package managers
-- [x] CI/CD automation (`--yes`, `--all` flags)
-- [x] Split commits by type (`--split`)
-- [x] Custom commit messages (`-m`)
-- [x] Dry-run mode (`--dry-run`)
-
-### Documentation
-- [x] Comprehensive README with examples
-- [x] docs/ directory with 15+ guides
-- [x] CI/CD integration guides
-- [x] Configuration reference
-- [x] Troubleshooting guide
-- [x] User configuration documentation
-
-## ✅ Completed (v2.2.0)
-
-### User Experience Improvements
-- [x] Add `goal wizard` command for guided setup
-- [x] Improve error messages with actionable suggestions
-- [x] Add progress indicators for long operations
-- [x] Better handling of merge conflicts
-
-### License Management
-- [x] Support for custom license templates
-- [x] Automatic LICENSE file creation/update
-- [x] License compatibility checking
-- [x] SPDX license identifiers validation
-
-### Multi-Author Projects
-- [x] Team-based author management
-- [x] Contributor guidelines integration
-- [x] Author attribution in commits
-- [x] Co-authored-by support
-
-## 📋 Planned (v2.3.x)
-
-### Advanced Features
-- [ ] Template system for project initialization
-- [ ] Plugin system for custom workflows
-- [x] Pre-commit hooks integration
-- [x] Post-commit actions
-- [x] Custom validation rules
-
-### Integration Improvements
-- [ ] GitHub Actions marketplace action
-- [ ] GitLab CI template
-- [ ] Bitbucket Pipelines integration
-- [ ] Azure DevOps extension
-- [ ] Jenkins plugin
-
-### Configuration Enhancements
-- [ ] Global configuration profiles
-- [ ] Project-specific overrides
-- [ ] Team configuration sharing
-- [ ] Configuration validation
-- [ ] Migration tools for config updates
-
-### Analytics & Insights
-- [ ] Commit pattern analysis
-- [ ] Development velocity metrics
-- [ ] Code churn tracking
-- [ ] Release frequency insights
-- [ ] Quality trend analysis
-
-## 🎯 Future Ideas (v3.x)
-
-### AI-Powered Features
-- [ ] AI-assisted code review suggestions
-- [ ] Smart release notes generation
-- [ ] Automated breaking change detection
-- [ ] Intelligent version bump recommendations
-- [ ] Semantic versioning analysis
-
-### Collaboration Tools
-- [ ] Team dashboard
-- [ ] Release coordination
-- [ ] Changelog collaboration
-- [ ] Version planning
-- [ ] Release retrospectives
-
-### Extended Platform Support
-- [ ] Monorepo support improvements
-- [ ] Submodule handling
-- [ ] Multiple remotes management
-- [ ] Fork workflow support
-- [ ] Mirror repository sync
-
-### Developer Experience
-- [ ] VS Code extension
-- [ ] JetBrains plugin
-- [ ] Vim/Neovim plugin
-- [ ] Interactive TUI mode
-- [ ] Web dashboard
-
-## 🐛 Known Issues
-
-### Minor Issues
-- [ ] Edge case: Empty commits with `--split` flag
-- [ ] Performance: Slow diff analysis on very large files (>10k lines)
-- [ ] Windows: Path handling in some edge cases
-
-### Documentation Gaps
-- [ ] Need more examples for complex workflows
-- [ ] Video tutorials for common use cases
-- [ ] API documentation for programmatic usage
-
-## 💡 Community Requests
-
-- [ ] Support for conventional commits 2.0
-- [ ] Integration with Jira/Linear/Asana
-- [ ] Slack/Discord notifications
-- [ ] Email digest of releases
-- [ ] RSS feed for changelogs
-
-## 🔧 Technical Debt
-
-- [ ] Refactor commit message generator (split into smaller modules)
-- [ ] Add type hints to legacy code
-- [ ] Improve test coverage (target: 90%+)
-- [ ] Performance optimization for large repositories
-- [ ] Code documentation improvements
-
-## 📊 Metrics & Goals
-
-### Current State
-- ✅ 2,622 lines of production code
-- ✅ 15+ documentation files
-- ✅ Support for 8+ programming languages
-- ✅ 8 open source licenses supported
-- ✅ CI/CD ready
-
-### Goals for v2.2
-- 🎯 Add 20+ more real-world examples
-- 🎯 Improve documentation coverage to 100%
-- 🎯 Add video tutorials
-- 🎯 Increase test coverage to 85%
-- 🎯 Performance improvements (50% faster)
-
-### Goals for v3.0
-- 🎯 Plugin ecosystem launch
-- 🎯 IDE integrations
-- 🎯 Team collaboration features
-- 🎯 AI-powered insights
-- 🎯 Enterprise features
-
-## 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-Priority areas:
-1. Documentation improvements
-2. Bug fixes
-3. Test coverage
-4. New language support
-5. CI/CD integrations
-
-## 📝 Notes
-
-- This TODO list is automatically updated by Goal
-- Completed items are moved to CHANGELOG.md
-- Feature requests tracked in GitHub Issues
-- Priority determined by community feedback
-
-Last updated: 2026-03-27 (v2.2.0)
-
-
 # TODO
+
+**Generated by:** prefact v0.1.26
+**Generated on:** 2026-03-27T17:17:00.855495
+**Total issues:** 321 active, 14 completed
+
+---
+
+## ✅ Completed Tasks
+
+- [x] goal/cli/__init__.py:78 - Function 'stage_paths' missing return type (suggested: -> None)
+- [x] goal/cli/__init__.py:157 - Function 'main' missing return type (suggested: -> None)
+- [x] goal/cli/authors_cmd.py:16 - Function 'authors_list' missing return type (suggested: -> None)
+- [x] goal/cli/authors_cmd.py:27 - Function 'authors_add' missing return type (suggested: -> None)
+- [x] goal/config/validation.py:316 - Function 'check_keys' missing return type (suggested: -> None)
+- [x] goal/config/validation.py:20 - String concatenation can be converted to f-string
+- [x] goal/config/validation.py:24 - String concatenation can be converted to f-string
+- [x] goal/config/validation.py:373 - String concatenation can be converted to f-string
+- [x] goal/config/validation.py:416 - Duplicate import: 'GoalConfig' (first at line 368)
+- [x] goal/config/validation.py:358 - LLM-style docstring in validate_config_file
+- [x] goal/config/validation.py:407 - LLM-style docstring in validate_config_interactive
+- [x] goal/config/validation.py:457 - LLM-style docstring in _auto_fix_config
+- [x] goal/generator/analyzer.py:377 - String concatenation can be converted to f-string
+- [x] goal/validators/file_validator.py:244 - String concatenation can be converted to f-string
+
+## 📋 Current Issues
+
+- [ ] goal/authors/__init__.py:9 - Relative import (level=1): '.manager'
+- [ ] goal/authors/__init__.py:10 - Relative import (level=1): '.utils'
+- [ ] goal/__main__.py:16 - module execution block
+- [ ] goal/authors/manager.py:201 - String concatenation can be converted to f-string
+- [ ] goal/authors/manager.py:180 - Magic number: 40 - use named constant
+- [ ] goal/authors/manager.py:287 - LLM-style docstring in get_project_authors
+- [ ] goal/authors/manager.py:300 - LLM-style docstring in add_project_author
+- [ ] goal/authors/manager.py:15 - LLM-style docstring in __init__
+- [ ] goal/authors/utils.py:7 - LLM-style docstring in format_co_author_trailer
+- [ ] goal/authors/utils.py:20 - LLM-style docstring in parse_co_authors
+- [ ] goal/authors/utils.py:42 - LLM-style docstring in add_co_authors_to_message
+- [ ] goal/changelog.py:9 - Function 'update_changelog' missing return type (suggested: -> None)
+- [ ] goal/changelog.py:6 - Unused Optional imported from typing
+- [ ] goal/changelog.py:6 - Unused import: 'Optional'
+- [ ] goal/changelog.py:76 - Cannot use an escape sequence (backslash) in f-strings on Python 3.8 (syntax was added in Python 3.12)
+- [ ] goal/changelog.py:9 - LLM-style docstring in update_changelog
+- [ ] goal/cli/__init__.py:180 - Relative import (level=1): '.'
+- [ ] goal/cli/__init__.py:181 - Relative import (level=1): '.'
+- [ ] goal/cli/__init__.py:182 - Relative import (level=1): '.'
+- [ ] goal/cli/__init__.py:117 - Function 'get_command' missing return type (suggested: -> Any)
+- [ ] goal/cli/__init__.py:129 - Function 'parse_args' missing return type (suggested: -> Any)
+- [ ] goal/cli/__init__.py:139 - String concatenation can be converted to f-string
+- [ ] goal/cli/__init__.py:100 - String concatenation can be converted to f-string
+- [ ] goal/cli/__init__.py:11 - Unused TerminalSink imported from nfo.terminal
+- [ ] goal/cli/__init__.py:17 - Unused GoalConfig imported from goal.config
+- [ ] goal/cli/__init__.py:17 - Unused init_config imported from goal.config
+- [ ] goal/cli/authors_cmd.py:10 - Function 'authors' missing return type (suggested: -> None)
+- [ ] goal/cli/authors_cmd.py:60 - Function 'authors_export' missing return type (suggested: -> None)
+- [ ] goal/cli/authors_cmd.py:68 - Function 'authors_find' missing return type (suggested: -> None)
+- [ ] goal/cli/authors_cmd.py:6 - Unused get_project_authors imported from goal.authors
+- [ ] goal/cli/authors_cmd.py:6 - Unused add_project_author imported from goal.authors
+- [ ] goal/cli/authors_cmd.py:6 - Unused import: 'get_project_authors'
+- [ ] goal/cli/commit_cmd.py:88 - Relative import (level=2): '..enhanced_summary'
+- [ ] goal/cli/commit_cmd.py:146 - Relative import (level=2): '..enhanced_summary'
+- [ ] goal/cli/commit_cmd.py:21 - Function 'commit' missing return type (suggested: -> None)
+- [ ] goal/cli/commit_cmd.py:86 - Function 'fix_summary' missing return type (suggested: -> None)
+- [ ] goal/cli/commit_cmd.py:144 - Function 'validate' missing return type (suggested: -> None)
+- [ ] goal/cli/commit_cmd.py:6 - Unused get_diff_content imported from goal.git_ops
+- [ ] goal/cli/commit_cmd.py:7 - Unused EnhancedSummaryGenerator imported from goal.enhanced_summary
+- [ ] goal/cli/commit_cmd.py:8 - Unused format_enhanced_summary imported from goal.formatter
+- [ ] goal/cli/commit_cmd.py:146 - Duplicate import: 'QualityValidator' (first at line 88)
+- [ ] goal/cli/config_cmd.py:11 - Function 'config' missing return type (suggested: -> None)
+- [ ] goal/cli/config_cmd.py:19 - Function 'config_show' missing return type (suggested: -> None)
+- [ ] goal/cli/config_cmd.py:46 - Function 'config_validate' missing return type (suggested: -> None)
+- [ ] goal/cli/config_validate_cmd.py:28 - Function 'validate_cmd' missing return type (suggested: -> None)
+- [ ] goal/cli/doctor_cmd.py:17 - Function 'doctor' missing return type (suggested: -> None)
+- [ ] goal/cli/doctor_cmd.py:24 - String concatenation can be converted to f-string
+- [ ] goal/cli/doctor_cmd.py:54 - String concatenation can be converted to f-string
+- [ ] goal/cli/hooks_cmd.py:10 - Function 'hooks' missing return type (suggested: -> None)
+- [ ] goal/cli/hooks_cmd.py:17 - Function 'hooks_install' missing return type (suggested: -> None)
+- [ ] goal/cli/hooks_cmd.py:34 - Function 'hooks_uninstall' missing return type (suggested: -> None)
+- [ ] goal/cli/hooks_cmd.py:6 - Unused install_hooks imported from goal.hooks
+- [ ] goal/cli/hooks_cmd.py:6 - Unused uninstall_hooks imported from goal.hooks
+- [ ] goal/cli/hooks_cmd.py:6 - Unused run_hooks imported from goal.hooks
+- [ ] goal/cli/license_cmd.py:18 - Function 'license' missing return type (suggested: -> None)
+- [ ] goal/cli/license_cmd.py:28 - Function 'license_create' missing return type (suggested: -> None)
+- [ ] goal/cli/license_cmd.py:59 - Function 'license_update' missing return type (suggested: -> None)
+- [ ] goal/cli/license_cmd.py:183 - Magic number: 40 - use named constant
+- [ ] goal/cli/postcommit_cmd.py:10 - Function 'postcommit' missing return type (suggested: -> None)
+- [ ] goal/cli/postcommit_cmd.py:16 - Function 'postcommit_run' missing return type (suggested: -> None)
+- [ ] goal/cli/postcommit_cmd.py:28 - Function 'postcommit_list' missing return type (suggested: -> None)
+- [ ] goal/cli/postcommit_cmd.py:6 - Unused run_post_commit_actions imported from goal.postcommit
+- [ ] goal/cli/postcommit_cmd.py:6 - Unused import: 'run_post_commit_actions'
+- [ ] goal/cli/postcommit_cmd.py:55 - Magic number: 40 - use named constant
+- [ ] goal/cli/push_cmd.py:27 - Function 'push' missing return type (suggested: -> None)
+- [ ] goal/cli/publish_cmd.py:16 - Function 'publish' missing return type (suggested: -> None)
+- [ ] goal/cli/tests.py:9 - Unused run_git imported from goal.git_ops
+- [ ] goal/cli/tests.py:9 - Unused import: 'run_git'
+- [ ] goal/cli/tests.py:73 - Magic number: 120 - use named constant
+- [ ] goal/cli/recover_cmd.py:38 - Function 'recover' missing return type (suggested: -> None)
+- [ ] goal/cli/utils_cmd.py:23 - Function 'status' missing return type (suggested: -> None)
+- [ ] goal/cli/utils_cmd.py:56 - Function 'init' missing return type (suggested: -> None)
+- [ ] goal/cli/utils_cmd.py:79 - Function 'info' missing return type (suggested: -> None)
+- [ ] goal/cli/validation_cmd.py:10 - Function 'validation' missing return type (suggested: -> None)
+- [ ] goal/cli/validation_cmd.py:16 - Function 'validation_run' missing return type (suggested: -> None)
+- [ ] goal/cli/validation_cmd.py:28 - Function 'validation_list' missing return type (suggested: -> None)
+- [ ] goal/cli/validation_cmd.py:55 - Magic number: 40 - use named constant
+- [ ] goal/cli/version.py:192 - String concatenation can be converted to f-string
+- [ ] goal/cli/version.py:422 - String concatenation can be converted to f-string
+- [ ] goal/cli/version.py:443 - String concatenation can be converted to f-string
+- [ ] goal/cli/version.py:8 - Unused run_git imported from goal.git_ops
+- [ ] goal/cli/version.py:8 - Unused import: 'run_git'
+- [ ] goal/cli/version.py:403 - boilerplate copyright
+- [ ] goal/cli/version.py:404 - boilerplate copyright
+- [ ] goal/cli/version.py:417 - boilerplate copyright
+- [ ] goal/cli/wizard_cmd.py:24 - Function 'wizard' missing return type (suggested: -> None)
+- [ ] goal/cli/wizard_cmd.py:5 - Unused Any imported from typing
+- [ ] goal/cli/wizard_cmd.py:10 - Unused GoalConfig imported from goal.config
+- [ ] goal/cli/wizard_cmd.py:5 - Unused import: 'Any'
+- [ ] goal/cli/wizard_cmd.py:71 - Magic number: 40 - use named constant
+- [ ] goal/cli/wizard_cmd.py:148 - Magic number: 40 - use named constant
+- [ ] goal/cli/wizard_cmd.py:204 - Magic number: 40 - use named constant
+- [ ] goal/cli/wizard_cmd.py:185 - boilerplate copyright
+- [ ] goal/cli.py:10 - Relative import (level=1): '.cli'
+- [ ] goal/cli.py:16 - Relative import (level=1): '.cli.version'
+- [ ] goal/cli.py:22 - Relative import (level=1): '.cli.publish'
+- [ ] goal/cli.py:42 - Function 'main' missing return type (suggested: -> None)
+- [ ] goal/cli.py:10 - Unused read_ticket imported from cli
+- [ ] goal/cli.py:16 - Unused PROJECT_TYPES imported from cli.version
+- [ ] goal/cli.py:16 - Unused find_version_files imported from cli.version
+- [ ] goal/cli.py:42 - standalone main function
+- [ ] goal/cli.py:62 - module execution block
+- [ ] goal/commit_generator.py:28 - module execution block
+- [ ] goal/config/__init__.py:8 - Relative import (level=1): '.constants'
+- [ ] goal/config/__init__.py:11 - Relative import (level=1): '.manager'
+- [ ] goal/config/__init__.py:19 - Relative import (level=1): '.validation'
+- [ ] goal/config/constants.py:19 - Magic number: 50 - use named constant
+- [ ] goal/config/constants.py:20 - Magic number: 200 - use named constant
+- [ ] goal/config/constants.py:243 - Magic number: 50 - use named constant
+- [ ] goal/config/manager.py:198 - Duplicate import: 'json' (first at line 136)
+- [ ] goal/config/manager.py:388 - LLM-style docstring in init_config
+- [ ] goal/config/manager.py:408 - LLM-style docstring in load_config
+- [ ] goal/config/manager.py:422 - LLM-style docstring in ensure_config
+- [ ] goal/config/validation.py:312 - Function 'check_keys' missing return type (suggested: -> None)
+- [ ] goal/config/validation.py:369 - String concatenation can be converted to f-string
+- [ ] goal/config/validation.py:377 - String concatenation can be converted to f-string
+- [ ] goal/config/validation.py:412 - Duplicate import: 'GoalConfig' (first at line 364)
+- [ ] goal/config/validation.py:20 - Cannot use an escape sequence (backslash) in f-strings on Python 3.8 (syntax was added in Python 3.12)
+- [ ] goal/config/validation.py:22 - Cannot use an escape sequence (backslash) in f-strings on Python 3.8 (syntax was added in Python 3.12)
+- [ ] goal/config/validation.py:354 - LLM-style docstring in validate_config_file
+- [ ] goal/config/validation.py:403 - LLM-style docstring in validate_config_interactive
+- [ ] goal/config/validation.py:453 - LLM-style docstring in _auto_fix_config
+- [ ] goal/doctor/__init__.py:8 - Relative import (level=1): '.models'
+- [ ] goal/doctor/__init__.py:11 - Relative import (level=1): '.core'
+- [ ] goal/doctor/__init__.py:18 - Relative import (level=1): '.python'
+- [ ] goal/doctor/__init__.py:11 - Unused _DIAGNOSTICS imported from core
+- [ ] goal/doctor/__init__.py:28 - Unused _generate_ticket_id imported from todo
+- [ ] goal/doctor/__init__.py:28 - Unused _read_existing_tickets imported from todo
+- [ ] goal/deep_analyzer.py:107 - String concatenation can be converted to f-string
+- [ ] goal/doctor/dotnet.py:12 - String concatenation can be converted to f-string
+- [ ] goal/doctor/core.py:35 - LLM-style docstring in diagnose_project
+- [ ] goal/doctor/logging.py:4 - Relative import (level=1): '.models'
+- [ ] goal/doctor/python.py:61 - String concatenation can be converted to f-string
+- [ ] goal/doctor/python.py:76 - Cannot reuse outer quote character in f-strings on Python 3.8 (syntax was added in Python 3.12)
+- [ ] goal/doctor/todo.py:117 - Relative import (level=1): '.core'
+- [ ] goal/doctor/todo.py:104 - String concatenation can be converted to f-string
+- [ ] goal/doctor/todo.py:97 - Cannot use an escape sequence (backslash) in f-strings on Python 3.8 (syntax was added in Python 3.12)
+- [ ] goal/doctor/todo.py:15 - Magic number: 50 - use named constant
+- [ ] goal/doctor/todo.py:54 - LLM-style docstring in add_issues_to_todo
+- [ ] goal/generator/__init__.py:3 - Relative import (level=1): '.git_ops'
+- [ ] goal/generator/__init__.py:4 - Relative import (level=1): '.analyzer'
+- [ ] goal/generator/__init__.py:5 - Relative import (level=1): '.generator'
+- [ ] goal/formatter.py:15 - Function 'add_header' missing return type (suggested: -> None)
+- [ ] goal/formatter.py:19 - Function 'add_metadata' missing return type (suggested: -> None)
+- [ ] goal/formatter.py:23 - Function 'add_section' missing return type (suggested: -> None)
+- [ ] goal/formatter.py:389 - Magic number in comparison: 20
+- [ ] goal/formatter.py:389 - Magic number: 20 - use named constant
+- [ ] goal/formatter.py:329 - Magic number in comparison: 50
+- [ ] goal/formatter.py:77 - LLM-style docstring in _build_functional_overview
+- [ ] goal/generator/analyzer.py:200 - String concatenation can be converted to f-string
+- [ ] goal/generator/generator.py:295 - Function 'fmt_file_list' missing return type (suggested: -> None)
+- [ ] goal/generator/generator.py:252 - String concatenation can be converted to f-string
+- [ ] goal/generator/generator.py:5 - Unused import os
+- [ ] goal/generator/generator.py:5 - Unused import: 'os'
+- [ ] goal/generator/generator.py:302 - Magic number in comparison: 20
+- [ ] goal/generator/generator.py:302 - Magic number: 20 - use named constant
+- [ ] goal/generator/generator.py:299 - Magic number: 20 - use named constant
+- [ ] goal/hooks/__init__.py:9 - Relative import (level=1): '.manager'
+- [ ] goal/hooks/__init__.py:10 - Relative import (level=1): '.config'
+- [ ] goal/generator/git_ops.py:166 - Function 'clear_cache' missing return type (suggested: -> None)
+- [ ] goal/hooks/config.py:41 - LLM-style docstring in get_hook_config
+- [ ] goal/hooks/config.py:71 - LLM-style docstring in create_precommit_config
+- [ ] goal/git_ops.py:17 - Function 'echo_md' missing return type (suggested: -> None)
+- [ ] goal/git_ops.py:30 - String concatenation can be converted to f-string
+- [ ] goal/git_ops.py:58 - String concatenation can be converted to f-string
+- [ ] goal/git_ops.py:89 - String concatenation can be converted to f-string
+- [ ] goal/git_ops.py:514 - Magic number: 10000 - use named constant
+- [ ] goal/git_ops.py:241 - LLM-style docstring in clone_repository
+- [ ] goal/license/__init__.py:10 - Relative import (level=1): '.manager'
+- [ ] goal/license/__init__.py:11 - Relative import (level=1): '.spdx'
+- [ ] goal/hooks/manager.py:15 - Relative import (level=2): '..validators.file_validator'
+- [ ] goal/hooks/manager.py:22 - Relative import (level=2): '..git_ops'
+- [ ] goal/hooks/manager.py:7 - Unused import os
+- [ ] goal/hooks/manager.py:15 - Unused FileSizeError imported from validators.file_validator
+- [ ] goal/hooks/manager.py:15 - Unused TokenDetectedError imported from validators.file_validator
+- [ ] goal/hooks/manager.py:99 - Magic number: 493 - use named constant
+- [ ] goal/hooks/manager.py:254 - Magic number: 30 - use named constant
+- [ ] goal/hooks/manager.py:271 - LLM-style docstring in install_hooks
+- [ ] goal/hooks/manager.py:285 - LLM-style docstring in uninstall_hooks
+- [ ] goal/hooks/manager.py:298 - LLM-style docstring in run_hooks
+- [ ] goal/hooks/manager.py:88 - standalone main function
+- [ ] goal/hooks/manager.py:94 - module execution block
+- [ ] goal/license/manager.py:17 - Relative import (level=1): '.spdx'
+- [ ] goal/license/manager.py:9 - Unused import os
+- [ ] goal/license/manager.py:17 - Unused get_license_info imported from spdx
+- [ ] goal/license/manager.py:9 - Unused import: 'os'
+- [ ] goal/license/manager.py:558 - LLM-style docstring in create_license_file
+- [ ] goal/license/manager.py:575 - LLM-style docstring in update_license_file
+- [ ] goal/license/manager.py:323 - LLM-style docstring in __init__
+- [ ] goal/license/manager.py:21 - boilerplate copyright
+- [ ] goal/license/spdx.py:75 - LLM-style docstring in validate_spdx_id
+- [ ] goal/license/spdx.py:114 - LLM-style docstring in get_license_info
+- [ ] goal/license/spdx.py:137 - LLM-style docstring in check_compatibility
+- [ ] goal/postcommit/__init__.py:10 - Relative import (level=1): '.manager'
+- [ ] goal/postcommit/__init__.py:11 - Relative import (level=1): '.actions'
+- [ ] goal/package_managers.py:12 - Unused import re
+- [ ] goal/package_managers.py:12 - Unused import: 're'
+- [ ] goal/package_managers.py:512 - LLM-style docstring in get_preferred_package_manager
+- [ ] goal/package_managers.py:531 - LLM-style docstring in format_package_manager_command
+- [ ] goal/postcommit/actions.py:51 - Magic number: 50 - use named constant
+- [ ] goal/postcommit/actions.py:18 - LLM-style docstring in execute
+- [ ] goal/postcommit/manager.py:9 - Relative import (level=1): '.actions'
+- [ ] goal/postcommit/manager.py:105 - Magic number: 40 - use named constant
+- [ ] goal/postcommit/manager.py:141 - Magic number: 40 - use named constant
+- [ ] goal/postcommit/manager.py:182 - LLM-style docstring in run_post_commit_actions
+- [ ] goal/postcommit/manager.py:15 - LLM-style docstring in __init__
+- [ ] goal/postcommit/manager.py:24 - LLM-style docstring in get_config
+- [ ] goal/push/__init__.py:9 - Relative import (level=1): '.core'
+- [ ] goal/push/__init__.py:18 - Relative import (level=1): '.stages'
+- [ ] goal/project_bootstrap.py:365 - Duplicate import: 'sys' (first at line 336)
+- [ ] goal/project_bootstrap.py:273 - Duplicate import: 're' (first at line 262)
+- [ ] goal/project_bootstrap.py:295 - Duplicate import: 're' (first at line 262)
+- [ ] goal/push/stages/__init__.py:3 - Relative import (level=1): '.commit'
+- [ ] goal/push/stages/__init__.py:4 - Relative import (level=1): '.version'
+- [ ] goal/push/stages/__init__.py:5 - Relative import (level=1): '.changelog'
+- [ ] goal/push/core.py:19 - Function 'run_git_local' missing return type (suggested: -> Any)
+- [ ] goal/push/core.py:24 - Function 'show_workflow_preview' missing return type (suggested: -> None)
+- [ ] goal/push/core.py:108 - Function 'get' missing return type (suggested: -> Any)
+- [ ] goal/push/core.py:28 - String concatenation can be converted to f-string
+- [ ] goal/push/core.py:99 - String concatenation can be converted to f-string
+- [ ] goal/push/core.py:5 - Unused Path imported from pathlib
+- [ ] goal/push/core.py:5 - Unused import: 'Path'
+- [ ] goal/push/core.py:159 - Duplicate import: 'format_push_result' (first at line 67)
+- [ ] goal/push/commands.py:24 - Function 'push' missing return type (suggested: -> None)
+- [ ] goal/push/commands.py:4 - Unused Any imported from typing
+- [ ] goal/push/commands.py:6 - Unused confirm imported from goal.cli
+- [ ] goal/push/commands.py:6 - Unused apply_ticket_prefix imported from goal.cli
+- [ ] goal/push/stages/dry_run.py:8 - Unused get_current_version imported from goal.cli.version
+- [ ] goal/push/stages/dry_run.py:11 - Unused get_commit_message imported from goal.push.stages.commit
+- [ ] goal/push/stages/dry_run.py:8 - Unused import: 'get_current_version'
+- [ ] goal/push/stages/dry_run.py:52 - Cannot use an escape sequence (backslash) in f-strings on Python 3.8 (syntax was added in Python 3.12)
+- [ ] goal/push/stages/commit.py:195 - Relative import (level=2): '..core'
+- [ ] goal/push/stages/commit.py:199 - Relative import (level=1): '.version'
+- [ ] goal/push/stages/commit.py:209 - Relative import (level=3): '...changelog'
+- [ ] goal/push/stages/push_remote.py:159 - Duplicate import: 'RecoveryManager' (first at line 135)
+- [ ] goal/push/stages/push_remote.py:324 - Duplicate import: 'RecoveryManager' (first at line 135)
+- [ ] goal/recovery/__init__.py:12 - Relative import (level=1): '.strategies'
+- [ ] goal/recovery/__init__.py:21 - Relative import (level=1): '.manager'
+- [ ] goal/recovery/__init__.py:22 - Relative import (level=1): '.exceptions'
+- [ ] goal/push/stages/version.py:38 - String concatenation can be converted to f-string
+- [ ] goal/push/stages/version.py:4 - Unused Any imported from typing
+- [ ] goal/push/stages/version.py:4 - Unused import: 'Any'
+- [ ] goal/push/stages/version.py:40 - Duplicate import: 'run_git_local' (first at line 33)
+- [ ] goal/smart_commit/__init__.py:7 - Relative import (level=1): '.abstraction'
+- [ ] goal/smart_commit/__init__.py:8 - Relative import (level=1): '.generator'
+- [ ] goal/smart_commit/abstraction.py:148 - String concatenation can be converted to f-string
+- [ ] goal/recovery/manager.py:10 - Relative import (level=1): '.strategies'
+- [ ] goal/recovery/manager.py:19 - Relative import (level=1): '.exceptions'
+- [ ] goal/recovery/manager.py:65 - String concatenation can be converted to f-string
+- [ ] goal/recovery/manager.py:7 - Unused Tuple imported from typing
+- [ ] goal/recovery/manager.py:19 - Unused RecoveryError imported from exceptions
+- [ ] goal/recovery/manager.py:19 - Unused RollbackError imported from exceptions
+- [ ] goal/recovery/strategies.py:11 - Relative import (level=1): '.exceptions'
+- [ ] goal/recovery/strategies.py:43 - String concatenation can be converted to f-string
+- [ ] goal/recovery/strategies.py:8 - Unused Optional imported from typing
+- [ ] goal/recovery/strategies.py:11 - Unused RecoveryError imported from exceptions
+- [ ] goal/recovery/strategies.py:11 - Unused AuthError imported from exceptions
+- [ ] goal/recovery/strategies.py:336 - Magic number: 50 - use named constant
+- [ ] goal/smart_commit/generator.py:22 - Function 'deep_analyzer' missing return type (suggested: -> Any)
+- [ ] goal/smart_commit/generator.py:116 - String concatenation can be converted to f-string
+- [ ] goal/summary/__init__.py:3 - Relative import (level=1): '.quality_filter'
+- [ ] goal/summary/__init__.py:4 - Relative import (level=1): '.validator'
+- [ ] goal/summary/__init__.py:5 - Relative import (level=1): '.generator'
+- [ ] goal/summary/__init__.py:9 - Function 'generate_business_summary' missing return type (suggested: -> Any)
+- [ ] goal/summary/__init__.py:15 - Function 'validate_summary' missing return type (suggested: -> Any)
+- [ ] goal/summary/__init__.py:25 - Function 'auto_fix_summary' missing return type (suggested: -> Any)
+- [ ] goal/summary/__init__.py:15 - LLM-style docstring in validate_summary
+- [ ] goal/summary/__init__.py:25 - LLM-style docstring in auto_fix_summary
+- [ ] goal/summary/generator.py:301 - String concatenation can be converted to f-string
+- [ ] goal/summary/generator.py:438 - String concatenation can be converted to f-string
+- [ ] goal/summary/generator.py:304 - String concatenation can be converted to f-string
+- [ ] goal/summary/generator.py:320 - Magic number: 50 - use named constant
+- [ ] goal/summary/generator.py:321 - Magic number: 30 - use named constant
+- [ ] goal/summary/generator.py:304 - Magic number: 50 - use named constant
+- [ ] goal/summary/generator.py:478 - LLM-style docstring in _format_changes_section
+- [ ] goal/summary/quality_filter.py:230 - String concatenation can be converted to f-string
+- [ ] goal/summary/quality_filter.py:265 - String concatenation can be converted to f-string
+- [ ] goal/summary/quality_filter.py:82 - Magic number: 200 - use named constant
+- [ ] goal/summary/quality_filter.py:158 - Magic number in comparison: 50
+- [ ] goal/summary/quality_filter.py:245 - Magic number in comparison: 250
+- [ ] goal/summary/quality_filter.py:141 - LLM-style docstring in format_complexity_delta
+- [ ] goal/summary/quality_filter.py:224 - LLM-style docstring in format_net_lines
+- [ ] goal/validation/__init__.py:10 - Relative import (level=1): '.manager'
+- [ ] goal/validation/__init__.py:11 - Relative import (level=1): '.rules'
+- [ ] goal/summary/validator.py:14 - Magic number: 200 - use named constant
+- [ ] goal/summary/validator.py:200 - Magic number: 20 - use named constant
+- [ ] goal/summary/validator.py:129 - Magic number in comparison: 250
+- [ ] goal/summary/validator.py:44 - LLM-style docstring in validate
+- [ ] goal/user_config.py:226 - Function 'show_user_config' missing return type (suggested: -> None)
+- [ ] goal/user_config.py:62 - Function 'set' missing return type (suggested: -> None)
+- [ ] goal/user_config.py:107 - Magic number: 70 - use named constant
+- [ ] goal/user_config.py:109 - Magic number: 70 - use named constant
+- [ ] goal/user_config.py:150 - Magic number: 70 - use named constant
+- [ ] goal/user_config.py:135 - LLM-style docstring in initialize_user_config
+- [ ] goal/user_config.py:214 - LLM-style docstring in get_user_config
+- [ ] goal/validation/rules.py:163 - String concatenation can be converted to f-string
+- [ ] goal/validation/rules.py:17 - LLM-style docstring in validate
+- [ ] goal/validators/__init__.py:7 - Relative import (level=1): '.file_validator'
+- [ ] goal/validation/manager.py:10 - Relative import (level=1): '.rules'
+- [ ] goal/validation/manager.py:89 - Magic number: 40 - use named constant
+- [ ] goal/validation/manager.py:133 - Magic number: 40 - use named constant
+- [ ] goal/validation/manager.py:180 - LLM-style docstring in run_custom_validations
+- [ ] goal/validation/manager.py:16 - LLM-style docstring in __init__
+- [ ] goal/validation/manager.py:25 - LLM-style docstring in get_rules
+- [ ] goal/validators/file_validator.py:140 - String concatenation can be converted to f-string
+- [ ] goal/validators/file_validator.py:211 - String concatenation can be converted to f-string
+- [ ] goal/validators/file_validator.py:198 - String concatenation can be converted to f-string
+- [ ] goal/validators/file_validator.py:257 - Duplicate import: 'run_git' (first at line 412)
+- [ ] goal/validators/file_validator.py:62 - LLM-style docstring in detect_tokens_in_content
+- [ ] goal/validators/file_validator.py:148 - LLM-style docstring in check_dot_folders
+- [ ] goal/validators/file_validator.py:217 - LLM-style docstring in manage_dot_folders
+- [ ] test_recovery.py:13 - Function 'test_strategy_detection' missing return type (suggested: -> bool)
+- [ ] test_recovery.py:70 - Function 'test_recovery_manager' missing return type (suggested: -> bool)
+- [ ] test_recovery.py:103 - Function 'main' missing return type (suggested: -> int)
+- [ ] test_recovery.py:117 - String concatenation can be converted to f-string
+- [ ] test_recovery.py:103 - standalone main function
+- [ ] test_recovery.py:126 - module execution block
+- [ ] goal/version_validation.py:7 - Duplicate import: urllib
+- [ ] goal/version_validation.py:7 - Duplicate import: 'urllib' (first at line 6)
+- [ ] goal/version_validation.py:72 - LLM-style docstring in extract_badge_versions
+- [ ] goal/version_validation.py:132 - LLM-style docstring in validate_project_versions
+
+---
+
+*To execute all tasks, run: `prefact -a --execute-todos`*

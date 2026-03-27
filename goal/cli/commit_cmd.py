@@ -143,7 +143,6 @@ def fix_summary(ctx, fix, preview, cached):
 @click.pass_context
 def validate(ctx, fix, cached):
     """Validate commit summary against quality gates."""
-    from ..enhanced_summary import QualityValidator
     
     files = get_staged_files()
     stats = get_diff_stats()

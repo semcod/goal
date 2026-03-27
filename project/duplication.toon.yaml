@@ -1,29 +1,22 @@
-# redup/duplication | 11 groups | 71f 16244L | 2026-03-27
+# redup/duplication | 11 groups | 71f 16242L | 2026-03-27
 
 SUMMARY:
   files_scanned: 71
-  total_lines:   16244
+  total_lines:   16242
   dup_groups:    11
-  dup_fragments: 39
-  saved_lines:   251
-  scan_ms:       5437
+  dup_fragments: 37
+  saved_lines:   235
+  scan_ms:       5761
 
 DUPLICATES[11] (ranked by impact):
-  [604cc914cf04728d] ! STRU  hooks_status  L=8 N=6 saved=40 sim=1.00
-      goal/cli/hooks_cmd.py:0-7  (hooks_status)
-      goal/cli/authors_cmd.py:0-7  (authors_list)
-      goal/cli/authors_cmd.py:0-7  (authors_import)
-      goal/cli/authors_cmd.py:0-7  (authors_export)
-      goal/cli/postcommit_cmd.py:0-7  (postcommit_list)
-      goal/cli/validation_cmd.py:0-7  (validation_list)
   [02d23ce0dd67549c] ! EXAC  push  L=35 N=2 saved=35 sim=1.00
       goal/push/commands.py:0-34  (push)
       goal/cli/push_cmd.py:0-34  (push)
   [4c2991aa6376ee76] ! STRU  hooks  L=7 N=6 saved=35 sim=1.00
       goal/cli/hooks_cmd.py:0-6  (hooks)
-      goal/cli/license_cmd.py:0-6  (license)
       goal/cli/authors_cmd.py:0-6  (authors)
       goal/cli/postcommit_cmd.py:0-6  (postcommit)
+      goal/cli/license_cmd.py:0-6  (license)
       goal/cli/validation_cmd.py:0-6  (validation)
       goal/cli/config_cmd.py:0-6  (config)
   [e8e1ba5d936993f1] ! STRU  get_name  L=4 N=9 saved=32 sim=1.00
@@ -44,6 +37,11 @@ DUPLICATES[11] (ranked by impact):
       goal/cli/hooks_cmd.py:0-12  (hooks_uninstall)
       goal/cli/postcommit_cmd.py:0-12  (postcommit_run)
       goal/cli/validation_cmd.py:0-12  (validation_run)
+  [604cc914cf04728d]   STRU  hooks_status  L=8 N=4 saved=24 sim=1.00
+      goal/cli/hooks_cmd.py:0-7  (hooks_status)
+      goal/cli/authors_cmd.py:0-7  (authors_export)
+      goal/cli/postcommit_cmd.py:0-7  (postcommit_list)
+      goal/cli/validation_cmd.py:0-7  (validation_list)
   [58de20ebce074e30]   STRU  get_config  L=20 N=2 saved=20 sim=1.00
       goal/postcommit/manager.py:0-19  (get_config)
       goal/validation/manager.py:0-19  (get_rules)
@@ -61,24 +59,24 @@ DUPLICATES[11] (ranked by impact):
       goal/deep_analyzer.py:0-3  (__init__)
 
 REFACTOR[11] (ranked by priority):
-  [1] ○ extract_function   → goal/cli/utils/hooks_status.py
-      WHY: 6 occurrences of 8-line block across 4 files — saves 40 lines
-      FILES: goal/cli/authors_cmd.py, goal/cli/hooks_cmd.py, goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
-  [2] ◐ extract_function   → goal/utils/push.py
+  [1] ◐ extract_function   → goal/utils/push.py
       WHY: 2 occurrences of 35-line block across 2 files — saves 35 lines
       FILES: goal/cli/push_cmd.py, goal/push/commands.py
-  [3] ○ extract_function   → goal/cli/utils/hooks.py
+  [2] ○ extract_function   → goal/cli/utils/hooks.py
       WHY: 6 occurrences of 7-line block across 6 files — saves 35 lines
       FILES: goal/cli/authors_cmd.py, goal/cli/config_cmd.py, goal/cli/hooks_cmd.py, goal/cli/license_cmd.py, goal/cli/postcommit_cmd.py +1 more
-  [4] ○ extract_function   → goal/utils/get_name.py
+  [3] ○ extract_function   → goal/utils/get_name.py
       WHY: 9 occurrences of 4-line block across 2 files — saves 32 lines
       FILES: goal/postcommit/actions.py, goal/validation/rules.py
-  [5] ○ extract_function   → goal/utils/uninstall_hooks.py
+  [4] ○ extract_function   → goal/utils/uninstall_hooks.py
       WHY: 3 occurrences of 14-line block across 3 files — saves 28 lines
       FILES: goal/hooks/manager.py, goal/postcommit/manager.py, goal/validation/manager.py
-  [6] ○ extract_function   → goal/cli/utils/hooks_uninstall.py
+  [5] ○ extract_function   → goal/cli/utils/hooks_uninstall.py
       WHY: 3 occurrences of 13-line block across 3 files — saves 26 lines
       FILES: goal/cli/hooks_cmd.py, goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
+  [6] ○ extract_function   → goal/cli/utils/hooks_status.py
+      WHY: 4 occurrences of 8-line block across 4 files — saves 24 lines
+      FILES: goal/cli/authors_cmd.py, goal/cli/hooks_cmd.py, goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
   [7] ○ extract_function   → goal/utils/get_config.py
       WHY: 2 occurrences of 20-line block across 2 files — saves 20 lines
       FILES: goal/postcommit/manager.py, goal/validation/manager.py
@@ -97,4 +95,4 @@ REFACTOR[11] (ranked by priority):
 
 METRICS-TARGET:
   dup_groups:  11 → 0
-  saved_lines: 251 lines recoverable
+  saved_lines: 235 lines recoverable

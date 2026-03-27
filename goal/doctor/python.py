@@ -364,7 +364,7 @@ class PythonDiagnostics:
                 init_content = re.sub(r'(__version__\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_version}"', init_py.read_text(errors='ignore'))
                 init_py.write_text(init_content, encoding='utf-8')
             if version_file.exists():
-                version_file.write_text(pyproject_version + '\n', encoding='utf-8')
+                version_file.write_text(f"{pyproject_version}\n", encoding='utf-8')
             issue.fixed = True
             issue.fix_description = f"Synchronized version to '{pyproject_version}'"
         self.issues.append(issue)

@@ -9,6 +9,7 @@ import click
 
 from goal.git_ops import run_git, ensure_remote, run_git_with_status, _echo_cmd, HAS_CLICKMD
 from goal.cli import confirm
+from goal.recovery import RecoveryManager
 
 # Import clickmd if available
 if HAS_CLICKMD:
@@ -132,7 +133,6 @@ def _offer_recovery(error_output: str) -> bool:
                 
                 if click.confirm(click.style("\nProceed with automatic recovery?", fg='yellow', bold=True)):
                     try:
-                        from goal.recovery import RecoveryManager
                         repo_path = os.getcwd()
                         manager = RecoveryManager(repo_path)
                         
@@ -156,7 +156,6 @@ def _offer_recovery(error_output: str) -> bool:
                 click.echo(click.style("\n✓ Files are not committed yet - just need to be unstaged.", fg='green'))
                 if click.confirm(click.style("\nProceed with automatic recovery?", fg='yellow')):
                     try:
-                        from goal.recovery import RecoveryManager
                         repo_path = os.getcwd()
                         manager = RecoveryManager(repo_path)
                         
@@ -321,7 +320,6 @@ def _offer_recovery(error_output: str) -> bool:
         # Automatic recovery
         click.echo(click.style("\n🔧 Attempting automatic recovery...", fg='blue', bold=True))
         try:
-            from goal.recovery import RecoveryManager
             repo_path = os.getcwd()
             manager = RecoveryManager(repo_path)
             
