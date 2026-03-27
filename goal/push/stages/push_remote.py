@@ -6,8 +6,12 @@ from typing import Optional
 
 import click
 
-from goal.git_ops import run_git, ensure_remote, get_remote_branch, _echo_cmd
+from goal.git_ops import run_git, ensure_remote, get_remote_branch, run_git_with_status, HAS_CLICKMD
 from goal.cli import confirm
+
+# Import clickmd if available
+if HAS_CLICKMD:
+    from clickmd import echo_md
 
 
 def push_to_remote(
@@ -28,14 +32,23 @@ def push_to_remote(
             click.echo(click.style("  Skipping push (user chose N).", fg='yellow'))
             return False
     
-    if not yes:
-        click.echo(click.style("Pushing to remote...", fg='cyan'))
-    else:
-        click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg='cyan'))
-    
     try:
-        _echo_cmd(['git', 'push', 'origin', branch])
-        result = run_git('push', 'origin', branch, capture=True)
+        # Show push operation header
+        if not yes:
+            if HAS_CLICKMD:
+                echo_md("\n### 📤 Pushing to Remote Repository")
+                echo_md(f"**Branch:** `{branch}`")
+                echo_md(f"**Remote:** `origin`")
+            else:
+                click.echo(click.style("\n📤 Pushing to Remote Repository", fg='blue', bold=True))
+                click.echo(f"Branch: {branch}")
+                click.echo(f"Remote: origin")
+        else:
+            click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg='cyan'))
+        
+        # Push with enhanced display
+        result = run_git_with_status('push', 'origin', branch, capture=True, show_output=False)
+        
         if result.returncode != 0:
             click.echo(click.style(f"✗ Push failed (exit {result.returncode}).", fg='red'))
             

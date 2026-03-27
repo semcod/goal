@@ -1,47 +1,29 @@
-# redup/duplication | 5 groups | 53f 11711L | 2026-03-27
+# redup/duplication | 2 groups | 53f 11903L | 2026-03-27
 
 SUMMARY:
   files_scanned: 53
-  total_lines:   11711
-  dup_groups:    5
-  dup_fragments: 10
-  saved_lines:   67
-  scan_ms:       2321
+  total_lines:   11903
+  dup_groups:    2
+  dup_fragments: 4
+  saved_lines:   39
+  scan_ms:       2825
 
-DUPLICATES[5] (ranked by impact):
-  [fe96954d342dd641]   EXAC  push  L=18 N=2 saved=18 sim=1.00
-      goal/push/commands.py:24-41  (push)
-      goal/cli/push_cmd.py:27-44  (push)
-  [f229e9e354414f1d]   STRU  _update_toml_version  L=18 N=2 saved=18 sim=1.00
-      goal/cli/version.py:471-488  (_update_toml_version)
-      goal/cli/version.py:491-508  (_update_cargo_version)
-  [1482aba0965f5c6a]   STRU  get_git_user_name  L=14 N=2 saved=14 sim=1.00
-      goal/user_config.py:72-85  (get_git_user_name)
-      goal/user_config.py:88-101  (get_git_user_email)
-  [be2174af53bfaa7c]   STRU  get_npm_version  L=9 N=2 saved=9 sim=1.00
-      goal/version_validation.py:23-31  (get_npm_version)
-      goal/version_validation.py:34-42  (get_cargo_version)
-  [457971a3264a496f]   STRU  validate_summary  L=8 N=2 saved=8 sim=1.00
-      goal/summary/__init__.py:15-22  (validate_summary)
-      goal/summary/__init__.py:25-32  (auto_fix_summary)
+DUPLICATES[2] (ranked by impact):
+  [02d23ce0dd67549c] ! EXAC  push  L=35 N=2 saved=35 sim=1.00
+      goal/push/commands.py:0-34  (push)
+      goal/cli/push_cmd.py:0-34  (push)
+  [b25039a06bd76f94]   EXAC  __init__  L=4 N=2 saved=4 sim=1.00
+      goal/generator/git_ops.py:0-3  (__init__)
+      goal/deep_analyzer.py:0-3  (__init__)
 
-REFACTOR[5] (ranked by priority):
-  [1] ○ extract_function   → goal/utils/push.py
-      WHY: 2 occurrences of 18-line block across 2 files — saves 18 lines
+REFACTOR[2] (ranked by priority):
+  [1] ◐ extract_function   → goal/utils/push.py
+      WHY: 2 occurrences of 35-line block across 2 files — saves 35 lines
       FILES: goal/cli/push_cmd.py, goal/push/commands.py
-  [2] ○ extract_function   → goal/cli/utils/_update_toml_version.py
-      WHY: 2 occurrences of 18-line block across 1 files — saves 18 lines
-      FILES: goal/cli/version.py
-  [3] ○ extract_function   → goal/utils/get_git_user_name.py
-      WHY: 2 occurrences of 14-line block across 1 files — saves 14 lines
-      FILES: goal/user_config.py
-  [4] ○ extract_function   → goal/utils/get_npm_version.py
-      WHY: 2 occurrences of 9-line block across 1 files — saves 9 lines
-      FILES: goal/version_validation.py
-  [5] ○ extract_function   → goal/summary/utils/validate_summary.py
-      WHY: 2 occurrences of 8-line block across 1 files — saves 8 lines
-      FILES: goal/summary/__init__.py
+  [2] ○ extract_function   → goal/utils/__init__.py
+      WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
+      FILES: goal/deep_analyzer.py, goal/generator/git_ops.py
 
 METRICS-TARGET:
-  dup_groups:  5 → 0
-  saved_lines: 67 lines recoverable
+  dup_groups:  2 → 0
+  saved_lines: 39 lines recoverable

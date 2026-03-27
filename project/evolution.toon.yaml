@@ -1,4 +1,4 @@
-# code2llm/evolution | 421 func | 53f | 2026-03-27
+# code2llm/evolution | 433 func | 55f | 2026-03-27
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           goal/cli/version.py
@@ -9,9 +9,9 @@ NEXT[10] (ranked by impact):
       WHY: 675L, 1 classes, max CC=26
       EFFORT: ~4h  IMPACT: 17550
 
-  [3] !! SPLIT           goal/package_managers.py
-      WHY: 631L, 1 classes, max CC=11
-      EFFORT: ~4h  IMPACT: 6941
+  [3] !! SPLIT           goal/recovery/strategies.py
+      WHY: 676L, 7 classes, max CC=11
+      EFFORT: ~4h  IMPACT: 7436
 
   [4] !! SPLIT-FUNC      execute_push_workflow  CC=34  fan=37
       WHY: CC=34 exceeds 15
@@ -44,13 +44,13 @@ NEXT[10] (ranked by impact):
 
 RISKS[3]:
   ⚠ Splitting goal/cli/version.py may break 18 import paths
+  ⚠ Splitting goal/recovery/strategies.py may break 30 import paths
   ⚠ Splitting goal/summary/generator.py may break 16 import paths
-  ⚠ Splitting goal/package_managers.py may break 12 import paths
 
 METRICS-TARGET:
-  CC̄:          5.7 → ≤4.0
+  CC̄:          5.8 → ≤4.1
   max-CC:      34 → ≤17
-  god-modules: 7 → 0
+  god-modules: 8 → 0
   high-CC(≥15): 30 → ≤15
   hub-types:   0 → ≤0
 
@@ -79,4 +79,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=5.7 → now CC̄=5.7
+  prev CC̄=5.8 → now CC̄=5.8

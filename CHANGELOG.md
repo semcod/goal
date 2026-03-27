@@ -1,5 +1,28 @@
 ## [Unreleased]
 
+## [2.1.106] - 2026-03-27
+
+### Docs
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update test_path_extraction.py
+
+### Other
+- Update debug_recovery.py
+- Update planfile.yaml
+- Update prefact.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- ... and 6 more files
+
 ## [2.1.105] - 2026-03-27
 
 ### Docs

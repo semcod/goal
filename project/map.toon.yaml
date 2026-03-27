@@ -1,14 +1,15 @@
-# goal | 70f 13199L | python:67,shell:3 | 2026-03-27
-# stats: 421 func | 0 cls | 70 mod | CC̄=5.7 | critical:30 | cycles:0
+# goal | 72f 13833L | python:69,shell:3 | 2026-03-27
+# stats: 433 func | 0 cls | 72 mod | CC̄=5.8 | critical:30 | cycles:0
 # alerts[5]: fan-out execute_push_workflow=37; CC ContentAnalyzer.short_action_summary=34; CC execute_push_workflow=34; CC sync_all_versions=33; CC validate_project_versions=30
 # hotspots[5]: execute_push_workflow fan=37; QualityValidator.auto_fix fan=27; SmartCommitGenerator.analyze_changes fan=27; EnhancedSummaryGenerator.generate_enhanced_summary fan=24; update_changelog fan=23
-# evolution: CC̄ 5.7→5.7 (flat 0.0)
+# evolution: CC̄ 5.8→5.8 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[70]:
+M[72]:
+  debug_recovery.py,62
   goal/__init__.py,3
   goal/__main__.py,17
   goal/changelog.py,125
-  goal/cli/__init__.py,207
+  goal/cli/__init__.py,208
   goal/cli/commit_cmd.py,187
   goal/cli/config_cmd.py,110
   goal/cli/doctor_cmd.py,99
@@ -18,6 +19,7 @@ M[70]:
   goal/cli/recover_cmd.py,126
   goal/cli/utils_cmd.py,207
   goal/cli/version.py,730
+  goal/cli/wizard_cmd.py,341
   goal/commit_generator.py,45
   goal/config/__init__.py,24
   goal/config/constants.py,436
@@ -42,7 +44,7 @@ M[70]:
   goal/generator/analyzer.py,396
   goal/generator/generator.py,384
   goal/generator/git_ops.py,171
-  goal/git_ops.py,473
+  goal/git_ops.py,553
   goal/package_managers.py,631
   goal/project_bootstrap.py,589
   goal/project_doctor.py,32
@@ -54,13 +56,13 @@ M[70]:
   goal/push/stages/commit.py,213
   goal/push/stages/dry_run.py,98
   goal/push/stages/publish.py,31
-  goal/push/stages/push_remote.py,102
+  goal/push/stages/push_remote.py,115
   goal/push/stages/tag.py,28
   goal/push/stages/version.py,51
   goal/recovery/__init__.py,48
   goal/recovery/exceptions.py,58
   goal/recovery/manager.py,317
-  goal/recovery/strategies.py,541
+  goal/recovery/strategies.py,676
   goal/smart_commit/__init__.py,14
   goal/smart_commit/abstraction.py,269
   goal/smart_commit/generator.py,524
@@ -74,7 +76,7 @@ M[70]:
   goal/version_validation.py,301
   integration/run_docker_matrix.sh,5
   integration/run_matrix.sh,216
-  project.sh,22
+  project.sh,24
 D:
   goal/generator/analyzer.py:
     e: ChangeAnalyzer,ContentAnalyzer
@@ -154,11 +156,12 @@ D:
     SmartCommitGenerator: __init__(1),analyze_changes(1),_generate_functional_summary(1),_get_staged_files(0),_get_file_diff(1),_infer_commit_type(1),generate_message(2),_is_docs_only_change(1),_generate_docs_message(1),_generate_high_abstraction_message(1),_generate_medium_abstraction_message(1),_generate_low_abstraction_message(1),_filter_meaningful_entities(1),_infer_message_from_files(1),generate_functional_body(1),generate_changelog_entry(2),format_changelog_entry(1)  # Generates smart commit messages using code abstraction...
     create_smart_generator(config)
   goal/git_ops.py:
-    e: run_git,run_command,_echo_cmd,_run_git_verbose,run_command_tee,is_git_repository,validate_repo_url,get_remote_url,list_remotes,_prompt_remote_url,_list_remote_branches,get_remote_branch,clone_repository,ensure_git_repository,ensure_remote,get_staged_files,get_unstaged_files,get_working_tree_files,get_diff_stats,get_diff_content,read_ticket,apply_ticket_prefix
+    e: run_git,run_command,_echo_cmd,_run_git_verbose,run_git_with_status,run_command_tee,is_git_repository,validate_repo_url,get_remote_url,list_remotes,_prompt_remote_url,_list_remote_branches,get_remote_branch,clone_repository,ensure_git_repository,ensure_remote,get_staged_files,get_unstaged_files,get_working_tree_files,get_diff_stats,get_diff_content,read_ticket,apply_ticket_prefix
     run_git()
     run_command(command;capture)
     _echo_cmd(args)
     _run_git_verbose()
+    run_git_with_status()
     run_command_tee(command)
     is_git_repository()
     validate_repo_url(url)
@@ -249,6 +252,15 @@ D:
   goal/cli/doctor_cmd.py:
     e: doctor
     doctor(ctx;fix;path;todo)
+  goal/cli/wizard_cmd.py:
+    e: wizard,_setup_git_repository,_find_git_root,_add_git_remote,_setup_user_config,_setup_project_config,_show_setup_summary
+    wizard(reset;skip_git;skip_user;skip_project)
+    _setup_git_repository()
+    _find_git_root()
+    _add_git_remote()
+    _setup_user_config(reset)
+    _setup_project_config()
+    _show_setup_summary()
   goal/user_config.py:
     e: UserConfig,get_git_user_name,get_git_user_email,prompt_for_license,initialize_user_config,get_user_config,show_user_config
     UserConfig: __init__(0),_load(0),_save(0),get(2),set(2),is_initialized(0)  # Manages user-specific configuration stored in ~/.goal...
@@ -261,6 +273,15 @@ D:
   goal/generator/git_ops.py:
     e: GitDiffOperations
     GitDiffOperations: __init__(0),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),clear_cache(0)  # Git diff operations with caching...
+  goal/recovery/strategies.py:
+    e: RecoveryStrategy,AuthErrorStrategy,LargeFileStrategy,DivergentHistoryStrategy,CorruptedObjectStrategy,LFSIssueStrategy,ForcePushStrategy
+    RecoveryStrategy(ABC): __init__(2),can_handle(1),recover(1),run_git(0),run_git_with_output(0)  # Base class for all recovery strategies...
+    AuthErrorStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles authentication errors...
+    LargeFileStrategy(RecoveryStrategy): __init__(1),can_handle(1),recover(1),_files_in_history(1),_remove_from_history(1),_extract_file_paths(1),_find_large_files(1),_get_file_size_mb(1),_remove_large_files(1),_move_to_lfs(1),_skip_large_files(1)  # Handles large file errors...
+    DivergentHistoryStrategy(RecoveryStrategy): can_handle(1),recover(1),_rebase_changes(1),_merge_changes(1),_pull_changes(0),_force_push(0)  # Handles divergent history errors...
+    CorruptedObjectStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles corrupted git objects...
+    LFSIssueStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles Git LFS issues...
+    ForcePushStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles force push recovery scenarios...
   goal/package_managers.py:
     e: PackageManager,detect_package_managers,get_package_manager,get_package_managers_by_language,is_package_manager_available,get_available_package_managers,get_preferred_package_manager,format_package_manager_command,get_package_manager_info,list_all_package_managers,detect_project_language,suggest_package_managers
     PackageManager: __post_init__(0)  # Package manager configuration and capabilities...
@@ -291,15 +312,6 @@ D:
     init_config(force)
     load_config(config_path)
     ensure_config(auto_update)
-  goal/recovery/strategies.py:
-    e: RecoveryStrategy,AuthErrorStrategy,LargeFileStrategy,DivergentHistoryStrategy,CorruptedObjectStrategy,LFSIssueStrategy,ForcePushStrategy
-    RecoveryStrategy(ABC): __init__(2),can_handle(1),recover(1),run_git(0),run_git_with_output(0)  # Base class for all recovery strategies...
-    AuthErrorStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles authentication errors...
-    LargeFileStrategy(RecoveryStrategy): can_handle(1),recover(1),_extract_file_paths(1),_find_large_files(1),_get_file_size_mb(1),_remove_large_files(1),_move_to_lfs(1),_skip_large_files(1)  # Handles large file errors...
-    DivergentHistoryStrategy(RecoveryStrategy): can_handle(1),recover(1),_rebase_changes(1),_merge_changes(1),_pull_changes(0),_force_push(0)  # Handles divergent history errors...
-    CorruptedObjectStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles corrupted git objects...
-    LFSIssueStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles Git LFS issues...
-    ForcePushStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles force push recovery scenarios...
   goal/doctor/todo.py:
     e: _generate_ticket_id,_read_existing_tickets,_format_todo_entry,add_issues_to_todo,diagnose_and_report_with_todo
     _generate_ticket_id(issue)
@@ -375,6 +387,9 @@ D:
     sync_all_versions_wrapper(new_version;user_config)
     handle_version_sync(new_version;no_version_sync;user_config;yes)
     get_version_info(current_version;bump)
+  debug_recovery.py:
+    e: test_recovery
+    test_recovery()
   goal/summary/__init__.py:
     e: generate_business_summary,validate_summary,auto_fix_summary
     generate_business_summary(files;diff_content;config)
@@ -390,8 +405,8 @@ D:
   goal/cli/push_cmd.py:
     e: push
     push(ctx;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
-  goal/config/__init__.py:
   goal/enhanced_summary.py:
+  goal/config/__init__.py:
   goal/commit_generator.py:
   goal/__init__.py:
   goal/__main__.py:

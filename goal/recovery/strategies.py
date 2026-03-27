@@ -3,6 +3,7 @@
 import os
 import re
 import subprocess
+import time
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 import click
@@ -130,8 +131,13 @@ class AuthErrorStrategy(RecoveryStrategy):
 class LargeFileStrategy(RecoveryStrategy):
     """Handles large file errors."""
     
+    def __init__(self, repo_path: str):
+        super().__init__(repo_path)
+        self.last_error = None
+    
     def can_handle(self, error_output: str) -> bool:
         """Check if error is related to large files."""
+        self.last_error = error_output  # Store for later use
         large_file_patterns = [
             r'file larger than 100 MB',
             r'large files detected',
@@ -140,7 +146,9 @@ class LargeFileStrategy(RecoveryStrategy):
             r'GB exceeds GitHub\'s file size limit',
             r'MB; this exceeds GitHub\'s file size limit',
             r'pathspec.*did not match any files',
-            r'large file notification'
+            r'large file notification',
+            r'GH001: Large files detected',
+            r'exceeds GitHub\'s file size limit'
         ]
         return any(re.search(pattern, error_output, re.IGNORECASE) for pattern in large_file_patterns)
     
@@ -159,12 +167,36 @@ class LargeFileStrategy(RecoveryStrategy):
             click.echo(click.style("❌ Could not identify large files", fg='red'))
             return False
         
-        click.echo(f"Found {len(file_paths)} large file(s):")
+        click.echo(f"Found {len(file_paths)} large file(s) in git history:")
         for path in file_paths:
             size_mb = self._get_file_size_mb(path)
             click.echo(f"  - {path} ({size_mb:.1f} MB)")
         
-        # Ask user what to do
+        # Check if files are in history (not just staged)
+        # If GitHub rejected the push, assume files are in history
+        github_rejected = 'GH001: Large files detected' in error_output or 'pre-receive hook declined' in error_output
+        
+        if github_rejected or self._files_in_history(file_paths):
+            click.echo(click.style("\n⚠️  WARNING: Large files are already committed in git history!", fg='red', bold=True))
+            click.echo(click.style("\nTo proceed, we must:", fg='yellow'))
+            click.echo("1. Remove large files from git history using filter-repo")
+            click.echo("2. Force push to update remote")
+            click.echo(click.style("\n⚠️  This will REWRITE GIT HISTORY:", fg='red', bold=True))
+            click.echo("  • All commits containing these files will be rewritten")
+            click.echo("  • You will need to force push (--force-with-lease)")
+            click.echo("  • Team members must re-clone or rebase their local repos")
+            click.echo(click.style("\nYour local files will NOT be deleted:", fg='green'))
+            click.echo("  • Files remain on your disk")
+            click.echo("  • Only removed from git history")
+            
+            if not click.confirm(click.style("\nDo you want to proceed with history rewrite?", fg='yellow')):
+                click.echo("Operation cancelled.")
+                return False
+            
+            # Use filter-repo to remove from history
+            return self._remove_from_history(file_paths)
+        
+        # Files are only staged, not committed
         click.echo("\nRecovery options:")
         click.echo("1. Add files to .gitignore and remove from history")
         click.echo("2. Move files to Git LFS")
@@ -181,21 +213,114 @@ class LargeFileStrategy(RecoveryStrategy):
         
         return False
     
+    def _files_in_history(self, file_paths: List[str]) -> bool:
+        """Check if files are in git history (not just staged)."""
+        for path in file_paths:
+            try:
+                # Check if file exists in any commit
+                result = self.run_git('log', '--all', '--full-history', '--', path, 
+                                    capture_output=True, check=False)
+                if result.returncode == 0 and result.stdout.strip():
+                    return True
+            except:
+                continue
+        return False
+    
+    def _remove_from_history(self, file_paths: List[str]) -> bool:
+        """Remove files from git history using filter-repo."""
+        click.echo(click.style("\n🔧 Removing large files from git history...", fg='blue'))
+        
+        # Check if git-filter-repo is available
+        try:
+            subprocess.run(['git-filter-repo', '--version'], check=True, capture_output=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            click.echo(click.style("❌ git-filter-repo is not installed", fg='red'))
+            click.echo("Install with: pip install git-filter-repo")
+            return False
+        
+        # Create backup before filter-repo
+        backup_ref = f"goal-backup-before-filter-{int(time.time())}"
+        self.run_git('branch', backup_ref)
+        click.echo(f"✓ Created backup branch: {backup_ref}")
+        
+        try:
+            # Run filter-repo to remove files
+            cmd = ['git-filter-repo']
+            # Add each file to be removed
+            for path in file_paths:
+                cmd.extend(['--path', path, '--invert-paths'])
+            
+            click.echo("Running git-filter-repo (this may take a while)...")
+            subprocess.run(cmd, cwd=self.repo_path, check=True)
+            
+            click.echo(click.style("✓ Large files removed from history", fg='green'))
+            
+            # Force push
+            click.echo("\nForce pushing to remote...")
+            self.run_git('push', 'origin', '--force-with-lease')
+            click.echo(click.style("✓ Successfully pushed to remote", fg='green'))
+            
+            # Clean up backup
+            self.run_git('branch', '-D', backup_ref)
+            
+            return True
+            
+        except subprocess.CalledProcessError as e:
+            click.echo(click.style(f"❌ Failed to remove files from history: {e}", fg='red'))
+            click.echo(f"You can restore from backup branch: {backup_ref}")
+            return False
+    
     def _extract_file_paths(self, error_output: str) -> List[str]:
         """Extract file paths from error message."""
-        # Pattern to match file paths in error messages
-        patterns = [
-            r"'([^']+)':",
-            r'path\s+([^\s]+)',
-            r'file\s+([^\s]+)',
+        paths = []
+        
+        # GitHub's specific error format: "remote: error: File <path> is <size> MB"
+        # This pattern is more specific to avoid partial matches
+        github_patterns = [
+            r'remote:\s+error:\s+File\s+(\S+)\s+is\s+[\d.]+\s*MB',
+            r'File\s+(\S+)\s+is\s+[\d.]+\s*MB',
+            r'File\s+(\S+)\s+exceeds',
         ]
         
-        paths = []
-        for pattern in patterns:
+        for pattern in github_patterns:
             matches = re.findall(pattern, error_output, re.IGNORECASE)
             paths.extend(matches)
         
-        return list(set(paths))  # Remove duplicates
+        # Fallback patterns for other git errors (more restrictive)
+        fallback_patterns = [
+            r"'([^']+\.[^']+)':",  # Must have a file extension
+            r'path\s+([^\s]+\.[^\s]+)',  # Must have a file extension
+        ]
+        
+        for pattern in fallback_patterns:
+            matches = re.findall(pattern, error_output, re.IGNORECASE)
+            paths.extend(matches)
+        
+        # Filter out invalid paths more strictly
+        valid_paths = []
+        for path in paths:
+            # Skip common non-file words and patterns
+            skip_words = ['file', 'path', 'storage', 'size', 'mb', 'gb', 'git', 'lfs', 'large', 'filestorage']
+            if path.lower() in skip_words:
+                continue
+            
+            # Skip if it doesn't look like a file path
+            # Must contain either a slash (directory) or a dot (extension)
+            if '/' not in path and '.' not in path:
+                continue
+            
+            # Skip if it's too short
+            if len(path) < 3:
+                continue
+            
+            # Skip if it's just a word (only letters, no numbers, dots, or slashes)
+            cleaned = path.replace('/', '').replace('.', '').replace('_', '').replace('-', '')
+            if cleaned.isalpha():
+                continue
+            
+            valid_paths.append(path)
+        
+        return list(set(valid_paths))  # Remove duplicates
     
     def _find_large_files(self, min_size_mb: int = 50) -> List[str]:
         """Find large files in the repository."""
@@ -231,6 +356,16 @@ class LargeFileStrategy(RecoveryStrategy):
     
     def _remove_large_files(self, file_paths: List[str]) -> bool:
         """Remove large files from repository."""
+        click.echo(click.style("\n🗑️  Removing large files...", fg='yellow'))
+        
+        # Check if files are in history
+        github_rejected = 'GH001: Large files detected' in self.last_error or 'pre-receive hook declined' in self.last_error
+        
+        if github_rejected or self._files_in_history(file_paths):
+            click.echo(click.style("\n⚠️  Large files are in git history - using filter-repo", fg='yellow'))
+            return self._remove_from_history(file_paths)
+        
+        # Files are only staged, not committed
         try:
             # Add to .gitignore
             gitignore_path = os.path.join(self.repo_path, '.gitignore')

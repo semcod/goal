@@ -1,142 +1,151 @@
 flowchart LR
+    subgraph debug_recovery
+        debug_recovery__test_recovery["test_recovery"]
+    end
     subgraph goal__cli
-        goal__cli__publish__publish_project["publish_project"]
-        goal__cli__utils_cmd__check_versions["check_versions"]
-        goal__cli__utils_cmd__clone["clone"]
-        goal__cli__utils_cmd__info["info"]
-        goal__cli__config_cmd__config_update["config_update"]
-        goal__cli__recover_cmd___get_error_output["_get_error_output"]
-        goal__cli__version__get_current_version["get_current_version"]
-        goal__cli__stage_paths["stage_paths"]
-        goal__cli__config_cmd__setup["setup"]
-        goal__cli__version__sync_all_versions["sync_all_versions"]
-        goal__cli__confirm["confirm"]
-        goal__cli__version__detect_project_types["detect_project_types"]
-        goal__cli__config_cmd__config_validate["config_validate"]
-        goal__cli__commit_cmd__validate["validate"]
-        goal__cli__version__bump_version["bump_version"]
-        goal__cli__publish___get_python_bin["_get_python_bin"]
-        goal__cli__config_cmd__config_get["config_get"]
-        goal__cli__utils_cmd__version["version"]
-        goal__cli__commit_cmd__fix_summary["fix_summary"]
-        goal__cli__config_cmd__config_set["config_set"]
         goal__cli__version__get_version_from_file["get_version_from_file"]
-        goal__cli__utils_cmd__package_managers["package_managers"]
-        goal__cli__version___update_json_version_file["_update_json_version_file"]
-        goal__cli__doctor_cmd__doctor["doctor"]
-        goal__cli__version__update_project_metadata["update_project_metadata"]
-        goal__cli__split_paths_by_type["split_paths_by_type"]
-        goal__cli__commit_cmd__commit["commit"]
-        goal__cli__config_cmd__config_show["config_show"]
-        goal__cli__publish_cmd__publish["publish"]
-        goal__cli__version___update_cargo_version["_update_cargo_version"]
-        goal__cli__version__find_version_files["find_version_files"]
-        goal__cli__utils_cmd__bootstrap["bootstrap"]
-        goal__cli__utils_cmd__init["init"]
-        goal__cli__version___update_readme_metadata["_update_readme_metadata"]
+        goal__cli__stage_paths["stage_paths"]
+        goal__cli__config_cmd__config_validate["config_validate"]
         goal__cli__version__update_json_version["update_json_version"]
-        goal__cli__recover_cmd__recover["recover"]
-        goal__cli__version__update_readme_metadata["update_readme_metadata"]
-        goal__cli__version___update_toml_version["_update_toml_version"]
-        goal__cli__utils_cmd__status["status"]
+        goal__cli__doctor_cmd__doctor["doctor"]
+        goal__cli__version___update_readme_metadata["_update_readme_metadata"]
+        goal__cli__version__update_project_metadata["update_project_metadata"]
+        goal__cli__config_cmd__config_show["config_show"]
+        goal__cli__version__get_current_version["get_current_version"]
         goal__cli__publish__makefile_has_target["makefile_has_target"]
+        goal__cli__config_cmd__config_get["config_get"]
+        goal__cli__utils_cmd__clone["clone"]
+        goal__cli__publish_cmd__publish["publish"]
+        goal__cli__publish___get_python_bin["_get_python_bin"]
+        goal__cli__wizard_cmd___find_git_root["_find_git_root"]
+        goal__cli__utils_cmd__status["status"]
+        goal__cli__confirm["confirm"]
+        goal__cli__version___update_toml_version["_update_toml_version"]
+        goal__cli__utils_cmd__init["init"]
+        goal__cli__config_cmd__config_set["config_set"]
+        goal__cli__version__find_version_files["find_version_files"]
+        goal__cli__wizard_cmd___setup_git_repository["_setup_git_repository"]
+        goal__cli__commit_cmd__fix_summary["fix_summary"]
+        goal__cli__version__sync_all_versions["sync_all_versions"]
+        goal__cli__config_cmd__setup["setup"]
+        goal__cli__version__update_readme_metadata["update_readme_metadata"]
+        goal__cli__wizard_cmd___show_setup_summary["_show_setup_summary"]
+        goal__cli__wizard_cmd___setup_user_config["_setup_user_config"]
+        goal__cli__utils_cmd__check_versions["check_versions"]
+        goal__cli__split_paths_by_type["split_paths_by_type"]
+        goal__cli__recover_cmd__recover["recover"]
+        goal__cli__utils_cmd__info["info"]
+        goal__cli__version__bump_version["bump_version"]
+        goal__cli__recover_cmd___get_error_output["_get_error_output"]
+        goal__cli__version___update_cargo_version["_update_cargo_version"]
+        goal__cli__utils_cmd__bootstrap["bootstrap"]
+        goal__cli__version__detect_project_types["detect_project_types"]
+        goal__cli__commit_cmd__validate["validate"]
+        goal__cli__utils_cmd__package_managers["package_managers"]
+        goal__cli__config_cmd__config_update["config_update"]
+        goal__cli__version___update_json_version_file["_update_json_version_file"]
+        goal__cli__utils_cmd__version["version"]
+        goal__cli__commit_cmd__commit["commit"]
+        goal__cli__wizard_cmd___setup_project_config["_setup_project_config"]
+        goal__cli__publish__publish_project["publish_project"]
     end
     subgraph goal__config
-        goal__config__manager__GoalConfig__set["set"]
+        goal__config__manager__init_config["init_config"]
         goal__config__manager__GoalConfig__update_from_detection["update_from_detection"]
         goal__config__manager__ensure_config["ensure_config"]
-        goal__config__manager__init_config["init_config"]
+        goal__config__manager__GoalConfig__set["set"]
     end
     subgraph goal__deep_analyzer
-        goal__deep_analyzer__CodeChangeAnalyzer___analyze_generic_diff["_analyze_generic_diff"]
         goal__deep_analyzer__CodeChangeAnalyzer__detect_relations["detect_relations"]
         goal__deep_analyzer__CodeChangeAnalyzer___analyze_js_diff["_analyze_js_diff"]
-        goal__deep_analyzer__CodeChangeAnalyzer__aggregate_changes["aggregate_changes"]
         goal__deep_analyzer__CodeChangeAnalyzer___detect_functional_areas["_detect_functional_areas"]
+        goal__deep_analyzer__CodeChangeAnalyzer__aggregate_changes["aggregate_changes"]
         goal__deep_analyzer__CodeChangeAnalyzer___analyze_python_diff["_analyze_python_diff"]
+        goal__deep_analyzer__CodeChangeAnalyzer___analyze_generic_diff["_analyze_generic_diff"]
     end
     subgraph goal__doctor
         goal__doctor__core__diagnose_project["diagnose_project"]
-        goal__doctor__todo__add_issues_to_todo["add_issues_to_todo"]
-        goal__doctor__todo__diagnose_and_report_with_todo["diagnose_and_report_with_todo"]
         goal__doctor__todo___generate_ticket_id["_generate_ticket_id"]
-        goal__doctor__todo___format_todo_entry["_format_todo_entry"]
-        goal__doctor__core__diagnose_and_report["diagnose_and_report"]
-        goal__doctor__logging___log_issue["_log_issue"]
         goal__doctor__todo___read_existing_tickets["_read_existing_tickets"]
+        goal__doctor__logging___log_issue["_log_issue"]
+        goal__doctor__todo__add_issues_to_todo["add_issues_to_todo"]
+        goal__doctor__todo___format_todo_entry["_format_todo_entry"]
+        goal__doctor__todo__diagnose_and_report_with_todo["diagnose_and_report_with_todo"]
+        goal__doctor__core__diagnose_and_report["diagnose_and_report"]
     end
     subgraph goal__formatter
+        goal__formatter___build_functional_overview["_build_functional_overview"]
         goal__formatter__format_push_result["format_push_result"]
         goal__formatter___determine_next_steps["_determine_next_steps"]
-        goal__formatter___build_functional_overview["_build_functional_overview"]
-        goal__formatter__format_status_output["format_status_output"]
         goal__formatter___build_files_section["_build_files_section"]
+        goal__formatter__format_status_output["format_status_output"]
     end
     subgraph goal__generator
-        goal__generator__generator__CommitMessageGenerator___classify_files["_classify_files"]
         goal__generator__analyzer__ChangeAnalyzer__extract_functions_changed["extract_functions_changed"]
+        goal__generator__generator__CommitMessageGenerator___classify_files["_classify_files"]
     end
     subgraph goal__git_ops
-        goal__git_ops___prompt_remote_url["_prompt_remote_url"]
-        goal__git_ops__clone_repository["clone_repository"]
-        goal__git_ops__get_diff_stats["get_diff_stats"]
-        goal__git_ops__run_command_tee["run_command_tee"]
-        goal__git_ops__get_remote_branch["get_remote_branch"]
-        goal__git_ops__get_staged_files["get_staged_files"]
-        goal__git_ops__read_ticket["read_ticket"]
-        goal__git_ops__ensure_remote["ensure_remote"]
-        goal__git_ops___echo_cmd["_echo_cmd"]
-        goal__git_ops__ensure_git_repository["ensure_git_repository"]
-        goal__git_ops__run_git["run_git"]
-        goal__git_ops__get_remote_url["get_remote_url"]
-        goal__git_ops___list_remote_branches["_list_remote_branches"]
-        goal__git_ops__get_working_tree_files["get_working_tree_files"]
-        goal__git_ops__list_remotes["list_remotes"]
-        goal__git_ops__apply_ticket_prefix["apply_ticket_prefix"]
         goal__git_ops__get_diff_content["get_diff_content"]
+        goal__git_ops__get_remote_branch["get_remote_branch"]
+        goal__git_ops__get_remote_url["get_remote_url"]
+        goal__git_ops__run_command_tee["run_command_tee"]
         goal__git_ops__get_unstaged_files["get_unstaged_files"]
-        goal__git_ops___run_git_verbose["_run_git_verbose"]
+        goal__git_ops__get_working_tree_files["get_working_tree_files"]
+        goal__git_ops___echo_cmd["_echo_cmd"]
+        goal__git_ops___list_remote_branches["_list_remote_branches"]
         goal__git_ops__is_git_repository["is_git_repository"]
+        goal__git_ops__ensure_remote["ensure_remote"]
+        goal__git_ops__list_remotes["list_remotes"]
+        goal__git_ops__run_git["run_git"]
+        goal__git_ops__read_ticket["read_ticket"]
+        goal__git_ops___prompt_remote_url["_prompt_remote_url"]
+        goal__git_ops__apply_ticket_prefix["apply_ticket_prefix"]
         goal__git_ops__validate_repo_url["validate_repo_url"]
+        goal__git_ops__get_diff_stats["get_diff_stats"]
+        goal__git_ops__get_staged_files["get_staged_files"]
+        goal__git_ops___run_git_verbose["_run_git_verbose"]
+        goal__git_ops__clone_repository["clone_repository"]
+        goal__git_ops__run_git_with_status["run_git_with_status"]
+        goal__git_ops__ensure_git_repository["ensure_git_repository"]
     end
     subgraph goal__package_managers
         goal__package_managers__suggest_package_managers["suggest_package_managers"]
-        goal__package_managers__is_package_manager_available["is_package_manager_available"]
-        goal__package_managers__get_available_package_managers["get_available_package_managers"]
-        goal__package_managers__list_all_package_managers["list_all_package_managers"]
-        goal__package_managers__get_preferred_package_manager["get_preferred_package_manager"]
-        goal__package_managers__detect_project_language["detect_project_language"]
-        goal__package_managers__get_package_manager_info["get_package_manager_info"]
         goal__package_managers__get_package_managers_by_language["get_package_managers_by_langua"]
         goal__package_managers__detect_package_managers["detect_package_managers"]
+        goal__package_managers__get_package_manager_info["get_package_manager_info"]
+        goal__package_managers__get_available_package_managers["get_available_package_managers"]
+        goal__package_managers__get_preferred_package_manager["get_preferred_package_manager"]
+        goal__package_managers__list_all_package_managers["list_all_package_managers"]
+        goal__package_managers__detect_project_language["detect_project_language"]
+        goal__package_managers__is_package_manager_available["is_package_manager_available"]
     end
     subgraph goal__project_bootstrap
-        goal__project_bootstrap__ensure_project_environment["ensure_project_environment"]
-        goal__project_bootstrap___match_marker["_match_marker"]
-        goal__project_bootstrap__guess_package_name["guess_package_name"]
+        goal__project_bootstrap__bootstrap_project["bootstrap_project"]
+        goal__project_bootstrap__find_existing_tests["find_existing_tests"]
+        goal__project_bootstrap___find_python_bin["_find_python_bin"]
         goal__project_bootstrap__scaffold_test["scaffold_test"]
         goal__project_bootstrap__detect_project_types_deep["detect_project_types_deep"]
-        goal__project_bootstrap__bootstrap_project["bootstrap_project"]
-        goal__project_bootstrap___find_python_bin["_find_python_bin"]
+        goal__project_bootstrap__guess_package_name["guess_package_name"]
         goal__project_bootstrap__bootstrap_all_projects["bootstrap_all_projects"]
-        goal__project_bootstrap__find_existing_tests["find_existing_tests"]
+        goal__project_bootstrap__ensure_project_environment["ensure_project_environment"]
+        goal__project_bootstrap___match_marker["_match_marker"]
     end
     subgraph goal__push
-        goal__push__stages__tag__create_tag["create_tag"]
-        goal__push__stages__push_remote__push_to_remote["push_to_remote"]
-        goal__push__stages__publish__handle_publish["handle_publish"]
-        goal__push__stages__commit__handle_split_commits["handle_split_commits"]
-        goal__push__stages__dry_run__handle_dry_run["handle_dry_run"]
-        goal__push__stages__version___get_version_module["_get_version_module"]
-        goal__push__stages__commit__handle_single_commit["handle_single_commit"]
-        goal__push__stages__commit__get_commit_message["get_commit_message"]
-        goal__push__stages__version__get_version_info["get_version_info"]
-        goal__push__core__run_git_local["run_git_local"]
-        goal__push__stages__version__sync_all_versions_wrapper["sync_all_versions_wrapper"]
-        goal__push__stages__version__handle_version_sync["handle_version_sync"]
-        goal__push__stages__changelog__handle_changelog["handle_changelog"]
-        goal__push__core__execute_push_workflow["execute_push_workflow"]
         goal__push__core__output_final_summary["output_final_summary"]
+        goal__push__stages__push_remote__push_to_remote["push_to_remote"]
+        goal__push__core__run_git_local["run_git_local"]
+        goal__push__stages__version__handle_version_sync["handle_version_sync"]
+        goal__push__stages__dry_run__handle_dry_run["handle_dry_run"]
+        goal__push__stages__changelog__handle_changelog["handle_changelog"]
+        goal__push__stages__version__sync_all_versions_wrapper["sync_all_versions_wrapper"]
+        goal__push__stages__version___get_version_module["_get_version_module"]
+        goal__push__stages__commit__handle_split_commits["handle_split_commits"]
+        goal__push__stages__version__get_version_info["get_version_info"]
+        goal__push__stages__commit__handle_single_commit["handle_single_commit"]
+        goal__push__stages__tag__create_tag["create_tag"]
+        goal__push__stages__commit__get_commit_message["get_commit_message"]
+        goal__push__core__execute_push_workflow["execute_push_workflow"]
+        goal__push__stages__publish__handle_publish["handle_publish"]
     end
     subgraph goal__recovery
         goal__recovery__strategies__LargeFileStrategy___extract_file_paths["_extract_file_paths"]
@@ -148,56 +157,50 @@ flowchart LR
     subgraph goal__summary
         goal__summary__quality_filter__SummaryQualityFilter__dedupe_files["dedupe_files"]
         goal__summary__quality_filter__SummaryQualityFilter__dedupe_relations["dedupe_relations"]
+        goal__summary__quality_filter__SummaryQualityFilter__has_banned_words["has_banned_words"]
         goal__summary__generator__EnhancedSummaryGenerator__detect_capabilities["detect_capabilities"]
         goal__summary__validator__QualityValidator___validate_title["_validate_title"]
-        goal__summary__quality_filter__SummaryQualityFilter__has_banned_words["has_banned_words"]
     end
     subgraph goal__user_config
-        goal__user_config__get_git_user_name["get_git_user_name"]
-        goal__user_config__show_user_config["show_user_config"]
-        goal__user_config__prompt_for_license["prompt_for_license"]
+        goal__user_config__UserConfig__set["set"]
         goal__user_config__get_user_config["get_user_config"]
+        goal__user_config__prompt_for_license["prompt_for_license"]
+        goal__user_config__get_git_user_name["get_git_user_name"]
         goal__user_config__initialize_user_config["initialize_user_config"]
         goal__user_config__get_git_user_email["get_git_user_email"]
-        goal__user_config__UserConfig__set["set"]
+        goal__user_config__show_user_config["show_user_config"]
     end
     subgraph goal__validators
-        goal__validators__file_validator__detect_tokens_in_content["detect_tokens_in_content"]
+        goal__validators__file_validator__save_gitignore["save_gitignore"]
+        goal__validators__file_validator__get_file_size_mb["get_file_size_mb"]
+        goal__validators__file_validator__manage_dot_folders["manage_dot_folders"]
         goal__validators__file_validator__check_dot_folders["check_dot_folders"]
         goal__validators__file_validator__load_gitignore["load_gitignore"]
-        goal__validators__file_validator__handle_large_files["handle_large_files"]
-        goal__validators__file_validator__get_file_size_mb["get_file_size_mb"]
-        goal__validators__file_validator__validate_staged_files["validate_staged_files"]
-        goal__validators__file_validator__save_gitignore["save_gitignore"]
         goal__validators__file_validator__validate_files["validate_files"]
-        goal__validators__file_validator__manage_dot_folders["manage_dot_folders"]
+        goal__validators__file_validator__validate_staged_files["validate_staged_files"]
+        goal__validators__file_validator__handle_large_files["handle_large_files"]
+        goal__validators__file_validator__detect_tokens_in_content["detect_tokens_in_content"]
     end
     subgraph goal__version_validation
-        goal__version_validation__get_npm_version["get_npm_version"]
-        goal__version_validation__update_badge_versions["update_badge_versions"]
-        goal__version_validation__check_readme_badges["check_readme_badges"]
-        goal__version_validation__validate_project_versions["validate_project_versions"]
-        goal__version_validation__format_validation_results["format_validation_results"]
         goal__version_validation__extract_badge_versions["extract_badge_versions"]
         goal__version_validation__get_pypi_version["get_pypi_version"]
+        goal__version_validation__check_readme_badges["check_readme_badges"]
+        goal__version_validation__validate_project_versions["validate_project_versions"]
+        goal__version_validation__update_badge_versions["update_badge_versions"]
+        goal__version_validation__format_validation_results["format_validation_results"]
+        goal__version_validation__get_npm_version["get_npm_version"]
     end
-    goal__version_validation__validate_project_versions --> goal__version_validation__get_pypi_version
-    goal__version_validation__validate_project_versions --> goal__version_validation__get_npm_version
-    goal__version_validation__check_readme_badges --> goal__version_validation__extract_badge_versions
+    subgraph integration__run_matrix
+        integration__run_matrix__print["print"]
+    end
+    debug_recovery__test_recovery --> integration__run_matrix__print
     goal__user_config__initialize_user_config --> goal__user_config__get_git_user_name
     goal__user_config__initialize_user_config --> goal__user_config__get_git_user_email
     goal__user_config__initialize_user_config --> goal__user_config__prompt_for_license
     goal__user_config__get_user_config --> goal__user_config__initialize_user_config
-    goal__project_bootstrap__detect_project_types_deep --> goal__project_bootstrap___match_marker
-    goal__project_bootstrap__ensure_project_environment --> goal__project_bootstrap___find_python_bin
-    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap__find_existing_tests
-    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap__guess_package_name
-    goal__project_bootstrap__bootstrap_project --> goal__doctor__core__diagnose_and_report
-    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__ensure_project_environment
-    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__find_existing_tests
-    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__scaffold_test
-    goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__detect_project_types_deep
-    goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__bootstrap_project
+    goal__version_validation__validate_project_versions --> goal__version_validation__get_pypi_version
+    goal__version_validation__validate_project_versions --> goal__version_validation__get_npm_version
+    goal__version_validation__check_readme_badges --> goal__version_validation__extract_badge_versions
     goal__formatter__format_push_result --> goal__formatter___build_functional_overview
     goal__formatter__format_push_result --> goal__formatter___build_files_section
     goal__formatter__format_push_result --> goal__formatter___determine_next_steps
@@ -209,6 +212,8 @@ flowchart LR
     goal__deep_analyzer__CodeChangeAnalyzer__detect_relations --> goal__user_config__UserConfig__set
     goal__git_ops___run_git_verbose --> goal__git_ops___echo_cmd
     goal__git_ops___run_git_verbose --> goal__git_ops__run_git
+    goal__git_ops__run_git_with_status --> goal__git_ops___echo_cmd
+    goal__git_ops__run_git_with_status --> goal__git_ops__run_git
     goal__git_ops__is_git_repository --> goal__git_ops__run_git
     goal__git_ops__get_remote_url --> goal__git_ops__run_git
     goal__git_ops__list_remotes --> goal__git_ops__run_git
@@ -230,6 +235,16 @@ flowchart LR
     goal__git_ops__get_diff_content --> goal__git_ops__run_git
     goal__git_ops__apply_ticket_prefix --> goal__git_ops__read_ticket
     goal__generator__analyzer__ChangeAnalyzer__extract_functions_changed --> goal__user_config__UserConfig__set
+    goal__project_bootstrap__detect_project_types_deep --> goal__project_bootstrap___match_marker
+    goal__project_bootstrap__ensure_project_environment --> goal__project_bootstrap___find_python_bin
+    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap__find_existing_tests
+    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap__guess_package_name
+    goal__project_bootstrap__bootstrap_project --> goal__doctor__core__diagnose_and_report
+    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__ensure_project_environment
+    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__find_existing_tests
+    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__scaffold_test
+    goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__detect_project_types_deep
+    goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__bootstrap_project
     goal__generator__generator__CommitMessageGenerator___classify_files --> goal__user_config__UserConfig__set
     goal__validators__file_validator__load_gitignore --> goal__user_config__UserConfig__set
     goal__validators__file_validator__check_dot_folders --> goal__validators__file_validator__load_gitignore
@@ -258,7 +273,6 @@ flowchart LR
     goal__push__core__execute_push_workflow --> goal__git_ops__get_diff_stats
     goal__push__core__execute_push_workflow --> goal__push__stages__tag__create_tag
     goal__cli__doctor_cmd__doctor --> goal__project_bootstrap__detect_project_types_deep
-    goal__recovery__strategies__LargeFileStrategy___extract_file_paths --> goal__user_config__UserConfig__set
     goal__cli__commit_cmd__commit --> goal__git_ops__get_staged_files
     goal__cli__commit_cmd__fix_summary --> goal__git_ops__get_staged_files
     goal__cli__commit_cmd__fix_summary --> goal__git_ops__get_diff_stats
@@ -300,12 +314,20 @@ flowchart LR
     goal__cli__utils_cmd__clone --> goal__git_ops__clone_repository
     goal__cli__utils_cmd__clone --> goal__git_ops__validate_repo_url
     goal__cli__utils_cmd__bootstrap --> goal__project_bootstrap__detect_project_types_deep
+    goal__recovery__strategies__LargeFileStrategy___extract_file_paths --> goal__user_config__UserConfig__set
+    goal__cli__publish__publish_project --> goal__cli__publish___get_python_bin
+    goal__cli__publish__publish_project --> goal__git_ops__run_command_tee
     goal__cli__publish_cmd__publish --> goal__cli__version__detect_project_types
     goal__cli__publish_cmd__publish --> goal__cli__publish__makefile_has_target
     goal__cli__publish_cmd__publish --> goal__git_ops__run_command_tee
     goal__cli__publish_cmd__publish --> goal__cli__version__get_current_version
-    goal__cli__publish__publish_project --> goal__cli__publish___get_python_bin
-    goal__cli__publish__publish_project --> goal__git_ops__run_command_tee
+    goal__cli__wizard_cmd___setup_git_repository --> goal__cli__wizard_cmd___find_git_root
+    goal__cli__wizard_cmd___setup_user_config --> goal__user_config__get_git_user_name
+    goal__cli__wizard_cmd___setup_user_config --> goal__user_config__get_git_user_email
+    goal__cli__wizard_cmd___setup_user_config --> goal__user_config__prompt_for_license
+    goal__cli__wizard_cmd___setup_project_config --> goal__config__manager__ensure_config
+    goal__cli__wizard_cmd___show_setup_summary --> goal__config__manager__ensure_config
+    goal__cli__wizard_cmd___show_setup_summary --> goal__cli__wizard_cmd___find_git_root
     goal__cli__config_cmd__config_show --> goal__config__manager__ensure_config
     goal__cli__config_cmd__config_validate --> goal__config__manager__ensure_config
     goal__cli__config_cmd__config_update --> goal__config__manager__ensure_config
@@ -334,9 +356,10 @@ flowchart LR
     goal__doctor__todo__add_issues_to_todo --> goal__doctor__todo___generate_ticket_id
     goal__doctor__todo__diagnose_and_report_with_todo --> goal__doctor__core__diagnose_and_report
     goal__doctor__todo__diagnose_and_report_with_todo --> goal__doctor__todo__add_issues_to_todo
+    goal__doctor__core__diagnose_and_report --> goal__doctor__core__diagnose_project
+    goal__doctor__core__diagnose_and_report --> goal__doctor__logging___log_issue
     goal__cli__stage_paths --> goal__git_ops__run_git
     goal__smart_commit__abstraction__CodeAbstraction__extract_entities --> goal__user_config__UserConfig__set
-    goal__smart_commit__generator__SmartCommitGenerator__analyze_changes --> goal__user_config__UserConfig__set
     goal__push__stages__version__sync_all_versions_wrapper --> goal__push__stages__version___get_version_module
     goal__push__stages__version__sync_all_versions_wrapper --> goal__cli__version__sync_all_versions
     goal__push__stages__version__handle_version_sync --> goal__push__stages__version___get_version_module
@@ -354,11 +377,10 @@ flowchart LR
     goal__push__stages__commit__handle_split_commits --> goal__git_ops__run_git
     goal__push__stages__dry_run__handle_dry_run --> goal__cli__split_paths_by_type
     goal__push__stages__tag__create_tag --> goal__git_ops__run_git
-    goal__push__stages__push_remote__push_to_remote --> goal__git_ops__ensure_remote
-    goal__push__stages__push_remote__push_to_remote --> goal__git_ops___echo_cmd
-    goal__push__stages__push_remote__push_to_remote --> goal__git_ops__run_git
-    goal__push__stages__push_remote__push_to_remote --> goal__cli__confirm
+    goal__smart_commit__generator__SmartCommitGenerator__analyze_changes --> goal__user_config__UserConfig__set
     goal__push__stages__publish__handle_publish --> goal__cli__publish__publish_project
     goal__push__stages__publish__handle_publish --> goal__cli__confirm
-    goal__doctor__core__diagnose_and_report --> goal__doctor__core__diagnose_project
-    goal__doctor__core__diagnose_and_report --> goal__doctor__logging___log_issue
+    goal__push__stages__push_remote__push_to_remote --> goal__git_ops__ensure_remote
+    goal__push__stages__push_remote__push_to_remote --> goal__git_ops__run_git_with_status
+    goal__push__stages__push_remote__push_to_remote --> goal__cli__confirm
+    goal__push__stages__push_remote__push_to_remote --> goal__git_ops___echo_cmd

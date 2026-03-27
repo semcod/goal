@@ -8,6 +8,18 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Dict
 import click
 
+# Try to import clickmd for enhanced formatting
+try:
+    from clickmd import echo_md
+    HAS_CLICKMD = True
+except ImportError:
+    HAS_CLICKMD = False
+    def echo_md(text, **kwargs):
+        """Fallback when clickmd is not available."""
+        click.echo(text)
+
+__all__ = ['run_git', 'run_command', '_echo_cmd', '_run_git_verbose', 'run_git_with_status', 'HAS_CLICKMD', 'echo_md']
+
 # =============================================================================
 # Core Git Execution
 # =============================================================================
@@ -35,13 +47,81 @@ def run_command(command: str, capture: bool = True) -> subprocess.CompletedProce
 def _echo_cmd(args: List[str]) -> None:
     """Display a git command that is about to run, for transparency."""
     cmd_str = ' '.join(args)
-    click.echo(click.style(f"  → {cmd_str}", fg='bright_black'))
+    if HAS_CLICKMD:
+        echo_md(f"```bash\n{' '.join(args)}\n```", fg='bright_black')
+    else:
+        click.echo(click.style(f"  → {cmd_str}", fg='bright_black'))
 
 
 def _run_git_verbose(*args, capture=True) -> subprocess.CompletedProcess:
     """Run a git command, display it first, and return the result."""
     _echo_cmd(['git'] + list(args))
-    return run_git(*args, capture=capture)
+    
+    # Show operation type with colors
+    if args[0] in ['add', 'commit', 'push', 'pull', 'fetch']:
+        operation = args[0].upper()
+        if HAS_CLICKMD:
+            echo_md(f"\n### 🔄 Git {operation}")
+        else:
+            click.echo(click.style(f"\n🔄 Git {operation}", fg='blue', bold=True))
+    
+    result = run_git(*args, capture=capture)
+    
+    # Show result summary for important operations
+    if not capture and args[0] in ['push', 'pull', 'commit']:
+        if result.returncode == 0:
+            if HAS_CLICKMD:
+                echo_md(f"✅ **Success**: {operation} completed", fg='green')
+            else:
+                click.echo(click.style(f"✅ Success: {operation} completed", fg='green'))
+        else:
+            if HAS_CLICKMD:
+                echo_md(f"❌ **Error**: {operation} failed", fg='red')
+            else:
+                click.echo(click.style(f"❌ Error: {operation} failed", fg='red'))
+    
+    return result
+
+
+def run_git_with_status(*args, capture=True, show_output=False) -> subprocess.CompletedProcess:
+    """Run git command with enhanced status display."""
+    # Show the command
+    _echo_cmd(['git'] + list(args))
+    
+    # Run the command
+    result = run_git(*args, capture=capture)
+    
+    # Show detailed status
+    if show_output or result.returncode != 0:
+        if HAS_CLICKMD:
+            echo_md(f"\n**Output:**")
+            echo_md("```")
+            if result.stdout:
+                click.echo(result.stdout)
+            if result.stderr:
+                click.echo(result.stderr, err=True)
+            echo_md("```")
+        else:
+            if result.stdout:
+                click.echo(click.style("Output:", fg='cyan'))
+                click.echo(result.stdout)
+            if result.stderr:
+                click.echo(click.style("Error:", fg='red'))
+                click.echo(result.stderr, err=True)
+    
+    # Show exit status
+    if result.returncode == 0:
+        if HAS_CLICKMD:
+            echo_md(f"✅ **Exit code**: {result.returncode}", fg='green')
+        else:
+            click.echo(click.style(f"✅ Exit code: {result.returncode}", fg='green'))
+    else:
+        if HAS_CLICKMD:
+            echo_md(f"❌ **Exit code**: {result.returncode}", fg='red')
+        else:
+            click.echo(click.style(f"❌ Exit code: {result.returncode}", fg='red'))
+    
+    return result
 
 
 def run_command_tee(command: str) -> subprocess.CompletedProcess:

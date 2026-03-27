@@ -1,7 +1,7 @@
-# goal | 421 func | 53f | 15457L | python | 2026-03-27
+# goal | 424 func | 53f | 15651L | python | 2026-03-27
 
 HEALTH:
-  CC̄=5.7  critical=72 (limit:10)  dup=0  cycles=0
+  CC̄=5.8  critical=74 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     execute_push_workflow = 37 (limit:10)
@@ -18,14 +18,14 @@ ALERTS[20]:
 MODULES[70] (top by size):
   M[goal/cli/version.py] 730L C:0 F:18 CC↑33 D:4 (python)
   M[goal/summary/generator.py] 675L C:1 F:16 CC↑26 D:0 (python)
+  M[goal/recovery/strategies.py] 640L C:7 F:29 CC↑11 D:0 (python)
   M[goal/package_managers.py] 631L C:1 F:12 CC↑11 D:1 (python)
   M[goal/project_bootstrap.py] 589L C:0 F:9 CC↑25 D:3 (python)
   M[goal/deep_analyzer.py] 554L C:1 F:22 CC↑16 D:0 (python)
-  M[goal/recovery/strategies.py] 541L C:7 F:27 CC↑9 D:0 (python)
+  M[goal/git_ops.py] 553L C:0 F:23 CC↑23 D:11 (python)
   M[goal/smart_commit/generator.py] 524L C:1 F:18 CC↑24 D:0 (python)
   M[goal/doctor/python.py] 486L C:1 F:16 CC↑17 D:0 (python)
   M[goal/validators/file_validator.py] 481L C:4 F:12 CC↑23 D:1 (python)
-  M[goal/git_ops.py] 473L C:0 F:22 CC↑23 D:11 (python)
   M[goal/config/manager.py] 449L C:1 F:25 CC↑10 D:3 (python)
   M[goal/config/constants.py] 436L C:0 F:0 CC↑0 D:0 (python)
   M[goal/formatter.py] 402L C:1 F:14 CC↑29 D:3 (python)
@@ -53,4 +53,4 @@ REFACTOR[15]:
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-03-27 CC̄=5.7 crit=72 15457L // Automated analysis
+  2026-03-27 CC̄=5.8 crit=74 15651L // Automated analysis

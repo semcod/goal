@@ -1,9 +1,9 @@
-# vallm batch | 137f | 74✓ 19⚠ 21✗ | 2026-03-27
+# vallm batch | 137f | 74✓ 20⚠ 21✗ | 2026-03-27
 
 SUMMARY:
-  scanned: 137  passed: 74 (54.0%)  warnings: 19  errors: 21  unsupported: 42
+  scanned: 137  passed: 74 (54.0%)  warnings: 20  errors: 21  unsupported: 42
 
-WARNINGS[19]{path,score}:
+WARNINGS[20]{path,score}:
   goal/cli/version.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,update_project_metadata has cyclomatic complexity 26 (max: 15),232
@@ -19,9 +19,9 @@ WARNINGS[19]{path,score}:
       complexity.lizard_cc,warning,per_file_notes: CC=29 exceeds limit 15,334
   goal/git_ops.py,0.93
     issues[3]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,ensure_git_repository has cyclomatic complexity 23 (max: 15),196
-      complexity.lizard_cc,warning,ensure_git_repository: CC=23 exceeds limit 15,196
-      complexity.lizard_length,warning,ensure_git_repository: 112 lines exceeds limit 100,196
+      complexity.cyclomatic,warning,ensure_git_repository has cyclomatic complexity 23 (max: 15),276
+      complexity.lizard_cc,warning,ensure_git_repository: CC=23 exceeds limit 15,276
+      complexity.lizard_length,warning,ensure_git_repository: 112 lines exceeds limit 100,276
   goal/project_bootstrap.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,guess_package_name has cyclomatic complexity 20 (max: 15),253
@@ -77,6 +77,10 @@ WARNINGS[19]{path,score}:
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,handle_dry_run has cyclomatic complexity 19 (max: 15),14
       complexity.lizard_cc,warning,handle_dry_run: CC=19 exceeds limit 15,14
+  goal/push/stages/push_remote.py,0.97
+    issues[2]{rule,severity,message,line}:
+      complexity.cyclomatic,warning,push_to_remote has cyclomatic complexity 16 (max: 15),17
+      complexity.lizard_cc,warning,push_to_remote: CC=16 exceeds limit 15,17
   goal/smart_commit/abstraction.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,extract_entities has cyclomatic complexity 20 (max: 15),60
@@ -183,15 +187,15 @@ ERRORS[21]{path,score}:
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'enhanced_summary' not found,67
       python.import.resolvable,error,Module 'enhanced_summary' not found,125
-  goal/recovery/strategies.py,0.94
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'exceptions' not found,10
   tests/test_project_doctor.py,0.94
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'pytest' not found,7
   goal/doctor/todo.py,0.95
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'core' not found,117
+  goal/recovery/strategies.py,0.95
+    issues[1]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'exceptions' not found,11
   tests/test_clone_repo.py,0.95
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'pytest' not found,9

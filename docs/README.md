@@ -1,7 +1,7 @@
 <!-- code2docs:start --># goal
 
-![version](https://img.shields.io/badge/version-0.1.0-blue) ![python](https://img.shields.io/badge/python-%3E%3D3.8-blue) ![coverage](https://img.shields.io/badge/coverage-unknown-lightgrey) ![functions](https://img.shields.io/badge/functions-421-green)
-> **421** functions | **41** classes | **75** files | CC̄ = 5.8
+![version](https://img.shields.io/badge/version-0.1.0-blue) ![python](https://img.shields.io/badge/python-%3E%3D3.8-blue) ![coverage](https://img.shields.io/badge/coverage-unknown-lightgrey) ![functions](https://img.shields.io/badge/functions-424-green)
+> **424** functions | **41** classes | **75** files | CC̄ = 5.8
 
 > Auto-generated project documentation from source code analysis.
 
@@ -147,7 +147,7 @@ Content outside the markers is preserved when regenerating. Enable this with `sy
 
 ```
 goal/
-    ├── config/    ├── cli/    ├── enhanced_summary    ├── commit_generator    ├── user_config    ├── version_validation├── goal/    ├── changelog    ├── __main__    ├── smart_commit/    ├── project_bootstrap    ├── formatter    ├── project_doctor    ├── git_ops    ├── deep_analyzer    ├── generator/        ├── git_ops    ├── validators/        ├── analyzer        ├── generator        ├── exceptions        ├── file_validator    ├── recovery/        ├── commands    ├── push/        ├── manager        ├── recover_cmd        ├── core        ├── doctor_cmd        ├── strategies        ├── commit_cmd        ├── version        ├── utils_cmd        ├── publish_cmd        ├── publish        ├── push_cmd        ├── config_cmd        ├── constants        ├── manager        ├── validator    ├── summary/        ├── generator        ├── rust        ├── ruby        ├── quality_filter    ├── package_managers        ├── dotnet    ├── doctor/        ├── go        ├── logging        ├── php        ├── todo        ├── core        ├── java        ├── abstraction        ├── generator            ├── version            ├── changelog            ├── commit            ├── dry_run            ├── tag        ├── stages/            ├── push_remote            ├── publish├── project    ├── markdown-demo    ├── run_docker_matrix    ├── run_matrix        ├── install        ├── nodejs        ├── python        ├── models```
+    ├── cli/    ├── enhanced_summary    ├── config/    ├── commit_generator    ├── changelog    ├── version_validation    ├── user_config├── goal/    ├── __main__    ├── smart_commit/    ├── project_bootstrap    ├── formatter    ├── project_doctor    ├── deep_analyzer    ├── git_ops    ├── generator/        ├── analyzer    ├── validators/        ├── git_ops        ├── generator        ├── exceptions        ├── file_validator    ├── recovery/        ├── manager        ├── commands    ├── push/        ├── recover_cmd        ├── core        ├── doctor_cmd        ├── strategies        ├── commit_cmd        ├── version        ├── utils_cmd        ├── publish        ├── push_cmd        ├── publish_cmd        ├── config_cmd        ├── constants        ├── manager        ├── generator        ├── validator    ├── summary/        ├── rust        ├── ruby        ├── quality_filter    ├── package_managers        ├── dotnet    ├── doctor/        ├── go        ├── todo        ├── logging        ├── php        ├── models        ├── java        ├── abstraction        ├── generator            ├── version            ├── changelog            ├── commit            ├── dry_run            ├── tag        ├── stages/            ├── push_remote            ├── publish├── project    ├── markdown-demo    ├── run_docker_matrix    ├── run_matrix        ├── install        ├── nodejs        ├── python        ├── core```
 
 ## API Overview
 
@@ -156,9 +156,9 @@ goal/
 - **`UserConfig`** — Manages user-specific configuration stored in ~/.goal
 - **`MarkdownFormatter`** — Formats Goal output as structured markdown for LLM consumption.
 - **`CodeChangeAnalyzer`** — Analyzes code changes to extract functional meaning.
-- **`GitDiffOperations`** — Git diff operations with caching.
 - **`ChangeAnalyzer`** — Analyze git changes to classify type, detect scope, and extract functions.
 - **`ContentAnalyzer`** — Analyze content for short summaries and per-file notes.
+- **`GitDiffOperations`** — Git diff operations with caching.
 - **`CommitMessageGenerator`** — Generate conventional commit messages using diff analysis and lightweight classification.
 - **`RecoveryError`** — Base exception for all recovery operations.
 - **`AuthError`** — Raised when authentication fails.
@@ -183,26 +183,21 @@ goal/
 - **`LFSIssueStrategy`** — Handles Git LFS issues.
 - **`ForcePushStrategy`** — Handles force push recovery scenarios.
 - **`GoalConfig`** — Manages goal.yaml configuration file.
-- **`QualityValidator`** — Validate commit summary against quality gates.
 - **`EnhancedSummaryGenerator`** — Generate business-value focused commit summaries.
+- **`QualityValidator`** — Validate commit summary against quality gates.
 - **`SummaryQualityFilter`** — Filter noise and improve summary quality.
 - **`PackageManager`** — Package manager configuration and capabilities.
 - **`GoalGroup`** — Custom Click Group that shows docs URL for unknown commands (like Poetry),
+- **`Issue`** — A single diagnosed issue.
+- **`DoctorReport`** — Aggregated report from a doctor run.
 - **`CodeAbstraction`** — Extracts meaningful abstractions from code changes.
 - **`SmartCommitGenerator`** — Generates smart commit messages using code abstraction.
 - **`App`** — —
 - **`PythonDiagnostics`** — Container for Python diagnostic checks with shared state.
-- **`Issue`** — A single diagnosed issue.
-- **`DoctorReport`** — Aggregated report from a doctor run.
 
 ### Functions
 
-- `get_git_user_name()` — Get git user.name from git config.
-- `get_git_user_email()` — Get git user.email from git config.
-- `prompt_for_license()` — Interactive prompt for license selection.
-- `initialize_user_config(force)` — Initialize user configuration interactively if not already done.
-- `get_user_config()` — Get user configuration, initializing if necessary.
-- `show_user_config()` — Display current user configuration.
+- `update_changelog(version, files, commit_msg, config)` — Update CHANGELOG.md with new version and changes.
 - `get_pypi_version(package_name)` — Get latest version of a package from PyPI.
 - `get_npm_version(package_name)` — Get latest version of a package from npm registry.
 - `get_cargo_version(package_name)` — Get latest version of a crate from crates.io.
@@ -213,7 +208,12 @@ goal/
 - `validate_project_versions(project_types, current_version)` — Validate versions across different registries.
 - `check_readme_badges(current_version)` — Check if README badges are up to date with current version.
 - `format_validation_results(results)` — Format validation results for display.
-- `update_changelog(version, files, commit_msg, config)` — Update CHANGELOG.md with new version and changes.
+- `get_git_user_name()` — Get git user.name from git config.
+- `get_git_user_email()` — Get git user.email from git config.
+- `prompt_for_license()` — Interactive prompt for license selection.
+- `initialize_user_config(force)` — Initialize user configuration interactively if not already done.
+- `get_user_config()` — Get user configuration, initializing if necessary.
+- `show_user_config()` — Display current user configuration.
 - `detect_project_types_deep(root, max_depth)` — Detect project types in *root* and up to *max_depth* subfolder levels.
 - `guess_package_name(project_dir, project_type)` — Best-effort guess of the package/module name for scaffold templates.
 - `ensure_project_environment(project_dir, project_type, yes)` — Ensure the project environment is properly set up.
@@ -226,6 +226,7 @@ goal/
 - `format_status_output(version, branch, staged_files, unstaged_files)` — Format status command output as markdown.
 - `run_git()` — Run a git command and return the result.
 - `run_command(command, capture)` — Run a shell command and return the result.
+- `run_git_with_status()` — Run git command with enhanced status display.
 - `run_command_tee(command)` — —
 - `is_git_repository()` — Check if the current directory is inside a git repository.
 - `validate_repo_url(url)` — Validate that a URL looks like a git repository (HTTP/HTTPS/SSH/file).
@@ -280,10 +281,10 @@ goal/
 - `check_versions(update_badges)` — Check version consistency across registries and README badges.
 - `clone(ctx, url, directory)` — Clone a git repository.
 - `bootstrap(yes, path)` — Bootstrap project environments (install deps, scaffold tests).
-- `publish(ctx, use_make, target, version_arg)` — Publish the current project (optionally using Makefile).
 - `makefile_has_target(target)` — Check if Makefile has a specific target.
 - `publish_project(project_types, version, yes)` — Publish project to appropriate package registries.
 - `push(ctx, bump, no_tag, no_changelog)` — Add, commit, tag, and push changes to remote.
+- `publish(ctx, use_make, target, version_arg)` — Publish the current project (optionally using Makefile).
 - `config()` — Manage goal configuration.
 - `config_show(ctx, key)` — Show configuration value(s).
 - `config_validate(ctx)` — Validate goal.yaml configuration.
@@ -312,16 +313,14 @@ goal/
 - `suggest_package_managers(project_path)` — Suggest package managers for a project based on detected languages and available tools.
 - `diagnose_dotnet(project_dir, auto_fix)` — Run all .NET-specific diagnostics.
 - `diagnose_go(project_dir, auto_fix)` — Run all Go-specific diagnostics.
+- `add_issues_to_todo(project_dir, issues, todo_file)` — Add issues to TODO.md without duplicates.
+- `diagnose_and_report_with_todo(project_dir, project_type, auto_fix, todo_file)` — Diagnose, fix, report, and optionally add issues to TODO.md.
+- `diagnose_php(project_dir, auto_fix)` — Run all PHP-specific diagnostics.
 - `strip_ansi(text)` — —
 - `split_paths_by_type(paths)` — Split file paths into groups (code/docs/ci/examples/other).
 - `stage_paths(paths)` — —
 - `confirm(prompt, default)` — Ask for user confirmation with Y/n prompt (Enter defaults to Yes).
 - `main(ctx, bump, version, yes)` — Goal - Automated git push with smart commit messages.
-- `diagnose_php(project_dir, auto_fix)` — Run all PHP-specific diagnostics.
-- `add_issues_to_todo(project_dir, issues, todo_file)` — Add issues to TODO.md without duplicates.
-- `diagnose_and_report_with_todo(project_dir, project_type, auto_fix, todo_file)` — Diagnose, fix, report, and optionally add issues to TODO.md.
-- `diagnose_project(project_dir, project_type, auto_fix)` — Run diagnostics for a single project directory.
-- `diagnose_and_report(project_dir, project_type, auto_fix)` — Diagnose, fix, and print a human-readable report.
 - `diagnose_java(project_dir, auto_fix)` — Run all Java-specific diagnostics.
 - `create_smart_generator(config)` — Factory function to create SmartCommitGenerator.
 - `sync_all_versions_wrapper(new_version, user_config)` — Wrapper to sync versions to all project files.
@@ -343,6 +342,8 @@ goal/
 - `self()` — —
 - `diagnose_nodejs(project_dir, auto_fix)` — Run all Node.js-specific diagnostics.
 - `diagnose_python(project_dir, auto_fix)` — Run all Python-specific diagnostics.
+- `diagnose_project(project_dir, project_type, auto_fix)` — Run diagnostics for a single project directory.
+- `diagnose_and_report(project_dir, project_type, auto_fix)` — Diagnose, fix, and print a human-readable report.
 
 
 ## Project Structure
@@ -386,7 +387,7 @@ goal/
 📄 `goal.generator.analyzer` (16 functions, 2 classes)
 📄 `goal.generator.generator` (24 functions, 1 classes)
 📄 `goal.generator.git_ops` (7 functions, 1 classes)
-📄 `goal.git_ops` (22 functions)
+📄 `goal.git_ops` (23 functions)
 📄 `goal.package_managers` (12 functions, 1 classes)
 📄 `goal.project_bootstrap` (9 functions)
 📄 `goal.project_doctor`
@@ -404,7 +405,7 @@ goal/
 📦 `goal.recovery`
 📄 `goal.recovery.exceptions` (9 functions, 9 classes)
 📄 `goal.recovery.manager` (14 functions, 1 classes)
-📄 `goal.recovery.strategies` (27 functions, 7 classes)
+📄 `goal.recovery.strategies` (29 functions, 7 classes)
 📦 `goal.smart_commit`
 📄 `goal.smart_commit.abstraction` (9 functions, 1 classes)
 📄 `goal.smart_commit.generator` (18 functions, 1 classes)
@@ -423,7 +424,7 @@ goal/
 ## Requirements
 
 - Python >= >=3.8
-- click >=8.0.0- PyYAML >=6.0
+- click >=8.0.0- PyYAML >=6.0- clickmd >=0.1.0
 
 ## Contributing
 
