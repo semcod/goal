@@ -131,8 +131,8 @@ class AuthErrorStrategy(RecoveryStrategy):
 class LargeFileStrategy(RecoveryStrategy):
     """Handles large file errors."""
     
-    def __init__(self, repo_path: str):
-        super().__init__(repo_path)
+    def __init__(self, repo_path: str, config=None):
+        super().__init__(repo_path, config)
         self.last_error = None
     
     def can_handle(self, error_output: str) -> bool:
