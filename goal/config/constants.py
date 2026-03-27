@@ -288,6 +288,45 @@ DEFAULT_CONFIG = {
                 r'^[A-Z_]+=[a-zA-Z0-9_-]{20,}',  # ENV_VAR=long_value
             ],
         },
+        'recovery': {
+            'enabled': True,
+            'auto_offer': True,  # Automatically offer recovery on push failure
+            'create_backup': True,  # Create backup branch before recovery
+            'clean_clone_fallback': True,  # Use clean clone method if standard recovery fails
+            'strategies': {
+                'auth': {
+                    'enabled': True,
+                    'try_gh_cli': True,
+                    'try_token_auth': True,
+                },
+                'large_files': {
+                    'enabled': True,
+                    'max_size_mb': 100,  # GitHub's limit
+                    'auto_lfs': False,  # Don't automatically move to LFS
+                    'default_action': 'remove',  # remove, lfs, or skip
+                },
+                'divergent_history': {
+                    'enabled': True,
+                    'default_action': 'rebase',  # rebase, merge, or force
+                    'auto_rebase': False,  # Don't auto-rebase without confirmation
+                },
+                'corrupted_objects': {
+                    'enabled': True,
+                    'run_fsck': True,
+                    'run_gc': True,
+                },
+                'lfs': {
+                    'enabled': True,
+                    'auto_install': False,
+                    'auto_pull': True,
+                },
+                'force_push': {
+                    'enabled': True,
+                    'require_confirmation': True,
+                    'prefer_force_with_lease': True,
+                },
+            },
+        },
     },
     'quality': {
         'commit_summary': {

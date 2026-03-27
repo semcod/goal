@@ -1,5 +1,26 @@
 ## [Unreleased]
 
+## [2.1.101] - 2026-03-27
+
+### Docs
+- Update docs/README.md
+- Update project/context.md
+
+### Test
+- Update test_recovery.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/flow.mmd
+- Update project/flow.png
+- Update project/index.html
+- Update project/map.toon.yaml
+- Update project/project.toon.yaml
+
 ## [2.1.100] - 2026-03-27
 
 ### Docs

@@ -183,13 +183,13 @@ Returns:
 > PY010: Check for consistent project name across all config files.
 - **Calls**: re.search, name_match.group, setup_py.exists, goal_yaml.exists, Issue, self.issues.append, setup_py.read_text, re.search
 
-### goal.doctor.python.PythonDiagnostics.check_py009_string_authors
-> PY009: Check for authors in deprecated string format (PEP 621 requires objects).
-- **Calls**: re.search, authors_match.group, re.compile, None.splitlines, Issue, self.issues.append, line.strip, string_author_pattern.match
-
 ### goal.doctor.nodejs.diagnose_nodejs
 > Run all Node.js-specific diagnostics.
 - **Calls**: json.dumps, data.get, json.dumps, pkg_json.exists, json.loads, data.get, issues.append, data.get
+
+### goal.doctor.python.PythonDiagnostics.check_py009_string_authors
+> PY009: Check for authors in deprecated string format (PEP 621 requires objects).
+- **Calls**: re.search, authors_match.group, re.compile, None.splitlines, Issue, self.issues.append, line.strip, string_author_pattern.match
 
 ### goal.generator.generator.CommitMessageGenerator._build_summary_section
 > Build high-level summary section.
@@ -572,8 +572,8 @@ Functions exposed as public API (no underscore prefix):
 - `goal.cli.publish.publish_project` - 24 calls
 - `goal.push.stages.push_remote.push_to_remote` - 24 calls
 - `goal.git_ops.ensure_remote` - 23 calls
-- `goal.doctor.python.PythonDiagnostics.check_py009_string_authors` - 23 calls
 - `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
+- `goal.doctor.python.PythonDiagnostics.check_py009_string_authors` - 23 calls
 - `goal.push.core.show_workflow_preview` - 22 calls
 - `goal.doctor.python.diagnose_python` - 22 calls
 - `goal.formatter.format_push_result` - 21 calls

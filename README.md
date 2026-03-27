@@ -4,7 +4,7 @@
 # Goal
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.100-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.101-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">

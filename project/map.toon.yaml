@@ -81,7 +81,7 @@ D:
     run_git_local()
     show_workflow_preview(files;stats;current_version;new_version;commit_msg;commit_body;markdown;ctx_obj)
     output_final_summary(ctx_obj;markdown;project_types;files;stats;current_version;new_version;commit_msg;commit_body;test_exit_code;publish_success;no_tag)
-    execute_push_workflow(ctx_obj;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
+    execute_push_workflow(ctx_obj;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo;force)
   goal/cli/version.py:
     e: detect_project_types,find_version_files,get_version_from_file,get_current_version,bump_version,update_version_in_file,update_json_version,update_project_metadata,update_readme_metadata,_update_version_file,_update_json_version_file,_update_toml_version,_update_cargo_version,_update_csproj_versions,_update_pom_xml,_update_readme_metadata,_update_init_py_versions,sync_all_versions,sync_all_versions
     detect_project_types()
@@ -356,10 +356,10 @@ D:
   goal/cli/push_cmd.py:
     e: push
     push(ctx;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
+  goal/enhanced_summary.py:
   goal/config/__init__.py:
   goal/commit_generator.py:
   goal/__init__.py:
-  goal/enhanced_summary.py:
   goal/__main__.py:
   goal/smart_commit/__init__.py:
   goal/project_doctor.py:

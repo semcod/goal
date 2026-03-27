@@ -25,16 +25,16 @@ flowchart TD
     goal__validators ==>|5| goal__git_ops
     goal__generator ==>|4| goal__user_config
     goal__push ==>|4| goal__formatter
-    goal__cli ==>|4| goal__package_managers
     goal__cli ==>|4| goal__version_validation
+    goal__cli ==>|4| goal__package_managers
     goal__cli -->|3| goal__project_bootstrap
     goal__doctor -->|3| goal__user_config
     goal__validators -->|2| goal__user_config
     goal__push -->|2| goal__project_bootstrap
     goal__smart_commit -->|2| goal__user_config
     goal__project_bootstrap -->|1| goal__doctor
-    goal__cli -->|1| goal__doctor
     goal__push -->|1| goal__validators
+    goal__cli -->|1| goal__doctor
     goal__cli -->|1| goal__formatter
     goal__cli -->|1| goal__push
     goal__package_managers -->|1| goal__user_config

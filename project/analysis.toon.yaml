@@ -2,18 +2,18 @@
 # CC̄=6.1 | critical:29/367 | dups:0 | cycles:0
 
 HEALTH[20]:
-  🟡 CC    validate_project_versions CC=30 (limit:15)
   🟡 CC    update_changelog CC=24 (limit:15)
-  🟡 CC    format_enhanced_summary CC=29 (limit:15)
-  🟡 CC    _analyze_python_diff CC=15 (limit:15)
-  🟡 CC    _build_summary CC=16 (limit:15)
-  🟡 CC    _score_by_signals CC=15 (limit:15)
-  🟡 CC    short_action_summary CC=34 (limit:15)
-  🟡 CC    per_file_notes CC=29 (limit:15)
-  🟡 CC    ensure_git_repository CC=23 (limit:15)
+  🟡 CC    validate_project_versions CC=30 (limit:15)
   🟡 CC    guess_package_name CC=20 (limit:15)
   🟡 CC    ensure_project_environment CC=25 (limit:15)
   🟡 CC    scaffold_test CC=15 (limit:15)
+  🟡 CC    format_enhanced_summary CC=29 (limit:15)
+  🟡 CC    _analyze_python_diff CC=15 (limit:15)
+  🟡 CC    _build_summary CC=16 (limit:15)
+  🟡 CC    ensure_git_repository CC=23 (limit:15)
+  🟡 CC    _score_by_signals CC=15 (limit:15)
+  🟡 CC    short_action_summary CC=34 (limit:15)
+  🟡 CC    per_file_notes CC=29 (limit:15)
   🟡 CC    detect_tokens_in_content CC=15 (limit:15)
   🟡 CC    check_dot_folders CC=23 (limit:15)
   🟡 CC    validate_files CC=15 (limit:15)
@@ -27,15 +27,15 @@ REFACTOR[1]:
   1. split 20 high-CC methods  (CC>15)
 
 PIPELINES[241]:
-  [1] Src [__init__]: __init__
+  [1] Src [get_registry_version]: get_registry_version
       PURITY: 100% pure
-  [2] Src [_load]: _load
+  [2] Src [check_readme_badges]: check_readme_badges → extract_badge_versions
       PURITY: 100% pure
-  [3] Src [_save]: _save
+  [3] Src [__init__]: __init__
       PURITY: 100% pure
-  [4] Src [get]: get
+  [4] Src [_load]: _load
       PURITY: 100% pure
-  [5] Src [get_registry_version]: get_registry_version
+  [5] Src [_save]: _save
       PURITY: 100% pure
 
 LAYERS:
@@ -123,8 +123,8 @@ COUPLING:
      goal.generator                  4                                                                                                                                   ──                   
   goal.smart_commit                  2                                                                                                                                                      ──
   CYCLES: none
-  HUB: goal.config/ (fan-in=8)
   HUB: goal.cli/ (fan-in=7)
+  HUB: goal.config/ (fan-in=8)
   HUB: goal/ (fan-in=100)
   SMELL: goal.cli/ fan-out=43 → split needed
   SMELL: goal.push/ fan-out=51 → split needed

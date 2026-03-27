@@ -185,6 +185,7 @@ from . import utils_cmd
 from . import doctor_cmd
 from . import config_cmd
 from . import commit_cmd
+from . import recover_cmd
 
 # Import version functions for external access
 from .version import sync_all_versions

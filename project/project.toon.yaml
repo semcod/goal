@@ -45,10 +45,10 @@ Args:
 
 REFACTOR[15]:
   [1] H/L Split validate_project_versions (CC=30 → target CC<10)
-  [2] H/L Split format_enhanced_summary (CC=29 → target CC<10)
-  [3] H/L Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)
-  [4] H/L Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)
-  [5] H/L Split ensure_project_environment (CC=25 → target CC<10)
+  [2] H/L Split ensure_project_environment (CC=25 → target CC<10)
+  [3] H/L Split format_enhanced_summary (CC=29 → target CC<10)
+  [4] H/L Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)
+  [5] H/L Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
