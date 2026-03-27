@@ -1,7 +1,7 @@
-# goal | 420 func | 53f | 15322L | python | 2026-03-27
+# goal | 421 func | 53f | 15457L | python | 2026-03-27
 
 HEALTH:
-  CC̄=5.7  critical=71 (limit:10)  dup=0  cycles=0
+  CC̄=5.7  critical=72 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     execute_push_workflow = 37 (limit:10)
@@ -24,10 +24,10 @@ MODULES[70] (top by size):
   M[goal/recovery/strategies.py] 541L C:7 F:27 CC↑9 D:0 (python)
   M[goal/smart_commit/generator.py] 524L C:1 F:18 CC↑24 D:0 (python)
   M[goal/doctor/python.py] 486L C:1 F:16 CC↑17 D:0 (python)
+  M[goal/validators/file_validator.py] 481L C:4 F:12 CC↑23 D:1 (python)
   M[goal/git_ops.py] 473L C:0 F:22 CC↑23 D:11 (python)
   M[goal/config/manager.py] 449L C:1 F:25 CC↑10 D:3 (python)
-  M[goal/config/constants.py] 435L C:0 F:0 CC↑0 D:0 (python)
-  M[goal/validators/file_validator.py] 418L C:4 F:11 CC↑23 D:1 (python)
+  M[goal/config/constants.py] 436L C:0 F:0 CC↑0 D:0 (python)
   M[goal/formatter.py] 402L C:1 F:14 CC↑29 D:3 (python)
   M[goal/generator/analyzer.py] 396L C:2 F:16 CC↑34 D:0 (python)
   M[goal/generator/generator.py] 384L C:1 F:24 CC↑12 D:0 (python)
@@ -44,8 +44,8 @@ Args:
     version: New versio
 
 REFACTOR[15]:
-  [1] H/L Split validate_project_versions (CC=30 → target CC<10)
-  [2] H/L Split ensure_project_environment (CC=25 → target CC<10)
+  [1] H/L Split ensure_project_environment (CC=25 → target CC<10)
+  [2] H/L Split validate_project_versions (CC=30 → target CC<10)
   [3] H/L Split format_enhanced_summary (CC=29 → target CC<10)
   [4] H/L Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)
   [5] H/L Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)
@@ -53,4 +53,4 @@ REFACTOR[15]:
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-03-27 CC̄=5.7 crit=71 15322L // Automated analysis
+  2026-03-27 CC̄=5.7 crit=72 15457L // Automated analysis

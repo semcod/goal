@@ -1,5 +1,5 @@
-# goal | 70f 13135L | python:67,shell:3 | 2026-03-27
-# stats: 420 func | 0 cls | 70 mod | CC̄=5.7 | critical:30 | cycles:0
+# goal | 70f 13199L | python:67,shell:3 | 2026-03-27
+# stats: 421 func | 0 cls | 70 mod | CC̄=5.7 | critical:30 | cycles:0
 # alerts[5]: fan-out execute_push_workflow=37; CC ContentAnalyzer.short_action_summary=34; CC execute_push_workflow=34; CC sync_all_versions=33; CC validate_project_versions=30
 # hotspots[5]: execute_push_workflow fan=37; QualityValidator.auto_fix fan=27; SmartCommitGenerator.analyze_changes fan=27; EnhancedSummaryGenerator.generate_enhanced_summary fan=24; update_changelog fan=23
 # evolution: CC̄ 5.7→5.7 (flat 0.0)
@@ -20,7 +20,7 @@ M[70]:
   goal/cli/version.py,730
   goal/commit_generator.py,45
   goal/config/__init__.py,24
-  goal/config/constants.py,435
+  goal/config/constants.py,436
   goal/config/manager.py,449
   goal/deep_analyzer.py,554
   goal/doctor/__init__.py,55
@@ -70,7 +70,7 @@ M[70]:
   goal/summary/validator.py,310
   goal/user_config.py,247
   goal/validators/__init__.py,25
-  goal/validators/file_validator.py,418
+  goal/validators/file_validator.py,481
   goal/version_validation.py,301
   integration/run_docker_matrix.sh,5
   integration/run_matrix.sh,216
@@ -178,7 +178,7 @@ D:
     read_ticket(path)
     apply_ticket_prefix(title;ticket)
   goal/validators/file_validator.py:
-    e: ValidationError,FileSizeError,TokenDetectedError,DotFolderError,get_file_size_mb,detect_tokens_in_content,load_gitignore,save_gitignore,check_dot_folders,manage_dot_folders,validate_files,validate_staged_files
+    e: ValidationError,FileSizeError,TokenDetectedError,DotFolderError,get_file_size_mb,detect_tokens_in_content,load_gitignore,save_gitignore,check_dot_folders,manage_dot_folders,validate_files,handle_large_files,validate_staged_files
     ValidationError(Exception):  # Base validation error...
     FileSizeError(ValidationError): __init__(3)  # Error for files exceeding size limit...
     TokenDetectedError(ValidationError): __init__(3)  # Error when API tokens are detected in files...
@@ -189,7 +189,8 @@ D:
     save_gitignore(ignored;gitignore_path)
     check_dot_folders(files;config)
     manage_dot_folders(files;config;dry_run)
-    validate_files(files;max_size_mb;block_large_files;token_patterns;detect_tokens;exclude_patterns)
+    validate_files(files;max_size_mb;block_large_files;token_patterns;detect_tokens;exclude_patterns;auto_handle_large)
+    handle_large_files(large_files)
     validate_staged_files(config)
   goal/smart_commit/abstraction.py:
     e: CodeAbstraction
@@ -389,8 +390,8 @@ D:
   goal/cli/push_cmd.py:
     e: push
     push(ctx;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
-  goal/config/__init__.py:
   goal/enhanced_summary.py:
+  goal/config/__init__.py:
   goal/commit_generator.py:
   goal/__init__.py:
   goal/__main__.py:
@@ -402,6 +403,10 @@ D:
   goal/push/__init__.py:
   goal/config/constants.py:
   goal/doctor/__init__.py:
+  goal/doctor/models.py:
+    e: Issue,DoctorReport
+    Issue:  # A single diagnosed issue...
+    DoctorReport:  # Aggregated report from a doctor run...
   goal/push/stages/__init__.py:
   project.sh:
   integration/run_docker_matrix.sh:
@@ -412,7 +417,3 @@ D:
     print()
     main()
     self()
-  goal/doctor/models.py:
-    e: Issue,DoctorReport
-    Issue:  # A single diagnosed issue...
-    DoctorReport:  # Aggregated report from a doctor run...

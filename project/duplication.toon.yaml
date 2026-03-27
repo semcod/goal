@@ -1,12 +1,12 @@
-# redup/duplication | 5 groups | 53f 11648L | 2026-03-27
+# redup/duplication | 5 groups | 53f 11711L | 2026-03-27
 
 SUMMARY:
   files_scanned: 53
-  total_lines:   11648
+  total_lines:   11711
   dup_groups:    5
   dup_fragments: 10
   saved_lines:   67
-  scan_ms:       1947
+  scan_ms:       2160
 
 DUPLICATES[5] (ranked by impact):
   [fe96954d342dd641]   EXAC  push  L=18 N=2 saved=18 sim=1.00

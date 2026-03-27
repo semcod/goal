@@ -1,7 +1,7 @@
 <!-- code2docs:start --># goal
 
-![version](https://img.shields.io/badge/version-0.1.0-blue) ![python](https://img.shields.io/badge/python-%3E%3D3.8-blue) ![coverage](https://img.shields.io/badge/coverage-unknown-lightgrey) ![functions](https://img.shields.io/badge/functions-420-green)
-> **420** functions | **41** classes | **75** files | CC̄ = 5.8
+![version](https://img.shields.io/badge/version-0.1.0-blue) ![python](https://img.shields.io/badge/python-%3E%3D3.8-blue) ![coverage](https://img.shields.io/badge/coverage-unknown-lightgrey) ![functions](https://img.shields.io/badge/functions-421-green)
+> **421** functions | **41** classes | **75** files | CC̄ = 5.8
 
 > Auto-generated project documentation from source code analysis.
 
@@ -147,7 +147,7 @@ Content outside the markers is preserved when regenerating. Enable this with `sy
 
 ```
 goal/
-    ├── cli/    ├── enhanced_summary    ├── config/    ├── commit_generator    ├── changelog    ├── version_validation    ├── user_config├── goal/    ├── __main__    ├── smart_commit/    ├── project_bootstrap    ├── formatter    ├── project_doctor    ├── deep_analyzer    ├── git_ops    ├── generator/        ├── git_ops    ├── validators/        ├── analyzer        ├── exceptions        ├── generator        ├── file_validator    ├── recovery/        ├── commands    ├── push/        ├── manager        ├── recover_cmd        ├── core        ├── doctor_cmd        ├── strategies        ├── commit_cmd        ├── version        ├── utils_cmd        ├── publish_cmd        ├── push_cmd        ├── publish        ├── config_cmd        ├── constants        ├── manager        ├── validator    ├── summary/        ├── generator        ├── rust        ├── ruby        ├── quality_filter    ├── package_managers        ├── dotnet    ├── doctor/        ├── go        ├── todo        ├── logging        ├── php        ├── models        ├── java        ├── abstraction        ├── generator            ├── version            ├── changelog            ├── commit            ├── dry_run            ├── tag        ├── stages/            ├── push_remote            ├── publish├── project    ├── markdown-demo    ├── run_docker_matrix    ├── run_matrix        ├── install        ├── nodejs        ├── python        ├── core```
+    ├── config/    ├── enhanced_summary    ├── cli/    ├── commit_generator    ├── changelog    ├── user_config    ├── version_validation├── goal/    ├── __main__    ├── smart_commit/    ├── project_bootstrap    ├── formatter    ├── project_doctor    ├── deep_analyzer    ├── git_ops    ├── generator/        ├── git_ops    ├── validators/        ├── analyzer        ├── generator        ├── exceptions        ├── file_validator    ├── recovery/        ├── commands    ├── push/        ├── manager        ├── recover_cmd        ├── core        ├── doctor_cmd        ├── strategies        ├── commit_cmd        ├── version        ├── utils_cmd        ├── publish_cmd        ├── publish        ├── push_cmd        ├── config_cmd        ├── manager        ├── constants        ├── validator    ├── summary/        ├── generator        ├── rust        ├── ruby        ├── quality_filter    ├── package_managers        ├── dotnet    ├── doctor/        ├── go        ├── todo        ├── logging        ├── php        ├── models        ├── java        ├── abstraction        ├── generator            ├── version            ├── changelog            ├── commit            ├── dry_run            ├── tag        ├── stages/            ├── push_remote            ├── publish├── project    ├── markdown-demo    ├── run_docker_matrix    ├── run_matrix        ├── install        ├── nodejs        ├── python        ├── core```
 
 ## API Overview
 
@@ -159,6 +159,7 @@ goal/
 - **`GitDiffOperations`** — Git diff operations with caching.
 - **`ChangeAnalyzer`** — Analyze git changes to classify type, detect scope, and extract functions.
 - **`ContentAnalyzer`** — Analyze content for short summaries and per-file notes.
+- **`CommitMessageGenerator`** — Generate conventional commit messages using diff analysis and lightweight classification.
 - **`RecoveryError`** — Base exception for all recovery operations.
 - **`AuthError`** — Raised when authentication fails.
 - **`LargeFileError`** — Raised when large files block the push.
@@ -168,7 +169,6 @@ goal/
 - **`RollbackError`** — Raised when rollback operation fails.
 - **`NetworkError`** — Raised when network connectivity issues occur.
 - **`QuotaExceededError`** — Raised when GitHub API quota is exceeded.
-- **`CommitMessageGenerator`** — Generate conventional commit messages using diff analysis and lightweight classification.
 - **`ValidationError`** — Base validation error.
 - **`FileSizeError`** — Error for files exceeding size limit.
 - **`TokenDetectedError`** — Error when API tokens are detected in files.
@@ -198,6 +198,12 @@ goal/
 ### Functions
 
 - `update_changelog(version, files, commit_msg, config)` — Update CHANGELOG.md with new version and changes.
+- `get_git_user_name()` — Get git user.name from git config.
+- `get_git_user_email()` — Get git user.email from git config.
+- `prompt_for_license()` — Interactive prompt for license selection.
+- `initialize_user_config(force)` — Initialize user configuration interactively if not already done.
+- `get_user_config()` — Get user configuration, initializing if necessary.
+- `show_user_config()` — Display current user configuration.
 - `get_pypi_version(package_name)` — Get latest version of a package from PyPI.
 - `get_npm_version(package_name)` — Get latest version of a package from npm registry.
 - `get_cargo_version(package_name)` — Get latest version of a crate from crates.io.
@@ -208,12 +214,6 @@ goal/
 - `validate_project_versions(project_types, current_version)` — Validate versions across different registries.
 - `check_readme_badges(current_version)` — Check if README badges are up to date with current version.
 - `format_validation_results(results)` — Format validation results for display.
-- `get_git_user_name()` — Get git user.name from git config.
-- `get_git_user_email()` — Get git user.email from git config.
-- `prompt_for_license()` — Interactive prompt for license selection.
-- `initialize_user_config(force)` — Initialize user configuration interactively if not already done.
-- `get_user_config()` — Get user configuration, initializing if necessary.
-- `show_user_config()` — Display current user configuration.
 - `detect_project_types_deep(root, max_depth)` — Detect project types in *root* and up to *max_depth* subfolder levels.
 - `guess_package_name(project_dir, project_type)` — Best-effort guess of the package/module name for scaffold templates.
 - `ensure_project_environment(project_dir, project_type, yes)` — Ensure the project environment is properly set up.
@@ -250,6 +250,7 @@ goal/
 - `check_dot_folders(files, config)` — Check for dot folders/files that should be in .gitignore.
 - `manage_dot_folders(files, config, dry_run)` — Proactively manage dot folders in .gitignore.
 - `validate_files(files, max_size_mb, block_large_files, token_patterns)` — Validate files before commit.
+- `handle_large_files(large_files)` — Automatically handle large files by adding them to .gitignore and unstaging.
 - `validate_staged_files(config)` — Validate staged files using configuration.
 - `push(ctx, bump, no_tag, no_changelog)` — Add, commit, tag, and push changes to remote.
 - `recover(ctx, full, error_file, error_message)` — Recover from git push failures.
@@ -280,9 +281,9 @@ goal/
 - `clone(ctx, url, directory)` — Clone a git repository.
 - `bootstrap(yes, path)` — Bootstrap project environments (install deps, scaffold tests).
 - `publish(ctx, use_make, target, version_arg)` — Publish the current project (optionally using Makefile).
-- `push(ctx, bump, no_tag, no_changelog)` — Add, commit, tag, and push changes to remote.
 - `makefile_has_target(target)` — Check if Makefile has a specific target.
 - `publish_project(project_types, version, yes)` — Publish project to appropriate package registries.
+- `push(ctx, bump, no_tag, no_changelog)` — Add, commit, tag, and push changes to remote.
 - `config()` — Manage goal configuration.
 - `config_show(ctx, key)` — Show configuration value(s).
 - `config_validate(ctx)` — Validate goal.yaml configuration.
@@ -413,7 +414,7 @@ goal/
 📄 `goal.summary.validator` (13 functions, 1 classes)
 📄 `goal.user_config` (12 functions, 1 classes)
 📦 `goal.validators`
-📄 `goal.validators.file_validator` (11 functions, 4 classes)
+📄 `goal.validators.file_validator` (12 functions, 4 classes)
 📄 `goal.version_validation` (10 functions)
 📄 `integration.run_docker_matrix`
 📄 `integration.run_matrix` (4 functions, 1 classes)

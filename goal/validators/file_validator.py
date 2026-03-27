@@ -346,7 +346,7 @@ def validate_files(
         size_mb = get_file_size_mb(file_path)
         if size_mb > max_size_mb:
             large_files_found.append(file_path)
-            if auto_handle_large and not block_large_files:
+            if auto_handle_large:
                 # Auto-handle by adding to gitignore
                 continue
             elif block_large_files:

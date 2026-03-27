@@ -1,7 +1,7 @@
-# vallm batch | 136f | 73✓ 19⚠ 21✗ | 2026-03-27
+# vallm batch | 137f | 74✓ 19⚠ 21✗ | 2026-03-27
 
 SUMMARY:
-  scanned: 136  passed: 73 (53.7%)  warnings: 19  errors: 21  unsupported: 42
+  scanned: 137  passed: 74 (54.0%)  warnings: 19  errors: 21  unsupported: 42
 
 WARNINGS[19]{path,score}:
   goal/cli/version.py,0.93
@@ -45,6 +45,12 @@ WARNINGS[19]{path,score}:
       complexity.cyclomatic,warning,_format_changes_section has cyclomatic complexity 26 (max: 15),478
       complexity.lizard_cc,warning,generate_value_title: CC=19 exceeds limit 15,330
       complexity.lizard_cc,warning,_format_changes_section: CC=26 exceeds limit 15,478
+  goal/validators/file_validator.py,0.93
+    issues[4]{rule,severity,message,line}:
+      complexity.cyclomatic,warning,check_dot_folders has cyclomatic complexity 23 (max: 15),148
+      complexity.cyclomatic,warning,validate_files has cyclomatic complexity 19 (max: 15),271
+      complexity.lizard_cc,warning,check_dot_folders: CC=23 exceeds limit 15,148
+      complexity.lizard_cc,warning,validate_files: CC=19 exceeds limit 15,271
   goal/deep_analyzer.py,0.96
     issues[3]{rule,severity,message,line}:
       complexity.cyclomatic,warning,_build_summary has cyclomatic complexity 16 (max: 15),522
@@ -83,10 +89,6 @@ WARNINGS[19]{path,score}:
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,auto_fix has cyclomatic complexity 19 (max: 15),204
       complexity.lizard_cc,warning,auto_fix: CC=19 exceeds limit 15,204
-  goal/validators/file_validator.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,check_dot_folders has cyclomatic complexity 23 (max: 15),148
-      complexity.lizard_cc,warning,check_dot_folders: CC=23 exceeds limit 15,148
   goal/version_validation.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,validate_project_versions has cyclomatic complexity 30 (max: 15),132

@@ -6,7 +6,7 @@
 - **Primary Language**: python
 - **Languages**: python: 67, shell: 5
 - **Analysis Mode**: static
-- **Total Functions**: 420
+- **Total Functions**: 421
 - **Total Classes**: 41
 - **Modules**: 72
 - **Entry Points**: 307
@@ -86,15 +86,15 @@
 - **Classes**: 1
 - **File**: `user_config.py`
 
+### goal.validators.file_validator
+- **Functions**: 12
+- **Classes**: 4
+- **File**: `file_validator.py`
+
 ### goal.package_managers
 - **Functions**: 12
 - **Classes**: 1
 - **File**: `package_managers.py`
-
-### goal.validators.file_validator
-- **Functions**: 11
-- **Classes**: 4
-- **File**: `file_validator.py`
 
 ### goal.version_validation
 - **Functions**: 10
@@ -201,13 +201,13 @@ git push failures including:
 - Authentication
 - **Calls**: main.command, click.option, click.option, click.option, click.option, click.option, os.getcwd, goal.cli.recover_cmd._get_error_output
 
-### goal.doctor.python.PythonDiagnostics.check_py009_string_authors
-> PY009: Check for authors in deprecated string format (PEP 621 requires objects).
-- **Calls**: re.search, authors_match.group, re.compile, None.splitlines, Issue, self.issues.append, line.strip, string_author_pattern.match
-
 ### goal.doctor.nodejs.diagnose_nodejs
 > Run all Node.js-specific diagnostics.
 - **Calls**: json.dumps, data.get, json.dumps, pkg_json.exists, json.loads, data.get, issues.append, data.get
+
+### goal.doctor.python.PythonDiagnostics.check_py009_string_authors
+> PY009: Check for authors in deprecated string format (PEP 621 requires objects).
+- **Calls**: re.search, authors_match.group, re.compile, None.splitlines, Issue, self.issues.append, line.strip, string_author_pattern.match
 
 ### goal.generator.generator.CommitMessageGenerator._build_summary_section
 > Build high-level summary section.
@@ -447,7 +447,7 @@ Returns:
 Args:
     files: List of file paths to validate
     max_size_mb: Maxi
-- **Output to**: any, goal.validators.file_validator.get_file_size_mb, os.path.exists, FileSizeError, click.echo
+- **Output to**: any, goal.validators.file_validator.get_file_size_mb, goal.validators.file_validator.handle_large_files, os.path.exists, large_files_found.append
 
 ### goal.validators.file_validator.validate_staged_files
 > Validate staged files using configuration.
@@ -564,8 +564,8 @@ Functions exposed as public API (no underscore prefix):
 - `goal.smart_commit.generator.SmartCommitGenerator.analyze_changes` - 33 calls
 - `goal.cli.version.update_project_metadata` - 32 calls
 - `goal.user_config.show_user_config` - 31 calls
-- `goal.version_validation.validate_project_versions` - 28 calls
 - `goal.project_bootstrap.guess_package_name` - 28 calls
+- `goal.version_validation.validate_project_versions` - 28 calls
 - `goal.smart_commit.generator.SmartCommitGenerator.generate_functional_body` - 27 calls
 - `goal.generator.analyzer.ContentAnalyzer.short_action_summary` - 26 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.calculate_quality_metrics` - 26 calls
@@ -578,8 +578,8 @@ Functions exposed as public API (no underscore prefix):
 - `goal.git_ops.ensure_remote` - 23 calls
 - `goal.recovery.manager.RecoveryManager.recover_from_push_failure` - 23 calls
 - `goal.cli.recover_cmd.recover` - 23 calls
-- `goal.doctor.python.PythonDiagnostics.check_py009_string_authors` - 23 calls
 - `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
+- `goal.doctor.python.PythonDiagnostics.check_py009_string_authors` - 23 calls
 - `goal.push.core.show_workflow_preview` - 22 calls
 - `goal.recovery.strategies.AuthErrorStrategy.recover` - 22 calls
 - `goal.doctor.python.diagnose_python` - 22 calls

@@ -14,16 +14,16 @@ flowchart TD
     goal__smart_commit["goal.smart_commit<br/>27 funcs"]
     goal__summary["goal.summary<br/>46 funcs"]
     goal__user_config["goal.user_config<br/>12 funcs"]
-    goal__validators["goal.validators<br/>11 funcs"]
+    goal__validators["goal.validators<br/>12 funcs"]
     goal__version_validation["goal.version_validation<br/>10 funcs"]
     goal__push ==>|27| goal__git_ops
     goal__cli ==>|19| goal__git_ops
     goal__push ==>|17| goal__cli
     goal__deep_analyzer ==>|11| goal__user_config
+    goal__validators ==>|9| goal__git_ops
     goal__cli ==>|8| goal__config
     goal__cli ==>|7| goal__user_config
     goal__summary ==>|6| goal__user_config
-    goal__validators ==>|5| goal__git_ops
     goal__generator ==>|4| goal__user_config
     goal__push ==>|4| goal__formatter
     goal__cli ==>|4| goal__version_validation
