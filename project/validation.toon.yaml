@@ -1,9 +1,16 @@
-# vallm batch | 144f | 80✓ 20⚠ 22✗ | 2026-03-27
+# vallm batch | 154f | 83✓ 20⚠ 26✗ | 2026-03-27
 
 SUMMARY:
-  scanned: 144  passed: 80 (55.6%)  warnings: 20  errors: 22  unsupported: 42
+  scanned: 154  passed: 83 (53.9%)  warnings: 20  errors: 26  unsupported: 45
 
 WARNINGS[20]{path,score}:
+  goal/push/stages/push_remote.py,0.90
+    issues[5]{rule,severity,message,line}:
+      complexity.cyclomatic,warning,push_to_remote has cyclomatic complexity 16 (max: 15),18
+      complexity.cyclomatic,warning,_offer_recovery has cyclomatic complexity 41 (max: 15),89
+      complexity.lizard_cc,warning,push_to_remote: CC=16 exceeds limit 15,18
+      complexity.lizard_cc,warning,_offer_recovery: CC=41 exceeds limit 15,89
+      complexity.lizard_length,warning,_offer_recovery: 210 lines exceeds limit 100,89
   goal/cli/version.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,update_project_metadata has cyclomatic complexity 26 (max: 15),232
@@ -77,10 +84,6 @@ WARNINGS[20]{path,score}:
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,handle_dry_run has cyclomatic complexity 19 (max: 15),14
       complexity.lizard_cc,warning,handle_dry_run: CC=19 exceeds limit 15,14
-  goal/push/stages/push_remote.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,push_to_remote has cyclomatic complexity 16 (max: 15),17
-      complexity.lizard_cc,warning,push_to_remote: CC=16 exceeds limit 15,17
   goal/smart_commit/abstraction.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,extract_entities has cyclomatic complexity 20 (max: 15),60
@@ -101,7 +104,11 @@ WARNINGS[20]{path,score}:
     issues[1]{rule,severity,message,line}:
       complexity.lizard_length,warning,run_case: 175 lines exceeds limit 100,11
 
-ERRORS[22]{path,score}:
+ERRORS[26]{path,score}:
+  goal/authors/__init__.py,0.57
+    issues[2]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'manager' not found,9
+      python.import.resolvable,error,Module 'utils' not found,10
   goal/config/__init__.py,0.57
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'constants' not found,8
@@ -111,6 +118,10 @@ ERRORS[22]{path,score}:
       python.import.resolvable,error,Module 'git_ops' not found,3
       python.import.resolvable,error,Module 'analyzer' not found,4
       python.import.resolvable,error,Module 'generator' not found,5
+  goal/hooks/__init__.py,0.57
+    issues[2]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'manager' not found,9
+      python.import.resolvable,error,Module 'config' not found,10
   goal/license/__init__.py,0.57
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'manager' not found,10
@@ -175,28 +186,35 @@ ERRORS[22]{path,score}:
       python.import.resolvable,error,Module 'models' not found,4
   goal/push/stages/commit.py,0.88
     issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'core' not found,188
-      python.import.resolvable,error,Module 'version' not found,192
-      python.import.resolvable,error,Module 'changelog' not found,202
+      python.import.resolvable,error,Module 'core' not found,195
+      python.import.resolvable,error,Module 'version' not found,199
+      python.import.resolvable,error,Module 'changelog' not found,209
   goal/cli/__init__.py,0.89
     issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'version' not found,193
+      python.import.resolvable,error,Module 'version' not found,195
       python.import.resolvable,error,Module 'nfo' not found,12
       python.import.resolvable,error,Module 'nfo.terminal' not found,13
   goal/recovery/manager.py,0.89
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'strategies' not found,10
       python.import.resolvable,error,Module 'exceptions' not found,19
-  goal/cli/commit_cmd.py,0.90
+  goal/hooks/manager.py,0.90
     issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'enhanced_summary' not found,67
-      python.import.resolvable,error,Module 'enhanced_summary' not found,125
+      python.import.resolvable,error,Module 'validators.file_validator' not found,15
+      python.import.resolvable,error,Module 'git_ops' not found,22
+  goal/cli/commit_cmd.py,0.91
+    issues[2]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'enhanced_summary' not found,89
+      python.import.resolvable,error,Module 'enhanced_summary' not found,147
   tests/test_project_doctor.py,0.94
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'pytest' not found,7
   goal/doctor/todo.py,0.95
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'core' not found,117
+  goal/license/manager.py,0.95
+    issues[1]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'spdx' not found,17
   goal/recovery/strategies.py,0.95
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'exceptions' not found,11
@@ -211,7 +229,7 @@ ERRORS[22]{path,score}:
       python.import.resolvable,error,Module 'pytest' not found,203
 
 UNSUPPORTED[5]{bucket,count}:
-  *.md,26
+  *.md,29
   Dockerfile*,1
   *.txt,1
   *.yml,1

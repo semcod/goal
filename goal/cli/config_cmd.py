@@ -32,20 +32,39 @@ def config_show(ctx, key):
 
 
 @config.command(name='validate')
+@click.option(
+    '--strict', '-s',
+    is_flag=True,
+    help='Treat warnings as errors'
+)
+@click.option(
+    '--fix', '-f',
+    is_flag=True,
+    help='Interactively fix configuration issues'
+)
 @click.pass_context
-def config_validate(ctx):
-    """Validate goal.yaml configuration."""
-    cfg = ctx.obj.get('config')
-    if not cfg:
-        cfg = ensure_config()
+def config_validate(ctx, strict: bool, fix: bool):
+    """Validate goal.yaml configuration.
     
-    errors = cfg.validate()
-    if errors:
-        click.echo(click.style("Configuration errors:", fg='red', bold=True))
-        for error in errors:
-            click.echo(f"  ✗ {error}")
+    Checks that the configuration file is valid, complete, and follows
+    best practices. Reports errors and warnings with helpful suggestions.
+    
+    Examples:
+        goal config validate              # Validate auto-detected config
+        goal config validate --strict     # Treat warnings as errors
+        goal config validate --fix        # Interactively fix issues
+    """
+    from goal.config import validate_config_file, validate_config_interactive
+    
+    click.echo(click.style("🔍 Validating Goal configuration...\n", fg='blue', bold=True))
+    
+    if fix:
+        success = validate_config_interactive()
     else:
-        click.echo(click.style("✓ Configuration is valid", fg='green'))
+        success = validate_config_file(strict=strict)
+    
+    if not success:
+        raise click.Abort()
 
 
 @config.command(name='update')

@@ -15,10 +15,22 @@ from .manager import (
     ensure_config,
 )
 
+# Validation
+from .validation import (
+    ConfigValidator,
+    ConfigValidationError,
+    validate_config_file,
+    validate_config_interactive,
+)
+
 __all__ = [
     'GoalConfig',
     'init_config',
     'load_config',
     'ensure_config',
     'DEFAULT_CONFIG',
+    'ConfigValidator',
+    'ConfigValidationError',
+    'validate_config_file',
+    'validate_config_interactive',
 ]

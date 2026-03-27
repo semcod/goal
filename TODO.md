@@ -85,9 +85,9 @@
 ### Advanced Features
 - [ ] Template system for project initialization
 - [ ] Plugin system for custom workflows
-- [ ] Pre-commit hooks integration
-- [ ] Post-commit actions
-- [ ] Custom validation rules
+- [x] Pre-commit hooks integration
+- [x] Post-commit actions
+- [x] Custom validation rules
 
 ### Integration Improvements
 - [ ] GitHub Actions marketplace action

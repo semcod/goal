@@ -24,12 +24,12 @@ def test_file_size_validation():
     
     try:
         # Should raise FileSizeError
-        validate_files([large_file], max_size_mb=10.0)
+        validate_files([large_file], max_size_mb=10.0, auto_handle_large=False)
         print("❌ File size validation failed - should have raised error")
-        return False
+        assert False, "Expected FileSizeError"
     except FileSizeError as e:
         print(f"✅ File size validation works: {e}")
-        return True
+        assert True
     finally:
         os.unlink(large_file)
 
@@ -39,13 +39,12 @@ def test_token_detection():
     print("\nTesting API token detection...")
     
     test_cases = [
-        ("github_token.txt", "ghp_test_token_abcdefghijklmnop", "GitHub Personal Access"),
-        ("aws_key.txt", "AKIATEST1234567890ABCD", "AWS Access Key"),
-        ("slack_bot.txt", "xoxb-test-123-456-abcdefghijklmnop", "Slack Bot"),
-        ("generic_token.txt", "Bearer test_token_1234567890", "Bearer Token"),
+        # Tokens must match the regex pattern lengths defined in file_validator.py
+        ("github_token.txt", "ghp_" + "a" * 36, "GitHub Personal Access"),
+        ("aws_key.txt", "AKIA" + "A" * 16, "AWS Access Key"),
+        ("slack_bot.txt", "xoxb-1234567890123-1234567890123-" + "a" * 24, "Slack Bot"),
+        ("generic_token.txt", "Bearer " + "a" * 25, "Bearer Token"),
     ]
-    
-    all_passed = True
     
     for filename, content, expected_type in test_cases:
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt', prefix=filename) as f:
@@ -53,19 +52,18 @@ def test_token_detection():
             test_file = f.name
         
         try:
-            validate_files([test_file], detect_tokens=True)
+            validate_files([test_file], detect_tokens=True, auto_handle_large=False)
             print(f"❌ Token detection failed for {expected_type}")
-            all_passed = False
+            assert False, f"Expected TokenDetectedError for {expected_type}"
         except TokenDetectedError as e:
             if expected_type in str(e):
                 print(f"✅ Token detection works for {expected_type}")
+                assert True
             else:
                 print(f"❌ Wrong token type detected: {e}")
-                all_passed = False
+                assert False, f"Wrong token type: {e}"
         finally:
             os.unlink(test_file)
-    
-    return all_passed
 
 
 def test_safe_files():
@@ -84,12 +82,12 @@ if __name__ == "__main__":
         safe_file = f.name
     
     try:
-        validate_files([safe_file], max_size_mb=10.0, detect_tokens=True)
+        validate_files([safe_file], max_size_mb=10.0, detect_tokens=True, auto_handle_large=False)
         print("✅ Safe files pass validation")
-        return True
+        assert True
     except Exception as e:
         print(f"❌ Safe file validation failed: {e}")
-        return False
+        assert False, f"Safe file failed: {e}"
     finally:
         os.unlink(safe_file)
 
@@ -116,16 +114,16 @@ def test_config_integration():
     
     try:
         # Small file should pass
-        validate_files([small_file], max_size_mb=5.0)
+        validate_files([small_file], max_size_mb=5.0, auto_handle_large=False)
         print("✅ Config integration: small file passes")
         
         # Large file should fail
-        validate_files([large_file], max_size_mb=5.0)
+        validate_files([large_file], max_size_mb=5.0, auto_handle_large=False)
         print("❌ Config integration: large file should have failed")
-        return False
+        assert False, "Expected FileSizeError"
     except FileSizeError:
         print("✅ Config integration: large file correctly blocked")
-        return True
+        assert True
     finally:
         os.unlink(small_file)
         os.unlink(large_file)

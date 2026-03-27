@@ -1,29 +1,45 @@
-# redup/duplication | 2 groups | 56f 12571L | 2026-03-27
+# redup/duplication | 4 groups | 63f 14705L | 2026-03-27
 
 SUMMARY:
-  files_scanned: 56
-  total_lines:   12571
-  dup_groups:    2
-  dup_fragments: 4
-  saved_lines:   39
-  scan_ms:       3022
+  files_scanned: 63
+  total_lines:   14705
+  dup_groups:    4
+  dup_fragments: 12
+  saved_lines:   84
+  scan_ms:       4028
 
-DUPLICATES[2] (ranked by impact):
+DUPLICATES[4] (ranked by impact):
   [02d23ce0dd67549c] ! EXAC  push  L=35 N=2 saved=35 sim=1.00
       goal/push/commands.py:0-34  (push)
       goal/cli/push_cmd.py:0-34  (push)
+  [604cc914cf04728d]   STRU  hooks_status  L=8 N=4 saved=24 sim=1.00
+      goal/cli/hooks_cmd.py:0-7  (hooks_status)
+      goal/cli/authors_cmd.py:0-7  (authors_list)
+      goal/cli/authors_cmd.py:0-7  (authors_import)
+      goal/cli/authors_cmd.py:0-7  (authors_export)
+  [4c2991aa6376ee76]   STRU  hooks  L=7 N=4 saved=21 sim=1.00
+      goal/cli/hooks_cmd.py:0-6  (hooks)
+      goal/cli/authors_cmd.py:0-6  (authors)
+      goal/cli/license_cmd.py:0-6  (license)
+      goal/cli/config_cmd.py:0-6  (config)
   [b25039a06bd76f94]   EXAC  __init__  L=4 N=2 saved=4 sim=1.00
       goal/generator/git_ops.py:0-3  (__init__)
       goal/deep_analyzer.py:0-3  (__init__)
 
-REFACTOR[2] (ranked by priority):
+REFACTOR[4] (ranked by priority):
   [1] ◐ extract_function   → goal/utils/push.py
       WHY: 2 occurrences of 35-line block across 2 files — saves 35 lines
       FILES: goal/cli/push_cmd.py, goal/push/commands.py
-  [2] ○ extract_function   → goal/utils/__init__.py
+  [2] ○ extract_function   → goal/cli/utils/hooks_status.py
+      WHY: 4 occurrences of 8-line block across 2 files — saves 24 lines
+      FILES: goal/cli/authors_cmd.py, goal/cli/hooks_cmd.py
+  [3] ○ extract_function   → goal/cli/utils/hooks.py
+      WHY: 4 occurrences of 7-line block across 4 files — saves 21 lines
+      FILES: goal/cli/authors_cmd.py, goal/cli/config_cmd.py, goal/cli/hooks_cmd.py, goal/cli/license_cmd.py
+  [4] ○ extract_function   → goal/utils/__init__.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: goal/deep_analyzer.py, goal/generator/git_ops.py
 
 METRICS-TARGET:
-  dup_groups:  2 → 0
-  saved_lines: 39 lines recoverable
+  dup_groups:  4 → 0
+  saved_lines: 84 lines recoverable

@@ -1,18 +1,23 @@
-# goal | 72f 13833L | python:69,shell:3 | 2026-03-27
-# stats: 433 func | 0 cls | 72 mod | CC̄=5.8 | critical:30 | cycles:0
-# alerts[5]: fan-out execute_push_workflow=37; CC ContentAnalyzer.short_action_summary=34; CC execute_push_workflow=34; CC sync_all_versions=33; CC validate_project_versions=30
+# goal | 83f 16253L | python:80,shell:3 | 2026-03-27
+# stats: 508 func | 0 cls | 83 mod | CC̄=5.5 | critical:34 | cycles:0
+# alerts[5]: CC _offer_recovery=41; fan-out execute_push_workflow=37; CC ContentAnalyzer.short_action_summary=34; CC execute_push_workflow=34; CC sync_all_versions=33
 # hotspots[5]: execute_push_workflow fan=37; QualityValidator.auto_fix fan=27; SmartCommitGenerator.analyze_changes fan=27; EnhancedSummaryGenerator.generate_enhanced_summary fan=24; update_changelog fan=23
-# evolution: CC̄ 5.8→5.8 (flat 0.0)
+# evolution: CC̄ 5.8→5.5 (improved -0.3)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[72]:
-  debug_recovery.py,62
+M[83]:
   goal/__init__.py,3
   goal/__main__.py,17
+  goal/authors/__init__.py,19
+  goal/authors/manager.py,316
+  goal/authors/utils.py,212
   goal/changelog.py,125
-  goal/cli/__init__.py,208
-  goal/cli/commit_cmd.py,187
+  goal/cli/__init__.py,211
+  goal/cli/authors_cmd.py,120
+  goal/cli/commit_cmd.py,209
   goal/cli/config_cmd.py,110
   goal/cli/doctor_cmd.py,99
+  goal/cli/hooks_cmd.py,72
+  goal/cli/license_cmd.py,199
   goal/cli/publish.py,136
   goal/cli/publish_cmd.py,38
   goal/cli/push_cmd.py,103
@@ -45,6 +50,12 @@ M[72]:
   goal/generator/generator.py,384
   goal/generator/git_ops.py,171
   goal/git_ops.py,553
+  goal/hooks/__init__.py,19
+  goal/hooks/config.py,105
+  goal/hooks/manager.py,309
+  goal/license/__init__.py,20
+  goal/license/manager.py,589
+  goal/license/spdx.py,228
   goal/package_managers.py,631
   goal/project_bootstrap.py,589
   goal/project_doctor.py,32
@@ -53,16 +64,16 @@ M[72]:
   goal/push/core.py,288
   goal/push/stages/__init__.py,27
   goal/push/stages/changelog.py,30
-  goal/push/stages/commit.py,213
+  goal/push/stages/commit.py,220
   goal/push/stages/dry_run.py,98
   goal/push/stages/publish.py,31
-  goal/push/stages/push_remote.py,115
+  goal/push/stages/push_remote.py,346
   goal/push/stages/tag.py,28
   goal/push/stages/version.py,51
   goal/recovery/__init__.py,48
   goal/recovery/exceptions.py,58
   goal/recovery/manager.py,317
-  goal/recovery/strategies.py,676
+  goal/recovery/strategies.py,687
   goal/smart_commit/__init__.py,14
   goal/smart_commit/abstraction.py,269
   goal/smart_commit/generator.py,524
@@ -78,6 +89,10 @@ M[72]:
   integration/run_matrix.sh,216
   project.sh,24
 D:
+  goal/push/stages/push_remote.py:
+    e: push_to_remote,_offer_recovery
+    push_to_remote(branch;tag_name;no_tag;yes)
+    _offer_recovery(error_output)
   goal/generator/analyzer.py:
     e: ChangeAnalyzer,ContentAnalyzer
     ChangeAnalyzer: classify_change_type(3),_detect_signals(2),_has_package_code(1),_is_docs_only(1),_is_ci_only(1),_has_new_goal_python_file(2),_score_by_file_patterns(2),_score_by_diff_content(2),_score_by_statistics(3),_score_by_signals(4),_score_new_functionality(3),_resolve_change_type(4),detect_scope(1),extract_functions_changed(1)  # Analyze git changes to classify type, detect scope, and extr...
@@ -198,6 +213,11 @@ D:
   goal/smart_commit/abstraction.py:
     e: CodeAbstraction
     CodeAbstraction: __init__(1),get_domain(1),get_language(1),extract_entities(2),extract_markdown_topics(1),infer_benefit(5),detect_features(2),determine_abstraction_level(1),get_action_verb(1)  # Extracts meaningful abstractions from code changes...
+  goal/license/manager.py:
+    e: LicenseManager,create_license_file,update_license_file
+    LicenseManager: __init__(1),get_available_licenses(0),get_license_template(1),add_custom_template(2),create_license_file(4),update_license_file(3),validate_license_file(0)  # Manages license operations including template handling and f...
+    create_license_file(license_id;fullname;year;force)
+    update_license_file(license_id;fullname;year)
   goal/summary/validator.py:
     e: QualityValidator
     QualityValidator: __init__(1),validate(2),_extract_intent(2),_validate_title(3),_validate_intent(7),_validate_metrics(3),_validate_relations(3),_validate_files(3),_validate_capabilities(3),_validate_body(3),_validate_value_score(4),_calculate_score(2),auto_fix(4)  # Validate commit summary against quality gates...
@@ -210,6 +230,11 @@ D:
     enforce_quality_gates(ctx_obj;commit_msg;detailed_result;files;total_adds;total_dels;yes;markdown)
     handle_single_commit(commit_title;commit_body;commit_msg;message;yes)
     handle_split_commits(ctx_obj;files;ticket;new_version;current_version;no_version_sync;no_changelog;yes)
+  goal/cli/commit_cmd.py:
+    e: commit,fix_summary,validate
+    commit(ctx;detailed;unstaged;markdown;ticket;abstraction;co_author)
+    fix_summary(ctx;fix;preview;cached)
+    validate(ctx;fix;cached)
   goal/doctor/python.py:
     e: PythonDiagnostics,diagnose_python
     PythonDiagnostics: __init__(3),check_py001_missing_config(4),check_py002_build_system(0),check_py003_license_classifiers(0),check_py004_deprecated_backends(0),check_py005_license_table(0),check_py006_duplicate_authors(0),check_py007_requires_python(0),check_py008_empty_classifiers(0),check_py009_string_authors(0),check_py010_project_name_consistency(0),check_py011_version_consistency(0),check_py012_dist_cleanup(0),check_py013_goal_publish_pattern(0),write_fixes(1)  # Container for Python diagnostic checks with shared state...
@@ -217,10 +242,6 @@ D:
   goal/deep_analyzer.py:
     e: CodeChangeAnalyzer
     CodeChangeAnalyzer: __init__(0),analyze_file_diff(3),_detect_language(1),_analyze_python_diff(2),_extract_python_entities(1),_get_decorator_name(1),_calculate_complexity(1),_analyze_js_diff(2),_analyze_generic_diff(2),_detect_functional_areas(2),aggregate_changes(1),_detect_file_patterns(1),_check_analyzer_value(2),_check_cli_value(2),_check_area_values(2),_check_complexity_value(1),_check_architecture_value(1),_build_entity_fallback(2),infer_functional_value(2),detect_relations(1),generate_functional_summary(1),_build_summary(3)  # Analyzes code changes to extract functional meaning...
-  goal/push/stages/push_remote.py:
-    e: push_to_remote,_offer_recovery
-    push_to_remote(branch;tag_name;no_tag;yes)
-    _offer_recovery(error_output)
   goal/cli/__init__.py:
     e: GoalGroup,_setup_nfo_logging,_nfo_log_call,strip_ansi,split_paths_by_type,stage_paths,confirm,main
     GoalGroup(click.Group): get_command(2),parse_args(2)  # Custom Click Group that shows docs URL for unknown commands ...
@@ -231,11 +252,15 @@ D:
     stage_paths(paths)
     confirm(prompt;default)
     main(ctx;bump;version;yes;all_flags;todo;markdown;dry_run;config_path;abstraction;nfo_format;nfo_sink)
-  goal/cli/commit_cmd.py:
-    e: commit,fix_summary,validate
-    commit(ctx;detailed;unstaged;markdown;ticket;abstraction)
-    fix_summary(ctx;fix;preview;cached)
-    validate(ctx;fix;cached)
+  goal/license/spdx.py:
+    e: _load_spdx_data,validate_spdx_id,get_license_info,check_compatibility,get_compatible_licenses,is_copyleft,is_permissive
+    _load_spdx_data()
+    validate_spdx_id(license_id)
+    get_license_info(license_id)
+    check_compatibility(license1;license2)
+    get_compatible_licenses(license_id)
+    is_copyleft(license_id)
+    is_permissive(license_id)
   goal/cli/publish.py:
     e: makefile_has_target,_get_python_bin,_ensure_publish_deps,publish_project
     makefile_has_target(target)
@@ -277,7 +302,7 @@ D:
     e: RecoveryStrategy,AuthErrorStrategy,LargeFileStrategy,DivergentHistoryStrategy,CorruptedObjectStrategy,LFSIssueStrategy,ForcePushStrategy
     RecoveryStrategy(ABC): __init__(2),can_handle(1),recover(1),run_git(0),run_git_with_output(0)  # Base class for all recovery strategies...
     AuthErrorStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles authentication errors...
-    LargeFileStrategy(RecoveryStrategy): __init__(1),can_handle(1),recover(1),_files_in_history(1),_remove_from_history(1),_extract_file_paths(1),_find_large_files(1),_get_file_size_mb(1),_remove_large_files(1),_move_to_lfs(1),_skip_large_files(1)  # Handles large file errors...
+    LargeFileStrategy(RecoveryStrategy): __init__(2),can_handle(1),recover(1),_files_in_history(1),_remove_from_history(1),_extract_file_paths(1),_find_large_files(1),_get_file_size_mb(1),_remove_large_files(1),_move_to_lfs(1),_skip_large_files(1)  # Handles large file errors...
     DivergentHistoryStrategy(RecoveryStrategy): can_handle(1),recover(1),_rebase_changes(1),_merge_changes(1),_pull_changes(0),_force_push(0)  # Handles divergent history errors...
     CorruptedObjectStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles corrupted git objects...
     LFSIssueStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles Git LFS issues...
@@ -319,16 +344,35 @@ D:
     _format_todo_entry(issue)
     add_issues_to_todo(project_dir;issues;todo_file)
     diagnose_and_report_with_todo(project_dir;project_type;auto_fix;todo_file)
+  goal/hooks/config.py:
+    e: get_hook_config,create_precommit_config
+    get_hook_config(project_dir)
+    create_precommit_config(project_dir;include_goal)
   goal/doctor/core.py:
     e: diagnose_project,diagnose_and_report
     diagnose_project(project_dir;project_type;auto_fix)
     diagnose_and_report(project_dir;project_type;auto_fix)
+  goal/cli/license_cmd.py:
+    e: license,license_create,license_update,license_validate,license_info,license_check,license_list,license_template
+    license()
+    license_create(license_id;fullname;year;force)
+    license_update(license_id;fullname;year)
+    license_validate()
+    license_info(license_id)
+    license_check(license1;license2)
+    license_list(custom)
+    license_template(license_id;file)
   goal/cli/publish_cmd.py:
     e: publish
     publish(ctx;use_make;target;version_arg)
   goal/doctor/php.py:
     e: diagnose_php
     diagnose_php(project_dir;auto_fix)
+  goal/authors/manager.py:
+    e: AuthorsManager,get_project_authors,add_project_author
+    AuthorsManager: __init__(1),get_authors(0),add_author(4),remove_author(1),update_author(4),find_author(1),list_authors(0),get_current_author(0),import_from_git(0),export_to_contributors(0)  # Manages project authors and team members...
+    get_project_authors(project_dir)
+    add_project_author(name;email;role;alias;project_dir)
   goal/recovery/manager.py:
     e: RecoveryManager
     RecoveryManager: __init__(2),_ensure_recovery_dir(0),run_git(0),recover_from_push_failure(1),_identify_strategy(1),_create_backup(0),_cleanup_backup(1),_rollback_to_backup(1),_attempt_push(0),setup_clean_clone(0),identify_new_commits(0),cherry_pick_commits(1),push_from_clean_clone(0),full_recovery_workflow(0)  # Manages the recovery process for failed git pushes...
@@ -342,9 +386,38 @@ D:
   goal/doctor/go.py:
     e: diagnose_go
     diagnose_go(project_dir;auto_fix)
+  goal/authors/utils.py:
+    e: format_co_author_trailer,parse_co_authors,add_co_authors_to_message,remove_co_authors_from_message,validate_author_format,deduplicate_co_authors,get_co_authors_from_command_line,format_commit_message_with_co_authors,extract_current_author_from_config
+    format_co_author_trailer(name;email)
+    parse_co_authors(message)
+    add_co_authors_to_message(message;co_authors)
+    remove_co_authors_from_message(message)
+    validate_author_format(author_str)
+    deduplicate_co_authors(co_authors)
+    get_co_authors_from_command_line(co_author_args)
+    format_commit_message_with_co_authors(title;body;co_authors)
+    extract_current_author_from_config()
   goal/push/stages/publish.py:
     e: handle_publish
     handle_publish(project_types;new_version;yes)
+  goal/hooks/manager.py:
+    e: HooksManager,install_hooks,uninstall_hooks,run_hooks
+    HooksManager: __init__(1),is_precommit_installed(0),is_hooks_configured(0),install_precommit(0),create_hook_script(0),create_precommit_config(1),install_hooks(1),uninstall_hooks(0),run_validation(1),run_hooks(1),status(0)  # Manages pre-commit hooks for Goal...
+    install_hooks(project_dir;force)
+    uninstall_hooks(project_dir)
+    run_hooks(project_dir;all_files)
+  goal/cli/authors_cmd.py:
+    e: authors,authors_list,authors_add,authors_remove,authors_update,authors_import,authors_export,authors_find,authors_co_author,authors_current
+    authors()
+    authors_list()
+    authors_add(name;email;role;alias)
+    authors_remove(email)
+    authors_update(email;name;role;alias)
+    authors_import()
+    authors_export()
+    authors_find(identifier)
+    authors_co_author(name;email)
+    authors_current()
   goal/cli/config_cmd.py:
     e: config,config_show,config_validate,config_update,config_set,config_get,setup
     config()
@@ -387,9 +460,13 @@ D:
     sync_all_versions_wrapper(new_version;user_config)
     handle_version_sync(new_version;no_version_sync;user_config;yes)
     get_version_info(current_version;bump)
-  debug_recovery.py:
-    e: test_recovery
-    test_recovery()
+  goal/cli/hooks_cmd.py:
+    e: hooks,hooks_install,hooks_uninstall,hooks_run,hooks_status
+    hooks()
+    hooks_install(force)
+    hooks_uninstall()
+    hooks_run(all_files)
+    hooks_status()
   goal/summary/__init__.py:
     e: generate_business_summary,validate_summary,auto_fix_summary
     generate_business_summary(files;diff_content;config)
@@ -405,15 +482,16 @@ D:
   goal/cli/push_cmd.py:
     e: push
     push(ctx;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
-  goal/enhanced_summary.py:
   goal/config/__init__.py:
   goal/commit_generator.py:
+  goal/enhanced_summary.py:
   goal/__init__.py:
   goal/__main__.py:
   goal/smart_commit/__init__.py:
   goal/project_doctor.py:
   goal/generator/__init__.py:
   goal/validators/__init__.py:
+  goal/hooks/__init__.py:
   goal/recovery/__init__.py:
   goal/push/__init__.py:
   goal/config/constants.py:
@@ -422,6 +500,8 @@ D:
     e: Issue,DoctorReport
     Issue:  # A single diagnosed issue...
     DoctorReport:  # Aggregated report from a doctor run...
+  goal/authors/__init__.py:
+  goal/license/__init__.py:
   goal/push/stages/__init__.py:
   project.sh:
   integration/run_docker_matrix.sh:

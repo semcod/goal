@@ -18,8 +18,35 @@
   - Creates `.pre-commit-config.yaml` with Goal validation hook
   - Automatic pre-commit package installation
 
+- **Post-commit actions** (v2.3.x feature)
+  - New `goal postcommit` command for managing post-commit actions
+  - `goal postcommit run` - Execute configured actions after commit
+  - `goal postcommit list` - Show configured actions
+  - `goal postcommit validate` - Validate action configuration
+  - `goal postcommit info` - Show available action types
+  - Available actions:
+    - Notification (desktop notifications)
+    - Webhook (HTTP POST requests)
+    - Script (custom shell scripts)
+    - Git push (automatic pushing)
+  - Configure via `goal.yaml` under `post_commit:` section
+
+- **Custom validation rules** (v2.3.x feature)
+  - New `goal validation` command for managing custom rules
+  - `goal validation run` - Execute all configured validation rules
+  - `goal validation list` - Show configured rules
+  - `goal validation validate` - Validate rule configurations
+  - `goal validation info` - Show available rule types
+  - Available rule types:
+    - `message_pattern` - Regex pattern matching for commit messages
+    - `file_pattern` - File pattern validation (min/max count, forbidden patterns)
+    - `script` - Custom validation scripts
+    - `commit_size` - Commit size limits (lines/files)
+    - `message_length` - Commit message length validation
+  - Configure via `goal.yaml` under `validation_rules:` section
+
 ### Changed
-- Started v2.3.x development with pre-commit hooks integration
+- Started v2.3.x development with pre-commit hooks and post-commit actions
 
 ## [2.1.112] - 2026-03-27
 

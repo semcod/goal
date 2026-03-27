@@ -24,7 +24,7 @@ __all__ = ['run_git', 'run_command', '_echo_cmd', '_run_git_verbose', 'run_git_w
 # Core Git Execution
 # =============================================================================
 
-def run_git(*args, capture=True):
+def run_git(*args: str, capture: bool = True) -> subprocess.CompletedProcess:
     """Run a git command and return the result."""
     result = subprocess.run(
         ['git'] + list(args),
@@ -473,19 +473,19 @@ def ensure_remote(auto: bool = False) -> bool:
 def get_staged_files() -> List[str]:
     """Get list of staged files."""
     result = run_git('diff', '--cached', '--name-only')
-    return result.stdout.strip().split('\n') if result.stdout.strip() else []
+    return result.stdout.strip().splitlines() if result.stdout.strip() else []
 
 
 def get_unstaged_files() -> List[str]:
     """Get list of unstaged/untracked files."""
     result = run_git('status', '--porcelain')
-    return [line[3:] for line in result.stdout.strip().split('\n') if line]
+    return [line[3:] for line in result.stdout.strip().splitlines() if line]
 
 
 def get_working_tree_files() -> List[str]:
     """Get list of files changed in working tree (unstaged + untracked)."""
-    changed = run_git('diff', '--name-only').stdout.strip().split('\n')
-    untracked = run_git('ls-files', '--others', '--exclude-standard').stdout.strip().split('\n')
+    changed = run_git('diff', '--name-only').stdout.strip().splitlines()
+    untracked = run_git('ls-files', '--others', '--exclude-standard').stdout.strip().splitlines()
 
     files: List[str] = []
     for f in [*changed, *untracked]:
@@ -501,7 +501,7 @@ def get_diff_stats(cached: bool = True) -> Dict[str, Tuple[int, int]]:
     """Get additions/deletions per file."""
     result = run_git('diff', '--cached', '--numstat') if cached else run_git('diff', '--numstat')
     stats = {}
-    for line in result.stdout.strip().split('\n'):
+    for line in result.stdout.strip().splitlines():
         if line:
             parts = line.split('\t')
             if len(parts) == 3:
@@ -511,8 +511,21 @@ def get_diff_stats(cached: bool = True) -> Dict[str, Tuple[int, int]]:
     return stats
 
 
-def get_diff_content(cached: bool = True) -> str:
-    """Get the actual diff content for analysis."""
+def get_diff_content(cached: bool = True, max_lines: int = 10000) -> str:
+    """Get the actual diff content for analysis.
+    
+    For performance, if total changes exceed max_lines, returns a limited diff
+    with summary stats instead of full content.
+    """
+    # First check stats to avoid loading huge diffs
+    stats = get_diff_stats(cached)
+    total_changes = sum(adds + dels for adds, dels in stats.values())
+    
+    if total_changes > max_lines:
+        # For very large changes, return limited diff with just file names and stats
+        result = run_git('diff', '--cached', '--stat') if cached else run_git('diff', '--stat')
+        return f"# Large diff ({total_changes} lines changed)\n{result.stdout}"
+    
     result = run_git('diff', '--cached', '-U3') if cached else run_git('diff', '-U3')
     return result.stdout
 
