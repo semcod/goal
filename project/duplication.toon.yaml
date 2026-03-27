@@ -1,12 +1,12 @@
-# redup/duplication | 11 groups | 71f 16242L | 2026-03-27
+# redup/duplication | 11 groups | 71f 16239L | 2026-03-27
 
 SUMMARY:
   files_scanned: 71
-  total_lines:   16242
+  total_lines:   16239
   dup_groups:    11
   dup_fragments: 37
   saved_lines:   235
-  scan_ms:       5761
+  scan_ms:       7393
 
 DUPLICATES[11] (ranked by impact):
   [02d23ce0dd67549c] ! EXAC  push  L=35 N=2 saved=35 sim=1.00
@@ -15,8 +15,8 @@ DUPLICATES[11] (ranked by impact):
   [4c2991aa6376ee76] ! STRU  hooks  L=7 N=6 saved=35 sim=1.00
       goal/cli/hooks_cmd.py:0-6  (hooks)
       goal/cli/authors_cmd.py:0-6  (authors)
-      goal/cli/postcommit_cmd.py:0-6  (postcommit)
       goal/cli/license_cmd.py:0-6  (license)
+      goal/cli/postcommit_cmd.py:0-6  (postcommit)
       goal/cli/validation_cmd.py:0-6  (validation)
       goal/cli/config_cmd.py:0-6  (config)
   [e8e1ba5d936993f1] ! STRU  get_name  L=4 N=9 saved=32 sim=1.00

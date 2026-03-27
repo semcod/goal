@@ -6,11 +6,11 @@ SUMMARY:
 WARNINGS[21]{path,score}:
   goal/push/stages/push_remote.py,0.90
     issues[5]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,push_to_remote has cyclomatic complexity 16 (max: 15),18
-      complexity.cyclomatic,warning,_offer_recovery has cyclomatic complexity 41 (max: 15),89
-      complexity.lizard_cc,warning,push_to_remote: CC=16 exceeds limit 15,18
-      complexity.lizard_cc,warning,_offer_recovery: CC=41 exceeds limit 15,89
-      complexity.lizard_length,warning,_offer_recovery: 210 lines exceeds limit 100,89
+      complexity.cyclomatic,warning,push_to_remote has cyclomatic complexity 16 (max: 15),19
+      complexity.cyclomatic,warning,_offer_recovery has cyclomatic complexity 41 (max: 15),90
+      complexity.lizard_cc,warning,push_to_remote: CC=16 exceeds limit 15,19
+      complexity.lizard_cc,warning,_offer_recovery: CC=41 exceeds limit 15,90
+      complexity.lizard_length,warning,_offer_recovery: 207 lines exceeds limit 100,90
   goal/cli/version.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,update_project_metadata has cyclomatic complexity 26 (max: 15),232
@@ -219,10 +219,6 @@ ERRORS[35]{path,score}:
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'strategies' not found,10
       python.import.resolvable,error,Module 'exceptions' not found,19
-  goal/cli/commit_cmd.py,0.90
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'enhanced_summary' not found,88
-      python.import.resolvable,error,Module 'enhanced_summary' not found,146
   goal/hooks/manager.py,0.90
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'validators.file_validator' not found,15
@@ -239,6 +235,9 @@ ERRORS[35]{path,score}:
   tests/test_project_doctor.py,0.94
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'pytest' not found,7
+  goal/cli/commit_cmd.py,0.95
+    issues[1]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'enhanced_summary' not found,88
   goal/doctor/todo.py,0.95
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'core' not found,117

@@ -13,6 +13,12 @@ from typing import List, Tuple, Optional, Set
 import click
 
 
+# Constants for file size limits
+BYTES_PER_MB = 1024 * 1024
+DEFAULT_MAX_FILE_SIZE_MB = 10
+GITHUB_MAX_FILE_SIZE_MB = 100
+
+
 class ValidationError(Exception):
     """Base validation error."""
     pass
@@ -54,7 +60,7 @@ class DotFolderError(ValidationError):
 def get_file_size_mb(file_path: str) -> float:
     """Get file size in megabytes."""
     try:
-        return os.path.getsize(file_path) / (1024 * 1024)
+        return os.path.getsize(file_path) / BYTES_PER_MB
     except OSError:
         return 0.0
 
