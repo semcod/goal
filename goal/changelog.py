@@ -102,7 +102,7 @@ def update_changelog(version: str, files: List[str], commit_msg: str,
                 else:
                     new_content = f"{existing_content}\n{entry}"
             else:
-                new_content = '## [Unreleased]\n\n' + entry + '\n' + existing_content
+                new_content = f"## [Unreleased]\n\n{entry}\n{existing_content}"
     else:
         # Create new changelog
         new_content = f"""# Changelog

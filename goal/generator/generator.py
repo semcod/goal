@@ -271,15 +271,15 @@ class CommitMessageGenerator:
         ext_counter = Counter((Path(f).suffix or 'other') for f in files)
         
         parts = ["\nSummary:"]
-        parts.append("- Dirs: " + ", ".join(f"{k}={v}" for k, v in dir_counter.most_common(6)))
-        parts.append("- Exts: " + ", ".join(f"{k}={v}" for k, v in ext_counter.most_common(6)))
+        parts.append(f"- Dirs: {', '.join(f'{k}={v}' for k, v in dir_counter.most_common(6))}")
+        parts.append(f"- Exts: {', '.join(f'{k}={v}' for k, v in ext_counter.most_common(6))}")
         parts.append(f"- A/M/D: {len(added_files)}/{len(modified_files)}/{len(deleted_files)}")
         if added_files:
-            parts.append("- Added: " + ", ".join(added_files[:8]) + (" ..." if len(added_files) > 8 else ""))
+            parts.append(f"- Added: {', '.join(added_files[:8])}{' ...' if len(added_files) > 8 else ''}")
         if deleted_files:
-            parts.append("- Deleted: " + ", ".join(deleted_files[:8]) + (" ..." if len(deleted_files) > 8 else ""))
+            parts.append(f"- Deleted: {', '.join(deleted_files[:8])}{' ...' if len(deleted_files) > 8 else ''}")
         if symbols:
-            parts.append("- Symbols: " + ", ".join(symbols))
+            parts.append(f"- Symbols: {', '.join(symbols)}")
         return parts
 
     def _build_file_lists(
@@ -322,7 +322,7 @@ class CommitMessageGenerator:
             a, d = numstat_map.get(p, (0, 0))
             notes = self._per_file_notes(p, cached=cached)
             if notes:
-                parts.append(f"- {p} (+{a}/-{d}): " + '; '.join(notes))
+                parts.append(f"- {p} (+{a}/-{d}): {'; '.join(notes)}")
             else:
                 parts.append(f"- {p} (+{a}/-{d}): update")
         return parts

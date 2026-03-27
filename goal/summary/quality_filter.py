@@ -109,7 +109,7 @@ class SummaryQualityFilter:
     
     def classify_intent(self, files: List[str], entities: List[Dict]) -> str:
         """Classify commit intent: feat, fix, refactor, docs, chore."""
-        combined = ' '.join(files) + ' ' + ' '.join(e.get('name', '') for e in entities)
+        combined = f"{' '.join(files)} {' '.join(e.get('name', '') for e in entities)}"
         
         # Check patterns
         refactor_score = sum(1 for p in self._refactor_re if p.search(combined))
@@ -258,7 +258,7 @@ class SummaryQualityFilter:
     def classify_intent_smart(self, files: List[str], entities: List[Dict], 
                                added: int = 0, deleted: int = 0) -> str:
         """Smart intent classification using multiple signals."""
-        combined = ' '.join(files) + ' ' + ' '.join(e.get('name', '') for e in entities)
+        combined = f"{' '.join(files)} {' '.join(e.get('name', '') for e in entities)}"
         
         # Signal 1: Deletions/churn signal (refactor often includes large deletions)
         net = added - deleted

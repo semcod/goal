@@ -72,6 +72,6 @@ def diagnose_nodejs(project_dir: Path, auto_fix: bool = True) -> List[Issue]:
     # Write fixes
     new_data = json.dumps(data, indent=2)
     if new_data != original_data and auto_fix:
-        pkg_json.write_text(new_data + '\n', encoding='utf-8')
+        pkg_json.write_text(f"{new_data}\n", encoding='utf-8')
 
     return issues

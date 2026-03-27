@@ -142,7 +142,7 @@ class EnhancedSummaryGenerator:
         capabilities = []
         seen = set()
         
-        combined_text = diff_content + ' ' + ' '.join(files)
+        combined_text = f"{diff_content} {' '.join(files)}"
         
         for cap_id, cap_info in self.VALUE_PATTERNS.items():
             for sig in cap_info['signatures']:

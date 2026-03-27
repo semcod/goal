@@ -198,7 +198,7 @@ class CodeAbstraction:
         features = []
         file_str = ' '.join(files).lower()
         entity_str = ' '.join(entities).lower()
-        combined = file_str + ' ' + entity_str
+        combined = f"{file_str} {entity_str}"
         
         # Technology/feature detection patterns
         feature_patterns = [

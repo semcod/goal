@@ -87,7 +87,7 @@ Last updated: """ + datetime.now().strftime('%Y-%m-%d')
         total_fixed = sum(len(r.fixed) for r in all_reports)
         
         if total_issues > 0 or total_fixed > 0:
-            click.echo(click.style("\n" + "=" * 60, fg='cyan'))
+            click.echo(click.style(f"\n{'=' * 60}", fg='cyan'))
             if total_issues == 0:
                 click.echo(click.style("✓ All projects are healthy!", fg='green', bold=True))
             else:

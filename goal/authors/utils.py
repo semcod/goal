@@ -63,7 +63,7 @@ def add_co_authors_to_message(message: str, co_authors: List[Dict[str, str]]) ->
     # Add co-author trailers
     for author in co_authors:
         trailer = format_co_author_trailer(author['name'], author['email'])
-        message += trailer + '\n'
+        message += f"{trailer}\n"
     
     return message
 
@@ -118,7 +118,7 @@ def validate_author_format(author_str: str) -> Optional[Dict[str, str]]:
     match = re.match(r'^([^<]+?)\s+<(.+?)@(.+?)>$', author_str.strip())
     if match:
         name = match.group(1).strip()
-        email = match.group(2) + '@' + match.group(3)
+        email = f"{match.group(2)}@{match.group(3)}"
         return {'name': name, 'email': email}
     
     # Try email format

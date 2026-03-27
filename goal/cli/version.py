@@ -453,7 +453,7 @@ def update_readme_metadata(user_config) -> bool:
 
 def _update_version_file(new_version: str, updated: List[str]) -> None:
     """Update VERSION file."""
-    Path('VERSION').write_text(new_version + '\n')
+    Path('VERSION').write_text(f"{new_version}\n")
     updated.append('VERSION')
 
 
@@ -600,7 +600,7 @@ def sync_all_versions(new_version: str, user_config=None) -> List[str]:
     updated = []
     
     # Always update VERSION file
-    Path('VERSION').write_text(new_version + '\n')
+    Path('VERSION').write_text(f"{new_version}\n")
     updated.append('VERSION')
     
     # Update package.json
