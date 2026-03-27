@@ -1,5 +1,26 @@
 ## [Unreleased]
 
+## [2.1.113] - 2026-03-27
+
+### Docs
+- Update CHANGELOG.md
+
+## [2.3.0] - 2026-03-27
+
+### Added
+- **Pre-commit hooks integration** (v2.3.x feature)
+  - New `goal hooks` command for managing pre-commit hooks
+  - `goal hooks install` - Install Goal validation hooks
+  - `goal hooks uninstall` - Remove Goal validation hooks  
+  - `goal hooks run` - Run hooks manually on demand
+  - `goal hooks status` - Check hooks installation status
+  - Integrates with existing file validation (size, tokens, dot folders)
+  - Creates `.pre-commit-config.yaml` with Goal validation hook
+  - Automatic pre-commit package installation
+
+### Changed
+- Started v2.3.x development with pre-commit hooks integration
+
 ## [2.1.112] - 2026-03-27
 
 ## [2.1.111] - 2026-03-27

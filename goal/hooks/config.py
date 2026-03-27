@@ -21,8 +21,8 @@ DEFAULT_HOOK_CONFIG = {
             'xoxb-[a-zA-Z0-9-]{10,48}',  # Slack Bot Token
             'xoxp-[a-zA-Z0-9-]{10,48}',  # Slack User Token
             'glpat-[a-zA-Z0-9-]{20}',    # GitLab Personal Token
-            'Bearer\s+[a-zA-Z0-9_\-\.]+',  # Bearer tokens
-            'Token\s+[a-zA-Z0-9_\-\.]+',   # API tokens
+            r'Bearer\s+[a-zA-Z0-9_\-\.]+',  # Bearer tokens
+            r'Token\s+[a-zA-Z0-9_\-\.]+',   # API tokens
         ],
     },
     'dot_folder_detection': {

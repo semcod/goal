@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Any, Tuple
 
 import click
 
-from goal.git_ops import run_git, apply_ticket_prefix
+from goal.git_ops import run_git, apply_ticket_prefix, get_staged_files
 from goal.commit_generator import CommitMessageGenerator
 from goal.enhanced_summary import QualityValidator
 from goal.cli import split_paths_by_type, stage_paths, confirm
@@ -167,6 +167,13 @@ def handle_split_commits(
             continue
         
         stage_paths(groups[gname])
+        
+        # Check if there are actual staged changes before committing
+        staged = get_staged_files()
+        if not staged:
+            click.echo(click.style(f"  ℹ Skipping {gname}: no changes to commit", fg='yellow'))
+            continue
+        
         d = generator.generate_detailed_message(cached=True, paths=groups[gname])
         if not d:
             continue
