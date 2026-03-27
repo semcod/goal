@@ -243,9 +243,15 @@ class LargeFileStrategy(RecoveryStrategy):
         self.run_git('branch', backup_ref)
         click.echo(f"✓ Created backup branch: {backup_ref}")
         
+        # Store remote URL in case filter-repo removes it
+        try:
+            remote_url = self.run_git('remote', 'get-url', 'origin', capture_output=True, check=True).stdout.strip()
+        except subprocess.CalledProcessError:
+            remote_url = None
+        
         try:
             # Run filter-repo to remove files
-            cmd = ['git-filter-repo']
+            cmd = ['git-filter-repo', '--force']
             # Add each file to be removed
             for path in file_paths:
                 cmd.extend(['--path', path, '--invert-paths'])
@@ -255,9 +261,20 @@ class LargeFileStrategy(RecoveryStrategy):
             
             click.echo(click.style("✓ Large files removed from history", fg='green'))
             
+            # Restore remote if filter-repo removed it
+            if remote_url:
+                try:
+                    self.run_git('remote', 'get-url', 'origin', capture_output=True, check=True)
+                except subprocess.CalledProcessError:
+                    click.echo("Restoring remote configuration...")
+                    self.run_git('remote', 'add', 'origin', remote_url)
+                    click.echo("✓ Remote restored")
+            
             # Force push
             click.echo("\nForce pushing to remote...")
-            self.run_git('push', 'origin', '--force-with-lease')
+            # Get current branch name
+            current_branch = self.run_git('branch', '--show-current', capture_output=True, check=True).stdout.strip()
+            self.run_git('push', '--set-upstream', 'origin', current_branch, '--force-with-lease')
             click.echo(click.style("✓ Successfully pushed to remote", fg='green'))
             
             # Clean up backup
