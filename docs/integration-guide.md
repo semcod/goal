@@ -23,6 +23,12 @@ Dodaj ten badge do swojego `README.md` aby pokazać że projekt używa `goal`:
 
 ## Czas wykonania `goal -a`
 
+Od wersji 2.1.127+, `goal -a` automatycznie wyświetla czas wykonania na końcu:
+
+```
+⏱️  Total time: 12.5s
+```
+
 ### Badge z czasem wykonania (via GitHub Actions)
 
 Dodaj do workflow generowanie badge z czasem:

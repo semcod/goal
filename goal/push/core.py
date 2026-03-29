@@ -1,6 +1,7 @@
 """Push workflow core - orchestrator and utilities."""
 
 import sys
+import time
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
@@ -127,6 +128,9 @@ def execute_push_workflow(
 ) -> None:
     """Execute the complete push workflow."""
     
+    # Start timing
+    start_time = time.time()
+    
     # Initialize context
     _initialize_context(ctx_obj, bump, message, yes, markdown)
     
@@ -210,10 +214,17 @@ def execute_push_workflow(
     # Publish
     publish_success = handle_publish(project_types, new_version, ctx_obj['yes'])
     
+    # Calculate elapsed time
+    elapsed = time.time() - start_time
+    ctx_obj['_elapsed_time'] = elapsed
+    
     # Final summary
     output_final_summary(ctx_obj, markdown, project_types, files, stats, current_version,
                         new_version, commit_msg, commit_body, test_exit_code,
                         publish_success, no_tag)
+    
+    # Print timing info
+    click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg='cyan'))
 
 
 def _initialize_context(ctx_obj: Dict[str, Any], bump: str, message: Optional[str],

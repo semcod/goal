@@ -454,6 +454,7 @@ class PythonDiagnostics:
     def check_py014_pypi_token(self) -> None:
         """PY014: Check for PyPI token configuration before publishing."""
         import os
+        from pathlib import Path
         
         # Check if this project uses Python and has publish enabled
         goal_yaml = self.project_dir / 'goal.yaml'
@@ -466,14 +467,15 @@ class PythonDiagnostics:
         
         # Check for PyPI token
         pypi_token = os.environ.get('PYPI_TOKEN') or os.environ.get('TWINE_PASSWORD')
-        pypirc = self.project_dir / '.pypirc'
+        pypirc_project = self.project_dir / '.pypirc'
+        pypirc_home = Path.home() / '.pypirc'
         
-        if pypi_token or pypirc.exists():
+        if pypi_token or pypirc_project.exists() or pypirc_home.exists():
             return
         
         detail = (
             "PyPI token not configured. Publishing will fail with 403 Forbidden.\n"
-            "Set PYPI_TOKEN environment variable or configure .pypirc file."
+            "Set PYPI_TOKEN environment variable or configure ~/.pypirc file."
         )
         issue = Issue(
             severity='error', code='PY014',

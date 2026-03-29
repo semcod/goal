@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [2.1.129] - 2026-03-29
+
+### Docs
+- Update docs/integration-guide.md
+
 ## [2.1.128] - 2026-03-29
 
 ### Docs
