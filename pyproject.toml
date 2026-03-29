@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.1.155"
+version = "2.1.156"
 description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
 readme = "README.md"
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ dependencies = [
     "click>=8.0.0",
     "PyYAML>=6.0",
     "clickmd>=0.1.0",
-    "costs>=0.1.12",
+    "costs>=0.1.21",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +32,7 @@ dev = [
     "pytest>=7.0.0",
     "build",
     "twine",
+    "pfix>=0.1.60",
 ]
 
 [project.scripts]
