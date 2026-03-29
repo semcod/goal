@@ -451,6 +451,37 @@ class PythonDiagnostics:
                 issue.fix_description = f"Fixed pattern to '{expected}'"
         self.issues.append(issue)
 
+    def check_py014_pypi_token(self) -> None:
+        """PY014: Check for PyPI token configuration before publishing."""
+        import os
+        
+        # Check if this project uses Python and has publish enabled
+        goal_yaml = self.project_dir / 'goal.yaml'
+        if not goal_yaml.exists():
+            return
+        
+        goal_content = goal_yaml.read_text(errors='ignore')
+        if 'publish_enabled: true' not in goal_content and 'publish_enabled:true' not in goal_content:
+            return
+        
+        # Check for PyPI token
+        pypi_token = os.environ.get('PYPI_TOKEN') or os.environ.get('TWINE_PASSWORD')
+        pypirc = self.project_dir / '.pypirc'
+        
+        if pypi_token or pypirc.exists():
+            return
+        
+        detail = (
+            "PyPI token not configured. Publishing will fail with 403 Forbidden.\n"
+            "Set PYPI_TOKEN environment variable or configure .pypirc file."
+        )
+        issue = Issue(
+            severity='error', code='PY014',
+            title='Missing PyPI token',
+            detail=detail, file='goal.yaml'
+        )
+        self.issues.append(issue)
+
     def write_fixes(self, pyproject: Path) -> None:
         """Write fixes back to file if content changed."""
         if self.content != self.original_content and self.auto_fix:
@@ -495,6 +526,7 @@ def diagnose_python(project_dir: Path, auto_fix: bool = True) -> List[Issue]:
     diag.check_py011_version_consistency()
     diag.check_py012_dist_cleanup()
     diag.check_py013_goal_publish_pattern()
+    diag.check_py014_pypi_token()
     
     # Write fixes
     diag.write_fixes(pyproject)

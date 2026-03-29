@@ -130,6 +130,9 @@ def execute_push_workflow(
     # Initialize context
     _initialize_context(ctx_obj, bump, message, yes, markdown)
     
+    # Get updated yes value from context (includes -a flag)
+    yes = ctx_obj['yes']
+    
     # Detect and bootstrap projects
     project_types = _detect_and_bootstrap_projects(ctx_obj, dry_run, yes)
     
