@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [2.1.153] - 2026-03-29
+
+### Other
+- Update examples/template-generator/generate.py
+
 ## [2.1.152] - 2026-03-29
 
 ### Docs

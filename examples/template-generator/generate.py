@@ -9,7 +9,6 @@ import sys
 import os
 import argparse
 from pathlib import Path
-from string import Template
 
 
 TEMPLATES = {
@@ -17,11 +16,11 @@ TEMPLATES = {
         "name": "Python Package",
         "files": {
             "pyproject.toml": '''[project]
-name = "$project_name"
+name = "{project_name}"
 version = "0.1.0"
-description = "$description"
-authors = [{name = "$author", email = "$email"}]
-license = "$license"
+description = "{description}"
+authors = [{name = "{author}", email = "{email}"}]
+license = "{license}"
 readme = "README.md"
 requires-python = ">=3.8"
 
@@ -32,17 +31,17 @@ dev = ["pytest", "goal>=2.1.0"]
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 ''',
-            "src/$project_name/__init__.py": '''"""$description"""
+            "src/{project_name}/__init__.py": '''"""{description}"""
 
 __version__ = "0.1.0"
 ''',
-            "tests/test_$project_name.py": '''def test_example():
+            "tests/test_{project_name}.py": '''def test_example():
     assert True
 ''',
             "goal.yaml": '''version: "1.0"
 
 project:
-  name: "$project_name"
+  name: "{project_name}"
   type: "python"
   versioning:
     strategy: "semantic"
@@ -63,22 +62,22 @@ publishing:
     "nodejs": {
         "name": "Node.js Application",
         "files": {
-            "package.json": '''{
-  "name": "$project_name",
+            "package.json": '''{{
+  "name": "{project_name}",
   "version": "0.1.0",
-  "description": "$description",
+  "description": "{description}",
   "main": "index.js",
-  "scripts": {
+  "scripts": {{
     "test": "jest",
     "start": "node index.js"
-  },
-  "devDependencies": {
+  }},
+  "devDependencies": {{
     "jest": "^29.0.0",
     "goal": "^2.1.0"
-  }
-}
+  }}
+}}
 ''',
-            "index.js": '''console.log("Hello from $project_name!");
+            "index.js": '''console.log("Hello from {project_name}!");
 ''',
             "index.test.js": '''test('example', () => {
   expect(true).toBe(true);
@@ -87,7 +86,7 @@ publishing:
             "goal.yaml": '''version: "1.0"
 
 project:
-  name: "$project_name"
+  name: "{project_name}"
   type: "nodejs"
 
 testing:
@@ -100,28 +99,28 @@ testing:
         "name": "Rust Crate",
         "files": {
             "Cargo.toml": '''[package]
-name = "$project_name"
+name = "{project_name}"
 version = "0.1.0"
 edition = "2021"
-description = "$description"
-license = "$license"
+description = "{description}"
+license = "{license}"
 
 [dependencies]
 ''',
-            "src/lib.rs": '''//! $description
+            "src/lib.rs": '''//! {description}
 
-pub fn hello() -> &'static str {
-    "Hello from $project_name!"
-}
+pub fn hello() -> &'static str {{
+    "Hello from {project_name}!"
+}}
 ''',
-            "src/main.rs": '''fn main() {
-    println!("Hello from $project_name!");
-}
+            "src/main.rs": '''fn main() {{
+    println!("Hello from {project_name}!");
+}}
 ''',
             "goal.yaml": '''version: "1.0"
 
 project:
-  name: "$project_name"
+  name: "{project_name}"
   type: "rust"
 
 testing:
@@ -133,7 +132,7 @@ testing:
     "go": {
         "name": "Go Module",
         "files": {
-            "go.mod": '''module github.com/$author/$project_name
+            "go.mod": '''module github.com/{author}/{project_name}
 
 go 1.21
 ''',
@@ -141,22 +140,22 @@ go 1.21
 
 import "fmt"
 
-func main() {
-    fmt.Println("Hello from $project_name!")
-}
+func main() {{
+    fmt.Println("Hello from {project_name}!")
+}}
 ''',
-            "${project_name}_test.go": '''package main
+            "{project_name}_test.go": '''package main
 
 import "testing"
 
-func TestHello(t *testing.T) {
+func TestHello(t *testing.T) {{
     // Test logic here
-}
+}}
 ''',
             "goal.yaml": '''version: "1.0"
 
 project:
-  name: "$project_name"
+  name: "{project_name}"
   type: "go"
 
 testing:
@@ -195,17 +194,14 @@ def generate_project(template_type, project_name, **kwargs):
     
     # Generate files
     for file_path_template, content_template in template["files"].items():
-        # Use Template for safe substitution
-        file_path_tpl = Template(file_path_template)
-        file_path = file_path_tpl.safe_substitute(variables)
+        file_path = file_path_template.format(**variables)
         full_path = project_dir / file_path
         
         # Create parent directories
         full_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Write file using Template for safe substitution
-        content_tpl = Template(content_template)
-        content = content_tpl.safe_substitute(variables)
+        # Write file
+        content = content_template.format(**variables)
         full_path.write_text(content)
         print(f"  ✓ Created {file_path}")
     
