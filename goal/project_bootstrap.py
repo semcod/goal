@@ -996,7 +996,20 @@ def _validate_pfix_env(project_dir: Path) -> bool:
     Shows error message if key is missing or empty.
     Returns True if key is present, False otherwise.
     """
-    env_file = project_dir / '.env'
+    # Search for .env in current directory and parent directories
+    env_file = None
+    search_dir = project_dir.resolve()
+    
+    while search_dir != search_dir.parent:  # Stop at filesystem root
+        candidate = search_dir / '.env'
+        if candidate.exists():
+            env_file = candidate
+            break
+        search_dir = search_dir.parent
+    
+    # If not found, check the original project_dir for error message
+    if not env_file:
+        env_file = project_dir / '.env'
     
     # Read API key directly from .env file
     api_key = ''

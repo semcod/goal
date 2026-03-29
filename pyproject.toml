@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.1.158"
+version = "2.1.159"
 description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
 readme = "README.md"
 license = "Apache-2.0"
@@ -42,6 +42,32 @@ goal = "goal.cli:main"
 Homepage = "https://github.com/wronai/goal"
 Repository = "https://github.com/wronai/goal"
 Issues = "https://github.com/wronai/goal/issues"
+
+[tool.poetry]
+name = "goal"
+version = "2.1.158"
+description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
+readme = "README.md"
+license = "Apache-2.0"
+authors = ["Tom Sapletta <tom@sapletta.com>"]
+homepage = "https://github.com/wronai/goal"
+repository = "https://github.com/wronai/goal"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+click = "^8.0.0"
+PyYAML = "^6.0"
+clickmd = "^0.1.0"
+costs = "^0.1.21"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+build = "*"
+twine = "*"
+pfix = "^0.1.60"
+
+[tool.poetry.scripts]
+goal = "goal.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -1,5 +1,15 @@
 ## [Unreleased]
 
+## [2.1.159] - 2026-03-29
+
+### Docs
+- Update examples/testing/README.md
+
+### Other
+- Update examples/run_all_examples.py
+- Update examples/testing/01_duplicate_call_detection.py
+- Update examples/testing/02_project_detection_tests.py
+
 ## [2.1.158] - 2026-03-29
 
 ### Docs
