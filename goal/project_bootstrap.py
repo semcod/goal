@@ -556,6 +556,9 @@ def bootstrap_project(project_dir: Path, project_type: str, yes: bool = False) -
     click.echo(click.style(f"  DEBUG: auto_fix={yes}", fg='magenta'))
     result['doctor_report'] = diagnose_and_report(project_dir, project_type, auto_fix=yes)
 
+    # Step 1b: Ensure pfix is installed for auto-fixing errors
+    _ensure_pfix_installed(project_dir, yes=yes)
+
     # Step 2: Ensure environment (venv, deps)
     result['env_ok'] = ensure_project_environment(project_dir, project_type, yes=yes)
 
@@ -685,11 +688,12 @@ def _ensure_costs_config(project_dir: Path) -> bool:
         'optional-dependencies',
     ]
     
-    # Check if goal/costs already in dependencies
+    # Check if goal/costs/pfix already in dependencies
     has_goal = 'goal' in content.lower() and ('goal' in content.split('[project]')[1].split('[tool')[0] if '[project]' in content and '[tool' in content else True)
     has_costs = 'costs' in content.lower()
+    has_pfix = 'pfix' in content.lower()
     
-    if not has_goal or not has_costs:
+    if not has_goal or not has_costs or not has_pfix:
         # Try to add to [project.optional-dependencies] dev group
         if '[project.optional-dependencies]' in content and 'dev = [' in content.lower():
             # Find the dev group and add
@@ -703,6 +707,8 @@ def _ensure_costs_config(project_dir: Path) -> bool:
                     to_add.append('"goal>=2.1.0"')
                 if 'costs' not in existing.lower():
                     to_add.append('"costs>=0.1.20"')
+                if 'pfix' not in existing.lower():
+                    to_add.append('"pfix>=0.1.60"')
                 if to_add:
                     return f'{match.group(1)}{existing}{"," if existing.strip() else ""}{", ".join(to_add)}]'
                 return match.group(0)
@@ -715,21 +721,23 @@ def _ensure_costs_config(project_dir: Path) -> bool:
         # Try hatch envs default
         elif '[tool.hatch.envs.default]' in content and 'dependencies = [' in content:
             pattern = r'(dependencies\s*=\s*\[)([^\]]*)\]'
-            def add_deps(match):
+            def add_deps_hatch(match):
                 existing = match.group(2)
                 to_add = []
                 if 'goal' not in existing.lower():
                     to_add.append('"goal>=2.1.0"')
                 if 'costs' not in existing.lower():
                     to_add.append('"costs>=0.1.20"')
+                if 'pfix' not in existing.lower():
+                    to_add.append('"pfix>=0.1.60"')
                 if to_add:
                     return f'{match.group(1)}{existing}{"," if existing.strip() else ""}{", ".join(to_add)}]'
                 return match.group(0)
             
             # Only match dependencies within hatch envs default
             hatch_section = content.split('[tool.hatch.envs.default]')[1].split('[')[0]
-            if 'goal' not in hatch_section.lower() or 'costs' not in hatch_section.lower():
-                new_content = re.sub(pattern, add_deps, content, flags=re.IGNORECASE | re.DOTALL)
+            if 'goal' not in hatch_section.lower() or 'costs' not in hatch_section.lower() or 'pfix' not in hatch_section.lower():
+                new_content = re.sub(pattern, add_deps_hatch, content, flags=re.IGNORECASE | re.DOTALL)
                 if new_content != content:
                     content = new_content
                     dev_deps_updated = True
@@ -737,7 +745,7 @@ def _ensure_costs_config(project_dir: Path) -> bool:
     if dev_deps_updated:
         with open(pyproject, 'w', encoding='utf-8') as f:
             f.write(content)
-        click.echo(click.style("  ✓ Added goal and costs to dev dependencies", fg='green'))
+        click.echo(click.style("  ✓ Added goal, costs and pfix to dev dependencies", fg='green'))
     
     # Check if already configured
     if '[tool.costs]' in content:
@@ -788,7 +796,7 @@ def _ensure_env_template(project_dir: Path) -> bool:
 OPENROUTER_API_KEY=sk-or-v1-...
 
 # Default AI model for cost analysis
-PFIX_MODEL=openrouter/qwen/qwen3-coder-next
+LLM_MODEL=openrouter/qwen/qwen3-coder-next
 
 # Optional: SaaS token for managed billing
 # SAAS_TOKEN=your-saas-token
@@ -816,4 +824,80 @@ PFIX_MODEL=openrouter/qwen/qwen3-coder-next
         return True
     except Exception as e:
         click.echo(click.style(f"  ⚠ Could not create .env: {e}", fg='yellow'))
+        return False
+
+
+def _ensure_pfix_installed(project_dir: Path, yes: bool = False) -> bool:
+    """Ensure pfix package is installed for auto-fixing errors.
+    
+    Returns True if pfix is ready to use.
+    """
+    python_bin = _find_python_bin(project_dir)
+    
+    # Check if pfix is already installed
+    result = subprocess.run(
+        [python_bin, '-c', 'import pfix; print(pfix.__version__)'],
+        capture_output=True, text=True, cwd=str(project_dir)
+    )
+    
+    if result.returncode != 0:
+        # Install pfix
+        click.echo(click.style(f"  Installing pfix package...", fg='cyan'))
+        install_result = subprocess.run(
+            [python_bin, '-m', 'pip', 'install', 'pfix>=0.1.60'],
+            capture_output=True, text=True, cwd=str(project_dir)
+        )
+        if install_result.returncode != 0:
+            click.echo(click.style(f"  ⚠ Could not install pfix package", fg='yellow'))
+            return False
+        click.echo(click.style("  ✓ Pfix package installed", fg='green'))
+    else:
+        click.echo(click.style(f"  ✓ Pfix package already installed ({result.stdout.strip()})", fg='green'))
+    
+    # Check/add pfix config to pyproject.toml
+    _ensure_pfix_config(project_dir, yes=yes)
+    
+    return True
+
+
+def _ensure_pfix_config(project_dir: Path, yes: bool = False) -> bool:
+    """Ensure [tool.pfix] section exists in pyproject.toml.
+    
+    Returns True if config was added or already exists.
+    """
+    pyproject = project_dir / 'pyproject.toml'
+    if not pyproject.exists():
+        return False
+    
+    content = pyproject.read_text(encoding='utf-8')
+    
+    # Check if already configured
+    if '[tool.pfix]' in content:
+        return True
+    
+    # Add pfix configuration
+    pfix_config = '''\n[tool.pfix]
+# Self-healing Python configuration
+model = "openrouter/qwen/qwen3-coder-next"
+auto_apply = true
+auto_install_deps = true
+auto_restart = false
+max_retries = 3
+create_backups = false
+git_auto_commit = false
+
+[tool.pfix.runtime_todo]
+enabled = true
+todo_file = "TODO.md"
+min_severity = "low"
+deduplicate = true
+'''
+    
+    try:
+        with open(pyproject, 'a', encoding='utf-8') as f:
+            f.write(pfix_config)
+        click.echo(click.style("  ✓ Added [tool.pfix] to pyproject.toml", fg='green'))
+        return True
+    except Exception as e:
+        click.echo(click.style(f"  ⚠ Could not add pfix config: {e}", fg='yellow'))
         return False
