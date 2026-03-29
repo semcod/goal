@@ -220,7 +220,16 @@ class PythonDiagnostics:
         ))
     
     def check_py009_string_authors(self) -> None:
-        """PY009: Check for authors in deprecated string format (PEP 621 requires objects)."""
+        """PY009: Check for authors in deprecated string format (PEP 621 requires objects).
+        
+        Note: Skip this check for Poetry projects which require string format.
+        """
+        # Check if using Poetry build backend - if so, skip this check
+        # Poetry requires string format authors, not PEP 621 object format
+        build_backend_match = re.search(r'build-backend\s*=\s*"([^"]+)"', self.content)
+        if build_backend_match and 'poetry' in build_backend_match.group(1).lower():
+            return
+            
         authors_match = re.search(r'authors\s*=\s*\[(.*?)\]', self.content, re.DOTALL)
         if not authors_match:
             return
