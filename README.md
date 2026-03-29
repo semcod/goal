@@ -3,8 +3,26 @@
 
 # Goal
 
+## AI Cost Tracking
+
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.136-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$23.81-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-66.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+
+This project uses AI-generated code.
+
+**Costs:**
+- 🤖 **LLM usage:** $23.8118 (168 commits)
+- 👤 **Human dev:** ~$6615 (66.1h @ $100/h, 30min dedup)
+- 📊 **ROI:** 278x savings vs full manual
+
+Generated on 2026-03-29 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/models/openrouter/qwen/qwen3-coder-next)
+
+---
+
+
+
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.135-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.136-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -18,9 +36,6 @@
   <a href="http://mypy-lang.org/"><img src="https://img.shields.io/badge/type%20checking-mypy-blue.svg" alt="Type Checking"></a>
   <a href="https://github.com/wronai/goal"><img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey" alt="Platform"></a>
   <a href="https://github.com/wronai/goal"><img src="https://img.shields.io/badge/dependencies-git%20%7C%20click-blue" alt="Dependencies"></a>
-  <a href="https://github.com/wronai/goal"><img src="https://img.shields.io/badge/AI%20Cost-%240.84-orange" alt="AI Cost"></a>
-  <a href="https://github.com/wronai/goal"><img src="https://img.shields.io/badge/Human%20Time-1.5h-blue" alt="Human Time"></a>
-  <a href="https://github.com/wronai/goal"><img src="https://img.shields.io/badge/Model-qwen3--coder--next-lightgrey" alt="Model"></a>
 </p>
 
 Goal is your **release autopilot**: a CLI that runs tests, writes conventional commits, updates changelogs, bumps versions, and publishes packages for you—while keeping you in control with clear prompts or full automation.
