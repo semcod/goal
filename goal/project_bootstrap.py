@@ -9,7 +9,7 @@ import subprocess
 import shutil
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import click
 
@@ -335,6 +335,53 @@ def _find_python_bin(project_dir: Path) -> str:
     # sys.executable
     import sys
     return sys.executable
+
+
+def _read_openrouter_api_key(env_file: Path) -> str:
+    """Extract OPENROUTER_API_KEY from a .env file."""
+    try:
+        content = env_file.read_text(encoding='utf-8')
+    except Exception:
+        return ''
+
+    for line in content.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            continue
+        if stripped.startswith('export '):
+            stripped = stripped[len('export '):].strip()
+
+        key_name, sep, value = stripped.partition('=')
+        if not sep or key_name.strip() != 'OPENROUTER_API_KEY':
+            continue
+
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1].strip()
+        return value
+
+    return ''
+
+
+def _find_openrouter_api_key(project_dir: Path) -> Tuple[Optional[Path], str]:
+    """Find an OpenRouter API key in the environment or any ancestor .env file."""
+    env_key = os.environ.get('OPENROUTER_API_KEY', '').strip()
+    if env_key:
+        return None, env_key
+
+    search_dir = project_dir.resolve()
+    while True:
+        candidate = search_dir / '.env'
+        if candidate.exists():
+            api_key = _read_openrouter_api_key(candidate)
+            if api_key:
+                return candidate, api_key
+
+        if search_dir == search_dir.parent:
+            break
+        search_dir = search_dir.parent
+
+    return None, ''
 
 
 def ensure_project_environment(project_dir: Path, project_type: str, yes: bool = False) -> bool:
@@ -960,6 +1007,10 @@ PFIX_GIT_PREFIX=pfix:         # commit message prefix
 # Backup
 PFIX_CREATE_BACKUPS=false     # false = disable .pfix_backups/ directory
 '''
+
+    _, existing_api_key = _find_openrouter_api_key(project_dir)
+    if existing_api_key:
+        return True
     
     created = False
     
@@ -996,32 +1047,9 @@ def _validate_pfix_env(project_dir: Path) -> bool:
     Shows error message if key is missing or empty.
     Returns True if key is present, False otherwise.
     """
-    # Search for .env in current directory and parent directories
-    env_file = None
-    search_dir = project_dir.resolve()
-    
-    while search_dir != search_dir.parent:  # Stop at filesystem root
-        candidate = search_dir / '.env'
-        if candidate.exists():
-            env_file = candidate
-            break
-        search_dir = search_dir.parent
-    
-    # If not found, check the original project_dir for error message
+    env_file, api_key = _find_openrouter_api_key(project_dir)
     if not env_file:
         env_file = project_dir / '.env'
-    
-    # Read API key directly from .env file
-    api_key = ''
-    if env_file.exists():
-        try:
-            content = env_file.read_text(encoding='utf-8')
-            for line in content.split('\n'):
-                if line.startswith('OPENROUTER_API_KEY='):
-                    api_key = line.split('=', 1)[1].strip()
-                    break
-        except Exception:
-            pass
     
     if not api_key:
         click.echo(click.style("\n  ⚠️ OPENROUTER_API_KEY not configured!", fg='red', bold=True))

@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [2.1.162] - 2026-03-29
+
+### Test
+- Update tests/test_project_bootstrap.py
+
 ## [2.1.161] - 2026-03-29
 
 ## [2.1.160] - 2026-03-29

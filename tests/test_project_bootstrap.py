@@ -19,6 +19,9 @@ from goal.project_bootstrap import (
     bootstrap_project,
     bootstrap_all_projects,
     _match_marker,
+    _find_openrouter_api_key,
+    _validate_pfix_env,
+    _ensure_pfix_env,
 )
 from goal.cli import main
 
@@ -287,6 +290,46 @@ class TestEnsureProjectEnvironmentGeneric:
         with mock.patch("shutil.which", return_value=None):
             result = ensure_project_environment(tmp_path, "nodejs", yes=True)
         assert result is True  # skips gracefully
+
+
+# ---------------------------------------------------------------------------
+# OpenRouter / pfix env discovery
+# ---------------------------------------------------------------------------
+
+class TestOpenRouterEnvDiscovery:
+    def test_finds_parent_env_over_blank_local_env(self, tmp_path):
+        root_env = tmp_path / ".env"
+        root_env.write_text(
+            "OPENROUTER_API_KEY=sk-or-v1-root-key\nLLM_MODEL=openrouter/qwen/qwen3-coder-next\n",
+            encoding="utf-8",
+        )
+
+        sub = tmp_path / "my-api"
+        sub.mkdir()
+        (sub / ".env").write_text("OPENROUTER_API_KEY=\n", encoding="utf-8")
+
+        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
+            env_file, api_key = _find_openrouter_api_key(sub)
+
+        assert env_file == root_env
+        assert api_key == "sk-or-v1-root-key"
+        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
+            assert _validate_pfix_env(sub) is True
+
+    def test_does_not_create_local_env_when_parent_key_exists(self, tmp_path):
+        root_env = tmp_path / ".env"
+        root_env.write_text(
+            "OPENROUTER_API_KEY=sk-or-v1-root-key\n",
+            encoding="utf-8",
+        )
+
+        sub = tmp_path / "my-api"
+        sub.mkdir()
+
+        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
+            assert _ensure_pfix_env(sub) is True
+
+        assert not (sub / ".env").exists()
 
 
 # ---------------------------------------------------------------------------
