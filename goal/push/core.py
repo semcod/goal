@@ -225,6 +225,9 @@ def execute_push_workflow(
     
     # Print timing info
     click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg='cyan'))
+    
+    # Update AI cost badges in README
+    _update_cost_badges(ctx_obj, new_version)
 
 
 def _initialize_context(ctx_obj: Dict[str, Any], bump: str, message: Optional[str],
@@ -333,3 +336,47 @@ def _handle_commit_phase(ctx_obj: Dict[str, Any], split: bool, message: Optional
         
         # Single commit
         handle_single_commit(commit_title, commit_body, commit_msg, message, ctx_obj['yes'])
+
+
+def _update_cost_badges(ctx_obj: Dict[str, Any], version: str) -> None:
+    """Update AI cost badges in README using costs package."""
+    try:
+        # Lazy import to avoid hard dependency
+        from costs.tracker import CostTracker
+        from costs.reports import update_readme_badge
+        
+        # Check if costs tracking is enabled in pyproject.toml
+        import tomllib
+        config_path = Path("pyproject.toml")
+        if not config_path.exists():
+            return
+            
+        with open(config_path, "rb") as f:
+            config = tomllib.load(f)
+        
+        tool_costs = config.get("tool", {}).get("costs", {})
+        if not tool_costs.get("badge", False) and not tool_costs.get("update_readme", False):
+            return
+        
+        # Get analysis results from cost tracker
+        tracker = CostTracker()
+        results = tracker.analyze_repository(Path("."))
+        
+        if results and results.get("summary"):
+            success = update_readme_badge(Path("."), results)
+            if success:
+                click.echo(click.style("✓ Updated AI cost badges in README", fg='green'))
+            
+            # Optionally commit the badge update
+            if tool_costs.get("auto_commit", False):
+                from goal.git_ops import run_git
+                run_git('add', 'README.md')
+                run_git('commit', '-m', f'chore: update AI cost badges for v{version}')
+                
+    except ImportError:
+        # costs package not installed, skip silently
+        pass
+    except Exception as e:
+        # Non-critical feature, log error only in verbose mode
+        if ctx_obj.get('verbose'):
+            click.echo(click.style(f"⚠ Could not update cost badges: {e}", fg='yellow'))
