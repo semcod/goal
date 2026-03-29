@@ -640,10 +640,34 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
     click.echo(click.style(f"  Generating AI cost badge...", fg='cyan'))
     
     try:
-        from costs.reports.badge import update_readme_badge, calculate_human_time
+        from costs.reports import update_readme_badge
         from costs.git_parser import parse_commits, get_repo_stats
         from costs.calculator import ai_cost, batch_calculate_costs
         import json
+        from datetime import datetime
+        from collections import defaultdict
+        
+        def calculate_human_time(commits):
+            """Calculate human hours from commit history."""
+            if not commits:
+                return 0.0
+            
+            # Group commits by date and author
+            daily_commits = defaultdict(lambda: defaultdict(list))
+            for commit in commits:
+                date = commit.get('date', '')[:10]  # YYYY-MM-DD
+                author = commit.get('author', 'Unknown')
+                daily_commits[date][author].append(commit)
+            
+            # Estimate hours: assume each author works ~2 hours per day with commits
+            total_hours = 0.0
+            for date, authors in daily_commits.items():
+                for author, author_commits in authors.items():
+                    # Estimate 30 min per commit, capped at 8 hours per day
+                    hours = min(len(author_commits) * 0.5, 8.0)
+                    total_hours += hours
+            
+            return total_hours
         
         # Get repository statistics
         repo_stats = get_repo_stats(str(project_dir))

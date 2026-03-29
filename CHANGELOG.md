@@ -1,5 +1,18 @@
 ## [Unreleased]
 
+## [2.1.152] - 2026-03-29
+
+### Docs
+- Update README.md
+
+### Other
+- Update VERSION
+- Update examples/my-new-project/goal.yaml
+- Update examples/my-new-project/pyproject.toml
+- Update examples/my-new-project/src/my-new-project/__init__.py
+- Update examples/my-new-project/tests/test_my-new-project.py
+- Update examples/template-generator/generate.py
+
 ## [2.1.150] - 2026-03-29
 
 ### Other

@@ -1,0 +1,15 @@
+[project]
+name = "my-new-project"
+version = "0.1.0"
+description = "None"
+authors = [{name = "Your Name", email = "you@example.com"}]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+dev = ["pytest", "goal>=2.1.0"]
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"

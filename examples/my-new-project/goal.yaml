@@ -1,0 +1,17 @@
+version: "1.0"
+
+project:
+  name: "my-new-project"
+  type: "python"
+  versioning:
+    strategy: "semantic"
+
+commit:
+  conventional:
+    enabled: true
+
+testing:
+  command: "pytest tests/ -v"
+
+publishing:
+  enabled: true
