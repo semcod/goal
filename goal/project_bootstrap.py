@@ -608,6 +608,8 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
     """
     import subprocess
     
+    click.echo(click.style(f"  DEBUG: _ensure_costs_installed called for {project_dir}", fg='magenta'))
+    
     # Check if costs is already installed
     result = subprocess.run(
         [python_bin, '-c', 'import costs; print(costs.__version__)'],

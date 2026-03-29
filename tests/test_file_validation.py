@@ -32,7 +32,6 @@ def test_file_size_validation():
         assert True
     finally:
         os.unlink(large_file)
-    return True
 
 
 def test_token_detection():
@@ -65,7 +64,6 @@ def test_token_detection():
                 assert False, f"Wrong token type: {e}"
         finally:
             os.unlink(test_file)
-    return True
 
 
 def test_safe_files():
@@ -92,7 +90,6 @@ if __name__ == "__main__":
         assert False, f"Safe file failed: {e}"
     finally:
         os.unlink(safe_file)
-    return True
 
 
 def test_false_positive_prevention():
@@ -141,7 +138,6 @@ def test_false_positive_prevention():
         print("✅ Correctly detected uppercase env var")
     finally:
         os.unlink(env_file)
-    return True
 
 
 def test_config_integration():
@@ -179,7 +175,6 @@ def test_config_integration():
     finally:
         os.unlink(small_file)
         os.unlink(large_file)
-    return True
 
 
 def main():

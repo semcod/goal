@@ -156,6 +156,16 @@ class GoalGroup(click.Group):
 @click.pass_context
 def main(ctx, bump, version, yes, all_flags, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink) -> None:
     """Goal - Automated git push with smart commit messages."""
+    # Display version info at startup with update check
+    from goal import __version__
+    from goal.version_validation import get_pypi_version
+    
+    latest = get_pypi_version("goal")
+    if latest and latest != __version__:
+        click.echo(click.style(f"Goal v{__version__} (latest: v{latest} → pip install -U goal)", fg='yellow', bold=True))
+    else:
+        click.echo(click.style(f"Goal v{__version__} ✓", fg='cyan', bold=True))
+    
     _setup_nfo_logging(nfo_format, nfo_sink)
     
     ctx.ensure_object(dict)

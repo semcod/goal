@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [2.1.148] - 2026-03-29
+
+### Test
+- Update tests/test_file_validation.py
+
 ## [2.1.147] - 2026-03-29
 
 ## [2.1.146] - 2026-03-29
