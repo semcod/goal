@@ -621,6 +621,18 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
     # Create .env template for API key if not exists
     _ensure_env_template(project_dir)
     
+    # Generate initial badge in README
+    click.echo(click.style(f"  Generating AI cost badge...", fg='cyan'))
+    badge_result = subprocess.run(
+        [python_bin, '-m', 'costs', 'auto-badge', '--repo', str(project_dir), '--all'],
+        capture_output=True, text=True, cwd=str(project_dir)
+    )
+    if badge_result.returncode == 0:
+        click.echo(click.style("  ✓ AI cost badge generated", fg='green'))
+    else:
+        # Non-critical, show warning only
+        click.echo(click.style("  ⚠ Badge generation skipped (will retry on next run)", fg='yellow'))
+    
     return True
 
 
