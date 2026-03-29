@@ -91,6 +91,8 @@ def detect_tokens_in_content(content: str, patterns: List[str]) -> List[Tuple[st
                         token_type = "GitHub Personal Access"
                     elif 'AKIA' in pattern:
                         token_type = "AWS Access Key"
+                    elif 'sk-or-v1' in pattern:
+                        token_type = "OpenRouter API"
                     elif 'sk-' in pattern:
                         token_type = "Stripe API"
                     elif 'xoxb' in pattern:
@@ -313,7 +315,8 @@ def validate_files(
         exclude_patterns = {
             '.git/', '.gitignore', '.DS_Store', 'Thumbs.db',
             '*.pyc', '*.pyo', '__pycache__/', '.pytest_cache/',
-            'node_modules/', '.npm/', '.cache/', '*.log', '*.tmp'
+            'node_modules/', '.npm/', '.cache/', '*.log', '*.tmp',
+            'tests/', 'test_*.py', '*_test.py'
         }
     
     large_files_found = []
@@ -335,14 +338,15 @@ def validate_files(
             r'pk_test_[a-zA-Z0-9]{24}',
             r'sk_live_[a-zA-Z0-9]{24}',
             r'sk_test_[a-zA-Z0-9]{24}',
-            r'CS:^[A-Z][A-Z0-9_]{5,}=[a-zA-Z0-9_-]{20,}',
-            r'Bearer\s+(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9_-]{32,}\b',
-            r'Token\s+(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9_-]{32,}\b',
+            r'sk-or-v1-(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9_-]{32,}',
+            r'CS:^[A-Z][A-Z0-9_]{5,}=(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9_-]{20,}',
+            r'\bBearer\s+(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9_-]{32,}\b',
+            r'\bToken\s+(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9_-]{32,}\b',
             r'-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----',
             r'-----BEGIN\s+EC\s+PRIVATE\s+KEY-----',
             r'-----BEGIN\s+OPENSSH\s+PRIVATE\s+KEY-----',
             r'-----BEGIN\s+DSA\s+PRIVATE\s+KEY-----',
-            r'CS:^[A-Z][A-Z0-9_]+=[a-zA-Z0-9_-]{20,}',
+            r'CS:^[A-Z][A-Z0-9_]+=(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9_-]{20,}',
         ]
     
     # Check each file

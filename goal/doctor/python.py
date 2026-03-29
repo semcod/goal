@@ -307,14 +307,22 @@ class PythonDiagnostics:
         issue = Issue(severity='error', code='PY010', title='Inconsistent project name', detail=detail, file='pyproject.toml')
         
         if self.auto_fix:
+            fixed_files = []
             if setup_py.exists():
-                setup_content = re.sub(r'(name\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_name}"', setup_py.read_text(errors='ignore'))
-                setup_py.write_text(setup_content, encoding='utf-8')
+                setup_content = setup_py.read_text(errors='ignore')
+                new_setup = re.sub(r'(name\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_name}"', setup_content)
+                if new_setup != setup_content:
+                    setup_py.write_text(new_setup, encoding='utf-8')
+                    fixed_files.append('setup.py')
             if goal_yaml.exists():
-                goal_content = re.sub(r'^(\s*name:\s*)\S+', rf'\1{pyproject_name}', goal_yaml.read_text(errors='ignore'), flags=re.MULTILINE)
-                goal_yaml.write_text(goal_content, encoding='utf-8')
-            issue.fixed = True
-            issue.fix_description = f"Synchronized name to '{pyproject_name}'"
+                goal_content = goal_yaml.read_text(errors='ignore')
+                new_goal = re.sub(r'^(\s*name:\s*)\S+', rf'\1{pyproject_name}', goal_content, flags=re.MULTILINE)
+                if new_goal != goal_content:
+                    goal_yaml.write_text(new_goal, encoding='utf-8')
+                    fixed_files.append('goal.yaml')
+            if fixed_files:
+                issue.fixed = True
+                issue.fix_description = f"Synchronized name to '{pyproject_name}' in {', '.join(fixed_files)}"
         self.issues.append(issue)
 
     def check_py011_version_consistency(self) -> None:
@@ -388,10 +396,17 @@ class PythonDiagnostics:
         issue = Issue(severity='error', code='PY012', title='Stale files in dist/', detail=detail, file='dist/')
         
         if self.auto_fix:
+            removed = []
             for fname in stale_files:
-                (dist_dir / fname).unlink()
-            issue.fixed = True
-            issue.fix_description = f"Removed {len(stale_files)} stale file(s)"
+                fpath = dist_dir / fname
+                try:
+                    fpath.unlink()
+                    removed.append(fname)
+                except OSError:
+                    pass  # File couldn't be removed
+            if removed:
+                issue.fixed = True
+                issue.fix_description = f"Removed {len(removed)} stale file(s)"
         self.issues.append(issue)
 
     def check_py013_goal_publish_pattern(self) -> None:
@@ -430,9 +445,10 @@ class PythonDiagnostics:
                 goal_content,
                 flags=re.MULTILINE
             )
-            goal_yaml.write_text(new_content, encoding='utf-8')
-            issue.fixed = True
-            issue.fix_description = f"Fixed pattern to '{expected}'"
+            if new_content != goal_content:
+                goal_yaml.write_text(new_content, encoding='utf-8')
+                issue.fixed = True
+                issue.fix_description = f"Fixed pattern to '{expected}'"
         self.issues.append(issue)
 
     def write_fixes(self, pyproject: Path) -> None:

@@ -44,7 +44,7 @@ def test_token_detection():
         ("github_token.txt", "ghp_" + "a" * 36, "GitHub Personal Access"),
         ("aws_key.txt", "AKIA" + "A" * 16, "AWS Access Key"),
         ("slack_bot.txt", "xoxb-1234567890123-1234567890123-" + "a" * 24, "Slack Bot"),
-        ("generic_token.txt", "Bearer " + "a" * 25, "Bearer Token"),
+        ("generic_token.txt", "Bearer Abcdef1234567890abcdefghijklmnopqrstuvwxyz", "Bearer Token"),
     ]
     
     for filename, content, expected_type in test_cases:
@@ -105,6 +105,12 @@ def test_false_positive_prevention():
         ("param_test2.txt", "some_long_parameter_name=another_long_value"),
         # Regular assignment to lowercase var should NOT trigger
         ("var_test.txt", "my_variable=some_value_here"),
+        # Documentation examples with "Token" should NOT trigger (has spaces)
+        ("readme_example.txt", "Token can be obtained from your account settings"),
+        # Placeholder examples should NOT trigger
+        ("placeholder.txt", "OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
+        # Bearer with short value should NOT trigger
+        ("short_bearer.txt", "Bearer token123"),
     ]
     
     for filename, content in test_cases:
@@ -122,9 +128,9 @@ def test_false_positive_prevention():
         finally:
             os.unlink(test_file)
     
-    # But uppercase env vars SHOULD still trigger
+    # But uppercase env vars SHOULD still trigger (with proper entropy: upper + lower + digit)
     with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt', prefix="env_var.txt") as f:
-        f.write("API_KEY=abcdef12345678901234567890abcdef1234567890")
+        f.write("API_KEY=Abcdef12345678901234567890abcdef123456789")
         env_file = f.name
     
     try:

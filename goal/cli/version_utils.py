@@ -278,8 +278,10 @@ def update_readme_metadata(user_config) -> bool:
             new_section = f'## License\n\nLicensed under {license_id}.\n'
             content = content[:start_pos] + new_section + content[end_pos:]
         else:
-            # Add license section at the end
-            content += f'\n\n## License\n\nLicensed under {license_id}.\n'
+            # Add license section at the end, but only if license info is not already present
+            license_line = f'Licensed under {license_id}.'
+            if license_line not in content and license_id not in content:
+                content += f'\n\n## License\n\n{license_line}\n'
         
         # Update author information if present - only match H2 headers at line start
         # Find the LAST occurrence (the real section, not code blocks)
