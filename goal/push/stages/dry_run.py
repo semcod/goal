@@ -4,8 +4,7 @@ from typing import Dict, List, Any, Optional
 
 import click
 
-from goal.cli_helpers import split_paths_by_type
-from goal.git_ops import apply_ticket_prefix
+from goal.cli import apply_ticket_prefix, split_paths_by_type
 from goal.commit_generator import CommitMessageGenerator
 from goal.formatter import format_enhanced_summary, format_push_result
 

@@ -1,7 +1,5 @@
 """Publish command - extracted from cli.py."""
 
-import shutil
-
 import click
 
 from goal.git_ops import run_command_tee

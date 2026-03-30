@@ -1,0 +1,53 @@
+pipeline:
+  name: goal-autodevelopment
+
+  metrics:
+    cc_max: 15
+    critical_max: 0
+
+  custom_tools:
+    - name: code2llm_goal
+      binary: code2llm
+      command: >-
+        code2llm {workdir} -f toon -o ./project --no-chunk
+        --exclude .git .venv .venv_test build dist __pycache__ .pytest_cache
+        .code2llm_cache .benchmarks .mypy_cache .ruff_cache
+      output: ""
+      allow_failure: false
+
+    - name: vallm_goal
+      binary: vallm
+      command: >-
+        vallm batch {workdir} --recursive --format toon --output ./project
+        --exclude .git,.venv,.venv_test,build,dist,__pycache__,.pytest_cache,
+        .code2llm_cache,.benchmarks,.mypy_cache,.ruff_cache
+      output: ""
+      allow_failure: false
+
+  stages:
+    - name: analyze
+      tool: code2llm_goal
+      optional: true
+      timeout: 0
+
+    - name: validate
+      tool: vallm_goal
+      optional: true
+      timeout: 0
+
+    - name: fix
+      tool: prefact
+      optional: true
+      when: metrics_fail
+      timeout: 900
+
+    - name: test
+      run: python3 -m pytest -q
+      when: always
+
+  loop:
+    max_iterations: 3
+    on_fail: report
+
+  env:
+    LLM_MODEL: openrouter/qwen/qwen3-coder-next

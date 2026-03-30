@@ -9,7 +9,7 @@ from typing import Optional
 import click
 
 from goal.git_ops import run_git, ensure_remote, run_git_with_status, _echo_cmd, HAS_CLICKMD
-from goal.cli_helpers import confirm
+from goal.cli import confirm
 from goal.recovery import RecoveryManager
 
 # Import clickmd if available

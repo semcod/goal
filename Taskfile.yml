@@ -119,6 +119,11 @@ tasks:
       - mypy goal/ --ignore-missing-imports
       - echo "✅ Type checking passed"
 
+  autodev:
+    desc: Run pyqual autodevelopment loop
+    cmds:
+      - pyqual run --config pyqual.yaml --workdir .
+
   # ─── Build ───────────────────────────────────────────────────────
   build:
     desc: Build Python package

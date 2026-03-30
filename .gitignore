@@ -223,6 +223,9 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# pyqual runtime artifacts
+.pyqual/
+
 # PyPI configuration file
 .pypirc
 

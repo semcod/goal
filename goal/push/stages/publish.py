@@ -3,7 +3,7 @@
 import click
 
 from goal.cli.publish import publish_project
-from goal.cli_helpers import confirm
+from goal.cli import confirm
 
 
 def handle_publish(

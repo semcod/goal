@@ -8,7 +8,7 @@ import click
 from goal.git_ops import run_git, apply_ticket_prefix, get_staged_files
 from goal.commit_generator import CommitMessageGenerator
 from goal.enhanced_summary import QualityValidator
-from goal.cli_helpers import confirm, split_paths_by_type, stage_paths
+from goal.cli import split_paths_by_type, stage_paths, confirm
 
 
 def get_commit_message(

@@ -5,7 +5,7 @@ from typing import Dict, List, Any, Tuple
 
 import click
 
-from goal.cli_helpers import confirm
+from goal.cli import confirm
 from goal.cli.tests import run_tests
 from goal.formatter import format_push_result
 

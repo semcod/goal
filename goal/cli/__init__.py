@@ -2,6 +2,7 @@
 
 import os
 import re
+from importlib import import_module
 from typing import List, Dict, Any
 
 import click
@@ -47,6 +48,7 @@ def _nfo_log_call(**kwargs):
 
 
 ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+_COMMAND_MODULES_LOADED = False
 
 
 def strip_ansi(text: str) -> str:
@@ -54,6 +56,33 @@ def strip_ansi(text: str) -> str:
         return ANSI_ESCAPE_RE.sub('', text)
     except Exception:
         return text
+
+
+def load_command_modules() -> None:
+    """Import Click command modules so they register against `main`."""
+    global _COMMAND_MODULES_LOADED
+
+    if _COMMAND_MODULES_LOADED:
+        return
+
+    for module_name in (
+        '.push_cmd',
+        '.publish_cmd',
+        '.utils_cmd',
+        '.doctor_cmd',
+        '.config_cmd',
+        '.commit_cmd',
+        '.recover_cmd',
+        '.wizard_cmd',
+        '.license_cmd',
+        '.authors_cmd',
+        '.hooks_cmd',
+        '.postcommit_cmd',
+        '.validation_cmd',
+    ):
+        import_module(module_name, __name__)
+
+    _COMMAND_MODULES_LOADED = True
 
 
 def split_paths_by_type(paths: List[str]) -> Dict[str, List[str]]:
@@ -115,7 +144,6 @@ class GoalGroup(click.Group):
     and defaults to 'push' command when -a/--all is passed without a subcommand."""
     
     def get_command(self, ctx, cmd_name) -> Any:
-        load_command_modules()
         rv = super().get_command(ctx, cmd_name)
         if rv is not None:
             return rv
@@ -126,13 +154,8 @@ class GoalGroup(click.Group):
         click.echo(click.style("Available commands:", fg='cyan', bold=True))
         self.list_commands(ctx)
         ctx.exit(2)
-
-    def list_commands(self, ctx) -> List[str]:
-        load_command_modules()
-        return super().list_commands(ctx)
     
     def parse_args(self, ctx, args) -> Any:
-        load_command_modules()
         # Check if -a or --all is in args without any command
         has_all_flag = '-a' in args or '--all' in args
         has_subcommand = any(
@@ -194,21 +217,8 @@ def main(ctx, bump, version, yes, all_flags, no_publish, todo, markdown, dry_run
     ctx.obj['user_config'] = user_config
 
 
-def load_command_modules() -> None:
-    """Import command modules so Click registers them on demand."""
-    from . import push_cmd
-    from . import publish_cmd
-    from . import utils_cmd
-    from . import doctor_cmd
-    from . import config_cmd
-    from . import commit_cmd
-    from . import recover_cmd
-    from . import wizard_cmd
-    from . import license_cmd
-    from . import authors_cmd
-    from . import hooks_cmd
-    from . import postcommit_cmd
-    from . import validation_cmd
+# Import commands to register them
+load_command_modules()
 
 # Import version functions for external access
 from .version import sync_all_versions
@@ -216,6 +226,7 @@ from .version import sync_all_versions
 __all__ = [
     'main',
     'GoalGroup',
+    'load_command_modules',
     '_setup_nfo_logging',
     '_nfo_log_call',
     'strip_ansi',
@@ -225,7 +236,6 @@ __all__ = [
     'split_paths_by_type',
     'stage_paths',
     'confirm',
-    'load_command_modules',
     'sync_all_versions',
     'DOCS_URL',
 ]
