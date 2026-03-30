@@ -210,6 +210,37 @@ class TestPushWorkflowE2E:
         assert result is False
         mock_publish_project.assert_not_called()
 
+    def test_publish_project_runs_python_build_before_upload(self):
+        """Test that Python publishing builds artifacts before twine upload."""
+        from goal.cli.publish import publish_project
+
+        config = {
+            'strategies': {
+                'python': {
+                    'build': 'python -m build',
+                    'publish': 'twine upload dist/goal-{version}*',
+                }
+            }
+        }
+
+        with patch('goal.cli.publish.validate_project_toml_files', return_value=(True, [])), \
+             patch('goal.cli.publish._get_python_bin', return_value='/tmp/project/.venv/bin/python') as mock_python_bin, \
+             patch('goal.cli.publish._ensure_publish_deps', return_value=True) as mock_deps, \
+             patch('goal.cli.publish.run_command_tee') as mock_run_command:
+            mock_run_command.side_effect = [
+                MagicMock(returncode=0, stdout='', stderr=''),
+                MagicMock(returncode=0, stdout='', stderr=''),
+            ]
+
+            result = publish_project(['python'], '1.2.3', yes=True, config=config)
+
+        assert result is True
+        mock_python_bin.assert_called_once()
+        mock_deps.assert_called_once_with('/tmp/project/.venv/bin/python')
+        assert mock_run_command.call_count == 2
+        assert mock_run_command.call_args_list[0].args[0] == '/tmp/project/.venv/bin/python -m build'
+        assert mock_run_command.call_args_list[1].args[0] == 'twine upload dist/goal-1.2.3*'
+
     def test_push_command_forwards_no_publish_flag(self):
         """Test that the CLI push command forwards --no-publish to the workflow."""
         from click.testing import CliRunner

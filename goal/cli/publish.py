@@ -128,10 +128,7 @@ def publish_project(
                 success = False
                 continue
 
-            build_cmd = strategy.get('build', '') or ''
-            if not build_cmd and 'build' not in publish_cmd:
-                build_cmd = 'python -m build'
-
+            build_cmd = strategy.get('build', '') or 'python -m build'
             if build_cmd:
                 build_cmd = build_cmd.replace('python ', f'{python_bin} ')
                 click.echo(click.style(f"  Build command: {build_cmd}", fg='cyan'))
