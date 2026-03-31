@@ -29,11 +29,65 @@ class SmartCommitGenerator:
                 self._deep_analyzer = False  # Mark as unavailable
         return self._deep_analyzer if self._deep_analyzer else None
     
+    def _analyze_file_diffs(self, staged_files: List[str], analysis: Dict[str, Any]) -> List[str]:
+        """Populate analysis with per-file domain/diff info. Returns all extracted entities."""
+        domain_counter: Counter = Counter()
+        all_entities: List[str] = []
+
+        for filepath in staged_files:
+            domain = self.abstraction.get_domain(filepath)
+            domain_counter[domain] += 1
+            analysis['domains'][domain].append(filepath)
+
+            diff = self._get_file_diff(filepath)
+            if not diff:
+                continue
+            for line in diff.split('\n'):
+                if line.startswith('+') and not line.startswith('+++'):
+                    analysis['added'] += 1
+                elif line.startswith('-') and not line.startswith('---'):
+                    analysis['deleted'] += 1
+
+            if filepath.endswith('.md'):
+                all_entities.extend(self.abstraction.extract_markdown_topics(diff))
+            else:
+                all_entities.extend(self.abstraction.extract_entities(filepath, diff))
+
+        if domain_counter:
+            analysis['primary_domain'] = domain_counter.most_common(1)[0][0]
+
+        return list(dict.fromkeys(all_entities))[:10]
+
+    def _merge_deep_analysis(self, analysis: Dict[str, Any], staged_files: List[str]) -> None:
+        """Run the deep analyzer and merge its results into *analysis*."""
+        if not self.deep_analyzer:
+            return
+        try:
+            deep = self.deep_analyzer.generate_functional_summary(staged_files)
+            analysis['deep_analysis'] = deep
+
+            if deep.get('functional_value'):
+                analysis['benefit'] = deep['functional_value']
+
+            agg = deep.get('aggregated') or {}
+            added_names = [e['name'] for e in agg.get('added_entities', [])]
+            if added_names:
+                analysis['entities'] = list(dict.fromkeys(
+                    added_names[:5] + analysis['entities'][:5]
+                ))[:10]
+            if not analysis['features'] and agg.get('functional_areas'):
+                analysis['features'] = agg['functional_areas']
+
+            if deep.get('relations'):
+                analysis['relations'] = deep['relations']
+        except Exception:
+            pass
+
     def analyze_changes(self, staged_files: List[str] = None) -> Dict[str, Any]:
         """Analyze staged changes and extract abstractions."""
         if staged_files is None:
             staged_files = self._get_staged_files()
-        
+
         analysis = {
             'files': staged_files,
             'file_count': len(staged_files),
@@ -47,86 +101,16 @@ class SmartCommitGenerator:
             'benefit': '',
             'summary': '',
         }
-        
+
         if not staged_files:
             return analysis
-        
-        # Analyze each file
-        domain_counter = Counter()
-        all_entities = []
-        
-        for filepath in staged_files:
-            domain = self.abstraction.get_domain(filepath)
-            domain_counter[domain] += 1
-            analysis['domains'][domain].append(filepath)
-            
-            # Get diff for this file
-            diff = self._get_file_diff(filepath)
-            if diff:
-                # Count additions/deletions
-                for line in diff.split('\n'):
-                    if line.startswith('+') and not line.startswith('+++'):
-                        analysis['added'] += 1
-                    elif line.startswith('-') and not line.startswith('---'):
-                        analysis['deleted'] += 1
-                
-                # Extract entities
-                if filepath.endswith('.md'):
-                    entities = self.abstraction.extract_markdown_topics(diff)
-                else:
-                    entities = self.abstraction.extract_entities(filepath, diff)
-                all_entities.extend(entities)
-        
-        # Determine primary domain
-        if domain_counter:
-            analysis['primary_domain'] = domain_counter.most_common(1)[0][0]
-        
-        # Deduplicate entities
-        seen = set()
-        unique_entities = []
-        for e in all_entities:
-            if e not in seen:
-                seen.add(e)
-                unique_entities.append(e)
-        analysis['entities'] = unique_entities[:10]
-        
-        # Detect high-level features
-        analysis['features'] = self.abstraction.detect_features(staged_files, unique_entities)
-        
-        # Determine commit type
+
+        analysis['entities'] = self._analyze_file_diffs(staged_files, analysis)
+        analysis['features'] = self.abstraction.detect_features(staged_files, analysis['entities'])
         analysis['commit_type'] = self._infer_commit_type(analysis)
-        
-        # Use deep analyzer if available for better functional value
-        deep_analysis = None
-        if self.deep_analyzer:
-            try:
-                deep_analysis = self.deep_analyzer.generate_functional_summary(staged_files)
-                analysis['deep_analysis'] = deep_analysis
-                
-                # Extract functional value from deep analysis
-                if deep_analysis.get('functional_value'):
-                    analysis['benefit'] = deep_analysis['functional_value']
-                
-                # Merge deep entities with existing
-                if deep_analysis.get('aggregated'):
-                    agg = deep_analysis['aggregated']
-                    added_names = [e['name'] for e in agg.get('added_entities', [])]
-                    if added_names:
-                        # Prepend deep analysis entities
-                        analysis['entities'] = added_names[:5] + analysis['entities'][:5]
-                        analysis['entities'] = list(dict.fromkeys(analysis['entities']))[:10]
-                    
-                    # Use functional areas as features if none detected
-                    if not analysis['features'] and agg.get('functional_areas'):
-                        analysis['features'] = agg['functional_areas']
-                
-                # Store relations for commit body
-                if deep_analysis.get('relations'):
-                    analysis['relations'] = deep_analysis['relations']
-            except Exception:
-                pass  # Fall back to basic analysis
-        
-        # Fallback: Infer benefit using features if not set by deep analysis
+
+        self._merge_deep_analysis(analysis, staged_files)
+
         if not analysis.get('benefit'):
             analysis['benefit'] = self.abstraction.infer_benefit(
                 analysis['entities'],
@@ -135,52 +119,54 @@ class SmartCommitGenerator:
                 files=staged_files,
                 features=analysis['features']
             )
-        
-        # Generate functional summary
+
         analysis['summary'] = self._generate_functional_summary(analysis)
-        
         return analysis
     
+    @staticmethod
+    def _summarize_features(features: List[str]) -> str:
+        """Summarize detected high-level features."""
+        if len(features) == 1:
+            return f"Added {features[0]} support"
+        if len(features) == 2:
+            return f"Added {features[0]} and {features[1]} support"
+        return f"Added {features[0]}, {features[1]}, and {len(features)-2} more features"
+
+    @staticmethod
+    def _summarize_entities(entities: List[str]) -> str:
+        """Summarize extracted code entities."""
+        meaningful = [e for e in entities if len(e) > 2 and not e.startswith('test_')]
+        if not meaningful:
+            return ''
+        if len(meaningful) <= 3:
+            return f"Implemented {', '.join(meaningful)}"
+        return f"Implemented {meaningful[0]}, {meaningful[1]}, and {len(meaningful)-2} more functions"
+
     def _generate_functional_summary(self, analysis: Dict[str, Any]) -> str:
         """Generate a human-readable functional summary of changes."""
-        parts = []
-        
+        parts: List[str] = []
         features = analysis.get('features', [])
         entities = analysis.get('entities', [])
         files = analysis.get('files', [])
         added = analysis.get('added', 0)
         deleted = analysis.get('deleted', 0)
-        
-        # Feature-based summary
+
         if features:
-            if len(features) == 1:
-                parts.append(f"Added {features[0]} support")
-            elif len(features) == 2:
-                parts.append(f"Added {features[0]} and {features[1]} support")
-            else:
-                parts.append(f"Added {features[0]}, {features[1]}, and {len(features)-2} more features")
-        
-        # Entity-based summary
+            parts.append(self._summarize_features(features))
         elif entities:
-            meaningful = [e for e in entities if len(e) > 2 and not e.startswith('test_')]
-            if meaningful:
-                if len(meaningful) <= 3:
-                    parts.append(f"Implemented {', '.join(meaningful)}")
-                else:
-                    parts.append(f"Implemented {meaningful[0]}, {meaningful[1]}, and {len(meaningful)-2} more functions")
-        
-        # Docs detection
+            s = self._summarize_entities(entities)
+            if s:
+                parts.append(s)
+
         doc_files = [f for f in files if f.endswith(('.md', '.rst', '.txt'))]
         if doc_files and len(doc_files) > len(files) // 2:
             doc_names = [Path(f).stem.upper() for f in doc_files[:3]]
             parts.append(f"Updated documentation ({', '.join(doc_names)})")
-        
-        # Test detection
+
         test_files = [f for f in files if 'test' in f.lower()]
         if test_files and not parts:
             parts.append(f"Added/updated {len(test_files)} test files")
-        
-        # Fallback
+
         if not parts:
             if added > deleted * 2:
                 parts.append(f"Added new functionality ({added} lines)")
@@ -188,7 +174,7 @@ class SmartCommitGenerator:
                 parts.append(f"Refactored code ({deleted} lines removed)")
             else:
                 parts.append(f"Updated {len(files)} files")
-        
+
         return '; '.join(parts)
     
     def _get_staged_files(self) -> List[str]:

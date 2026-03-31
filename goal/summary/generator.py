@@ -475,6 +475,44 @@ class EnhancedSummaryGenerator:
             'files': files  # Include deduped files for validation
         }
     
+    @staticmethod
+    def _format_entity_list(label: str, entities: List[Dict], limit: int = 6) -> str:
+        """Format a list of entities as a YAML-like line, e.g. 'added: [a, b]'."""
+        names = [e['name'] for e in entities[:limit]]
+        suffix = f", +{len(entities) - limit} more" if len(entities) > limit else ""
+        return f"    {label}: [{', '.join(names)}{suffix}]"
+
+    def _format_file_change(self, f: str, fa: Dict, categorized: Dict,
+                            change_lines: List[str], test_scenarios: List[str]) -> bool:
+        """Append change lines for a single file. Returns True if any entities found."""
+        added_ents = fa.get('added_entities', [])
+        modified_ents = fa.get('modified_entities', [])
+        removed_ents = fa.get('removed_entities', [])
+
+        if not added_ents and not modified_ents and not removed_ents:
+            return False
+
+        area = next((cat for cat, cat_files in categorized.items() if f in cat_files), 'core')
+        fname = Path(f).name
+        change_lines.append(f"  - file: {fname}")
+        change_lines.append(f"    area: {area}")
+
+        if added_ents:
+            names = [e['name'] for e in added_ents]
+            tests = [n for n in names if n.startswith('test_')]
+            non_tests = [n for n in names if not n.startswith('test_')]
+            test_scenarios.extend(tests)
+            if non_tests:
+                change_lines.append(self._format_entity_list('added', [{'name': n} for n in non_tests]))
+            if tests:
+                change_lines.append(f"    new_tests: {len(tests)}")
+
+        if modified_ents:
+            change_lines.append(self._format_entity_list('modified', modified_ents))
+        if removed_ents:
+            change_lines.append(self._format_entity_list('removed', removed_ents))
+        return True
+
     def _format_changes_section(self, files: List[str], file_analyses: List[Dict]) -> tuple:
         """Format the CHANGES section with per-file breakdown.
         
@@ -482,63 +520,20 @@ class EnhancedSummaryGenerator:
             Tuple of (section_text, test_scenarios, has_changes)
         """
         categorized = self.quality_filter.categorize_files(files)
-        # Build filepath→analysis lookup
         analysis_map = {}
         for fa in file_analyses:
             fp = fa.get('filepath', '')
             analysis_map[fp] = fa
-            # Also index by basename for fuzzy matching
             analysis_map[Path(fp).name] = fa
 
         change_lines = ["changes:"]
+        test_scenarios: List[str] = []
         has_changes = False
-        test_scenarios = []
 
         for f in files:
-            fname = Path(f).name
-            fa = analysis_map.get(f) or analysis_map.get(fname) or {}
-
-            added_ents = fa.get('added_entities', [])
-            modified_ents = fa.get('modified_entities', [])
-            removed_ents = fa.get('removed_entities', [])
-
-            if not added_ents and not modified_ents and not removed_ents:
-                continue
-
-            has_changes = True
-            # Determine area from categorization
-            area = 'core'
-            for cat, cat_files in categorized.items():
-                if f in cat_files:
-                    area = cat
-                    break
-
-            change_lines.append(f"  - file: {fname}")
-            change_lines.append(f"    area: {area}")
-
-            if added_ents:
-                names = [e['name'] for e in added_ents]
-                # Collect test names for the testing section
-                tests = [n for n in names if n.startswith('test_')]
-                non_tests = [n for n in names if not n.startswith('test_')]
-                test_scenarios.extend(tests)
-
-                if non_tests:
-                    shown = non_tests[:6]
-                    suffix = f", +{len(non_tests) - 6} more" if len(non_tests) > 6 else ""
-                    change_lines.append(f"    added: [{', '.join(shown)}{suffix}]")
-                if tests:
-                    change_lines.append(f"    new_tests: {len(tests)}")
-
-            if modified_ents:
-                names = [e['name'] for e in modified_ents[:6]]
-                suffix = f", +{len(modified_ents) - 6} more" if len(modified_ents) > 6 else ""
-                change_lines.append(f"    modified: [{', '.join(names)}{suffix}]")
-
-            if removed_ents:
-                names = [e['name'] for e in removed_ents[:6]]
-                suffix = f", +{len(removed_ents) - 6} more" if len(removed_ents) > 6 else ""
-                change_lines.append(f"    removed: [{', '.join(names)}{suffix}]")
+            fa = analysis_map.get(f) or analysis_map.get(Path(f).name) or {}
+            if self._format_file_change(f, fa, categorized, change_lines, test_scenarios):
+                has_changes = True
 
         if has_changes:
             return '\n'.join(change_lines), test_scenarios, True

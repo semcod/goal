@@ -65,6 +65,31 @@ def get_file_size_mb(file_path: str) -> float:
         return 0.0
 
 
+# Ordered list of (pattern_substring, token_label) for classifying detected tokens.
+# First match wins; order matters (e.g. 'sk-or-v1' before 'sk-').
+_TOKEN_TYPE_HINTS = [
+    ('ghp_',     "GitHub Personal Access"),
+    ('gho_',     "GitHub Personal Access"),
+    ('ghu_',     "GitHub Personal Access"),
+    ('AKIA',     "AWS Access Key"),
+    ('sk-or-v1', "OpenRouter API"),
+    ('sk-',      "Stripe API"),
+    ('xoxb',     "Slack Bot"),
+    ('xoxp',     "Slack User"),
+    ('glpat',    "GitLab"),
+    ('Bearer',   "Bearer Token"),
+    ('Token',    "API Token"),
+]
+
+
+def _classify_token(pattern: str) -> str:
+    """Return a human-readable token type label for a pattern."""
+    for hint, label in _TOKEN_TYPE_HINTS:
+        if hint in pattern:
+            return label
+    return "API Key"
+
+
 def detect_tokens_in_content(content: str, patterns: List[str]) -> List[Tuple[str, Optional[int]]]:
     """Detect tokens in file content using regex patterns.
     
@@ -79,40 +104,16 @@ def detect_tokens_in_content(content: str, patterns: List[str]) -> List[Tuple[st
             try:
                 # Check if pattern is marked as case-sensitive with 'CS:' prefix
                 if pattern.startswith('CS:'):
-                    # Remove the 'CS:' prefix and search case-sensitively
                     actual_pattern = pattern[3:]
                     match = re.search(actual_pattern, line)
                 else:
                     match = re.search(pattern, line, re.IGNORECASE)
                 
                 if match:
-                    # Determine token type from pattern
-                    if 'ghp_' in pattern or 'gho_' in pattern or 'ghu_' in pattern:
-                        token_type = "GitHub Personal Access"
-                    elif 'AKIA' in pattern:
-                        token_type = "AWS Access Key"
-                    elif 'sk-or-v1' in pattern:
-                        token_type = "OpenRouter API"
-                    elif 'sk-' in pattern:
-                        token_type = "Stripe API"
-                    elif 'xoxb' in pattern:
-                        token_type = "Slack Bot"
-                    elif 'xoxp' in pattern:
-                        token_type = "Slack User"
-                    elif 'glpat' in pattern:
-                        token_type = "GitLab"
-                    elif 'Bearer' in pattern:
-                        token_type = "Bearer Token"
-                    elif 'Token' in pattern:
-                        token_type = "API Token"
-                    else:
-                        token_type = "API Key"
-                    
-                    detected.append((token_type, line_num))
+                    detected.append((_classify_token(pattern), line_num))
                     # Only report first match per line to avoid spam
                     break
             except re.error:
-                # Skip invalid regex patterns
                 continue
     
     return detected
@@ -161,70 +162,71 @@ def save_gitignore(ignored: Set[str], gitignore_path: str = '.gitignore') -> Non
             f.writelines(existing_lines)
 
 
+# Common safe dot files that shouldn't trigger warnings
+_SAFE_DOT_FILES = {
+    '.gitignore', '.gitattributes', '.editorconfig', '.git',
+    '.github', '.gitlab-ci.yml', '.pre-commit-config.yaml'
+}
+
+# Default problematic dot folders/files
+_DEFAULT_PROBLEMATIC = {
+    '.idea', '.vscode', '.DS_Store', 'Thumbs.db', '.pytest_cache',
+    '.coverage', '.mypy_cache', '.tox', '.nox', '.venv', '.env',
+    '.python-version', '.ruff_cache', '.cursorignore', '.cursorindexingignore'
+}
+
+
+def _is_dot_path(path: Path) -> bool:
+    """True if the file or any parent (except root) is a dot-name."""
+    return path.name.startswith('.') or any(p.startswith('.') for p in path.parts[:-1])
+
+
+def _is_safe_path(path: Path) -> bool:
+    """True if the path or a parent is in the safe-list."""
+    return path.name in _SAFE_DOT_FILES or any(p in _SAFE_DOT_FILES for p in path.parts[:-1])
+
+
+def _is_whitelisted_path(path: Path, whitelist: set) -> bool:
+    """True if the path matches any whitelist pattern."""
+    return any(
+        path.match(pattern) or any(p.match(pattern) for p in [path] + list(path.parents))
+        for pattern in whitelist
+    )
+
+
+def _matches_problematic(path: Path, problematic_folders: set) -> bool:
+    """True if the path name or prefix matches a problematic folder."""
+    name = path.name
+    path_str = str(path)
+    return (
+        name in problematic_folders
+        or any(name.startswith(f) or path_str.startswith(f + '/') for f in problematic_folders)
+    )
+
+
 def check_dot_folders(files: List[str], config) -> List[str]:
     """Check for dot folders/files that should be in .gitignore.
     
     Returns:
         List of dot folders/files that need to be added to .gitignore
     """
-    # Common safe dot files that shouldn't trigger warnings
-    safe_dot_files = {
-        '.gitignore', '.gitattributes', '.editorconfig', '.git',
-        '.github', '.gitlab-ci.yml', '.pre-commit-config.yaml'
-    }
-    
-    # Load current .gitignore
     ignored, whitelisted = load_gitignore()
     
-    # Get configuration
-    auto_manage = config.get('advanced.file_validation.auto_manage_gitignore', True) if config else True
     known_dot_folders = config.get('advanced.file_validation.known_dot_folders', []) if config else []
+    problematic_folders = _DEFAULT_PROBLEMATIC | set(known_dot_folders)
     
-    # Add known problematic folders
-    problematic_folders = {
-        '.idea', '.vscode', '.DS_Store', 'Thumbs.db', '.pytest_cache',
-        '.coverage', '.mypy_cache', '.tox', '.nox', '.venv', '.env',
-        '.python-version', '.ruff_cache', '.cursorignore', '.cursorindexingignore'
-    }
-    problematic_folders.update(known_dot_folders)
-    
-    # Check staged files
     problematic_found = []
     for file_path in files:
         path = Path(file_path)
-        
-        # Check if it's a dot file/folder or has a dot parent
-        is_dot_file = path.name.startswith('.')
-        has_dot_parent = any(p.startswith('.') for p in path.parts[:-1])  # Check all parts except the filename
-        
-        if not (is_dot_file or has_dot_parent):
+        if not _is_dot_path(path):
             continue
-        
-        # Skip safe files
-        if path.name in safe_dot_files:
+        if _is_safe_path(path):
             continue
-        
-        # Skip if any parent is safe
-        if any(p in safe_dot_files for p in path.parts[:-1]):
+        if _is_whitelisted_path(path, whitelisted):
             continue
-        
-        # Skip if explicitly whitelisted
-        is_whitelisted = False
-        for pattern in whitelisted:
-            if path.match(pattern) or any(p.match(pattern) for p in [path] + list(path.parents)):
-                is_whitelisted = True
-                break
-        if is_whitelisted:
-            continue
-        
-        # Skip if already ignored
         if any(path.match(pattern) for pattern in ignored):
             continue
-        
-        # Check if it matches problematic patterns
-        if (path.name in problematic_folders or 
-            any(path.name.startswith(folder) or str(path).startswith(folder + '/') for folder in problematic_folders) or
-            any(str(path).startswith(folder + '/') for folder in problematic_folders)):
+        if _matches_problematic(path, problematic_folders):
             problematic_found.append(str(path))
     
     return problematic_found
@@ -282,6 +284,38 @@ def manage_dot_folders(files: List[str], config, dry_run: bool = False) -> None:
     else:
         # Just report the issue
         raise DotFolderError(problematic)
+
+
+def _is_excluded(file_path: str, exclude_patterns: Set[str]) -> bool:
+    """Check if a file matches any exclusion pattern."""
+    return any(
+        file_path.endswith(pattern.replace('*', '')) or pattern in file_path
+        for pattern in exclude_patterns
+    )
+
+
+def _handle_oversized_file(file_path: str, size_mb: float, max_size_mb: float,
+                           auto_handle: bool, block: bool) -> None:
+    """Warn or raise for an oversized file (unless auto-handled)."""
+    if auto_handle:
+        return
+    if block:
+        raise FileSizeError(file_path, size_mb, max_size_mb)
+    click.echo(click.style(
+        f"Warning: {file_path} is {size_mb:.1f}MB (exceeds {max_size_mb}MB limit)",
+        fg='yellow'
+    ))
+
+
+def _check_file_for_tokens(file_path: str, token_patterns: List[str]) -> None:
+    """Read a text file and raise TokenDetectedError if tokens are found."""
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        for token_type, line_num in detect_tokens_in_content(content, token_patterns):
+            raise TokenDetectedError(file_path, token_type, line_num)
+    except (UnicodeDecodeError, PermissionError):
+        pass
 
 
 def validate_files(
@@ -349,51 +383,22 @@ def validate_files(
             r'CS:^[A-Z][A-Z0-9_]+=(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9_-]{20,}',
         ]
     
-    # Check each file
     for file_path in files:
-        # Skip excluded patterns
-        if any(file_path.endswith(pattern.replace('*', '')) or pattern in file_path 
-               for pattern in exclude_patterns):
+        if _is_excluded(file_path, exclude_patterns):
             continue
-        
-        # Check file exists
         if not os.path.exists(file_path):
             continue
-        
-        # Check file size
+
         size_mb = get_file_size_mb(file_path)
         if size_mb > max_size_mb:
             large_files_found.append(file_path)
+            _handle_oversized_file(file_path, size_mb, max_size_mb,
+                                   auto_handle_large, block_large_files)
             if auto_handle_large:
-                # Auto-handle by adding to gitignore
                 continue
-            elif block_large_files:
-                raise FileSizeError(file_path, size_mb, max_size_mb)
-            else:
-                click.echo(
-                    click.style(
-                        f"Warning: {file_path} is {size_mb:.1f}MB (exceeds {max_size_mb}MB limit)",
-                        fg='yellow'
-                    )
-                )
-        
-        # Check for tokens in text files
-        if detect_tokens and size_mb <= 1.0:  # Only check files <= 1MB for performance
-            try:
-                # Try to read as text
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-                
-                detected = detect_tokens_in_content(content, token_patterns)
-                for token_type, line_num in detected:
-                    raise TokenDetectedError(file_path, token_type, line_num)
-                    
-            except UnicodeDecodeError:
-                # Skip binary files
-                pass
-            except PermissionError:
-                # Skip files we can't read
-                pass
+
+        if detect_tokens and size_mb <= 1.0:
+            _check_file_for_tokens(file_path, token_patterns)
     
     # Auto-handle large files if found
     if large_files_found and auto_handle_large:

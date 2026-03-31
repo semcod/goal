@@ -250,67 +250,82 @@ def detect_project_types_deep(root: Optional[Path] = None, max_depth: int = 1) -
     return results
 
 
+def _guess_python_name(project_dir: Path) -> Optional[str]:
+    """Guess Python package name from pyproject.toml or setup.py."""
+    import re as _re
+    for filename, pattern, flags in [
+        ('pyproject.toml', r'^name\s*=\s*["\']([^"\']+)["\']', _re.MULTILINE),
+        ('setup.py',       r'name\s*=\s*["\']([^"\']+)["\']', 0),
+    ]:
+        path = project_dir / filename
+        if not path.exists():
+            continue
+        try:
+            m = _re.search(pattern, path.read_text(errors='ignore'), flags)
+            if m:
+                return m.group(1).replace('-', '_')
+        except Exception:
+            pass
+    return None
+
+
+def _guess_nodejs_name(project_dir: Path) -> Optional[str]:
+    """Guess Node.js package name from package.json."""
+    pkg = project_dir / 'package.json'
+    if not pkg.exists():
+        return None
+    try:
+        data = json.loads(pkg.read_text(errors='ignore'))
+        name = data.get('name', '')
+        return name.split('/')[-1] if '/' in name else name
+    except Exception:
+        return None
+
+
+def _guess_rust_name(project_dir: Path) -> Optional[str]:
+    """Guess Rust crate name from Cargo.toml."""
+    import re as _re
+    cargo = project_dir / 'Cargo.toml'
+    if not cargo.exists():
+        return None
+    try:
+        m = _re.search(r'^name\s*=\s*"([^"]+)"', cargo.read_text(errors='ignore'), _re.MULTILINE)
+        return m.group(1) if m else None
+    except Exception:
+        return None
+
+
+def _guess_go_name(project_dir: Path) -> Optional[str]:
+    """Guess Go module name from go.mod."""
+    gomod = project_dir / 'go.mod'
+    if not gomod.exists():
+        return None
+    try:
+        first_line = gomod.read_text(errors='ignore').split('\n')[0]
+        parts = first_line.strip().split()
+        if len(parts) >= 2:
+            return parts[1].rsplit('/', 1)[-1]
+    except Exception:
+        pass
+    return None
+
+
+_PACKAGE_NAME_DETECTORS = {
+    'python': _guess_python_name,
+    'nodejs': _guess_nodejs_name,
+    'rust':   _guess_rust_name,
+    'go':     _guess_go_name,
+}
+
+
 def guess_package_name(project_dir: Path, project_type: str) -> str:
     """Best-effort guess of the package/module name for scaffold templates."""
     project_dir = project_dir.resolve()
-
-    if project_type == 'python':
-        # Try pyproject.toml name field
-        pyproject = project_dir / 'pyproject.toml'
-        if pyproject.exists():
-            try:
-                import re
-                content = pyproject.read_text(errors='ignore')
-                m = re.search(r'^name\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
-                if m:
-                    return m.group(1).replace('-', '_')
-            except Exception:
-                pass
-        # Try setup.py
-        setup_py = project_dir / 'setup.py'
-        if setup_py.exists():
-            try:
-                import re
-                content = setup_py.read_text(errors='ignore')
-                m = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
-                if m:
-                    return m.group(1).replace('-', '_')
-            except Exception:
-                pass
-
-    elif project_type == 'nodejs':
-        pkg = project_dir / 'package.json'
-        if pkg.exists():
-            try:
-                data = json.loads(pkg.read_text(errors='ignore'))
-                name = data.get('name', '')
-                return name.split('/')[-1] if '/' in name else name
-            except Exception:
-                pass
-
-    elif project_type == 'rust':
-        cargo = project_dir / 'Cargo.toml'
-        if cargo.exists():
-            try:
-                import re
-                content = cargo.read_text(errors='ignore')
-                m = re.search(r'^name\s*=\s*"([^"]+)"', content, re.MULTILINE)
-                if m:
-                    return m.group(1)
-            except Exception:
-                pass
-
-    elif project_type == 'go':
-        gomod = project_dir / 'go.mod'
-        if gomod.exists():
-            try:
-                first_line = gomod.read_text(errors='ignore').split('\n')[0]
-                parts = first_line.strip().split()
-                if len(parts) >= 2:
-                    return parts[1].rsplit('/', 1)[-1]
-            except Exception:
-                pass
-
+    detector = _PACKAGE_NAME_DETECTORS.get(project_type)
+    if detector:
+        name = detector(project_dir)
+        if name:
+            return name
     # Fallback: directory name
     return project_dir.name.replace('-', '_')
 
@@ -424,6 +439,105 @@ def _ensure_python_test_dependency(project_dir: Path, python_bin: str, test_dep:
     return True
 
 
+def _ensure_python_env(project_dir: Path, cfg: dict, yes: bool) -> bool:
+    """Set up Python project environment: venv, pip, costs, deps, test deps."""
+    venv_path = project_dir / '.venv'
+    if not venv_path.exists():
+        if not yes:
+            click.echo(click.style(f"\n⚠  No virtual environment found in {project_dir}", fg='yellow'))
+            if not click.confirm(click.style("Create .venv and install dependencies?", fg='cyan'), default=True):
+                return True  # user declined, not a failure
+        click.echo(click.style(f"  Creating .venv in {project_dir} ...", fg='cyan'))
+        import sys
+        result = subprocess.run(
+            [sys.executable, '-m', 'venv', str(venv_path)],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            click.echo(click.style(f"  ✗ Failed to create venv: {result.stderr.strip()}", fg='red'))
+            return False
+        click.echo(click.style("  ✓ Created .venv", fg='green'))
+
+    python_bin = _find_python_bin(project_dir)
+
+    # Upgrade pip
+    subprocess.run([python_bin, '-m', 'pip', 'install', '--upgrade', 'pip'],
+                   capture_output=True, text=True, cwd=str(project_dir))
+
+    # Install costs package for AI tracking
+    _ensure_costs_installed(project_dir, python_bin)
+
+    # Install deps (first matching only)
+    _install_python_deps(project_dir, cfg, python_bin)
+
+    test_dep = cfg.get('test_dep')
+    return _ensure_python_test_dependency(project_dir, python_bin, test_dep)
+
+
+def _install_python_deps(project_dir: Path, cfg: dict, python_bin: str) -> None:
+    """Run the first matching dependency install command for a Python project."""
+    for dep_cfg in cfg['dep_install_commands']:
+        if not _match_marker(project_dir, dep_cfg['condition']):
+            continue
+        cmd = dep_cfg['cmd'].format(python=python_bin)
+        click.echo(click.style(f"  Installing deps: {cmd}", fg='cyan'))
+        result = subprocess.run(cmd, shell=True, cwd=str(project_dir),
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            fallback = dep_cfg.get('fallback')
+            if fallback:
+                cmd = fallback.format(python=python_bin)
+                click.echo(click.style(f"  Retrying: {cmd}", fg='yellow'))
+                result = subprocess.run(cmd, shell=True, cwd=str(project_dir),
+                                        capture_output=True, text=True)
+            if result.returncode != 0:
+                click.echo(click.style(f"  ⚠  Dependency install had issues (exit {result.returncode})", fg='yellow'))
+        else:
+            click.echo(click.style("  ✓ Dependencies installed", fg='green'))
+        break  # Only run the first matching dep install
+
+
+def _ensure_generic_env(project_dir: Path, project_type: str, cfg: dict, yes: bool) -> bool:
+    """Set up a non-Python project environment (Node, Rust, Go, etc.)."""
+    env_dir = cfg.get('env_dir')
+    if env_dir and (project_dir / env_dir).exists():
+        return True  # Already set up
+
+    needs_install = env_dir and not (project_dir / env_dir).exists()
+    if not needs_install:
+        for dep_cfg in cfg['dep_install_commands']:
+            if _match_marker(project_dir, dep_cfg['condition']):
+                needs_install = True
+                break
+
+    if not needs_install:
+        return True
+
+    if not yes:
+        click.echo(click.style(f"\n⚠  Dependencies not installed for {project_type} project in {project_dir}", fg='yellow'))
+        if not click.confirm(click.style("Install dependencies?", fg='cyan'), default=True):
+            return True
+
+    for dep_cfg in cfg['dep_install_commands']:
+        if not _match_marker(project_dir, dep_cfg['condition']):
+            continue
+        cmd = dep_cfg['cmd']
+        tool = cmd.split()[0]
+        if not shutil.which(tool):
+            click.echo(click.style(f"  ⚠  '{tool}' not found in PATH, skipping", fg='yellow'))
+            continue
+        click.echo(click.style(f"  Installing deps: {cmd}", fg='cyan'))
+        result = subprocess.run(cmd, shell=True, cwd=str(project_dir),
+                                capture_output=True, text=True)
+        if result.returncode == 0:
+            click.echo(click.style("  ✓ Dependencies installed", fg='green'))
+        else:
+            click.echo(click.style(f"  ⚠  Install had issues (exit {result.returncode})", fg='yellow'))
+        break
+
+    return True
+
+
 def ensure_project_environment(project_dir: Path, project_type: str, yes: bool = False) -> bool:
     """Ensure the project environment is properly set up.
 
@@ -438,108 +552,10 @@ def ensure_project_environment(project_dir: Path, project_type: str, yes: bool =
         return True
 
     project_dir = project_dir.resolve()
-    env_dir = cfg.get('env_dir')
 
-    # --- Python special handling: create venv if missing ---
     if project_type == 'python':
-        venv_path = project_dir / '.venv'
-        if not venv_path.exists():
-            if not yes:
-                click.echo(click.style(f"\n⚠  No virtual environment found in {project_dir}", fg='yellow'))
-                if not click.confirm(click.style("Create .venv and install dependencies?", fg='cyan'), default=True):
-                    return True  # user declined, not a failure
-            click.echo(click.style(f"  Creating .venv in {project_dir} ...", fg='cyan'))
-            import sys
-            result = subprocess.run(
-                [sys.executable, '-m', 'venv', str(venv_path)],
-                capture_output=True, text=True
-            )
-            if result.returncode != 0:
-                click.echo(click.style(f"  ✗ Failed to create venv: {result.stderr.strip()}", fg='red'))
-                return False
-            click.echo(click.style("  ✓ Created .venv", fg='green'))
-
-        python_bin = _find_python_bin(project_dir)
-
-        # Upgrade pip
-        subprocess.run([python_bin, '-m', 'pip', 'install', '--upgrade', 'pip'],
-                       capture_output=True, text=True, cwd=str(project_dir))
-
-        # Install costs package for AI tracking
-        _ensure_costs_installed(project_dir, python_bin)
-
-        # Install deps
-        for dep_cfg in cfg['dep_install_commands']:
-            condition_file = dep_cfg['condition']
-            if _match_marker(project_dir, condition_file):
-                cmd = dep_cfg['cmd'].format(python=python_bin)
-                click.echo(click.style(f"  Installing deps: {cmd}", fg='cyan'))
-                result = subprocess.run(
-                    cmd, shell=True, cwd=str(project_dir),
-                    capture_output=True, text=True
-                )
-                if result.returncode != 0:
-                    # Try fallback if available
-                    fallback = dep_cfg.get('fallback')
-                    if fallback:
-                        cmd = fallback.format(python=python_bin)
-                        click.echo(click.style(f"  Retrying: {cmd}", fg='yellow'))
-                        result = subprocess.run(
-                            cmd, shell=True, cwd=str(project_dir),
-                            capture_output=True, text=True
-                        )
-                    if result.returncode != 0:
-                        click.echo(click.style(f"  ⚠  Dependency install had issues (exit {result.returncode})", fg='yellow'))
-                        # Not fatal — some deps may be optional
-                else:
-                    click.echo(click.style("  ✓ Dependencies installed", fg='green'))
-                break  # Only run the first matching dep install
-
-        test_dep = cfg.get('test_dep')
-        if not _ensure_python_test_dependency(project_dir, python_bin, test_dep):
-            return False
-        return True
-
-    # --- Generic handling for other project types ---
-    if env_dir:
-        env_path = project_dir / env_dir
-        if env_path.exists():
-            return True  # Already set up
-
-    # Check if deps need installing
-    needs_install = env_dir and not (project_dir / env_dir).exists()
-    if not needs_install:
-        # Check if any condition file exists but env is missing
-        for dep_cfg in cfg['dep_install_commands']:
-            if _match_marker(project_dir, dep_cfg['condition']):
-                needs_install = True
-                break
-
-    if needs_install:
-        if not yes:
-            click.echo(click.style(f"\n⚠  Dependencies not installed for {project_type} project in {project_dir}", fg='yellow'))
-            if not click.confirm(click.style("Install dependencies?", fg='cyan'), default=True):
-                return True
-
-        for dep_cfg in cfg['dep_install_commands']:
-            if _match_marker(project_dir, dep_cfg['condition']):
-                cmd = dep_cfg['cmd']
-                tool = cmd.split()[0]
-                if not shutil.which(tool):
-                    click.echo(click.style(f"  ⚠  '{tool}' not found in PATH, skipping", fg='yellow'))
-                    continue
-                click.echo(click.style(f"  Installing deps: {cmd}", fg='cyan'))
-                result = subprocess.run(
-                    cmd, shell=True, cwd=str(project_dir),
-                    capture_output=True, text=True
-                )
-                if result.returncode == 0:
-                    click.echo(click.style("  ✓ Dependencies installed", fg='green'))
-                else:
-                    click.echo(click.style(f"  ⚠  Install had issues (exit {result.returncode})", fg='yellow'))
-                break
-
-    return True
+        return _ensure_python_env(project_dir, cfg, yes)
+    return _ensure_generic_env(project_dir, project_type, cfg, yes)
 
 
 # =============================================================================
@@ -563,6 +579,20 @@ def find_existing_tests(project_dir: Path, project_type: str) -> List[Path]:
     return found
 
 
+# Test file name templates per project type.
+# Value is a format string receiving {package_name}; use 'test_dir' or 'project_dir' as base.
+_TEST_FILE_NAMES = {
+    'python': ('test_dir', 'test_{package_name}.py'),
+    'nodejs': ('test_dir', '{package_name}.test.js'),
+    'rust':   ('test_dir', 'placeholder_test.rs'),
+    'go':     ('project_dir', 'placeholder_test.go'),
+    'ruby':   ('test_dir', '{package_name}_spec.rb'),
+    'php':    ('test_dir', 'PlaceholderTest.php'),
+    'dotnet': ('test_dir', 'PlaceholderTest.cs'),
+    'java':   ('test_dir', 'PlaceholderTest.java'),
+}
+
+
 def scaffold_test(project_dir: Path, project_type: str, yes: bool = False) -> Optional[Path]:
     """Create a sample test file if no tests exist.
 
@@ -581,30 +611,17 @@ def scaffold_test(project_dir: Path, project_type: str, yes: bool = False) -> Op
         if not click.confirm(click.style("Create a sample test file?", fg='cyan'), default=True):
             return None
 
-    package_name = guess_package_name(project_dir, project_type)
+    template = _TEST_FILE_NAMES.get(project_type)
+    if not template:
+        return None
 
-    # Determine test directory and file name
+    package_name = guess_package_name(project_dir, project_type)
     test_dir_name = cfg['test_dirs'][0]
     test_dir = project_dir / test_dir_name
 
-    if project_type == 'python':
-        test_file = test_dir / f'test_{package_name}.py'
-    elif project_type == 'nodejs':
-        test_file = test_dir / f'{package_name}.test.js'
-    elif project_type == 'rust':
-        test_file = test_dir / 'placeholder_test.rs'
-    elif project_type == 'go':
-        test_file = project_dir / 'placeholder_test.go'
-    elif project_type == 'ruby':
-        test_file = test_dir / f'{package_name}_spec.rb'
-    elif project_type == 'php':
-        test_file = test_dir / 'PlaceholderTest.php'
-    elif project_type == 'dotnet':
-        test_file = test_dir / 'PlaceholderTest.cs'
-    elif project_type == 'java':
-        test_file = test_dir / 'PlaceholderTest.java'
-    else:
-        return None
+    base_key, name_fmt = template
+    base = test_dir if base_key == 'test_dir' else project_dir
+    test_file = base / name_fmt.format(package_name=package_name)
 
     if test_file.exists():
         return None
@@ -688,142 +705,118 @@ def bootstrap_all_projects(root: Optional[Path] = None, yes: bool = False) -> Li
     return results
 
 
-def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
-    """Ensure costs package is installed and configured for AI tracking.
-    
-    Returns True if costs is ready to use.
-    """
+def _install_costs_package(project_dir: Path, python_bin: str) -> bool:
+    """Check if costs is installed; install it if not. Returns True on success."""
     import subprocess
-    
-    click.echo(click.style(f"  DEBUG: _ensure_costs_installed called for {project_dir}", fg='magenta'))
-    
-    # Check if costs is already installed
     result = subprocess.run(
         [python_bin, '-c', 'import costs; print(costs.__version__)'],
         capture_output=True, text=True, cwd=str(project_dir)
     )
-    
-    if result.returncode != 0:
-        # Install costs
-        click.echo(click.style(f"  Installing costs package...", fg='cyan'))
-        install_result = subprocess.run(
-            [python_bin, '-m', 'pip', 'install', 'costs>=0.1.20'],
-            capture_output=True, text=True, cwd=str(project_dir)
-        )
-        if install_result.returncode != 0:
-            click.echo(click.style(f"  ⚠ Could not install costs package", fg='yellow'))
-            return False
-        click.echo(click.style("  ✓ Costs package installed", fg='green'))
-    else:
+    if result.returncode == 0:
         click.echo(click.style(f"  ✓ Costs package already installed ({result.stdout.strip()})", fg='green'))
-    
-    # Check/add costs config to pyproject.toml
-    config_ok = _ensure_costs_config(project_dir)
-    
-    # Create .env template for API key if not exists
-    env_ok = _ensure_env_template(project_dir)
-    
-    # Generate initial badge in README (append at end, not after first heading)
+        return True
+
+    click.echo(click.style(f"  Installing costs package...", fg='cyan'))
+    install_result = subprocess.run(
+        [python_bin, '-m', 'pip', 'install', 'costs>=0.1.20'],
+        capture_output=True, text=True, cwd=str(project_dir)
+    )
+    if install_result.returncode != 0:
+        click.echo(click.style(f"  ⚠ Could not install costs package", fg='yellow'))
+        return False
+    click.echo(click.style("  ✓ Costs package installed", fg='green'))
+    return True
+
+
+def _load_costs_api():
+    """Import costs API functions, falling back to older API versions."""
+    try:
+        from costs import calculate_human_time, update_readme_badge
+    except ImportError:
+        from costs.reports import update_readme_badge
+        from collections import defaultdict
+
+        def calculate_human_time(commits):
+            """Calculate human hours from commit history."""
+            if not commits:
+                return 0.0
+            daily_commits = defaultdict(lambda: defaultdict(list))
+            for commit in commits:
+                date = commit.get('date', '')[:10]
+                author = commit.get('author', 'Unknown')
+                daily_commits[date][author].append(commit)
+            total_hours = 0.0
+            for date, authors in daily_commits.items():
+                for author, author_commits in authors.items():
+                    total_hours += min(len(author_commits) * 0.5, 8.0)
+            return total_hours
+
+    return calculate_human_time, update_readme_badge
+
+
+def _calculate_ai_costs(repo_root: Path):
+    """Parse commits and calculate AI-related costs. Returns (total_cost, total_commits, all_commits_data)."""
+    from costs.git_parser import parse_commits, get_commit_diff
+    from costs.calculator import ai_cost
+
+    all_commits_data = parse_commits(
+        str(repo_root), max_count=500, ai_only=False, full_history=True
+    )
+
+    ai_indicators = ['🤖', 'AI:', '[AI]', '(AI)', 'automat', 'cascade', 'claude', 'gpt', 'llm']
+    ai_commits = [
+        c for c in all_commits_data
+        if any(ind in c[1].lower() for ind in ai_indicators)
+    ]
+
+    total_cost = 0.0
+    total_commits = len(ai_commits)
+
+    for commit_obj, _msg in ai_commits[:50]:
+        try:
+            diff = get_commit_diff(str(repo_root), commit_obj.hexsha)
+            if diff:
+                total_cost += ai_cost(diff, model='openrouter/qwen/qwen3-coder-next').get('cost', 0.0)
+        except Exception:
+            total_cost += 0.15
+
+    if total_cost == 0 and all_commits_data:
+        total_cost = len(all_commits_data) * 0.15
+        total_commits = len(all_commits_data)
+
+    return total_cost, total_commits, all_commits_data
+
+
+def _read_model_from_pyproject(project_dir: Path) -> str:
+    """Read default_model from pyproject.toml, or return a default."""
+    import re as _re
+    pyproject = project_dir / 'pyproject.toml'
+    if pyproject.exists():
+        content = pyproject.read_text()
+        match = _re.search(r'default_model\s*=\s*"([^"]+)"', content)
+        if match:
+            return match.group(1)
+    return "openrouter/qwen/qwen3-coder-next"
+
+
+def _generate_costs_badge(project_dir: Path) -> None:
+    """Generate an AI cost badge in the project README."""
     click.echo(click.style(f"  Generating AI cost badge...", fg='cyan'))
-    
     try:
         repo_root = _find_git_root(project_dir) or project_dir
+        calculate_human_time, update_readme_badge = _load_costs_api()
+        from costs.git_parser import get_repo_stats
 
-        # Try new simplified API first (costs >= 0.1.21)
-        try:
-            from costs import calculate_human_time, update_readme_badge
-        except ImportError:
-            # Fallback to old API (costs <= 0.1.20)
-            from costs.reports import update_readme_badge
-            from datetime import datetime
-            from collections import defaultdict
-            
-            def calculate_human_time(commits):
-                """Calculate human hours from commit history."""
-                if not commits:
-                    return 0.0
-                
-                # Group commits by date and author
-                daily_commits = defaultdict(lambda: defaultdict(list))
-                for commit in commits:
-                    date = commit.get('date', '')[:10]  # YYYY-MM-DD
-                    author = commit.get('author', 'Unknown')
-                    daily_commits[date][author].append(commit)
-                
-                # Estimate hours: assume each author works ~2 hours per day with commits
-                total_hours = 0.0
-                for date, authors in daily_commits.items():
-                    for author, author_commits in authors.items():
-                        # Estimate 30 min per commit, capped at 8 hours per day
-                        hours = min(len(author_commits) * 0.5, 8.0)
-                        total_hours += hours
-                
-                return total_hours
-        
-        from costs.git_parser import parse_commits, get_repo_stats, get_commit_diff
-        from costs.calculator import ai_cost
-        import json
-        
-        # Get repository statistics
         repo_stats = get_repo_stats(str(repo_root))
-        
-        # Get all commits with AI detection
-        all_commits_data = parse_commits(
-            str(repo_root),
-            max_count=500,
-            ai_only=False,
-            full_history=True
-        )
-        
-        # Calculate costs for AI commits
-        # parse_commits returns List[Tuple[Commit, str]] where str is commit message
-        ai_indicators = ['🤖', 'AI:', '[AI]', '(AI)', 'automat', 'cascade', 'claude', 'gpt', 'llm']
-        ai_commits = [
-            c for c in all_commits_data 
-            if any(ind in c[1].lower() for ind in ai_indicators)
-        ]
-        
-        # Calculate total cost from AI commits
-        total_cost = 0.0
-        total_commits = len(ai_commits)
-        
-        if ai_commits:
-            # Get commit diffs and calculate costs
-            commits_with_diffs = []
-            for commit_obj, commit_data in ai_commits[:50]:  # Limit to first 50 for performance
-                try:
-                    diff = get_commit_diff(str(repo_root), commit_obj.hexsha)
-                    if diff:
-                        cost_result = ai_cost(diff, model='openrouter/qwen/qwen3-coder-next')
-                        total_cost += cost_result.get('cost', 0.0)
-                except Exception:
-                    # Estimate based on commit size
-                    total_cost += 0.15  # Average cost per AI commit
-        
-        # If no AI commits detected, estimate from total commits
-        if total_cost == 0 and len(all_commits_data) > 0:
-            total_cost = len(all_commits_data) * 0.15  # Estimate $0.15 per commit
-            total_commits = len(all_commits_data)
-        
-        # Get model from pyproject.toml or use default
-        model = "openrouter/qwen/qwen3-coder-next"
-        pyproject = project_dir / 'pyproject.toml'
-        if pyproject.exists():
-            content = pyproject.read_text()
-            if 'default_model' in content:
-                import re
-                match = re.search(r'default_model\s*=\s*"([^"]+)"', content)
-                if match:
-                    model = match.group(1)
-        
-        # Calculate human time
+        total_cost, total_commits, all_commits_data = _calculate_ai_costs(repo_root)
+        model = _read_model_from_pyproject(project_dir)
+
         all_commits_list = [
             {"date": c[0].committed_datetime.isoformat(), "author": c[0].author.name}
             for c in all_commits_data
         ]
         human_hours = calculate_human_time(all_commits_list)
-        
-        # Build results structure expected by update_readme_badge
+
         results = {
             "summary": {
                 "total_cost": total_cost,
@@ -835,8 +828,7 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
                 "human_cost": human_hours * 100
             }
         }
-        
-        # Update README with badge
+
         readme_path = repo_root / "README.md"
         if readme_path.exists():
             success = update_readme_badge(repo_root, results)
@@ -846,12 +838,50 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
                 click.echo(click.style("  ⚠ Failed to update README badge", fg='yellow'))
         else:
             click.echo(click.style("  ⚠ README.md not found", fg='yellow'))
-            
     except Exception as e:
-        import traceback
         click.echo(click.style(f"  ⚠ Badge generation failed: {str(e)[:100]}", fg='yellow'))
+
+
+def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
+    """Ensure costs package is installed and configured for AI tracking.
+    
+    Returns True if costs is ready to use.
+    """
+    if not _install_costs_package(project_dir, python_bin):
+        return False
+    
+    _ensure_costs_config(project_dir)
+    _ensure_env_template(project_dir)
+    _generate_costs_badge(project_dir)
     
     return True
+
+
+_REQUIRED_DEV_DEPS = [
+    ('goal',  '"goal>=2.1.0"'),
+    ('costs', '"costs>=0.1.20"'),
+    ('pfix',  '"pfix>=0.1.60"'),
+]
+
+
+def _add_deps_to_section(match, required_deps=_REQUIRED_DEV_DEPS):
+    """Regex replacement callback: append missing deps to a TOML list."""
+    existing = match.group(2)
+    to_add = [spec for name, spec in required_deps if name not in existing.lower()]
+    if not to_add:
+        return match.group(0)
+
+    existing_stripped = existing.rstrip()
+    indent = '    '
+    for line in existing.split('\n'):
+        stripped = line.lstrip()
+        if stripped.startswith('"'):
+            indent = line[:len(line) - len(stripped)] or indent
+            break
+    new_entries = '\n'.join(f'{indent}{dep},' for dep in to_add)
+    if existing_stripped and not existing_stripped.endswith(','):
+        existing_stripped += ','
+    return f'{match.group(1)}{existing_stripped}\n{new_entries}\n]'
 
 
 def _ensure_costs_config(project_dir: Path) -> bool:
@@ -861,99 +891,30 @@ def _ensure_costs_config(project_dir: Path) -> bool:
     
     Returns True if config was added or already exists.
     """
+    import re
     pyproject = project_dir / 'pyproject.toml'
     if not pyproject.exists():
         return False
     
     content = pyproject.read_text(encoding='utf-8')
     
-    # Check/add dev dependencies for goal and costs
+    # Check if any required dep is missing
+    all_present = all(name in content.lower() for name, _ in _REQUIRED_DEV_DEPS)
     dev_deps_updated = False
-    
-    # Look for common dev dependency groups
-    dev_dep_patterns = [
-        'dev-dependencies',
-        'optional-dependencies',
-    ]
-    
-    # Check if goal/costs/pfix already in dependencies
-    has_goal = 'goal' in content.lower() and ('goal' in content.split('[project]')[1].split('[tool')[0] if '[project]' in content and '[tool' in content else True)
-    has_costs = 'costs' in content.lower()
-    has_pfix = 'pfix' in content.lower()
-    
-    if not has_goal or not has_costs or not has_pfix:
-        # Try to add to [project.optional-dependencies] dev group
+
+    if not all_present:
+        dep_pattern = r'((?:dev|dependencies)\s*=\s*\[)([^\]]*)\]'
         if '[project.optional-dependencies]' in content and 'dev = [' in content.lower():
-            # Find the dev group and add
-            import re
-            # Find dev = [ ... ] and add goal/costs if not present
-            pattern = r'(dev\s*=\s*\[)([^\]]*)\]'
-            def add_deps(match):
-                existing = match.group(2)
-                to_add = []
-                if 'goal' not in existing.lower():
-                    to_add.append('"goal>=2.1.0"')
-                if 'costs' not in existing.lower():
-                    to_add.append('"costs>=0.1.20"')
-                if 'pfix' not in existing.lower():
-                    to_add.append('"pfix>=0.1.60"')
-                if to_add:
-                    # Preserve multi-line formatting
-                    existing_stripped = existing.rstrip()
-                    # Detect indentation from existing content
-                    indent = '    '  # default 4 spaces
-                    for line in existing.split('\n'):
-                        stripped = line.lstrip()
-                        if stripped.startswith('"'):
-                            indent = line[:len(line) - len(stripped)] or indent
-                            break
-                    # Build new entries with proper formatting
-                    new_entries = '\n'.join(f'{indent}{dep},' for dep in to_add)
-                    # Add comma after last existing entry if needed
-                    if existing_stripped and not existing_stripped.endswith(','):
-                        existing_stripped += ','
-                    return f'{match.group(1)}{existing_stripped}\n{new_entries}\n]'
-                return match.group(0)
-            
-            new_content = re.sub(pattern, add_deps, content, flags=re.IGNORECASE | re.DOTALL)
+            new_content = re.sub(dep_pattern, _add_deps_to_section, content,
+                                 flags=re.IGNORECASE | re.DOTALL)
             if new_content != content:
                 content = new_content
                 dev_deps_updated = True
-        
-        # Try hatch envs default
         elif '[tool.hatch.envs.default]' in content and 'dependencies = [' in content:
-            pattern = r'(dependencies\s*=\s*\[)([^\]]*)\]'
-            def add_deps_hatch(match):
-                existing = match.group(2)
-                to_add = []
-                if 'goal' not in existing.lower():
-                    to_add.append('"goal>=2.1.0"')
-                if 'costs' not in existing.lower():
-                    to_add.append('"costs>=0.1.20"')
-                if 'pfix' not in existing.lower():
-                    to_add.append('"pfix>=0.1.60"')
-                if to_add:
-                    # Preserve multi-line formatting
-                    existing_stripped = existing.rstrip()
-                    # Detect indentation from existing content
-                    indent = '    '  # default 4 spaces
-                    for line in existing.split('\n'):
-                        stripped = line.lstrip()
-                        if stripped.startswith('"'):
-                            indent = line[:len(line) - len(stripped)] or indent
-                            break
-                    # Build new entries with proper formatting
-                    new_entries = '\n'.join(f'{indent}{dep},' for dep in to_add)
-                    # Add comma after last existing entry if needed
-                    if existing_stripped and not existing_stripped.endswith(','):
-                        existing_stripped += ','
-                    return f'{match.group(1)}{existing_stripped}\n{new_entries}\n]'
-                return match.group(0)
-            
-            # Only match dependencies within hatch envs default
             hatch_section = content.split('[tool.hatch.envs.default]')[1].split('[')[0]
-            if 'goal' not in hatch_section.lower() or 'costs' not in hatch_section.lower() or 'pfix' not in hatch_section.lower():
-                new_content = re.sub(pattern, add_deps_hatch, content, flags=re.IGNORECASE | re.DOTALL)
+            if not all(name in hatch_section.lower() for name, _ in _REQUIRED_DEV_DEPS):
+                new_content = re.sub(dep_pattern, _add_deps_to_section, content,
+                                     flags=re.IGNORECASE | re.DOTALL)
                 if new_content != content:
                     content = new_content
                     dev_deps_updated = True
@@ -963,11 +924,9 @@ def _ensure_costs_config(project_dir: Path) -> bool:
             f.write(content)
         click.echo(click.style("  ✓ Added goal, costs and pfix to dev dependencies", fg='green'))
     
-    # Check if already configured
     if '[tool.costs]' in content:
         return True
     
-    # Add costs configuration
     costs_config = '''\n[tool.costs]
 # AI Cost tracking configuration
 badge = true

@@ -6,10 +6,12 @@ from importlib import import_module
 from typing import List, Dict, Any
 
 import click
+import goal
+
+from goal import __version__
 
 try:
     import nfo
-    from nfo.terminal import TerminalSink
     _HAS_NFO = True
 except ImportError:
     _HAS_NFO = False
@@ -172,7 +174,8 @@ class GoalGroup(click.Group):
 
 @click.group(cls=GoalGroup)
 @click.option('--bump', default='patch', help='Version bump type (major, minor, patch)')
-@click.option('--version', default=None, help='Explicit version to use')
+@click.option('--target-version', default=None, help='Explicit version to use')
+@click.version_option(version=__version__, prog_name="goal")
 @click.option('--yes', '-y', is_flag=True, help='Auto-confirm all prompts')
 @click.option('--all', '-a', 'all_flags', is_flag=True, help='Run full workflow (tests, push, publish)')
 @click.option('--no-publish', is_flag=True, help='Skip publishing to registry')
@@ -184,7 +187,7 @@ class GoalGroup(click.Group):
 @click.option('--nfo-format', default='markdown', help='nfo log format')
 @click.option('--nfo-sink', default='', help='Additional nfo sink')
 @click.pass_context
-def main(ctx, bump, version, yes, all_flags, no_publish, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink) -> None:
+def main(ctx, bump, target_version, yes, all_flags, no_publish, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink) -> None:
     """Goal - Automated git push with smart commit messages."""
     # Display version info at startup with update check
     from goal import __version__
@@ -200,7 +203,7 @@ def main(ctx, bump, version, yes, all_flags, no_publish, todo, markdown, dry_run
     
     ctx.ensure_object(dict)
     ctx.obj['bump'] = bump
-    ctx.obj['version'] = version
+    ctx.obj['version'] = target_version
     ctx.obj['yes'] = yes or all_flags
     ctx.obj['no_publish'] = no_publish
     ctx.obj['todo'] = todo

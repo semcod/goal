@@ -262,6 +262,47 @@ def format_push_result(
     return formatter.render()
 
 
+def _format_complexity_metric(metrics: Dict[str, Any]) -> Optional[str]:
+    """Format complexity change as a single metric line, or None."""
+    old_cc = metrics.get('old_complexity', 1)
+    new_cc = metrics.get('new_complexity', old_cc)
+    if old_cc == new_cc or old_cc <= 0:
+        return None
+    delta_pct = ((new_cc - old_cc) / old_cc) * 100
+    if delta_pct < -10:
+        return f"📉 -{abs(delta_pct):.0f}% complexity (refactor win)"
+    if delta_pct > 50:
+        return f"⚠️ +{delta_pct:.0f}% complexity (monitor)"
+    if delta_pct > 0:
+        return f"📊 +{delta_pct:.0f}% complexity (new features)"
+    return "➡️ Stable complexity"
+
+
+def _format_metrics_section(metrics: Dict[str, Any], relations: Dict[str, Any] = None) -> str:
+    """Build the Impact Metrics section content."""
+    lines: List[str] = []
+    cc_line = _format_complexity_metric(metrics)
+    if cc_line:
+        lines.append(cc_line)
+    if metrics.get('test_impact', 0) > 0:
+        lines.append(f"🧪 Test coverage: +{metrics['test_impact']}%")
+    rel_count = len(relations.get('relations', [])) if relations else 0
+    if rel_count > 0:
+        lines.append(f"🔗 Relations: {rel_count} dependencies detected")
+    lines.append(f"⭐ Value score: {metrics['value_score']}/100")
+    return '\n'.join(lines)
+
+
+def _format_relations_section(relations: Dict[str, Any]) -> Optional[str]:
+    """Build the Relations section content, or None if empty."""
+    if not relations or not relations.get('chain'):
+        return None
+    content = f"**Chain:** `{relations['chain']}`"
+    if relations.get('ascii'):
+        content += f"\n```\n{relations['ascii']}\n```"
+    return content
+
+
 def format_enhanced_summary(
     commit_title: str,
     commit_body: str,
@@ -303,52 +344,21 @@ def format_enhanced_summary(
     
     # NEW CAPABILITIES section
     if capabilities:
-        cap_lines = []
-        for cap in capabilities[:5]:
-            cap_lines.append(f"✅ **{cap['capability']}** - {cap['impact']}")
+        cap_lines = [f"✅ **{cap['capability']}** - {cap['impact']}" for cap in capabilities[:5]]
         formatter.add_section("New Capabilities", '\n'.join(cap_lines))
     
     # FUNCTIONAL COMPONENTS section (roles)
     if roles:
-        role_lines = []
-        for role in roles[:5]:
-            role_lines.append(f"- **{role['role']}** (`{role['name']}`)")
+        role_lines = [f"- **{role['role']}** (`{role['name']}`)" for role in roles[:5]]
         formatter.add_section("Functional Components", '\n'.join(role_lines))
     
     # IMPACT METRICS section
     if metrics:
-        metric_lines = []
-        
-        # Use interpretable complexity metrics
-        old_cc = metrics.get('old_complexity', 1)
-        new_cc = metrics.get('new_complexity', old_cc)
-        if old_cc != new_cc and old_cc > 0:
-            delta_pct = ((new_cc - old_cc) / old_cc) * 100
-            if delta_pct < -10:
-                metric_lines.append(f"📉 -{abs(delta_pct):.0f}% complexity (refactor win)")
-            elif delta_pct > 50:
-                metric_lines.append(f"⚠️ +{delta_pct:.0f}% complexity (monitor)")
-            elif delta_pct > 0:
-                metric_lines.append(f"📊 +{delta_pct:.0f}% complexity (new features)")
-            else:
-                metric_lines.append("➡️ Stable complexity")
-        
-        if metrics.get('test_impact', 0) > 0:
-            metric_lines.append(f"🧪 Test coverage: +{metrics['test_impact']}%")
-        
-        # Show relation count instead of density
-        rel_count = len(relations.get('relations', [])) if relations else 0
-        if rel_count > 0:
-            metric_lines.append(f"🔗 Relations: {rel_count} dependencies detected")
-        
-        metric_lines.append(f"⭐ Value score: {metrics['value_score']}/100")
-        formatter.add_section("Impact Metrics", '\n'.join(metric_lines))
+        formatter.add_section("Impact Metrics", _format_metrics_section(metrics, relations))
     
     # RELATIONS section
-    if relations and relations.get('chain'):
-        rel_content = f"**Chain:** `{relations['chain']}`"
-        if relations.get('ascii'):
-            rel_content += f"\n```\n{relations['ascii']}\n```"
+    rel_content = _format_relations_section(relations)
+    if rel_content:
         formatter.add_section("Relations", rel_content)
     
     # Commit body (if different from capabilities display)

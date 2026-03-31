@@ -2,8 +2,9 @@
 
 import re
 import os
+import subprocess
 from collections import Counter, defaultdict
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 
 
 class ChangeAnalyzer:
@@ -273,123 +274,158 @@ class ChangeAnalyzer:
 
 class ContentAnalyzer:
     """Analyze content for short summaries and per-file notes."""
-    
+
+    # Tag detectors: (label, file_match, diff_match)
+    # A tag is activated when file_match(files) or diff_match(diff) is truthy.
+    _TAG_DETECTORS: List[Tuple[str, str, str]] = [
+        ('markdown output', 'formatter.py', 'markdown'),
+        ('commit messages', 'commit_generator.py', 'commit message'),
+        ('hooks',          'git-hooks',     'prepare-commit-msg'),
+    ]
+
+    # Single-tag → fixed summary overrides
+    _TAG_SUMMARIES: Dict[str, str] = {
+        'markdown output': 'add markdown output',
+        'commit messages': 'improve commit messages',
+        'hooks':           'add git hooks',
+    }
+
+    # Noise patterns for changelog/version headings in .md/.rst files
+    _HEADING_NOISE = [
+        r'^\[.*\d+\.\d+.*\]',
+        r'^\d{4}-\d{2}-\d{2}',
+        r'^(Added|Changed|Deprecated|Removed|Fixed|Security)$',
+        r'^(Changelog|CHANGELOG|Unreleased)',
+        r'^v?\d+\.\d+',
+    ]
+
     def short_action_summary(self, files: List[str], diff_content: str) -> str:
         """Return a short 2–6 word action summary (no LLM)."""
         file_lower = [f.lower() for f in files]
         diff_lower = diff_content.lower()
 
-        tags: List[str] = []
+        tags = self._detect_tags(file_lower, diff_lower)
 
-        has_markdown = any('formatter.py' in f for f in file_lower) or 'markdown' in diff_lower
-        has_hooks = any('git-hooks' in f for f in file_lower) or any('prepare-commit-msg' in f for f in file_lower)
-        has_commit_gen = any('commit_generator.py' in f for f in file_lower) or 'commit message' in diff_lower
-        has_cli = any(f.startswith('goal/') for f in file_lower) and ('@click.' in diff_lower or 'click.option' in diff_lower)
-
-        if has_markdown:
-            tags.append('markdown output')
-        if has_commit_gen:
-            tags.append('commit messages')
-        if has_hooks:
-            tags.append('hooks')
-        if has_cli and not tags:
-            tags.append('cli workflow')
-
-        # Build a compact grouped summary from up to 2 themes
         if tags:
-            pick = tags[:2]
-            if pick == ['markdown output']:
-                return 'add markdown output'
-            if pick == ['commit messages']:
-                return 'improve commit messages'
-            if pick == ['hooks']:
-                return 'add git hooks'
+            return self._summary_from_tags(tags)
 
-            if len(pick) == 2:
-                # Keep it short: "add X and Y"
-                return f"add {pick[0]} and {pick[1]}"
-
-            return f"add {pick[0]}"
-
-        if any(f.startswith('docs/') for f in file_lower) or any('readme.md' in f for f in file_lower):
-            if any(f.startswith('goal/') for f in file_lower):
-                return 'update cli docs'
-            return 'update docs'
-
-        if any(f.startswith('examples/') for f in file_lower):
-            if any(f.startswith('goal/') for f in file_lower):
-                return 'update examples and cli'
-            return 'update examples'
-
-        # Fallbacks
-        if len(files) == 1:
-            base = os.path.basename(files[0])
-            if base.lower().endswith('.md'):
-                return 'update documentation'
-            return f"update {base}"
+        fallback = self._summary_from_paths(file_lower, files)
+        if fallback:
+            return fallback
 
         return 'update project'
 
+    def _detect_tags(self, file_lower: List[str], diff_lower: str) -> List[str]:
+        """Detect thematic tags from files and diff content."""
+        tags: List[str] = []
+        for label, file_needle, diff_needle in self._TAG_DETECTORS:
+            if any(file_needle in f for f in file_lower) or diff_needle in diff_lower:
+                tags.append(label)
+
+        # CLI tag only when no other tags matched
+        if not tags:
+            has_cli = (any(f.startswith('goal/') for f in file_lower)
+                       and ('@click.' in diff_lower or 'click.option' in diff_lower))
+            if has_cli:
+                tags.append('cli workflow')
+        return tags
+
+    def _summary_from_tags(self, tags: List[str]) -> str:
+        """Build summary string from detected tags."""
+        pick = tags[:2]
+        if len(pick) == 1 and pick[0] in self._TAG_SUMMARIES:
+            return self._TAG_SUMMARIES[pick[0]]
+        if len(pick) == 2:
+            return f"add {pick[0]} and {pick[1]}"
+        return f"add {pick[0]}"
+
+    def _summary_from_paths(self, file_lower: List[str], files: List[str]) -> Optional[str]:
+        """Derive summary from file paths when no tags matched."""
+        has_goal = any(f.startswith('goal/') for f in file_lower)
+
+        if any(f.startswith('docs/') for f in file_lower) or any('readme.md' in f for f in file_lower):
+            return 'update cli docs' if has_goal else 'update docs'
+
+        if any(f.startswith('examples/') for f in file_lower):
+            return 'update examples and cli' if has_goal else 'update examples'
+
+        if len(files) == 1:
+            base = os.path.basename(files[0])
+            return 'update documentation' if base.lower().endswith('.md') else f"update {base}"
+
+        return None
+
+    # ------------------------------------------------------------------
+    # per_file_notes
+    # ------------------------------------------------------------------
+
     def per_file_notes(self, path: str, cached: bool = True) -> List[str]:
         """Generate small descriptive notes for a file based on added lines heuristics."""
+        added_lines = self._get_added_lines(path, cached)
+        if added_lines is None:
+            return []
+
+        notes: List[str] = []
+        if path.endswith('.py'):
+            self._notes_python(added_lines, notes)
+        if path.endswith(('.md', '.rst')):
+            self._notes_docs(added_lines, path, notes)
+        if path.endswith('.sh'):
+            self._notes_shell(added_lines, notes)
+
+        # Deduplicate and cap
+        return list(dict.fromkeys(notes))[:3]
+
+    @staticmethod
+    def _get_added_lines(path: str, cached: bool) -> Optional[List[str]]:
+        """Extract added lines from git diff."""
         cmd = ['git', 'diff']
         if cached:
             cmd.append('--cached')
         cmd.extend(['-U0', '--', path])
-
         try:
             diff = subprocess.run(cmd, capture_output=True, text=True).stdout
         except Exception:
-            return []
+            return None
+        return [l[1:].strip() for l in diff.splitlines() if l.startswith('+') and not l.startswith('+++')]
 
-        notes: List[str] = []
-        added_lines = [l[1:].strip() for l in diff.splitlines() if l.startswith('+') and not l.startswith('+++')]
+    @staticmethod
+    def _notes_python(added_lines: List[str], notes: List[str]) -> None:
+        """Collect notes for Python files."""
+        joined = '\n'.join(added_lines)
+        classes = re.findall(r'^class\s+(\w+)', joined, re.MULTILINE)
+        funcs = re.findall(r'^def\s+(\w+)\s*\(', joined, re.MULTILINE)
+        if classes:
+            notes.append(f"add classes: {', '.join(sorted(set(classes))[:4])}")
+        if funcs:
+            notes.append(f"add functions: {', '.join(sorted(set(funcs))[:4])}")
+        if any('click.option' in l for l in added_lines):
+            notes.append('add/update cli options')
+        if any('markdown' in l.lower() for l in added_lines):
+            notes.append('add markdown formatting')
 
-        if path.endswith('.py'):
-            funcs = re.findall(r'^def\s+(\w+)\s*\(', '\n'.join(added_lines), re.MULTILINE)
-            classes = re.findall(r'^class\s+(\w+)', '\n'.join(added_lines), re.MULTILINE)
-            if classes:
-                notes.append(f"add classes: {', '.join(sorted(set(classes))[:4])}")
-            if funcs:
-                notes.append(f"add functions: {', '.join(sorted(set(funcs))[:4])}")
-            if any('click.option' in l for l in added_lines):
-                notes.append('add/update cli options')
-            if any('markdown' in l.lower() for l in added_lines):
-                notes.append('add markdown formatting')
+    @classmethod
+    def _notes_docs(cls, added_lines: List[str], path: str, notes: List[str]) -> None:
+        """Collect notes for documentation files."""
+        headings = []
+        for l in added_lines:
+            if l.startswith('#'):
+                h = re.sub(r'^#+\s*', '', l).strip()
+                if h and len(h) > 2:
+                    if not any(re.match(p, h, re.IGNORECASE) for p in cls._HEADING_NOISE):
+                        headings.append(h)
+        if headings:
+            notes.append(f"update sections: {', '.join(headings[:4])}")
+        elif 'changelog' in path.lower():
+            notes.append('update changelog entries')
+        elif 'readme' in path.lower():
+            notes.append('update documentation')
 
-        if path.endswith(('.md', '.rst')):
-            # Filter out changelog noise from headings
-            noise_patterns = [
-                r'^\[.*\d+\.\d+.*\]',  # [1.2.0]
-                r'^\d{4}-\d{2}-\d{2}',  # Dates
-                r'^(Added|Changed|Deprecated|Removed|Fixed|Security)$',
-                r'^(Changelog|CHANGELOG|Unreleased)',
-                r'^v?\d+\.\d+',  # Version numbers
-            ]
-            headings = []
-            for l in added_lines:
-                if l.startswith('#'):
-                    h = re.sub(r'^#+\s*', '', l).strip()
-                    if h and len(h) > 2:
-                        if not any(re.match(p, h, re.IGNORECASE) for p in noise_patterns):
-                            headings.append(h)
-            if headings:
-                notes.append(f"update sections: {', '.join(headings[:4])}")
-            elif 'changelog' in path.lower():
-                notes.append('update changelog entries')
-            elif 'readme' in path.lower():
-                notes.append('update documentation')
-
-        if path.endswith('.sh'):
-            if any('chmod' in l or 'hook' in l for l in added_lines):
-                notes.append('add hook install script')
-
-        # Deduplicate and cap
-        out = []
-        for n in notes:
-            if n not in out:
-                out.append(n)
-        return out[:3]
+    @staticmethod
+    def _notes_shell(added_lines: List[str], notes: List[str]) -> None:
+        """Collect notes for shell scripts."""
+        if any('chmod' in l or 'hook' in l for l in added_lines):
+            notes.append('add hook install script')
 
 
 __all__ = ['ChangeAnalyzer', 'ContentAnalyzer']

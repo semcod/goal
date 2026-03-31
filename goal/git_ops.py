@@ -273,6 +273,119 @@ def clone_repository(url: str, target_dir: Optional[str] = None) -> Tuple[bool, 
         return False, "Failed to clone repository. Check the URL and your access permissions."
 
 
+def _select_branch(branches: list) -> str:
+    """Prompt user to select a branch from a list, or auto-select if only one."""
+    if len(branches) == 1:
+        click.echo(click.style(f"  Using branch: {branches[0]}", fg='bright_black'))
+        return branches[0]
+    branch_list = '\n'.join(f"  [{i+1}] {b}" for i, b in enumerate(branches))
+    idx = click.prompt(
+        f"{click.style('Select branch:', fg='cyan')}\n{branch_list}\nChoose",
+        type=click.IntRange(1, len(branches)),
+        default=1,
+    )
+    return branches[idx - 1]
+
+
+def _handle_merge_strategy(branches: list, has_files: bool) -> None:
+    """Prompt for and execute a merge strategy after fetching remote branches."""
+    if not branches:
+        click.echo(click.style("  Remote is empty (no branches yet). Your local files will be the first push.", fg='bright_black'))
+        return
+
+    click.echo(click.style(f"  Remote branches: {', '.join(branches)}", fg='bright_black'))
+    click.echo()
+
+    merge_action = click.prompt(
+        f"{click.style('How should goal combine local and remote files?', fg='cyan')}\n"
+        f"  [1] Keep local files, push to remote later     (recommended for new projects)\n"
+        f"  [2] Merge remote branch into local files       (combine both)\n"
+        f"  [3] Reset local to remote branch               (overwrite local with remote)\n"
+        f"  [4] Skip — just keep the remote configured\n"
+        f"Choose",
+        type=click.IntRange(1, 4),
+        default=1,
+    )
+
+    if merge_action not in (2, 3):
+        return
+
+    branch = _select_branch(branches)
+
+    if merge_action == 2:
+        if has_files:
+            _run_git_verbose('add', '-A')
+            _run_git_verbose('commit', '-m', 'chore: initial local state before merge')
+        result = _run_git_verbose('merge', f'origin/{branch}', '--allow-unrelated-histories', '--no-edit')
+        if result.returncode != 0:
+            click.echo(click.style(
+                f"⚠  Merge conflict detected. Resolve manually, then run goal again.",
+                fg='yellow', bold=True
+            ))
+            click.echo(click.style(f"  Hint: git status  →  resolve  →  git add .  →  git merge --continue", fg='bright_black'))
+        else:
+            click.echo(click.style(f"✓ Merged origin/{branch} into local files.", fg='green'))
+    elif merge_action == 3:
+        result = _run_git_verbose('checkout', f'origin/{branch}', '-B', branch)
+        if result.returncode == 0:
+            click.echo(click.style(f"✓ Local files replaced with origin/{branch}.", fg='green'))
+        else:
+            click.echo(click.style(f"✗ Failed to checkout: {result.stderr.strip()}", fg='red'))
+
+
+def _handle_init_remote(has_files: bool) -> bool:
+    """git init + add remote + optional fetch/merge."""
+    result = _run_git_verbose('init')
+    if result.returncode != 0:
+        click.echo(click.style("✗ Failed to initialize git repository.", fg='red'))
+        return False
+    click.echo(click.style("✓ Initialized git repository.", fg='green'))
+
+    url = _prompt_remote_url()
+    if url:
+        result = _run_git_verbose('remote', 'add', 'origin', url)
+        if result.returncode != 0:
+            click.echo(click.style(f"✗ Could not add remote: {result.stderr.strip()}", fg='red'))
+        else:
+            click.echo(click.style(f"✓ Remote 'origin' → {url}", fg='green'))
+
+        click.echo()
+        click.echo(click.style("Fetching remote branches...", fg='cyan'))
+        fetch_result = _run_git_verbose('fetch', 'origin')
+        if fetch_result.returncode == 0:
+            _handle_merge_strategy(_list_remote_branches('origin'), has_files)
+        else:
+            click.echo(click.style(f"⚠  Could not fetch remote: {fetch_result.stderr.strip()}", fg='yellow'))
+            click.echo(click.style("  Remote is configured but unreachable. Check URL and credentials.", fg='bright_black'))
+
+    click.echo(click.style(f"\n✓ Ready. Run 'goal' again to commit and push.", fg='green', bold=True))
+    return True
+
+
+def _handle_clone() -> bool:
+    """Clone a remote repository into the current directory."""
+    url = _prompt_remote_url()
+    if not url:
+        return False
+    success, msg = clone_repository(url)
+    if success:
+        os.chdir(msg)
+        click.echo(click.style(f"✓ Cloned and entered '{msg}'", fg='green', bold=True))
+        return True
+    click.echo(click.style(f"✗ {msg}", fg='red'))
+    return False
+
+
+def _handle_local_init() -> bool:
+    """Initialize a local-only git repository."""
+    result = _run_git_verbose('init')
+    if result.returncode == 0:
+        click.echo(click.style("✓ Initialized local git repository (no remote).", fg='green', bold=True))
+        return True
+    click.echo(click.style("✗ Failed to initialize git repository.", fg='red'))
+    return False
+
+
 def ensure_git_repository(auto: bool = False) -> bool:
     """Check for a git repo; if missing, interactively offer options.
 
@@ -291,7 +404,6 @@ def ensure_git_repository(auto: bool = False) -> bool:
         return False
 
     click.echo()
-    # Detect local project files to give context
     has_files = any(Path('.').iterdir())
     cwd_name = Path('.').resolve().name
 
@@ -306,116 +418,12 @@ def ensure_git_repository(auto: bool = False) -> bool:
         default=1,
     )
 
-    # ── Option 1: git init + add remote ──
-    if action == 1:
-        result = _run_git_verbose('init')
-        if result.returncode != 0:
-            click.echo(click.style("✗ Failed to initialize git repository.", fg='red'))
-            return False
-        click.echo(click.style("✓ Initialized git repository.", fg='green'))
-
-        url = _prompt_remote_url()
-        if url:
-            result = _run_git_verbose('remote', 'add', 'origin', url)
-            if result.returncode != 0:
-                click.echo(click.style(f"✗ Could not add remote: {result.stderr.strip()}", fg='red'))
-            else:
-                click.echo(click.style(f"✓ Remote 'origin' → {url}", fg='green'))
-
-            # Offer to fetch and choose merge strategy
-            click.echo()
-            click.echo(click.style("Fetching remote branches...", fg='cyan'))
-            fetch_result = _run_git_verbose('fetch', 'origin')
-            if fetch_result.returncode == 0:
-                branches = _list_remote_branches('origin')
-                if branches:
-                    click.echo(click.style(f"  Remote branches: {', '.join(branches)}", fg='bright_black'))
-                    click.echo()
-
-                    merge_action = click.prompt(
-                        f"{click.style('How should goal combine local and remote files?', fg='cyan')}\n"
-                        f"  [1] Keep local files, push to remote later     (recommended for new projects)\n"
-                        f"  [2] Merge remote branch into local files       (combine both)\n"
-                        f"  [3] Reset local to remote branch               (overwrite local with remote)\n"
-                        f"  [4] Skip — just keep the remote configured\n"
-                        f"Choose",
-                        type=click.IntRange(1, 4),
-                        default=1,
-                    )
-
-                    if merge_action in (2, 3) and branches:
-                        if len(branches) == 1:
-                            branch = branches[0]
-                            click.echo(click.style(f"  Using branch: {branch}", fg='bright_black'))
-                        else:
-                            branch_list = '\n'.join(f"  [{i+1}] {b}" for i, b in enumerate(branches))
-                            idx = click.prompt(
-                                f"{click.style('Select branch:', fg='cyan')}\n{branch_list}\nChoose",
-                                type=click.IntRange(1, len(branches)),
-                                default=1,
-                            )
-                            branch = branches[idx - 1]
-
-                        if merge_action == 2:
-                            # Merge: allow unrelated histories for first-time connect
-                            if has_files:
-                                _run_git_verbose('add', '-A')
-                                _run_git_verbose('commit', '-m', 'chore: initial local state before merge')
-                            result = _run_git_verbose('merge', f'origin/{branch}', '--allow-unrelated-histories', '--no-edit')
-                            if result.returncode != 0:
-                                click.echo(click.style(
-                                    f"⚠  Merge conflict detected. Resolve manually, then run goal again.",
-                                    fg='yellow', bold=True
-                                ))
-                                click.echo(click.style(f"  Hint: git status  →  resolve  →  git add .  →  git merge --continue", fg='bright_black'))
-                                return True  # repo exists, user can fix
-                            click.echo(click.style(f"✓ Merged origin/{branch} into local files.", fg='green'))
-
-                        elif merge_action == 3:
-                            # Reset local to remote
-                            result = _run_git_verbose('checkout', f'origin/{branch}', '-B', branch)
-                            if result.returncode == 0:
-                                click.echo(click.style(f"✓ Local files replaced with origin/{branch}.", fg='green'))
-                            else:
-                                click.echo(click.style(f"✗ Failed to checkout: {result.stderr.strip()}", fg='red'))
-                else:
-                    click.echo(click.style("  Remote is empty (no branches yet). Your local files will be the first push.", fg='bright_black'))
-            else:
-                click.echo(click.style(f"⚠  Could not fetch remote: {fetch_result.stderr.strip()}", fg='yellow'))
-                click.echo(click.style("  Remote is configured but unreachable. Check URL and credentials.", fg='bright_black'))
-
-        click.echo(click.style(f"\n✓ Ready. Run 'goal' again to commit and push.", fg='green', bold=True))
-        return True
-
-    # ── Option 2: Clone remote into current dir ──
-    elif action == 2:
-        url = _prompt_remote_url()
-        if not url:
-            return False
-
-        success, msg = clone_repository(url)
-        if success:
-            repo_dir = msg
-            os.chdir(repo_dir)
-            click.echo(click.style(f"✓ Cloned and entered '{repo_dir}'", fg='green', bold=True))
-            return True
-        else:
-            click.echo(click.style(f"✗ {msg}", fg='red'))
-            return False
-
-    # ── Option 3: Local-only init ──
-    elif action == 3:
-        result = _run_git_verbose('init')
-        if result.returncode == 0:
-            click.echo(click.style("✓ Initialized local git repository (no remote).", fg='green', bold=True))
-            return True
-        else:
-            click.echo(click.style("✗ Failed to initialize git repository.", fg='red'))
-            return False
-
-    # ── Option 4: Exit ──
-    else:
-        return False
+    handlers = {
+        1: lambda: _handle_init_remote(has_files),
+        2: _handle_clone,
+        3: _handle_local_init,
+    }
+    return handlers.get(action, lambda: False)()
 
 
 def ensure_remote(auto: bool = False) -> bool:

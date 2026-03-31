@@ -8,6 +8,34 @@ from goal.cli import main, apply_ticket_prefix
 from goal.authors.utils import get_co_authors_from_command_line, add_co_authors_to_message
 
 
+def _output_detailed(title: str, body: str, use_markdown: bool) -> None:
+    """Print a detailed commit message in markdown or plain style."""
+    if use_markdown:
+        click.echo(f"## Commit Message\n\n**{title}**\n\n{body}")
+    else:
+        click.echo(click.style("Generated commit message:", fg='cyan', bold=True))
+        click.echo(f"\n{click.style(title, fg='green', bold=True)}")
+        if body:
+            click.echo(f"\n{body}")
+
+
+def _output_simple(title: str, co_authors: list, use_markdown: bool) -> None:
+    """Print a simple commit message (with optional co-authors)."""
+    if use_markdown:
+        click.echo(f"## Commit Message\n\n**{title}**")
+        if co_authors:
+            click.echo()
+            for author in co_authors:
+                click.echo(f"Co-authored-by: {author['name']} <{author['email']}>")
+    else:
+        click.echo(click.style("Generated commit message:", fg='cyan'))
+        click.echo(click.style(title, fg='green'))
+        if co_authors:
+            click.echo()
+            for author in co_authors:
+                click.echo(click.style(f"Co-authored-by: {author['name']} <{author['email']}>", fg='cyan'))
+
+
 @main.command()
 @click.option('--detailed', is_flag=True, help='Generate detailed commit message with body')
 @click.option('--unstaged', is_flag=True, help='Include unstaged changes')
@@ -28,52 +56,23 @@ def commit(ctx, detailed, unstaged, markdown, ticket, abstraction, co_author) ->
     config_dict = config_obj.to_dict() if config_obj else None
     
     generator = CommitMessageGenerator(config=config_dict)
-    
-    # Parse co-authors
     co_authors = get_co_authors_from_command_line(list(co_author))
+    use_markdown = markdown or ctx.obj.get('markdown')
     
     if detailed:
         result = generator.generate_detailed_message(cached=not unstaged)
         if result:
             title = apply_ticket_prefix(result.get('title'), ticket)
             body = result.get('body', '')
-            
-            # Add co-authors to body
             if co_authors:
                 body = add_co_authors_to_message(body, co_authors)
-            
-            if markdown or ctx.obj.get('markdown'):
-                click.echo(f"## Commit Message\n\n**{title}**\n\n{body}")
-            else:
-                click.echo(click.style("Generated commit message:", fg='cyan', bold=True))
-                click.echo(f"\n{click.style(title, fg='green', bold=True)}")
-                if body:
-                    click.echo(f"\n{body}")
+            _output_detailed(title, body, use_markdown)
         else:
             click.echo(click.style("Could not generate detailed message.", fg='yellow'))
     else:
-        # Simple commit message
         message = generator.generate_commit_message(cached=not unstaged)
         title = apply_ticket_prefix(message, ticket)
-        
-        # Add co-authors as separate lines for simple commits
-        if co_authors:
-            if markdown or ctx.obj.get('markdown'):
-                click.echo(f"## Commit Message\n\n**{title}**\n\n")
-                for author in co_authors:
-                    click.echo(f"Co-authored-by: {author['name']} <{author['email']}>")
-            else:
-                click.echo(click.style("Generated commit message:", fg='cyan'))
-                click.echo(click.style(title, fg='green'))
-                click.echo()
-                for author in co_authors:
-                    click.echo(click.style(f"Co-authored-by: {author['name']} <{author['email']}>", fg='cyan'))
-        else:
-            if markdown or ctx.obj.get('markdown'):
-                click.echo(f"## Commit Message\n\n**{title}**")
-            else:
-                click.echo(click.style("Generated commit message:", fg='cyan'))
-                click.echo(click.style(title, fg='green'))
+        _output_simple(title, co_authors, use_markdown)
 
 
 @main.command()

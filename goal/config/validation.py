@@ -258,54 +258,45 @@ class ConfigValidator:
         if dry_run is not None and not isinstance(dry_run, bool):
             self.errors.append("publishing.dry_run must be a boolean")
     
+    def _check_bool(self, section: Dict, key: str, label: str = '') -> None:
+        """Append an error if *key* exists in *section* but is not a bool."""
+        val = section.get(key)
+        if val is not None and not isinstance(val, bool):
+            self.errors.append(f"{label or key} must be a boolean")
+
+    def _check_numeric(self, section: Dict, key: str, lo: float = None, hi: float = None,
+                       warn_lo: float = None, warn_hi: float = None) -> None:
+        """Validate a numeric field, appending errors/warnings as needed."""
+        val = section.get(key)
+        if val is None:
+            return
+        if not isinstance(val, (int, float)):
+            self.errors.append(f"{key} must be a number")
+            return
+        if lo is not None and hi is not None and not (lo <= val <= hi):
+            self.errors.append(f"{key} must be between {lo} and {hi}")
+        elif warn_lo is not None and warn_hi is not None and not (warn_lo <= val <= warn_hi):
+            self.warnings.append(f"{key} ({val}) seems unusual (typical: {warn_lo}-{warn_hi})")
+
     def _validate_advanced_section(self):
         """Validate advanced configuration."""
         advanced = self.config.get('advanced', {})
-        
-        # Validate file validation settings
+
         file_validation = advanced.get('file_validation', {})
         if file_validation:
-            max_size = file_validation.get('max_file_size_mb')
-            if max_size is not None:
-                if not isinstance(max_size, (int, float)):
-                    self.errors.append("max_file_size_mb must be a number")
-                elif max_size < 0.1 or max_size > 1000:
-                    self.warnings.append(
-                        f"max_file_size_mb ({max_size}) seems unusual (typical: 5-50)"
-                    )
-            
-            block_large = file_validation.get('block_large_files')
-            if block_large is not None and not isinstance(block_large, bool):
-                self.errors.append("block_large_files must be a boolean")
-            
-            detect_tokens = file_validation.get('detect_api_tokens')
-            if detect_tokens is not None and not isinstance(detect_tokens, bool):
-                self.errors.append("detect_api_tokens must be a boolean")
-        
-        # Validate test settings
+            self._check_numeric(file_validation, 'max_file_size_mb', warn_lo=0.1, warn_hi=1000)
+            self._check_bool(file_validation, 'block_large_files')
+            self._check_bool(file_validation, 'detect_api_tokens')
+
         tests = advanced.get('tests', {})
         if tests:
-            require_tests = tests.get('require_tests')
-            if require_tests is not None and not isinstance(require_tests, bool):
-                self.errors.append("require_tests must be a boolean")
-            
-            coverage_threshold = tests.get('coverage_threshold')
-            if coverage_threshold is not None:
-                if not isinstance(coverage_threshold, (int, float)):
-                    self.errors.append("coverage_threshold must be a number")
-                elif not 0 <= coverage_threshold <= 100:
-                    self.errors.append("coverage_threshold must be between 0 and 100")
-        
-        # Validate recovery settings
+            self._check_bool(tests, 'require_tests')
+            self._check_numeric(tests, 'coverage_threshold', lo=0, hi=100)
+
         recovery = advanced.get('recovery', {})
         if recovery:
-            enabled = recovery.get('enabled')
-            if enabled is not None and not isinstance(enabled, bool):
-                self.errors.append("recovery.enabled must be a boolean")
-            
-            auto_recover = recovery.get('auto_recover')
-            if auto_recover is not None and not isinstance(auto_recover, bool):
-                self.errors.append("recovery.auto_recover must be a boolean")
+            self._check_bool(recovery, 'enabled', 'recovery.enabled')
+            self._check_bool(recovery, 'auto_recover', 'recovery.auto_recover')
     
     def _validate_no_unknown_keys(self):
         """Check for unknown/deprecated keys in configuration."""

@@ -129,12 +129,85 @@ def update_badge_versions(readme_path: Path, new_version: str) -> bool:
     return False
 
 
+# -- Per-language package name extractors ----------------------------------
+
+def _detect_python_package() -> Optional[str]:
+    """Extract package name from pyproject.toml."""
+    pyproject_path = Path("pyproject.toml")
+    if not pyproject_path.exists():
+        return None
+    try:
+        try:
+            import tomllib
+        except ModuleNotFoundError:
+            tomllib = None
+        if tomllib is not None:
+            data = tomllib.loads(pyproject_path.read_text())
+            return (
+                (data.get("project") or {}).get("name")
+                or ((data.get("tool") or {}).get("poetry") or {}).get("name")
+            )
+    except Exception:
+        pass
+    return None
+
+
+def _detect_nodejs_package() -> Optional[str]:
+    """Extract package name from package.json."""
+    package_json_path = Path("package.json")
+    if not package_json_path.exists():
+        return None
+    try:
+        data = json.loads(package_json_path.read_text())
+        return data.get("name")
+    except Exception:
+        return None
+
+
+def _detect_rust_package() -> Optional[str]:
+    """Extract package name from Cargo.toml."""
+    cargo_path = Path("Cargo.toml")
+    if not cargo_path.exists():
+        return None
+    try:
+        content = cargo_path.read_text()
+        match = re.search(r'^name\s*=\s*"([^"]+)"', content, re.MULTILINE)
+        return match.group(1) if match else None
+    except Exception:
+        return None
+
+
+def _detect_ruby_package() -> Optional[str]:
+    """Extract gem name from .gemspec."""
+    for gemspec_path in Path(".").glob("*.gemspec"):
+        try:
+            content = gemspec_path.read_text()
+            match = re.search(r'\.name\s*=\s*["\']([^"\']+)["\']', content)
+            if match:
+                return match.group(1)
+        except Exception:
+            pass
+    return None
+
+
+# Registry for each project type: (registry_name, detect_func_name, fetch_func_name, not_found_msg)
+# Uses function names (not references) so that unittest.mock.patch works correctly.
+_VERSION_VALIDATORS = {
+    "python": ("pypi",     "_detect_python_package", "get_pypi_version",     "Package not found in PyPI"),
+    "nodejs": ("npm",      "_detect_nodejs_package", "get_npm_version",      "Package not found in npm"),
+    "rust":   ("cargo",    "_detect_rust_package",   "get_cargo_version",    "Crate not found in crates.io"),
+    "ruby":   ("rubygems", "_detect_ruby_package",   "get_rubygems_version", "Gem not found in RubyGems"),
+}
+
+import sys as _sys
+
 def validate_project_versions(project_types: List[str], current_version: str) -> Dict[str, Dict]:
     """Validate versions across different registries.
     
     Returns:
         Dict with validation results for each project type.
     """
+    _mod = _sys.modules[__name__]
     results = {}
     
     for project_type in project_types:
@@ -147,102 +220,20 @@ def validate_project_versions(project_types: List[str], current_version: str) ->
             "error": None
         }
         
-        if project_type == "python":
-            # Try to get package name from pyproject.toml
-            package_name = None
-            pyproject_path = Path("pyproject.toml")
-            if pyproject_path.exists():
-                try:
-                    try:
-                        import tomllib
-                    except ModuleNotFoundError:
-                        tomllib = None
-                    
-                    if tomllib is not None:
-                        data = tomllib.loads(pyproject_path.read_text())
-                        package_name = (
-                            (data.get("project") or {}).get("name")
-                            or ((data.get("tool") or {}).get("poetry") or {}).get("name")
-                        )
-                except Exception:
-                    pass
-            
+        entry = _VERSION_VALIDATORS.get(project_type)
+        if entry:
+            registry_name, detect_name, fetch_name, not_found_msg = entry
+            detect_fn = getattr(_mod, detect_name)
+            fetch_fn = getattr(_mod, fetch_name)
+            package_name = detect_fn()
             if package_name:
-                result["registry"] = "pypi"
+                result["registry"] = registry_name
                 result["package_name"] = package_name
-                result["registry_version"] = get_pypi_version(package_name)
-                
+                result["registry_version"] = fetch_fn(package_name)
                 if result["registry_version"]:
                     result["is_latest"] = result["registry_version"] == current_version
                 else:
-                    result["error"] = "Package not found in PyPI"
-        
-        elif project_type == "nodejs":
-            # Try to get package name from package.json
-            package_name = None
-            package_json_path = Path("package.json")
-            if package_json_path.exists():
-                try:
-                    data = json.loads(package_json_path.read_text())
-                    package_name = data.get("name")
-                except Exception:
-                    pass
-            
-            if package_name:
-                result["registry"] = "npm"
-                result["package_name"] = package_name
-                result["registry_version"] = get_npm_version(package_name)
-                
-                if result["registry_version"]:
-                    result["is_latest"] = result["registry_version"] == current_version
-                else:
-                    result["error"] = "Package not found in npm"
-        
-        elif project_type == "rust":
-            # Try to get package name from Cargo.toml
-            package_name = None
-            cargo_path = Path("Cargo.toml")
-            if cargo_path.exists():
-                try:
-                    content = cargo_path.read_text()
-                    match = re.search(r'^name\s*=\s*"([^"]+)"', content, re.MULTILINE)
-                    if match:
-                        package_name = match.group(1)
-                except Exception:
-                    pass
-            
-            if package_name:
-                result["registry"] = "cargo"
-                result["package_name"] = package_name
-                result["registry_version"] = get_cargo_version(package_name)
-                
-                if result["registry_version"]:
-                    result["is_latest"] = result["registry_version"] == current_version
-                else:
-                    result["error"] = "Crate not found in crates.io"
-        
-        elif project_type == "ruby":
-            # Try to get gem name from .gemspec
-            package_name = None
-            for gemspec_path in Path(".").glob("*.gemspec"):
-                try:
-                    content = gemspec_path.read_text()
-                    match = re.search(r'\.name\s*=\s*["\']([^"\']+)["\']', content)
-                    if match:
-                        package_name = match.group(1)
-                        break
-                except Exception:
-                    pass
-            
-            if package_name:
-                result["registry"] = "rubygems"
-                result["package_name"] = package_name
-                result["registry_version"] = get_rubygems_version(package_name)
-                
-                if result["registry_version"]:
-                    result["is_latest"] = result["registry_version"] == current_version
-                else:
-                    result["error"] = "Gem not found in RubyGems"
+                    result["error"] = not_found_msg
         
         results[project_type] = result
     

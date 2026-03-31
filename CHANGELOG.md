@@ -1,5 +1,27 @@
 ## [Unreleased]
 
+## [2.1.175] - 2026-03-31
+
+### Docs
+- Update README.md
+- Update REFACTOR_PLAN.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update project.sh
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- ... and 6 more files
+
 ## [2.1.174] - 2026-03-31
 
 ### Docs

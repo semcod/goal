@@ -491,6 +491,23 @@ class LicenseManager:
         # Create new content
         return self.create_license_file(license_id, fullname, year, force=True)
     
+    # Ordered (license_id, required_substrings) for detection; first match wins.
+    _LICENSE_SIGNATURES = [
+        ('MIT',          ['Permission is hereby granted']),
+        ('Apache-2.0',   ['Apache License', 'Version 2.0']),
+        ('GPL-3.0',      ['GNU GENERAL PUBLIC LICENSE']),
+        ('BSD-3-Clause', ['BSD 3-Clause License']),
+        ('ISC',          ['ISC License']),
+    ]
+
+    @classmethod
+    def _detect_license_type(cls, content: str) -> Optional[str]:
+        """Return the SPDX license ID detected in *content*, or None."""
+        for lid, signatures in cls._LICENSE_SIGNATURES:
+            if all(sig in content for sig in signatures):
+                return lid
+        return None
+
     def validate_license_file(self) -> Tuple[bool, List[str]]:
         """Validate the LICENSE file.
         
@@ -500,46 +517,23 @@ class LicenseManager:
         if not self.license_file.exists():
             return False, ["LICENSE file does not exist"]
         
-        issues = []
+        issues: List[str] = []
         content = self.license_file.read_text(encoding='utf-8')
         
-        # Check if empty
         if not content.strip():
-            issues.append("LICENSE file is empty")
-            return False, issues
+            return False, ["LICENSE file is empty"]
         
-        # Try to detect license type
-        detected = None
-        for lid, template in LICENSE_TEMPLATES.items():
-            if lid == 'MIT' and 'Permission is hereby granted' in content:
-                detected = lid
-                break
-            elif lid == 'Apache-2.0' and 'Apache License' in content and 'Version 2.0' in content:
-                detected = lid
-                break
-            elif lid == 'GPL-3.0' and 'GNU GENERAL PUBLIC LICENSE' in content:
-                detected = lid
-                break
-            elif lid == 'BSD-3-Clause' and 'BSD 3-Clause License' in content:
-                detected = lid
-                break
-            elif lid == 'ISC' and 'ISC License' in content:
-                detected = lid
-                break
-        
+        detected = self._detect_license_type(content)
         if not detected:
             issues.append("Could not detect license type")
         else:
-            # Validate SPDX ID
             is_valid, msg = validate_spdx_id(detected)
             if not is_valid:
                 issues.append(f"Invalid SPDX license: {msg}")
         
-        # Check for placeholders
         if '{year}' in content or '{fullname}' in content:
             issues.append("License contains unfilled placeholders")
         
-        # Check for copyright
         if not re.search(r'copyright', content, re.IGNORECASE):
             issues.append("No copyright notice found")
         

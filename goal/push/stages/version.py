@@ -1,7 +1,7 @@
 """Push workflow stages - version handling."""
 
 from pathlib import Path
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Dict
 
 import click
 

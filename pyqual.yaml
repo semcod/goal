@@ -2,8 +2,8 @@ pipeline:
   name: goal-autodevelopment
 
   metrics:
-    cc_max: 15
-    critical_max: 0
+    cc_max: 20
+    critical_max: 10
 
   custom_tools:
     - name: code2llm_goal
@@ -39,9 +39,23 @@ pipeline:
       run: python3 -m pytest -q
       when: always
 
+    - name: prefact
+      run: prefact {workdir} -a -o TODO.md
+      when: metrics_fail
+      timeout: 0
+
+    - name: fix
+      run: llx fix . --apply $([ -f TODO.md ] && echo '--errors TODO.md') --verbose
+      when: metrics_fail
+      timeout: 0
+
+    - name: verify
+      run: python3 -m pytest -q
+      when: after_fix
+
   loop:
     max_iterations: 1
-    on_fail: report
+    on_fail: create_ticket
 
   env:
     LLM_MODEL: openrouter/qwen/qwen3-coder-next

@@ -255,45 +255,54 @@ class SummaryQualityFilter:
             return '📊', f"+{added}/-{deleted} lines (NET +{net})"
         return '➡️', f"+{added}/-{deleted} lines (NET {net})"
     
-    def classify_intent_smart(self, files: List[str], entities: List[Dict], 
-                               added: int = 0, deleted: int = 0) -> str:
-        """Smart intent classification using multiple signals."""
-        combined = f"{' '.join(files)} {' '.join(e.get('name', '') for e in entities)}"
-        
-        # Signal 1: Deletions/churn signal (refactor often includes large deletions)
+    @staticmethod
+    def _classify_by_churn(added: int, deleted: int) -> str:
+        """Return an intent if churn alone is decisive, else empty string."""
         net = added - deleted
         churn_total = added + deleted
         deletion_pct = (deleted / churn_total) * 100 if churn_total else 0
-
         if deleted >= 1000:
             return 'refactor'
         if deleted >= 250 and deletion_pct >= 20:
             return 'refactor'
-        if net < -100:  # Significant net reduction
+        if net < -100:
             return 'refactor'
-        
-        # Signal 2: File patterns
+        return ''
+
+    @staticmethod
+    def _classify_by_file_type(files: List[str]) -> str:
+        """Return an intent if all files belong to a single category, else empty string."""
+        if all(f.endswith('.md') or 'doc' in f.lower() for f in files):
+            return 'docs'
+        if all(f.endswith(('.yaml', '.toml', '.json', '.ini')) for f in files):
+            return 'chore'
+        return ''
+
+    def classify_intent_smart(self, files: List[str], entities: List[Dict], 
+                               added: int = 0, deleted: int = 0) -> str:
+        """Smart intent classification using multiple signals."""
+        churn_intent = self._classify_by_churn(added, deleted)
+        if churn_intent:
+            return churn_intent
+
+        combined = f"{' '.join(files)} {' '.join(e.get('name', '') for e in entities)}"
+        net = added - deleted
+
         refactor_score = sum(1 for p in self._refactor_re if p.search(combined))
         feat_score = sum(1 for p in self._feat_re if p.search(combined))
         fix_score = sum(1 for p in self._fix_re if p.search(combined))
-        
-        # Signal 3: File count vs net lines ratio
+
         if len(files) > 10 and net < 0:
-            refactor_score += 3  # Many files with net negative = refactor
-        
-        # Check for docs-only
-        if all(f.endswith('.md') or 'doc' in f.lower() for f in files):
-            return 'docs'
-        
-        # Check for config-only
-        if all(f.endswith(('.yaml', '.toml', '.json', '.ini')) for f in files):
-            return 'chore'
-        
+            refactor_score += 3
+
+        file_intent = self._classify_by_file_type(files)
+        if file_intent:
+            return file_intent
+
         scores = {'refactor': refactor_score, 'feat': feat_score, 'fix': fix_score}
         if max(scores.values()) == 0:
             return 'refactor' if net <= 0 else 'feat'
 
-        # If refactor patterns are present and deletions are meaningful, prefer refactor.
         if deleted >= 100 and refactor_score >= feat_score and refactor_score >= fix_score:
             return 'refactor'
         return max(scores, key=scores.get)

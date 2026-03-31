@@ -362,105 +362,86 @@ def _handle_commit_phase(ctx_obj: Dict[str, Any], split: bool, message: Optional
         handle_single_commit(commit_title, commit_body, commit_msg, message, ctx_obj['yes'])
 
 
+def _is_cost_tracking_enabled() -> bool:
+    """Check pyproject.toml to see if cost badge/readme update is enabled."""
+    import tomllib
+    config_path = Path("pyproject.toml")
+    if not config_path.exists():
+        return True
+    try:
+        with open(config_path, "rb") as f:
+            tool_costs = tomllib.load(f).get("tool", {}).get("costs", {})
+        return tool_costs.get("badge") is not False or tool_costs.get("update_readme") is not False
+    except Exception:
+        return True
+
+
+def _compute_ai_costs(project_dir: Path, model: str, api_key: Optional[str]):
+    """Parse commits and calculate AI-related costs. Returns (total_cost, total_commits, all_commits_data)."""
+    from costs.git_parser import parse_commits, get_commit_diff
+    from costs.calculator import ai_cost
+
+    all_commits_data = parse_commits(
+        str(project_dir), max_count=500, ai_only=False, full_history=True
+    )
+    ai_commits = [c for c in all_commits_data if c[1].get('is_ai', False)]
+
+    total_cost = 0.0
+    total_commits = len(ai_commits)
+
+    for commit_obj, _data in ai_commits[:50]:
+        try:
+            diff = get_commit_diff(str(project_dir), commit_obj.hexsha)
+            if diff:
+                total_cost += ai_cost(diff, model=model, api_key=api_key).get('cost', 0.0)
+        except Exception:
+            total_cost += 0.15
+
+    if total_cost == 0 and all_commits_data:
+        total_cost = len(all_commits_data) * 0.15
+        total_commits = len(all_commits_data)
+
+    return total_cost, total_commits, all_commits_data
+
+
 def _update_cost_badges(ctx_obj: Dict[str, Any], version: str, model: Optional[str] = None, api_key: Optional[str] = None) -> bool:
     """Update AI cost badges in README using costs package."""
     try:
-        # Lazy import to avoid hard dependency
-        # Try new simplified API first (costs >= 0.1.21)
         try:
             from costs import calculate_human_time, update_readme_badge
         except ImportError:
-            # Fallback to old API (costs <= 0.1.20)
             from costs.reports import update_readme_badge
-            from datetime import datetime
             from collections import defaultdict
-            
+
             def calculate_human_time(commits):
-                """Calculate human hours from commit history."""
                 if not commits:
                     return 0.0
-                daily_commits = defaultdict(lambda: defaultdict(list))
-                for commit in commits:
-                    date = commit.get('date', '')[:10]
-                    author = commit.get('author', 'Unknown')
-                    daily_commits[date][author].append(commit)
-                total_hours = 0.0
-                for date, authors in daily_commits.items():
-                    for author, author_commits in authors.items():
-                        hours = min(len(author_commits) * 0.5, 8.0)
-                        total_hours += hours
-                return total_hours
-        
-        from costs.git_parser import parse_commits, get_repo_stats, get_commit_diff
-        from costs.calculator import ai_cost
-        
-        # Use provided model or default
+                daily = defaultdict(lambda: defaultdict(list))
+                for c in commits:
+                    daily[c.get('date', '')[:10]][c.get('author', 'Unknown')].append(c)
+                return sum(
+                    min(len(ac) * 0.5, 8.0)
+                    for authors in daily.values() for ac in authors.values()
+                )
+
+        from costs.git_parser import get_repo_stats
+
+        if not _is_cost_tracking_enabled():
+            return False
+
         model = model or ctx_obj.get('cost_model') or "openrouter/qwen/qwen3-coder-next"
         api_key = api_key or ctx_obj.get('cost_api_key')
-        
-        # Check if costs tracking is enabled in pyproject.toml
-        import tomllib
-        config_path = Path("pyproject.toml")
-        
-        # Default to enabled unless explicitly disabled
-        badge_enabled = True
-        update_readme_enabled = True
-        
-        if config_path.exists():
-            with open(config_path, "rb") as f:
-                config = tomllib.load(f)
-            
-            tool_costs = config.get("tool", {}).get("costs", {})
-            # Only disable if explicitly set to False
-            if tool_costs.get("badge") is False:
-                badge_enabled = False
-            if tool_costs.get("update_readme") is False:
-                update_readme_enabled = False
-        
-        if not badge_enabled and not update_readme_enabled:
-            return False
-        
-        # Get repository statistics and build results
         project_dir = Path(".")
+
         repo_stats = get_repo_stats(str(project_dir))
-        
-        # Get all commits with AI detection
-        all_commits_data = parse_commits(
-            str(project_dir),
-            max_count=500,
-            ai_only=False,
-            full_history=True
-        )
-        
-        # Calculate costs for AI commits
-        ai_commits = [c for c in all_commits_data if c[1].get('is_ai', False)]
-        
-        # Calculate total cost from AI commits
-        total_cost = 0.0
-        total_commits = len(ai_commits)
-        
-        if ai_commits:
-            for commit_obj, commit_data in ai_commits[:50]:
-                try:
-                    diff = get_commit_diff(str(project_dir), commit_obj.hexsha)
-                    if diff:
-                        cost_result = ai_cost(diff, model=model, api_key=api_key)
-                        total_cost += cost_result.get('cost', 0.0)
-                except Exception:
-                    total_cost += 0.15
-        
-        if total_cost == 0 and len(all_commits_data) > 0:
-            total_cost = len(all_commits_data) * 0.15
-            total_commits = len(all_commits_data)
-        
-        # Calculate human time
+        total_cost, total_commits, all_commits_data = _compute_ai_costs(project_dir, model, api_key)
+
         all_commits_list = [
             {"date": c[0].committed_datetime.isoformat(), "author": c[0].author.name}
             for c in all_commits_data
         ]
         human_hours = calculate_human_time(all_commits_list)
-        
-        # Build results structure
+
         results = {
             "summary": {
                 "total_cost": total_cost,
@@ -472,19 +453,16 @@ def _update_cost_badges(ctx_obj: Dict[str, Any], version: str, model: Optional[s
                 "human_cost": human_hours * 100
             }
         }
-        
-        # Update badge
+
         success = update_readme_badge(project_dir, results)
         if success:
             click.echo(click.style("✓ Updated AI cost badges in README", fg='green'))
             return True
         return False
-                
+
     except ImportError:
-        # costs package not installed, skip silently
         return False
     except Exception as e:
-        # Non-critical feature, log error only in verbose mode
         if ctx_obj.get('verbose'):
             click.echo(click.style(f"⚠ Could not update cost badges: {e}", fg='yellow'))
         return False

@@ -186,17 +186,23 @@ class CodeChangeAnalyzer:
         new_complexity = sum(e.get('complexity', 1) for e in new_entities.values())
         result['complexity_change'] = new_complexity - old_complexity
         
-        # Detect value indicators from decorators and names
-        for entity in result['added_entities']:
-            if any(d in str(entity.get('decorators', [])) for d in ['click', 'command', 'option']):
-                result['value_indicators'].append('cli_enhancement')
-            if 'config' in entity['name'].lower():
-                result['value_indicators'].append('configuration')
-            if entity['name'].startswith('test_'):
-                result['value_indicators'].append('testing')
+        result['value_indicators'] = self._detect_value_indicators(result['added_entities'])
         
         return result
     
+    @staticmethod
+    def _detect_value_indicators(added_entities: List[Dict]) -> List[str]:
+        """Detect value indicators from added entity decorators and names."""
+        indicators: List[str] = []
+        for entity in added_entities:
+            if any(d in str(entity.get('decorators', [])) for d in ['click', 'command', 'option']):
+                indicators.append('cli_enhancement')
+            if 'config' in entity['name'].lower():
+                indicators.append('configuration')
+            if entity['name'].startswith('test_'):
+                indicators.append('testing')
+        return indicators
+
     def _extract_python_entities(self, tree: ast.Module) -> Dict[str, Dict]:
         """Extract functions, classes, and their metadata from AST."""
         entities = {}

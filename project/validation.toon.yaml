@@ -1,99 +1,45 @@
-# vallm batch | 233f | 161✓ 28⚠ 0✗ | 2026-03-31
+# vallm batch | 240f | 168✓ 19⚠ 0✗ | 2026-03-31
 
 SUMMARY:
-  scanned: 233  passed: 161 (69.1%)  warnings: 28  errors: 0  unsupported: 72
+  scanned: 240  passed: 168 (70.0%)  warnings: 19  errors: 0  unsupported: 72
 
-WARNINGS[28]{path,score}:
-  goal/project_bootstrap.py,0.87
-    issues[9]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,guess_package_name has cyclomatic complexity 20 (max: 15),253
-      complexity.cyclomatic,warning,ensure_project_environment has cyclomatic complexity 26 (max: 15),427
-      complexity.cyclomatic,warning,_ensure_costs_installed has cyclomatic complexity 21 (max: 15),691
-      complexity.cyclomatic,warning,_ensure_costs_config has cyclomatic complexity 20 (max: 15),857
-      complexity.maintainability,warning,Low maintainability index: 11.1 (threshold: 20),
-      complexity.lizard_cc,warning,guess_package_name: CC=20 exceeds limit 15,253
-      complexity.lizard_cc,warning,ensure_project_environment: CC=26 exceeds limit 15,427
-      complexity.lizard_cc,warning,_ensure_costs_installed: CC=21 exceeds limit 15,691
-      complexity.lizard_cc,warning,_ensure_costs_config: CC=20 exceeds limit 15,857
-  goal/validators/file_validator.py,0.90
-    issues[6]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,detect_tokens_in_content has cyclomatic complexity 17 (max: 15),68
-      complexity.cyclomatic,warning,check_dot_folders has cyclomatic complexity 23 (max: 15),164
-      complexity.cyclomatic,warning,validate_files has cyclomatic complexity 18 (max: 15),287
-      complexity.lizard_cc,warning,detect_tokens_in_content: CC=17 exceeds limit 15,68
-      complexity.lizard_cc,warning,check_dot_folders: CC=23 exceeds limit 15,164
-      complexity.lizard_cc,warning,validate_files: CC=18 exceeds limit 15,287
+WARNINGS[19]{path,score}:
   examples/validation/test_api_signatures.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,extract_function_calls has cyclomatic complexity 20 (max: 15),27
       complexity.cyclomatic,warning,validate_call has cyclomatic complexity 20 (max: 15),123
       complexity.lizard_cc,warning,extract_function_calls: CC=20 exceeds limit 15,27
       complexity.lizard_cc,warning,validate_call: CC=20 exceeds limit 15,123
-  goal/generator/analyzer.py,0.93
-    issues[5]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,ContentAnalyzer has cyclomatic complexity 33 (max: 15),274
-      complexity.cyclomatic,warning,short_action_summary has cyclomatic complexity 34 (max: 15),277
-      complexity.cyclomatic,warning,per_file_notes has cyclomatic complexity 29 (max: 15),333
-      complexity.lizard_cc,warning,short_action_summary: CC=34 exceeds limit 15,277
-      complexity.lizard_cc,warning,per_file_notes: CC=29 exceeds limit 15,333
-  goal/git_ops.py,0.93
-    issues[3]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,ensure_git_repository has cyclomatic complexity 23 (max: 15),276
-      complexity.lizard_cc,warning,ensure_git_repository: CC=23 exceeds limit 15,276
-      complexity.lizard_length,warning,ensure_git_repository: 112 lines exceeds limit 100,276
   goal/license/manager.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,update_license_file has cyclomatic complexity 18 (max: 15),427
       complexity.cyclomatic,warning,validate_license_file has cyclomatic complexity 20 (max: 15),494
       complexity.lizard_cc,warning,update_license_file: CC=18 exceeds limit 15,427
       complexity.lizard_cc,warning,validate_license_file: CC=20 exceeds limit 15,494
-  goal/push/core.py,0.93
-    issues[4]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,execute_push_workflow has cyclomatic complexity 17 (max: 15),114
-      complexity.cyclomatic,warning,_update_cost_badges has cyclomatic complexity 23 (max: 15),365
-      complexity.lizard_cc,warning,execute_push_workflow: CC=17 exceeds limit 15,114
-      complexity.lizard_cc,warning,_update_cost_badges: CC=23 exceeds limit 15,365
-  goal/smart_commit/generator.py,0.93
-    issues[4]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,analyze_changes has cyclomatic complexity 24 (max: 15),32
-      complexity.cyclomatic,warning,_generate_functional_summary has cyclomatic complexity 22 (max: 15),144
-      complexity.lizard_cc,warning,analyze_changes: CC=24 exceeds limit 15,32
-      complexity.lizard_cc,warning,_generate_functional_summary: CC=22 exceeds limit 15,144
   goal/summary/generator.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,generate_value_title has cyclomatic complexity 19 (max: 15),330
-      complexity.cyclomatic,warning,_format_changes_section has cyclomatic complexity 26 (max: 15),478
+      complexity.cyclomatic,warning,_format_file_change has cyclomatic complexity 17 (max: 15),485
       complexity.lizard_cc,warning,generate_value_title: CC=19 exceeds limit 15,330
-      complexity.lizard_cc,warning,_format_changes_section: CC=26 exceeds limit 15,478
+      complexity.lizard_cc,warning,_format_file_change: CC=17 exceeds limit 15,485
   goal/deep_analyzer.py,0.96
     issues[3]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,_build_summary has cyclomatic complexity 16 (max: 15),522
-      complexity.maintainability,warning,Low maintainability index: 16.2 (threshold: 20),
-      complexity.lizard_cc,warning,_build_summary: CC=16 exceeds limit 15,522
+      complexity.cyclomatic,warning,_build_summary has cyclomatic complexity 16 (max: 15),528
+      complexity.maintainability,warning,Low maintainability index: 15.5 (threshold: 20),
+      complexity.lizard_cc,warning,_build_summary: CC=16 exceeds limit 15,528
   goal/doctor/python.py,0.96
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,check_py011_version_consistency has cyclomatic complexity 17 (max: 15),337
       complexity.maintainability,warning,Low maintainability index: 16.6 (threshold: 20),
+  goal/smart_commit/generator.py,0.96
+    issues[3]{rule,severity,message,line}:
+      complexity.cyclomatic,warning,_generate_functional_summary has cyclomatic complexity 22 (max: 15),126
+      complexity.maintainability,warning,Low maintainability index: 19.0 (threshold: 20),
+      complexity.lizard_cc,warning,_generate_functional_summary: CC=22 exceeds limit 15,126
   examples/validation/test_readme_consistency.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,validate_readme has cyclomatic complexity 22 (max: 15),92
       complexity.lizard_cc,warning,validate_readme: CC=22 exceeds limit 15,92
-  goal/changelog.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,update_changelog has cyclomatic complexity 24 (max: 15),9
-      complexity.lizard_cc,warning,update_changelog: CC=24 exceeds limit 15,9
-  goal/cli/commit_cmd.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,commit has cyclomatic complexity 17 (max: 15),19
-      complexity.lizard_cc,warning,commit: CC=17 exceeds limit 15,19
-  goal/cli/publish.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,publish_project has cyclomatic complexity 24 (max: 15),132
-      complexity.lizard_cc,warning,publish_project: CC=22 exceeds limit 15,132
-  goal/cli/tests.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,_run_tests_in_subdirs has cyclomatic complexity 24 (max: 15),55
-      complexity.lizard_cc,warning,_run_tests_in_subdirs: CC=24 exceeds limit 15,55
   goal/cli/version_utils.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,update_project_metadata has cyclomatic complexity 18 (max: 15),118
@@ -104,16 +50,16 @@ WARNINGS[28]{path,score}:
       complexity.lizard_cc,warning,_validate_advanced_section: CC=21 exceeds limit 15,261
   goal/formatter.py,0.97
     issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,format_enhanced_summary has cyclomatic complexity 29 (max: 15),265
-      complexity.lizard_cc,warning,format_enhanced_summary: CC=28 exceeds limit 15,265
+      complexity.cyclomatic,warning,format_enhanced_summary has cyclomatic complexity 19 (max: 15),306
+      complexity.lizard_cc,warning,format_enhanced_summary: CC=18 exceeds limit 15,306
+  goal/push/core.py,0.97
+    issues[2]{rule,severity,message,line}:
+      complexity.cyclomatic,warning,execute_push_workflow has cyclomatic complexity 17 (max: 15),114
+      complexity.lizard_cc,warning,execute_push_workflow: CC=17 exceeds limit 15,114
   goal/push/stages/commit.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,handle_split_commits has cyclomatic complexity 22 (max: 15),140
       complexity.lizard_cc,warning,handle_split_commits: CC=22 exceeds limit 15,140
-  goal/push/stages/dry_run.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,handle_dry_run has cyclomatic complexity 19 (max: 15),12
-      complexity.lizard_cc,warning,handle_dry_run: CC=19 exceeds limit 15,12
   goal/push/stages/push_remote.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,push_to_remote has cyclomatic complexity 16 (max: 15),20
@@ -124,26 +70,25 @@ WARNINGS[28]{path,score}:
       complexity.lizard_cc,warning,extract_entities: CC=20 exceeds limit 15,60
   goal/summary/quality_filter.py,0.97
     issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,classify_intent_smart has cyclomatic complexity 25 (max: 15),258
-      complexity.lizard_cc,warning,classify_intent_smart: CC=24 exceeds limit 15,258
+      complexity.cyclomatic,warning,classify_intent_smart has cyclomatic complexity 17 (max: 15),281
+      complexity.lizard_cc,warning,classify_intent_smart: CC=16 exceeds limit 15,281
   goal/summary/validator.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,auto_fix has cyclomatic complexity 19 (max: 15),204
       complexity.lizard_cc,warning,auto_fix: CC=19 exceeds limit 15,204
-  goal/version_validation.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,validate_project_versions has cyclomatic complexity 30 (max: 15),132
-      complexity.lizard_cc,warning,validate_project_versions: CC=30 exceeds limit 15,132
   integration/run_matrix.sh,0.97
     issues[1]{rule,severity,message,line}:
       complexity.lizard_length,warning,run_case: 175 lines exceeds limit 100,11
+  goal/project_bootstrap.py,0.98
+    issues[1]{rule,severity,message,line}:
+      complexity.maintainability,warning,Low maintainability index: 8.5 (threshold: 20),
   tests/test_project_bootstrap.py,0.98
     issues[1]{rule,severity,message,line}:
       complexity.maintainability,warning,Low maintainability index: 16.6 (threshold: 20),
 
 UNSUPPORTED[5]{bucket,count}:
-  *.md,49
+  *.md,50
   Dockerfile*,1
   *.txt,1
   *.yml,1
-  other,20
+  other,19

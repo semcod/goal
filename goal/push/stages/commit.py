@@ -137,6 +137,61 @@ def handle_single_commit(
     return True
 
 
+_GROUP_ORDER = ['code', 'docs', 'ci', 'examples', 'other']
+
+
+def _commit_file_group(gname: str, paths: List[str], generator: CommitMessageGenerator,
+                       ticket: Optional[str], yes: bool) -> None:
+    """Stage and commit a single file group."""
+    stage_paths(paths)
+    if not get_staged_files():
+        click.echo(click.style(f"  ℹ Skipping {gname}: no changes to commit", fg='yellow'))
+        return
+    d = generator.generate_detailed_message(cached=True, paths=paths)
+    if not d:
+        return
+    title = apply_ticket_prefix(d.get('title'), ticket)
+    result = run_git('commit', '-m', title, '-m', d.get('body'))
+    if result.returncode != 0:
+        click.echo(click.style(f"✗ Error committing split group {gname}: {result.stderr}", fg='red'))
+        if not yes:
+            sys.exit(1)
+    else:
+        click.echo(click.style(f"✓ Committed ({gname}): {title}", fg='green'))
+
+
+def _commit_release_metadata(
+    ctx_obj: Dict[str, Any], files: List[str], config_dict, ticket: Optional[str],
+    new_version: str, current_version: str, no_version_sync: bool, no_changelog: bool
+) -> None:
+    """Sync versions, update changelog, update cost badges, and commit release metadata."""
+    from ..core import _update_cost_badges
+
+    if not no_version_sync:
+        from .version import sync_all_versions_wrapper
+        stage_paths(sync_all_versions_wrapper(new_version, ctx_obj.get('user_config')))
+    else:
+        from pathlib import Path
+        Path('VERSION').write_text(f"{new_version}\n")
+        stage_paths(['VERSION'])
+
+    if not no_changelog:
+        from ...changelog import update_changelog
+        update_changelog(new_version, files, f"chore(release): bump version to {new_version}", config=config_dict)
+        stage_paths(['CHANGELOG.md'])
+
+    if _update_cost_badges(ctx_obj, new_version):
+        run_git('add', 'README.md')
+
+    release_title = apply_ticket_prefix(f"chore(release): bump version to {new_version}", ticket)
+    release_body = f"Release metadata\n\nVersion: {current_version} -> {new_version}"
+    result = run_git('commit', '-m', release_title, '-m', release_body)
+    if result.returncode != 0:
+        click.echo(click.style(f"Error committing release metadata: {result.stderr}", fg='red'))
+    else:
+        click.echo(click.style(f"✓ Committed (release): {release_title}", fg='green'))
+
+
 def handle_split_commits(
     ctx_obj: Dict[str, Any],
     files: List[str],
@@ -150,81 +205,33 @@ def handle_split_commits(
     """Handle split commits per file group."""
     config_dict = (ctx_obj.get('config') or {}).to_dict() if ctx_obj.get('config') else None
     generator = CommitMessageGenerator(config=config_dict)
-    
     groups = split_paths_by_type(files)
-    
+
     if not yes:
         click.echo(click.style("\nSplit commits plan:", fg='cyan', bold=True))
-        for gname in ['code', 'docs', 'ci', 'examples', 'other']:
+        for gname in _GROUP_ORDER:
             if gname in groups:
                 d = generator.generate_detailed_message(cached=False, paths=groups[gname])
                 title = apply_ticket_prefix(d.get('title'), ticket) if d else gname
                 click.echo(f"- {gname}: {title} ({len(groups[gname])} files)")
-    
-    # Commit each group
-    for gname in ['code', 'docs', 'ci', 'examples', 'other']:
-        if gname not in groups:
-            continue
-        
-        stage_paths(groups[gname])
-        
-        # Check if there are actual staged changes before committing
-        staged = get_staged_files()
-        if not staged:
-            click.echo(click.style(f"  ℹ Skipping {gname}: no changes to commit", fg='yellow'))
-            continue
-        
-        d = generator.generate_detailed_message(cached=True, paths=groups[gname])
-        if not d:
-            continue
-        
-        title = apply_ticket_prefix(d.get('title'), ticket)
-        body = d.get('body')
-        result = run_git('commit', '-m', title, '-m', body)
-        
-        if result.returncode != 0:
-            click.echo(click.style(f"✗ Error committing split group {gname}: {result.stderr}", fg='red'))
-            if not yes:
-                sys.exit(1)
-            continue
-        
-        click.echo(click.style(f"✓ Committed ({gname}): {title}", fg='green'))
-    
-    # Release meta commit
+
+    for gname in _GROUP_ORDER:
+        if gname in groups:
+            _commit_file_group(gname, groups[gname], generator, ticket, yes)
+
     from ..core import _update_cost_badges
     if (not no_version_sync) or (not no_changelog):
-        if not no_version_sync:
-            from .version import sync_all_versions_wrapper
-            user_config = ctx_obj.get('user_config')
-            updated_files = sync_all_versions_wrapper(new_version, user_config)
-            stage_paths(updated_files)
-        else:
-            from pathlib import Path
-            Path('VERSION').write_text(f"{new_version}\n")
-            stage_paths(['VERSION'])
-        
-        if not no_changelog:
-            from ...changelog import update_changelog
-            update_changelog(new_version, files, f"chore(release): bump version to {new_version}", config=config_dict)
-            stage_paths(['CHANGELOG.md'])
-
-        if _update_cost_badges(ctx_obj, new_version):
-            run_git('add', 'README.md')
-        
-        release_title = apply_ticket_prefix(f"chore(release): bump version to {new_version}", ticket)
-        release_body = f"Release metadata\n\nVersion: {current_version} -> {new_version}"
-        result = run_git('commit', '-m', release_title, '-m', release_body)
-        
-        if result.returncode != 0:
-            click.echo(click.style(f"Error committing release metadata: {result.stderr}", fg='red'))
-        else:
-            click.echo(click.style(f"✓ Committed (release): {release_title}", fg='green'))
+        _commit_release_metadata(
+            ctx_obj, files, config_dict, ticket,
+            new_version, current_version, no_version_sync, no_changelog
+        )
     else:
         if _update_cost_badges(ctx_obj, new_version):
             run_git('add', 'README.md')
             if get_staged_files():
-                result = run_git('commit', '-m', f'chore: update AI cost badges for v{new_version}')
+                msg = f'chore: update AI cost badges for v{new_version}'
+                result = run_git('commit', '-m', msg)
                 if result.returncode != 0:
                     click.echo(click.style(f"Error committing badge update: {result.stderr}", fg='red'))
                 else:
-                    click.echo(click.style(f"✓ Committed (badges): chore: update AI cost badges for v{new_version}", fg='green'))
+                    click.echo(click.style(f"✓ Committed (badges): {msg}", fg='green'))

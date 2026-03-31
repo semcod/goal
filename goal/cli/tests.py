@@ -52,68 +52,64 @@ def _find_project_root(path: Path, project_type: str) -> Optional[Path]:
         current = current.parent
 
 
+_SKIP_DIRS = {'venv', '.venv', 'build', 'dist', '__pycache__', 'node_modules'}
+
+
+def _find_python_test_dirs() -> List[str]:
+    """Find subdirectories containing Python test files that belong to a real sub-project."""
+    dirs: List[str] = []
+    for root, child_dirs, files in os.walk('.'):
+        child_dirs[:] = [d for d in child_dirs if not d.startswith('.') and d not in _SKIP_DIRS]
+        if root == '.':
+            continue
+        if not any(f.startswith('test_') and f.endswith('.py') for f in files):
+            continue
+        project_root = _find_project_root(Path(root), 'python')
+        if project_root is None or project_root == Path('.'):
+            continue
+        dirs.append(root)
+    return dirs
+
+
+def _find_nodejs_test_dirs() -> List[str]:
+    """Find subdirectories with a usable Node.js test script."""
+    if shutil.which('npm') is None:
+        return []
+    dirs: List[str] = []
+    for package_json in Path('.').rglob('package.json'):
+        if set(package_json.parts) & _SKIP_DIRS:
+            continue
+        if str(package_json.parent) != '.' and _has_usable_test_script(package_json.parent, 'nodejs'):
+            dirs.append(str(package_json.parent))
+    return dirs
+
+
+def _run_subdir_test(project_type: str, base_cmd: List[str], test_dir: str) -> bool:
+    """Run a single sub-directory test. Returns True on success."""
+    try:
+        if project_type == 'python':
+            if Path(test_dir).parent == Path('.'):
+                return True
+            result = subprocess.run(base_cmd + [test_dir], capture_output=True, text=True, timeout=120)
+        else:
+            result = subprocess.run(base_cmd, cwd=test_dir, capture_output=True, text=True, timeout=120)
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
 def _run_tests_in_subdirs(project_type: str, base_cmd: List[str]) -> bool:
     """Run tests in subdirectories (monorepo support)."""
-    test_dirs = []
-    
-    if project_type == 'python':
-        # Find directories with test files
-        for root, dirs, files in os.walk('.'):
-            # Skip hidden and build directories
-            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['venv', '.venv', 'build', 'dist', '__pycache__', 'node_modules']]
-            
-            if any(f.startswith('test_') and f.endswith('.py') for f in files):
-                if root != '.':
-                    project_root = _find_project_root(Path(root), project_type)
-                    if project_root is None or project_root == Path('.'):
-                        continue
-                    test_dirs.append(root)
-    
-    elif project_type == 'nodejs':
-        # Skip node tests if npm is not available
-        if shutil.which('npm') is None:
-            return True
+    finders = {'python': _find_python_test_dirs, 'nodejs': _find_nodejs_test_dirs}
+    finder = finders.get(project_type)
+    if not finder:
+        return True
 
-        # Find directories with package.json that have test scripts
-        for package_json in Path('.').rglob('package.json'):
-            # Avoid picking up package.json in virtualenvs, build artifacts or dependencies
-            parts = set(package_json.parts)
-            if parts.intersection({'venv', '.venv', 'node_modules', 'build', 'dist', '__pycache__'}):
-                continue
-
-            if _has_usable_test_script(package_json.parent, 'nodejs'):
-                if str(package_json.parent) != '.':
-                    test_dirs.append(str(package_json.parent))
-    
+    test_dirs = finder()
     if not test_dirs:
-        return True  # No subdir tests to run
-    
-    all_passed = True
-    for test_dir in test_dirs[:5]:  # Limit to 5 subdirs to avoid runaway
-        try:
-            if project_type == 'python':
-                if Path(test_dir).parent == Path('.'):
-                    continue
-                result = subprocess.run(
-                    base_cmd + [test_dir],
-                    capture_output=True,
-                    text=True,
-                    timeout=120
-                )
-            else:
-                result = subprocess.run(
-                    base_cmd,
-                    cwd=test_dir,
-                    capture_output=True,
-                    text=True,
-                    timeout=120
-                )
-            if result.returncode != 0:
-                all_passed = False
-        except Exception:
-            all_passed = False
-    
-    return all_passed
+        return True
+
+    return all(_run_subdir_test(project_type, base_cmd, d) for d in test_dirs[:5])
 
 
 def run_tests(project_types: List[str]) -> bool:

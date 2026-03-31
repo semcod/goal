@@ -1,57 +1,57 @@
-# code2llm/evolution | 618 func | 73f | 2026-03-31
+# code2llm/evolution | 685 func | 79f | 2026-03-31
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           goal/project_bootstrap.py
-      WHY: 1230L, 0 classes, max CC=26
-      EFFORT: ~4h  IMPACT: 31980
+      WHY: 1189L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 17835
 
   [2] !! SPLIT           goal/summary/generator.py
-      WHY: 675L, 1 classes, max CC=26
-      EFFORT: ~4h  IMPACT: 17550
+      WHY: 670L, 1 classes, max CC=19
+      EFFORT: ~4h  IMPACT: 12730
 
-  [3] !! SPLIT           goal/recovery/strategies.py
-      WHY: 685L, 7 classes, max CC=11
-      EFFORT: ~4h  IMPACT: 7535
+  [3] !! SPLIT           goal/package_managers.py
+      WHY: 628L, 1 classes, max CC=11
+      EFFORT: ~4h  IMPACT: 6908
 
-  [4] !  SPLIT-FUNC      _ensure_costs_installed  CC=21  fan=31
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 651
+  [4] !  SPLIT-FUNC      QualityValidator.auto_fix  CC=19  fan=27
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 513
 
-  [5] !  SPLIT-FUNC      SmartCommitGenerator.analyze_changes  CC=24  fan=27
-      WHY: CC=24 exceeds 15
-      EFFORT: ~1h  IMPACT: 648
+  [5] !  SPLIT-FUNC      execute_push_workflow  CC=17  fan=29
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 493
 
-  [6] !  SPLIT-FUNC      _update_cost_badges  CC=23  fan=26
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 598
+  [6] !  SPLIT-FUNC      PythonDiagnostics.check_py011_version_consistency  CC=17  fan=21
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 357
 
-  [7] !! SPLIT-FUNC      ContentAnalyzer.per_file_notes  CC=29  fan=20
-      WHY: CC=29 exceeds 15
-      EFFORT: ~1h  IMPACT: 580
+  [7] !  SPLIT-FUNC      CodeAbstraction.extract_entities  CC=20  fan=17
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 340
 
-  [8] !! SPLIT-FUNC      validate_project_versions  CC=30  fan=19
-      WHY: CC=30 exceeds 15
-      EFFORT: ~1h  IMPACT: 570
+  [8] !  SPLIT-FUNC      update_project_metadata  CC=18  fan=15
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 270
 
-  [9] !  SPLIT-FUNC      update_changelog  CC=24  fan=23
-      WHY: CC=24 exceeds 15
-      EFFORT: ~1h  IMPACT: 552
+  [9] !  SPLIT-FUNC      format_enhanced_summary  CC=19  fan=14
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 266
 
-  [10] !! SPLIT-FUNC      ensure_project_environment  CC=26  fan=21
-      WHY: CC=26 exceeds 15
-      EFFORT: ~1h  IMPACT: 546
+  [10] !  SPLIT-FUNC      LicenseManager.update_license_file  CC=18  fan=14
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 252
 
 
 RISKS[3]:
-  ⚠ Splitting goal/project_bootstrap.py may break 20 import paths
-  ⚠ Splitting goal/recovery/strategies.py may break 30 import paths
-  ⚠ Splitting goal/summary/generator.py may break 16 import paths
+  ⚠ Splitting goal/project_bootstrap.py may break 33 import paths
+  ⚠ Splitting goal/summary/generator.py may break 18 import paths
+  ⚠ Splitting goal/package_managers.py may break 12 import paths
 
 METRICS-TARGET:
-  CC̄:          5.3 → ≤3.7
-  max-CC:      34 → ≤17
+  CC̄:          4.8 → ≤3.4
+  max-CC:      20 → ≤10
   god-modules: 9 → 0
-  high-CC(≥15): 38 → ≤19
+  high-CC(≥15): 17 → ≤8
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -79,4 +79,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=5.3 → now CC̄=5.3
+  prev CC̄=5.3 → now CC̄=4.8
