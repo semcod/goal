@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [2.1.176] - 2026-03-31
+
+### Docs
+- Update README.md
+
+### Other
+- Update project/validation.toon.yaml
+
 ## [2.1.175] - 2026-03-31
 
 ### Docs
