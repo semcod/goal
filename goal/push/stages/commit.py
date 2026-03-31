@@ -191,10 +191,8 @@ def handle_split_commits(
         click.echo(click.style(f"✓ Committed ({gname}): {title}", fg='green'))
     
     # Release meta commit
+    from ..core import _update_cost_badges
     if (not no_version_sync) or (not no_changelog):
-        from ..core import PushContext
-        ctx = PushContext(ctx_obj)
-        
         if not no_version_sync:
             from .version import sync_all_versions_wrapper
             user_config = ctx_obj.get('user_config')
@@ -209,6 +207,9 @@ def handle_split_commits(
             from ...changelog import update_changelog
             update_changelog(new_version, files, f"chore(release): bump version to {new_version}", config=config_dict)
             stage_paths(['CHANGELOG.md'])
+
+        if _update_cost_badges(ctx_obj, new_version):
+            run_git('add', 'README.md')
         
         release_title = apply_ticket_prefix(f"chore(release): bump version to {new_version}", ticket)
         release_body = f"Release metadata\n\nVersion: {current_version} -> {new_version}"
@@ -218,3 +219,12 @@ def handle_split_commits(
             click.echo(click.style(f"Error committing release metadata: {result.stderr}", fg='red'))
         else:
             click.echo(click.style(f"✓ Committed (release): {release_title}", fg='green'))
+    else:
+        if _update_cost_badges(ctx_obj, new_version):
+            run_git('add', 'README.md')
+            if get_staged_files():
+                result = run_git('commit', '-m', f'chore: update AI cost badges for v{new_version}')
+                if result.returncode != 0:
+                    click.echo(click.style(f"Error committing badge update: {result.stderr}", fg='red'))
+                else:
+                    click.echo(click.style(f"✓ Committed (badges): chore: update AI cost badges for v{new_version}", fg='green'))

@@ -1,21 +1,20 @@
-# vallm batch | 232f | 131✓ 25⚠ 29✗ | 2026-03-30
+# vallm batch | 232f | 132✓ 25⚠ 29✗ | 2026-03-31
 
 SUMMARY:
-  scanned: 232  passed: 131 (56.5%)  warnings: 25  errors: 29  unsupported: 72
+  scanned: 232  passed: 132 (56.9%)  warnings: 25  errors: 29  unsupported: 71
 
 WARNINGS[25]{path,score}:
-  goal/project_bootstrap.py,0.83
-    issues[10]{rule,severity,message,line}:
+  goal/project_bootstrap.py,0.87
+    issues[9]{rule,severity,message,line}:
       complexity.cyclomatic,warning,guess_package_name has cyclomatic complexity 20 (max: 15),253
       complexity.cyclomatic,warning,ensure_project_environment has cyclomatic complexity 26 (max: 15),427
-      complexity.cyclomatic,warning,_ensure_costs_installed has cyclomatic complexity 22 (max: 15),691
-      complexity.cyclomatic,warning,_ensure_costs_config has cyclomatic complexity 20 (max: 15),862
-      complexity.maintainability,warning,Low maintainability index: 10.9 (threshold: 20),
+      complexity.cyclomatic,warning,_ensure_costs_installed has cyclomatic complexity 21 (max: 15),691
+      complexity.cyclomatic,warning,_ensure_costs_config has cyclomatic complexity 20 (max: 15),857
+      complexity.maintainability,warning,Low maintainability index: 11.1 (threshold: 20),
       complexity.lizard_cc,warning,guess_package_name: CC=20 exceeds limit 15,253
       complexity.lizard_cc,warning,ensure_project_environment: CC=26 exceeds limit 15,427
-      complexity.lizard_cc,warning,_ensure_costs_installed: CC=22 exceeds limit 15,691
-      complexity.lizard_length,warning,_ensure_costs_installed: 103 lines exceeds limit 100,691
-      complexity.lizard_cc,warning,_ensure_costs_config: CC=20 exceeds limit 15,862
+      complexity.lizard_cc,warning,_ensure_costs_installed: CC=21 exceeds limit 15,691
+      complexity.lizard_cc,warning,_ensure_costs_config: CC=20 exceeds limit 15,857
   goal/validators/file_validator.py,0.90
     issues[6]{rule,severity,message,line}:
       complexity.cyclomatic,warning,detect_tokens_in_content has cyclomatic complexity 17 (max: 15),68
@@ -51,9 +50,9 @@ WARNINGS[25]{path,score}:
   goal/push/core.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,execute_push_workflow has cyclomatic complexity 17 (max: 15),114
-      complexity.cyclomatic,warning,_update_cost_badges has cyclomatic complexity 24 (max: 15),364
+      complexity.cyclomatic,warning,_update_cost_badges has cyclomatic complexity 23 (max: 15),365
       complexity.lizard_cc,warning,execute_push_workflow: CC=17 exceeds limit 15,114
-      complexity.lizard_cc,warning,_update_cost_badges: CC=24 exceeds limit 15,364
+      complexity.lizard_cc,warning,_update_cost_badges: CC=23 exceeds limit 15,365
   goal/smart_commit/generator.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,analyze_changes has cyclomatic complexity 24 (max: 15),32
@@ -83,6 +82,10 @@ WARNINGS[25]{path,score}:
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,update_changelog has cyclomatic complexity 24 (max: 15),9
       complexity.lizard_cc,warning,update_changelog: CC=24 exceeds limit 15,9
+  goal/cli/publish.py,0.97
+    issues[2]{rule,severity,message,line}:
+      complexity.cyclomatic,warning,publish_project has cyclomatic complexity 24 (max: 15),132
+      complexity.lizard_cc,warning,publish_project: CC=22 exceeds limit 15,132
   goal/cli/tests.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,_run_tests_in_subdirs has cyclomatic complexity 24 (max: 15),55
@@ -122,12 +125,9 @@ WARNINGS[25]{path,score}:
   integration/run_matrix.sh,0.97
     issues[1]{rule,severity,message,line}:
       complexity.lizard_length,warning,run_case: 175 lines exceeds limit 100,11
-  goal/cli/publish.py,0.98
-    issues[1]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,publish_project has cyclomatic complexity 17 (max: 15),95
   tests/test_project_bootstrap.py,0.98
     issues[1]{rule,severity,message,line}:
-      complexity.maintainability,warning,Low maintainability index: 18.4 (threshold: 20),
+      complexity.maintainability,warning,Low maintainability index: 18.0 (threshold: 20),
 
 ERRORS[29]{path,score}:
   goal/authors/__init__.py,0.57
@@ -225,14 +225,9 @@ ERRORS[29]{path,score}:
       python.import.resolvable,error,Module 'models' not found,4
   goal/push/stages/commit.py,0.88
     issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'core' not found,195
-      python.import.resolvable,error,Module 'version' not found,199
-      python.import.resolvable,error,Module 'changelog' not found,209
-  goal/cli/__init__.py,0.89
-    issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'version' not found,207
-      python.import.resolvable,error,Module 'nfo' not found,10
-      python.import.resolvable,error,Module 'nfo.terminal' not found,11
+      python.import.resolvable,error,Module 'core' not found,194
+      python.import.resolvable,error,Module 'version' not found,197
+      python.import.resolvable,error,Module 'changelog' not found,207
   goal/hooks/manager.py,0.89
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'validators.file_validator' not found,14
@@ -241,6 +236,11 @@ ERRORS[29]{path,score}:
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'strategies' not found,10
       python.import.resolvable,error,Module 'exceptions' not found,19
+  goal/cli/__init__.py,0.90
+    issues[3]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'version' not found,224
+      python.import.resolvable,error,Module 'nfo' not found,11
+      python.import.resolvable,error,Module 'nfo.terminal' not found,12
   goal/cli/version_sync.py,0.91
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'version_utils' not found,7
@@ -271,4 +271,4 @@ UNSUPPORTED[5]{bucket,count}:
   Dockerfile*,1
   *.txt,1
   *.yml,1
-  other,20
+  other,19

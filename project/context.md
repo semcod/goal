@@ -6,10 +6,10 @@
 - **Primary Language**: python
 - **Languages**: python: 107, shell: 5, go: 1, java: 1, csharp: 1
 - **Analysis Mode**: static
-- **Total Functions**: 657
+- **Total Functions**: 659
 - **Total Classes**: 65
 - **Modules**: 117
-- **Entry Points**: 465
+- **Entry Points**: 466
 
 ## Architecture by Module
 
@@ -158,13 +158,13 @@ Main execution flows into the system:
 > Interactive wizard for complete Goal setup.
 - **Calls**: main.command, click.option, click.option, click.option, click.option, click.echo, click.echo, click.echo
 
-### examples.api-usage.01_basic_api.main
-> Run basic API examples.
-- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.cli.version_utils.detect_project_types, integration.run_matrix.print, integration.run_matrix.print, goal.cli.version_utils.get_current_version
-
 ### goal.doctor.python.PythonDiagnostics.check_py011_version_consistency
 > PY011: Check for consistent version across all config files.
 - **Calls**: re.search, version_match.group, setup_py.exists, re.search, version_file.exists, Issue, self.issues.append, setup_py.read_text
+
+### examples.api-usage.01_basic_api.main
+> Run basic API examples.
+- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.cli.version_utils.detect_project_types, integration.run_matrix.print, integration.run_matrix.print, goal.cli.version_utils.get_current_version
 
 ### goal.smart_commit.generator.SmartCommitGenerator.analyze_changes
 > Analyze staged changes and extract abstractions.
@@ -479,10 +479,6 @@ Args:
 This is a convenience function that extracts validation 
 - **Output to**: goal.git_ops.get_staged_files, goal.validators.file_validator.manage_dot_folders, goal.git_ops.get_staged_files, goal.validators.file_validator.validate_files, config.get
 
-### goal.cli.license_cmd.license_validate
-> Validate the LICENSE file.
-- **Output to**: license.command, LicenseManager, manager.validate_license_file, click.echo, click.echo
-
 ### goal.push.core._validate_staged_files
 > Validate staged files for security issues.
 - **Output to**: goal.validators.file_validator.validate_staged_files, click.echo, ctx_obj.get, click.echo, click.echo
@@ -492,6 +488,10 @@ This is a convenience function that extracts validation
 
 Checks that the configuration file is valid, complete, and f
 - **Output to**: click.command, click.option, click.option, click.option, click.echo
+
+### goal.cli.license_cmd.license_validate
+> Validate the LICENSE file.
+- **Output to**: license.command, LicenseManager, manager.validate_license_file, click.echo, click.echo
 
 ### goal.cli.postcommit_cmd.postcommit_validate
 > Validate post-commit action configuration.
@@ -550,11 +550,12 @@ Functions exposed as public API (no underscore prefix):
 - `goal.project_bootstrap.ensure_project_environment` - 59 calls
 - `goal.summary.validator.QualityValidator.auto_fix` - 59 calls
 - `goal.user_config.initialize_user_config` - 52 calls
+- `goal.push.stages.commit.handle_split_commits` - 50 calls
+- `goal.cli.publish.publish_project` - 48 calls
 - `goal.cli.commit_cmd.commit` - 47 calls
 - `goal.cli.commit_cmd.validate` - 45 calls
 - `goal.generator.analyzer.ContentAnalyzer.per_file_notes` - 43 calls
-- `goal.push.core.execute_push_workflow` - 43 calls
-- `goal.push.stages.commit.handle_split_commits` - 41 calls
+- `goal.push.core.execute_push_workflow` - 42 calls
 - `goal.push.stages.push_remote.push_to_remote` - 41 calls
 - `goal.formatter.format_enhanced_summary` - 39 calls
 - `goal.recovery.strategies.LargeFileStrategy.recover` - 38 calls
@@ -565,9 +566,8 @@ Functions exposed as public API (no underscore prefix):
 - `goal.push.stages.dry_run.handle_dry_run` - 36 calls
 - `goal.changelog.update_changelog` - 35 calls
 - `goal.cli.wizard_cmd.wizard` - 34 calls
-- `goal.cli.publish.publish_project` - 34 calls
-- `examples.api-usage.01_basic_api.main` - 34 calls
 - `goal.doctor.python.PythonDiagnostics.check_py011_version_consistency` - 34 calls
+- `examples.api-usage.01_basic_api.main` - 34 calls
 - `goal.smart_commit.generator.SmartCommitGenerator.analyze_changes` - 33 calls
 - `goal.user_config.show_user_config` - 31 calls
 - `examples.api-usage.04_version_validation.main` - 30 calls

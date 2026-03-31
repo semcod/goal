@@ -248,9 +248,6 @@ def execute_push_workflow(
     
     # Print timing info
     click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg='cyan'))
-    
-    # Update AI cost badges in README
-    _update_cost_badges(ctx_obj, new_version)
 
 
 def _initialize_context(ctx_obj: Dict[str, Any], bump: str, message: Optional[str],
@@ -356,12 +353,16 @@ def _handle_commit_phase(ctx_obj: Dict[str, Any], split: bool, message: Optional
         # Changelog
         config_dict = (ctx_obj.get('config') or {}).to_dict() if ctx_obj.get('config') else None
         handle_changelog(new_version, files, commit_msg, config_dict, no_changelog)
+
+        # Refresh costs README content before committing so the update is included.
+        if _update_cost_badges(ctx_obj, new_version):
+            run_git_local('add', 'README.md')
         
         # Single commit
         handle_single_commit(commit_title, commit_body, commit_msg, message, ctx_obj['yes'])
 
 
-def _update_cost_badges(ctx_obj: Dict[str, Any], version: str, model: Optional[str] = None, api_key: Optional[str] = None) -> None:
+def _update_cost_badges(ctx_obj: Dict[str, Any], version: str, model: Optional[str] = None, api_key: Optional[str] = None) -> bool:
     """Update AI cost badges in README using costs package."""
     try:
         # Lazy import to avoid hard dependency
@@ -404,7 +405,6 @@ def _update_cost_badges(ctx_obj: Dict[str, Any], version: str, model: Optional[s
         # Default to enabled unless explicitly disabled
         badge_enabled = True
         update_readme_enabled = True
-        auto_commit = False
         
         if config_path.exists():
             with open(config_path, "rb") as f:
@@ -416,10 +416,9 @@ def _update_cost_badges(ctx_obj: Dict[str, Any], version: str, model: Optional[s
                 badge_enabled = False
             if tool_costs.get("update_readme") is False:
                 update_readme_enabled = False
-            auto_commit = tool_costs.get("auto_commit", False)
         
         if not badge_enabled and not update_readme_enabled:
-            return
+            return False
         
         # Get repository statistics and build results
         project_dir = Path(".")
@@ -478,17 +477,14 @@ def _update_cost_badges(ctx_obj: Dict[str, Any], version: str, model: Optional[s
         success = update_readme_badge(project_dir, results)
         if success:
             click.echo(click.style("✓ Updated AI cost badges in README", fg='green'))
-        
-        # Optionally commit the badge update
-        if auto_commit:
-            from goal.git_ops import run_git
-            run_git('add', 'README.md')
-            run_git('commit', '-m', f'chore: update AI cost badges for v{version}')
+            return True
+        return False
                 
     except ImportError:
         # costs package not installed, skip silently
-        pass
+        return False
     except Exception as e:
         # Non-critical feature, log error only in verbose mode
         if ctx_obj.get('verbose'):
             click.echo(click.style(f"⚠ Could not update cost badges: {e}", fg='yellow'))
+        return False

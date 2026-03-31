@@ -363,6 +363,7 @@ class TestCostsBadgeGeneration:
     def test_uses_git_root_for_subproject_analysis(self, tmp_path):
         repo_root = tmp_path
         (repo_root / ".git").mkdir()
+        (repo_root / "README.md").write_text("# Repo\n\n## AI Cost Tracking\n")
 
         subproject = repo_root / "my-api"
         subproject.mkdir()
@@ -370,10 +371,16 @@ class TestCostsBadgeGeneration:
         fake_costs = types.ModuleType("costs")
         fake_costs.__path__ = []
         fake_costs.calculate_human_time = lambda commits: 1.0
-        fake_costs.update_readme_badge = lambda project_dir, results: True
+        calls = {}
+
+        def fake_update_readme_badge(project_dir, results):
+            calls["readme_update"] = project_dir
+            calls["readme_results"] = results
+            return True
+
+        fake_costs.update_readme_badge = fake_update_readme_badge
 
         fake_git_parser = types.ModuleType("costs.git_parser")
-        calls = {}
 
         class FakeAuthor:
             name = "Tom"
@@ -424,6 +431,7 @@ class TestCostsBadgeGeneration:
         assert calls["repo_stats"] == str(repo_root)
         assert calls["parse_commits"][0] == str(repo_root)
         assert calls["commit_diff"][0] == str(repo_root)
+        assert calls["readme_update"] == repo_root
 
 
 # ---------------------------------------------------------------------------

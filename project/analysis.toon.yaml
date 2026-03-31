@@ -1,5 +1,5 @@
-# code2llm | 97f 18827L | python:94,shell:3 | 2026-03-30
-# CC̄=5.3 | critical:38/657 | dups:0 | cycles:0
+# code2llm | 97f 18938L | python:94,shell:3 | 2026-03-31
+# CC̄=5.3 | critical:38/659 | dups:0 | cycles:0
 
 HEALTH[20]:
   🔴 GOD   goal/recovery/strategies.py = 685L, 7 classes, 30m, max CC=11
@@ -11,7 +11,7 @@ HEALTH[20]:
   🟡 CC    guess_package_name CC=20 (limit:15)
   🟡 CC    ensure_project_environment CC=26 (limit:15)
   🟡 CC    scaffold_test CC=15 (limit:15)
-  🟡 CC    _ensure_costs_installed CC=22 (limit:15)
+  🟡 CC    _ensure_costs_installed CC=21 (limit:15)
   🟡 CC    _ensure_costs_config CC=20 (limit:15)
   🟡 CC    ensure_git_repository CC=23 (limit:15)
   🟡 CC    _score_by_signals CC=15 (limit:15)
@@ -21,27 +21,27 @@ HEALTH[20]:
   🟡 CC    check_dot_folders CC=23 (limit:15)
   🟡 CC    validate_files CC=18 (limit:15)
   🟡 CC    execute_push_workflow CC=17 (limit:15)
-  🟡 CC    _update_cost_badges CC=24 (limit:15)
+  🟡 CC    _update_cost_badges CC=23 (limit:15)
 
 REFACTOR[2]:
   1. split goal/recovery/strategies.py  (god module)
   2. split 19 high-CC methods  (CC>15)
 
-PIPELINES[413]:
-  [1] Src [__init__]: __init__
+PIPELINES[414]:
+  [1] Src [get_registry_version]: get_registry_version
       PURITY: 100% pure
-  [2] Src [_load]: _load
+  [2] Src [__init__]: __init__
       PURITY: 100% pure
-  [3] Src [_save]: _save
+  [3] Src [_load]: _load
       PURITY: 100% pure
-  [4] Src [get]: get
+  [4] Src [_save]: _save
       PURITY: 100% pure
-  [5] Src [get_registry_version]: get_registry_version
+  [5] Src [get]: get
       PURITY: 100% pure
 
 LAYERS:
-  goal/                           CC̄=5.3    ←in:120  →out:3
-  │ !! project_bootstrap         1207L  0C   20m  CC=26     ←3
+  goal/                           CC̄=5.3    ←in:123  →out:3
+  │ !! project_bootstrap         1230L  0C   20m  CC=26     ←3
   │ !! strategies                 685L  7C   30m  CC=11     ←0
   │ !! generator                  675L  1C   16m  CC=26     ←0
   │ !! package_managers           628L  1C   12m  CC=11     ←1
@@ -51,7 +51,7 @@ LAYERS:
   │ !! python                     545L  1C   17m  CC=17     ←0
   │ !! generator                  524L  1C   18m  CC=24     ←0
   │ !! file_validator             499L  4C   12m  CC=23     ←2
-  │ !! core                       494L  1C   12m  CC=24     ←4
+  │ !! core                       490L  1C   12m  CC=23     ←5
   │ !! validation                 483L  2C   13m  CC=21     ←2
   │ manager                    457L  1C   25m  CC=10     ←7
   │ constants                  436L  0C    0m  CC=0.0    ←0
@@ -69,11 +69,12 @@ LAYERS:
   │ !! version_validation         301L  0C   10m  CC=30     ←4
   │ !! abstraction                269L  1C    9m  CC=20     ←0
   │ user_config                247L  1C   12m  CC=11     ←22
-  │ __init__                   223L  1C    9m  CC=14     ←5
+  │ __init__                   241L  1C   10m  CC=14     ←5
+  │ !! publish                    233L  0C    6m  CC=24     ←2
+  │ !! commit                     230L  0C    4m  CC=22     ←1
   │ spdx                       222L  0C    7m  CC=14     ←2
   │ actions                    221L  5C   16m  CC=7      ←0
   │ rules                      220L  6C   19m  CC=11     ←0
-  │ !! commit                     220L  0C    4m  CC=18     ←1
   │ utils                      212L  0C    9m  CC=5      ←2
   │ utils_cmd                  207L  0C    8m  CC=10     ←0
   │ !! commit_cmd                 205L  0C    3m  CC=17     ←0
@@ -81,7 +82,6 @@ LAYERS:
   │ manager                    192L  1C    7m  CC=6      ←0
   │ manager                    190L  1C    7m  CC=7      ←0
   │ git_ops                    171L  1C    7m  CC=11     ←0
-  │ !! publish                    170L  0C    5m  CC=17     ←2
   │ version_sync               151L  0C    9m  CC=7      ←2
   │ config_cmd                 129L  0C    7m  CC=4      ←0
   │ todo                       127L  0C    5m  CC=9      ←1
@@ -131,7 +131,7 @@ LAYERS:
   │ __init__                    20L  0C    0m  CC=0.0    ←0
   │ __init__                    19L  0C    0m  CC=0.0    ←0
   │ __init__                    19L  0C    0m  CC=0.0    ←0
-  │ __main__                    17L  0C    0m  CC=0.0    ←0
+  │ __main__                    18L  0C    0m  CC=0.0    ←0
   │ __init__                    14L  0C    0m  CC=0.0    ←0
   │ __init__                    14L  0C    0m  CC=0.0    ←0
   │ __init__                     3L  0C    0m  CC=0.0    ←0
@@ -146,9 +146,9 @@ LAYERS:
 
 COUPLING:
                                   goal           goal.cli          goal.push        goal.config    goal.validators       goal.license       goal.authors       goal.summary        goal.doctor         goal.hooks     goal.generator  goal.smart_commit    goal.validation      goal.recovery
-               goal                 ──                ←40                ←47                  2                ←11                                    ←2                 ←6                  1                 ←1                 ←4                 ←2                 ←2                 ←1  hub
-           goal.cli                 40                 ──                  1                 11                                     7                  3                                     1                  3                                                                              hub
-          goal.push                 47                  7                 ──                                     1                                                                                                                                                                             !! fan-out
+               goal                 ──                ←41                ←49                  2                ←11                                    ←2                 ←6                  1                 ←1                 ←4                 ←2                 ←2                 ←1  hub
+           goal.cli                 41                 ──                  1                 11                                     7                  3                                     1                  3                                                                              hub
+          goal.push                 49                  7                 ──                                     1                                                                                                                                                                             !! fan-out
         goal.config                  1                ←11                                    ──                                                       ←1                                                                                                                                       hub
     goal.validators                 11                                    ←1                                    ──                                                                                             ←1                                                                              !! fan-out
        goal.license                                    ←7                                                                          ──                                                                                                                                                          hub
@@ -162,12 +162,12 @@ COUPLING:
       goal.recovery                  1                                                                                                                                                                                                                                                     ──
   CYCLES: none
   HUB: goal.config/ (fan-in=14)
-  HUB: goal/ (fan-in=120)
+  HUB: goal/ (fan-in=123)
   HUB: goal.cli/ (fan-in=7)
   HUB: goal.license/ (fan-in=7)
-  SMELL: goal.cli/ fan-out=66 → split needed
+  SMELL: goal.push/ fan-out=57 → split needed
   SMELL: goal.validators/ fan-out=11 → split needed
-  SMELL: goal.push/ fan-out=55 → split needed
+  SMELL: goal.cli/ fan-out=67 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

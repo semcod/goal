@@ -837,18 +837,13 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
         }
         
         # Update README with badge
-        readme_path = project_dir / "README.md"
+        readme_path = repo_root / "README.md"
         if readme_path.exists():
-            # Check if already has AI Cost Tracking section
-            content = readme_path.read_text(encoding='utf-8')
-            if "## AI Cost Tracking" not in content:
-                success = update_readme_badge(project_dir, results)
-                if success:
-                    click.echo(click.style("  ✓ AI cost badge appended to README", fg='green'))
-                else:
-                    click.echo(click.style("  ⚠ Failed to update README badge", fg='yellow'))
+            success = update_readme_badge(repo_root, results)
+            if success:
+                click.echo(click.style("  ✓ AI cost badge updated in README", fg='green'))
             else:
-                click.echo(click.style("  ✓ AI Cost Tracking section already exists", fg='green'))
+                click.echo(click.style("  ⚠ Failed to update README badge", fg='yellow'))
         else:
             click.echo(click.style("  ⚠ README.md not found", fg='yellow'))
             
@@ -903,7 +898,21 @@ def _ensure_costs_config(project_dir: Path) -> bool:
                 if 'pfix' not in existing.lower():
                     to_add.append('"pfix>=0.1.60"')
                 if to_add:
-                    return f'{match.group(1)}{existing}{"," if existing.strip() else ""}{", ".join(to_add)}]'
+                    # Preserve multi-line formatting
+                    existing_stripped = existing.rstrip()
+                    # Detect indentation from existing content
+                    indent = '    '  # default 4 spaces
+                    for line in existing.split('\n'):
+                        stripped = line.lstrip()
+                        if stripped.startswith('"'):
+                            indent = line[:len(line) - len(stripped)]
+                            break
+                    # Build new entries with proper formatting
+                    new_entries = '\n'.join(f'{indent}{dep},' for dep in to_add)
+                    # Add comma after last existing entry if needed
+                    if existing_stripped and not existing_stripped.endswith(','):
+                        existing_stripped += ','
+                    return f'{match.group(1)}{existing_stripped}\n{new_entries}\n]'
                 return match.group(0)
             
             new_content = re.sub(pattern, add_deps, content, flags=re.IGNORECASE | re.DOTALL)
@@ -924,7 +933,21 @@ def _ensure_costs_config(project_dir: Path) -> bool:
                 if 'pfix' not in existing.lower():
                     to_add.append('"pfix>=0.1.60"')
                 if to_add:
-                    return f'{match.group(1)}{existing}{"," if existing.strip() else ""}{", ".join(to_add)}]'
+                    # Preserve multi-line formatting
+                    existing_stripped = existing.rstrip()
+                    # Detect indentation from existing content
+                    indent = '    '  # default 4 spaces
+                    for line in existing.split('\n'):
+                        stripped = line.lstrip()
+                        if stripped.startswith('"'):
+                            indent = line[:len(line) - len(stripped)]
+                            break
+                    # Build new entries with proper formatting
+                    new_entries = '\n'.join(f'{indent}{dep},' for dep in to_add)
+                    # Add comma after last existing entry if needed
+                    if existing_stripped and not existing_stripped.endswith(','):
+                        existing_stripped += ','
+                    return f'{match.group(1)}{existing_stripped}\n{new_entries}\n]'
                 return match.group(0)
             
             # Only match dependencies within hatch envs default

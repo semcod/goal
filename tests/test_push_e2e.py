@@ -274,6 +274,43 @@ class TestPushWorkflowE2E:
         mock_push_remote.assert_not_called()
         mock_publish.assert_not_called()
 
+    def test_commit_phase_refreshes_costs_before_single_commit(self):
+        """Test that the costs README refresh is staged before the main commit."""
+        from goal.push.core import _handle_commit_phase
+
+        ctx_obj = {
+            'yes': True,
+            'markdown': False,
+            'config': None,
+            'user_config': {},
+        }
+
+        with patch('goal.push.core.handle_version_sync') as mock_version_sync, \
+             patch('goal.push.core.handle_changelog') as mock_changelog, \
+             patch('goal.push.core._update_cost_badges', return_value=True) as mock_update_badges, \
+             patch('goal.push.core.run_git_local') as mock_run_git_local, \
+             patch('goal.push.core.handle_single_commit') as mock_single_commit:
+            _handle_commit_phase(
+                ctx_obj=ctx_obj,
+                split=False,
+                message=None,
+                commit_title='feat: add thing',
+                commit_body=None,
+                commit_msg='feat: add thing',
+                files=['src/app.py'],
+                ticket=None,
+                new_version='1.2.4',
+                current_version='1.2.3',
+                no_version_sync=False,
+                no_changelog=False,
+            )
+
+        mock_version_sync.assert_called_once_with('1.2.4', False, {}, True)
+        mock_changelog.assert_called_once_with('1.2.4', ['src/app.py'], 'feat: add thing', None, False)
+        mock_update_badges.assert_called_once_with(ctx_obj, '1.2.4')
+        mock_run_git_local.assert_called_once_with('add', 'README.md')
+        mock_single_commit.assert_called_once_with('feat: add thing', None, 'feat: add thing', None, True)
+
     def test_publish_project_skips_nodejs_publish_when_not_configured(self):
         """Test that local Node.js packages without nodejs project config are not published."""
         from goal.cli.publish import publish_project

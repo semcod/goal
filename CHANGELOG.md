@@ -1,5 +1,21 @@
 ## [Unreleased]
 
+## [2.1.172] - 2026-03-31
+
+### Docs
+- Update README.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_project_bootstrap.py
+- Update tests/test_push_e2e.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/validation.toon.yaml
+
 ## [2.1.171] - 2026-03-30
 
 ### Test
