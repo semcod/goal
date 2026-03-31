@@ -6,22 +6,22 @@ SUMMARY:
   dup_groups:    11
   dup_fragments: 39
   saved_lines:   238
-  scan_ms:       8841
+  scan_ms:       7653
 
 DUPLICATES[11] (ranked by impact):
   [4093ed9ae3929a54] ! STRU  hooks_status  L=8 N=6 saved=40 sim=1.00
       goal/cli/hooks_cmd.py:0-7  (hooks_status)
+      goal/cli/postcommit_cmd.py:0-7  (postcommit_list)
+      goal/cli/validation_cmd.py:0-7  (validation_list)
       goal/cli/authors_cmd.py:0-7  (authors_list)
       goal/cli/authors_cmd.py:0-7  (authors_import)
       goal/cli/authors_cmd.py:0-7  (authors_export)
-      goal/cli/postcommit_cmd.py:0-7  (postcommit_list)
-      goal/cli/validation_cmd.py:0-7  (validation_list)
   [ff6389d03f2bd5a4] ! STRU  hooks  L=7 N=6 saved=35 sim=1.00
       goal/cli/hooks_cmd.py:0-6  (hooks)
-      goal/cli/license_cmd.py:0-6  (license)
-      goal/cli/authors_cmd.py:0-6  (authors)
       goal/cli/postcommit_cmd.py:0-6  (postcommit)
+      goal/cli/license_cmd.py:0-6  (license)
       goal/cli/validation_cmd.py:0-6  (validation)
+      goal/cli/authors_cmd.py:0-6  (authors)
       goal/cli/config_cmd.py:0-6  (config)
   [e8e1ba5d936993f1] ! STRU  get_name  L=4 N=9 saved=32 sim=1.00
       goal/postcommit/actions.py:0-3  (get_name)
@@ -35,24 +35,24 @@ DUPLICATES[11] (ranked by impact):
       goal/validation/rules.py:0-3  (get_name)
   [e44f0850892ead3e]   STRU  uninstall_hooks  L=14 N=3 saved=28 sim=1.00
       goal/hooks/manager.py:0-13  (uninstall_hooks)
-      goal/validation/manager.py:0-13  (run_custom_validations)
       goal/postcommit/manager.py:0-13  (run_post_commit_actions)
+      goal/validation/manager.py:0-13  (run_custom_validations)
   [d503586ba9fab39a]   STRU  hooks_uninstall  L=13 N=3 saved=26 sim=1.00
       goal/cli/hooks_cmd.py:0-12  (hooks_uninstall)
       goal/cli/postcommit_cmd.py:0-12  (postcommit_run)
       goal/cli/validation_cmd.py:0-12  (validation_run)
   [af82833cf13aa10a]   STRU  main  L=22 N=2 saved=22 sim=1.00
-      examples/webhooks/slack-webhook.py:0-21  (main)
       examples/webhooks/discord-webhook.py:0-21  (main)
-  [58de20ebce074e30]   STRU  get_rules  L=20 N=2 saved=20 sim=1.00
-      goal/validation/manager.py:0-19  (get_rules)
+      examples/webhooks/slack-webhook.py:0-21  (main)
+  [58de20ebce074e30]   STRU  get_config  L=20 N=2 saved=20 sim=1.00
       goal/postcommit/manager.py:0-19  (get_config)
+      goal/validation/manager.py:0-19  (get_rules)
   [979569d1a241cc8c]   STRU  postcommit_validate  L=15 N=2 saved=15 sim=1.00
       goal/cli/postcommit_cmd.py:0-14  (postcommit_validate)
       goal/cli/validation_cmd.py:0-14  (validation_validate)
   [79344c1fc3ff9956]   EXAC  __init__  L=10 N=2 saved=10 sim=1.00
-      goal/validation/manager.py:0-9  (__init__)
       goal/postcommit/manager.py:0-9  (__init__)
+      goal/validation/manager.py:0-9  (__init__)
   [b0af7fa5c6b933ca]   EXAC  get_name  L=6 N=2 saved=6 sim=1.00
       goal/postcommit/actions.py:0-5  (get_name)
       goal/validation/rules.py:0-5  (get_name)
@@ -79,7 +79,7 @@ REFACTOR[11] (ranked by priority):
   [6] ○ extract_function   → examples/webhooks/utils/main.py
       WHY: 2 occurrences of 22-line block across 2 files — saves 22 lines
       FILES: examples/webhooks/discord-webhook.py, examples/webhooks/slack-webhook.py
-  [7] ○ extract_function   → goal/utils/get_rules.py
+  [7] ○ extract_function   → goal/utils/get_config.py
       WHY: 2 occurrences of 20-line block across 2 files — saves 20 lines
       FILES: goal/postcommit/manager.py, goal/validation/manager.py
   [8] ○ extract_function   → goal/cli/utils/postcommit_validate.py

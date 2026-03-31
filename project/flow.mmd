@@ -24,12 +24,12 @@ flowchart TD
 
     subgraph Core
         goal__changelog__update_changelog["update_changelog"]
+        goal__version_validation__get_registry_version["get_registry_version"]
+        goal__version_validation__validate_project_versions{{validate_project_versions CC=30}}
         goal__user_config__UserConfig___load["_load"]
         goal__user_config__UserConfig___save["_save"]
         goal__user_config__UserConfig__get["get"]
         goal__user_config__UserConfig__is_initialized["is_initialized"]
-        goal__version_validation__get_registry_version["get_registry_version"]
-        goal__version_validation__validate_project_versions{{validate_project_versions CC=30}}
         goal__formatter__MarkdownFormatter__add_header["add_header"]
         goal__formatter__MarkdownFormatter__add_metadata["add_metadata"]
         goal__formatter__MarkdownFormatter__add_section["add_section"]
@@ -45,4 +45,4 @@ flowchart TD
         goal__authors__manager__AuthorsManager__export_to_contributors["export_to_contributors"]
     end
 
-    class goal__changelog__update_changelog,goal__user_config__UserConfig___load,goal__user_config__UserConfig___save,goal__user_config__UserConfig__get,goal__user_config__UserConfig__is_initialized,goal__version_validation__get_registry_version,goal__formatter__MarkdownFormatter__add_header,goal__formatter__MarkdownFormatter__add_metadata,goal__formatter__MarkdownFormatter__add_section,goal__formatter__MarkdownFormatter__add_list entry
+    class goal__changelog__update_changelog,goal__version_validation__get_registry_version,goal__user_config__UserConfig___load,goal__user_config__UserConfig___save,goal__user_config__UserConfig__get,goal__user_config__UserConfig__is_initialized,goal__formatter__MarkdownFormatter__add_header,goal__formatter__MarkdownFormatter__add_metadata,goal__formatter__MarkdownFormatter__add_section,goal__formatter__MarkdownFormatter__add_list entry

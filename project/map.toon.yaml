@@ -1,4 +1,4 @@
-# goal | 97f 18938L | shell:3,python:94 | 2026-03-31
+# goal | 97f 18939L | shell:3,python:94 | 2026-03-31
 # stats: 618 func | 0 cls | 97 mod | CC̄=5.3 | critical:38 | cycles:0
 # alerts[5]: CC ContentAnalyzer.short_action_summary=34; fan-out _ensure_costs_installed=31; CC validate_project_versions=30; CC ContentAnalyzer.per_file_notes=29; CC format_enhanced_summary=29
 # hotspots[5]: _ensure_costs_installed fan=31; execute_push_workflow fan=29; QualityValidator.auto_fix fan=27; SmartCommitGenerator.analyze_changes fan=27; _update_cost_badges fan=26
@@ -101,7 +101,7 @@ M[97]:
   goal/version_validation.py,301
   integration/run_docker_matrix.sh,5
   integration/run_matrix.sh,216
-  project.sh,24
+  project.sh,25
 D:
   goal/generator/analyzer.py:
     e: ChangeAnalyzer,ContentAnalyzer

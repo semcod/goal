@@ -1,4 +1,4 @@
-# code2llm | 97f 18938L | python:94,shell:3 | 2026-03-31
+# code2llm | 97f 18939L | python:94,shell:3 | 2026-03-31
 # CC̄=5.3 | critical:38/658 | dups:0 | cycles:0
 
 HEALTH[20]:
@@ -141,7 +141,7 @@ LAYERS:
   │ run_docker_matrix.sh         5L  0C    0m  CC=0.0    ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
-  │ project.sh                  24L  0C    0m  CC=0.0    ←0
+  │ project.sh                  25L  0C    0m  CC=0.0    ←0
   │
 
 COUPLING:
@@ -161,13 +161,13 @@ COUPLING:
     goal.validation                  2                                                                                                                                                                                                                                  ──                   
       goal.recovery                  1                                                                                                                                                                                                                                                     ──
   CYCLES: none
-  HUB: goal.license/ (fan-in=7)
-  HUB: goal.config/ (fan-in=14)
   HUB: goal.cli/ (fan-in=7)
   HUB: goal/ (fan-in=122)
+  HUB: goal.license/ (fan-in=7)
+  HUB: goal.config/ (fan-in=14)
+  SMELL: goal.cli/ fan-out=67 → split needed
   SMELL: goal.validators/ fan-out=11 → split needed
   SMELL: goal.push/ fan-out=56 → split needed
-  SMELL: goal.cli/ fan-out=67 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

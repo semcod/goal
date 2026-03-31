@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 clear
 pip install -e .
+pip install pyqual --upgrade
 pip install prefact --upgrade
 pip install vallm --upgrade
 pip install redup --upgrade
