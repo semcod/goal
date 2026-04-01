@@ -98,7 +98,8 @@ def validate_files(
             '.git/', '.gitignore', '.DS_Store', 'Thumbs.db',
             '*.pyc', '*.pyo', '__pycache__/', '.pytest_cache/',
             'node_modules/', '.npm/', '.cache/', '*.log', '*.tmp',
-            'tests/', 'test_*.py', '*_test.py'
+            'tests/', 'test_*.py', '*_test.py',
+            'examples/', 'example/'
         }
 
     large_files_found = []
