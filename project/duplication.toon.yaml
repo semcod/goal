@@ -1,28 +1,28 @@
-# redup/duplication | 11 groups | 91f 18642L | 2026-03-31
+# redup/duplication | 11 groups | 91f 18652L | 2026-03-31
 
 SUMMARY:
   files_scanned: 91
-  total_lines:   18642
+  total_lines:   18652
   dup_groups:    11
   dup_fragments: 39
   saved_lines:   238
-  scan_ms:       7751
+  scan_ms:       6579
 
 DUPLICATES[11] (ranked by impact):
-  [4093ed9ae3929a54] ! STRU  authors_list  L=8 N=6 saved=40 sim=1.00
+  [4093ed9ae3929a54] ! STRU  hooks_status  L=8 N=6 saved=40 sim=1.00
+      goal/cli/hooks_cmd.py:0-7  (hooks_status)
       goal/cli/authors_cmd.py:0-7  (authors_list)
       goal/cli/authors_cmd.py:0-7  (authors_import)
       goal/cli/authors_cmd.py:0-7  (authors_export)
-      goal/cli/hooks_cmd.py:0-7  (hooks_status)
       goal/cli/postcommit_cmd.py:0-7  (postcommit_list)
       goal/cli/validation_cmd.py:0-7  (validation_list)
-  [ff6389d03f2bd5a4] ! STRU  authors  L=7 N=6 saved=35 sim=1.00
-      goal/cli/authors_cmd.py:0-6  (authors)
+  [ff6389d03f2bd5a4] ! STRU  hooks  L=7 N=6 saved=35 sim=1.00
       goal/cli/hooks_cmd.py:0-6  (hooks)
-      goal/cli/license_cmd.py:0-6  (license)
+      goal/cli/authors_cmd.py:0-6  (authors)
       goal/cli/postcommit_cmd.py:0-6  (postcommit)
       goal/cli/validation_cmd.py:0-6  (validation)
       goal/cli/config_cmd.py:0-6  (config)
+      goal/cli/license_cmd.py:0-6  (license)
   [e8e1ba5d936993f1] ! STRU  get_name  L=4 N=9 saved=32 sim=1.00
       goal/postcommit/actions.py:0-3  (get_name)
       goal/postcommit/actions.py:0-3  (get_name)
@@ -61,10 +61,10 @@ DUPLICATES[11] (ranked by impact):
       goal/deep_analyzer.py:0-3  (__init__)
 
 REFACTOR[11] (ranked by priority):
-  [1] ○ extract_function   → goal/cli/utils/authors_list.py
+  [1] ○ extract_function   → goal/cli/utils/hooks_status.py
       WHY: 6 occurrences of 8-line block across 4 files — saves 40 lines
       FILES: goal/cli/authors_cmd.py, goal/cli/hooks_cmd.py, goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
-  [2] ○ extract_function   → goal/cli/utils/authors.py
+  [2] ○ extract_function   → goal/cli/utils/hooks.py
       WHY: 6 occurrences of 7-line block across 6 files — saves 35 lines
       FILES: goal/cli/authors_cmd.py, goal/cli/config_cmd.py, goal/cli/hooks_cmd.py, goal/cli/license_cmd.py, goal/cli/postcommit_cmd.py +1 more
   [3] ○ extract_function   → goal/utils/get_name.py

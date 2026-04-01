@@ -5113,3 +5113,224 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
+  - id: ticket-59df6747
+    name: Fix duplicate-imports issues
+    description: Resolve 1 duplicate-imports issues in goal/cli/__init__.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/cli/__init__.py
+    rule_id: duplicate-imports
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-28ea3db1
+    name: Fix duplicate-imports issues
+    description: Resolve 1 duplicate-imports issues in goal/push/stages/commit.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/push/stages/commit.py
+    rule_id: duplicate-imports
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-66f1db01
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in goal/recovery/auth.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/recovery/auth.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e8209e60
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in goal/recovery/corrupted.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/recovery/corrupted.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d13fc8f8
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in goal/recovery/divergent.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/recovery/divergent.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c182c048
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in goal/recovery/force_push.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/recovery/force_push.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-cbf29d30
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in goal/recovery/large_file.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/recovery/large_file.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f18ec1ff
+    name: Fix magic-numbers issues
+    description: Resolve 1 magic-numbers issues in goal/recovery/large_file.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/recovery/large_file.py
+    rule_id: magic-numbers
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d4172bb7
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in goal/recovery/lfs.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/recovery/lfs.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-fdef3cbf
+    name: Fix duplicate-imports issues
+    description: Resolve 12 duplicate-imports issues in goal/validators/__init__.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - goal/validators/__init__.py
+    rule_id: duplicate-imports
+    count: 12
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-23c7639f
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in goal/validators/dot_folders.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/validators/dot_folders.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-557c9d13
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in goal/validators/dot_folders.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/validators/dot_folders.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-47839822
+    name: Fix llm-generated-code issues
+    description: Resolve 2 llm-generated-code issues in goal/validators/dot_folders.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/validators/dot_folders.py
+    rule_id: llm-generated-code
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-7e2efb16
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in goal/validators/file_validator.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/validators/file_validator.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e1798adc
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in goal/validators/gitignore.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/validators/gitignore.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-2ba6ac2f
+    name: Fix llm-generated-code issues
+    description: Resolve 1 llm-generated-code issues in goal/validators/tokens.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/validators/tokens.py
+    rule_id: llm-generated-code
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-5bffe6eb
+    name: Fix outdated-dependency issues
+    description: Resolve 1 outdated-dependency issues in pyproject.toml
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - pyproject.toml
+    rule_id: outdated-dependency
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced

@@ -1,4 +1,4 @@
-# code2llm/evolution | 685 func | 79f | 2026-03-31
+# code2llm/evolution | 686 func | 79f | 2026-03-31
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           goal/project_bootstrap.py
@@ -79,4 +79,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=5.3 → now CC̄=4.8
+  prev CC̄=4.8 → now CC̄=4.8

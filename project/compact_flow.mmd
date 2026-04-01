@@ -5,7 +5,7 @@ flowchart TD
     examples__validation["examples.validation<br/>5 funcs"]
     examples__webhooks["examples.webhooks<br/>4 funcs"]
     goal__authors["goal.authors<br/>21 funcs"]
-    goal__cli["goal.cli<br/>102 funcs"]
+    goal__cli["goal.cli<br/>103 funcs"]
     goal__config["goal.config<br/>40 funcs"]
     goal__deep_analyzer["goal.deep_analyzer<br/>23 funcs"]
     goal__doctor["goal.doctor<br/>33 funcs"]
@@ -70,7 +70,7 @@ flowchart TD
     goal__cli -->|1| goal__formatter
     goal__cli -->|1| goal__toml_validation
     goal__cli -->|1| goal__push
-    goal__config -->|1| goal__user_config
     goal__package_managers -->|1| goal__user_config
+    goal__config -->|1| goal__user_config
     goal__smart_commit -->|1| goal__user_config
     goal__authors -->|1| goal__config

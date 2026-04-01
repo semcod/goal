@@ -10,14 +10,8 @@ from goal.cli.version import get_current_version, detect_project_types
 from goal.cli.publish import makefile_has_target, publish_project
 
 
-@main.command()
-@click.option('--make/--no-make', 'use_make', default=True, help='Use Makefile publish target if available')
-@click.option('--target', default='publish', help='Make target to run when using --make')
-@click.option('--version', 'version_arg', default=None, help='Version to publish when not using Makefile')
-@click.pass_context
-def publish(ctx, use_make, target, version_arg) -> None:
-    """Publish the current project (optionally using Makefile)."""
-    ctx_obj = ctx.obj or {}
+def _publish_impl(ctx_obj, use_make, target, version_arg) -> None:
+    """Implementation of the publish command."""
     if ctx_obj.get('no_publish', False):
         click.echo(click.style("Publishing skipped (--no-publish)", fg='yellow'))
         return
@@ -30,9 +24,15 @@ def publish(ctx, use_make, target, version_arg) -> None:
         click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
         result = run_command_tee(cmd)
         if result.returncode != 0:
-            import sys
-            sys.exit(result.returncode)
-        return
+            click.echo(
+                click.style(
+                    f"Makefile publish failed with exit code {result.returncode}; "
+                    "falling back to direct publish.",
+                    fg='yellow',
+                )
+            )
+        else:
+            return
 
     if version_arg is None:
         version_arg = get_current_version()
@@ -41,4 +41,14 @@ def publish(ctx, use_make, target, version_arg) -> None:
         click.echo(click.style("Publish failed. Continuing.", fg='yellow'))
 
 
-__all__ = ['publish']
+@main.command()
+@click.option('--make/--no-make', 'use_make', default=True, help='Use Makefile publish target if available')
+@click.option('--target', default='publish', help='Make target to run when using --make')
+@click.option('--version', 'version_arg', default=None, help='Version to publish when not using Makefile')
+@click.pass_context
+def publish(ctx, use_make, target, version_arg) -> None:
+    """Publish the current project (optionally using Makefile)."""
+    _publish_impl(ctx.obj or {}, use_make, target, version_arg)
+
+
+__all__ = ['publish', '_publish_impl']

@@ -10,6 +10,18 @@ import click
 from .base import RecoveryStrategy
 
 
+def _run_git_chunked(run_git_fn, cmd_base: List[str], paths: List[str], chunk_size: int = 100, **kwargs) -> None:
+    """Run git command in chunks to avoid 'Argument list too long' errors."""
+    chunk: List[str] = []
+    for path in paths:
+        chunk.append(path)
+        if len(chunk) >= chunk_size:
+            run_git_fn(*cmd_base, *chunk, **kwargs)
+            chunk = []
+    if chunk:
+        run_git_fn(*cmd_base, *chunk, **kwargs)
+
+
 class LargeFileStrategy(RecoveryStrategy):
     """Handles large file errors."""
     
@@ -267,8 +279,8 @@ class LargeFileStrategy(RecoveryStrategy):
                 for path in file_paths:
                     f.write(f'{path}\n')
             
-            # Remove from git
-            self.run_git('rm', '--cached', *file_paths, check=False)
+            # Remove from git (in chunks to avoid argument list too long)
+            _run_git_chunked(self.run_git, ['rm', '--cached'], file_paths, check=False)
             self.run_git('add', '.gitignore')
             
             commit_msg = "chore: remove large files and update .gitignore"
@@ -294,7 +306,8 @@ class LargeFileStrategy(RecoveryStrategy):
                 self.run_git('lfs', 'track', path)
             
             self.run_git('add', '.gitattributes')
-            self.run_git('add', *file_paths)
+            # Add files in chunks to avoid argument list too long
+            _run_git_chunked(self.run_git, ['add'], file_paths)
             
             commit_msg = "chore: move large files to Git LFS"
             self.run_git('commit', '-m', commit_msg)
@@ -312,8 +325,8 @@ class LargeFileStrategy(RecoveryStrategy):
     def _skip_large_files(self, file_paths: List[str]) -> bool:
         """Skip large files in current commit."""
         try:
-            # Reset the files
-            self.run_git('reset', 'HEAD', '--', *file_paths)
+            # Reset the files (in chunks to avoid argument list too long)
+            _run_git_chunked(self.run_git, ['reset', 'HEAD', '--'], file_paths)
             click.echo(click.style("✓ Large files unstaged", fg='green'))
             return True
         except Exception as e:

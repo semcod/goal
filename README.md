@@ -25,6 +25,10 @@
 
 ![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.176-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 ![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.50-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-82.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+<!-- pyqual:badges:start -->
+![Version](https://img.shields.io/badge/version-2.1.176-blue) ![Python](https://img.shields.io/badge/python-%3E%3D3.8-blue) ![License](https://img.shields.io/badge/license-Apache-2.0-green) ![AI Cost](https://img.shields.io/badge/AI%20Cost-%2429.85%20%28199%20commits%29-red) ![Human Time](https://img.shields.io/badge/Human%20Time-70.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx-ai%2Fgrok-code-fast-1-lightgrey)
+![pyqual](https://img.shields.io/badge/pyqual-pass-brightgreen) ![gates](https://img.shields.io/badge/gates-3%2F3-brightgreen) ![CC̄](https://img.shields.io/badge/CC%CC%84-4.8-brightgreen) ![vallm](https://img.shields.io/badge/vallm-100%25-brightgreen) ![critical](https://img.shields.io/badge/critical-17-red)
+<!-- pyqual:badges:end -->
 
 - 🤖 **LLM usage:** $7.5000 (198 commits)
 - 👤 **Human dev:** ~$8263 (82.6h @ $100/h, 30min dedup)

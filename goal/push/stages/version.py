@@ -26,17 +26,20 @@ def handle_version_sync(
 ) -> None:
     """Sync versions to all project files."""
     _, _, sync_all_versions = _get_version_module()
-    # Lazy import to avoid circular dependency
-    from goal.push.core import run_git_local
-    
+
     if not no_version_sync:
         updated_files = sync_all_versions(new_version, user_config)
+        # Use stage_paths with chunking to avoid "Argument list too long"
+        # Lazy import to avoid circular dependency
+        from goal.cli import stage_paths
+        stage_paths(updated_files)
         for f in updated_files:
-            run_git_local('add', f)
             click.echo(click.style(f"✓ Updated {f} to {new_version}", fg='green'))
     else:
         Path('VERSION').write_text(new_version + '\n')
-        run_git_local('add', 'VERSION')
+        # Lazy import to avoid circular dependency
+        from goal.cli import stage_paths
+        stage_paths(['VERSION'])
         click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg='green'))
 
 

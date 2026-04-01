@@ -4,12 +4,12 @@
 
 - **Project**: /home/tom/github/wronai/goal
 - **Primary Language**: python
-- **Languages**: python: 114, shell: 5, csharp: 1, go: 1, php: 1
+- **Languages**: python: 118, shell: 5, csharp: 1, go: 1, java: 1
 - **Analysis Mode**: static
-- **Total Functions**: 725
+- **Total Functions**: 728
 - **Total Classes**: 64
-- **Modules**: 123
-- **Entry Points**: 499
+- **Modules**: 127
+- **Entry Points**: 498
 
 ## Architecture by Module
 
@@ -45,11 +45,6 @@
 - **Functions**: 22
 - **Classes**: 1
 - **File**: `generator.py`
-
-### goal.validators.file_validator
-- **Functions**: 20
-- **Classes**: 4
-- **File**: `file_validator.py`
 
 ### goal.validation.rules
 - **Functions**: 19
@@ -109,6 +104,11 @@
 - **Functions**: 14
 - **File**: `push_remote.py`
 
+### goal.summary.validator
+- **Functions**: 13
+- **Classes**: 1
+- **File**: `validator.py`
+
 ## Key Entry Points
 
 Main execution flows into the system:
@@ -119,7 +119,7 @@ Main execution flows into the system:
 
 ### goal.cli.commit_cmd.validate
 > Validate commit summary against quality gates.
-- **Calls**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats, ctx.obj.get, CommitMessageGenerator, generator.generate_detailed_message
+- **Calls**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.generator.generator.CommitMessageGenerator.get_diff_stats, ctx.obj.get, CommitMessageGenerator, generator.generate_detailed_message
 
 ### examples.api-usage.02_git_operations.main
 > Demonstrate git operations.
@@ -131,7 +131,7 @@ Main execution flows into the system:
 
 ### goal.cli.commit_cmd.fix_summary
 > Auto-fix commit summary quality issues.
-- **Calls**: main.command, click.option, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats, ctx.obj.get, CommitMessageGenerator
+- **Calls**: main.command, click.option, click.option, click.option, goal.git_ops.get_staged_files, goal.generator.generator.CommitMessageGenerator.get_diff_stats, ctx.obj.get, CommitMessageGenerator
 
 ### goal.cli.doctor_cmd.doctor
 > Diagnose and auto-fix common project configuration issues.
@@ -217,7 +217,7 @@ Note: Skip this check for Poetry projects which require string forma
 
 ### examples.api-usage.03_commit_generation.main
 > Demonstrate commit message generation.
-- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.git_ops.get_staged_files, goal.git_ops.get_diff_content, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print
+- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.git_ops.get_staged_files, goal.generator.generator.CommitMessageGenerator.get_diff_content, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print
 
 ### goal.recovery.manager.RecoveryManager.recover_from_push_failure
 > Attempt to recover from a git push failure.
@@ -232,13 +232,13 @@ git push failures including:
 - Authentication
 - **Calls**: main.command, click.option, click.option, click.option, click.option, click.option, os.getcwd, goal.cli.recover_cmd._get_error_output
 
-### goal.doctor.nodejs.diagnose_nodejs
-> Run all Node.js-specific diagnostics.
-- **Calls**: json.dumps, data.get, json.dumps, pkg_json.exists, json.loads, data.get, issues.append, data.get
-
 ### goal.doctor.python.diagnose_python
 > Run all Python-specific diagnostics.
 - **Calls**: pyproject.read_text, PythonDiagnostics, diag.check_py002_build_system, diag.check_py003_license_classifiers, diag.check_py004_deprecated_backends, diag.check_py005_license_table, diag.check_py006_duplicate_authors, diag.check_py007_requires_python
+
+### goal.doctor.nodejs.diagnose_nodejs
+> Run all Node.js-specific diagnostics.
+- **Calls**: json.dumps, data.get, json.dumps, pkg_json.exists, json.loads, data.get, issues.append, data.get
 
 ## Process Flows
 
@@ -255,8 +255,6 @@ validate [goal.cli.commit_cmd]
   └─ →> get_staged_files
       └─> run_git
   └─ →> get_diff_stats
-      └─> run_git
-      └─> run_git
 ```
 
 ### Flow 3: main
@@ -436,6 +434,12 @@ Returns:
 > Format validation results for display.
 - **Output to**: results.items, messages.append, messages.append, messages.append, messages.append
 
+### goal.project_bootstrap._validate_pfix_env
+> Validate that OPENROUTER_API_KEY is configured in .env.
+
+Shows error message if key is missing or em
+- **Output to**: goal.project_bootstrap._find_openrouter_api_key, click.echo, click.echo, click.echo, click.echo
+
 ### goal.formatter.format_push_result
 > Format push command result as markdown.
 - **Output to**: MarkdownFormatter, formatter.add_metadata, formatter.add_header, goal.formatter._build_functional_overview, formatter.add_section
@@ -460,12 +464,6 @@ Returns:
 > Format status command output as markdown.
 - **Output to**: MarkdownFormatter, formatter.add_header, None.strip, formatter.add_section, formatter.add_list
 
-### goal.project_bootstrap._validate_pfix_env
-> Validate that OPENROUTER_API_KEY is configured in .env.
-
-Shows error message if key is missing or em
-- **Output to**: goal.project_bootstrap._find_openrouter_api_key, click.echo, click.echo, click.echo, click.echo
-
 ### goal.git_ops.validate_repo_url
 > Validate that a URL looks like a git repository (HTTP/HTTPS/SSH/file).
 - **Output to**: url.strip, re.match, re.match, re.match
@@ -476,13 +474,13 @@ Shows error message if key is missing or em
 Args:
     files: List of file paths to validate
     max_size_mb: Maxi
-- **Output to**: goal.validators.file_validator._is_excluded, goal.validators.file_validator.get_file_size_mb, goal.validators.file_validator.handle_large_files, os.path.exists, large_files_found.append
+- **Output to**: goal.validators.tokens.get_default_token_patterns, goal.validators.file_validator._is_excluded, goal.validators.file_validator.get_file_size_mb, goal.validators.file_validator.handle_large_files, os.path.exists
 
 ### goal.validators.file_validator.validate_staged_files
 > Validate staged files using configuration.
 
 This is a convenience function that extracts validation 
-- **Output to**: goal.git_ops.get_staged_files, goal.validators.file_validator.manage_dot_folders, goal.git_ops.get_staged_files, goal.validators.file_validator.validate_files, config.get
+- **Output to**: goal.git_ops.get_staged_files, goal.validators.dot_folders.manage_dot_folders, goal.git_ops.get_staged_files, goal.validators.file_validator.validate_files, config.get
 
 ### goal.push.stages.dry_run._format_markdown_dry_run
 > Return markdown-formatted dry-run output.
@@ -508,11 +506,7 @@ Checks that the configuration file is valid, complete, and f
 
 ### goal.cli.commit_cmd.validate
 > Validate commit summary against quality gates.
-- **Output to**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats
-
-### goal.cli.validation_cmd.validation_validate
-> Validate rule configurations.
-- **Output to**: validation.command, ValidationRuleManager, click.echo, click.echo, manager.validate_config
+- **Output to**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.generator.generator.CommitMessageGenerator.get_diff_stats
 
 ### goal.cli.config_cmd.config_validate
 > Validate goal.yaml configuration.
@@ -520,17 +514,16 @@ Checks that the configuration file is valid, complete, and f
 Checks that the configuration file is valid, complete, and follow
 - **Output to**: config.command, click.option, click.option, click.echo, click.style
 
-### goal.postcommit.manager.PostCommitManager.validate_actions
-> Validate all configured actions.
-
-Returns:
-    True if all actions are valid
-- **Output to**: self.get_config, action_config.get, action_class, click.echo, action.validate_config
+### goal.cli.validation_cmd.validation_validate
+> Validate rule configurations.
+- **Output to**: validation.command, ValidationRuleManager, click.echo, click.echo, manager.validate_config
 
 ### goal.postcommit.actions.PostCommitAction.validate_config
 > Validate action configuration.
 
 ### goal.postcommit.actions.NotificationAction.validate_config
+
+### goal.postcommit.actions.WebhookAction.validate_config
 
 ## Behavioral Patterns
 
@@ -577,8 +570,8 @@ Functions exposed as public API (no underscore prefix):
 - `goal.recovery.manager.RecoveryManager.recover_from_push_failure` - 23 calls
 - `goal.cli.recover_cmd.recover` - 23 calls
 - `goal.cli.version_utils.update_readme_metadata` - 23 calls
-- `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
 - `goal.doctor.python.diagnose_python` - 23 calls
+- `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
 - `goal.recovery.auth.AuthErrorStrategy.recover` - 22 calls
 - `goal.push.stages.commit.handle_split_commits` - 22 calls
 - `goal.push.core.show_workflow_preview` - 22 calls

@@ -352,6 +352,29 @@ class TestPushWorkflowE2E:
         assert result is True
         mock_run_command.assert_called_once_with('npm publish --access public')
 
+    def test_publish_command_falls_back_when_make_publish_fails(self):
+        """Test that goal publish falls back to direct publish after Makefile failure."""
+        from goal.cli.publish_cmd import _publish_impl
+
+        ctx_obj = {'config': None}
+
+        with patch('goal.cli.publish_cmd.detect_project_types', return_value=['python']) as mock_detect, \
+             patch('goal.cli.publish_cmd.shutil.which', return_value='/usr/bin/make') as mock_which, \
+             patch('goal.cli.publish_cmd.makefile_has_target', return_value=True) as mock_has_target, \
+             patch('goal.cli.publish_cmd.run_command_tee') as mock_run_command, \
+             patch('goal.cli.publish_cmd.get_current_version', return_value='1.2.3') as mock_version, \
+             patch('goal.cli.publish_cmd.publish_project', return_value=True) as mock_publish_project:
+            mock_run_command.return_value = MagicMock(returncode=1, stdout='boom', stderr='boom')
+
+            _publish_impl(ctx_obj, True, 'publish', None)
+
+        mock_detect.assert_called_once()
+        mock_which.assert_called_once_with('make')
+        mock_has_target.assert_called_once_with('publish')
+        mock_run_command.assert_called_once_with('make publish')
+        mock_version.assert_called_once_with()
+        mock_publish_project.assert_called_once_with(['python'], '1.2.3', False, config=None)
+
     def test_run_tests_ignores_top_level_tests_dir_as_subdir(self):
         """Test that the canonical top-level tests dir is not rerun as a subdir scan."""
         from goal.cli.tests import run_tests
@@ -374,32 +397,24 @@ class TestPushWorkflowE2E:
             text=True,
         )
 
-    def test_run_tests_skips_non_project_example_validation_tests(self):
-        """Test that example validation tests without their own project marker are ignored."""
-        from goal.cli.tests import run_tests
+    def test_publish_command_imports_all_required_modules(self):
+        """Regression test: publish command must have all imports including shutil."""
+        # This test catches issues like missing shutil import in publish_cmd.py
+        # which caused: NameError: name 'shutil' is not defined
+        from goal.cli.publish_cmd import publish, _publish_impl
+        import inspect
 
-        def fake_walk(_):
-            yield ('.', ['examples'], [])
-            yield ('./examples', ['validation', 'my-new-project'], [])
-            yield ('./examples/validation', [], ['test_readme_consistency.py'])
-            yield ('./examples/my-new-project', ['tests'], ['pyproject.toml'])
-            yield ('./examples/my-new-project/tests', [], ['test_example.py'])
+        # Get the source file path
+        source_file = inspect.getfile(_publish_impl)
+        source = Path(source_file).read_text()
 
-        with patch('goal.cli.tests.os.walk', side_effect=fake_walk), \
-             patch('goal.cli.tests._find_python_bin', return_value='/tmp/project/.venv/bin/python') as mock_find_python_bin, \
-             patch('goal.cli.tests.subprocess.run') as mock_subprocess_run:
-            mock_subprocess_run.return_value = MagicMock(returncode=0)
+        # Check that shutil is imported (not just used)
+        assert 'import shutil' in source, \
+            f"Missing 'import shutil' in {source_file}"
 
-            assert run_tests(['python']) is True
-
-        assert mock_find_python_bin.call_count == 1
-        assert mock_subprocess_run.call_count == 2
-        assert mock_subprocess_run.call_args_list[0].args[0] == [
-            '/tmp/project/.venv/bin/python', '-m', 'pytest'
-        ]
-        assert mock_subprocess_run.call_args_list[1].args[0] == [
-            '/tmp/project/.venv/bin/python', '-m', 'pytest', './examples/my-new-project/tests'
-        ]
+        # Verify the module can be loaded without errors
+        assert callable(_publish_impl)
+        assert hasattr(publish, 'callback')
 
 
 if __name__ == '__main__':

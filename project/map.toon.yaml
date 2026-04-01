@@ -1,8 +1,8 @@
-# goal | 104f 19002L | shell:3,python:101 | 2026-03-31
-# stats: 685 func | 0 cls | 104 mod | CC̄=4.8 | critical:17 | cycles:0
+# goal | 104f 19014L | shell:3,python:101 | 2026-03-31
+# stats: 686 func | 0 cls | 104 mod | CC̄=4.8 | critical:17 | cycles:0
 # alerts[5]: fan-out execute_push_workflow=29; fan-out QualityValidator.auto_fix=27; fan-out EnhancedSummaryGenerator.generate_enhanced_summary=24; fan-out diagnose_python=22; fan-out PythonDiagnostics.check_py011_version_consistency=21
 # hotspots[5]: execute_push_workflow fan=29; QualityValidator.auto_fix fan=27; EnhancedSummaryGenerator.generate_enhanced_summary fan=24; diagnose_python fan=22; PythonDiagnostics.check_py011_version_consistency fan=21
-# evolution: CC̄ 5.3→4.8 (improved -0.5)
+# evolution: CC̄ 4.8→4.8 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[104]:
   goal/__init__.py,3
@@ -21,7 +21,7 @@ M[104]:
   goal/cli/license_cmd.py,198
   goal/cli/postcommit_cmd.py,82
   goal/cli/publish.py,232
-  goal/cli/publish_cmd.py,42
+  goal/cli/publish_cmd.py,54
   goal/cli/push_cmd.py,114
   goal/cli/recover_cmd.py,125
   goal/cli/utils_cmd.py,207
@@ -433,9 +433,6 @@ D:
   goal/recovery/divergent.py:
     e: DivergentHistoryStrategy
     DivergentHistoryStrategy(RecoveryStrategy): can_handle(1),recover(1),_rebase_changes(1),_merge_changes(1),_pull_changes(0),_force_push(0)  # Handles divergent history errors...
-  goal/cli/publish_cmd.py:
-    e: publish
-    publish(ctx;use_make;target;version_arg)
   goal/doctor/todo.py:
     e: _generate_ticket_id,_read_existing_tickets,_format_todo_entry,add_issues_to_todo,diagnose_and_report_with_todo
     _generate_ticket_id(issue)
@@ -456,6 +453,10 @@ D:
     _format_markdown_dry_run(ctx_obj;project_types;files;stats;current_version;new_version;commit_msg;commit_body;detailed_result)
     _print_plain_dry_run(project_types;files;stats;current_version;new_version;commit_msg)
     handle_dry_run(ctx_obj;project_types;files;stats;current_version;new_version;commit_msg;commit_body;detailed_result;split;ticket;bump;no_version_sync;no_changelog;no_tag;markdown)
+  goal/cli/publish_cmd.py:
+    e: _publish_impl,publish
+    _publish_impl(ctx_obj;use_make;target;version_arg)
+    publish(ctx;use_make;target;version_arg)
   goal/doctor/core.py:
     e: diagnose_project,diagnose_and_report
     diagnose_project(project_dir;project_type;auto_fix)
@@ -670,10 +671,6 @@ D:
   goal/config/constants.py:
   goal/validation/__init__.py:
   goal/doctor/__init__.py:
-  goal/doctor/models.py:
-    e: Issue,DoctorReport
-    Issue:  # A single diagnosed issue...
-    DoctorReport:  # Aggregated report from a doctor run...
   goal/authors/__init__.py:
   goal/license/__init__.py:
   integration/run_docker_matrix.sh:
@@ -684,3 +681,7 @@ D:
     print()
     main()
     self()
+  goal/doctor/models.py:
+    e: Issue,DoctorReport
+    Issue:  # A single diagnosed issue...
+    DoctorReport:  # Aggregated report from a doctor run...
