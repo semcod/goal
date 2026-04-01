@@ -39,11 +39,12 @@ def test_token_detection():
     print("\nTesting API token detection...")
     
     test_cases = [
-        # Tokens must match the regex pattern lengths defined in file_validator.py
-        ("github_token.txt", "ghp_" + "a" * 36, "GitHub Personal Access"),
-        ("aws_key.txt", "AKIA" + "A" * 16, "AWS Access Key"),
-        ("slack_bot.txt", "xoxb-1234567890123-1234567890123-" + "a" * 24, "Slack Bot"),
-        ("generic_token.txt", "Bearer Abcdef1234567890abcdefghijklmnopqrstuvwxyz", "Bearer Token"),
+        # Tokens must match the regex pattern lengths AND have high entropy
+        # Use mixed case + digits for high entropy (real secret-like)
+        ("github_token.txt", "ghp_" + "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890Ab", "GitHub Personal Access"),
+        ("aws_key.txt", "AKIA" + "IOSFODNN7EXAMPLEX", "AWS Access Key"),
+        ("slack_bot.txt", "xoxb-1234567890123-1234567890123-" + "aBcDeFgHiJkLmNoPqRsTuVwXy", "Slack Bot"),
+        ("generic_token.txt", "Bearer Abcdef1234567890Abcdef1234567890Abcdef", "Bearer Token"),
     ]
     
     for filename, content, expected_type in test_cases:
