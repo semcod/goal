@@ -33,7 +33,7 @@ jobs:
 
       - name: Create PR if tests pass
         if: success() && github.event_name == 'schedule'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: deps/auto-update
