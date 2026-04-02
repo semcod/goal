@@ -359,6 +359,15 @@ class ContentAnalyzer:
     # per_file_notes
     # ------------------------------------------------------------------
 
+    # Extension → handler method name. All handlers share signature
+    # (added_lines, path, notes) so the dispatch is uniform.
+    _EXT_NOTE_HANDLERS: Dict[str, str] = {
+        '.py':  '_notes_python',
+        '.md':  '_notes_docs',
+        '.rst': '_notes_docs',
+        '.sh':  '_notes_shell',
+    }
+
     def per_file_notes(self, path: str, cached: bool = True) -> List[str]:
         """Generate small descriptive notes for a file based on added lines heuristics."""
         added_lines = self._get_added_lines(path, cached)
@@ -366,12 +375,10 @@ class ContentAnalyzer:
             return []
 
         notes: List[str] = []
-        if path.endswith('.py'):
-            self._notes_python(added_lines, notes)
-        if path.endswith(('.md', '.rst')):
-            self._notes_docs(added_lines, path, notes)
-        if path.endswith('.sh'):
-            self._notes_shell(added_lines, notes)
+        suffix = os.path.splitext(path)[1].lower()
+        handler_name = self._EXT_NOTE_HANDLERS.get(suffix)
+        if handler_name:
+            getattr(self, handler_name)(added_lines, path, notes)
 
         # Deduplicate and cap
         return list(dict.fromkeys(notes))[:3]
@@ -390,7 +397,7 @@ class ContentAnalyzer:
         return [l[1:].strip() for l in diff.splitlines() if l.startswith('+') and not l.startswith('+++')]
 
     @staticmethod
-    def _notes_python(added_lines: List[str], notes: List[str]) -> None:
+    def _notes_python(added_lines: List[str], _path: str, notes: List[str]) -> None:
         """Collect notes for Python files."""
         joined = '\n'.join(added_lines)
         classes = re.findall(r'^class\s+(\w+)', joined, re.MULTILINE)
@@ -422,7 +429,7 @@ class ContentAnalyzer:
             notes.append('update documentation')
 
     @staticmethod
-    def _notes_shell(added_lines: List[str], notes: List[str]) -> None:
+    def _notes_shell(added_lines: List[str], _path: str, notes: List[str]) -> None:
         """Collect notes for shell scripts."""
         if any('chmod' in l or 'hook' in l for l in added_lines):
             notes.append('add hook install script')

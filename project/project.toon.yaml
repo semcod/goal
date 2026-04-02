@@ -1,7 +1,7 @@
-# goal | 686 func | 79f | 22578L | python | 2026-03-31
+# goal | 693 func | 83f | 22812L | python | 2026-04-02
 
 HEALTH:
-  CC̄=4.8  critical=86 (limit:10)  dup=0  cycles=0
+  CC̄=4.8  critical=87 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     execute_push_workflow = 29 (limit:10)
@@ -10,28 +10,28 @@ ALERTS[20]:
   !!! high_fan_out     diagnose_python = 22 (limit:10)
   !!! high_fan_out     PythonDiagnostics.check_py011_version_consistency = 21 (limit:10)
   !!! high_fan_out     doctor = 20 (limit:10)
+  !!  cc_exceeded      format_enhanced_summary = 22 (limit:15)
   !!  cc_exceeded      CodeAbstraction.extract_entities = 20 (limit:15)
   !!  high_fan_out     _update_cost_badges = 19 (limit:10)
   !!  high_fan_out     PythonDiagnostics.check_py009_string_authors = 19 (limit:10)
-  !!  high_fan_out     fix_summary = 18 (limit:10)
 
-MODULES[104] (top by size):
+MODULES[108] (top by size):
   M[goal/project_bootstrap.py] 1189L C:0 F:33 CC↑15 D:3 (python)
   M[goal/summary/generator.py] 670L C:1 F:18 CC↑19 D:0 (python)
   M[goal/package_managers.py] 628L C:1 F:12 CC↑11 D:1 (python)
   M[goal/license/manager.py] 574L C:1 F:10 CC↑18 D:1 (python)
-  M[goal/git_ops.py] 574L C:0 F:28 CC↑11 D:15 (python)
+  M[goal/git_ops.py] 574L C:0 F:28 CC↑11 D:16 (python)
   M[goal/deep_analyzer.py] 560L C:1 F:23 CC↑16 D:0 (python)
   M[goal/doctor/python.py] 545L C:1 F:17 CC↑17 D:0 (python)
   M[goal/smart_commit/generator.py] 510L C:1 F:22 CC↑16 D:0 (python)
-  M[goal/validators/file_validator.py] 504L C:4 F:20 CC↑12 D:2 (python)
   M[goal/config/validation.py] 474L C:2 F:15 CC↑14 D:2 (python)
-  M[goal/push/core.py] 468L C:1 F:14 CC↑17 D:5 (python)
+  M[goal/push/core.py] 468L C:1 F:14 CC↑17 D:4 (python)
   M[goal/config/manager.py] 457L C:1 F:25 CC↑10 D:7 (python)
+  M[goal/generator/analyzer.py] 438L C:2 F:23 CC↑15 D:0 (python)
   M[goal/config/constants.py] 436L C:0 F:0 CC↑0 D:0 (python)
-  M[goal/generator/analyzer.py] 431L C:2 F:23 CC↑15 D:0 (python)
-  M[goal/formatter.py] 412L C:1 F:17 CC↑19 D:3 (python)
-  LANGS: python:101/shell:3
+  M[goal/formatter.py] 408L C:1 F:17 CC↑22 D:3 (python)
+  M[goal/generator/generator.py] 382L C:1 F:24 CC↑12 D:1 (python)
+  LANGS: python:105/shell:3
 
 HOTSPOTS[10]:
   ★ execute_push_workflow fan=29  // Execute the complete push workflow.
@@ -50,4 +50,4 @@ REFACTOR[15]:
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-03-31 CC̄=4.8 crit=86 22578L // Automated analysis
+  2026-04-02 CC̄=4.8 crit=87 22812L // Automated analysis

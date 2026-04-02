@@ -1,20 +1,20 @@
-# code2llm | 108f 19101L | python:105,shell:3 | 2026-03-31
-# CC̄=4.8 | critical:17/728 | dups:0 | cycles:0
+# code2llm | 108f 19255L | python:105,shell:3 | 2026-04-02
+# CC̄=4.8 | critical:17/733 | dups:0 | cycles:0
 
 HEALTH[18]:
   🟡 CC    main CC=15 (limit:15)
-  🟡 CC    _ensure_costs_config CC=15 (limit:15)
+  🟡 CC    format_enhanced_summary CC=22 (limit:15)
   🟡 CC    _build_summary CC=16 (limit:15)
-  🟡 CC    format_enhanced_summary CC=19 (limit:15)
+  🟡 CC    _ensure_costs_config CC=15 (limit:15)
   🟡 CC    _score_by_signals CC=15 (limit:15)
   🟡 CC    enforce_quality_gates CC=15 (limit:15)
   🟡 CC    execute_push_workflow CC=17 (limit:15)
   🟡 CC    push_to_remote CC=16 (limit:15)
   🟡 CC    update_project_metadata CC=18 (limit:15)
   🟡 CC    auto_fix CC=19 (limit:15)
-  🟡 CC    classify_intent_smart CC=17 (limit:15)
   🟡 CC    generate_value_title CC=19 (limit:15)
   🟡 CC    _format_file_change CC=17 (limit:15)
+  🟡 CC    classify_intent_smart CC=17 (limit:15)
   🟡 CC    extract_entities CC=20 (limit:15)
   🟡 CC    _generate_functional_summary CC=16 (limit:15)
   🟡 CC    update_license_file CC=18 (limit:15)
@@ -24,20 +24,20 @@ HEALTH[18]:
 REFACTOR[1]:
   1. split 18 high-CC methods  (CC>15)
 
-PIPELINES[446]:
+PIPELINES[447]:
   [1] Src [Main]: Main → Add
       PURITY: 100% pure
-  [2] Src [main]: main → print
+  [2] Src [test_build]: test_build → print
       PURITY: 100% pure
-  [3] Src [main]: main → send_slack_notification → print
+  [3] Src [test_install]: test_install → print
       PURITY: 100% pure
-  [4] Src [main]: main → send_discord_notification → print
+  [4] Src [check_version]: check_version → print
       PURITY: 100% pure
-  [5] Src [test_build]: test_build → print
+  [5] Src [run_security_check]: run_security_check → print
       PURITY: 100% pure
 
 LAYERS:
-  goal/                           CC̄=4.8    ←in:119  →out:3
+  goal/                           CC̄=4.8    ←in:125  →out:3
   │ !! project_bootstrap         1189L  0C   33m  CC=15     ←3
   │ !! generator                  670L  1C   18m  CC=19     ←0
   │ !! package_managers           628L  1C   12m  CC=11     ←1
@@ -49,10 +49,10 @@ LAYERS:
   │ validation                 474L  2C   15m  CC=14     ←2
   │ !! core                       468L  1C   14m  CC=17     ←4
   │ manager                    457L  1C   25m  CC=10     ←7
+  │ !! analyzer                   438L  2C   23m  CC=15     ←0
   │ constants                  436L  0C    0m  CC=0.0    ←0
-  │ !! analyzer                   431L  2C   23m  CC=15     ←0
-  │ !! formatter                  412L  1C   17m  CC=19     ←3
-  │ generator                  382L  1C   24m  CC=12     ←5
+  │ !! formatter                  408L  1C   17m  CC=22     ←3
+  │ generator                  382L  1C   24m  CC=12     ←1
   │ !! push_remote                377L  0C   14m  CC=16     ←1
   │ wizard_cmd                 340L  0C    7m  CC=12     ←0
   │ !! quality_filter             337L  1C   16m  CC=17     ←0
@@ -62,13 +62,14 @@ LAYERS:
   │ !! version_utils              310L  0C    9m  CC=18     ←7
   │ !! validator                  310L  1C   13m  CC=19     ←0
   │ manager                    302L  1C   14m  CC=4      ←1
-  │ version_validation         292L  0C   14m  CC=9      ←4
+  │ version_validation         299L  0C   15m  CC=9      ←4
   │ !! abstraction                269L  1C    9m  CC=20     ←0
-  │ user_config                247L  1C   12m  CC=11     ←22
-  │ file_validator             246L  0C    7m  CC=12     ←2
+  │ user_config                247L  1C   12m  CC=11     ←23
+  │ file_validator             247L  0C    7m  CC=12     ←2
   │ __init__                   244L  1C   10m  CC=14     ←6
   │ !! commit                     237L  0C    6m  CC=15     ←1
   │ publish                    232L  0C    8m  CC=13     ←2
+  │ tokens                     225L  0C    7m  CC=10     ←1
   │ spdx                       222L  0C    7m  CC=14     ←2
   │ actions                    221L  5C   16m  CC=7      ←0
   │ rules                      220L  6C   19m  CC=11     ←0
@@ -94,7 +95,6 @@ LAYERS:
   │ changelog                  103L  0C    5m  CC=7      ←0
   │ doctor_cmd                  99L  0C    1m  CC=12     ←0
   │ core                        87L  0C    2m  CC=8      ←3
-  │ tokens                      86L  0C    3m  CC=6      ←1
   │ validation_cmd              85L  0C    5m  CC=7      ←0
   │ postcommit_cmd              82L  0C    5m  CC=6      ←0
   │ nodejs                      77L  0C    1m  CC=13     ←0
@@ -149,33 +149,32 @@ LAYERS:
   │ run_docker_matrix.sh         5L  0C    0m  CC=0.0    ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
-  │ project.sh                  36L  0C    0m  CC=0.0    ←0
+  │ project.sh                  40L  0C    0m  CC=0.0    ←0
   │
 
 COUPLING:
-                                  goal           goal.cli          goal.push        goal.config    goal.validators     goal.generator       goal.license       goal.authors       goal.summary        goal.doctor         goal.hooks    goal.validation      goal.recovery  goal.smart_commit
-               goal                 ──                ←39                ←48                  2                ←12                 ←4                                    ←2                 ←6                  1                 ←1                 ←1                 ←1                 ←1  hub
-           goal.cli                 39                 ──                  1                 11                                     2                  7                  3                                     1                  3                                                           hub
-          goal.push                 48                  7                 ──                                     1                  2                                                                                                                                                          !! fan-out
-        goal.config                  1                ←11                                    ──                                                                          ←1                                                                                                                    hub
-    goal.validators                 12                                    ←1                                    ──                                                                                                                ←1                                                           !! fan-out
-     goal.generator                  4                 ←2                 ←2                                                       ──                                                                                                                ←1                                        hub
-       goal.license                                    ←7                                                                                             ──                                                                                                                                       hub
-       goal.authors                  2                 ←3                                     1                                                                          ──                                                                                                                  
-       goal.summary                  6                                                                                                                                                      ──                                                                                               
-        goal.doctor                  3                 ←1                                                                                                                                                      ──                                                                            
-         goal.hooks                  1                 ←3                                                        1                                                                                                                ──                                                         
-    goal.validation                  1                                                                                              1                                                                                                                ──                                      
+                                  goal           goal.cli          goal.push        goal.config    goal.validators       goal.license       goal.authors       goal.summary        goal.doctor         goal.hooks     goal.generator    goal.validation      goal.recovery  goal.smart_commit
+               goal                 ──                ←41                ←50                  2                ←13                                    ←2                 ←6                  1                 ←1                 ←4                 ←2                 ←1                 ←1  hub
+           goal.cli                 41                 ──                  1                 11                                     7                  3                                     1                  3                                                                              hub
+          goal.push                 50                  7                 ──                                     1                                                                                                                                                                             !! fan-out
+        goal.config                  1                ←11                                    ──                                                       ←1                                                                                                                                       hub
+    goal.validators                 13                                    ←1                                    ──                                                                                             ←1                                                                              !! fan-out
+       goal.license                                    ←7                                                                          ──                                                                                                                                                          hub
+       goal.authors                  2                 ←3                                     1                                                       ──                                                                                                                                     
+       goal.summary                  6                                                                                                                                   ──                                                                                                                  
+        goal.doctor                  3                 ←1                                                                                                                                   ──                                                                                               
+         goal.hooks                  1                 ←3                                                        1                                                                                             ──                                                                            
+     goal.generator                  4                                                                                                                                                                                            ──                                                         
+    goal.validation                  2                                                                                                                                                                                                               ──                                      
       goal.recovery                  1                                                                                                                                                                                                                                  ──                   
   goal.smart_commit                  1                                                                                                                                                                                                                                                     ──
   CYCLES: none
+  HUB: goal/ (fan-in=125)
   HUB: goal.cli/ (fan-in=7)
   HUB: goal.config/ (fan-in=14)
   HUB: goal.license/ (fan-in=7)
-  HUB: goal.generator/ (fan-in=5)
-  HUB: goal/ (fan-in=119)
   SMELL: goal.cli/ fan-out=67 → split needed
-  SMELL: goal.validators/ fan-out=12 → split needed
+  SMELL: goal.validators/ fan-out=13 → split needed
   SMELL: goal.push/ fan-out=58 → split needed
 
 EXTERNAL:

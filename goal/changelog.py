@@ -57,14 +57,9 @@ def _insert_entry(existing_content: str, entry: str) -> str:
                 "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n"
                 f"## [Unreleased]\n\n{entry}\n")
 
-    if '## [Unreleased]' in existing_content:
-        parts = existing_content.split('## [Unreleased]', 1)
-        if len(parts) == 2:
-            match = re.search(r'\n## ', parts[1])
-            if match:
-                pos = match.start()
-                return f"{parts[0]}## [Unreleased]{parts[1][:pos]}\n{entry}{parts[1][pos:]}"
-        return f"{existing_content}\n{entry}"
+    pos = _find_unreleased_insert_pos(existing_content)
+    if pos is not None:
+        return f"{existing_content[:pos]}\n{entry}{existing_content[pos:]}"
 
     if existing_content.startswith('# '):
         first_nl = existing_content.find('\n')
@@ -73,6 +68,23 @@ def _insert_entry(existing_content: str, entry: str) -> str:
         return f"{existing_content}\n{entry}"
 
     return f"## [Unreleased]\n\n{entry}\n{existing_content}"
+
+
+def _find_unreleased_insert_pos(content: str) -> int | None:
+    """Find the position after ## [Unreleased] where a new entry should go.
+
+    Returns the character offset, or None if no Unreleased section found.
+    """
+    marker = '## [Unreleased]'
+    if marker not in content:
+        return None
+    after = content.split(marker, 1)[1]
+    match = re.search(r'\n## ', after)
+    if not match:
+        return None
+    # Absolute offset = everything before marker + marker + offset in remainder
+    base = len(content.split(marker, 1)[0]) + len(marker)
+    return base + match.start()
 
 
 def update_changelog(version: str, files: List[str], commit_msg: str, 

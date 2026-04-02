@@ -1,12 +1,12 @@
-# redup/duplication | 11 groups | 91f 18652L | 2026-03-31
+# redup/duplication | 11 groups | 95f 18864L | 2026-04-02
 
 SUMMARY:
-  files_scanned: 91
-  total_lines:   18652
+  files_scanned: 95
+  total_lines:   18864
   dup_groups:    11
   dup_fragments: 39
   saved_lines:   238
-  scan_ms:       6579
+  scan_ms:       6887
 
 DUPLICATES[11] (ranked by impact):
   [4093ed9ae3929a54] ! STRU  hooks_status  L=8 N=6 saved=40 sim=1.00
@@ -20,9 +20,9 @@ DUPLICATES[11] (ranked by impact):
       goal/cli/hooks_cmd.py:0-6  (hooks)
       goal/cli/authors_cmd.py:0-6  (authors)
       goal/cli/postcommit_cmd.py:0-6  (postcommit)
+      goal/cli/license_cmd.py:0-6  (license)
       goal/cli/validation_cmd.py:0-6  (validation)
       goal/cli/config_cmd.py:0-6  (config)
-      goal/cli/license_cmd.py:0-6  (license)
   [e8e1ba5d936993f1] ! STRU  get_name  L=4 N=9 saved=32 sim=1.00
       goal/postcommit/actions.py:0-3  (get_name)
       goal/postcommit/actions.py:0-3  (get_name)
@@ -42,8 +42,8 @@ DUPLICATES[11] (ranked by impact):
       goal/cli/postcommit_cmd.py:0-12  (postcommit_run)
       goal/cli/validation_cmd.py:0-12  (validation_run)
   [af82833cf13aa10a]   STRU  main  L=22 N=2 saved=22 sim=1.00
-      examples/webhooks/discord-webhook.py:0-21  (main)
       examples/webhooks/slack-webhook.py:0-21  (main)
+      examples/webhooks/discord-webhook.py:0-21  (main)
   [58de20ebce074e30]   STRU  get_config  L=20 N=2 saved=20 sim=1.00
       goal/postcommit/manager.py:0-19  (get_config)
       goal/validation/manager.py:0-19  (get_rules)

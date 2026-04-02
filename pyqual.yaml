@@ -4,7 +4,7 @@ pipeline:
   # Quality gates — pipeline iterates until ALL pass
   metrics:
     cc_max: 20           # cyclomatic complexity per function
-    critical_max: 20     # realistic dla obecnego kodu
+    critical_max: 18     # Phase 2-3 done; lowered from 20 (current: 17)
     vallm_pass_min: 50   # obecny poziom: 56.6%
     # coverage_min: 30   # pyqual nie wspiera pytest-cov (zawsze null)
     # Security gates (uncomment to enable):

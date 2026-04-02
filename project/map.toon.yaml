@@ -1,10 +1,10 @@
-# goal | 104f 19014L | shell:3,python:101 | 2026-03-31
-# stats: 686 func | 0 cls | 104 mod | CC̄=4.8 | critical:17 | cycles:0
+# goal | 108f 19255L | shell:3,python:105 | 2026-04-02
+# stats: 693 func | 0 cls | 108 mod | CC̄=4.8 | critical:17 | cycles:0
 # alerts[5]: fan-out execute_push_workflow=29; fan-out QualityValidator.auto_fix=27; fan-out EnhancedSummaryGenerator.generate_enhanced_summary=24; fan-out diagnose_python=22; fan-out PythonDiagnostics.check_py011_version_consistency=21
 # hotspots[5]: execute_push_workflow fan=29; QualityValidator.auto_fix fan=27; EnhancedSummaryGenerator.generate_enhanced_summary fan=24; diagnose_python fan=22; PythonDiagnostics.check_py011_version_consistency fan=21
 # evolution: CC̄ 4.8→4.8 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[104]:
+M[108]:
   goal/__init__.py,3
   goal/__main__.py,18
   goal/authors/__init__.py,19
@@ -51,9 +51,9 @@ M[104]:
   goal/doctor/rust.py,35
   goal/doctor/todo.py,127
   goal/enhanced_summary.py,26
-  goal/formatter.py,412
+  goal/formatter.py,408
   goal/generator/__init__.py,14
-  goal/generator/analyzer.py,431
+  goal/generator/analyzer.py,438
   goal/generator/generator.py,382
   goal/generator/git_ops.py,171
   goal/git_ops.py,574
@@ -79,7 +79,7 @@ M[104]:
   goal/push/stages/publish.py,37
   goal/push/stages/push_remote.py,377
   goal/push/stages/tag.py,28
-  goal/push/stages/version.py,49
+  goal/push/stages/version.py,52
   goal/recovery/__init__.py,48
   goal/recovery/auth.py,75
   goal/recovery/base.py,48
@@ -87,7 +87,7 @@ M[104]:
   goal/recovery/divergent.py,119
   goal/recovery/exceptions.py,58
   goal/recovery/force_push.py,45
-  goal/recovery/large_file.py,321
+  goal/recovery/large_file.py,334
   goal/recovery/lfs.py,57
   goal/recovery/manager.py,315
   goal/recovery/strategies.py,23
@@ -103,16 +103,17 @@ M[104]:
   goal/validation/__init__.py,27
   goal/validation/manager.py,190
   goal/validation/rules.py,220
-  goal/validators/__init__.py,25
-  goal/validators/file_validator.py,504
-  goal/version_validation.py,292
+  goal/validators/__init__.py,50
+  goal/validators/dot_folders.py,133
+  goal/validators/exceptions.py,39
+  goal/validators/file_validator.py,247
+  goal/validators/gitignore.py,46
+  goal/validators/tokens.py,225
+  goal/version_validation.py,299
   integration/run_docker_matrix.sh,5
   integration/run_matrix.sh,216
-  project.sh,36
+  project.sh,40
 D:
-  goal/smart_commit/abstraction.py:
-    e: CodeAbstraction
-    CodeAbstraction: __init__(1),get_domain(1),get_language(1),extract_entities(2),extract_markdown_topics(1),infer_benefit(5),detect_features(2),determine_abstraction_level(1),get_action_verb(1)  # Extracts meaningful abstractions from code changes...
   goal/formatter.py:
     e: MarkdownFormatter,_build_functional_overview,_build_files_section,_determine_next_steps,format_push_result,_format_complexity_metric,_format_metrics_section,_format_relations_section,format_enhanced_summary,format_status_output
     MarkdownFormatter: __init__(0),add_header(2),add_metadata(0),add_section(4),add_list(3),add_command_output(3),add_summary(2),render(0)  # Formats Goal output as structured markdown for LLM consumpti...
@@ -125,6 +126,9 @@ D:
     _format_relations_section(relations)
     format_enhanced_summary(commit_title;commit_body;capabilities;roles;relations;metrics;files;stats;current_version;new_version)
     format_status_output(version;branch;staged_files;unstaged_files)
+  goal/smart_commit/abstraction.py:
+    e: CodeAbstraction
+    CodeAbstraction: __init__(1),get_domain(1),get_language(1),extract_entities(2),extract_markdown_topics(1),infer_benefit(5),detect_features(2),determine_abstraction_level(1),get_action_verb(1)  # Extracts meaningful abstractions from code changes...
   goal/summary/validator.py:
     e: QualityValidator
     QualityValidator: __init__(1),validate(2),_extract_intent(2),_validate_title(3),_validate_intent(7),_validate_metrics(3),_validate_relations(3),_validate_files(3),_validate_capabilities(3),_validate_body(3),_validate_value_score(4),_calculate_score(2),auto_fix(4)  # Validate commit summary against quality gates...
@@ -230,7 +234,7 @@ D:
   goal/generator/analyzer.py:
     e: ChangeAnalyzer,ContentAnalyzer
     ChangeAnalyzer: classify_change_type(3),_detect_signals(2),_has_package_code(1),_is_docs_only(1),_is_ci_only(1),_has_new_goal_python_file(2),_score_by_file_patterns(2),_score_by_diff_content(2),_score_by_statistics(3),_score_by_signals(4),_score_new_functionality(3),_resolve_change_type(4),detect_scope(1),extract_functions_changed(1)  # Analyze git changes to classify type, detect scope, and extr...
-    ContentAnalyzer: short_action_summary(2),_detect_tags(2),_summary_from_tags(1),_summary_from_paths(2),per_file_notes(2),_get_added_lines(1),_notes_python(1),_notes_docs(3),_notes_shell(1)  # Analyze content for short summaries and per-file notes...
+    ContentAnalyzer: short_action_summary(2),_detect_tags(2),_summary_from_tags(1),_summary_from_paths(2),per_file_notes(2),_get_added_lines(1),_notes_python(2),_notes_docs(3),_notes_shell(2)  # Analyze content for short summaries and per-file notes...
   goal/push/stages/commit.py:
     e: get_commit_message,enforce_quality_gates,handle_single_commit,_commit_file_group,_commit_release_metadata,handle_split_commits
     get_commit_message(ctx_obj;files;diff_content;message;ticket;abstraction)
@@ -291,22 +295,8 @@ D:
     CommitMessageGenerator: __init__(1),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),classify_change_type(3),detect_scope(1),extract_functions_changed(1),_short_action_summary(2),_per_file_notes(2),generate_commit_message(3),generate_abstraction_message(2),generate_changelog_entry(2),generate_enhanced_summary(2),_try_enhanced_summary(2),_classify_files(2),_build_statistics_section(1),_build_summary_section(5),_build_file_lists(4),_build_per_file_notes(3),_build_implementation_notes(0),generate_detailed_message(2)  # Generate conventional commit messages using diff analysis an...
     generate_smart_commit_message(cached)
   goal/validators/file_validator.py:
-    e: ValidationError,FileSizeError,TokenDetectedError,DotFolderError,get_file_size_mb,_classify_token,detect_tokens_in_content,load_gitignore,save_gitignore,_is_dot_path,_is_safe_path,_is_whitelisted_path,_matches_problematic,check_dot_folders,manage_dot_folders,_is_excluded,_handle_oversized_file,_check_file_for_tokens,validate_files,handle_large_files,validate_staged_files
-    ValidationError(Exception):  # Base validation error...
-    FileSizeError(ValidationError): __init__(3)  # Error for files exceeding size limit...
-    TokenDetectedError(ValidationError): __init__(3)  # Error when API tokens are detected in files...
-    DotFolderError(ValidationError): __init__(1)  # Error when dot folders are detected that should be in .gitig...
+    e: get_file_size_mb,_is_excluded,_handle_oversized_file,_check_file_for_tokens,validate_files,handle_large_files,validate_staged_files
     get_file_size_mb(file_path)
-    _classify_token(pattern)
-    detect_tokens_in_content(content;patterns)
-    load_gitignore(gitignore_path)
-    save_gitignore(ignored;gitignore_path)
-    _is_dot_path(path)
-    _is_safe_path(path)
-    _is_whitelisted_path(path;whitelist)
-    _matches_problematic(path;problematic_folders)
-    check_dot_folders(files;config)
-    manage_dot_folders(files;config;dry_run)
     _is_excluded(file_path;exclude_patterns)
     _handle_oversized_file(file_path;size_mb;max_size_mb;auto_handle;block)
     _check_file_for_tokens(file_path;token_patterns)
@@ -368,8 +358,9 @@ D:
     e: GitDiffOperations
     GitDiffOperations: __init__(0),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),clear_cache(0)  # Git diff operations with caching...
   goal/recovery/large_file.py:
-    e: LargeFileStrategy
+    e: LargeFileStrategy,_run_git_chunked
     LargeFileStrategy(RecoveryStrategy): __init__(2),can_handle(1),recover(1),_files_in_history(1),_remove_from_history(1),_extract_file_paths(1),_find_large_files(1),_get_file_size_mb(1),_remove_large_files(1),_move_to_lfs(1),_skip_large_files(1)  # Handles large file errors...
+    _run_git_chunked(run_git_fn;cmd_base;paths;chunk_size)
   goal/package_managers.py:
     e: PackageManager,detect_package_managers,get_package_manager,get_package_managers_by_language,is_package_manager_available,get_available_package_managers,get_preferred_package_manager,format_package_manager_command,get_package_manager_info,list_all_package_managers,detect_project_language,suggest_package_managers
     PackageManager: __post_init__(0)  # Package manager configuration and capabilities...
@@ -392,6 +383,15 @@ D:
     ScriptRule(ValidationRule): get_name(0),validate_config(0),validate(1)  # Run custom validation script...
     CommitSizeRule(ValidationRule): get_name(0),validate_config(0),validate(1)  # Validate commit size (lines changed)...
     MessageLengthRule(ValidationRule): get_name(0),validate_config(0),validate(1)  # Validate commit message length...
+  goal/validators/tokens.py:
+    e: _calculate_entropy,_is_dummy_value,_get_entropy_threshold,_classify_token,_extract_token_value,detect_tokens_in_content,get_default_token_patterns
+    _calculate_entropy(text)
+    _is_dummy_value(text)
+    _get_entropy_threshold(token_type)
+    _classify_token(pattern)
+    _extract_token_value(match;line)
+    detect_tokens_in_content(content;patterns)
+    get_default_token_patterns()
   goal/cli/utils_cmd.py:
     e: status,init,info,version,package_managers,check_versions,clone,bootstrap
     status(ctx;markdown)
@@ -415,7 +415,7 @@ D:
     validate_project_toml_files(project_dir)
     check_pyproject_toml()
   goal/version_validation.py:
-    e: get_pypi_version,get_npm_version,get_cargo_version,get_rubygems_version,get_registry_version,extract_badge_versions,update_badge_versions,_detect_python_package,_detect_nodejs_package,_detect_rust_package,_detect_ruby_package,validate_project_versions,check_readme_badges,format_validation_results
+    e: get_pypi_version,get_npm_version,get_cargo_version,get_rubygems_version,get_registry_version,extract_badge_versions,update_badge_versions,_detect_python_package,_detect_nodejs_package,_detect_rust_package,_detect_ruby_package,_validate_single_type,validate_project_versions,check_readme_badges,format_validation_results
     get_pypi_version(package_name)
     get_npm_version(package_name)
     get_cargo_version(package_name)
@@ -427,9 +427,18 @@ D:
     _detect_nodejs_package()
     _detect_rust_package()
     _detect_ruby_package()
+    _validate_single_type(project_type;current_version)
     validate_project_versions(project_types;current_version)
     check_readme_badges(current_version)
     format_validation_results(results)
+  goal/validators/dot_folders.py:
+    e: _is_dot_path,_is_safe_path,_is_whitelisted_path,_matches_problematic,check_dot_folders,manage_dot_folders
+    _is_dot_path(path)
+    _is_safe_path(path)
+    _is_whitelisted_path(path;whitelist)
+    _matches_problematic(path;problematic_folders)
+    check_dot_folders(files;config)
+    manage_dot_folders(files;config;dry_run)
   goal/recovery/divergent.py:
     e: DivergentHistoryStrategy
     DivergentHistoryStrategy(RecoveryStrategy): can_handle(1),recover(1),_rebase_changes(1),_merge_changes(1),_pull_changes(0),_force_push(0)  # Handles divergent history errors...
@@ -444,6 +453,10 @@ D:
     e: get_hook_config,create_precommit_config
     get_hook_config(project_dir)
     create_precommit_config(project_dir;include_goal)
+  goal/validators/gitignore.py:
+    e: load_gitignore,save_gitignore
+    load_gitignore(gitignore_path)
+    save_gitignore(ignored;gitignore_path)
   goal/recovery/auth.py:
     e: AuthErrorStrategy
     AuthErrorStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles authentication errors...
@@ -625,6 +638,12 @@ D:
     e: _log_issue,_log_fix
     _log_issue(issue)
     _log_fix(issue)
+  goal/validators/exceptions.py:
+    e: ValidationError,FileSizeError,TokenDetectedError,DotFolderError
+    ValidationError(Exception):  # Base validation error...
+    FileSizeError(ValidationError): __init__(3)  # Error for files exceeding size limit...
+    TokenDetectedError(ValidationError): __init__(3)  # Error when API tokens are detected in files...
+    DotFolderError(ValidationError): __init__(1)  # Error when dot folders are detected that should be in .gitig...
   goal/recovery/base.py:
     e: RecoveryStrategy
     RecoveryStrategy(ABC): __init__(2),can_handle(1),recover(1),run_git(0),run_git_with_output(0)  # Base class for all recovery strategies...

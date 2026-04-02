@@ -2,7 +2,6 @@
 
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
-import os
 
 try:
     from goal.generator.git_ops import GitDiffOperations

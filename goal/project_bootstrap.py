@@ -884,50 +884,36 @@ def _add_deps_to_section(match, required_deps=_REQUIRED_DEV_DEPS):
     return f'{match.group(1)}{existing_stripped}\n{new_entries}\n]'
 
 
-def _ensure_costs_config(project_dir: Path) -> bool:
-    """Ensure [tool.costs] section exists in pyproject.toml.
-    
-    Also adds goal and costs as dev dependencies.
-    
-    Returns True if config was added or already exists.
+def _try_add_deps(content: str) -> tuple[str, bool]:
+    """Try adding missing dev deps to pyproject.toml content.
+
+    Returns (updated_content, changed).
     """
     import re
-    pyproject = project_dir / 'pyproject.toml'
-    if not pyproject.exists():
-        return False
-    
-    content = pyproject.read_text(encoding='utf-8')
-    
-    # Check if any required dep is missing
-    all_present = all(name in content.lower() for name, _ in _REQUIRED_DEV_DEPS)
-    dev_deps_updated = False
+    if all(name in content.lower() for name, _ in _REQUIRED_DEV_DEPS):
+        return content, False
 
-    if not all_present:
-        dep_pattern = r'((?:dev|dependencies)\s*=\s*\[)([^\]]*)\]'
-        if '[project.optional-dependencies]' in content and 'dev = [' in content.lower():
-            new_content = re.sub(dep_pattern, _add_deps_to_section, content,
-                                 flags=re.IGNORECASE | re.DOTALL)
-            if new_content != content:
-                content = new_content
-                dev_deps_updated = True
-        elif '[tool.hatch.envs.default]' in content and 'dependencies = [' in content:
-            hatch_section = content.split('[tool.hatch.envs.default]')[1].split('[')[0]
-            if not all(name in hatch_section.lower() for name, _ in _REQUIRED_DEV_DEPS):
-                new_content = re.sub(dep_pattern, _add_deps_to_section, content,
-                                     flags=re.IGNORECASE | re.DOTALL)
-                if new_content != content:
-                    content = new_content
-                    dev_deps_updated = True
-    
-    if dev_deps_updated:
-        with open(pyproject, 'w', encoding='utf-8') as f:
-            f.write(content)
-        click.echo(click.style("  ✓ Added goal, costs and pfix to dev dependencies", fg='green'))
-    
-    if '[tool.costs]' in content:
-        return True
-    
-    costs_config = '''\n[tool.costs]
+    dep_pattern = r'((?:dev|dependencies)\s*=\s*\[)([^\]]*)\]'
+    re_flags = re.IGNORECASE | re.DOTALL
+
+    # Strategy 1: [project.optional-dependencies] dev = [...]
+    if '[project.optional-dependencies]' in content and 'dev = [' in content.lower():
+        new = re.sub(dep_pattern, _add_deps_to_section, content, flags=re_flags)
+        if new != content:
+            return new, True
+
+    # Strategy 2: [tool.hatch.envs.default] dependencies = [...]
+    if '[tool.hatch.envs.default]' in content and 'dependencies = [' in content:
+        hatch_section = content.split('[tool.hatch.envs.default]')[1].split('[')[0]
+        if not all(name in hatch_section.lower() for name, _ in _REQUIRED_DEV_DEPS):
+            new = re.sub(dep_pattern, _add_deps_to_section, content, flags=re_flags)
+            if new != content:
+                return new, True
+
+    return content, False
+
+
+_COSTS_CONFIG_TEMPLATE = '''\n[tool.costs]
 # AI Cost tracking configuration
 badge = true
 update_readme = true
@@ -940,10 +926,32 @@ max_commits = 500
 # Cost thresholds for badge colors (USD)
 badge_color_thresholds = { low = 1.0, medium = 5.0, high = 10.0, critical = 50.0 }
 '''
+
+
+def _ensure_costs_config(project_dir: Path) -> bool:
+    """Ensure [tool.costs] section exists in pyproject.toml.
+    
+    Also adds goal and costs as dev dependencies.
+    
+    Returns True if config was added or already exists.
+    """
+    pyproject = project_dir / 'pyproject.toml'
+    if not pyproject.exists():
+        return False
+    
+    content = pyproject.read_text(encoding='utf-8')
+
+    content, deps_updated = _try_add_deps(content)
+    if deps_updated:
+        pyproject.write_text(content, encoding='utf-8')
+        click.echo(click.style("  ✓ Added goal, costs and pfix to dev dependencies", fg='green'))
+    
+    if '[tool.costs]' in content:
+        return True
     
     try:
         with open(pyproject, 'a', encoding='utf-8') as f:
-            f.write(costs_config)
+            f.write(_COSTS_CONFIG_TEMPLATE)
         click.echo(click.style("  ✓ Added [tool.costs] to pyproject.toml", fg='green'))
         return True
     except Exception as e:

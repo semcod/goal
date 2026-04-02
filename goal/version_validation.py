@@ -201,43 +201,50 @@ _VERSION_VALIDATORS = {
 
 import sys as _sys
 
+
+def _validate_single_type(project_type: str, current_version: str) -> Dict:
+    """Validate a single project type against its registry.
+
+    Returns a result dict with registry info, or defaults when the type
+    is unknown / the package cannot be detected.
+    """
+    result: Dict = {
+        "registry": None,
+        "package_name": None,
+        "registry_version": None,
+        "local_version": current_version,
+        "is_latest": True,
+        "error": None,
+    }
+
+    entry = _VERSION_VALIDATORS.get(project_type)
+    if not entry:
+        return result
+
+    registry_name, detect_name, fetch_name, not_found_msg = entry
+    _mod = _sys.modules[__name__]
+    package_name = getattr(_mod, detect_name)()
+    if not package_name:
+        return result
+
+    result["registry"] = registry_name
+    result["package_name"] = package_name
+    result["registry_version"] = getattr(_mod, fetch_name)(package_name)
+    if result["registry_version"]:
+        result["is_latest"] = result["registry_version"] == current_version
+    else:
+        result["error"] = not_found_msg
+
+    return result
+
+
 def validate_project_versions(project_types: List[str], current_version: str) -> Dict[str, Dict]:
     """Validate versions across different registries.
-    
+
     Returns:
         Dict with validation results for each project type.
     """
-    _mod = _sys.modules[__name__]
-    results = {}
-    
-    for project_type in project_types:
-        result = {
-            "registry": None,
-            "package_name": None,
-            "registry_version": None,
-            "local_version": current_version,
-            "is_latest": True,
-            "error": None
-        }
-        
-        entry = _VERSION_VALIDATORS.get(project_type)
-        if entry:
-            registry_name, detect_name, fetch_name, not_found_msg = entry
-            detect_fn = getattr(_mod, detect_name)
-            fetch_fn = getattr(_mod, fetch_name)
-            package_name = detect_fn()
-            if package_name:
-                result["registry"] = registry_name
-                result["package_name"] = package_name
-                result["registry_version"] = fetch_fn(package_name)
-                if result["registry_version"]:
-                    result["is_latest"] = result["registry_version"] == current_version
-                else:
-                    result["error"] = not_found_msg
-        
-        results[project_type] = result
-    
-    return results
+    return {pt: _validate_single_type(pt, current_version) for pt in project_types}
 
 
 def check_readme_badges(current_version: str) -> Dict[str, any]:

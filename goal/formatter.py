@@ -342,28 +342,24 @@ def format_enhanced_summary(
     ]
     formatter.add_section("Summary", '\n'.join(p for p in summary_parts if p))
     
-    # NEW CAPABILITIES section
-    if capabilities:
-        cap_lines = [f"✅ **{cap['capability']}** - {cap['impact']}" for cap in capabilities[:5]]
-        formatter.add_section("New Capabilities", '\n'.join(cap_lines))
-    
-    # FUNCTIONAL COMPONENTS section (roles)
-    if roles:
-        role_lines = [f"- **{role['role']}** (`{role['name']}`)" for role in roles[:5]]
-        formatter.add_section("Functional Components", '\n'.join(role_lines))
-    
-    # IMPACT METRICS section
-    if metrics:
-        formatter.add_section("Impact Metrics", _format_metrics_section(metrics, relations))
-    
-    # RELATIONS section
-    rel_content = _format_relations_section(relations)
-    if rel_content:
-        formatter.add_section("Relations", rel_content)
-    
-    # Commit body (if different from capabilities display)
-    if commit_body and not capabilities:
-        formatter.add_section("Details", commit_body, code_block=True)
+    # Optional sections — build content, add only when non-empty.
+    cap_content = '\n'.join(
+        f"✅ **{c['capability']}** - {c['impact']}" for c in (capabilities or [])[:5]
+    ) or None
+    role_content = '\n'.join(
+        f"- **{r['role']}** (`{r['name']}`)" for r in (roles or [])[:5]
+    ) or None
+
+    optional_sections = [
+        ("New Capabilities", cap_content, {}),
+        ("Functional Components", role_content, {}),
+        ("Impact Metrics", _format_metrics_section(metrics, relations) if metrics else None, {}),
+        ("Relations", _format_relations_section(relations), {}),
+        ("Details", commit_body if commit_body and not capabilities else None, {"code_block": True}),
+    ]
+    for title, content, kwargs in optional_sections:
+        if content:
+            formatter.add_section(title, content, **kwargs)
     
     return formatter.render()
 

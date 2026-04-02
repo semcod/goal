@@ -270,7 +270,6 @@ advanced:
     - ghu_[a-zA-Z0-9]{36}
     - ghs_[a-zA-Z0-9]{36}
     - ghr_[a-zA-Z0-9]{36}
-    - ghs_[a-zA-Z0-9]{36}
     - AKIA[0-9A-Z]{16}
     - sk-[a-zA-Z0-9]{48}
     - xoxb-[0-9]{13}-[0-9]{13}-[a-zA-Z0-9]{24}
@@ -361,8 +360,6 @@ quality:
     '@click\.option': CLI option
     format_.*result: output formatter
     _calculate_complexity: complexity analyzer
-    '@click\\.command': CLI command
-    '@click\\.option': CLI option
   value_patterns:
     ast_analysis:
       signatures:

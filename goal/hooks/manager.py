@@ -12,7 +12,7 @@ from typing import List, Optional
 import click
 
 from ..validators.file_validator import validate_files, ValidationError
-from ..git_ops import get_staged_files, run_git
+from ..git_ops import get_staged_files
 
 
 class HooksManager:

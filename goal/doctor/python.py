@@ -463,7 +463,6 @@ class PythonDiagnostics:
     def check_py014_pypi_token(self) -> None:
         """PY014: Check for PyPI token configuration before publishing."""
         import os
-        from pathlib import Path
         
         # Check if this project uses Python and has publish enabled
         goal_yaml = self.project_dir / 'goal.yaml'

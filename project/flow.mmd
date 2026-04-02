@@ -4,6 +4,8 @@ flowchart TD
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
 
     subgraph CLI
+        goal__cli__recover_cmd__recover["recover"]
+        goal__cli__recover_cmd___get_error_output["_get_error_output"]
         goal__cli__version_sync___update_version_file["_update_version_file"]
         goal__cli__version_sync___update_json_version_file["_update_json_version_file"]
         goal__cli__version_sync___update_toml_version["_update_toml_version"]
@@ -13,8 +15,6 @@ flowchart TD
         goal__cli__version_sync___update_readme_metadata["_update_readme_metadata"]
         goal__cli__version_sync___update_init_py_versions["_update_init_py_versions"]
         goal__cli__version_sync__sync_all_versions["sync_all_versions"]
-        goal__cli__recover_cmd__recover["recover"]
-        goal__cli__recover_cmd___get_error_output["_get_error_output"]
         goal__cli__hooks_cmd__hooks["hooks"]
         goal__cli__hooks_cmd__hooks_install["hooks_install"]
         goal__cli__hooks_cmd__hooks_uninstall["hooks_uninstall"]
@@ -23,6 +23,7 @@ flowchart TD
     end
 
     subgraph Core
+        goal__changelog__update_changelog["update_changelog"]
         goal__user_config__UserConfig___load["_load"]
         goal__user_config__UserConfig___save["_save"]
         goal__user_config__UserConfig__get["get"]
@@ -35,9 +36,8 @@ flowchart TD
         goal__version_validation___detect_nodejs_package["_detect_nodejs_package"]
         goal__version_validation___detect_rust_package["_detect_rust_package"]
         goal__version_validation___detect_ruby_package["_detect_ruby_package"]
-        goal__changelog__update_changelog["update_changelog"]
-        goal__project_bootstrap___guess_python_name["_guess_python_name"]
-        goal__project_bootstrap___guess_nodejs_name["_guess_nodejs_name"]
+        goal__formatter__MarkdownFormatter__add_header["add_header"]
+        goal__formatter__MarkdownFormatter__add_metadata["add_metadata"]
         ...["+366 more"]
     end
 
@@ -45,4 +45,4 @@ flowchart TD
         goal__authors__manager__AuthorsManager__export_to_contributors["export_to_contributors"]
     end
 
-    class goal__user_config__UserConfig___load,goal__user_config__UserConfig___save,goal__user_config__UserConfig__get,goal__user_config__UserConfig__is_initialized,goal__version_validation__get_npm_version,goal__version_validation__get_cargo_version,goal__version_validation__get_rubygems_version,goal__version_validation__get_registry_version,goal__version_validation___detect_python_package,goal__version_validation___detect_nodejs_package entry
+    class goal__changelog__update_changelog,goal__user_config__UserConfig___load,goal__user_config__UserConfig___save,goal__user_config__UserConfig__get,goal__user_config__UserConfig__is_initialized,goal__version_validation__get_npm_version,goal__version_validation__get_cargo_version,goal__version_validation__get_rubygems_version,goal__version_validation__get_registry_version,goal__version_validation___detect_python_package entry

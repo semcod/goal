@@ -17,21 +17,21 @@ flowchart TD
     goal__package_managers["goal.package_managers<br/>12 funcs"]
     goal__project_bootstrap["goal.project_bootstrap<br/>33 funcs"]
     goal__push["goal.push<br/>47 funcs"]
-    goal__recovery["goal.recovery<br/>53 funcs"]
+    goal__recovery["goal.recovery<br/>54 funcs"]
     goal__smart_commit["goal.smart_commit<br/>31 funcs"]
     goal__summary["goal.summary<br/>50 funcs"]
     goal__toml_validation["goal.toml_validation<br/>4 funcs"]
     goal__user_config["goal.user_config<br/>12 funcs"]
     goal__validation["goal.validation<br/>26 funcs"]
-    goal__validators["goal.validators<br/>20 funcs"]
-    goal__version_validation["goal.version_validation<br/>14 funcs"]
+    goal__validators["goal.validators<br/>25 funcs"]
+    goal__version_validation["goal.version_validation<br/>15 funcs"]
     integration__run_matrix["integration.run_matrix<br/>4 funcs"]
     examples__api_usage ==>|102| integration__run_matrix
     examples__custom_hooks ==>|50| integration__run_matrix
     goal__push ==>|31| goal__git_ops
     examples__validation ==>|20| integration__run_matrix
     goal__cli ==>|20| goal__git_ops
-    goal__push ==>|17| goal__cli
+    goal__push ==>|19| goal__cli
     goal__cli ==>|13| goal__config
     goal__cli ==>|12| goal__user_config
     goal__deep_analyzer ==>|11| goal__user_config
@@ -43,14 +43,14 @@ flowchart TD
     goal__summary ==>|6| goal__user_config
     examples__api_usage ==>|4| goal__cli
     goal__generator ==>|4| goal__user_config
+    goal__validators ==>|4| goal__user_config
     goal__push ==>|4| goal__formatter
     goal__cli ==>|4| goal__version_validation
     goal__cli ==>|4| goal__package_managers
     examples__api_usage -->|3| goal__version_validation
-    goal__validators -->|3| goal__user_config
     goal__cli -->|3| goal__hooks
-    goal__cli -->|3| goal__project_bootstrap
     goal__cli -->|3| goal__authors
+    goal__cli -->|3| goal__project_bootstrap
     goal__doctor -->|3| goal__user_config
     goal__push -->|2| goal__project_bootstrap
     goal__validation -->|2| goal__git_ops
@@ -70,7 +70,7 @@ flowchart TD
     goal__cli -->|1| goal__formatter
     goal__cli -->|1| goal__toml_validation
     goal__cli -->|1| goal__push
-    goal__package_managers -->|1| goal__user_config
     goal__config -->|1| goal__user_config
+    goal__package_managers -->|1| goal__user_config
     goal__smart_commit -->|1| goal__user_config
     goal__authors -->|1| goal__config

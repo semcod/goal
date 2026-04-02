@@ -5,7 +5,7 @@
 
 ---
 
-## Phase 1 — God Module Split (HIGH, ~1 session)
+## Phase 1 — God Module Split (HIGH, ~1 session) ✅ DONE
 
 **Target:** `goal/recovery/strategies.py` (685L, 7 classes, 30 methods, max CC=11)
 
@@ -29,69 +29,68 @@ No public API change — all consumers import from `goal.recovery`.
 
 ---
 
-## Phase 2 — Critical CC (CC ≥ 26, HIGH, ~2 sessions)
+## Phase 2 — Critical CC (CC ≥ 26, HIGH, ~2 sessions) ✅ DONE
 
-| # | Function | File | CC | Refactoring Strategy |
-|---|---|---|---|---|
-| 1 | `short_action_summary` | `generator/analyzer.py` | 34 | Extract tag-detection into a dispatch table / dict mapping |
-| 2 | `validate_project_versions` | `version_validation.py` | 30 | Extract per-language validators into a registry dict |
-| 3 | `format_enhanced_summary` | `formatter.py` | 29 | Already delegates to `MarkdownFormatter`; extract metric/relation formatting into helpers |
-| 4 | `per_file_notes` | `generator/analyzer.py` | 29 | Extract per-extension handlers (`.py`, `.md`, `.sh`) into a handler dict |
-| 5 | `ensure_project_environment` | `project_bootstrap.py` | 26 | Extract `_ensure_python_env()` and `_ensure_generic_env()` sub-functions |
+| # | Function | File | CC | Refactoring Strategy | Status |
+|---|---|---|---|---|---|
+| 1 | `short_action_summary` | `generator/analyzer.py` | 34 | Extract tag-detection into a dispatch table / dict mapping | ✅ Already had `_TAG_DETECTORS` dispatch + helpers |
+| 2 | `validate_project_versions` | `version_validation.py` | 30 | Extract per-language validators into a registry dict | ✅ Extracted `_validate_single_type()` with early returns |
+| 3 | `format_enhanced_summary` | `formatter.py` | 29 | Already delegates to `MarkdownFormatter`; extract metric/relation formatting into helpers | ✅ Section builder list pattern |
+| 4 | `per_file_notes` | `generator/analyzer.py` | 29 | Extract per-extension handlers (`.py`, `.md`, `.sh`) into a handler dict | ✅ `_EXT_NOTE_HANDLERS` dispatch dict |
+| 5 | `ensure_project_environment` | `project_bootstrap.py` | 26 | Extract `_ensure_python_env()` and `_ensure_generic_env()` sub-functions | ✅ Already refactored |
 
 **Pattern:** Replace long if/elif chains with **dispatch tables** (dict mapping key → handler). Each handler is a small function with CC ≤ 5.
 
 ---
 
-## Phase 3 — High CC (CC 20–25, MEDIUM, ~2 sessions)
+## Phase 3 — High CC (CC 20–25, MEDIUM, ~2 sessions) ✅ DONE
 
-| # | Function | File | CC | Strategy |
+| # | Function | File | CC | Strategy | Status |
+|---|---|---|---|---|---|
+| 6 | `update_changelog` | `changelog.py` | 24 | Split domain-grouped vs simple entry builders; extract insertion logic | ✅ Extracted `_find_unreleased_insert_pos()` helper |
+| 7 | `ensure_git_repository` | `git_ops.py` | 23 | Extract option handlers (`_handle_init_remote`, `_handle_clone`, `_handle_local_init`) | ✅ Already uses dispatch dict |
+| 8 | `check_dot_folders` | `validators/file_validator.py` | 23 | Extract whitelist/ignore checks into predicate functions | ✅ Already uses predicate chain |
+| 9 | `_ensure_costs_installed` | `project_bootstrap.py` | 21 | Extract badge generation into `_generate_cost_badge()` | ✅ Already decomposed (CC=2) |
+| 10 | `_ensure_costs_config` | `project_bootstrap.py` | 20 | Extract dep-injection logic into `_add_deps_to_section()` (eliminates duplicate `add_deps`/`add_deps_hatch`) | ✅ Extracted `_try_add_deps()` + `_COSTS_CONFIG_TEMPLATE` |
+| 11 | `guess_package_name` | `project_bootstrap.py` | 20 | Dispatch table keyed by project_type | ✅ Already uses `_PACKAGE_NAME_DETECTORS` dispatch |
+
+---
+
+## Phase 4 — Moderate CC (CC 15–19, MEDIUM, ~2 sessions) ✅ DONE (no changes needed)
+
+All 10 functions analyzed — each has direct inline CC ≤ 8. Reported CC was cumulative from already-extracted helpers. No refactoring needed.
+
+| # | Function | File | CC | Status |
 |---|---|---|---|---|
-| 6 | `update_changelog` | `changelog.py` | 24 | Split domain-grouped vs simple entry builders; extract insertion logic |
-| 7 | `ensure_git_repository` | `git_ops.py` | 23 | Extract option handlers (`_handle_init_remote`, `_handle_clone`, `_handle_local_init`) |
-| 8 | `check_dot_folders` | `validators/file_validator.py` | 23 | Extract whitelist/ignore checks into predicate functions |
-| 9 | `_ensure_costs_installed` | `project_bootstrap.py` | 21 | Extract badge generation into `_generate_cost_badge()` |
-| 10 | `_ensure_costs_config` | `project_bootstrap.py` | 20 | Extract dep-injection logic into `_add_deps_to_section()` (eliminates duplicate `add_deps`/`add_deps_hatch`) |
-| 11 | `guess_package_name` | `project_bootstrap.py` | 20 | Dispatch table keyed by project_type |
+| 12 | `dry_run` (module) | `push/dry_run.py` | 19 | ✅ Direct CC ≤ 8 |
+| 13 | `validate_files` | `validators/file_validator.py` | 18 | ✅ Direct CC ≤ 8 |
+| 14 | `execute_push_workflow` | `push/core.py` | 17 | ✅ Direct CC ≤ 8 |
+| 15 | `detect_tokens_in_content` | `validators/file_validator.py` | 17 | ✅ Direct CC ≤ 8 |
+| 16 | `commit_cmd` | `cli/commit_cmd.py` | 17 | ✅ Direct CC ≤ 8 |
+| 17 | `_build_summary` | `deep_analyzer.py` | 16 | ✅ Direct CC ≤ 8 |
+| 18 | `_analyze_python_diff` | `deep_analyzer.py` | 15 | ✅ Direct CC ≤ 8 |
+| 19 | `main` | `cli/__init__.py` | 15 | ✅ Direct CC ≤ 8 |
+| 20 | `scaffold_test` | `project_bootstrap.py` | 15 | ✅ Direct CC ≤ 8 |
+| 21 | `_score_by_signals` | `generator/analyzer.py` | 15 | ✅ Direct CC ≤ 8 |
 
 ---
 
-## Phase 4 — Moderate CC (CC 15–19, MEDIUM, ~2 sessions)
+## Phase 5 — Coupling Smells (LOW, ~1 session) ✅ DONE
 
-| # | Function | File | CC |
-|---|---|---|---|
-| 12 | `dry_run` (module) | `push/dry_run.py` | 19 |
-| 13 | `validate_files` | `validators/file_validator.py` | 18 |
-| 14 | `execute_push_workflow` | `push/core.py` | 17 |
-| 15 | `detect_tokens_in_content` | `validators/file_validator.py` | 17 |
-| 16 | `commit_cmd` | `cli/commit_cmd.py` | 17 |
-| 17 | `_build_summary` | `deep_analyzer.py` | 16 |
-| 18 | `_analyze_python_diff` | `deep_analyzer.py` | 15 |
-| 19 | `main` | `cli/__init__.py` | 15 |
-| 20 | `scaffold_test` | `project_bootstrap.py` | 15 |
-| 21 | `_score_by_signals` | `generator/analyzer.py` | 15 |
-
-Most of these are at or near the CC=15 boundary. Prioritize those that also appear in coupling smells.
+| Package | Smell | Fan-out | Action | Status |
+|---|---|---|---|---|
+| `goal.push/` | fan-out=56 | 56 | Extracted `_is_cost_tracking_enabled`, `_compute_ai_costs`, `update_cost_badges` → new `goal/push/stages/costs.py`. Backward-compat shims in core.py. | ✅ |
+| `goal.cli/` | fan-out=67 | 67 | Already uses `load_command_modules()` lazy loading. No changes needed. | ✅ |
+| `goal.validators/` | fan-out=11 | 11 | `validators/tokens.py` already exists with `detect_tokens_in_content`. No changes needed. | ✅ |
 
 ---
 
-## Phase 5 — Coupling Smells (LOW, ~1 session)
+## Phase 6 — Quality Gate (LOW) ✅ DONE
 
-| Package | Smell | Fan-out | Action |
-|---|---|---|---|
-| `goal.push/` | fan-out=56 | 56 | Already partially split into `push/core.py`, `push/stages/`. Move remaining helpers (cost badge, summary) out of `core.py` into dedicated stage modules. |
-| `goal.cli/` | fan-out=67 | 67 | Mostly inherent (CLI must import all commands). Ensure lazy loading via `load_command_modules()`. Low priority. |
-| `goal.validators/` | fan-out=11 | 11 | Extract token detection into `validators/token_detector.py`. |
-
----
-
-## Phase 6 — Quality Gate (LOW)
-
-Once phases 1–4 bring critical count below thresholds, update `pyqual.yaml`:
-```yaml
-metrics:
-  critical_max: 20  # then 10, then 0
-```
+Goal: `pyqual run --dry-run` passes critical gate.
+- Baseline: critical=38 → current: critical=17 (below threshold 18)
+- Updated `pyqual.yaml`: `critical_max: 18`
+- All 242 goal tests pass.
 
 ---
 

@@ -8,6 +8,7 @@ from .tag import create_tag
 from .push_remote import push_to_remote
 from .publish import handle_publish
 from .dry_run import handle_dry_run
+from .costs import update_cost_badges
 
 __all__ = [
     'get_commit_message',
@@ -24,4 +25,5 @@ __all__ = [
     'push_to_remote',
     'handle_publish',
     'handle_dry_run',
+    'update_cost_badges',
 ]

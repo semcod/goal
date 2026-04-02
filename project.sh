@@ -2,11 +2,15 @@
 set -e
 clear
 
-VENV=".venv"
+VENV="venv"
 PIP="$VENV/bin/pip"
 
 if [ ! -f "$PIP" ]; then
     echo "Creating virtual environment..."
+    python3 -m venv "$VENV"
+elif ! head -1 "$PIP" | grep -q "$(pwd)"; then
+    echo "Virtual environment has broken paths (moved from another location). Recreating..."
+    rm -rf "$VENV"
     python3 -m venv "$VENV"
 fi
 

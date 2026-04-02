@@ -139,16 +139,16 @@
 - [ ] goal/__main__.py:16 - module execution block
 - [x] goal/authors/__init__.py:9 - Relative import (level=1): '.manager'
 - [x] goal/authors/__init__.py:10 - Relative import (level=1): '.utils'
-- [ ] goal/authors/manager.py:15 - LLM-style docstring in __init__
-- [ ] goal/authors/manager.py:180 - Magic number: 40 - use named constant
-- [ ] goal/authors/manager.py:201 - String concatenation can be converted to f-string
-- [ ] goal/authors/manager.py:287 - LLM-style docstring in get_project_authors
-- [ ] goal/authors/manager.py:300 - LLM-style docstring in add_project_author
+- [x] goal/authors/manager.py:15 - LLM-style docstring in __init__
+- [x] goal/authors/manager.py:180 - Magic number: 40 - use named constant
+- [x] goal/authors/manager.py:201 - String concatenation can be converted to f-string
+- [x] goal/authors/manager.py:287 - LLM-style docstring in get_project_authors
+- [x] goal/authors/manager.py:300 - LLM-style docstring in add_project_author
 - [ ] goal/authors/utils.py:7 - LLM-style docstring in format_co_author_trailer
 - [ ] goal/authors/utils.py:20 - LLM-style docstring in parse_co_authors
 - [ ] goal/authors/utils.py:42 - LLM-style docstring in add_co_authors_to_message
-- [ ] goal/changelog.py:48 - String concatenation can be converted to f-string
-- [ ] goal/changelog.py:78 - LLM-style docstring in update_changelog
+- [x] goal/changelog.py:48 - String concatenation can be converted to f-string
+- [x] goal/changelog.py:78 - LLM-style docstring in update_changelog
 - [ ] goal/cli.py:10 - Relative import (level=1): '.cli'
 - [ ] goal/cli.py:16 - Relative import (level=1): '.cli.version'
 - [ ] goal/cli.py:22 - Relative import (level=1): '.cli.publish'
@@ -197,10 +197,10 @@
 - [ ] goal/config/constants.py:19 - Magic number: 50 - use named constant
 - [ ] goal/config/constants.py:20 - Magic number: 200 - use named constant
 - [ ] goal/config/constants.py:243 - Magic number: 50 - use named constant
-- [ ] goal/config/manager.py:207 - Duplicate import: 'json' (first at line 145)
-- [ ] goal/config/manager.py:397 - LLM-style docstring in init_config
-- [ ] goal/config/manager.py:417 - LLM-style docstring in load_config
-- [ ] goal/config/manager.py:431 - LLM-style docstring in ensure_config
+- [x] goal/config/manager.py:207 - Duplicate import: 'json' (first at line 145)
+- [x] goal/config/manager.py:397 - LLM-style docstring in init_config
+- [x] goal/config/manager.py:417 - LLM-style docstring in load_config
+- [x] goal/config/manager.py:431 - LLM-style docstring in ensure_config
 - [ ] goal/config/validation.py:303 - Function 'check_keys' missing return type (suggested: -> None)
 - [ ] goal/config/validation.py:345 - LLM-style docstring in validate_config_file
 - [ ] goal/config/validation.py:394 - LLM-style docstring in validate_config_interactive
@@ -209,28 +209,28 @@
 - [x] goal/doctor/__init__.py:8 - Relative import (level=1): '.models'
 - [x] goal/doctor/__init__.py:11 - Relative import (level=1): '.core'
 - [x] goal/doctor/__init__.py:18 - Relative import (level=1): '.python'
-- [ ] goal/doctor/core.py:35 - LLM-style docstring in diagnose_project
+- [x] goal/doctor/core.py:35 - LLM-style docstring in diagnose_project
 - [ ] goal/doctor/logging.py:4 - Relative import (level=1): '.models'
-- [ ] goal/doctor/python.py:222 - LLM-style docstring in check_py009_string_authors
-- [ ] goal/doctor/python.py:466 - Duplicate import: 'Path' (first at line 4)
+- [x] goal/doctor/python.py:222 - LLM-style docstring in check_py009_string_authors
+- [x] goal/doctor/python.py:466 - Duplicate import: 'Path' (first at line 4)
 - [ ] goal/doctor/todo.py:15 - Magic number: 50 - use named constant
 - [ ] goal/doctor/todo.py:54 - LLM-style docstring in add_issues_to_todo
 - [ ] goal/doctor/todo.py:117 - Relative import (level=1): '.core'
-- [ ] goal/formatter.py:15 - Function 'add_header' missing return type (suggested: -> None)
-- [ ] goal/formatter.py:19 - Function 'add_metadata' missing return type (suggested: -> None)
-- [ ] goal/formatter.py:23 - Function 'add_section' missing return type (suggested: -> None)
-- [ ] goal/formatter.py:77 - LLM-style docstring in _build_functional_overview
-- [ ] goal/formatter.py:274 - Magic number in comparison: 50
-- [ ] goal/formatter.py:274 - Magic number: 50 - use named constant
-- [ ] goal/formatter.py:399 - Magic number in comparison: 20
+- [x] goal/formatter.py:15 - Function 'add_header' missing return type (suggested: -> None)
+- [x] goal/formatter.py:19 - Function 'add_metadata' missing return type (suggested: -> None)
+- [x] goal/formatter.py:23 - Function 'add_section' missing return type (suggested: -> None)
+- [x] goal/formatter.py:77 - LLM-style docstring in _build_functional_overview
+- [x] goal/formatter.py:274 - Magic number in comparison: 50
+- [x] goal/formatter.py:274 - Magic number: 50 - use named constant
+- [x] goal/formatter.py:399 - Magic number in comparison: 20
 - [x] goal/generator/__init__.py:3 - Relative import (level=1): '.git_ops'
 - [x] goal/generator/__init__.py:4 - Relative import (level=1): '.analyzer'
 - [x] goal/generator/__init__.py:5 - Relative import (level=1): '.generator'
-- [ ] goal/generator/generator.py:5 - Unused import: 'os'
-- [ ] goal/generator/generator.py:295 - Function 'fmt_file_list' missing return type (suggested: -> None)
-- [ ] goal/generator/generator.py:299 - Magic number: 20 - use named constant
-- [ ] goal/generator/generator.py:302 - Magic number in comparison: 20
-- [ ] goal/generator/generator.py:302 - Magic number: 20 - use named constant
+- [x] goal/generator/generator.py:5 - Unused import: 'os'
+- [x] goal/generator/generator.py:295 - Function 'fmt_file_list' missing return type (suggested: -> None)
+- [x] goal/generator/generator.py:299 - Magic number: 20 - use named constant
+- [x] goal/generator/generator.py:302 - Magic number in comparison: 20
+- [x] goal/generator/generator.py:302 - Magic number: 20 - use named constant
 - [ ] goal/generator/git_ops.py:166 - Function 'clear_cache' missing return type (suggested: -> None)
 - [ ] goal/git_ops.py:17 - Function 'echo_md' missing return type (suggested: -> None)
 - [ ] goal/git_ops.py:241 - LLM-style docstring in clone_repository
@@ -239,22 +239,22 @@
 - [x] goal/hooks/__init__.py:10 - Relative import (level=1): '.config'
 - [ ] goal/hooks/config.py:41 - LLM-style docstring in get_hook_config
 - [ ] goal/hooks/config.py:71 - LLM-style docstring in create_precommit_config
-- [ ] goal/hooks/manager.py:14 - Relative import (level=2): '..validators.file_validator'
-- [ ] goal/hooks/manager.py:15 - Relative import (level=2): '..git_ops'
-- [ ] goal/hooks/manager.py:15 - Unused import: 'run_git'
-- [ ] goal/hooks/manager.py:81 - standalone main function
-- [ ] goal/hooks/manager.py:87 - module execution block
-- [ ] goal/hooks/manager.py:92 - Magic number: 493 - use named constant
-- [ ] goal/hooks/manager.py:247 - Magic number: 30 - use named constant
-- [ ] goal/hooks/manager.py:264 - LLM-style docstring in install_hooks
-- [ ] goal/hooks/manager.py:278 - LLM-style docstring in uninstall_hooks
-- [ ] goal/hooks/manager.py:291 - LLM-style docstring in run_hooks
+- [x] goal/hooks/manager.py:14 - Relative import (level=2): '..validators.file_validator'
+- [x] goal/hooks/manager.py:15 - Relative import (level=2): '..git_ops'
+- [x] goal/hooks/manager.py:15 - Unused import: 'run_git'
+- [x] goal/hooks/manager.py:81 - standalone main function
+- [x] goal/hooks/manager.py:87 - module execution block
+- [x] goal/hooks/manager.py:92 - Magic number: 493 - use named constant
+- [x] goal/hooks/manager.py:247 - Magic number: 30 - use named constant
+- [x] goal/hooks/manager.py:264 - LLM-style docstring in install_hooks
+- [x] goal/hooks/manager.py:278 - LLM-style docstring in uninstall_hooks
+- [x] goal/hooks/manager.py:291 - LLM-style docstring in run_hooks
 - [x] goal/license/__init__.py:10 - Relative import (level=1): '.manager'
 - [x] goal/license/__init__.py:11 - Relative import (level=1): '.spdx'
-- [ ] goal/license/manager.py:12 - boilerplate copyright
-- [ ] goal/license/manager.py:314 - LLM-style docstring in __init__
-- [ ] goal/license/manager.py:543 - LLM-style docstring in create_license_file
-- [ ] goal/license/manager.py:560 - LLM-style docstring in update_license_file
+- [x] goal/license/manager.py:12 - boilerplate copyright
+- [x] goal/license/manager.py:314 - LLM-style docstring in __init__
+- [x] goal/license/manager.py:543 - LLM-style docstring in create_license_file
+- [x] goal/license/manager.py:560 - LLM-style docstring in update_license_file
 - [ ] goal/license/spdx.py:69 - LLM-style docstring in validate_spdx_id
 - [ ] goal/license/spdx.py:108 - LLM-style docstring in get_license_info
 - [ ] goal/license/spdx.py:131 - LLM-style docstring in check_compatibility
@@ -264,27 +264,27 @@
 - [x] goal/postcommit/__init__.py:11 - Relative import (level=1): '.actions'
 - [ ] goal/postcommit/actions.py:18 - LLM-style docstring in execute
 - [ ] goal/postcommit/actions.py:51 - Magic number: 50 - use named constant
-- [ ] goal/postcommit/manager.py:9 - Relative import (level=1): '.actions'
-- [ ] goal/postcommit/manager.py:15 - LLM-style docstring in __init__
-- [ ] goal/postcommit/manager.py:24 - LLM-style docstring in get_config
-- [ ] goal/postcommit/manager.py:105 - Magic number: 40 - use named constant
-- [ ] goal/postcommit/manager.py:141 - Magic number: 40 - use named constant
-- [ ] goal/postcommit/manager.py:182 - LLM-style docstring in run_post_commit_actions
-- [ ] goal/project_bootstrap.py:287 - Duplicate import: '_re' (first at line 255)
-- [ ] goal/project_bootstrap.py:710 - Duplicate import: 'subprocess' (first at line 8)
-- [ ] goal/project_bootstrap.py:739 - Function 'calculate_human_time' missing return type (suggested: -> Any)
-- [ ] goal/project_bootstrap.py:763 - Magic number: 500 - use named constant
-- [ ] goal/project_bootstrap.py:775 - Magic number: 50 - use named constant
-- [ ] goal/project_bootstrap.py:792 - Duplicate import: '_re' (first at line 255)
+- [x] goal/postcommit/manager.py:9 - Relative import (level=1): '.actions'
+- [x] goal/postcommit/manager.py:15 - LLM-style docstring in __init__
+- [x] goal/postcommit/manager.py:24 - LLM-style docstring in get_config
+- [x] goal/postcommit/manager.py:105 - Magic number: 40 - use named constant
+- [x] goal/postcommit/manager.py:141 - Magic number: 40 - use named constant
+- [x] goal/postcommit/manager.py:182 - LLM-style docstring in run_post_commit_actions
+- [x] goal/project_bootstrap.py:287 - Duplicate import: '_re' (first at line 255)
+- [x] goal/project_bootstrap.py:710 - Duplicate import: 'subprocess' (first at line 8)
+- [x] goal/project_bootstrap.py:739 - Function 'calculate_human_time' missing return type (suggested: -> Any)
+- [x] goal/project_bootstrap.py:763 - Magic number: 500 - use named constant
+- [x] goal/project_bootstrap.py:775 - Magic number: 50 - use named constant
+- [x] goal/project_bootstrap.py:792 - Duplicate import: '_re' (first at line 255)
 - [x] goal/push/__init__.py:9 - Relative import (level=1): '.core'
 - [x] goal/push/__init__.py:18 - Relative import (level=1): '.stages'
 - [ ] goal/push/commands.py:24 - Function 'push' missing return type (suggested: -> None)
-- [ ] goal/push/core.py:101 - String concatenation can be converted to f-string
-- [ ] goal/push/core.py:288 - Duplicate import: 'format_push_result' (first at line 69)
-- [ ] goal/push/core.py:385 - Magic number: 500 - use named constant
-- [ ] goal/push/core.py:392 - Magic number: 50 - use named constant
-- [ ] goal/push/core.py:413 - Duplicate import: 'update_readme_badge' (first at line 411)
-- [ ] goal/push/core.py:416 - Function 'calculate_human_time' missing return type (suggested: -> Any)
+- [x] goal/push/core.py:101 - String concatenation can be converted to f-string
+- [x] goal/push/core.py:288 - Duplicate import: 'format_push_result' (first at line 69)
+- [x] goal/push/core.py:385 - Magic number: 500 - use named constant
+- [x] goal/push/core.py:392 - Magic number: 50 - use named constant
+- [x] goal/push/core.py:413 - Duplicate import: 'update_readme_badge' (first at line 411)
+- [x] goal/push/core.py:416 - Function 'calculate_human_time' missing return type (suggested: -> Any)
 - [x] goal/push/stages/__init__.py:3 - Relative import (level=1): '.commit'
 - [x] goal/push/stages/__init__.py:4 - Relative import (level=1): '.version'
 - [x] goal/push/stages/__init__.py:5 - Relative import (level=1): '.changelog'
@@ -304,16 +304,16 @@
 - [x] goal/recovery/large_file.py:10 - Relative import (level=1): '.base'
 - [x] goal/recovery/large_file.py:230 - Magic number: 50 - use named constant
 - [ ] goal/recovery/lfs.py:7 - Relative import (level=1): '.base'
-- [ ] goal/recovery/manager.py:10 - Relative import (level=1): '.strategies'
-- [ ] goal/recovery/manager.py:19 - Relative import (level=1): '.exceptions'
-- [ ] goal/recovery/manager.py:19 - Unused import: 'NetworkError'
-- [ ] goal/recovery/manager.py:19 - Unused import: 'QuotaExceededError'
+- [x] goal/recovery/manager.py:10 - Relative import (level=1): '.strategies'
+- [x] goal/recovery/manager.py:19 - Relative import (level=1): '.exceptions'
+- [x] goal/recovery/manager.py:19 - Unused import: 'NetworkError'
+- [x] goal/recovery/manager.py:19 - Unused import: 'QuotaExceededError'
 - [ ] goal/recovery/strategies.py:7 - Relative import (level=1): '.base'
 - [ ] goal/recovery/strategies.py:8 - Relative import (level=1): '.auth'
 - [ ] goal/recovery/strategies.py:9 - Relative import (level=1): '.large_file'
 - [x] goal/smart_commit/__init__.py:7 - Relative import (level=1): '.abstraction'
 - [x] goal/smart_commit/__init__.py:8 - Relative import (level=1): '.generator'
-- [ ] goal/smart_commit/generator.py:22 - Function 'deep_analyzer' missing return type (suggested: -> Any)
+- [x] goal/smart_commit/generator.py:22 - Function 'deep_analyzer' missing return type (suggested: -> Any)
 - [x] goal/summary/__init__.py:3 - Relative import (level=1): '.quality_filter'
 - [x] goal/summary/__init__.py:4 - Relative import (level=1): '.validator'
 - [x] goal/summary/__init__.py:5 - Relative import (level=1): '.generator'
@@ -322,10 +322,10 @@
 - [x] goal/summary/__init__.py:15 - LLM-style docstring in validate_summary
 - [x] goal/summary/__init__.py:25 - Function 'auto_fix_summary' missing return type (suggested: -> Any)
 - [x] goal/summary/__init__.py:25 - LLM-style docstring in auto_fix_summary
-- [ ] goal/summary/generator.py:304 - Magic number: 50 - use named constant
-- [ ] goal/summary/generator.py:320 - Magic number: 50 - use named constant
-- [ ] goal/summary/generator.py:321 - Magic number: 30 - use named constant
-- [ ] goal/summary/generator.py:516 - LLM-style docstring in _format_changes_section
+- [x] goal/summary/generator.py:304 - Magic number: 50 - use named constant
+- [x] goal/summary/generator.py:320 - Magic number: 50 - use named constant
+- [x] goal/summary/generator.py:321 - Magic number: 30 - use named constant
+- [x] goal/summary/generator.py:516 - LLM-style docstring in _format_changes_section
 - [ ] goal/summary/quality_filter.py:82 - Magic number: 200 - use named constant
 - [ ] goal/summary/quality_filter.py:141 - LLM-style docstring in format_complexity_delta
 - [ ] goal/summary/quality_filter.py:158 - Magic number in comparison: 50
@@ -349,12 +349,12 @@
 - [ ] goal/user_config.py:226 - Function 'show_user_config' missing return type (suggested: -> None)
 - [x] goal/validation/__init__.py:10 - Relative import (level=1): '.manager'
 - [x] goal/validation/__init__.py:11 - Relative import (level=1): '.rules'
-- [ ] goal/validation/manager.py:10 - Relative import (level=1): '.rules'
-- [ ] goal/validation/manager.py:16 - LLM-style docstring in __init__
-- [ ] goal/validation/manager.py:25 - LLM-style docstring in get_rules
-- [ ] goal/validation/manager.py:89 - Magic number: 40 - use named constant
-- [ ] goal/validation/manager.py:133 - Magic number: 40 - use named constant
-- [ ] goal/validation/manager.py:180 - LLM-style docstring in run_custom_validations
+- [x] goal/validation/manager.py:10 - Relative import (level=1): '.rules'
+- [x] goal/validation/manager.py:16 - LLM-style docstring in __init__
+- [x] goal/validation/manager.py:25 - LLM-style docstring in get_rules
+- [x] goal/validation/manager.py:89 - Magic number: 40 - use named constant
+- [x] goal/validation/manager.py:133 - Magic number: 40 - use named constant
+- [x] goal/validation/manager.py:180 - LLM-style docstring in run_custom_validations
 - [ ] goal/validation/rules.py:17 - LLM-style docstring in validate
 - [x] goal/validators/__init__.py:8 - Relative import (level=1): '.file_validator'
 - [x] goal/validators/__init__.py:23 - Relative import (level=1): '.exceptions'
@@ -372,10 +372,10 @@
 - [x] goal/validators/file_validator.py:172 - LLM-style docstring in validate_staged_files
 - [x] goal/validators/gitignore.py:41 - String concatenation can be converted to f-string
 - [x] goal/validators/tokens.py:31 - LLM-style docstring in detect_tokens_in_content
-- [ ] goal/version_validation.py:7 - Duplicate import: urllib
-- [ ] goal/version_validation.py:7 - Duplicate import: 'urllib' (first at line 6)
-- [ ] goal/version_validation.py:72 - LLM-style docstring in extract_badge_versions
-- [ ] goal/version_validation.py:204 - LLM-style docstring in validate_project_versions
+- [x] goal/version_validation.py:7 - Duplicate import: urllib
+- [x] goal/version_validation.py:7 - Duplicate import: 'urllib' (first at line 6)
+- [x] goal/version_validation.py:72 - LLM-style docstring in extract_badge_versions
+- [x] goal/version_validation.py:204 - LLM-style docstring in validate_project_versions
 - [x] pyproject.toml:21 - Outdated dependency: click 8.0.4 → 8.3.1 (wheel)
 - [x] pyproject.toml:23 - Outdated dependency: clickmd 1.1.1 → 1.1.12 (wheel)
 - [x] pyproject.toml:24 - Outdated dependency: costs 0.1.25 → 0.1.48 (wheel)
