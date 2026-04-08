@@ -104,8 +104,8 @@ class TestPushWorkflowIntegration:
         
         # Test the function works with explicit version
         current, new = get_version_info('1.0.0', 'patch')
-        assert current == '2.1.177'
-        assert new == '2.1.177'
+        assert current == '1.0.0'
+        assert new == '1.0.1'
     
     def test_format_changes_section(self):
         """Test the format_changes_section helper."""

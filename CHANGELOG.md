@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [2.1.178] - 2026-04-08
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_push_e2e.py
+
 ## [0.1.10] - 2026-04-07
 
 ### Fixed
