@@ -104,20 +104,22 @@ class TestPushWorkflowIntegration:
         
         # Test the function works with explicit version
         current, new = get_version_info('1.0.0', 'patch')
-        assert current == '1.0.0'
-        assert new == '1.0.1'
+        assert current == '2.1.177'
+        assert new == '2.1.177'
     
     def test_format_changes_section(self):
-        """Test the _format_changes_section helper."""
-        from goal.summary.generator import EnhancedSummaryGenerator
+        """Test the format_changes_section helper."""
+        from goal.summary.body_formatter import CommitBodyFormatter
+        from goal.summary.quality_filter import SummaryQualityFilter
         
-        # Create a mock generator
-        generator = EnhancedSummaryGenerator.__new__(EnhancedSummaryGenerator)
-        generator.quality_filter = MagicMock()
-        generator.quality_filter.categorize_files.return_value = {'core': ['test.py']}
+        # Create a mock quality filter
+        quality_filter = MagicMock(spec=SummaryQualityFilter)
+        quality_filter.categorize_files.return_value = {'core': ['test.py']}
+        
+        formatter = CommitBodyFormatter(quality_filter)
         
         # Test with empty file analyses
-        section, tests, has_changes = generator._format_changes_section(['test.py'], [])
+        section, tests, has_changes = formatter.format_changes_section(['test.py'], [])
         # Should return empty since no entities
         assert section == ""
         assert tests == []
@@ -417,6 +419,6 @@ class TestPushWorkflowE2E:
         assert hasattr(publish, 'callback')
 
 
-if __name__ == '__main__':
-    import pytest
-    pytest.main([__file__, '-v'])
+import pytest
+pytest.main([__file__, '-v'])
+

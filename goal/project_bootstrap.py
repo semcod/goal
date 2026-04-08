@@ -593,6 +593,18 @@ _TEST_FILE_NAMES = {
 }
 
 
+def _resolve_scaffold_test_path(project_dir: Path, project_type: str, cfg: dict, package_name: str) -> Optional[Path]:
+    template = _TEST_FILE_NAMES.get(project_type)
+    if not template:
+        return None
+
+    test_dir_name = cfg['test_dirs'][0]
+    test_dir = project_dir / test_dir_name
+    base_key, name_fmt = template
+    base = test_dir if base_key == 'test_dir' else project_dir
+    return base / name_fmt.format(package_name=package_name)
+
+
 def scaffold_test(project_dir: Path, project_type: str, yes: bool = False) -> Optional[Path]:
     """Create a sample test file if no tests exist.
 
@@ -611,22 +623,15 @@ def scaffold_test(project_dir: Path, project_type: str, yes: bool = False) -> Op
         if not click.confirm(click.style("Create a sample test file?", fg='cyan'), default=True):
             return None
 
-    template = _TEST_FILE_NAMES.get(project_type)
-    if not template:
-        return None
-
     package_name = guess_package_name(project_dir, project_type)
-    test_dir_name = cfg['test_dirs'][0]
-    test_dir = project_dir / test_dir_name
-
-    base_key, name_fmt = template
-    base = test_dir if base_key == 'test_dir' else project_dir
-    test_file = base / name_fmt.format(package_name=package_name)
+    test_file = _resolve_scaffold_test_path(project_dir, project_type, cfg, package_name)
+    if not test_file:
+        return None
 
     if test_file.exists():
         return None
 
-    test_dir.mkdir(parents=True, exist_ok=True)
+    test_file.parent.mkdir(parents=True, exist_ok=True)
     content = cfg['scaffold_test'].format(package_name=package_name)
     test_file.write_text(content, encoding='utf-8')
 
@@ -637,6 +642,33 @@ def scaffold_test(project_dir: Path, project_type: str, yes: bool = False) -> Op
 # =============================================================================
 # High-level orchestration
 # =============================================================================
+
+
+def _new_bootstrap_result(project_dir: Path, project_type: str) -> Dict:
+    return {
+        'project_type': project_type,
+        'project_dir': project_dir,
+        'env_ok': False,
+        'tests_found': [],
+        'test_created': None,
+        'doctor_report': None,
+    }
+
+
+def _run_bootstrap_diagnostics(project_dir: Path, project_type: str, yes: bool):
+    click.echo(click.style(f"  DEBUG: auto_fix={yes}", fg='magenta'))
+    return diagnose_and_report(project_dir, project_type, auto_fix=yes)
+
+
+def _ensure_bootstrap_tests(project_dir: Path, project_type: str, yes: bool) -> tuple[List[Path], Optional[Path]]:
+    tests_found = find_existing_tests(project_dir, project_type)
+    if tests_found:
+        return tests_found, None
+
+    test_created = scaffold_test(project_dir, project_type, yes=yes)
+    if test_created:
+        return [test_created], test_created
+    return [], None
 
 def bootstrap_project(project_dir: Path, project_type: str, yes: bool = False) -> Dict:
     """Full bootstrap: diagnose & fix config, ensure environment, scaffold tests.
@@ -651,18 +683,10 @@ def bootstrap_project(project_dir: Path, project_type: str, yes: bool = False) -
             'doctor_report': DoctorReport | None,
         }
     """
-    result = {
-        'project_type': project_type,
-        'project_dir': project_dir,
-        'env_ok': False,
-        'tests_found': [],
-        'test_created': None,
-        'doctor_report': None,
-    }
+    result = _new_bootstrap_result(project_dir, project_type)
 
     # Step 1: Diagnose and auto-fix project configuration issues
-    click.echo(click.style(f"  DEBUG: auto_fix={yes}", fg='magenta'))
-    result['doctor_report'] = diagnose_and_report(project_dir, project_type, auto_fix=yes)
+    result['doctor_report'] = _run_bootstrap_diagnostics(project_dir, project_type, yes)
 
     # Step 1b: Ensure pfix is installed for auto-fixing errors
     _ensure_pfix_installed(project_dir, yes=yes)
@@ -672,12 +696,7 @@ def bootstrap_project(project_dir: Path, project_type: str, yes: bool = False) -
     result['env_ok'] = ensure_project_environment(project_dir, project_type, yes=yes)
 
     # Step 3: Find or scaffold tests
-    result['tests_found'] = find_existing_tests(project_dir, project_type)
-
-    if not result['tests_found']:
-        result['test_created'] = scaffold_test(project_dir, project_type, yes=yes)
-        if result['test_created']:
-            result['tests_found'] = [result['test_created']]
+    result['tests_found'], result['test_created'] = _ensure_bootstrap_tests(project_dir, project_type, yes)
 
     return result
 

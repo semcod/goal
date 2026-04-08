@@ -5334,3 +5334,211 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
+  - id: ticket-6df723a3
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in goal/__init__.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/__init__.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-8c0c85e6
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in goal/config.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/config.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a44a0d95
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in goal/deep_analyzer.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/deep_analyzer.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-508933be
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in goal/enhanced_summary.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/enhanced_summary.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-4a3846ab
+    name: Fix smart-return-type issues
+    description: Resolve 1 smart-return-type issues in goal/push/stages/costs.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/push/stages/costs.py
+    rule_id: smart-return-type
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ce157c5e
+    name: Fix duplicate-imports issues
+    description: Resolve 1 duplicate-imports issues in goal/push/stages/costs.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/push/stages/costs.py
+    rule_id: duplicate-imports
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-1617f838
+    name: Fix magic-numbers issues
+    description: Resolve 2 magic-numbers issues in goal/push/stages/costs.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/push/stages/costs.py
+    rule_id: magic-numbers
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-320340cf
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in goal/smart_commit.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/smart_commit.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d5deb2f6
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in goal/summary/body_formatter.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/summary/body_formatter.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e21fa7ff
+    name: Fix llm-generated-code issues
+    description: Resolve 1 llm-generated-code issues in goal/summary/body_formatter.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/summary/body_formatter.py
+    rule_id: llm-generated-code
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a6b6c749
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in goal/user_config.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/user_config.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-0678a360
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in goal/version_validation.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/version_validation.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-8057661f
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in goal/recovery/base.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/recovery/base.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-055e3416
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in goal/user_config.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/user_config.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f0741dec
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in goal/validators/tokens.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - goal/validators/tokens.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-bbe82c9b
+    name: Fix wildcard-imports issues
+    description: Resolve 6 wildcard-imports issues in goal/version_validation.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - goal/version_validation.py
+    rule_id: wildcard-imports
+    count: 6
+    model_hints:
+      planning: balanced
+      implementation: balanced

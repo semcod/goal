@@ -141,6 +141,31 @@ def confirm(prompt: str, default: bool = True) -> bool:
             click.echo(click.style("Please respond with 'y' or 'n'", fg='red'))
 
 
+def _show_goal_version_banner() -> None:
+    from goal import __version__
+    from goal.version_validation import get_pypi_version
+
+    latest = get_pypi_version("goal")
+    if latest and latest != __version__:
+        click.echo(click.style(f"Goal v{__version__} (latest: v{latest} → pip install -U goal)", fg='yellow', bold=True))
+    else:
+        click.echo(click.style(f"Goal v{__version__} ✓", fg='cyan', bold=True))
+
+
+def _configure_main_context(ctx, bump, target_version, yes, all_flags, no_publish, todo, markdown, dry_run, config_path, abstraction) -> None:
+    ctx.ensure_object(dict)
+    ctx.obj['bump'] = bump
+    ctx.obj['version'] = target_version
+    ctx.obj['yes'] = yes or all_flags
+    ctx.obj['no_publish'] = no_publish
+    ctx.obj['todo'] = todo
+    ctx.obj['markdown'] = markdown
+    ctx.obj['dry_run'] = dry_run
+    ctx.obj['abstraction'] = abstraction
+    ctx.obj['config'] = load_config(config_path) if config_path else ensure_config()
+    ctx.obj['user_config'] = get_user_config()
+
+
 class GoalGroup(click.Group):
     """Custom Click Group that shows docs URL for unknown commands (like Poetry),
     and defaults to 'push' command when -a/--all is passed without a subcommand."""
@@ -189,35 +214,11 @@ class GoalGroup(click.Group):
 @click.pass_context
 def main(ctx, bump, target_version, yes, all_flags, no_publish, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink) -> None:
     """Goal - Automated git push with smart commit messages."""
-    # Display version info at startup with update check
-    from goal import __version__
-    from goal.version_validation import get_pypi_version
-    
-    latest = get_pypi_version("goal")
-    if latest and latest != __version__:
-        click.echo(click.style(f"Goal v{__version__} (latest: v{latest} → pip install -U goal)", fg='yellow', bold=True))
-    else:
-        click.echo(click.style(f"Goal v{__version__} ✓", fg='cyan', bold=True))
-    
+    _show_goal_version_banner()
     _setup_nfo_logging(nfo_format, nfo_sink)
-    
-    ctx.ensure_object(dict)
-    ctx.obj['bump'] = bump
-    ctx.obj['version'] = target_version
-    ctx.obj['yes'] = yes or all_flags
-    ctx.obj['no_publish'] = no_publish
-    ctx.obj['todo'] = todo
-    ctx.obj['markdown'] = markdown
-    ctx.obj['dry_run'] = dry_run
-    ctx.obj['abstraction'] = abstraction
-    
-    # Load configuration
-    config = load_config(config_path) if config_path else ensure_config()
-    ctx.obj['config'] = config
-    
-    # Load user config
-    user_config = get_user_config()
-    ctx.obj['user_config'] = user_config
+
+    _configure_main_context(ctx, bump, target_version, yes, all_flags, no_publish, todo,
+                            markdown, dry_run, config_path, abstraction)
 
 
 # Import commands to register them

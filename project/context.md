@@ -6,79 +6,89 @@
 - **Primary Language**: python
 - **Languages**: python: 118, shell: 5, csharp: 1, go: 1, java: 1
 - **Analysis Mode**: static
-- **Total Functions**: 733
+- **Total Functions**: 791
 - **Total Classes**: 64
 - **Modules**: 127
-- **Entry Points**: 499
+- **Entry Points**: 538
 
 ## Architecture by Module
 
 ### goal.project_bootstrap
-- **Functions**: 33
+- **Functions**: 38
 - **File**: `project_bootstrap.py`
+
+### goal.doctor.python
+- **Functions**: 31
+- **Classes**: 1
+- **File**: `python.py`
 
 ### goal.git_ops
 - **Functions**: 28
 - **File**: `git_ops.py`
+
+### goal.deep_analyzer
+- **Functions**: 27
+- **Classes**: 1
+- **File**: `deep_analyzer.py`
+
+### goal.generator.analyzer
+- **Functions**: 27
+- **Classes**: 2
+- **File**: `analyzer.py`
 
 ### goal.config.manager
 - **Functions**: 25
 - **Classes**: 1
 - **File**: `manager.py`
 
+### goal.smart_commit.generator
+- **Functions**: 25
+- **Classes**: 1
+- **File**: `generator.py`
+
 ### goal.generator.generator
 - **Functions**: 24
 - **Classes**: 1
 - **File**: `generator.py`
 
-### goal.deep_analyzer
+### goal.summary.validator
+- **Functions**: 24
+- **Classes**: 1
+- **File**: `validator.py`
+
+### goal.formatter
 - **Functions**: 23
 - **Classes**: 1
-- **File**: `deep_analyzer.py`
-
-### goal.generator.analyzer
-- **Functions**: 23
-- **Classes**: 2
-- **File**: `analyzer.py`
-
-### goal.smart_commit.generator
-- **Functions**: 22
-- **Classes**: 1
-- **File**: `generator.py`
+- **File**: `formatter.py`
 
 ### goal.validation.rules
 - **Functions**: 19
 - **Classes**: 6
 - **File**: `rules.py`
 
-### goal.summary.generator
+### goal.summary.quality_filter
 - **Functions**: 18
 - **Classes**: 1
-- **File**: `generator.py`
+- **File**: `quality_filter.py`
 
-### goal.formatter
+### goal.push.core
 - **Functions**: 17
 - **Classes**: 1
-- **File**: `formatter.py`
+- **File**: `core.py`
 
-### goal.doctor.python
+### goal.push.stages.push_remote
 - **Functions**: 17
-- **Classes**: 1
-- **File**: `python.py`
+- **File**: `push_remote.py`
 
 ### goal.postcommit.actions
 - **Functions**: 16
 - **Classes**: 5
 - **File**: `actions.py`
 
-### goal.summary.quality_filter
+### goal.package_managers
 - **Functions**: 16
 - **Classes**: 1
-- **File**: `quality_filter.py`
-
-### goal.version_validation
-- **Functions**: 15
-- **File**: `version_validation.py`
+- **File**: `package_managers.py`
 
 ### goal.config.validation
 - **Functions**: 15
@@ -95,27 +105,14 @@
 - **Classes**: 1
 - **File**: `manager.py`
 
-### goal.push.core
+### goal.summary.generator
 - **Functions**: 14
 - **Classes**: 1
-- **File**: `core.py`
-
-### goal.push.stages.push_remote
-- **Functions**: 14
-- **File**: `push_remote.py`
-
-### goal.summary.validator
-- **Functions**: 13
-- **Classes**: 1
-- **File**: `validator.py`
+- **File**: `generator.py`
 
 ## Key Entry Points
 
 Main execution flows into the system:
-
-### goal.summary.validator.QualityValidator.auto_fix
-> Auto-fix summary issues and return corrected summary.
-- **Calls**: summary.copy, self.filter.categorize_files, fixed.get, self.filter.has_banned_words, fixed.get, re.match, fixed.get, len
 
 ### goal.cli.commit_cmd.validate
 > Validate commit summary against quality gates.
@@ -149,25 +146,17 @@ Main execution flows into the system:
 > Interactive wizard for complete Goal setup.
 - **Calls**: main.command, click.option, click.option, click.option, click.option, click.echo, click.echo, click.echo
 
-### goal.doctor.python.PythonDiagnostics.check_py011_version_consistency
-> PY011: Check for consistent version across all config files.
-- **Calls**: re.search, version_match.group, setup_py.exists, re.search, version_file.exists, Issue, self.issues.append, setup_py.read_text
-
 ### goal.recovery.large_file.LargeFileStrategy._remove_from_history
 > Remove files from git history using filter-repo.
 - **Calls**: click.echo, self.run_git, click.echo, click.style, subprocess.run, None.stdout.strip, click.echo, subprocess.run
 
 ### examples.api-usage.04_version_validation.main
 > Demonstrate version validation.
-- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.cli.version_utils.get_current_version, integration.run_matrix.print, integration.run_matrix.print, goal.version_validation.get_pypi_version
+- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.cli.version_utils.get_current_version, integration.run_matrix.print, integration.run_matrix.print, get_pypi_version
 
-### goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
+### goal.deep_analyzer._analyze_python_diff
 > Analyze Python code changes using AST.
-- **Calls**: self._extract_python_entities, self._extract_python_entities, goal.user_config.UserConfig.set, goal.user_config.UserConfig.set, sum, sum, self._detect_value_indicators, old_entities.keys
-
-### goal.doctor.python.PythonDiagnostics.check_py010_project_name_consistency
-> PY010: Check for consistent project name across all config files.
-- **Calls**: re.search, name_match.group, setup_py.exists, goal_yaml.exists, Issue, self.issues.append, setup_py.read_text, re.search
+- **Calls**: self._extract_python_entities, self._extract_python_entities, goal.config.manager.GoalConfig.set, goal.config.manager.GoalConfig.set, sum, sum, self._detect_value_indicators, old_entities.keys
 
 ### goal.cli.commit_cmd.commit
 > Generate a smart commit message for current changes.
@@ -181,19 +170,13 @@ Main execution flows into the system:
 > Calculate quality metrics for the changes.
 - **Calls**: analysis.get, len, analysis.get, aggregated.get, min, min, min, min
 
-### goal.doctor.python.PythonDiagnostics.check_py009_string_authors
-> PY009: Check for authors in deprecated string format (PEP 621 requires objects).
-
-Note: Skip this check for Poetry projects which require string forma
-- **Calls**: re.search, re.search, authors_match.group, re.compile, None.splitlines, Issue, self.issues.append, line.strip
-
 ### goal.recovery.divergent.DivergentHistoryStrategy.recover
 > Attempt to recover from divergent history.
 - **Calls**: click.echo, self.run_git_with_output, click.echo, click.style, click.echo, self.run_git, click.echo, self.run_git_with_output
 
-### goal.smart_commit.abstraction.CodeAbstraction.extract_entities
-> Extract code entities (functions, classes, etc.) from diff.
-- **Calls**: self.get_language, self.code_parsers.get, parser.get, parser.get, parser.get, goal.user_config.UserConfig.set, None.strip, any
+### goal.push.stages.costs.update_cost_badges
+> Update AI cost badges in README using costs package.
+- **Calls**: Path, get_repo_stats, goal.push.stages.costs._compute_ai_costs, calculate_human_time, update_readme_badge, goal.push.stages.costs._is_cost_tracking_enabled, ctx_obj.get, ctx_obj.get
 
 ### goal.config.validation.ConfigValidator._validate_project_section
 > Validate project configuration.
@@ -202,14 +185,6 @@ Note: Skip this check for Poetry projects which require string forma
 ### goal.config.validation.ConfigValidator._validate_git_section
 > Validate git configuration.
 - **Calls**: self.config.get, git.get, commit.get, commit.get, commit.get, git.get, remote.get, remote.get
-
-### goal.cli.main
-> Goal - Automated git push with smart commit messages.
-- **Calls**: click.group, click.option, click.option, click.version_option, click.option, click.option, click.option, click.option
-
-### goal.smart_commit.generator.SmartCommitGenerator._generate_functional_summary
-> Generate a human-readable functional summary of changes.
-- **Calls**: analysis.get, analysis.get, analysis.get, analysis.get, analysis.get, None.join, parts.append, parts.append
 
 ### examples.custom-hooks.pre-commit.main
 > Run all pre-commit checks.
@@ -236,20 +211,38 @@ git push failures including:
 > Run all Node.js-specific diagnostics.
 - **Calls**: json.dumps, data.get, json.dumps, pkg_json.exists, json.loads, data.get, issues.append, data.get
 
-### goal.doctor.python.diagnose_python
-> Run all Python-specific diagnostics.
-- **Calls**: pyproject.read_text, PythonDiagnostics, diag.check_py002_build_system, diag.check_py003_license_classifiers, diag.check_py004_deprecated_backends, diag.check_py005_license_table, diag.check_py006_duplicate_authors, diag.check_py007_requires_python
+### goal.deep_analyzer._build_summary
+> Build human-readable summary.
+- **Calls**: aggregated.get, aggregated.get, aggregated.get, aggregated.get, self._format_entity_names, self._format_entity_names, self._format_entity_names, parts.append
+
+### goal.generator.generator.CommitMessageGenerator._build_summary_section
+> Build high-level summary section.
+- **Calls**: Counter, Counter, parts.append, parts.append, parts.append, parts.append, parts.append, parts.append
+
+### goal.recovery.auth.AuthErrorStrategy.recover
+> Attempt to recover from authentication error.
+- **Calls**: click.echo, click.echo, click.echo, click.echo, click.echo, click.echo, click.echo, click.style
+
+### goal.config.validation.ConfigValidator._validate_versioning_section
+> Validate versioning configuration.
+- **Calls**: self.config.get, versioning.get, versioning.get, versioning.get, versioning.get, versioning.get, self.errors.append, self.errors.append
+
+### goal.cli.license_cmd.license_create
+> Create a LICENSE file with the specified license.
+- **Calls**: license.command, click.argument, click.option, click.option, click.option, goal.license.spdx.validate_spdx_id, goal.license.manager.LicenseManager.create_license_file, LicenseManager
+
+### goal.cli.utils_cmd.status
+> Show current git status and version info.
+- **Calls**: main.command, click.option, goal.cli.version_utils.get_current_version, goal.git_ops.get_remote_branch, goal.git_ops.get_staged_files, goal.git_ops.get_unstaged_files, ctx.obj.get, goal.formatter.format_status_output
+
+### goal.postcommit.actions.ScriptAction.execute
+- **Calls**: self.config.get, os.environ.copy, commit_info.get, commit_info.get, commit_info.get, commit_info.get, self.config.get, click.echo
 
 ## Process Flows
 
 Key execution flows identified:
 
-### Flow 1: auto_fix
-```
-auto_fix [goal.summary.validator.QualityValidator]
-```
-
-### Flow 2: validate
+### Flow 1: validate
 ```
 validate [goal.cli.commit_cmd]
   └─ →> get_staged_files
@@ -259,56 +252,73 @@ validate [goal.cli.commit_cmd]
       └─> run_git
 ```
 
-### Flow 3: main
+### Flow 2: main
 ```
 main [examples.api-usage.02_git_operations]
   └─ →> print
   └─ →> print
 ```
 
-### Flow 4: recover
+### Flow 3: recover
 ```
 recover [goal.recovery.large_file.LargeFileStrategy]
 ```
 
-### Flow 5: fix_summary
+### Flow 4: fix_summary
 ```
 fix_summary [goal.cli.commit_cmd]
   └─ →> get_staged_files
       └─> run_git
 ```
 
-### Flow 6: doctor
+### Flow 5: doctor
 ```
 doctor [goal.cli.doctor_cmd]
 ```
 
-### Flow 7: generate_enhanced_summary
+### Flow 6: generate_enhanced_summary
 ```
 generate_enhanced_summary [goal.summary.generator.EnhancedSummaryGenerator]
 ```
 
-### Flow 8: wizard
+### Flow 7: wizard
 ```
 wizard [goal.cli.wizard_cmd]
 ```
 
-### Flow 9: check_py011_version_consistency
-```
-check_py011_version_consistency [goal.doctor.python.PythonDiagnostics]
-```
-
-### Flow 10: _remove_from_history
+### Flow 8: _remove_from_history
 ```
 _remove_from_history [goal.recovery.large_file.LargeFileStrategy]
 ```
 
+### Flow 9: _analyze_python_diff
+```
+_analyze_python_diff [goal.deep_analyzer]
+  └─ →> set
+  └─ →> set
+```
+
+### Flow 10: commit
+```
+commit [goal.cli.commit_cmd]
+```
+
 ## Key Classes
 
-### goal.deep_analyzer.CodeChangeAnalyzer
-> Analyzes code changes to extract functional meaning.
-- **Methods**: 23
-- **Key Methods**: goal.deep_analyzer.CodeChangeAnalyzer.__init__, goal.deep_analyzer.CodeChangeAnalyzer.analyze_file_diff, goal.deep_analyzer.CodeChangeAnalyzer._detect_language, goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff, goal.deep_analyzer.CodeChangeAnalyzer._detect_value_indicators, goal.deep_analyzer.CodeChangeAnalyzer._extract_python_entities, goal.deep_analyzer.CodeChangeAnalyzer._get_decorator_name, goal.deep_analyzer.CodeChangeAnalyzer._calculate_complexity, goal.deep_analyzer.CodeChangeAnalyzer._analyze_js_diff, goal.deep_analyzer.CodeChangeAnalyzer._analyze_generic_diff
+### goal.doctor.python.PythonDiagnostics
+> Container for Python diagnostic checks with shared state.
+- **Methods**: 30
+- **Key Methods**: goal.doctor.python.PythonDiagnostics.__init__, goal.doctor.python.PythonDiagnostics.check_py001_missing_config, goal.doctor.python.PythonDiagnostics.check_py002_build_system, goal.doctor.python.PythonDiagnostics.check_py003_license_classifiers, goal.doctor.python.PythonDiagnostics.check_py004_deprecated_backends, goal.doctor.python.PythonDiagnostics.check_py005_license_table, goal.doctor.python.PythonDiagnostics.check_py006_duplicate_authors, goal.doctor.python.PythonDiagnostics.check_py007_requires_python, goal.doctor.python.PythonDiagnostics.check_py008_empty_classifiers, goal.doctor.python.PythonDiagnostics.check_py009_string_authors
+
+### goal.smart_commit.generator.SmartCommitGenerator
+> Generates smart commit messages using code abstraction.
+- **Methods**: 25
+- **Key Methods**: goal.smart_commit.generator.SmartCommitGenerator.__init__, goal.smart_commit.generator.SmartCommitGenerator.deep_analyzer, goal.smart_commit.generator.SmartCommitGenerator._analyze_file_diffs, goal.smart_commit.generator.SmartCommitGenerator._merge_deep_analysis, goal.smart_commit.generator.SmartCommitGenerator.analyze_changes, goal.smart_commit.generator.SmartCommitGenerator._summarize_features, goal.smart_commit.generator.SmartCommitGenerator._summarize_entities, goal.smart_commit.generator.SmartCommitGenerator._summarize_documentation, goal.smart_commit.generator.SmartCommitGenerator._summarize_test_files, goal.smart_commit.generator.SmartCommitGenerator._fallback_functional_summary
+
+### goal.summary.validator.QualityValidator
+> Validate commit summary against quality gates.
+- **Methods**: 24
+- **Key Methods**: goal.summary.validator.QualityValidator.__init__, goal.summary.validator.QualityValidator.validate, goal.summary.validator.QualityValidator._extract_intent, goal.summary.validator.QualityValidator._validate_title, goal.summary.validator.QualityValidator._validate_intent, goal.summary.validator.QualityValidator._validate_metrics, goal.summary.validator.QualityValidator._validate_relations, goal.summary.validator.QualityValidator._validate_files, goal.summary.validator.QualityValidator._validate_capabilities, goal.summary.validator.QualityValidator._validate_body
 
 ### goal.generator.generator.CommitMessageGenerator
 > Generate conventional commit messages using diff analysis and lightweight classification.
@@ -320,40 +330,30 @@ _remove_from_history [goal.recovery.large_file.LargeFileStrategy]
 - **Methods**: 22
 - **Key Methods**: goal.config.manager.GoalConfig.__init__, goal.config.manager.GoalConfig._find_config, goal.config.manager.GoalConfig._find_git_root, goal.config.manager.GoalConfig.exists, goal.config.manager.GoalConfig.load, goal.config.manager.GoalConfig._get_default_config, goal.config.manager.GoalConfig._deep_copy, goal.config.manager.GoalConfig._merge_configs, goal.config.manager.GoalConfig._detect_project_name, goal.config.manager.GoalConfig._detect_project_types
 
-### goal.smart_commit.generator.SmartCommitGenerator
-> Generates smart commit messages using code abstraction.
-- **Methods**: 22
-- **Key Methods**: goal.smart_commit.generator.SmartCommitGenerator.__init__, goal.smart_commit.generator.SmartCommitGenerator.deep_analyzer, goal.smart_commit.generator.SmartCommitGenerator._analyze_file_diffs, goal.smart_commit.generator.SmartCommitGenerator._merge_deep_analysis, goal.smart_commit.generator.SmartCommitGenerator.analyze_changes, goal.smart_commit.generator.SmartCommitGenerator._summarize_features, goal.smart_commit.generator.SmartCommitGenerator._summarize_entities, goal.smart_commit.generator.SmartCommitGenerator._generate_functional_summary, goal.smart_commit.generator.SmartCommitGenerator._get_staged_files, goal.smart_commit.generator.SmartCommitGenerator._get_file_diff
-
-### goal.summary.generator.EnhancedSummaryGenerator
-> Generate business-value focused commit summaries.
+### goal.generator.analyzer.ChangeAnalyzer
+> Analyze git changes to classify type, detect scope, and extract functions.
 - **Methods**: 18
-- **Key Methods**: goal.summary.generator.EnhancedSummaryGenerator.__init__, goal.summary.generator.EnhancedSummaryGenerator.map_entity_to_role, goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations, goal.summary.generator.EnhancedSummaryGenerator._infer_domain, goal.summary.generator.EnhancedSummaryGenerator._build_relation_chain, goal.summary.generator.EnhancedSummaryGenerator._render_relations_ascii, goal.summary.generator.EnhancedSummaryGenerator.calculate_quality_metrics, goal.summary.generator.EnhancedSummaryGenerator.generate_value_title, goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary
+- **Key Methods**: goal.generator.analyzer.ChangeAnalyzer.classify_change_type, goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_package_code, goal.generator.analyzer.ChangeAnalyzer._is_docs_only, goal.generator.analyzer.ChangeAnalyzer._is_ci_only, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file, goal.generator.analyzer.ChangeAnalyzer._score_by_file_patterns, goal.generator.analyzer.ChangeAnalyzer._score_by_diff_content, goal.generator.analyzer.ChangeAnalyzer._score_by_statistics, goal.generator.analyzer.ChangeAnalyzer._score_by_signals
 
 ### goal.summary.quality_filter.SummaryQualityFilter
 > Filter noise and improve summary quality.
-- **Methods**: 16
+- **Methods**: 18
 - **Key Methods**: goal.summary.quality_filter.SummaryQualityFilter.__init__, goal.summary.quality_filter.SummaryQualityFilter.is_noise, goal.summary.quality_filter.SummaryQualityFilter.filter_entities, goal.summary.quality_filter.SummaryQualityFilter.has_banned_words, goal.summary.quality_filter.SummaryQualityFilter.classify_intent, goal.summary.quality_filter.SummaryQualityFilter.prioritize_capabilities, goal.summary.quality_filter.SummaryQualityFilter.format_complexity_delta, goal.summary.quality_filter.SummaryQualityFilter.dedupe_relations, goal.summary.quality_filter.SummaryQualityFilter.dedupe_files, goal.summary.quality_filter.SummaryQualityFilter.categorize_files
-
-### goal.doctor.python.PythonDiagnostics
-> Container for Python diagnostic checks with shared state.
-- **Methods**: 16
-- **Key Methods**: goal.doctor.python.PythonDiagnostics.__init__, goal.doctor.python.PythonDiagnostics.check_py001_missing_config, goal.doctor.python.PythonDiagnostics.check_py002_build_system, goal.doctor.python.PythonDiagnostics.check_py003_license_classifiers, goal.doctor.python.PythonDiagnostics.check_py004_deprecated_backends, goal.doctor.python.PythonDiagnostics.check_py005_license_table, goal.doctor.python.PythonDiagnostics.check_py006_duplicate_authors, goal.doctor.python.PythonDiagnostics.check_py007_requires_python, goal.doctor.python.PythonDiagnostics.check_py008_empty_classifiers, goal.doctor.python.PythonDiagnostics.check_py009_string_authors
-
-### goal.generator.analyzer.ChangeAnalyzer
-> Analyze git changes to classify type, detect scope, and extract functions.
-- **Methods**: 14
-- **Key Methods**: goal.generator.analyzer.ChangeAnalyzer.classify_change_type, goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_package_code, goal.generator.analyzer.ChangeAnalyzer._is_docs_only, goal.generator.analyzer.ChangeAnalyzer._is_ci_only, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file, goal.generator.analyzer.ChangeAnalyzer._score_by_file_patterns, goal.generator.analyzer.ChangeAnalyzer._score_by_diff_content, goal.generator.analyzer.ChangeAnalyzer._score_by_statistics, goal.generator.analyzer.ChangeAnalyzer._score_by_signals
 
 ### goal.recovery.manager.RecoveryManager
 > Manages the recovery process for failed git pushes.
 - **Methods**: 14
 - **Key Methods**: goal.recovery.manager.RecoveryManager.__init__, goal.recovery.manager.RecoveryManager._ensure_recovery_dir, goal.recovery.manager.RecoveryManager.run_git, goal.recovery.manager.RecoveryManager.recover_from_push_failure, goal.recovery.manager.RecoveryManager._identify_strategy, goal.recovery.manager.RecoveryManager._create_backup, goal.recovery.manager.RecoveryManager._cleanup_backup, goal.recovery.manager.RecoveryManager._rollback_to_backup, goal.recovery.manager.RecoveryManager._attempt_push, goal.recovery.manager.RecoveryManager.setup_clean_clone
 
-### goal.summary.validator.QualityValidator
-> Validate commit summary against quality gates.
-- **Methods**: 13
-- **Key Methods**: goal.summary.validator.QualityValidator.__init__, goal.summary.validator.QualityValidator.validate, goal.summary.validator.QualityValidator._extract_intent, goal.summary.validator.QualityValidator._validate_title, goal.summary.validator.QualityValidator._validate_intent, goal.summary.validator.QualityValidator._validate_metrics, goal.summary.validator.QualityValidator._validate_relations, goal.summary.validator.QualityValidator._validate_files, goal.summary.validator.QualityValidator._validate_capabilities, goal.summary.validator.QualityValidator._validate_body
+### goal.summary.generator.EnhancedSummaryGenerator
+> Generate business-value focused commit summaries.
+- **Methods**: 14
+- **Key Methods**: goal.summary.generator.EnhancedSummaryGenerator.__init__, goal.summary.generator.EnhancedSummaryGenerator.map_entity_to_role, goal.summary.generator.EnhancedSummaryGenerator._file_stems, goal.summary.generator.EnhancedSummaryGenerator._special_title_from_files, goal.summary.generator.EnhancedSummaryGenerator._title_from_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations, goal.summary.generator.EnhancedSummaryGenerator._infer_domain, goal.summary.generator.EnhancedSummaryGenerator._build_relation_chain, goal.summary.generator.EnhancedSummaryGenerator._render_relations_ascii
+
+### goal.summary.body_formatter.CommitBodyFormatter
+> Format enhanced commit body sections.
+- **Methods**: 12
+- **Key Methods**: goal.summary.body_formatter.CommitBodyFormatter.__init__, goal.summary.body_formatter.CommitBodyFormatter._format_entity_list, goal.summary.body_formatter.CommitBodyFormatter._split_added_entities, goal.summary.body_formatter.CommitBodyFormatter._append_file_header, goal.summary.body_formatter.CommitBodyFormatter._append_added_entities, goal.summary.body_formatter.CommitBodyFormatter._append_entity_change, goal.summary.body_formatter.CommitBodyFormatter._format_file_change, goal.summary.body_formatter.CommitBodyFormatter.format_changes_section, goal.summary.body_formatter.CommitBodyFormatter.format_testing_section, goal.summary.body_formatter.CommitBodyFormatter.format_dependencies_section
 
 ### goal.hooks.manager.HooksManager
 > Manages pre-commit hooks for Goal.
@@ -371,40 +371,41 @@ _remove_from_history [goal.recovery.large_file.LargeFileStrategy]
 - **Methods**: 11
 - **Key Methods**: goal.config.validation.ConfigValidator.__init__, goal.config.validation.ConfigValidator.validate, goal.config.validation.ConfigValidator._validate_required_sections, goal.config.validation.ConfigValidator._validate_project_section, goal.config.validation.ConfigValidator._validate_git_section, goal.config.validation.ConfigValidator._validate_versioning_section, goal.config.validation.ConfigValidator._validate_publishing_section, goal.config.validation.ConfigValidator._check_bool, goal.config.validation.ConfigValidator._check_numeric, goal.config.validation.ConfigValidator._validate_advanced_section
 
+### goal.smart_commit.abstraction.CodeAbstraction
+> Extracts meaningful abstractions from code changes.
+- **Methods**: 11
+- **Key Methods**: goal.smart_commit.abstraction.CodeAbstraction.__init__, goal.smart_commit.abstraction.CodeAbstraction.get_domain, goal.smart_commit.abstraction.CodeAbstraction.get_language, goal.smart_commit.abstraction.CodeAbstraction._added_lines_from_diff, goal.smart_commit.abstraction.CodeAbstraction._dedupe_entities, goal.smart_commit.abstraction.CodeAbstraction.extract_entities, goal.smart_commit.abstraction.CodeAbstraction.extract_markdown_topics, goal.smart_commit.abstraction.CodeAbstraction.infer_benefit, goal.smart_commit.abstraction.CodeAbstraction.detect_features, goal.smart_commit.abstraction.CodeAbstraction.determine_abstraction_level
+
 ### goal.authors.manager.AuthorsManager
 > Manages project authors and team members.
 - **Methods**: 10
 - **Key Methods**: goal.authors.manager.AuthorsManager.__init__, goal.authors.manager.AuthorsManager.get_authors, goal.authors.manager.AuthorsManager.add_author, goal.authors.manager.AuthorsManager.remove_author, goal.authors.manager.AuthorsManager.update_author, goal.authors.manager.AuthorsManager.find_author, goal.authors.manager.AuthorsManager.list_authors, goal.authors.manager.AuthorsManager.get_current_author, goal.authors.manager.AuthorsManager.import_from_git, goal.authors.manager.AuthorsManager.export_to_contributors
+
+### goal.license.manager.LicenseManager
+> Manages license operations including template handling and file creation.
+- **Methods**: 10
+- **Key Methods**: goal.license.manager.LicenseManager.__init__, goal.license.manager.LicenseManager.get_available_licenses, goal.license.manager.LicenseManager.get_license_template, goal.license.manager.LicenseManager.add_custom_template, goal.license.manager.LicenseManager.create_license_file, goal.license.manager.LicenseManager.update_license_file, goal.license.manager.LicenseManager._detect_license_type, goal.license.manager.LicenseManager._resolve_license_id, goal.license.manager.LicenseManager._extract_owner_from_content, goal.license.manager.LicenseManager.validate_license_file
 
 ### goal.generator.analyzer.ContentAnalyzer
 > Analyze content for short summaries and per-file notes.
 - **Methods**: 9
 - **Key Methods**: goal.generator.analyzer.ContentAnalyzer.short_action_summary, goal.generator.analyzer.ContentAnalyzer._detect_tags, goal.generator.analyzer.ContentAnalyzer._summary_from_tags, goal.generator.analyzer.ContentAnalyzer._summary_from_paths, goal.generator.analyzer.ContentAnalyzer.per_file_notes, goal.generator.analyzer.ContentAnalyzer._get_added_lines, goal.generator.analyzer.ContentAnalyzer._notes_python, goal.generator.analyzer.ContentAnalyzer._notes_docs, goal.generator.analyzer.ContentAnalyzer._notes_shell
 
-### goal.smart_commit.abstraction.CodeAbstraction
-> Extracts meaningful abstractions from code changes.
-- **Methods**: 9
-- **Key Methods**: goal.smart_commit.abstraction.CodeAbstraction.__init__, goal.smart_commit.abstraction.CodeAbstraction.get_domain, goal.smart_commit.abstraction.CodeAbstraction.get_language, goal.smart_commit.abstraction.CodeAbstraction.extract_entities, goal.smart_commit.abstraction.CodeAbstraction.extract_markdown_topics, goal.smart_commit.abstraction.CodeAbstraction.infer_benefit, goal.smart_commit.abstraction.CodeAbstraction.detect_features, goal.smart_commit.abstraction.CodeAbstraction.determine_abstraction_level, goal.smart_commit.abstraction.CodeAbstraction.get_action_verb
-
 ### goal.formatter.MarkdownFormatter
 > Formats Goal output as structured markdown for LLM consumption.
 - **Methods**: 8
 - **Key Methods**: goal.formatter.MarkdownFormatter.__init__, goal.formatter.MarkdownFormatter.add_header, goal.formatter.MarkdownFormatter.add_metadata, goal.formatter.MarkdownFormatter.add_section, goal.formatter.MarkdownFormatter.add_list, goal.formatter.MarkdownFormatter.add_command_output, goal.formatter.MarkdownFormatter.add_summary, goal.formatter.MarkdownFormatter.render
-
-### goal.license.manager.LicenseManager
-> Manages license operations including template handling and file creation.
-- **Methods**: 8
-- **Key Methods**: goal.license.manager.LicenseManager.__init__, goal.license.manager.LicenseManager.get_available_licenses, goal.license.manager.LicenseManager.get_license_template, goal.license.manager.LicenseManager.add_custom_template, goal.license.manager.LicenseManager.create_license_file, goal.license.manager.LicenseManager.update_license_file, goal.license.manager.LicenseManager._detect_license_type, goal.license.manager.LicenseManager.validate_license_file
 
 ### goal.generator.git_ops.GitDiffOperations
 > Git diff operations with caching.
 - **Methods**: 7
 - **Key Methods**: goal.generator.git_ops.GitDiffOperations.__init__, goal.generator.git_ops.GitDiffOperations.get_diff_stats, goal.generator.git_ops.GitDiffOperations.get_name_status, goal.generator.git_ops.GitDiffOperations.get_numstat_map, goal.generator.git_ops.GitDiffOperations.get_changed_files, goal.generator.git_ops.GitDiffOperations.get_diff_content, goal.generator.git_ops.GitDiffOperations.clear_cache
 
-### goal.user_config.UserConfig
-> Manages user-specific configuration stored in ~/.goal
+### goal.recovery.divergent.DivergentHistoryStrategy
+> Handles divergent history errors.
 - **Methods**: 6
-- **Key Methods**: goal.user_config.UserConfig.__init__, goal.user_config.UserConfig._load, goal.user_config.UserConfig._save, goal.user_config.UserConfig.get, goal.user_config.UserConfig.set, goal.user_config.UserConfig.is_initialized
+- **Key Methods**: goal.recovery.divergent.DivergentHistoryStrategy.can_handle, goal.recovery.divergent.DivergentHistoryStrategy.recover, goal.recovery.divergent.DivergentHistoryStrategy._rebase_changes, goal.recovery.divergent.DivergentHistoryStrategy._merge_changes, goal.recovery.divergent.DivergentHistoryStrategy._pull_changes, goal.recovery.divergent.DivergentHistoryStrategy._force_push
+- **Inherits**: RecoveryStrategy
 
 ## Data Transformation Functions
 
@@ -425,23 +426,6 @@ Args:
     
 - **Output to**: Path, toml_file.exists, goal.toml_validation.validate_toml_file, errors.append
 
-### goal.version_validation._validate_single_type
-> Validate a single project type against its registry.
-
-Returns a result dict with registry info, or d
-- **Output to**: _VERSION_VALIDATORS.get, getattr, getattr
-
-### goal.version_validation.validate_project_versions
-> Validate versions across different registries.
-
-Returns:
-    Dict with validation results for each p
-- **Output to**: goal.version_validation._validate_single_type
-
-### goal.version_validation.format_validation_results
-> Format validation results for display.
-- **Output to**: results.items, messages.append, messages.append, messages.append, messages.append
-
 ### goal.formatter.format_push_result
 > Format push command result as markdown.
 - **Output to**: MarkdownFormatter, formatter.add_metadata, formatter.add_header, goal.formatter._build_functional_overview, formatter.add_section
@@ -460,11 +444,21 @@ Returns:
 
 ### goal.formatter.format_enhanced_summary
 > Format enhanced business-value summary as markdown.
-- **Output to**: MarkdownFormatter, formatter.add_metadata, formatter.add_header, sum, sum
+- **Output to**: MarkdownFormatter, formatter.add_metadata, formatter.add_header, formatter.add_section, goal.formatter._add_optional_sections
 
 ### goal.formatter.format_status_output
 > Format status command output as markdown.
 - **Output to**: MarkdownFormatter, formatter.add_header, None.strip, formatter.add_section, formatter.add_list
+
+### goal.deep_analyzer._format_entity_names
+
+### goal.deep_analyzer._format_relations
+- **Output to**: None.join
+
+### goal.deep_analyzer._format_complexity_change
+
+### goal.deep_analyzer._format_areas
+- **Output to**: None.join
 
 ### goal.project_bootstrap._validate_pfix_env
 > Validate that OPENROUTER_API_KEY is configured in .env.
@@ -493,6 +487,9 @@ This is a convenience function that extracts validation
 ### goal.push.stages.dry_run._format_markdown_dry_run
 > Return markdown-formatted dry-run output.
 - **Output to**: goal.formatter.format_push_result, detailed_result.get, goal.formatter.format_enhanced_summary, detailed_result.get, detailed_result.get
+
+### goal.push.core._validate_toml_or_exit
+- **Output to**: goal.toml_validation.check_pyproject_toml, click.echo, click.echo, sys.exit, click.style
 
 ### goal.push.core._validate_staged_files
 > Validate staged files for security issues.
@@ -526,32 +523,11 @@ Checks that the configuration file is valid, complete, and f
 Checks that the configuration file is valid, complete, and follow
 - **Output to**: config.command, click.option, click.option, click.echo, click.style
 
-### goal.postcommit.manager.PostCommitManager.validate_actions
-> Validate all configured actions.
-
-Returns:
-    True if all actions are valid
-- **Output to**: self.get_config, action_config.get, action_class, click.echo, action.validate_config
-
-### goal.postcommit.actions.PostCommitAction.validate_config
-> Validate action configuration.
-
-## Behavioral Patterns
-
-### state_machine_CodeChangeAnalyzer
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: goal.deep_analyzer.CodeChangeAnalyzer.__init__, goal.deep_analyzer.CodeChangeAnalyzer.analyze_file_diff, goal.deep_analyzer.CodeChangeAnalyzer._detect_language, goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff, goal.deep_analyzer.CodeChangeAnalyzer._detect_value_indicators
-
 ## Public API Surface
 
 Functions exposed as public API (no underscore prefix):
 
-- `goal.summary.validator.QualityValidator.auto_fix` - 59 calls
-- `goal.user_config.initialize_user_config` - 52 calls
 - `goal.cli.commit_cmd.validate` - 45 calls
-- `goal.push.core.execute_push_workflow` - 42 calls
-- `goal.push.stages.push_remote.push_to_remote` - 41 calls
 - `examples.api-usage.02_git_operations.main` - 38 calls
 - `goal.recovery.large_file.LargeFileStrategy.recover` - 38 calls
 - `goal.cli.commit_cmd.fix_summary` - 38 calls
@@ -559,20 +535,14 @@ Functions exposed as public API (no underscore prefix):
 - `goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary` - 36 calls
 - `examples.api-usage.01_basic_api.main` - 34 calls
 - `goal.cli.wizard_cmd.wizard` - 34 calls
-- `goal.doctor.python.PythonDiagnostics.check_py011_version_consistency` - 34 calls
-- `goal.user_config.show_user_config` - 31 calls
 - `examples.api-usage.04_version_validation.main` - 30 calls
-- `goal.doctor.python.PythonDiagnostics.check_py010_project_name_consistency` - 28 calls
+- `goal.push.core.execute_push_workflow` - 28 calls
 - `goal.cli.commit_cmd.commit` - 27 calls
 - `goal.smart_commit.generator.SmartCommitGenerator.generate_functional_body` - 27 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.calculate_quality_metrics` - 26 calls
-- `goal.doctor.python.PythonDiagnostics.check_py009_string_authors` - 26 calls
-- `goal.user_config.prompt_for_license` - 25 calls
 - `goal.recovery.divergent.DivergentHistoryStrategy.recover` - 25 calls
-- `goal.cli.version_utils.update_project_metadata` - 25 calls
+- `goal.push.stages.costs.update_cost_badges` - 25 calls
 - `goal.config.validation.validate_config_file` - 25 calls
-- `goal.smart_commit.abstraction.CodeAbstraction.extract_entities` - 25 calls
-- `goal.cli.main` - 24 calls
 - `examples.custom-hooks.pre-commit.main` - 23 calls
 - `examples.api-usage.03_commit_generation.main` - 23 calls
 - `examples.template-generator.generate.generate_project` - 23 calls
@@ -581,12 +551,22 @@ Functions exposed as public API (no underscore prefix):
 - `goal.cli.recover_cmd.recover` - 23 calls
 - `goal.cli.version_utils.update_readme_metadata` - 23 calls
 - `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
-- `goal.doctor.python.diagnose_python` - 23 calls
 - `goal.recovery.auth.AuthErrorStrategy.recover` - 22 calls
 - `goal.push.stages.commit.handle_split_commits` - 22 calls
 - `goal.push.core.show_workflow_preview` - 22 calls
 - `goal.config.validation.validate_config_interactive` - 22 calls
 - `goal.formatter.format_push_result` - 21 calls
+- `goal.push.stages.commit.get_commit_message` - 21 calls
+- `goal.cli.license_cmd.license_create` - 21 calls
+- `goal.cli.utils_cmd.status` - 21 calls
+- `goal.cli.publish.publish_project` - 21 calls
+- `goal.postcommit.actions.ScriptAction.execute` - 21 calls
+- `goal.doctor.core.diagnose_and_report` - 21 calls
+- `goal.authors.manager.AuthorsManager.list_authors` - 21 calls
+- `goal.license.manager.LicenseManager.create_license_file` - 21 calls
+- `goal.git_ops.run_git_with_status` - 20 calls
+- `goal.generator.generator.CommitMessageGenerator.generate_detailed_message` - 20 calls
+- `goal.cli.license_cmd.license_list` - 20 calls
 
 ## System Interactions
 
@@ -594,10 +574,6 @@ How components interact:
 
 ```mermaid
 graph TD
-    auto_fix --> copy
-    auto_fix --> categorize_files
-    auto_fix --> get
-    auto_fix --> has_banned_words
     validate --> command
     validate --> option
     validate --> get_staged_files
@@ -619,11 +595,15 @@ graph TD
     main --> detect_project_types
     wizard --> command
     wizard --> option
-    check_py011_version_ --> search
-    check_py011_version_ --> group
-    check_py011_version_ --> exists
     _remove_from_history --> echo
     _remove_from_history --> run_git
+    _remove_from_history --> style
+    _remove_from_history --> run
+    main --> get_current_version
+    _analyze_python_diff --> _extract_python_enti
+    _analyze_python_diff --> set
+    _analyze_python_diff --> sum
+    commit --> command
 ```
 
 ## Reverse Engineering Guidelines

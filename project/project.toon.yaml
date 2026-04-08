@@ -1,53 +1,53 @@
-# goal | 693 func | 83f | 22812L | python | 2026-04-02
+# goal | 751 func | 84f | 22763L | python | 2026-04-08
 
 HEALTH:
-  CC̄=4.8  critical=87 (limit:10)  dup=0  cycles=0
+  CC̄=4.4  critical=71 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     execute_push_workflow = 29 (limit:10)
-  !!! high_fan_out     QualityValidator.auto_fix = 27 (limit:10)
+  !!! high_fan_out     execute_push_workflow = 26 (limit:10)
   !!! high_fan_out     EnhancedSummaryGenerator.generate_enhanced_summary = 24 (limit:10)
-  !!! high_fan_out     diagnose_python = 22 (limit:10)
-  !!! high_fan_out     PythonDiagnostics.check_py011_version_consistency = 21 (limit:10)
   !!! high_fan_out     doctor = 20 (limit:10)
-  !!  cc_exceeded      format_enhanced_summary = 22 (limit:15)
-  !!  cc_exceeded      CodeAbstraction.extract_entities = 20 (limit:15)
-  !!  high_fan_out     _update_cost_badges = 19 (limit:10)
-  !!  high_fan_out     PythonDiagnostics.check_py009_string_authors = 19 (limit:10)
+  !!  high_fan_out     update_cost_badges = 19 (limit:10)
+  !!  high_fan_out     fix_summary = 18 (limit:10)
+  !!  high_fan_out     validate = 18 (limit:10)
+  !!  high_fan_out     _analyze_python_diff = 17 (limit:10)
+  !!  high_fan_out     CommitMessageGenerator.generate_detailed_message = 17 (limit:10)
+  !!  high_fan_out     commit = 17 (limit:10)
+  !!  high_fan_out     add_issues_to_todo = 17 (limit:10)
 
-MODULES[108] (top by size):
-  M[goal/project_bootstrap.py] 1189L C:0 F:33 CC↑15 D:3 (python)
-  M[goal/summary/generator.py] 670L C:1 F:18 CC↑19 D:0 (python)
-  M[goal/package_managers.py] 628L C:1 F:12 CC↑11 D:1 (python)
-  M[goal/license/manager.py] 574L C:1 F:10 CC↑18 D:1 (python)
+MODULES[109] (top by size):
+  M[goal/project_bootstrap.py] 1216L C:0 F:38 CC↑14 D:3 (python)
+  M[goal/doctor/python.py] 625L C:1 F:31 CC↑10 D:0 (python)
+  M[goal/package_managers.py] 616L C:1 F:16 CC↑5 D:1 (python)
+  M[goal/deep_analyzer.py] 588L C:1 F:27 CC↑13 D:0 (python)
   M[goal/git_ops.py] 574L C:0 F:28 CC↑11 D:16 (python)
-  M[goal/deep_analyzer.py] 560L C:1 F:23 CC↑16 D:0 (python)
-  M[goal/doctor/python.py] 545L C:1 F:17 CC↑17 D:0 (python)
-  M[goal/smart_commit/generator.py] 510L C:1 F:22 CC↑16 D:0 (python)
+  M[goal/license/manager.py] 570L C:1 F:12 CC↑10 D:1 (python)
+  M[goal/smart_commit/generator.py] 527L C:1 F:25 CC↑13 D:0 (python)
+  M[goal/summary/generator.py] 523L C:1 F:14 CC↑15 D:0 (python)
   M[goal/config/validation.py] 474L C:2 F:15 CC↑14 D:2 (python)
-  M[goal/push/core.py] 468L C:1 F:14 CC↑17 D:4 (python)
-  M[goal/config/manager.py] 457L C:1 F:25 CC↑10 D:7 (python)
-  M[goal/generator/analyzer.py] 438L C:2 F:23 CC↑15 D:0 (python)
+  M[goal/config/manager.py] 457L C:1 F:25 CC↑10 D:22 (python)
+  M[goal/generator/analyzer.py] 442L C:2 F:27 CC↑14 D:0 (python)
   M[goal/config/constants.py] 436L C:0 F:0 CC↑0 D:0 (python)
-  M[goal/formatter.py] 408L C:1 F:17 CC↑22 D:3 (python)
-  M[goal/generator/generator.py] 382L C:1 F:24 CC↑12 D:1 (python)
-  LANGS: python:105/shell:3
+  M[goal/push/core.py] 412L C:1 F:17 CC↑10 D:3 (python)
+  M[goal/push/stages/push_remote.py] 382L C:0 F:17 CC↑11 D:1 (python)
+  M[goal/generator/generator.py] 381L C:1 F:24 CC↑12 D:1 (python)
+  LANGS: python:106/shell:3
 
 HOTSPOTS[10]:
-  ★ execute_push_workflow fan=29  // Execute the complete push workflow.
-  ★ QualityValidator.auto_fix fan=27  // Auto-fix summary issues and return corrected summary.
+  ★ execute_push_workflow fan=26  // Execute the complete push workflow.
   ★ EnhancedSummaryGenerator.generate_enhanced_summary fan=24  // Generate complete enhanced summary with business value focus.
-  ★ diagnose_python fan=22  // Run all Python-specific diagnostics.
-  ★ PythonDiagnostics.check_py011_version_consistency fan=21  // PY011: Check for consistent version across all config files.
+  ★ doctor fan=20  // Diagnose and auto-fix common project configuration issues.
+  ★ update_cost_badges fan=19  // Update AI cost badges in README using costs package.
+  ★ fix_summary fan=18  // Auto-fix commit summary quality issues.
 
-REFACTOR[15]:
-  [1] H/H Split god module goal/summary/generator.py (670L, 1 classes)
-  [2] H/H Split god module goal/license/manager.py (574L, 1 classes)
-  [3] H/H Split god module goal/doctor/python.py (545L, 1 classes)
-  [4] H/H Split god module goal/deep_analyzer.py (560L, 1 classes)
-  [5] H/H Split god module goal/smart_commit/generator.py (510L, 1 classes)
+REFACTOR[12]:
+  [1] H/H Split god module goal/summary/generator.py (523L, 1 classes)
+  [2] H/H Split god module goal/project_bootstrap.py (1216L, 0 classes)
+  [3] H/H Split god module goal/deep_analyzer.py (588L, 1 classes)
+  [4] H/H Split god module goal/smart_commit/generator.py (527L, 1 classes)
+  [5] H/H Split god module goal/git_ops.py (574L, 0 classes)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-04-02 CC̄=4.8 crit=87 22812L // Automated analysis
+  2026-04-08 CC̄=4.4 crit=71 22763L // Automated analysis

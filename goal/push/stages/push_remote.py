@@ -17,6 +17,48 @@ if HAS_CLICKMD:
     from clickmd import echo_md
 
 
+def _print_push_header(branch: str, yes: bool) -> None:
+    if not yes:
+        if HAS_CLICKMD:
+            echo_md("\n### 📤 Pushing to Remote Repository")
+            echo_md(f"**Branch:** `{branch}`")
+            echo_md(f"**Remote:** `origin`")
+        else:
+            click.echo(click.style("\n📤 Pushing to Remote Repository", fg='blue', bold=True))
+            click.echo(f"Branch: {branch}")
+            click.echo("Remote: origin")
+    else:
+        click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg='cyan'))
+
+
+def _push_tag_if_needed(tag_name: Optional[str], no_tag: bool) -> None:
+    if tag_name and not no_tag:
+        _echo_cmd(['git', 'push', 'origin', tag_name])
+        result = run_git('push', 'origin', tag_name, capture=False)
+        if result.returncode != 0:
+            click.echo(click.style(f"⚠  Could not push tag {tag_name}.", fg='yellow'))
+
+
+def _handle_push_failure(result, branch: str, yes: bool) -> bool:
+    click.echo(click.style(f"✗ Push failed (exit {result.returncode}).", fg='red'))
+
+    if not yes and result.stderr:
+        if _offer_recovery(result.stderr):
+            click.echo(click.style("\nRetrying push after recovery...", fg='cyan'))
+            retry = run_git('push', 'origin', branch, capture=False)
+            if retry.returncode == 0:
+                click.echo(click.style("✓ Push successful after recovery!", fg='green'))
+                return True
+            click.echo(click.style("✗ Push still failed after recovery.", fg='red'))
+            sys.exit(1)
+
+        click.echo(click.style("Push failed. Run 'goal recover' to attempt automatic recovery.", fg='yellow'))
+        sys.exit(1)
+
+    click.echo(click.style("Push failed. Run 'goal recover' to attempt automatic recovery.", fg='yellow'))
+    return False
+
+
 def push_to_remote(
     branch: str,
     tag_name: Optional[str],
@@ -25,60 +67,23 @@ def push_to_remote(
 ) -> bool:
     """Push commits and tags to remote."""
     has_remote = ensure_remote(auto=yes)
-    
     if not has_remote:
         click.echo(click.style("  ℹ  No remote configured — commit saved locally.", fg='yellow'))
         return False
-    
+
     if not yes:
         if not confirm("Push to remote?"):
             click.echo(click.style("  Skipping push (user chose N).", fg='yellow'))
             return False
-    
+
     try:
-        # Show push operation header
-        if not yes:
-            if HAS_CLICKMD:
-                echo_md("\n### 📤 Pushing to Remote Repository")
-                echo_md(f"**Branch:** `{branch}`")
-                echo_md(f"**Remote:** `origin`")
-            else:
-                click.echo(click.style("\n📤 Pushing to Remote Repository", fg='blue', bold=True))
-                click.echo(f"Branch: {branch}")
-                click.echo(f"Remote: origin")
-        else:
-            click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg='cyan'))
-        
-        # Push with enhanced display
+        _print_push_header(branch, yes)
         result = run_git_with_status('push', 'origin', branch, capture=True, show_output=False)
-        
+
         if result.returncode != 0:
-            click.echo(click.style(f"✗ Push failed (exit {result.returncode}).", fg='red'))
-            
-            # Try recovery if not in auto mode
-            if not yes and result.stderr:
-                if _offer_recovery(result.stderr):
-                    # Retry push after recovery
-                    click.echo(click.style("\nRetrying push after recovery...", fg='cyan'))
-                    result = run_git('push', 'origin', branch, capture=False)
-                    if result.returncode == 0:
-                        click.echo(click.style("✓ Push successful after recovery!", fg='green'))
-                    else:
-                        click.echo(click.style(f"✗ Push still failed after recovery.", fg='red'))
-                        sys.exit(1)
-                else:
-                    click.echo(click.style("Push failed. Run 'goal recover' to attempt automatic recovery.", fg='yellow'))
-                    sys.exit(1)
-            else:
-                click.echo(click.style("Push failed. Run 'goal recover' to attempt automatic recovery.", fg='yellow'))
-                return False
-        
-        if tag_name and not no_tag:
-            _echo_cmd(['git', 'push', 'origin', tag_name])
-            result = run_git('push', 'origin', tag_name, capture=False)
-            if result.returncode != 0:
-                click.echo(click.style(f"⚠  Could not push tag {tag_name}.", fg='yellow'))
-        
+            return _handle_push_failure(result, branch, yes)
+
+        _push_tag_if_needed(tag_name, no_tag)
         click.echo(click.style(f"\n✓ Successfully pushed to {branch}", fg='green', bold=True))
         return True
     except Exception as e:

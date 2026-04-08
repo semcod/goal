@@ -111,6 +111,87 @@ class PushContext:
         return self.obj.get(key, default)
 
 
+def _validate_toml_or_exit(dry_run: bool) -> None:
+    if dry_run:
+        return
+    toml_error = check_pyproject_toml()
+    if toml_error:
+        click.echo(click.style(toml_error, fg='red', bold=True), err=True)
+        click.echo(click.style("\nFix the TOML syntax error and try again.", fg='yellow'), err=True)
+        sys.exit(1)
+
+
+def _apply_enhanced_quality_gates(
+    ctx_obj: Dict[str, Any],
+    commit_msg: str,
+    detailed_result: Dict,
+    files: List[str],
+    stats: Dict,
+    message: Optional[str],
+    markdown: bool,
+) -> str:
+    if message or not detailed_result or not detailed_result.get('enhanced'):
+        return commit_msg
+
+    total_adds = sum(s[0] for s in stats.values())
+    total_dels = sum(s[1] for s in stats.values())
+    return enforce_quality_gates(
+        ctx_obj, commit_msg, detailed_result, files, total_adds, total_dels,
+        ctx_obj['yes'], markdown
+    )
+
+
+def _handle_no_files(ctx_obj: Dict[str, Any], project_types: List[str], dry_run: bool, markdown: bool, files: List[str]) -> bool:
+    if files and files != ['']:
+        return False
+    _handle_no_changes(ctx_obj, project_types, dry_run, markdown)
+    return True
+
+
+def _abort_if_missing_commit_title(commit_title: Optional[str]) -> bool:
+    if commit_title:
+        return False
+    click.echo(click.style("No changes to commit.", fg='yellow'))
+    return True
+
+
+def _maybe_show_workflow_preview(
+    ctx_obj: Dict[str, Any],
+    files: List[str],
+    stats: Dict,
+    current_version: str,
+    new_version: str,
+    commit_msg: str,
+    commit_body: Optional[str],
+    markdown: bool,
+) -> None:
+    if not ctx_obj['yes']:
+        show_workflow_preview(files, stats, current_version, new_version, commit_msg, commit_body, markdown, ctx_obj)
+
+
+def _run_test_stage_or_exit(
+    project_types: List[str],
+    ctx_obj: Dict[str, Any],
+    markdown: bool,
+    files: List[str],
+    stats: Dict,
+    current_version: str,
+    new_version: str,
+    commit_msg: str,
+    commit_body: Optional[str],
+):
+    test_result, test_exit_code = run_test_stage(
+        project_types, ctx_obj['yes'], markdown, ctx_obj, files, stats,
+        current_version, new_version, commit_msg, commit_body
+    )
+
+    if test_exit_code != 0 and ctx_obj['yes']:
+        click.echo(click.style("Aborting workflow because tests failed.", fg='red', bold=True))
+        sys.exit(1)
+
+    return test_result, test_exit_code
+
+
 def execute_push_workflow(
     ctx_obj: Dict[str, Any],
     bump: str,
@@ -132,103 +213,68 @@ def execute_push_workflow(
 ) -> None:
     """Execute the complete push workflow."""
     
-    # Early TOML validation for clear error messages
-    if not dry_run:
-        toml_error = check_pyproject_toml()
-        if toml_error:
-            click.echo(click.style(toml_error, fg='red', bold=True), err=True)
-            click.echo(click.style("\nFix the TOML syntax error and try again.", fg='yellow'), err=True)
-            sys.exit(1)
+    _validate_toml_or_exit(dry_run)
     
-    # Start timing
     start_time = time.time()
     
-    # Initialize context
     _initialize_context(ctx_obj, bump, message, yes, markdown)
     
-    # Get updated yes value from context (includes -a flag)
     yes = ctx_obj['yes']
     no_publish = no_publish or ctx_obj.get('no_publish', False)
     
-    # Detect and bootstrap projects
     project_types = _detect_and_bootstrap_projects(ctx_obj, dry_run, yes)
     
-    # Stage all changes
     if not dry_run:
         run_git('add', '-A')
     
-    # Get staged files
     files = get_staged_files()
-    if not files or files == ['']:
-        _handle_no_changes(ctx_obj, project_types, dry_run, markdown)
+    if _handle_no_files(ctx_obj, project_types, dry_run, markdown, files):
         return
     
-    # Validate staged files
     _validate_staged_files(ctx_obj, dry_run, force)
     
-    # Get diff content and stats
     diff_content = get_diff_content()
     stats = get_diff_stats()
     
-    # Generate commit message
     commit_title, commit_body, detailed_result = get_commit_message(
         ctx_obj, files, diff_content, message, ticket, abstraction
     )
     
-    if not commit_title:
-        click.echo(click.style("No changes to commit.", fg='yellow'))
+    if _abort_if_missing_commit_title(commit_title):
         return
     
     commit_msg = commit_title
     
-    # Get version info
     current_version, new_version = get_version_info()
     
-    # Enforce quality gates
-    if not message and detailed_result and detailed_result.get('enhanced'):
-        total_adds = sum(s[0] for s in stats.values())
-        total_dels = sum(s[1] for s in stats.values())
-        commit_msg = enforce_quality_gates(
-            ctx_obj, commit_msg, detailed_result, files, total_adds, total_dels,
-            ctx_obj['yes'], markdown
-        )
+    commit_msg = _apply_enhanced_quality_gates(
+        ctx_obj, commit_msg, detailed_result, files, stats, message, markdown
+    )
     
-    # Handle dry run
     if dry_run:
         handle_dry_run(ctx_obj, project_types, files, stats, current_version, new_version,
                       commit_msg, commit_body, detailed_result, split, ticket, bump,
                       no_version_sync, no_changelog, no_tag, markdown)
         return
     
-    # Interactive workflow preview
-    if not ctx_obj['yes']:
-        show_workflow_preview(files, stats, current_version, new_version,
-                             commit_msg, commit_body, markdown, ctx_obj)
+    _maybe_show_workflow_preview(ctx_obj, files, stats, current_version, new_version,
+                                 commit_msg, commit_body, markdown)
     
-    # Test stage
-    test_result, test_exit_code = run_test_stage(
-        project_types, ctx_obj['yes'], markdown, ctx_obj, files, stats,
-        current_version, new_version, commit_msg, commit_body
+    test_result, test_exit_code = _run_test_stage_or_exit(
+        project_types, ctx_obj, markdown, files, stats, current_version, new_version,
+        commit_msg, commit_body
     )
-
-    if test_exit_code != 0 and ctx_obj['yes']:
-        click.echo(click.style("Aborting workflow because tests failed.", fg='red', bold=True))
-        sys.exit(1)
     
-    # Commit changes
     _handle_commit_phase(ctx_obj, split, message, commit_title, commit_body, commit_msg,
                          files, ticket, new_version, current_version, no_version_sync,
                          no_changelog)
     
-    # Create tag
     tag_name = create_tag(new_version, no_tag)
     
-    # Push to remote
     from goal.git_ops import get_remote_branch
     branch = get_remote_branch()
     push_to_remote(branch, tag_name, no_tag, ctx_obj['yes'])
     
-    # Publish
     publish_success = handle_publish(
         project_types,
         new_version,
@@ -237,16 +283,13 @@ def execute_push_workflow(
         config=ctx_obj.get('config'),
     )
     
-    # Calculate elapsed time
     elapsed = time.time() - start_time
     ctx_obj['_elapsed_time'] = elapsed
     
-    # Final summary
     output_final_summary(ctx_obj, markdown, project_types, files, stats, current_version,
                         new_version, commit_msg, commit_body, test_exit_code,
                         publish_success, no_tag)
     
-    # Print timing info
     click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg='cyan'))
 
 

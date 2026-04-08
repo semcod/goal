@@ -15,7 +15,7 @@ from goal.summary import (
 )
 
 
-# Maintain backward compatibility for direct function access
+# Maintain backward compatibility for direct access
 __all__ = [
     'SummaryQualityFilter',
     'QualityValidator',

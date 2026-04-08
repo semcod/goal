@@ -1,28 +1,28 @@
-# redup/duplication | 11 groups | 95f 18864L | 2026-04-02
+# redup/duplication | 11 groups | 95f 18357L | 2026-04-08
 
 SUMMARY:
   files_scanned: 95
-  total_lines:   18864
+  total_lines:   18357
   dup_groups:    11
   dup_fragments: 39
   saved_lines:   238
-  scan_ms:       6887
+  scan_ms:       16026
 
 DUPLICATES[11] (ranked by impact):
   [4093ed9ae3929a54] ! STRU  hooks_status  L=8 N=6 saved=40 sim=1.00
       goal/cli/hooks_cmd.py:0-7  (hooks_status)
+      goal/cli/postcommit_cmd.py:0-7  (postcommit_list)
+      goal/cli/validation_cmd.py:0-7  (validation_list)
       goal/cli/authors_cmd.py:0-7  (authors_list)
       goal/cli/authors_cmd.py:0-7  (authors_import)
       goal/cli/authors_cmd.py:0-7  (authors_export)
-      goal/cli/postcommit_cmd.py:0-7  (postcommit_list)
-      goal/cli/validation_cmd.py:0-7  (validation_list)
   [ff6389d03f2bd5a4] ! STRU  hooks  L=7 N=6 saved=35 sim=1.00
       goal/cli/hooks_cmd.py:0-6  (hooks)
-      goal/cli/authors_cmd.py:0-6  (authors)
-      goal/cli/postcommit_cmd.py:0-6  (postcommit)
       goal/cli/license_cmd.py:0-6  (license)
+      goal/cli/postcommit_cmd.py:0-6  (postcommit)
       goal/cli/validation_cmd.py:0-6  (validation)
       goal/cli/config_cmd.py:0-6  (config)
+      goal/cli/authors_cmd.py:0-6  (authors)
   [e8e1ba5d936993f1] ! STRU  get_name  L=4 N=9 saved=32 sim=1.00
       goal/postcommit/actions.py:0-3  (get_name)
       goal/postcommit/actions.py:0-3  (get_name)
@@ -91,7 +91,7 @@ REFACTOR[11] (ranked by priority):
   [10] ○ extract_function   → goal/utils/get_name.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: goal/postcommit/actions.py, goal/validation/rules.py
-  [11] ○ extract_function   → goal/utils/__init__.py
+  [11] ○ extract_class      → goal/utils/__init__.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: goal/deep_analyzer.py, goal/generator/git_ops.py
 

@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [0.1.10] - 2026-04-07
+
+### Fixed
+- Fix string-concat issues (ticket-8057661f)
+- Fix wildcard-imports issues (ticket-055e3416)
+- Fix string-concat issues (ticket-f0741dec)
+- Fix wildcard-imports issues (ticket-bbe82c9b)
+
 ## [2.1.177] - 2026-04-01
 
 ### Docs

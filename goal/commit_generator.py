@@ -27,9 +27,9 @@ __all__ = [
 # Example usage as a script
 if __name__ == '__main__':
     import sys
-    
+
     generator = CommitMessageGenerator()
-    
+
     # Check if we want detailed output
     if '--detailed' in sys.argv:
         result = generator.generate_detailed_message()

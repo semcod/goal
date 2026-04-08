@@ -155,28 +155,32 @@ class ChangeAnalyzer:
 
     def _score_by_signals(self, scores: defaultdict, signals: Dict[str, bool], files: List[str], diff_content: str) -> None:
         """Apply scoring based on detected signals."""
+        self._score_package_signals(scores, signals, diff_content)
+        self._score_text_signals(scores, diff_content)
+        self._score_file_signals(scores, signals)
+        self._score_path_signals(scores, files)
+
+    def _score_package_signals(self, scores: defaultdict, signals: Dict[str, bool], diff_content: str) -> None:
         if signals['has_package_code']:
             scores['docs'] = max(0, scores['docs'] - 5)
             scores['chore'] += 1
             self._score_new_functionality(scores, signals, diff_content)
 
-        if signals['has_new_goal_python_file']:
-            scores['feat'] += 4
-
-        # Explicit bug fix mentions
+    def _score_text_signals(self, scores: defaultdict, diff_content: str) -> None:
         if any(k in diff_content.lower() for k in ['fix', 'bug', 'error', 'exception', 'crash']):
             scores['fix'] += 2
 
+    def _score_file_signals(self, scores: defaultdict, signals: Dict[str, bool]) -> None:
+        if signals['has_new_goal_python_file']:
+            scores['feat'] += 4
         if signals['has_docs_only']:
             scores['docs'] += 5
-
         if signals['has_ci_only']:
             scores['build'] += 5
 
-        # Version/config file signals
+    def _score_path_signals(self, scores: defaultdict, files: List[str]) -> None:
         if any('version' in f or 'package' in f or 'pyproject' in f for f in files):
             scores['chore'] += 3
-
         if any('docker' in f or 'ci' in f or 'cd' in f for f in files):
             scores['build'] += 3
 

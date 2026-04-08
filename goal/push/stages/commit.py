@@ -52,6 +52,32 @@ def get_commit_message(
     return None, None, None
 
 
+def _build_validation_summary(commit_msg: str, detailed_result: Dict, total_adds: int, total_dels: int) -> Dict[str, Any]:
+    return {
+        'title': commit_msg,
+        'intent': detailed_result.get('intent'),
+        'metrics': {
+            'lines_added': total_adds,
+            'lines_deleted': total_dels,
+        }
+    }
+
+
+def _confirm_suggested_title(commit_msg: str, suggested_title: str, yes: bool) -> bool:
+    if not suggested_title or suggested_title == commit_msg:
+        return False
+    if yes:
+        return True
+    return confirm(f"Apply suggested title?\n\nCurrent: {commit_msg}\nSuggested: {suggested_title}")
+
+
+def _echo_applied_title_fix(ctx_obj: Dict[str, Any], commit_msg: str, markdown: bool) -> None:
+    if markdown or ctx_obj.get('markdown'):
+        click.echo(f"\n- **Applied title fix:** `{commit_msg}`")
+    else:
+        click.echo(click.style(f"\n✓ Applied title fix: {commit_msg}", fg='green'))
+
+
 def enforce_quality_gates(
     ctx_obj: Dict[str, Any],
     commit_msg: str,
@@ -72,16 +98,7 @@ def enforce_quality_gates(
     
     try:
         validator = QualityValidator(config_dict or {})
-        
-        summary = {
-            'title': commit_msg,
-            'intent': detailed_result.get('intent'),
-            'metrics': {
-                'lines_added': total_adds,
-                'lines_deleted': total_dels,
-            }
-        }
-        
+        summary = _build_validation_summary(commit_msg, detailed_result, total_adds, total_dels)
         validation = validator.validate(summary, detailed_result.get('files') or files)
         
         if validation.get('valid', True):
@@ -90,19 +107,9 @@ def enforce_quality_gates(
         suggested = validator.auto_fix(summary, files, total_adds, total_dels)
         suggested_title = (suggested or {}).get('title', '')
         
-        if not suggested_title or suggested_title == commit_msg:
-            return commit_msg
-        
-        apply_fix = True
-        if not yes:
-            apply_fix = confirm(f"Apply suggested title?\n\nCurrent: {commit_msg}\nSuggested: {suggested_title}")
-        
-        if apply_fix:
+        if _confirm_suggested_title(commit_msg, suggested_title, yes):
             commit_msg = suggested_title
-            if markdown or ctx_obj.get('markdown'):
-                click.echo(f"\n- **Applied title fix:** `{commit_msg}`")
-            else:
-                click.echo(click.style(f"\n✓ Applied title fix: {commit_msg}", fg='green'))
+            _echo_applied_title_fix(ctx_obj, commit_msg, markdown)
         
         return commit_msg
     except Exception:

@@ -14,7 +14,7 @@ from goal.config import (
 )
 
 
-# Maintain backward compatibility for direct function access
+# Maintain backward compatibility for direct access
 __all__ = [
     'GoalConfig',
     'init_config',

@@ -1,7 +1,12 @@
+
+CONSTANT_70 = 70
+
 """User configuration management for goal.
 
 Stores user preferences in ~/.goal including:
-- Git author information (name, email)
+
+if __name__ == "__main__":
+    - Git author information (name, email)
 - Default license preference
 - Other user-specific settings
 """
@@ -104,9 +109,9 @@ def get_git_user_email() -> Optional[str]:
 def prompt_for_license() -> Dict[str, str]:
     """Interactive prompt for license selection."""
     click.echo()
-    click.echo(click.style("=" * 70, fg='cyan'))
+    click.echo(click.style("=" * CONSTANT_70, fg='cyan'))
     click.echo(click.style("  📄 License Selection", fg='cyan', bold=True))
-    click.echo(click.style("=" * 70, fg='cyan'))
+    click.echo(click.style("=" * CONSTANT_70, fg='cyan'))
     click.echo()
     click.echo("Please select your preferred default license:")
     click.echo()
@@ -147,9 +152,9 @@ def initialize_user_config(force: bool = False) -> UserConfig:
         return config
     
     click.echo()
-    click.echo(click.style("=" * 70, fg='cyan'))
+    click.echo(click.style("=" * CONSTANT_70, fg='cyan'))
     click.echo(click.style("  🎯 Goal - First Time Setup", fg='cyan', bold=True))
-    click.echo(click.style("=" * 70, fg='cyan'))
+    click.echo(click.style("=" * CONSTANT_70, fg='cyan'))
     click.echo()
     
     # Get git user information
@@ -197,9 +202,9 @@ def initialize_user_config(force: bool = False) -> UserConfig:
     config.set('license_classifier', license_info['classifier'])
     
     click.echo()
-    click.echo(click.style("=" * 70, fg='cyan'))
+    click.echo(click.style("=" * CONSTANT_70, fg='cyan'))
     click.echo(click.style("✓ Configuration saved to ~/.goal", fg='green', bold=True))
-    click.echo(click.style("=" * 70, fg='cyan'))
+    click.echo(click.style("=" * CONSTANT_70, fg='cyan'))
     click.echo()
     click.echo("Your preferences:")
     click.echo(f"  Author: {click.style(git_name, fg='white', bold=True)} <{click.style(git_email, fg='white', bold=True)}>")
@@ -232,9 +237,9 @@ def show_user_config():
         return
     
     click.echo()
-    click.echo(click.style("=" * 70, fg='cyan'))
+    click.echo(click.style("=" * CONSTANT_70, fg='cyan'))
     click.echo(click.style("  📋 Goal User Configuration", fg='cyan', bold=True))
-    click.echo(click.style("=" * 70, fg='cyan'))
+    click.echo(click.style("=" * CONSTANT_70, fg='cyan'))
     click.echo()
     click.echo(f"Config file: {click.style(str(config.config_path), fg='white', bold=True)}")
     click.echo()

@@ -446,41 +446,17 @@ class LicenseManager:
             click.echo(click.style("ℹ No updates specified", fg='cyan'))
             return True
         
-        # Get current content to detect license type if not specified
         current_content = self.license_file.read_text(encoding='utf-8')
-        
+
+        license_id = self._resolve_license_id(current_content, license_id)
         if not license_id:
-            # Try to detect current license
-            for lid, template in LICENSE_TEMPLATES.items():
-                # Simple detection by checking for unique phrases
-                if 'Permission is hereby granted' in current_content and lid == 'MIT':
-                    license_id = lid
-                    break
-                elif 'Apache License' in current_content and 'Version 2.0' in current_content:
-                    license_id = 'Apache-2.0'
-                    break
-                elif 'GNU GENERAL PUBLIC LICENSE' in current_content and 'Version 3' in current_content:
-                    license_id = 'GPL-3.0'
-                    break
-                elif 'BSD 3-Clause License' in current_content:
-                    license_id = 'BSD-3-Clause'
-                    break
-                elif 'ISC License' in current_content:
-                    license_id = 'ISC'
-                    break
-            
-            if not license_id:
-                click.echo(click.style("⚠ Could not detect current license type", fg='yellow'))
-                if not click.confirm(click.style("Proceed anyway?", fg='cyan'), default=False):
-                    return False
-        
-        # Extract current info if not provided
+            return False
+
         if not fullname:
-            # Try to extract from current content
-            match = re.search(r'Copyright(?: \(c\))? (\d+) (.+)', current_content)
-            if match:
-                year = int(match.group(1))
-                fullname = match.group(2)
+            extracted_year, extracted_fullname = self._extract_owner_from_content(current_content)
+            if extracted_fullname:
+                year = extracted_year
+                fullname = extracted_fullname
             else:
                 user_config = UserConfig()
                 fullname = user_config.get('author_name', 'Author Name')
@@ -507,6 +483,26 @@ class LicenseManager:
             if all(sig in content for sig in signatures):
                 return lid
         return None
+
+    def _resolve_license_id(self, current_content: str, license_id: Optional[str]) -> Optional[str]:
+        if license_id:
+            return license_id
+
+        license_id = self._detect_license_type(current_content)
+        if license_id:
+            return license_id
+
+        click.echo(click.style("⚠ Could not detect current license type", fg='yellow'))
+        if not click.confirm(click.style("Proceed anyway?", fg='cyan'), default=False):
+            return None
+        return license_id
+
+    @staticmethod
+    def _extract_owner_from_content(content: str) -> tuple[Optional[int], Optional[str]]:
+        match = re.search(r'Copyright(?: \(c\))? (\d+) (.+)', content)
+        if match:
+            return int(match.group(1)), match.group(2)
+        return None, None
 
     def validate_license_file(self) -> Tuple[bool, List[str]]:
         """Validate the LICENSE file.

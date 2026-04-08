@@ -7,6 +7,7 @@ from pathlib import Path
 
 from goal.deep_analyzer import CodeChangeAnalyzer
 from goal.summary.quality_filter import SummaryQualityFilter
+from goal.summary.body_formatter import CommitBodyFormatter
 
 
 class EnhancedSummaryGenerator:
@@ -105,6 +106,7 @@ class EnhancedSummaryGenerator:
         self.config = config or {}
         self.analyzer = CodeChangeAnalyzer()
         self.quality_filter = SummaryQualityFilter()
+        self.body_formatter = CommitBodyFormatter(self.quality_filter)
         self._cache = {}
     
     def map_entity_to_role(self, entity_name: str) -> str:
@@ -136,6 +138,39 @@ class EnhancedSummaryGenerator:
             return 'analyzer'
         
         return entity_name  # Return as-is if no pattern matches
+
+    @staticmethod
+    def _file_stems(files: List[str]) -> List[str]:
+        return [Path(f).stem.lower() for f in files]
+
+    @staticmethod
+    def _special_title_from_files(file_stems: List[str], areas: List[str]) -> str:
+        if any('analyzer' in s or 'analysis' in s for s in file_stems):
+            if any('deep' in s or 'smart' in s for s in file_stems):
+                return "intelligent code analysis pipeline"
+            return "code analysis engine"
+
+        if any('commit' in s for s in file_stems):
+            if any('smart' in s for s in file_stems):
+                return "smart commit generation system"
+            return "commit message generator"
+
+        if 'cli' in areas and any('cli' in s for s in file_stems):
+            return "CLI interface improvements"
+
+        if 'configuration' in areas:
+            return "configuration management system"
+
+        return ''
+
+    @staticmethod
+    def _title_from_capabilities(capabilities: List[Dict]) -> str:
+        if not capabilities:
+            return ''
+        cap_name = capabilities[0]['capability']
+        if len(capabilities) >= 3:
+            return f"{cap_name} with {len(capabilities) - 1} supporting modules"
+        return cap_name
     
     def detect_capabilities(self, files: List[str], diff_content: str) -> List[Dict[str, str]]:
         """Detect capabilities from files and diff content."""
@@ -340,41 +375,15 @@ class EnhancedSummaryGenerator:
         files = files or []
         aggregated = analysis.get('aggregated', {})
         areas = aggregated.get('functional_areas', [])
-        
-        # Check for specific system patterns
-        file_stems = [Path(f).stem.lower() for f in files]
-        
-        # Detect analysis pipeline
-        if any('analyzer' in s or 'analysis' in s for s in file_stems):
-            if any('deep' in s or 'smart' in s for s in file_stems):
-                return "intelligent code analysis pipeline"
-            return "code analysis engine"
-        
-        # Detect commit system
-        if any('commit' in s for s in file_stems):
-            if any('smart' in s for s in file_stems):
-                return "smart commit generation system"
-            return "commit message generator"
-        
-        # Detect CLI system
-        if 'cli' in areas and any('cli' in s for s in file_stems):
-            return "CLI interface improvements"
-        
-        # Detect config system
-        if 'configuration' in areas:
-            return "configuration management system"
-        
-        # Use capabilities if meaningful
-        if capabilities:
-            primary = capabilities[0]
-            cap_name = primary['capability']
-            
-            # Make capability name more specific
-            if len(capabilities) >= 3:
-                return f"{cap_name} with {len(capabilities)-1} supporting modules"
-            return cap_name
-        
-        # Fallback to inferred value
+
+        special_title = self._special_title_from_files(self._file_stems(files), areas)
+        if special_title:
+            return special_title
+
+        capability_title = self._title_from_capabilities(capabilities)
+        if capability_title:
+            return capability_title
+
         return analysis.get('functional_value', 'code improvements')
     
     def generate_enhanced_summary(self, files: List[str], 
@@ -445,7 +454,7 @@ class EnhancedSummaryGenerator:
         title = self.generate_value_title(capabilities, analysis, files)
         
         # Build formatted output
-        body = self._format_enhanced_body(
+        body = self.body_formatter.format_body(
             capabilities=capabilities,
             roles=roles,
             relations=relations,
@@ -474,162 +483,6 @@ class EnhancedSummaryGenerator:
             'analysis': analysis,
             'files': files  # Include deduped files for validation
         }
-    
-    @staticmethod
-    def _format_entity_list(label: str, entities: List[Dict], limit: int = 6) -> str:
-        """Format a list of entities as a YAML-like line, e.g. 'added: [a, b]'."""
-        names = [e['name'] for e in entities[:limit]]
-        suffix = f", +{len(entities) - limit} more" if len(entities) > limit else ""
-        return f"    {label}: [{', '.join(names)}{suffix}]"
-
-    def _format_file_change(self, f: str, fa: Dict, categorized: Dict,
-                            change_lines: List[str], test_scenarios: List[str]) -> bool:
-        """Append change lines for a single file. Returns True if any entities found."""
-        added_ents = fa.get('added_entities', [])
-        modified_ents = fa.get('modified_entities', [])
-        removed_ents = fa.get('removed_entities', [])
-
-        if not added_ents and not modified_ents and not removed_ents:
-            return False
-
-        area = next((cat for cat, cat_files in categorized.items() if f in cat_files), 'core')
-        fname = Path(f).name
-        change_lines.append(f"  - file: {fname}")
-        change_lines.append(f"    area: {area}")
-
-        if added_ents:
-            names = [e['name'] for e in added_ents]
-            tests = [n for n in names if n.startswith('test_')]
-            non_tests = [n for n in names if not n.startswith('test_')]
-            test_scenarios.extend(tests)
-            if non_tests:
-                change_lines.append(self._format_entity_list('added', [{'name': n} for n in non_tests]))
-            if tests:
-                change_lines.append(f"    new_tests: {len(tests)}")
-
-        if modified_ents:
-            change_lines.append(self._format_entity_list('modified', modified_ents))
-        if removed_ents:
-            change_lines.append(self._format_entity_list('removed', removed_ents))
-        return True
-
-    def _format_changes_section(self, files: List[str], file_analyses: List[Dict]) -> tuple:
-        """Format the CHANGES section with per-file breakdown.
-        
-        Returns:
-            Tuple of (section_text, test_scenarios, has_changes)
-        """
-        categorized = self.quality_filter.categorize_files(files)
-        analysis_map = {}
-        for fa in file_analyses:
-            fp = fa.get('filepath', '')
-            analysis_map[fp] = fa
-            analysis_map[Path(fp).name] = fa
-
-        change_lines = ["changes:"]
-        test_scenarios: List[str] = []
-        has_changes = False
-
-        for f in files:
-            fa = analysis_map.get(f) or analysis_map.get(Path(f).name) or {}
-            if self._format_file_change(f, fa, categorized, change_lines, test_scenarios):
-                has_changes = True
-
-        if has_changes:
-            return '\n'.join(change_lines), test_scenarios, True
-        return "", [], False
-
-    def _format_testing_section(self, test_scenarios: List[str]) -> str:
-        """Format the TESTING section with concrete test scenarios."""
-        if not test_scenarios:
-            return ""
-        
-        test_lines = ["testing:"]
-        test_lines.append(f"  new_tests: {len(test_scenarios)}")
-        test_lines.append("  scenarios:")
-        for t in test_scenarios[:10]:
-            # Strip test_ prefix for readability
-            readable = t[5:] if t.startswith('test_') else t
-            test_lines.append(f"    - {readable}")
-        if len(test_scenarios) > 10:
-            test_lines.append(f"    # +{len(test_scenarios) - 10} more")
-        return '\n'.join(test_lines)
-
-    def _format_dependencies_section(self, relations: Dict) -> str:
-        """Format the DEPENDENCIES section with import flow."""
-        if not relations.get('relations'):
-            return ""
-        
-        dep_lines = ["dependencies:"]
-        chain = relations.get('chain', '')
-        if chain:
-            dep_lines.append(f"  flow: \"{chain}\"")
-        for r in relations.get('relations', [])[:8]:
-            dep_lines.append(f"  - {r.get('from')}.py -> {r.get('to')}.py")
-        return '\n'.join(dep_lines)
-
-    def _format_stats_section(self, metrics: Dict, files: List[str]) -> str:
-        """Format the STATS section with concise metrics."""
-        if not metrics:
-            return ""
-        
-        stat_lines = ["stats:"]
-        added = metrics.get('lines_added', 0)
-        deleted = metrics.get('lines_deleted', 0)
-        if added or deleted:
-            net = added - deleted
-            sign = '+' if net >= 0 else ''
-            stat_lines.append(f"  lines: \"+{added}/-{deleted} (net {sign}{net})\"")
-        stat_lines.append(f"  files: {len(files)}")
-
-        # Complexity change (human-readable interpretation)
-        old_cc = metrics.get('old_complexity', 1)
-        new_cc = metrics.get('new_complexity', old_cc)
-        if old_cc and old_cc > 0:
-            emoji, desc = self.quality_filter.format_complexity_delta(old_cc, new_cc)
-            stat_lines.append(f"  complexity: \"{desc}\"")
-
-        return '\n'.join(stat_lines)
-
-    def _format_enhanced_body(self, capabilities: List[Dict],
-                               roles: List[Dict],
-                               relations: Dict,
-                               metrics: Dict,
-                               files: List[str],
-                               aggregated: Dict,
-                               file_analyses: List[Dict] = None) -> str:
-        """Format the enhanced commit body.
-        
-        Produces a YAML structure optimised for git log / GitHub readers:
-        - changes:      per-file concrete additions/modifications/removals
-        - testing:      new test scenarios (only when tests are present)
-        - dependencies: import flow between changed files (only when present)
-        - stats:        concise line/complexity metrics
-        """
-        file_analyses = file_analyses or []
-        sections = []
-
-        # ── CHANGES section: per-file breakdown of what was touched ──
-        changes_section, test_scenarios, has_changes = self._format_changes_section(files, file_analyses)
-        if has_changes:
-            sections.append(changes_section)
-
-        # ── TESTING section: concrete test scenarios added ──
-        testing_section = self._format_testing_section(test_scenarios)
-        if testing_section:
-            sections.append(testing_section)
-
-        # ── DEPENDENCIES section: import flow (only when non-trivial) ──
-        deps_section = self._format_dependencies_section(relations)
-        if deps_section:
-            sections.append(deps_section)
-
-        # ── STATS section: concise metrics ──
-        stats_section = self._format_stats_section(metrics, files)
-        if stats_section:
-            sections.append(stats_section)
-
-        return '\n\n'.join(sections)
     
     def validate_summary_quality(self, title: str, body: str) -> Dict[str, Any]:
         """Validate summary against quality thresholds."""

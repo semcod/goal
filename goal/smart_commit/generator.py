@@ -142,6 +142,29 @@ class SmartCommitGenerator:
             return f"Implemented {', '.join(meaningful)}"
         return f"Implemented {meaningful[0]}, {meaningful[1]}, and {len(meaningful)-2} more functions"
 
+    @staticmethod
+    def _summarize_documentation(files: List[str]) -> str:
+        doc_files = [f for f in files if f.endswith(('.md', '.rst', '.txt'))]
+        if doc_files and len(doc_files) > len(files) // 2:
+            doc_names = [Path(f).stem.upper() for f in doc_files[:3]]
+            return f"Updated documentation ({', '.join(doc_names)})"
+        return ''
+
+    @staticmethod
+    def _summarize_test_files(files: List[str], parts: List[str]) -> str:
+        test_files = [f for f in files if 'test' in f.lower()]
+        if test_files and not parts:
+            return f"Added/updated {len(test_files)} test files"
+        return ''
+
+    @staticmethod
+    def _fallback_functional_summary(files: List[str], added: int, deleted: int) -> str:
+        if added > deleted * 2:
+            return f"Added new functionality ({added} lines)"
+        if deleted > added:
+            return f"Refactored code ({deleted} lines removed)"
+        return f"Updated {len(files)} files"
+
     def _generate_functional_summary(self, analysis: Dict[str, Any]) -> str:
         """Generate a human-readable functional summary of changes."""
         parts: List[str] = []
@@ -158,22 +181,16 @@ class SmartCommitGenerator:
             if s:
                 parts.append(s)
 
-        doc_files = [f for f in files if f.endswith(('.md', '.rst', '.txt'))]
-        if doc_files and len(doc_files) > len(files) // 2:
-            doc_names = [Path(f).stem.upper() for f in doc_files[:3]]
-            parts.append(f"Updated documentation ({', '.join(doc_names)})")
+        doc_summary = self._summarize_documentation(files)
+        if doc_summary:
+            parts.append(doc_summary)
 
-        test_files = [f for f in files if 'test' in f.lower()]
-        if test_files and not parts:
-            parts.append(f"Added/updated {len(test_files)} test files")
+        test_summary = self._summarize_test_files(files, parts)
+        if test_summary:
+            parts.append(test_summary)
 
         if not parts:
-            if added > deleted * 2:
-                parts.append(f"Added new functionality ({added} lines)")
-            elif deleted > added:
-                parts.append(f"Refactored code ({deleted} lines removed)")
-            else:
-                parts.append(f"Updated {len(files)} files")
+            parts.append(self._fallback_functional_summary(files, added, deleted))
 
         return '; '.join(parts)
     

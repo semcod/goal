@@ -1,7 +1,7 @@
 """Quality validator - extracted from enhanced_summary.py."""
 
 import re
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from goal.summary.quality_filter import SummaryQualityFilter
 
@@ -200,7 +200,146 @@ class QualityValidator:
         score -= len(errors) * 20
         score -= len(warnings) * 5
         return max(0, min(100, score))
-    
+
+    def _apply_title_fixes(
+        self,
+        fixed: Dict[str, Any],
+        files: List[str],
+        categories: Dict,
+        entities: List,
+        added: int,
+        deleted: int,
+        applied_fixes: List[str],
+    ) -> None:
+        title = fixed.get('title', '')
+
+        result = self._fix_banned_words_title(title, files, categories, entities, added, deleted)
+        if result:
+            fixed['title'], fixed['intent'], msg = result
+            applied_fixes.append(msg)
+            title = fixed['title']
+
+        result = self._fix_wrong_intent(title, files, entities, added, deleted)
+        if result:
+            fixed['title'], fixed['intent'], msg = result
+            applied_fixes.append(msg)
+            title = fixed['title']
+
+        result = self._expand_short_title(title, files, categories, entities, added, deleted)
+        if result:
+            fixed['title'], msg = result
+            applied_fixes.append(msg)
+
+    def _get_entities(self, summary: Dict[str, Any]) -> List[Any]:
+        """Extract added_entities from summary analysis."""
+        return summary.get('analysis', {}).get('aggregated', {}).get('added_entities', [])
+
+    def _fix_banned_words_title(self, title: str, files: List[str], categories: Dict,
+                                 entities: List, added: int, deleted: int) -> Optional[tuple]:
+        """Fix title with banned words. Returns (new_title, intent, fix_msg) or None."""
+        banned = self.filter.has_banned_words(title)
+        if not banned:
+            return None
+        
+        arch_title = self.filter.generate_architecture_title(files, categories)
+        scope_match = re.search(r'\(([^)]+)\)', title)
+        scope = scope_match.group(1) if scope_match else 'core'
+        intent = self.filter.classify_intent_smart(files, entities, added, deleted)
+        
+        new_title = f"{intent}({scope}): {arch_title}"
+        return (new_title, intent, f"Fixed title: banned words {banned} → '{arch_title}'")
+
+    def _fix_wrong_intent(self, title: str, files: List[str], entities: List,
+                          added: int, deleted: int) -> Optional[tuple]:
+        """Fix wrong intent classification. Returns (new_title, intent, fix_msg) or None."""
+        m = re.match(r'^(\w+)\(([^)]*)\):\s*(.*)$', title)
+        if not m:
+            return None
+        
+        current_intent, scope, desc = m.groups()
+        smart_intent = self.filter.classify_intent_smart(files, entities, added, deleted)
+        
+        if current_intent != smart_intent and smart_intent == 'refactor':
+            return (f"{smart_intent}({scope}): {desc}", smart_intent,
+                    f"Fixed intent: {current_intent} → {smart_intent}")
+        return None
+
+    def _expand_short_title(self, title: str, files: List[str], categories: Dict,
+                            entities: List, added: int, deleted: int) -> Optional[tuple]:
+        """Expand short title. Returns (new_title, fix_msg) or None."""
+        desc = title.split(':', 1)[1].strip() if ':' in title else title
+        desc_word_count = len(re.findall(r"[a-zA-Z]+", desc.lower()))
+        
+        if desc_word_count >= self.min_value_words:
+            return None
+        
+        arch_title = self.filter.generate_architecture_title(files, categories)
+        if not arch_title:
+            return None
+        
+        m = re.match(r'^(\w+)\(([^)]*)\):', title)
+        if m:
+            return (f"{m.group(1)}({m.group(2)}): {arch_title}",
+                    f"Fixed title: \"{desc}\" → \"{arch_title}\"")
+        
+        # No conventional commit prefix — add one
+        intent = self.filter.classify_intent_smart(files, entities, added, deleted)
+        dominant_cat = max(categories.items(), key=lambda x: len(x[1]))[0] if categories else 'core'
+        return (f"{intent}({dominant_cat}): {arch_title}",
+                f"Fixed title: \"{desc}\" → \"{arch_title}\"")
+
+    def _clean_relations(self, fixed: Dict[str, Any]) -> Optional[str]:
+        """Clean relations in-place. Returns fix message or None."""
+        if 'relations' not in fixed or 'relations' not in fixed['relations']:
+            return None
+        
+        original_count = len(fixed['relations']['relations'])
+        relations = fixed['relations']['relations']
+        relations = self.filter.filter_generic_nodes(relations)
+        generic_removed = original_count - len(relations)
+        relations = self.filter.dedupe_relations(relations)
+        fixed['relations']['relations'] = relations
+        
+        new_count = len(relations)
+        if original_count != new_count:
+            return f"Cleaned relations: {original_count} → {new_count} ({generic_removed} generic nodes removed)"
+        return None
+
+    def _apply_relation_fixes(self, fixed: Dict[str, Any], applied_fixes: List[str]) -> None:
+        msg = self._clean_relations(fixed)
+        if msg:
+            applied_fixes.append(msg)
+
+    def _apply_file_dedupe(self, files: List[str], applied_fixes: List[str]) -> None:
+        original_files = len(files)
+        unique_files = self.filter.dedupe_files(files)
+        if original_files != len(unique_files):
+            applied_fixes.append(f"Deduped files: {original_files} → {len(unique_files)}")
+
+    def _apply_capability_priority(self, fixed: Dict[str, Any], applied_fixes: List[str]) -> None:
+        if 'capabilities' in fixed:
+            fixed['capabilities'] = self.filter.prioritize_capabilities(fixed['capabilities'])
+            applied_fixes.append("Reordered capabilities by priority")
+
+    def _apply_net_lines(self, fixed: Dict[str, Any], added: int, deleted: int, applied_fixes: List[str]) -> None:
+        if added or deleted:
+            net = added - deleted
+            emoji, desc = self.filter.format_net_lines(added, deleted)
+            fixed['net_lines'] = {
+                'added': added,
+                'deleted': deleted,
+                'net': net,
+                'emoji': emoji,
+                'description': desc,
+            }
+            applied_fixes.append(f"Added NET lines: {desc}")
+
+    @staticmethod
+    def _apply_categories(fixed: Dict[str, Any], categories: Dict, applied_fixes: List[str]) -> None:
+        fixed['categories'] = categories
+        cat_summary = ', '.join(f"{len(v)} {k}" for k, v in categories.items())
+        applied_fixes.append(f"Categorized: {cat_summary}")
+
     def auto_fix(self, summary: Dict[str, Any], files: List[str], 
                  added: int = 0, deleted: int = 0) -> Dict[str, Any]:
         """Auto-fix summary issues and return corrected summary."""
@@ -209,100 +348,15 @@ class QualityValidator:
         
         # Get file categories for architecture title
         categories = self.filter.categorize_files(files)
-        
-        # 1. Remove banned words and generate architecture title
-        title = fixed.get('title', '')
-        banned = self.filter.has_banned_words(title)
-        if banned:
-            # Generate architecture-aware title instead of just removing words
-            arch_title = self.filter.generate_architecture_title(files, categories)
-            
-            # Extract scope from original title if present
-            scope_match = re.search(r'\(([^)]+)\)', title)
-            scope = scope_match.group(1) if scope_match else 'core'
-            
-            # Reclassify intent based on net lines
-            entities = summary.get('analysis', {}).get('aggregated', {}).get('added_entities', [])
-            intent = self.filter.classify_intent_smart(files, entities, added, deleted)
-            
-            fixed['title'] = f"{intent}({scope}): {arch_title}"
-            fixed['intent'] = intent
-            applied_fixes.append(f"Fixed title: banned words {banned} → '{arch_title}'")
+        entities = self._get_entities(summary)
 
-        # 1b. Fix wrong intent even if there are no banned words
-        title = fixed.get('title', '')
-        m = re.match(r'^(\w+)\(([^)]*)\):\s*(.*)$', title)
-        if m:
-            current_intent = m.group(1)
-            scope = m.group(2)
-            desc = m.group(3)
-            entities = summary.get('analysis', {}).get('aggregated', {}).get('added_entities', [])
-            smart_intent = self.filter.classify_intent_smart(files, entities, added, deleted)
-            if current_intent != smart_intent and smart_intent == 'refactor':
-                fixed['title'] = f"{smart_intent}({scope}): {desc}"
-                fixed['intent'] = smart_intent
-                applied_fixes.append(f"Fixed intent: {current_intent} → {smart_intent}")
-        
-        # 1c. Expand short title if description has fewer words than min_value_words
-        title = fixed.get('title', '')
-        desc = title.split(':', 1)[1].strip() if ':' in title else title
-        desc_word_count = len(re.findall(r"[a-zA-Z]+", desc.lower()))
-        if desc_word_count < self.min_value_words:
-            arch_title = self.filter.generate_architecture_title(files, categories)
-            if arch_title:
-                m2 = re.match(r'^(\w+)\(([^)]*)\):', title)
-                if m2:
-                    fixed['title'] = f"{m2.group(1)}({m2.group(2)}): {arch_title}"
-                else:
-                    # No conventional commit prefix — add one
-                    entities = summary.get('analysis', {}).get('aggregated', {}).get('added_entities', [])
-                    intent = self.filter.classify_intent_smart(files, entities, added, deleted)
-                    dominant_cat = max(categories.items(), key=lambda x: len(x[1]))[0] if categories else 'core'
-                    fixed['title'] = f"{intent}({dominant_cat}): {arch_title}"
-                applied_fixes.append(f"Fixed title: \"{desc}\" → \"{arch_title}\"")
+        self._apply_title_fixes(fixed, files, categories, entities, added, deleted, applied_fixes)
+        self._apply_relation_fixes(fixed, applied_fixes)
+        self._apply_file_dedupe(files, applied_fixes)
+        self._apply_capability_priority(fixed, applied_fixes)
+        self._apply_net_lines(fixed, added, deleted, applied_fixes)
+        self._apply_categories(fixed, categories, applied_fixes)
 
-        # 2. Dedupe and clean relations (remove generic nodes)
-        if 'relations' in fixed and 'relations' in fixed['relations']:
-            original_count = len(fixed['relations']['relations'])
-            relations = fixed['relations']['relations']
-            
-            # First filter generic nodes
-            relations = self.filter.filter_generic_nodes(relations)
-            generic_removed = original_count - len(relations)
-            
-            # Then dedupe
-            relations = self.filter.dedupe_relations(relations)
-            fixed['relations']['relations'] = relations
-            
-            new_count = len(relations)
-            if original_count != new_count:
-                applied_fixes.append(f"Cleaned relations: {original_count} → {new_count} "
-                                    f"({generic_removed} generic nodes removed)")
-        
-        # 3. Dedupe files
-        original_files = len(files)
-        unique_files = self.filter.dedupe_files(files)
-        if original_files != len(unique_files):
-            applied_fixes.append(f"Deduped files: {original_files} → {len(unique_files)}")
-        
-        # 4. Prioritize capabilities
-        if 'capabilities' in fixed:
-            fixed['capabilities'] = self.filter.prioritize_capabilities(fixed['capabilities'])
-            applied_fixes.append("Reordered capabilities by priority")
-        
-        # 5. Store NET lines info
-        if added or deleted:
-            net = added - deleted
-            emoji, desc = self.filter.format_net_lines(added, deleted)
-            fixed['net_lines'] = {'added': added, 'deleted': deleted, 'net': net, 
-                                  'emoji': emoji, 'description': desc}
-            applied_fixes.append(f"Added NET lines: {desc}")
-        
-        # 6. Smart file categorization
-        fixed['categories'] = categories
-        cat_summary = ', '.join(f"{len(v)} {k}" for k, v in categories.items())
-        applied_fixes.append(f"Categorized: {cat_summary}")
-        
         fixed['applied_fixes'] = applied_fixes
         return fixed
 

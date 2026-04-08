@@ -1,79 +1,45 @@
-# vallm batch | 253f | 166✓ 16⚠ 10✗ | 2026-04-02
+# vallm batch | 257f | 166✓ 8⚠ 12✗ | 2026-04-08
 
 SUMMARY:
-  scanned: 253  passed: 166 (65.6%)  warnings: 16  errors: 10  unsupported: 77
+  scanned: 257  passed: 166 (64.6%)  warnings: 8  errors: 12  unsupported: 79
 
-WARNINGS[16]{path,score}:
+WARNINGS[8]{path,score}:
   examples/validation/test_api_signatures.py,0.93
     issues[4]{rule,severity,message,line}:
       complexity.cyclomatic,warning,extract_function_calls has cyclomatic complexity 20 (max: 15),27
       complexity.cyclomatic,warning,validate_call has cyclomatic complexity 20 (max: 15),123
       complexity.lizard_cc,warning,extract_function_calls: CC=20 exceeds limit 15,27
       complexity.lizard_cc,warning,validate_call: CC=20 exceeds limit 15,123
-  goal/summary/generator.py,0.93
-    issues[4]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,generate_value_title has cyclomatic complexity 19 (max: 15),330
-      complexity.cyclomatic,warning,_format_file_change has cyclomatic complexity 17 (max: 15),485
-      complexity.lizard_cc,warning,generate_value_title: CC=19 exceeds limit 15,330
-      complexity.lizard_cc,warning,_format_file_change: CC=17 exceeds limit 15,485
-  goal/deep_analyzer.py,0.96
-    issues[3]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,_build_summary has cyclomatic complexity 16 (max: 15),528
-      complexity.maintainability,warning,Low maintainability index: 15.5 (threshold: 20),
-      complexity.lizard_cc,warning,_build_summary: CC=16 exceeds limit 15,528
-  goal/doctor/python.py,0.96
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,check_py011_version_consistency has cyclomatic complexity 17 (max: 15),337
-      complexity.maintainability,warning,Low maintainability index: 16.6 (threshold: 20),
-  goal/smart_commit/generator.py,0.96
-    issues[3]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,_generate_functional_summary has cyclomatic complexity 16 (max: 15),145
-      complexity.maintainability,warning,Low maintainability index: 16.9 (threshold: 20),
-      complexity.lizard_cc,warning,_generate_functional_summary: CC=16 exceeds limit 15,145
   examples/validation/test_readme_consistency.py,0.97
     issues[2]{rule,severity,message,line}:
       complexity.cyclomatic,warning,validate_readme has cyclomatic complexity 22 (max: 15),92
       complexity.lizard_cc,warning,validate_readme: CC=22 exceeds limit 15,92
-  goal/cli/version_utils.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,update_project_metadata has cyclomatic complexity 18 (max: 15),118
-      complexity.lizard_cc,warning,update_project_metadata: CC=18 exceeds limit 15,118
-  goal/formatter.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,format_enhanced_summary has cyclomatic complexity 22 (max: 15),306
-      complexity.lizard_cc,warning,format_enhanced_summary: CC=21 exceeds limit 15,306
-  goal/license/manager.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,update_license_file has cyclomatic complexity 18 (max: 15),427
-      complexity.lizard_cc,warning,update_license_file: CC=18 exceeds limit 15,427
-  goal/push/core.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,execute_push_workflow has cyclomatic complexity 17 (max: 15),114
-      complexity.lizard_cc,warning,execute_push_workflow: CC=17 exceeds limit 15,114
-  goal/push/stages/push_remote.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,push_to_remote has cyclomatic complexity 16 (max: 15),20
-      complexity.lizard_cc,warning,push_to_remote: CC=16 exceeds limit 15,20
-  goal/smart_commit/abstraction.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,extract_entities has cyclomatic complexity 20 (max: 15),60
-      complexity.lizard_cc,warning,extract_entities: CC=20 exceeds limit 15,60
-  goal/summary/quality_filter.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,classify_intent_smart has cyclomatic complexity 17 (max: 15),281
-      complexity.lizard_cc,warning,classify_intent_smart: CC=16 exceeds limit 15,281
-  goal/summary/validator.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,auto_fix has cyclomatic complexity 19 (max: 15),204
-      complexity.lizard_cc,warning,auto_fix: CC=19 exceeds limit 15,204
   integration/run_matrix.sh,0.97
     issues[1]{rule,severity,message,line}:
       complexity.lizard_length,warning,run_case: 175 lines exceeds limit 100,11
+  goal/deep_analyzer.py,0.98
+    issues[1]{rule,severity,message,line}:
+      complexity.maintainability,warning,Low maintainability index: 17.9 (threshold: 20),
+  goal/doctor/python.py,0.98
+    issues[1]{rule,severity,message,line}:
+      complexity.maintainability,warning,Low maintainability index: 10.1 (threshold: 20),
+  goal/formatter.py,0.98
+    issues[1]{rule,severity,message,line}:
+      complexity.maintainability,warning,Low maintainability index: 15.0 (threshold: 20),
   goal/project_bootstrap.py,0.98
     issues[1]{rule,severity,message,line}:
-      complexity.maintainability,warning,Low maintainability index: 8.6 (threshold: 20),
+      complexity.maintainability,warning,Low maintainability index: 8.2 (threshold: 20),
+  goal/smart_commit/generator.py,0.98
+    issues[1]{rule,severity,message,line}:
+      complexity.maintainability,warning,Low maintainability index: 15.6 (threshold: 20),
 
-ERRORS[10]{path,score}:
+ERRORS[12]{path,score}:
+  goal/user_config.py,0.00
+    issues[1]{rule,severity,message,line}:
+      syntax.parse,error,SyntaxError: unexpected indent,23
+  goal/version_validation.py,0.00
+    issues[1]{rule,severity,message,line}:
+      syntax.parse,error,SyntaxError: expected an indented block after 'try' statement on line 9,11
   tests/test_formatter.py,0.79
     issues[1]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'pytest' not found,2
@@ -104,11 +70,11 @@ ERRORS[10]{path,score}:
   tests/test_push_e2e.py,0.98
     issues[2]{rule,severity,message,line}:
       python.import.resolvable,error,Module 'pytest' not found,10
-      python.import.resolvable,error,Module 'pytest' not found,421
+      python.import.resolvable,error,Module 'pytest' not found,422
 
 UNSUPPORTED[5]{bucket,count}:
   *.md,52
   Dockerfile*,1
   *.txt,1
   *.yml,1
-  other,22
+  other,24

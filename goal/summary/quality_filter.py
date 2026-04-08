@@ -278,6 +278,21 @@ class SummaryQualityFilter:
             return 'chore'
         return ''
 
+    def _score_intent_patterns(self, combined: str) -> Dict[str, int]:
+        return {
+            'refactor': sum(1 for p in self._refactor_re if p.search(combined)),
+            'feat': sum(1 for p in self._feat_re if p.search(combined)),
+            'fix': sum(1 for p in self._fix_re if p.search(combined)),
+        }
+
+    @staticmethod
+    def _resolve_scored_intent(scores: Dict[str, int], net: int, deleted: int) -> str:
+        if max(scores.values()) == 0:
+            return 'refactor' if net <= 0 else 'feat'
+        if deleted >= 100 and scores.get('refactor', 0) >= scores.get('feat', 0) and scores.get('refactor', 0) >= scores.get('fix', 0):
+            return 'refactor'
+        return max(scores, key=scores.get)
+
     def classify_intent_smart(self, files: List[str], entities: List[Dict], 
                                added: int = 0, deleted: int = 0) -> str:
         """Smart intent classification using multiple signals."""
@@ -285,27 +300,19 @@ class SummaryQualityFilter:
         if churn_intent:
             return churn_intent
 
-        combined = f"{' '.join(files)} {' '.join(e.get('name', '') for e in entities)}"
-        net = added - deleted
-
-        refactor_score = sum(1 for p in self._refactor_re if p.search(combined))
-        feat_score = sum(1 for p in self._feat_re if p.search(combined))
-        fix_score = sum(1 for p in self._fix_re if p.search(combined))
-
-        if len(files) > 10 and net < 0:
-            refactor_score += 3
-
         file_intent = self._classify_by_file_type(files)
         if file_intent:
             return file_intent
 
-        scores = {'refactor': refactor_score, 'feat': feat_score, 'fix': fix_score}
-        if max(scores.values()) == 0:
-            return 'refactor' if net <= 0 else 'feat'
+        combined = f"{' '.join(files)} {' '.join(e.get('name', '') for e in entities)}"
+        net = added - deleted
 
-        if deleted >= 100 and refactor_score >= feat_score and refactor_score >= fix_score:
-            return 'refactor'
-        return max(scores, key=scores.get)
+        scores = self._score_intent_patterns(combined)
+
+        if len(files) > 10 and net < 0:
+            scores['refactor'] += 3
+
+        return self._resolve_scored_intent(scores, net, deleted)
     
     def generate_architecture_title(self, files: List[str], categories: Dict) -> str:
         """Generate architecture-aware title based on file patterns."""

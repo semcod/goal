@@ -115,6 +115,105 @@ def update_json_version(filepath: Path, new_version: str) -> bool:
     return False
 
 
+def _build_author_block(existing_authors: str, author_name: str, author_email: str) -> str:
+    author_entries = []
+    for line in existing_authors.split('\n'):
+        line = line.strip()
+        if line and not line.startswith('#'):
+            author_entries.append(line.rstrip(','))
+
+    author_entries.append(f'{{name = "{author_name}", email = "{author_email}"}}')
+
+    authors_block = 'authors = [\n'
+    for entry in author_entries:
+        authors_block += f'    {entry},\n'
+    authors_block += ']'
+    return authors_block
+
+
+def _update_pyproject_metadata(content: str, author_name: str, author_email: str,
+                               license_id: str, license_classifier: Optional[str]) -> str:
+    content = re.sub(
+        r'^license\s*=\s*[{{\[].*?[}}\]]',
+        f'license = {{text = "{license_id}"}}',
+        content,
+        flags=re.MULTILINE
+    )
+    content = re.sub(
+        r'^license\s*=\s*["\'].*?["\']',
+        f'license = "{license_id}"',
+        content,
+        flags=re.MULTILINE
+    )
+
+    authors_match = re.search(r'authors\s*=\s*\[(.*?)\]', content, re.DOTALL)
+    if authors_match and author_email not in authors_match.group(1):
+        authors_block = _build_author_block(authors_match.group(1), author_name, author_email)
+        content = re.sub(
+            r'authors\s*=\s*\[.*?\]',
+            authors_block,
+            content,
+            flags=re.DOTALL
+        )
+
+    if license_classifier:
+        content = re.sub(
+            r'"License :: OSI Approved :: .*?"',
+            f'"{license_classifier}"',
+            content,
+            flags=re.MULTILINE
+        )
+
+    return content
+
+
+def _update_package_json_metadata(content: str, author_name: str, author_email: str,
+                                  license_id: str) -> str:
+    data = json.loads(content)
+    if 'author' in data:
+        if isinstance(data['author'], dict):
+            data['author']['name'] = author_name
+            data['author']['email'] = author_email
+        else:
+            data['author'] = {
+                'name': author_name,
+                'email': author_email
+            }
+    else:
+        data['author'] = {
+            'name': author_name,
+            'email': author_email
+        }
+
+    if 'license' in data:
+        data['license'] = license_id
+
+    return json.dumps(data, indent=2) + '\n'
+
+
+def _update_setup_py_metadata(content: str, author_name: str, author_email: str,
+                              license_id: str) -> str:
+    content = re.sub(
+        r"author\s*=\s*['\"].*?['\"]",
+        f'author="{author_name}"',
+        content,
+        flags=re.MULTILINE
+    )
+    content = re.sub(
+        r"author_email\s*=\s*['\"].*?['\"]",
+        f'author_email="{author_email}"',
+        content,
+        flags=re.MULTILINE
+    )
+    content = re.sub(
+        r"license\s*=\s*['\"].*?['\"]",
+        f'license="{license_id}"',
+        content,
+        flags=re.MULTILINE
+    )
+    return content
+
+
 def update_project_metadata(filepath: Path, user_config) -> bool:
     """Update author and license in project files based on user config."""
     if not user_config:
@@ -132,105 +231,12 @@ def update_project_metadata(filepath: Path, user_config) -> bool:
         content = filepath.read_text()
         original_content = content
         
-        # Update pyproject.toml
         if filepath.name == 'pyproject.toml':
-            # Update license
-            content = re.sub(
-                r'^license\s*=\s*[{\[].*?[}\]]',
-                f'license = {{text = "{license_id}"}}',
-                content,
-                flags=re.MULTILINE
-            )
-            content = re.sub(
-                r'^license\s*=\s*["\'].*?["\']',
-                f'license = "{license_id}"',
-                content,
-                flags=re.MULTILINE
-            )
-            
-            # Smart author update - add if not present
-            authors_match = re.search(r'authors\s*=\s*\[(.*?)\]', content, re.DOTALL)
-            if authors_match:
-                existing_authors = authors_match.group(1)
-                # Check if this author already exists
-                if author_email not in existing_authors:
-                    # Parse existing authors
-                    author_entries = []
-                    for line in existing_authors.split('\n'):
-                        line = line.strip()
-                        if line and not line.startswith('#'):
-                            author_entries.append(line.rstrip(','))
-                    
-                    # Add new author in PEP 621 object format (not Poetry string format)
-                    new_author = f'{{name = "{author_name}", email = "{author_email}"}}'
-                    author_entries.append(new_author)
-                    
-                    # Rebuild authors list
-                    authors_block = 'authors = [\n'
-                    for entry in author_entries:
-                        authors_block += f'    {entry},\n'
-                    authors_block += ']'
-                    
-                    content = re.sub(
-                        r'authors\s*=\s*\[.*?\]',
-                        authors_block,
-                        content,
-                        flags=re.DOTALL
-                    )
-            
-            # Update license classifier if present
-            if license_classifier:
-                content = re.sub(
-                    r'"License :: OSI Approved :: .*?"',
-                    f'"{license_classifier}"',
-                    content,
-                    flags=re.MULTILINE
-                )
-        
-        # Update package.json
+            content = _update_pyproject_metadata(content, author_name, author_email, license_id, license_classifier)
         elif filepath.name == 'package.json':
-            data = json.loads(content)
-            if 'author' in data:
-                if isinstance(data['author'], dict):
-                    data['author']['name'] = author_name
-                    data['author']['email'] = author_email
-                else:
-                    data['author'] = {
-                        'name': author_name,
-                        'email': author_email
-                    }
-            else:
-                data['author'] = {
-                    'name': author_name,
-                    'email': author_email
-                }
-            
-            if 'license' in data:
-                data['license'] = license_id
-            
-            content = json.dumps(data, indent=2) + '\n'
-        
-        # Update setup.py
+            content = _update_package_json_metadata(content, author_name, author_email, license_id)
         elif filepath.name == 'setup.py':
-            # Update author and email
-            content = re.sub(
-                r"author\s*=\s*['\"].*?['\"]",
-                f'author="{author_name}"',
-                content,
-                flags=re.MULTILINE
-            )
-            content = re.sub(
-                r"author_email\s*=\s*['\"].*?['\"]",
-                f'author_email="{author_email}"',
-                content,
-                flags=re.MULTILINE
-            )
-            content = re.sub(
-                r"license\s*=\s*['\"].*?['\"]",
-                f'license="{license_id}"',
-                content,
-                flags=re.MULTILINE
-            )
+            content = _update_setup_py_metadata(content, author_name, author_email, license_id)
         
         if content != original_content:
             filepath.write_text(content)

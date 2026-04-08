@@ -3,7 +3,7 @@
 import fnmatch
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class CodeAbstraction:
@@ -56,57 +56,48 @@ class CodeAbstraction:
         """Get programming language from file extension."""
         ext = Path(filepath).suffix.lower()
         return self.EXTENSION_TO_LANGUAGE.get(ext, 'unknown')
-    
+
+    @staticmethod
+    def _added_lines_from_diff(diff_content: str) -> List[str]:
+        return [
+            line[1:].strip()
+            for line in diff_content.split('\n')
+            if line.startswith('+') and not line.startswith('+++')
+        ]
+
+    @staticmethod
+    def _dedupe_entities(entities: List[str]) -> List[str]:
+        seen = set()
+        unique_entities = []
+        for entity in entities:
+            if entity not in seen:
+                seen.add(entity)
+                unique_entities.append(entity)
+        return unique_entities[:10]
+
     def extract_entities(self, filepath: str, diff_content: str) -> List[str]:
         """Extract code entities (functions, classes, etc.) from diff."""
         language = self.get_language(filepath)
         parser = self.code_parsers.get(language, {})
         
-        entities = []
         extract_patterns = parser.get('extract', [])
         ignore_patterns = parser.get('ignore', [])
         entity_pattern = parser.get('entity_pattern', '')
-        
-        # Only look at added lines (starting with +)
-        added_lines = [
-            line[1:].strip() 
-            for line in diff_content.split('\n') 
-            if line.startswith('+') and not line.startswith('+++')
-        ]
-        
+
+        added_lines = self._added_lines_from_diff(diff_content)
+
+        entities = []
         for line in added_lines:
-            # Skip ignored patterns
-            if any(ignore in line for ignore in ignore_patterns):
-                continue
-            
-            # Check extract patterns
-            for pattern in extract_patterns:
-                if pattern in line:
-                    # Try to extract entity name using regex
-                    if entity_pattern:
-                        match = re.search(entity_pattern, line)
-                        if match:
-                            entity_name = match.group(1)
-                            if entity_name and len(entity_name) > 1:
-                                entities.append(entity_name)
-                    else:
-                        # Fallback: extract word after pattern
-                        parts = line.split(pattern)
-                        if len(parts) > 1:
-                            word = parts[1].split('(')[0].split(':')[0].split()[0] if parts[1] else ''
-                            if word and len(word) > 1 and word.isidentifier():
-                                entities.append(word)
-                    break
-        
-        # Remove duplicates while preserving order
-        seen = set()
-        unique_entities = []
-        for e in entities:
-            if e not in seen:
-                seen.add(e)
-                unique_entities.append(e)
-        
-        return unique_entities[:10]  # Limit to 10 entities
+            entity_name = self._extract_entity_from_line(
+                line,
+                extract_patterns,
+                ignore_patterns,
+                entity_pattern,
+            )
+            if entity_name:
+                entities.append(entity_name)
+
+        return self._dedupe_entities(entities)
     
     def extract_markdown_topics(self, diff_content: str) -> List[str]:
         """Extract meaningful topics from markdown changes, filtering out noise."""

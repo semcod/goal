@@ -443,42 +443,32 @@ PACKAGE_MANAGERS: Dict[str, PackageManager] = {
 }
 
 
+def _path_matches(project_root: Path, pattern: str) -> bool:
+    if '*' in pattern:
+        return bool(list(project_root.glob(pattern)))
+    return (project_root / pattern).exists()
+
+
+def _has_any_matching_path(project_root: Path, patterns: List[str]) -> bool:
+    return any(_path_matches(project_root, pattern) for pattern in patterns)
+
+
+def _detect_package_manager(project_root: Path, pm: PackageManager) -> bool:
+    return _has_any_matching_path(project_root, pm.lock_files) or _has_any_matching_path(project_root, pm.config_files)
+
+
+def _has_language_extension(project_root: Path, extensions: List[str]) -> bool:
+    return any(list(project_root.rglob(f"*{ext}")) for ext in extensions)
+
+
 def detect_package_managers(project_path: str = ".") -> List[PackageManager]:
     """
     Detect available package managers in the given project path.
     
     Returns a list of package managers sorted by priority (highest first).
     """
-    detected = []
     project_root = Path(project_path)
-    
-    for pm_name, pm in PACKAGE_MANAGERS.items():
-        # Check for lock files (strongest indicator)
-        for lock_file in pm.lock_files:
-            if '*' in lock_file:
-                if list(project_root.glob(lock_file)):
-                    detected.append(pm)
-                    break
-            else:
-                lock_path = project_root / lock_file
-                if lock_path.exists():
-                    detected.append(pm)
-                    break
-        
-        # Check for config files if no lock files found
-        if pm not in detected:
-            for config_file in pm.config_files:
-                if '*' in config_file:
-                    if list(project_root.glob(config_file)):
-                        detected.append(pm)
-                        break
-                else:
-                    config_path = project_root / config_file
-                    if config_path.exists():
-                        detected.append(pm)
-                        break
-    
-    # Sort by priority (highest first)
+    detected = [pm for pm in PACKAGE_MANAGERS.values() if _detect_package_manager(project_root, pm)]
     detected.sort(key=lambda x: x.priority, reverse=True)
     return detected
 
@@ -598,15 +588,13 @@ def detect_project_language(project_path: str = ".") -> List[str]:
     Detect the primary language(s) of a project based on file extensions.
     """
     project_root = Path(project_path)
-    detected_languages = set()
-    
-    for language, extensions in LANGUAGE_FILE_EXTENSIONS.items():
-        for ext in extensions:
-            if list(project_root.rglob(f"*{ext}")):
-                detected_languages.add(language)
-                break
-    
-    return list(detected_languages)
+    detected_languages = [
+        language
+        for language, extensions in LANGUAGE_FILE_EXTENSIONS.items()
+        if _has_language_extension(project_root, extensions)
+    ]
+
+    return detected_languages
 
 
 def suggest_package_managers(project_path: str = ".") -> List[PackageManager]:

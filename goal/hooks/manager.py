@@ -84,8 +84,8 @@ def main():
     success = manager.run_validation()
     sys.exit(0 if success else 1)
 
-if __name__ == '__main__':
-    main()
+main()
+
 '''
         
         self.goal_hook_script.write_text(hook_content)

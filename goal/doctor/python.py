@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from goal.doctor.models import Issue
 
@@ -18,6 +18,23 @@ DEPRECATED_BACKENDS = [
 
 class PythonDiagnostics:
     """Container for Python diagnostic checks with shared state."""
+    
+    # Registry of check methods (in order of execution)
+    CHECK_METHODS = [
+        'check_py002_build_system',
+        'check_py003_license_classifiers',
+        'check_py004_deprecated_backends',
+        'check_py005_license_table',
+        'check_py006_duplicate_authors',
+        'check_py007_requires_python',
+        'check_py008_empty_classifiers',
+        'check_py009_string_authors',
+        'check_py010_project_name_consistency',
+        'check_py011_version_consistency',
+        'check_py012_dist_cleanup',
+        'check_py013_goal_publish_pattern',
+        'check_py014_pypi_token',
+    ]
     
     def __init__(self, project_dir: Path, content: str, auto_fix: bool):
         self.project_dir = project_dir
@@ -224,44 +241,18 @@ class PythonDiagnostics:
         
         Note: Skip this check for Poetry projects which require string format.
         """
-        # Check if using Poetry build backend - if so, skip this check
-        # Poetry requires string format authors, not PEP 621 object format
-        build_backend_match = re.search(r'build-backend\s*=\s*"([^"]+)"', self.content)
-        if build_backend_match and 'poetry' in build_backend_match.group(1).lower():
+        if self._should_skip_string_author_check():
             return
-            
+
         authors_match = re.search(r'authors\s*=\s*\[(.*?)\]', self.content, re.DOTALL)
         if not authors_match:
             return
-        
+
         authors_block = authors_match.group(1)
-        # Pattern to match string format: "Name <email>" or 'Name <email>'
-        string_author_pattern = re.compile(r'^\s*["\']([^"\']+)<([^>]+)>["\']\s*,?\s*$')
-        
-        lines = authors_block.strip().splitlines()
-        new_lines = []
-        has_string_format = False
-        
-        for line in lines:
-            stripped = line.strip()
-            if not stripped or stripped.startswith('#'):
-                new_lines.append(line)
-                continue
-                
-            match = string_author_pattern.match(line)
-            if match:
-                has_string_format = True
-                name = match.group(1).strip()
-                email = match.group(2).strip()
-                # Replace with object format, preserving indentation
-                indent = line[:len(line) - len(line.lstrip())]
-                new_lines.append(f'{indent}{{name = "{name}", email = "{email}"}},')
-            else:
-                new_lines.append(line)
-        
-        if not has_string_format:
+        new_block = self._convert_string_author_block(authors_block)
+        if new_block is None:
             return
-        
+
         detail = (
             'authors field uses deprecated string format like "Name <email>".\n'
             'PEP 621 requires object format: {name = "...", email = "..."}.\n'
@@ -273,7 +264,6 @@ class PythonDiagnostics:
             detail=detail, file='pyproject.toml',
         )
         if self.auto_fix:
-            new_block = '\n'.join(new_lines)
             self.content = re.sub(
                 r'authors\s*=\s*\[.*?\]',
                 f'authors = [\n{new_block}\n]',
@@ -286,53 +276,141 @@ class PythonDiagnostics:
             issue.fix_description = 'Converted string-format authors to PEP 621 object format'
         self.issues.append(issue)
 
+    def _should_skip_string_author_check(self) -> bool:
+        build_backend_match = re.search(r'build-backend\s*=\s*"([^"]+)"', self.content)
+        return bool(build_backend_match and 'poetry' in build_backend_match.group(1).lower())
+
+    @staticmethod
+    def _convert_string_author_block(authors_block: str) -> Optional[str]:
+        string_author_pattern = re.compile(r'^\s*["\']([^"\']+)<([^>]+)>["\']\s*,?\s*$')
+        lines = authors_block.strip().splitlines()
+        new_lines = []
+        has_string_format = False
+
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                new_lines.append(line)
+                continue
+
+            match = string_author_pattern.match(line)
+            if match:
+                has_string_format = True
+                name = match.group(1).strip()
+                email = match.group(2).strip()
+                indent = line[:len(line) - len(line.lstrip())]
+                new_lines.append(f'{indent}{{name = "{name}", email = "{email}"}},')
+            else:
+                new_lines.append(line)
+
+        if not has_string_format:
+            return None
+
+        return '\n'.join(new_lines)
+
+    def _collect_py010_inconsistencies(self, pyproject_name: str, setup_py: Path, goal_yaml: Path) -> List[str]:
+        inconsistencies: List[str] = []
+
+        if setup_py.exists():
+            setup_content = setup_py.read_text(errors='ignore')
+            setup_name_match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', setup_content)
+            if setup_name_match and setup_name_match.group(1) != pyproject_name:
+                inconsistencies.append(f"setup.py: '{setup_name_match.group(1)}'")
+
+        if goal_yaml.exists():
+            goal_content = goal_yaml.read_text(errors='ignore')
+            goal_name_match = re.search(r'^\s*name:\s*(\S+)', goal_content, re.MULTILINE)
+            if goal_name_match and goal_name_match.group(1) != pyproject_name:
+                inconsistencies.append(f"goal.yaml: '{goal_name_match.group(1)}'")
+
+        return inconsistencies
+
+    def _sync_py010_files(self, pyproject_name: str, setup_py: Path, goal_yaml: Path) -> List[str]:
+        fixed_files: List[str] = []
+
+        if setup_py.exists():
+            setup_content = setup_py.read_text(errors='ignore')
+            new_setup = re.sub(r'(name\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_name}"', setup_content)
+            if new_setup != setup_content:
+                setup_py.write_text(new_setup, encoding='utf-8')
+                fixed_files.append('setup.py')
+
+        if goal_yaml.exists():
+            goal_content = goal_yaml.read_text(errors='ignore')
+            new_goal = re.sub(r'^(\s*name:\s*)\S+', rf'\1{pyproject_name}', goal_content, flags=re.MULTILINE)
+            if new_goal != goal_content:
+                goal_yaml.write_text(new_goal, encoding='utf-8')
+                fixed_files.append('goal.yaml')
+
+        return fixed_files
+
     def check_py010_project_name_consistency(self) -> None:
         """PY010: Check for consistent project name across all config files."""
         name_match = re.search(r'^name\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
         if not name_match:
             return
         pyproject_name = name_match.group(1)
-        
-        inconsistencies = []
+
         setup_py = self.project_dir / 'setup.py'
         goal_yaml = self.project_dir / 'goal.yaml'
-        
-        if setup_py.exists():
-            setup_content = setup_py.read_text(errors='ignore')
-            setup_name_match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', setup_content)
-            if setup_name_match and setup_name_match.group(1) != pyproject_name:
-                inconsistencies.append(f"setup.py: '{setup_name_match.group(1)}'")
-        
-        if goal_yaml.exists():
-            goal_content = goal_yaml.read_text(errors='ignore')
-            goal_name_match = re.search(r'^\s*name:\s*(\S+)', goal_content, re.MULTILINE)
-            if goal_name_match and goal_name_match.group(1) != pyproject_name:
-                inconsistencies.append(f"goal.yaml: '{goal_name_match.group(1)}'")
-        
+        inconsistencies = self._collect_py010_inconsistencies(pyproject_name, setup_py, goal_yaml)
+
         if not inconsistencies:
             return
-        
+
         detail = f"Project name inconsistency. pyproject.toml: '{pyproject_name}', others: {', '.join(inconsistencies)}"
         issue = Issue(severity='error', code='PY010', title='Inconsistent project name', detail=detail, file='pyproject.toml')
-        
+
         if self.auto_fix:
-            fixed_files = []
-            if setup_py.exists():
-                setup_content = setup_py.read_text(errors='ignore')
-                new_setup = re.sub(r'(name\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_name}"', setup_content)
-                if new_setup != setup_content:
-                    setup_py.write_text(new_setup, encoding='utf-8')
-                    fixed_files.append('setup.py')
-            if goal_yaml.exists():
-                goal_content = goal_yaml.read_text(errors='ignore')
-                new_goal = re.sub(r'^(\s*name:\s*)\S+', rf'\1{pyproject_name}', goal_content, flags=re.MULTILINE)
-                if new_goal != goal_content:
-                    goal_yaml.write_text(new_goal, encoding='utf-8')
-                    fixed_files.append('goal.yaml')
+            fixed_files = self._sync_py010_files(pyproject_name, setup_py, goal_yaml)
             if fixed_files:
                 issue.fixed = True
                 issue.fix_description = f"Synchronized name to '{pyproject_name}' in {', '.join(fixed_files)}"
         self.issues.append(issue)
+
+    def _collect_py011_inconsistencies(self, pyproject_version: str, setup_py: Path,
+                                       init_py: Optional[Path], version_file: Path) -> List[str]:
+        inconsistencies: List[str] = []
+
+        if setup_py.exists():
+            setup_content = setup_py.read_text(errors='ignore')
+            setup_ver_match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', setup_content)
+            if setup_ver_match and setup_ver_match.group(1) != pyproject_version:
+                inconsistencies.append(f"setup.py: '{setup_ver_match.group(1)}'")
+
+        if init_py and init_py.exists():
+            init_content = init_py.read_text(errors='ignore')
+            init_ver_match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', init_content)
+            if init_ver_match and init_ver_match.group(1) != pyproject_version:
+                inconsistencies.append(f"{init_py.parent.name}/__init__.py: '{init_ver_match.group(1)}'")
+
+        if version_file.exists():
+            file_version = version_file.read_text().strip()
+            if file_version != pyproject_version:
+                inconsistencies.append(f"VERSION: '{file_version}'")
+
+        return inconsistencies
+
+    def _sync_py011_files(self, pyproject_version: str, setup_py: Path,
+                          init_py: Optional[Path], version_file: Path) -> None:
+        if setup_py.exists():
+            setup_content = re.sub(
+                r'(version\s*=\s*)["\'][^"\']+["\']',
+                rf'\1"{pyproject_version}"',
+                setup_py.read_text(errors='ignore')
+            )
+            setup_py.write_text(setup_content, encoding='utf-8')
+
+        if init_py and init_py.exists():
+            init_content = re.sub(
+                r'(__version__\s*=\s*)["\'][^"\']+["\']',
+                rf'\1"{pyproject_version}"',
+                init_py.read_text(errors='ignore')
+            )
+            init_py.write_text(init_content, encoding='utf-8')
+
+        if version_file.exists():
+            version_file.write_text(f"{pyproject_version}\n", encoding='utf-8')
 
     def check_py011_version_consistency(self) -> None:
         """PY011: Check for consistent version across all config files."""
@@ -340,48 +418,26 @@ class PythonDiagnostics:
         if not version_match:
             return
         pyproject_version = version_match.group(1)
-        
-        inconsistencies = []
+
         setup_py = self.project_dir / 'setup.py'
         version_file = self.project_dir / 'VERSION'
         init_py = None
-        
-        if setup_py.exists():
-            setup_content = setup_py.read_text(errors='ignore')
-            setup_ver_match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', setup_content)
-            if setup_ver_match and setup_ver_match.group(1) != pyproject_version:
-                inconsistencies.append(f"setup.py: '{setup_ver_match.group(1)}'")
-        
+
         name_match = re.search(r'^name\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
         if name_match:
             pkg_name = name_match.group(1).replace('-', '_')
             init_py = self.project_dir / pkg_name / '__init__.py'
-            if init_py.exists():
-                init_content = init_py.read_text(errors='ignore')
-                init_ver_match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', init_content)
-                if init_ver_match and init_ver_match.group(1) != pyproject_version:
-                    inconsistencies.append(f"{pkg_name}/__init__.py: '{init_ver_match.group(1)}'")
-        
-        if version_file.exists():
-            file_version = version_file.read_text().strip()
-            if file_version != pyproject_version:
-                inconsistencies.append(f"VERSION: '{file_version}'")
-        
+
+        inconsistencies = self._collect_py011_inconsistencies(pyproject_version, setup_py, init_py, version_file)
+
         if not inconsistencies:
             return
-        
+
         detail = f"Version inconsistency. pyproject.toml: '{pyproject_version}', others: {', '.join(inconsistencies)}"
         issue = Issue(severity='error', code='PY011', title='Inconsistent version', detail=detail, file='pyproject.toml')
-        
+
         if self.auto_fix:
-            if setup_py.exists():
-                setup_content = re.sub(r'(version\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_version}"', setup_py.read_text(errors='ignore'))
-                setup_py.write_text(setup_content, encoding='utf-8')
-            if init_py and init_py.exists():
-                init_content = re.sub(r'(__version__\s*=\s*)["\'][^"\']+["\']', rf'\1"{pyproject_version}"', init_py.read_text(errors='ignore'))
-                init_py.write_text(init_content, encoding='utf-8')
-            if version_file.exists():
-                version_file.write_text(f"{pyproject_version}\n", encoding='utf-8')
+            self._sync_py011_files(pyproject_version, setup_py, init_py, version_file)
             issue.fixed = True
             issue.fix_description = f"Synchronized version to '{pyproject_version}'"
         self.issues.append(issue)
@@ -396,69 +452,93 @@ class PythonDiagnostics:
         if not name_match:
             return
         project_name = name_match.group(1)
-        
-        stale_files = [f.name for f in dist_dir.iterdir() if f.is_file() and not f.name.startswith(f'{project_name}-')]
+
+        stale_files = self._collect_stale_dist_files(dist_dir, project_name)
         if not stale_files:
             return
-        
+
         detail = f"Found {len(stale_files)} stale file(s) in dist/: {', '.join(stale_files)}"
         issue = Issue(severity='error', code='PY012', title='Stale files in dist/', detail=detail, file='dist/')
-        
+
         if self.auto_fix:
-            removed = []
-            for fname in stale_files:
-                fpath = dist_dir / fname
-                try:
-                    fpath.unlink()
-                    removed.append(fname)
-                except OSError:
-                    pass  # File couldn't be removed
+            removed = self._remove_stale_dist_files(dist_dir, stale_files)
             if removed:
                 issue.fixed = True
                 issue.fix_description = f"Removed {len(removed)} stale file(s)"
         self.issues.append(issue)
+
+    @staticmethod
+    def _collect_stale_dist_files(dist_dir: Path, project_name: str) -> List[str]:
+        return [
+            f.name for f in dist_dir.iterdir()
+            if f.is_file() and not f.name.startswith(f'{project_name}-')
+        ]
+
+    @staticmethod
+    def _remove_stale_dist_files(dist_dir: Path, stale_files: List[str]) -> List[str]:
+        removed = []
+        for fname in stale_files:
+            fpath = dist_dir / fname
+            try:
+                fpath.unlink()
+                removed.append(fname)
+            except OSError:
+                pass  # File couldn't be removed
+        return removed
 
     def check_py013_goal_publish_pattern(self) -> None:
         """PY013: Check for correct publish pattern in goal.yaml."""
         goal_yaml = self.project_dir / 'goal.yaml'
         if not goal_yaml.exists():
             return
-        
+
         goal_content = goal_yaml.read_text(errors='ignore')
         name_match = re.search(r'^name\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
         if not name_match:
             return
-        
+
         project_name = name_match.group(1)
-        # Match publish pattern to end of line (YAML value can contain spaces)
-        publish_match = re.search(r'publish:\s*(.+?)(?:\s*$|\s+\w+:|\n\w+)', goal_content, re.MULTILINE)
-        if not publish_match:
+        publish_pattern = self._extract_goal_publish_pattern(goal_content)
+        if not publish_pattern:
             return
-        
-        publish_pattern = publish_match.group(1).strip()
+
         expected = f'twine upload dist/{project_name}-{{version}}*'
-        
-        if publish_pattern == expected:
+
+        if self._goal_publish_pattern_is_acceptable(project_name, publish_pattern, expected):
             return
-        if project_name in publish_pattern and 'goal-' not in publish_pattern:
-            return
-        
+
         detail = f"Incorrect publish pattern: '{publish_pattern}'. Expected: '{expected}'"
         issue = Issue(severity='error', code='PY013', title='Wrong publish pattern', detail=detail, file='goal.yaml')
-        
+
         if self.auto_fix:
-            # Replace entire publish value, not just first word
-            new_content = re.sub(
-                r'(publish:\s*)(.+?)(\s*$|\s+\w+:|\n\w+)',
-                rf'\1{expected}\3',
-                goal_content,
-                flags=re.MULTILINE
-            )
+            new_content = self._rewrite_goal_publish_pattern(goal_content, expected)
             if new_content != goal_content:
                 goal_yaml.write_text(new_content, encoding='utf-8')
                 issue.fixed = True
                 issue.fix_description = f"Fixed pattern to '{expected}'"
         self.issues.append(issue)
+
+    @staticmethod
+    def _extract_goal_publish_pattern(goal_content: str) -> Optional[str]:
+        publish_match = re.search(r'publish:\s*(.+?)(?:\s*$|\s+\w+:|\n\w+)', goal_content, re.MULTILINE)
+        if not publish_match:
+            return None
+        return publish_match.group(1).strip()
+
+    @staticmethod
+    def _goal_publish_pattern_is_acceptable(project_name: str, publish_pattern: str, expected: str) -> bool:
+        if publish_pattern == expected:
+            return True
+        return project_name in publish_pattern and 'goal-' not in publish_pattern
+
+    @staticmethod
+    def _rewrite_goal_publish_pattern(goal_content: str, expected: str) -> str:
+        return re.sub(
+            r'(publish:\s*)(.+?)(\s*$|\s+\w+:|\n\w+)',
+            rf'\1{expected}\3',
+            goal_content,
+            flags=re.MULTILINE
+        )
 
     def check_py014_pypi_token(self) -> None:
         """PY014: Check for PyPI token configuration before publishing."""
@@ -468,19 +548,14 @@ class PythonDiagnostics:
         goal_yaml = self.project_dir / 'goal.yaml'
         if not goal_yaml.exists():
             return
-        
+
         goal_content = goal_yaml.read_text(errors='ignore')
-        if 'publish_enabled: true' not in goal_content and 'publish_enabled:true' not in goal_content:
+        if not self._is_publish_enabled(goal_content):
             return
-        
-        # Check for PyPI token
-        pypi_token = os.environ.get('PYPI_TOKEN') or os.environ.get('TWINE_PASSWORD')
-        pypirc_project = self.project_dir / '.pypirc'
-        pypirc_home = Path.home() / '.pypirc'
-        
-        if pypi_token or pypirc_project.exists() or pypirc_home.exists():
+
+        if self._has_pypi_credentials():
             return
-        
+
         detail = (
             "PyPI token not configured. Publishing will fail with 403 Forbidden.\n"
             "Set PYPI_TOKEN environment variable or configure ~/.pypirc file."
@@ -491,6 +566,24 @@ class PythonDiagnostics:
             detail=detail, file='goal.yaml'
         )
         self.issues.append(issue)
+
+    @staticmethod
+    def _is_publish_enabled(goal_content: str) -> bool:
+        return 'publish_enabled: true' in goal_content or 'publish_enabled:true' in goal_content
+
+    def _has_pypi_credentials(self) -> bool:
+        import os
+
+        pypi_token = os.environ.get('PYPI_TOKEN') or os.environ.get('TWINE_PASSWORD')
+        pypirc_project = self.project_dir / '.pypirc'
+        pypirc_home = Path.home() / '.pypirc'
+        return bool(pypi_token or pypirc_project.exists() or pypirc_home.exists())
+
+    def run_all_checks(self) -> None:
+        """Run all registered check methods in order."""
+        for method_name in self.CHECK_METHODS:
+            method = getattr(self, method_name)
+            method()
 
     def write_fixes(self, pyproject: Path) -> None:
         """Write fixes back to file if content changed."""
@@ -523,20 +616,8 @@ def diagnose_python(project_dir: Path, auto_fix: bool = True) -> List[Issue]:
     content = pyproject.read_text(errors='ignore')
     diag = PythonDiagnostics(project_dir, content, auto_fix)
     
-    # Run all checks
-    diag.check_py002_build_system()
-    diag.check_py003_license_classifiers()
-    diag.check_py004_deprecated_backends()
-    diag.check_py005_license_table()
-    diag.check_py006_duplicate_authors()
-    diag.check_py007_requires_python()
-    diag.check_py008_empty_classifiers()
-    diag.check_py009_string_authors()
-    diag.check_py010_project_name_consistency()
-    diag.check_py011_version_consistency()
-    diag.check_py012_dist_cleanup()
-    diag.check_py013_goal_publish_pattern()
-    diag.check_py014_pypi_token()
+    # Run all checks via registry
+    diag.run_all_checks()
     
     # Write fixes
     diag.write_fixes(pyproject)
