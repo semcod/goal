@@ -4,7 +4,6 @@ NOTE: This file now serves as a backward-compatibility shim.
 The actual implementation has been split into the goal.summary package.
 """
 
-# Re-export everything from the new summary package for backward compatibility
 from goal.summary import (
     SummaryQualityFilter,
     QualityValidator,
@@ -14,8 +13,6 @@ from goal.summary import (
     auto_fix_summary,
 )
 
-
-# Maintain backward compatibility for direct access
 __all__ = [
     'SummaryQualityFilter',
     'QualityValidator',

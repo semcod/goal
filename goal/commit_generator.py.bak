@@ -24,22 +24,38 @@ __all__ = [
 ]
 
 
-# Example usage as a script
-if __name__ == '__main__':
+def main() -> None:
     import sys
 
     generator = CommitMessageGenerator()
 
-    # Check if we want detailed output
-    if '--detailed' in sys.argv:
-        result = generator.generate_detailed_message()
-        if result:
-            print(result['title'])
-            print()
-            print(result['body'])
+    if is_detailed_output_requested(sys.argv):
+        display_detailed_message(generator)
     else:
-        msg = generator.generate_commit_message()
-        if msg:
-            print(msg)
-        else:
-            sys.exit(1)
+        display_commit_message(generator)
+
+
+def is_detailed_output_requested(args: list) -> bool:
+    return '--detailed' in args
+
+
+def display_detailed_message(generator: CommitMessageGenerator) -> None:
+    result = generator.generate_detailed_message()
+    if result:
+        print(result['title'])
+        print()
+        print(result['body'])
+
+
+def display_commit_message(generator: CommitMessageGenerator) -> None:
+    msg = generator.generate_commit_message()
+    if msg:
+        print(msg)
+    else:
+        import sys
+        sys.exit(1)
+
+
+# Example usage as a script
+if __name__ == '__main__':
+    main()

@@ -1,5 +1,14 @@
 ## [Unreleased]
 
+## [2.1.181] - 2026-04-09
+
+### Docs
+- Update README.md
+
+### Other
+- Update goal/cli.py.bak
+- Update goal/commit_generator.py.bak
+
 ## [2.1.180] - 2026-04-08
 
 ### Docs
