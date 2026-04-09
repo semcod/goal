@@ -128,6 +128,9 @@ def _run_tests_in_subdirs(project_type: str, base_cmd: List[str]) -> bool:
     if not test_dirs:
         return True
 
+    if test_dirs:
+        click.echo(click.style(f"  📁 Running tests in {len(test_dirs)} subproject(s): {', '.join(test_dirs[:5])}", fg='cyan'))
+
     return all(_run_subdir_test(project_type, base_cmd, d) for d in test_dirs[:5])
 
 
