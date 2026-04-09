@@ -6,6 +6,8 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+import click
+
 from goal.git_ops import run_command
 from goal.cli.version import PROJECT_TYPES
 from goal.project_bootstrap import _find_python_bin
@@ -93,8 +95,25 @@ def _run_subdir_test(project_type: str, base_cmd: List[str], test_dir: str) -> b
             result = subprocess.run(base_cmd + [test_dir], capture_output=True, text=True, timeout=120)
         else:
             result = subprocess.run(base_cmd, cwd=test_dir, capture_output=True, text=True, timeout=120)
-        return result.returncode == 0
-    except Exception:
+        if result.returncode != 0:
+            click.echo(click.style(f"\n  ❌ Tests failed in {test_dir}/", fg='red'))
+            if result.stdout:
+                click.echo(click.style("  stdout:", fg='yellow'))
+                for line in result.stdout.strip().split('\n')[:10]:
+                    click.echo(f"    {line}")
+            if result.stderr:
+                click.echo(click.style("  stderr:", fg='yellow'))
+                for line in result.stderr.strip().split('\n')[:10]:
+                    click.echo(f"    {line}")
+            if project_type == 'nodejs':
+                if not (Path(test_dir) / 'node_modules').exists():
+                    click.echo(click.style(f"\n  💡 Fix: cd {test_dir} && npm install", fg='cyan'))
+                elif 'Cannot find module' in (result.stderr or ''):
+                    click.echo(click.style(f"\n  💡 Fix: cd {test_dir} && npm run compile", fg='cyan'))
+            return False
+        return True
+    except Exception as e:
+        click.echo(click.style(f"\n  ❌ Error running tests in {test_dir}/: {e}", fg='red'))
         return False
 
 
