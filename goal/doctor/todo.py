@@ -94,7 +94,8 @@ def add_issues_to_todo(project_dir: Path, issues: List[Issue], todo_file: str = 
         timestamp = datetime.now().strftime('%Y-%m-%d')
     
     header = f"\n## Issues Found - {timestamp}\n\n"
-    content = f"{header}{'\n\n'.join(new_entries)}\n"
+    nl2 = '\n\n'
+    content = f"{header}{nl2.join(new_entries)}\n"
     
     # Write to TODO.md
     if todo_path.exists():

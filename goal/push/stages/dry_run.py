@@ -35,7 +35,8 @@ def _build_split_plan_body(
     if not no_version_sync or not no_changelog:
         plan_lines.append(f"- release: chore(release): bump to {new_version}")
 
-    return f"Planned split commits:\n{'\n'.join(plan_lines)}".strip()
+    nl = '\n'
+    return f"Planned split commits:\n{nl.join(plan_lines)}".strip()
 
 
 def _format_markdown_dry_run(

@@ -17,9 +17,10 @@ class ConfigValidationError(Exception):
     def __init__(self, errors: List[str], warnings: List[str] = None):
         self.errors = errors or []
         self.warnings = warnings or []
-        message = f"Configuration validation failed:\n{'\n'.join(f'  ❌ {e}' for e in self.errors)}"
+        nl = '\n'
+        message = f"Configuration validation failed:\n{nl.join(f'  ❌ {e}' for e in self.errors)}"
         if self.warnings:
-            message += f"\n\nWarnings:\n{'\n'.join(f'  ⚠️  {w}' for w in self.warnings)}"
+            message += f"\n\nWarnings:\n{nl.join(f'  ⚠️  {w}' for w in self.warnings)}"
         super().__init__(message)
 
 

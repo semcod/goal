@@ -90,7 +90,7 @@ class PythonDiagnostics:
             'PEP 639 (adopted in newer setuptools) supersedes license classifiers\n'
             'with the license field. Newer setuptools will REFUSE to build if both\n'
             'a license expression and a License :: classifier are present.\n'
-            f"Found: {', '.join(c.strip().strip('"').strip(',') for c in license_classifiers)}"
+            "Found: " + ', '.join(c.strip().strip('"').strip(',') for c in license_classifiers)
         )
         issue = Issue(
             severity='error', code='PY003',
