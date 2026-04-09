@@ -277,7 +277,6 @@ DEFAULT_CONFIG = {
                 r'sk_live_[a-zA-Z0-9]{24}',  # Stripe secret
                 r'sk_test_[a-zA-Z0-9]{24}',  # Stripe test
                 # Generic patterns
-                r'[a-zA-Z0-9_-]{20,}=[a-zA-Z0-9_-]{20,}',  # key=value format
                 r'Bearer\s+[a-zA-Z0-9_-]{20,}',  # Bearer tokens
                 r'Token\s+[a-zA-Z0-9_-]{20,}',  # Token auth
                 # Private keys
