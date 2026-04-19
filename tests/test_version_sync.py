@@ -1,7 +1,9 @@
 import os
+import pytest
 from pathlib import Path
 from goal.cli import sync_all_versions
 from goal.cli.version import PROJECT_TYPES
+from goal.cli.version_utils import bump_version
 
 def test_sync_updates_init_py(tmp_path):
     """Test that sync_all_versions updates __version__ in __init__.py files."""
@@ -66,3 +68,30 @@ def test_python_publish_command_skips_existing():
     cmd = PROJECT_TYPES["python"]["publish_command"]
     assert "python -m twine upload" in cmd
     assert "--skip-existing" in cmd
+
+
+@pytest.mark.parametrize("version,bump_type,expected", [
+    # clean semver — unchanged behaviour
+    ("1.2.3",        "patch", "1.2.4"),
+    ("1.2.3",        "minor", "1.3.0"),
+    ("1.2.3",        "major", "2.0.0"),
+    ("1.0",          "patch", "1.0.1"),
+    # hyphen pre-release  (was crashing before fix)
+    ("0.2.0-rc1",    "patch", "0.2.1"),
+    ("0.2.0-rc1",    "minor", "0.3.0"),
+    ("0.2.0-rc1",    "major", "1.0.0"),
+    ("1.2.3-alpha",  "patch", "1.2.4"),
+    ("1.2.3-beta.2", "patch", "1.2.4"),
+    # PEP 440 inline pre-release
+    ("1.0.0rc1",     "patch", "1.0.1"),
+    ("1.2.3a1",      "minor", "1.3.0"),
+    ("1.2.3b2",      "patch", "1.2.4"),
+    # PEP 440 dev / post
+    ("1.2.3.dev5",   "patch", "1.2.4"),
+    ("1.2.3.post1",  "patch", "1.2.4"),
+    # CalVer with suffix
+    ("2024.1.0-rc1", "patch", "2024.1.1"),
+])
+def test_bump_version_pre_release_formats(version, bump_type, expected):
+    """bump_version must not crash on pre-release suffixes and must strip them."""
+    assert bump_version(version, bump_type) == expected

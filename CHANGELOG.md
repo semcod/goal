@@ -3,6 +3,14 @@
 ### Fixed
 - Remove `--asyncio-mode=auto` from pytest configuration for compatibility with older pytest-asyncio versions used by `goal -a`
 
+## [2.1.189] - 2026-04-19
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_version_sync.py
+
 ## [2.1.188] - 2026-04-19
 
 ### Docs
