@@ -11,11 +11,6 @@ Goal supports pre/post hooks for commit and push operations, allowing you to aut
 | `pre_push` | Before pushing to remote | Full test suite, security scans |
 | `post_push` | After successful push | Deployment, release announcements |
 
-## Configuration
-
-### Basic Hook Setup
-
-```yaml
 # goal.yaml
 hooks:
   pre_commit: "black . && isort ."
@@ -40,12 +35,6 @@ hooks:
     safety check
 ```
 
-### Conditional Hooks
-
-```bash
-#!/bin/bash
-# scripts/pre-commit.sh
-
 # Only run Python hooks if Python files changed
 if git diff --cached --name-only | grep -E '\.py$'; then
     echo "Running Python hooks..."
@@ -66,8 +55,6 @@ fi
 hooks:
   pre_commit: "./scripts/pre-commit.sh"
 ```
-
-## Hook Examples
 
 ### Python Project Hooks
 
@@ -204,8 +191,6 @@ hooks:
     ./scripts/notify-deployment.sh staging
 ```
 
-## Advanced Hook Patterns
-
 ### Using Environment Variables
 
 ```yaml
@@ -268,12 +253,6 @@ hooks:
   pre_commit: "./scripts/format-code.sh"
 ```
 
-### Parallel Execution
-
-```bash
-#!/bin/bash
-# scripts/parallel-tests.sh
-
 # Run tests in parallel
 pytest tests/unit/ &
 PID1=$!
@@ -301,14 +280,6 @@ if [ $EXIT1 -ne 0 ] || [ $EXIT2 -ne 0 ] || [ $EXIT3 -ne 0 ]; then
 fi
 ```
 
-### Time-based Hooks
-
-```bash
-#!/bin/bash
-# scripts/smart-hooks.sh
-
-HOUR=$(date +%H)
-
 # During business hours (9-17), run full checks
 if [ $HOUR -ge 9 ] && [ $HOUR -le 17 ]; then
     echo "Business hours - running full checks..."
@@ -320,10 +291,6 @@ else
 fi
 ```
 
-### Hook Success/Failure Handling
-
-```bash
-#!/bin/bash
 # scripts/robust-pre-push.sh
 
 set -e  # Exit on any error
@@ -356,11 +323,6 @@ fi
 echo "All checks passed!"
 ```
 
-## Integration with Tools
-
-### Pre-commit Framework
-
-```yaml
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/psf/black
@@ -385,14 +347,8 @@ hooks:
   pre_commit: "pre-commit run --all-files"
 ```
 
-### Husky (Node.js)
-
-```bash
 # Install Husky
 npm install --save-dev husky
-
-# Enable Git hooks
-npx husky install
 
 # Add pre-commit hook
 npx husky add .husky/pre-commit "npm run format && npm run lint"
@@ -404,9 +360,6 @@ hooks:
   pre_commit: "npx husky run pre-commit"
 ```
 
-### Lefthook
-
-```yaml
 # lefthook.yml
 pre-commit:
   commands:
@@ -431,21 +384,9 @@ hooks:
 5. **Test hooks** - Ensure they work in different environments
 6. **Document hooks** - Explain what each hook does
 
-## Troubleshooting
-
-### Hook Not Running
-
-```bash
 # Check if hook is executable
 chmod +x scripts/my-hook.sh
 
-# Check permissions
-ls -la scripts/
-```
-
-### Hook Fails Silently
-
-```bash
 # Add debug output
 #!/bin/bash
 set -ex  # Exit on error, print commands
@@ -455,9 +396,6 @@ echo "Starting hook..."
 echo "Hook completed!"
 ```
 
-### PATH Issues
-
-```bash
 # Use full paths
 hooks:
   pre_commit: "/usr/local/bin/black ."

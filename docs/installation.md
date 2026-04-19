@@ -1,5 +1,3 @@
-# Installation
-
 ## Requirements
 
 - Python 3.8 or higher
@@ -36,12 +34,6 @@ This installs additional development dependencies:
 
 ```bash
 goal --version
-# Goal, version 2.1.1
-
-goal --help
-# Usage: goal [OPTIONS] COMMAND [ARGS]...
-```
-
 ## Optional Dependencies
 
 Goal works out of the box, but you might want these for specific features:
@@ -54,17 +46,6 @@ pip install pytest black isort flake8
 ### For Node.js Projects
 ```bash
 npm install -g
-# Goal will use npm commands if package.json exists
-```
-
-### For Rust Projects
-```bash
-# Install Rust first: https://rustup.rs/
-# Goal will use cargo commands if Cargo.toml exists
-```
-
-## Shell Completion
-
 ### Bash
 ```bash
 eval "$(_GOAL_COMPLETE=bash_source goal)"
@@ -90,8 +71,6 @@ echo 'eval "$(_GOAL_COMPLETE=zsh_source goal)"' >> ~/.zshrc
 eval (env _GOAL_COMPLETE=fish_source goal)
 ```
 
-## Docker
-
 ### Using Goal in Docker
 ```dockerfile
 FROM python:3.11-slim
@@ -111,8 +90,6 @@ CMD ["--help"]
 ```bash
 docker run --rm -v $(pwd):/app -w /app wronai/goal:latest push
 ```
-
-## Troubleshooting
 
 ### Permission Denied
 
@@ -136,13 +113,6 @@ Goal requires Git to be installed:
 ```bash
 # Ubuntu/Debian
 sudo apt-get install git
-
-# macOS
-brew install git
-
-# Windows
-# Download from https://git-scm.com/
-```
 
 ### Python Version
 

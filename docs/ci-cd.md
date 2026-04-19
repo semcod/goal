@@ -2,11 +2,6 @@
 
 Goal is designed to work seamlessly in CI/CD pipelines for automated releases.
 
-## GitHub Actions
-
-### Basic Release Workflow
-
-```yaml
 # .github/workflows/release.yml
 name: Release
 
@@ -69,9 +64,6 @@ jobs:
           path: release-*.md
 ```
 
-### Multi-Stage Pipeline
-
-```yaml
 # .github/workflows/pipeline.yml
 name: CI/CD Pipeline
 
@@ -133,11 +125,6 @@ jobs:
         run: goal --all --bump patch
 ```
 
-## GitLab CI
-
-### Basic Release
-
-```yaml
 # .gitlab-ci.yml
 stages:
   - test
@@ -173,9 +160,6 @@ release:
       - release-*.md
 ```
 
-### Environment-Specific Releases
-
-```yaml
 # .gitlab-ci.yml
 stages:
   - test
@@ -210,8 +194,6 @@ release-production:
   script:
     - goal -c .goal/production.yaml --all --bump patch
 ```
-
-## Jenkins
 
 ### Declarative Pipeline
 
@@ -269,11 +251,6 @@ pipeline {
 }
 ```
 
-## Azure DevOps
-
-### YAML Pipeline
-
-```yaml
 # azure-pipelines.yml
 trigger:
   branches:
@@ -329,11 +306,6 @@ stages:
       displayName: 'Release with Goal'
 ```
 
-## Docker
-
-### Multi-stage Build
-
-```dockerfile
 # Dockerfile
 FROM python:3.11-slim as builder
 
@@ -342,12 +314,6 @@ COPY . .
 
 # Install build dependencies
 RUN pip install --no-cache-dir -e .[dev]
-
-# Run tests
-RUN pytest
-
-# Build package
-RUN python -m build
 
 # Release stage
 FROM python:3.11-slim as release
@@ -368,9 +334,6 @@ ENV PYPI_TOKEN=${PYPI_TOKEN}
 CMD ["goal", "--all", "--bump", "patch"]
 ```
 
-### Docker Compose
-
-```yaml
 # docker-compose.yml
 version: '3.8'
 
@@ -395,8 +358,6 @@ services:
 volumes:
   git-config:
 ```
-
-## Configuration for CI/CD
 
 ### Environment-Specific Configs
 
@@ -442,9 +403,6 @@ hooks:
   post_push: "npm run deploy:staging"
 ```
 
-### Using in Pipeline
-
-```bash
 # Production
 goal -c .goal/production.yaml --all
 
@@ -455,11 +413,6 @@ goal -c .goal/staging.yaml --all --bump minor
 goal -c ci-config.yaml --yes
 ```
 
-## Best Practices
-
-### 1. Secure Credentials
-
-```yaml
 # GitHub Actions - use secrets
 env:
   PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
@@ -475,9 +428,6 @@ environment {
 }
 ```
 
-### 2. Conditional Releases
-
-```yaml
 # Only release on main branch
 - if: github.ref == 'refs/heads/main'
   run: goal --all
@@ -493,9 +443,6 @@ environment {
   run: goal --all
 ```
 
-### 3. Version Bump Strategy
-
-```yaml
 # Auto-detect bump type based on changes
 - name: Determine bump type
   id: bump
@@ -512,10 +459,6 @@ environment {
   run: goal --all --bump ${{ steps.bump.outputs.type }}
 ```
 
-### 4. Rollback Strategy
-
-```bash
-#!/bin/bash
 # rollback.sh
 NEW_VERSION=$1
 PREVIOUS_VERSION=$2
@@ -529,9 +472,6 @@ goal config set git.tag.prefix "rollback-"
 goal push -m "chore: rollback $NEW_VERSION to $PREVIOUS_VERSION" --no-version-sync
 ```
 
-### 5. Notifications
-
-```yaml
 # Slack notification after release
 - name: Notify Slack
   uses: 8398a7/action-slack@v3
@@ -545,8 +485,6 @@ goal push -m "chore: rollback $NEW_VERSION to $PREVIOUS_VERSION" --no-version-sy
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
   if: always()
 ```
-
-## Troubleshooting
 
 ### Common Issues
 
@@ -614,12 +552,6 @@ pipeline:
     on_fail: report
 ```
 
-### Uruchomienie lokalne
-
-```bash
-# Zainstaluj pyqual
-pip install pyqual
-
 # Uruchom pipeline
 pyqual run --config pyqual.yaml
 
@@ -630,9 +562,6 @@ pyqual validate --config pyqual.yaml
 pyqual status --config pyqual.yaml
 ```
 
-### Integracja z GitHub Actions
-
-```yaml
 # .github/workflows/quality.yml
 name: Quality Pipeline
 
@@ -687,13 +616,6 @@ commands = pytest {posargs}
 Uruchomienie:
 
 ```bash
-# Testuj wszystkie wersje Pythona
-pip install tox
-tox
-
-# Konkretna wersja
-tox -e py311
-
 # Z pokryciem
 tox -e py311 -- --cov=goal
 ```
@@ -717,18 +639,3 @@ tox -e py311 -- --cov=goal
 - **Critical** ≤ 20 - krytyczne problemy
 - **Vallm pass** ≥ 50% - procent poprawnych walidacji
 
-### Troubleshooting pyqual
-
-```bash
-# Brak uprawnień do push
-# → Sprawdź GITHUB_TOKEN / git credentials
-
-# Claude Code nie działa
-# → Wymaga auth: claude auth login (lokalnie) lub ANTHROPIC_API_KEY (CI)
-
-# Coverage nie parsuje się
-# → Pyqual nie wspiera pytest-cov parsowania - użyj gate na podstawie innych metryk
-
-# Za długi czas wykonania
-# → Zmniejsz max_iterations w loop lub oznacz stage jako optional: true
-```

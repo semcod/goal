@@ -9,8 +9,6 @@
 **License:** Apache-2.0[(LICENSE)](./LICENSE)  
 **Repository:** [https://github.com/wronai/goal](https://github.com/wronai/goal)
 
-## Installation
-
 ### From PyPI
 
 ```bash
@@ -31,14 +29,6 @@ pip install -e .
 pip install goal[nfo]    # nfo features
 pip install goal[dev]    # development tools
 ```
-
-## Quick Start
-
-### CLI Usage
-
-```bash
-# Generate full documentation for your project
-goal ./my-project
 
 # Only regenerate README
 goal ./my-project --readme-only
@@ -148,8 +138,6 @@ Content outside the markers is preserved when regenerating. Enable this with `sy
 ```
 goal/
 ├── project    ├── markdown-demo        ├── Calculator        ├── slack-webhook            ├── my-new-project/        ├── pre-publish        ├── pre-commit        ├── install        ├── main        ├── 04_version_validation        ├── post-commit        ├── 05_programmatic_workflow        ├── 03_commit_generation        ├── 01_basic_api        ├── 02_git_operations            ├── Example                            ├── Main        ├── run_all_validation    ├── config/        ├── discord-webhook    ├── enhanced_summary    ├── cli/        ├── generate    ├── toml_validation    ├── commit_generator    ├── user_config    ├── changelog├── goal/    ├── version_validation    ├── __main__    ├── smart_commit/    ├── project_bootstrap    ├── formatter    ├── deep_analyzer    ├── project_doctor        ├── generator    ├── generator/        ├── analyzer    ├── git_ops        ├── config    ├── hooks/        ├── git_ops        ├── exceptions    ├── validators/        ├── manager        ├── gitignore        ├── dot_folders        ├── tokens        ├── file_validator        ├── exceptions        ├── base        ├── large_file        ├── strategies        ├── lfs        ├── auth    ├── recovery/        ├── corrupted        ├── force_push        ├── commands        ├── manager    ├── push/            ├── version            ├── changelog        ├── divergent            ├── dry_run            ├── costs        ├── core            ├── tag        ├── stages/            ├── commit            ├── publish        ├── recover_cmd        ├── version        ├── version_sync        ├── hooks_cmd        ├── config_validate_cmd        ├── license_cmd            ├── push_remote        ├── authors_cmd        ├── doctor_cmd        ├── postcommit_cmd        ├── commit_cmd        ├── utils_cmd        ├── version_utils        ├── wizard_cmd        ├── version_types        ├── validation_cmd        ├── publish        ├── publish_cmd        ├── push_cmd        ├── config_cmd        ├── manager    ├── postcommit/        ├── actions        ├── manager        ├── constants        ├── validation        ├── generator        ├── validator    ├── summary/    ├── package_managers        ├── quality_filter        ├── manager    ├── validation/        ├── rust        ├── ruby        ├── rules        ├── body_formatter        ├── dotnet    ├── doctor/        ├── go        ├── todo        ├── logging        ├── php        ├── nodejs        ├── java        ├── abstraction        ├── generator        ├── manager    ├── authors/        ├── utils        ├── manager        ├── spdx    ├── license/    ├── run_docker_matrix    ├── run_matrix        ├── models        ├── core        ├── python```
-
-## API Overview
 
 ### Classes
 
@@ -620,21 +608,14 @@ goal/
 - Tom Softreck <tom@sapletta.com>
 - Tom Sapletta <tom-sapletta-com@users.noreply.github.com>
 
-We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please see [CONTRIBUTING.md](https://github.com/wronai/goal/blob/main/CONTRIBUTING.md) for guidelines.
 
-### Development Setup
-
-```bash
 # Clone the repository
 git clone https://github.com/wronai/goal
 cd goal
 
 # Install in development mode
 pip install -e ".[dev]"
-
-# Run tests
-pytest
-```
 
 ## Documentation
 
@@ -649,15 +630,15 @@ pytest
 | Output | Description | Link |
 |--------|-------------|------|
 | `README.md` | Project overview (this file) | — |
-| `docs/api.md` | Consolidated API reference | [View](./docs/api.md) |
-| `docs/modules.md` | Module reference with metrics | [View](./docs/modules.md) |
-| `docs/architecture.md` | Architecture with diagrams | [View](./docs/architecture.md) |
-| `docs/dependency-graph.md` | Dependency graphs | [View](./docs/dependency-graph.md) |
-| `docs/coverage.md` | Docstring coverage report | [View](./docs/coverage.md) |
-| `docs/getting-started.md` | Getting started guide | [View](./docs/getting-started.md) |
+| `docs/api.md` | Consolidated API reference | [View](https://github.com/wronai/goal/blob/main/docs/api.md) |
+| `docs/modules.md` | Module reference with metrics | [View](https://github.com/wronai/goal/blob/main/docs/modules.md) |
+| `docs/architecture.md` | Architecture with diagrams | [View](https://github.com/wronai/goal/blob/main/docs/architecture.md) |
+| `docs/dependency-graph.md` | Dependency graphs | [View](https://github.com/wronai/goal/blob/main/docs/dependency-graph.md) |
+| `docs/coverage.md` | Docstring coverage report | [View](https://github.com/wronai/goal/blob/main/docs/coverage.md) |
+| `docs/getting-started.md` | Getting started guide | [View](https://github.com/wronai/goal/blob/main/docs/getting-started.md) |
 | `docs/configuration.md` | Configuration reference | [View](./docs/configuration.md) |
-| `docs/api-changelog.md` | API change tracking | [View](./docs/api-changelog.md) |
-| `CONTRIBUTING.md` | Contribution guidelines | [View](./CONTRIBUTING.md) |
+| `docs/api-changelog.md` | API change tracking | [View](https://github.com/wronai/goal/blob/main/docs/api-changelog.md) |
+| `CONTRIBUTING.md` | Contribution guidelines | [View](https://github.com/wronai/goal/blob/main/CONTRIBUTING.md) |
 | `examples/` | Usage examples | [Browse](./examples) |
 | `mkdocs.yml` | MkDocs configuration | — |
 

@@ -11,8 +11,6 @@ The user configuration system:
 - **Updates** project files automatically
 - **Preserves** existing authors
 
-## First-Time Setup
-
 ### Automatic Detection
 
 When you run Goal for the first time, it will:
@@ -71,10 +69,6 @@ Enter your email: info@softreck.com
 
 Every time you run `goal`, it automatically updates:
 
-### Project Files
-
-#### pyproject.toml (Python)
-```toml
 # Before
 authors = [
     {name = "Original Author", email = "original@example.com"}
@@ -109,8 +103,6 @@ classifiers = [
 authors = ["Original <old@email.com>", "Tom Sapletta <info@softreck.com>"]
 license = "Apache-2.0"
 ```
-
-### README.md
 
 #### License Badges
 
@@ -149,19 +141,12 @@ Created by **Tom Sapletta** - [info@softreck.com](mailto:info@softreck.com)
 
 Goal intelligently manages authors:
 
-### Scenario 1: No Existing Author
-```python
-# Before: Empty or no authors field
-authors = []
-
 # After: Goal adds you
 authors = [
     {name = "Tom Sapletta", email = "info@softreck.com"}
 ]
 ```
 
-### Scenario 2: Different Existing Author
-```python
 # Before: Someone else is the author
 authors = [
     {name = "Alice Developer", email = "alice@example.com"}
@@ -174,8 +159,6 @@ authors = [
 ]
 ```
 
-### Scenario 3: You're Already an Author
-```python
 # Before: You're already listed
 authors = [
     {name = "Tom Sapletta", email = "info@softreck.com"}
@@ -186,8 +169,6 @@ authors = [
     {name = "Tom Sapletta", email = "info@softreck.com"}
 ]
 ```
-
-## Managing Configuration
 
 ### View Current Configuration
 
@@ -212,12 +193,6 @@ Current settings:
 
 ```bash
 $ goal config --reset
-
-# This will:
-# 1. Delete current configuration
-# 2. Run first-time setup again
-# 3. Save new preferences
-```
 
 ### Manual Edit
 
@@ -256,52 +231,14 @@ Each license gets an appropriate badge:
 - **BSD**: Blue badge
 - **MPL**: Bright green badge
 
-## Common Workflows
-
-### New Project Setup
-
-```bash
 # 1. Initialize git
 git init
 git config user.name "Tom Sapletta"
 git config user.email "info@softreck.com"
 
-# 2. Run goal (first time will configure)
-goal init
-
-# 3. Everything is automatically set up!
-```
-
-### Contributing to Existing Project
-
-```bash
 # 1. Clone the repository
 git clone https://github.com/org/project.git
 cd project
-
-# 2. Make your changes
-# Edit files...
-
-# 3. Run goal
-goal
-
-# Goal will:
-# - Keep existing authors
-# - Add you as co-author
-# - Use your license preference for new files
-```
-
-### Team Development
-
-```bash
-# Each team member runs:
-goal config
-
-# Their settings are stored locally in ~/.goal
-# Project files get updated with all contributors
-```
-
-## Troubleshooting
 
 ### Git User Not Configured
 
@@ -319,13 +256,6 @@ git config --global user.email "your@email.com"
 
 **Solution**:
 ```bash
-# Option 1: Reset and reconfigure
-goal config --reset
-
-# Option 2: Edit ~/.goal manually
-nano ~/.goal
-```
-
 ### License Not Updating
 
 **Problem**: Project files not getting license updates
@@ -355,8 +285,6 @@ nano ~/.goal
 3. Manually add a license badge if none exists
 4. Goal will update it on next run
 
-## Best Practices
-
 ### For Individual Developers
 
 1. **Configure once**: Set up your ~/.goal on each machine
@@ -375,8 +303,6 @@ nano ~/.goal
 2. **Update CONTRIBUTING.md**: Explain how authors are managed
 3. **Be transparent**: Document license choice in README
 
-## Configuration File Reference
-
 ### ~/.goal Structure
 
 ```json
@@ -388,8 +314,6 @@ nano ~/.goal
   "license_classifier": "string"     // PyPI classifier for license
 }
 ```
-
-### Example Configurations
 
 #### Apache-2.0
 ```json
@@ -412,8 +336,6 @@ nano ~/.goal
   "license_classifier": "License :: OSI Approved :: MIT License"
 }
 ```
-
-## Advanced Usage
 
 ### Programmatic Access
 
@@ -490,12 +412,6 @@ Use the `goal authors` command to manage project authors:
 ```bash
 # Add an author
 goal authors add "Alice Chen" alice@company.com --role "Lead Developer"
-
-# List all authors
-goal authors list
-
-# Import from git history
-goal authors import
 
 # Export to CONTRIBUTORS.md
 goal authors export

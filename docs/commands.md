@@ -14,8 +14,6 @@ These options can be used with any Goal command:
 | `--help` | `-h` | Show help message |
 | `--version` | | Show version and exit |
 
-## Main Commands
-
 ### `goal` (default)
 
 Run the interactive push workflow.
@@ -251,8 +249,6 @@ goal commit               # Simple message
 goal commit --detailed    # Detailed message with body
 goal commit --unstaged    # Analyze unstaged changes
 ```
-
-## Configuration Commands
 
 ### `goal config`
 
@@ -513,10 +509,6 @@ Goal looks for `goal.yaml` in this order:
 2. Current directory
 3. Parent directories (up to git root)
 
-## Examples by Use Case
-
-### Development Workflow
-```bash
 # Make changes...
 goal                    # Interactive commit and push
 ```

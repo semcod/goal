@@ -124,14 +124,6 @@ pipeline:
     LLX_DEFAULT_TIER: balanced
 ```
 
-## Użycie
-
-### Lokalne uruchomienie
-
-```bash
-# Zainstaluj pyqual
-pip install pyqual
-
 # Uruchom pipeline
 pyqual run --config pyqual.yaml
 
@@ -143,40 +135,6 @@ pyqual status --config pyqual.yaml
 
 # Szczegółowe logi
 pyqual run --config pyqual.yaml --verbose
-```
-
-### CI/CD (GitHub Actions)
-
-```yaml
-# .github/workflows/quality.yml
-name: Quality Pipeline
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  quality:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
-      - name: Install dependencies
-        run: |
-          pip install -e ".[dev]"
-          pip install pyqual tox
-      
-      - name: Run quality pipeline
-        run: pyqual run --config pyqual.yaml
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 ```
 
 ## Stage'y
@@ -206,16 +164,8 @@ Obecne gate'y w projekcie:
 - **Vallm pass** ≥ 50% - procent poprawnych walidacji vallm
   - Obecna wartość: 100% ✓
 
-## Claude Code Integration
-
-### Wymagania
-
-```bash
 # Instalacja Claude Code CLI
 npm install -g @anthropic-ai/claude-code
-
-# Autentykacja lokalna
-claude auth login
 
 # Lub w CI - zmienna środowiskowa
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -232,35 +182,13 @@ Prompt zawiera:
 - Pierwsze 50 linii z `TODO.md`
 - Kontekst projektu (pliki, struktura)
 
-## Troubleshooting
-
-### Coverage nie jest parsowane
-
-```bash
-# Problem: pyqual nie wspiera parsowania pytest-cov
-# Rozwiązanie: użyj gate na podstawie innych metryk
 # lub zapisz coverage do pliku i parsuj ręcznie
 
 pytest --cov=goal --cov-report=xml
-# Dodaj stage parsujący coverage.xml
-```
-
-### Claude Code nie działa
-
-```bash
 # Sprawdź instalację
 which claude
 claude --version
 
-# Sprawdź autentykację
-claude auth status
-
-# W CI użyj ANTHROPIC_API_KEY
-```
-
-### Pipeline się zapętla
-
-```yaml
 # W pyqual.yaml - zmniejsz iteracje lub wyłącz stage
 loop:
   max_iterations: 1  # Zamiast 3
@@ -270,9 +198,6 @@ loop:
   optional: true
 ```
 
-### Push fail (brak uprawnień)
-
-```bash
 # Lokalnie - skonfiguruj git
 git config user.name "Developer"
 git config user.email "dev@example.com"
@@ -309,25 +234,6 @@ commands = pfix check {posargs}
 deps = pyqual>=0.2.0
 commands = pyqual validate --config pyqual.yaml
 """
-```
-
-### Uruchomienie
-
-```bash
-# Zainstaluj tox
-pip install tox
-
-# Testuj wszystkie wersje
-tox
-
-# Konkretna wersja
-tox -e py311
-
-# Tylko lint
-tox -e lint
-
-# Walidacja pyqual
-tox -e pyqual
 ```
 
 ## Powiązane narzędzia

@@ -1,5 +1,3 @@
-# Goal Integration Guide
-
 ## Badge
 
 Dodaj ten badge do swojego `README.md` aby pokazać że projekt używa `goal`:
@@ -98,8 +96,6 @@ release:
 ```
 
 ---
-
-## Automatyczne uruchamianie `goal -a` po udanych testach
 
 ### Opcja 1: GitHub Actions (zalecana)
 

@@ -41,8 +41,6 @@ Goal's Enhanced Summary system transforms raw code changes into **business-value
 
 ---
 
-## Before vs After
-
 ### Traditional Commit (Statistics-Based)
 
 ```text
@@ -112,8 +110,6 @@ dependency_flow:
 
 ---
 
-## Architecture
-
 ### Component Overview
 
 ```
@@ -149,8 +145,6 @@ dependency_flow:
 | [`goal/config.py`](../goal/config.py) | Quality thresholds & patterns | ~790 |
 
 ---
-
-## Implementation
 
 ### 1. Role Mapping (Entity → Function)
 
@@ -277,8 +271,6 @@ IMPACT:
 
 ---
 
-## Configuration
-
 ### goal.yaml Quality Settings
 
 ```yaml
@@ -316,12 +308,6 @@ quality:
       impact: 'intelligent change detection'
 ```
 
-### Enable/Disable Enhanced Summary
-
-```bash
-# Use enhanced summary (default when config exists)
-goal push
-
 # Force legacy format
 goal push --abstraction legacy
 
@@ -332,8 +318,6 @@ goal push --abstraction low     # Statistical focus
 ```
 
 ---
-
-## Comparison with Alternatives
 
 ### Feature Comparison
 
@@ -351,8 +335,6 @@ goal push --abstraction low     # Statistical focus
 
 **Conventional Changelog:**
 ```
-## [1.2.0] - 2024-01-29
-
 ### Added
 - Add deep analyzer module
 - Add enhanced summary generator
@@ -395,8 +377,6 @@ IMPACT:
 
 ---
 
-## API Reference
-
 ### EnhancedSummaryGenerator
 
 ```python
@@ -406,28 +386,12 @@ generator = EnhancedSummaryGenerator(config=config_dict)
 
 # Generate full summary
 result = generator.generate_enhanced_summary(files, diff_content)
-# Returns: {
-#     'title': 'enterprise-grade commit intelligence',
-#     'body': 'NEW CAPABILITIES:\n...',
-#     'capabilities': [{'id': 'ast_analysis', 'capability': '...', 'impact': '...'}],
-#     'roles': [{'name': '_analyze_diff', 'role': 'language-specific analyzer'}],
-#     'relations': {'chain': 'cli→generator', 'ascii': '...'},
-#     'metrics': {'value_score': 85, 'complexity_delta': 549}
-# }
-
 # Map entity to role
 role = generator.map_entity_to_role('_analyze_python_diff')
-# Returns: 'language-specific code analyzer'
-
 # Detect capabilities
 caps = generator.detect_capabilities(files, diff_content)
-# Returns: [{'id': 'ast_analysis', 'capability': '...', 'impact': '...'}]
-
 # Calculate metrics
 metrics = generator.calculate_quality_metrics(analysis, files)
-# Returns: {'value_score': 85, 'complexity_delta': 549, ...}
-```
-
 ### CodeChangeAnalyzer
 
 ```python
@@ -437,27 +401,8 @@ analyzer = CodeChangeAnalyzer()
 
 # Analyze single file
 result = analyzer.analyze_file_diff(filepath, old_content, new_content)
-# Returns: {
-#     'filepath': 'goal/cli.py',
-#     'language': 'python',
-#     'added_entities': [{'name': 'push', 'type': 'function', ...}],
-#     'modified_entities': [...],
-#     'functional_areas': ['cli', 'configuration'],
-#     'complexity_change': 5
-# }
-
 # Generate functional summary
 summary = analyzer.generate_functional_summary(files)
-# Returns: {
-#     'aggregated': {...},
-#     'functional_value': 'enhanced code analysis capabilities',
-#     'relations': [('config', 'cli', 'configuration-driven CLI')],
-#     'summary': 'New classes: CodeChangeAnalyzer\nNew functions: ...'
-# }
-```
-
----
-
 ## See Also
 
 - [Configuration Guide](configuration.md) - Full goal.yaml reference

@@ -12,8 +12,6 @@ goal status --markdown
 goal --markdown --all
 ```
 
-## Example Output
-
 ### Failed Test Scenario
 
 ```markdown
@@ -24,8 +22,6 @@ version_bump: "1.0.1 -> 1.0.2"
 file_count: 7
 timestamp: "2026-01-29T10:03:15.123456"
 ---
-
-# Goal Push Result
 
 ## Overview
 **Project Type:** python
@@ -88,8 +84,6 @@ version_bump: "1.0.1 -> 1.0.2"
 file_count: 5
 timestamp: "2026-01-29T10:05:30.654321"
 ---
-
-# Goal Push Result
 
 ## Overview
 **Project Type:** python
@@ -192,10 +186,6 @@ print(f"Version: {version_bump}")
 print(f"Files changed: {file_count}")
 ```
 
-### Shell Script Example
-
-```bash
-#!/bin/bash
 # Extract version from markdown output
 VERSION=$(goal push --dry-run --markdown | grep "version_bump" | cut -d'"' -f2)
 echo "Next version will be: $VERSION"
@@ -205,8 +195,6 @@ if goal push --dry-run --markdown | grep -q "pytest"; then
     echo "Tests will be run"
 fi
 ```
-
-## CI/CD Integration
 
 ### GitHub Actions
 

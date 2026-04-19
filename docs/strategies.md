@@ -15,8 +15,6 @@ Goal supports multiple project types with configurable strategies for testing, b
 | .NET | `*.csproj`, `*.fsproj` | `dotnet test` | `dotnet pack` | `dotnet nuget push` |
 | Java | `pom.xml`, `build.gradle` | `mvn test` | `mvn package` | `mvn deploy` |
 
-## Configuring Strategies
-
 ### Python Strategy
 
 ```yaml
@@ -139,8 +137,6 @@ strategies:
     publish: "cd cli && cargo publish"
 ```
 
-## Custom Strategies
-
 ### Creating Custom Strategy
 
 ```yaml
@@ -168,8 +164,6 @@ strategies:
       test_filter: "not slow"
       build_dir: "dist"
 ```
-
-## Version Files Configuration
 
 ### Python Projects
 
@@ -213,8 +207,6 @@ versioning:
     - "cli/Cargo.toml:version"
 ```
 
-## Registry Configuration
-
 ### PyPI Configuration
 
 ```yaml
@@ -249,8 +241,6 @@ strategies:
       sleep 30
       twine upload --repository pypi dist/*
 ```
-
-## Hooks Integration
 
 ### Pre-commit Hooks
 
@@ -290,8 +280,6 @@ hooks:
     # Notify team
     curl -X POST "$SLACK_WEBHOOK" -d "text='New version deployed'"
 ```
-
-## Examples by Use Case
 
 ### Data Science Project
 
@@ -377,8 +365,6 @@ versioning:
 4. **Use environment variables** for sensitive data
 5. **Test publish commands** with dry-run flags
 6. **Document custom strategies** for your team
-
-## Troubleshooting
 
 ### Common Issues
 
