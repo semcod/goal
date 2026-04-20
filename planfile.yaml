@@ -1,5544 +1,748 @@
-name: Code Quality Improvement
-project_name: ''
-project_type: prefactoring
-domain: dev-tools
-goal: Improve code quality using prefact
-goals:
-- Fix all prefact-detected issues
-- Improve code maintainability
-- Ensure consistent code style
-quality_gates:
-- metric: Prefact Issues
-  threshold: '0'
-sprints:
-- id: sprint-1
-  name: Code Quality Improvements
-  duration: 2 weeks
-  objectives:
-  - Fix code quality issues
-  task_patterns:
-  - id: ticket-6ffdf184
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/authors/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/authors/__init__.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-fb4fae09
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/authors/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/authors/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4a334ca3
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/__main__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/__main__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5c7fe6eb
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/__main__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/__main__.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7d2a0e14
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f9de5882
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/authors/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/authors/manager.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ffd86490
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/authors/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/authors/manager.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e315126b
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/authors/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/authors/manager.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-72e063c1
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/authors/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/authors/manager.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3d5d23ae
-    name: Fix llm-generated-code issues
-    description: Resolve 10 llm-generated-code issues in goal/authors/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/authors/manager.py
-    rule_id: llm-generated-code
-    count: 10
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-460ea50e
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/authors/utils.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/authors/utils.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-72013e0b
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in goal/authors/utils.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/authors/utils.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c67d7dc6
-    name: Fix llm-generated-code issues
-    description: Resolve 9 llm-generated-code issues in goal/authors/utils.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/authors/utils.py
-    rule_id: llm-generated-code
-    count: 9
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5bead0fc
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/changelog.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/changelog.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a40b03bb
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/changelog.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/changelog.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d4e3e5d9
-    name: Fix string-concat issues
-    description: Resolve 19 string-concat issues in goal/changelog.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/changelog.py
-    rule_id: string-concat
-    count: 19
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1b7ef2a4
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/changelog.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/changelog.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6f238a23
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/changelog.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/changelog.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d891f624
-    name: Fix relative-imports issues
-    description: Resolve 28 relative-imports issues in goal/cli/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/__init__.py
-    rule_id: relative-imports
-    count: 28
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-82a8673d
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2022028b
-    name: Fix smart-return-type issues
-    description: Resolve 4 smart-return-type issues in goal/cli/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/__init__.py
-    rule_id: smart-return-type
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a5066b7f
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in goal/cli/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/__init__.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1fb93116
-    name: Fix unused-imports issues
-    description: Resolve 82 unused-imports issues in goal/cli/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/__init__.py
-    rule_id: unused-imports
-    count: 82
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-61dda27e
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/authors_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/authors_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-13ffec07
-    name: Fix smart-return-type issues
-    description: Resolve 10 smart-return-type issues in goal/cli/authors_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/authors_cmd.py
-    rule_id: smart-return-type
-    count: 10
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ef720f39
-    name: Fix unused-imports issues
-    description: Resolve 16 unused-imports issues in goal/cli/authors_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/authors_cmd.py
-    rule_id: unused-imports
-    count: 16
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a12b43b4
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/cli/commit_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/commit_cmd.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-809d1304
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/commit_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/commit_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bfe2ab0a
-    name: Fix smart-return-type issues
-    description: Resolve 3 smart-return-type issues in goal/cli/commit_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/commit_cmd.py
-    rule_id: smart-return-type
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-be1f1542
-    name: Fix unused-imports issues
-    description: Resolve 16 unused-imports issues in goal/cli/commit_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/commit_cmd.py
-    rule_id: unused-imports
-    count: 16
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d10de0d4
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/cli/commit_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/commit_cmd.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-84802f76
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/config_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/config_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bf75c893
-    name: Fix smart-return-type issues
-    description: Resolve 7 smart-return-type issues in goal/cli/config_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/config_cmd.py
-    rule_id: smart-return-type
-    count: 7
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-601d874a
-    name: Fix unused-imports issues
-    description: Resolve 12 unused-imports issues in goal/cli/config_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/config_cmd.py
-    rule_id: unused-imports
-    count: 12
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-eea71bb1
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/config_validate_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/config_validate_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-410d680a
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/cli/config_validate_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/config_validate_cmd.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-272a13b0
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/cli/config_validate_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/config_validate_cmd.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d44c3967
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/doctor_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/doctor_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4212e6a6
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/cli/doctor_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/doctor_cmd.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-87216eaa
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in goal/cli/doctor_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/doctor_cmd.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-00086e06
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/cli/doctor_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/doctor_cmd.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7424fa3c
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/hooks_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/hooks_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ca4c165d
-    name: Fix smart-return-type issues
-    description: Resolve 5 smart-return-type issues in goal/cli/hooks_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/hooks_cmd.py
-    rule_id: smart-return-type
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5f2126a0
-    name: Fix unused-imports issues
-    description: Resolve 16 unused-imports issues in goal/cli/hooks_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/hooks_cmd.py
-    rule_id: unused-imports
-    count: 16
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ce03eae2
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/license_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/license_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9a8ae60f
-    name: Fix smart-return-type issues
-    description: Resolve 8 smart-return-type issues in goal/cli/license_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/license_cmd.py
-    rule_id: smart-return-type
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-00e007c1
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/cli/license_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/license_cmd.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ec97d874
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/publish.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/publish.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ce5810c4
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/cli/publish.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/publish.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-19571bcc
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/postcommit_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/postcommit_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b22d8681
-    name: Fix smart-return-type issues
-    description: Resolve 5 smart-return-type issues in goal/cli/postcommit_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/postcommit_cmd.py
-    rule_id: smart-return-type
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a8853187
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/cli/postcommit_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/postcommit_cmd.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4f93f900
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/cli/postcommit_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/postcommit_cmd.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-00ed9d66
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/push_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/push_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c1b48756
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/cli/push_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/push_cmd.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ce835184
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/publish_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/publish_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-914eccfa
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/cli/publish_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/publish_cmd.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-cd5ecddc
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/cli/publish_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/publish_cmd.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-41ca0841
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/tests.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/tests.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-284869f1
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/cli/tests.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/tests.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c3bd2359
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/cli/tests.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/tests.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-62dd271e
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/recover_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/recover_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-119c70f9
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/cli/recover_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/recover_cmd.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c1c11986
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/cli/recover_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/recover_cmd.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-43a71e74
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/utils_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/utils_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9f4e98ca
-    name: Fix smart-return-type issues
-    description: Resolve 8 smart-return-type issues in goal/cli/utils_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/utils_cmd.py
-    rule_id: smart-return-type
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8dc64013
-    name: Fix unused-imports issues
-    description: Resolve 16 unused-imports issues in goal/cli/utils_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/utils_cmd.py
-    rule_id: unused-imports
-    count: 16
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bd579d50
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/validation_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/validation_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e091c738
-    name: Fix smart-return-type issues
-    description: Resolve 5 smart-return-type issues in goal/cli/validation_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/validation_cmd.py
-    rule_id: smart-return-type
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9e71cd0f
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/cli/validation_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/validation_cmd.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9e509799
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/cli/validation_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/validation_cmd.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f870133f
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/wizard_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/wizard_cmd.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3b1139b9
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/cli/wizard_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/wizard_cmd.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7148b685
-    name: Fix unused-imports issues
-    description: Resolve 20 unused-imports issues in goal/cli/wizard_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/wizard_cmd.py
-    rule_id: unused-imports
-    count: 20
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-88530c76
-    name: Fix magic-numbers issues
-    description: Resolve 5 magic-numbers issues in goal/cli/wizard_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/wizard_cmd.py
-    rule_id: magic-numbers
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2a97e91c
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/cli/wizard_cmd.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/wizard_cmd.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3209296c
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli/version.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/version.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f173cf94
-    name: Fix string-concat issues
-    description: Resolve 11 string-concat issues in goal/cli/version.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/version.py
-    rule_id: string-concat
-    count: 11
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ec962bc0
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/cli/version.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/version.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-666bf566
-    name: Fix ai-boilerplate issues
-    description: Resolve 6 ai-boilerplate issues in goal/cli/version.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/version.py
-    rule_id: ai-boilerplate
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7c4d2f99
-    name: Fix relative-imports issues
-    description: Resolve 20 relative-imports issues in goal/cli.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli.py
-    rule_id: relative-imports
-    count: 20
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d48b0aac
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/cli.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-11009c46
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/cli.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9b87cae3
-    name: Fix unused-imports issues
-    description: Resolve 28 unused-imports issues in goal/cli.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli.py
-    rule_id: unused-imports
-    count: 28
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-fb55a8a3
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in goal/cli.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-50dd0eeb
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/commit_generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/commit_generator.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-80bb797e
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/commit_generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/commit_generator.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-adf2e12c
-    name: Fix relative-imports issues
-    description: Resolve 6 relative-imports issues in goal/config/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/config/__init__.py
-    rule_id: relative-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ee8922ab
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/config/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-83c35252
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/config/constants.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config/constants.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a5d61a36
-    name: Fix magic-numbers issues
-    description: Resolve 8 magic-numbers issues in goal/config/constants.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/config/constants.py
-    rule_id: magic-numbers
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-cb9bcb97
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/config/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config/manager.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3c3f1cc1
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/config/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/config/manager.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-60fb35fd
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/config/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config/manager.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-cf3d98ea
-    name: Fix llm-generated-code issues
-    description: Resolve 6 llm-generated-code issues in goal/config/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/config/manager.py
-    rule_id: llm-generated-code
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-786f8532
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/config/validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config/validation.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1b552216
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/config/validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config/validation.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6d2226bf
-    name: Fix string-concat issues
-    description: Resolve 4 string-concat issues in goal/config/validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/config/validation.py
-    rule_id: string-concat
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8cd7632d
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/config/validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/config/validation.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3ab472e5
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/config/validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config/validation.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-cf8b12e8
-    name: Fix llm-generated-code issues
-    description: Resolve 4 llm-generated-code issues in goal/config/validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/config/validation.py
-    rule_id: llm-generated-code
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-232312a3
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e9d90a2e
-    name: Fix relative-imports issues
-    description: Resolve 24 relative-imports issues in goal/doctor/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/doctor/__init__.py
-    rule_id: relative-imports
-    count: 24
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0c162f0b
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d9982610
-    name: Fix unused-imports issues
-    description: Resolve 14 unused-imports issues in goal/doctor/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/doctor/__init__.py
-    rule_id: unused-imports
-    count: 14
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-180b30e8
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/deep_analyzer.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/deep_analyzer.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9506b597
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/deep_analyzer.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/deep_analyzer.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bbe9ad89
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/dotnet.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/dotnet.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-17d0f4e6
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/doctor/dotnet.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/dotnet.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e3a83324
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/core.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/core.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5fba8c04
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/doctor/core.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/core.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a3061483
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/doctor/core.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/core.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4c85bc7b
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/go.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/go.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5722901a
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/doctor/logging.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/logging.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e590f640
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/logging.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/logging.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0e2d4efb
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/java.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/java.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c999f721
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/php.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/php.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-74d5093b
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/models.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/models.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-122d1163
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/nodejs.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/nodejs.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bb82a72c
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/doctor/nodejs.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/nodejs.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9f4e7e36
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/python.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/python.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7e3d16e7
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in goal/doctor/python.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/python.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3622aebc
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/doctor/python.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/doctor/python.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f685f5ed
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/ruby.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/ruby.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9d80e5cd
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/rust.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/rust.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c1b28cdb
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/doctor/todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/todo.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-83d5d946
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/doctor/todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/todo.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-eda9fce4
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in goal/doctor/todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/todo.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8cce5e66
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/doctor/todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/todo.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5ca0239f
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/doctor/todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/todo.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f0a0ba82
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/enhanced_summary.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/enhanced_summary.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-60238f99
-    name: Fix relative-imports issues
-    description: Resolve 6 relative-imports issues in goal/generator/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/generator/__init__.py
-    rule_id: relative-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-caac81ad
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/generator/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/generator/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5328f140
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/formatter.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/formatter.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c02ed288
-    name: Fix smart-return-type issues
-    description: Resolve 6 smart-return-type issues in goal/formatter.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/formatter.py
-    rule_id: smart-return-type
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d248eb58
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in goal/formatter.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/formatter.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c49c4576
-    name: Fix magic-numbers issues
-    description: Resolve 6 magic-numbers issues in goal/formatter.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/formatter.py
-    rule_id: magic-numbers
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c1674106
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/formatter.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/formatter.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6c143b7b
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/generator/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/generator/generator.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b338f68e
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/generator/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/generator/generator.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-65ea4331
-    name: Fix string-concat issues
-    description: Resolve 10 string-concat issues in goal/generator/generator.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/generator/generator.py
-    rule_id: string-concat
-    count: 10
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-eb83b6f3
-    name: Fix unused-imports issues
-    description: Resolve 10 unused-imports issues in goal/generator/generator.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/generator/generator.py
-    rule_id: unused-imports
-    count: 10
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-31168e84
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/generator/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/generator/generator.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e8323fdc
-    name: Fix magic-numbers issues
-    description: Resolve 4 magic-numbers issues in goal/generator/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/generator/generator.py
-    rule_id: magic-numbers
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7eb7032a
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/generator/analyzer.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/generator/analyzer.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-db256d03
-    name: Fix string-concat issues
-    description: Resolve 4 string-concat issues in goal/generator/analyzer.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/generator/analyzer.py
-    rule_id: string-concat
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1f931f99
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/generator/analyzer.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/generator/analyzer.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a39351d1
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/generator/git_ops.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/generator/git_ops.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-afc71edf
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/generator/git_ops.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/generator/git_ops.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b8770605
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/hooks/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/hooks/__init__.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e7fb8677
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/hooks/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/hooks/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2622d72a
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/hooks/config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/hooks/config.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-99a82c71
-    name: Fix llm-generated-code issues
-    description: Resolve 2 llm-generated-code issues in goal/hooks/config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/hooks/config.py
-    rule_id: llm-generated-code
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d4b9f057
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/git_ops.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/git_ops.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-31f7a7f8
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/git_ops.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/git_ops.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c85170fb
-    name: Fix string-concat issues
-    description: Resolve 21 string-concat issues in goal/git_ops.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/git_ops.py
-    rule_id: string-concat
-    count: 21
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-eed103c2
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/git_ops.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/git_ops.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c4b45d93
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/git_ops.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/git_ops.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f80ace05
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/license/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/license/__init__.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-23ed9134
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/license/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/license/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-87658dfc
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/hooks/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/hooks/manager.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bb97423d
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/hooks/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/hooks/manager.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6ee04de8
-    name: Fix unused-imports issues
-    description: Resolve 32 unused-imports issues in goal/hooks/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/hooks/manager.py
-    rule_id: unused-imports
-    count: 32
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6250f32c
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in goal/hooks/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/hooks/manager.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-652b2b88
-    name: Fix llm-generated-code issues
-    description: Resolve 9 llm-generated-code issues in goal/hooks/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/hooks/manager.py
-    rule_id: llm-generated-code
-    count: 9
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8648f1d9
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in goal/hooks/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/hooks/manager.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2e3eaa37
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/license/spdx.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/license/spdx.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-70f349c0
-    name: Fix llm-generated-code issues
-    description: Resolve 6 llm-generated-code issues in goal/license/spdx.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/license/spdx.py
-    rule_id: llm-generated-code
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-69bfa343
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/license/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/license/manager.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c86d57c8
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/license/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/license/manager.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4ec04772
-    name: Fix unused-imports issues
-    description: Resolve 12 unused-imports issues in goal/license/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/license/manager.py
-    rule_id: unused-imports
-    count: 12
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a3bcc668
-    name: Fix llm-generated-code issues
-    description: Resolve 8 llm-generated-code issues in goal/license/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/license/manager.py
-    rule_id: llm-generated-code
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8505c73d
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/license/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/license/manager.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6ba97fc3
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/postcommit/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/postcommit/__init__.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b2c32774
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/postcommit/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/postcommit/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-46b22761
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/package_managers.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/package_managers.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4ea3cf5e
-    name: Fix unused-imports issues
-    description: Resolve 12 unused-imports issues in goal/package_managers.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/package_managers.py
-    rule_id: unused-imports
-    count: 12
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-143f5f36
-    name: Fix llm-generated-code issues
-    description: Resolve 2 llm-generated-code issues in goal/package_managers.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/package_managers.py
-    rule_id: llm-generated-code
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c1c0a4b3
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/postcommit/actions.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/postcommit/actions.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5cb6865b
-    name: Fix unused-imports issues
-    description: Resolve 12 unused-imports issues in goal/postcommit/actions.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/postcommit/actions.py
-    rule_id: unused-imports
-    count: 12
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-618fbb85
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/postcommit/actions.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/postcommit/actions.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d6deb1a8
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/postcommit/actions.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/postcommit/actions.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6790085a
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/postcommit/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/postcommit/manager.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-992471b3
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/postcommit/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/postcommit/manager.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1b1bef5d
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/postcommit/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/postcommit/manager.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-199c6bd2
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in goal/postcommit/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/postcommit/manager.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a5a9f92b
-    name: Fix llm-generated-code issues
-    description: Resolve 6 llm-generated-code issues in goal/postcommit/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/postcommit/manager.py
-    rule_id: llm-generated-code
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-af72453b
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/project_doctor.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/project_doctor.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-68dd969d
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/project_bootstrap.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/project_bootstrap.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b02a6284
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/project_bootstrap.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/project_bootstrap.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9cfce62b
-    name: Fix duplicate-imports issues
-    description: Resolve 3 duplicate-imports issues in goal/project_bootstrap.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/project_bootstrap.py
-    rule_id: duplicate-imports
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a13254b8
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/push/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/push/__init__.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ca726ca5
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-173ed083
-    name: Fix relative-imports issues
-    description: Resolve 16 relative-imports issues in goal/push/stages/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/push/stages/__init__.py
-    rule_id: relative-imports
-    count: 16
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-629c4ff3
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f4cb8795
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/changelog.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/changelog.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-74151b5d
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/core.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/core.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2c88c6f9
-    name: Fix smart-return-type issues
-    description: Resolve 3 smart-return-type issues in goal/push/core.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/core.py
-    rule_id: smart-return-type
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b3a2881c
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in goal/push/core.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/core.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7832d2a1
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/push/core.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/push/core.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ac5773ec
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/push/core.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/core.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-840d99b8
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/commands.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/commands.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-24e36212
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/push/commands.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/commands.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7fe63a75
-    name: Fix unused-imports issues
-    description: Resolve 20 unused-imports issues in goal/push/commands.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/push/commands.py
-    rule_id: unused-imports
-    count: 20
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0d47cbb0
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/publish.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/publish.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-171ad054
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/tag.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/tag.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-95729f08
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/dry_run.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/dry_run.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-378c753e
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/push/stages/dry_run.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/dry_run.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f879c566
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/push/stages/dry_run.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/push/stages/dry_run.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ce04190f
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/push_remote.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/push_remote.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f4e81bf7
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/push/stages/push_remote.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/push/stages/push_remote.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7cf307fe
-    name: Fix duplicate-imports issues
-    description: Resolve 2 duplicate-imports issues in goal/push/stages/push_remote.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/push_remote.py
-    rule_id: duplicate-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-092fe5c3
-    name: Fix relative-imports issues
-    description: Resolve 6 relative-imports issues in goal/push/stages/commit.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/push/stages/commit.py
-    rule_id: relative-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ca3d10ab
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/commit.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5d8862c0
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/push/stages/commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/commit.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4d6cc601
-    name: Fix relative-imports issues
-    description: Resolve 6 relative-imports issues in goal/recovery/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/recovery/__init__.py
-    rule_id: relative-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-923fc425
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/recovery/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6d91ef65
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/recovery/exceptions.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/exceptions.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6e5f61fa
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/version.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/version.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-097ed693
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/push/stages/version.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/version.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-811c3d28
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/push/stages/version.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/push/stages/version.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0f5ca70a
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/push/stages/version.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/version.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e9fcfcd3
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/push/stages/test.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/test.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4b53f031
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/smart_commit/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/smart_commit/__init__.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-72b758d6
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/smart_commit/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/smart_commit/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-30ba74d6
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/recovery/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/recovery/manager.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c020cd32
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/recovery/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/manager.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8b623ae1
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/recovery/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/manager.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a3a21506
-    name: Fix unused-imports issues
-    description: Resolve 20 unused-imports issues in goal/recovery/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/recovery/manager.py
-    rule_id: unused-imports
-    count: 20
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ff7823b1
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/recovery/strategies.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/strategies.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a1d3592f
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/recovery/strategies.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/strategies.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-605bec28
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/recovery/strategies.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/strategies.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-99429564
-    name: Fix unused-imports issues
-    description: Resolve 36 unused-imports issues in goal/recovery/strategies.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/recovery/strategies.py
-    rule_id: unused-imports
-    count: 36
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f6082379
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/recovery/strategies.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/strategies.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-79f05589
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/smart_commit/abstraction.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/smart_commit/abstraction.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4557135b
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in goal/smart_commit/abstraction.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/smart_commit/abstraction.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-593ef56a
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/smart_commit/abstraction.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/smart_commit/abstraction.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-17562314
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/smart_commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/smart_commit.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6d6c9e90
-    name: Fix relative-imports issues
-    description: Resolve 6 relative-imports issues in goal/summary/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/summary/__init__.py
-    rule_id: relative-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1953334b
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/summary/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6096eb84
-    name: Fix smart-return-type issues
-    description: Resolve 3 smart-return-type issues in goal/summary/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/__init__.py
-    rule_id: smart-return-type
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-940e5c7c
-    name: Fix llm-generated-code issues
-    description: Resolve 2 llm-generated-code issues in goal/summary/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/__init__.py
-    rule_id: llm-generated-code
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-757a8e2f
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/smart_commit/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/smart_commit/generator.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d2da0c8f
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/smart_commit/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/smart_commit/generator.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-43dfe792
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/smart_commit/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/smart_commit/generator.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-19f56c0c
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/smart_commit/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/smart_commit/generator.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-14b4ee97
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/summary/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/generator.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0112eec7
-    name: Fix string-concat issues
-    description: Resolve 8 string-concat issues in goal/summary/generator.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/summary/generator.py
-    rule_id: string-concat
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f1b4a5bb
-    name: Fix magic-numbers issues
-    description: Resolve 4 magic-numbers issues in goal/summary/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/summary/generator.py
-    rule_id: magic-numbers
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-33f459d8
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/summary/generator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/generator.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-02c0d1c6
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/summary/quality_filter.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/quality_filter.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0c21b88b
-    name: Fix string-concat issues
-    description: Resolve 6 string-concat issues in goal/summary/quality_filter.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/summary/quality_filter.py
-    rule_id: string-concat
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1aa11f1f
-    name: Fix magic-numbers issues
-    description: Resolve 13 magic-numbers issues in goal/summary/quality_filter.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/summary/quality_filter.py
-    rule_id: magic-numbers
-    count: 13
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a7b76e0b
-    name: Fix llm-generated-code issues
-    description: Resolve 2 llm-generated-code issues in goal/summary/quality_filter.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/quality_filter.py
-    rule_id: llm-generated-code
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4020834b
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/summary/validator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/validator.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-75578b6f
-    name: Fix magic-numbers issues
-    description: Resolve 4 magic-numbers issues in goal/summary/validator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/summary/validator.py
-    rule_id: magic-numbers
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1b76da8b
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/summary/validator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/validator.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0865a624
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/user_config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/user_config.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3dba36d9
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in goal/user_config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/user_config.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ee284663
-    name: Fix magic-numbers issues
-    description: Resolve 8 magic-numbers issues in goal/user_config.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/user_config.py
-    rule_id: magic-numbers
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-97d6145b
-    name: Fix llm-generated-code issues
-    description: Resolve 2 llm-generated-code issues in goal/user_config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/user_config.py
-    rule_id: llm-generated-code
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b6a414ec
-    name: Fix relative-imports issues
-    description: Resolve 4 relative-imports issues in goal/validation/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/validation/__init__.py
-    rule_id: relative-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a3a29ee3
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/validation/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validation/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-917cc8ea
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/validators/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/__init__.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a3e28a21
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/validators/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/__init__.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-655ccacb
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/validation/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validation/manager.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2372b592
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/validation/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validation/manager.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-898b096f
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in goal/validation/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/validation/manager.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-35d21e44
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in goal/validation/manager.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validation/manager.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-87f3bca7
-    name: Fix llm-generated-code issues
-    description: Resolve 6 llm-generated-code issues in goal/validation/manager.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/validation/manager.py
-    rule_id: llm-generated-code
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ba1e82f0
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/validation/rules.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validation/rules.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-aaebb933
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/validation/rules.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validation/rules.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d510ce52
-    name: Fix unused-imports issues
-    description: Resolve 12 unused-imports issues in goal/validation/rules.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/validation/rules.py
-    rule_id: unused-imports
-    count: 12
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4bc2d83c
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/validation/rules.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validation/rules.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9b0c9513
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/validators/file_validator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/file_validator.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-168cf976
-    name: Fix string-concat issues
-    description: Resolve 5 string-concat issues in goal/validators/file_validator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/validators/file_validator.py
-    rule_id: string-concat
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f1c01cce
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/validators/file_validator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/file_validator.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0fbdaa3e
-    name: Fix llm-generated-code issues
-    description: Resolve 6 llm-generated-code issues in goal/validators/file_validator.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/validators/file_validator.py
-    rule_id: llm-generated-code
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-29f8a179
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in test_recovery.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - test_recovery.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9a59492d
-    name: Fix smart-return-type issues
-    description: Resolve 3 smart-return-type issues in test_recovery.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - test_recovery.py
-    rule_id: smart-return-type
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f9cafcd0
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in test_recovery.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - test_recovery.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-00048bac
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in test_recovery.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - test_recovery.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a2e0eb1e
-    name: Fix duplicate-imports issues
-    description: Resolve 2 duplicate-imports issues in goal/version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/version_validation.py
-    rule_id: duplicate-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f65c027e
-    name: Fix print-statements issues
-    description: Resolve 1 print-statements issues in goal/version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/version_validation.py
-    rule_id: print-statements
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-73483bbd
-    name: Fix llm-generated-code issues
-    description: Resolve 2 llm-generated-code issues in goal/version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/version_validation.py
-    rule_id: llm-generated-code
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0f634339
-    name: Fix wildcard-imports issues
-    description: Resolve 1 wildcard-imports issues in goal/changelog.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/changelog.py
-    rule_id: wildcard-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0d8f6000
-    name: Fix wildcard-imports issues
-    description: Resolve 1 wildcard-imports issues in goal/doctor/python.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/python.py
-    rule_id: wildcard-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-212c0467
-    name: Fix wildcard-imports issues
-    description: Resolve 2 wildcard-imports issues in goal/doctor/todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/todo.py
-    rule_id: wildcard-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0fd418e6
-    name: Fix wildcard-imports issues
-    description: Resolve 1 wildcard-imports issues in goal/push/stages/dry_run.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/dry_run.py
-    rule_id: wildcard-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-09656430
-    name: Fix wildcard-imports issues
-    description: Resolve 2 wildcard-imports issues in goal/config/validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config/validation.py
-    rule_id: wildcard-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1747b620
-    name: Fix relative-imports issues
-    description: Resolve 6 relative-imports issues in goal/cli/version.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/cli/version.py
-    rule_id: relative-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e37ef835
-    name: Fix relative-imports issues
-    description: Resolve 1 relative-imports issues in goal/cli/version_utils.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/version_utils.py
-    rule_id: relative-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a1a7a963
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/cli/version_sync.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/version_sync.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3ac4ebd1
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in goal/cli/version_sync.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/version_sync.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-955e5aaa
-    name: Fix wildcard-imports issues
-    description: Resolve 36 wildcard-imports issues in goal/cli/doctor_cmd.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/cli/doctor_cmd.py
-    rule_id: wildcard-imports
-    count: 36
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0d22f91b
-    name: Fix string-concat issues
-    description: Resolve 4 string-concat issues in goal/cli/version_utils.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/version_utils.py
-    rule_id: string-concat
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-41f077a4
-    name: Fix ai-boilerplate issues
-    description: Resolve 4 ai-boilerplate issues in goal/cli/version_utils.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - goal/cli/version_utils.py
-    rule_id: ai-boilerplate
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a4236fcf
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/doctor/python.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/python.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ad8108d5
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/project_bootstrap.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/project_bootstrap.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ffff0750
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in goal/project_bootstrap.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/project_bootstrap.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9fae4ec0
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in goal/project_bootstrap.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/project_bootstrap.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-95201114
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in goal/push/core.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/core.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-fead239f
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in examples/api-usage/03_commit_generation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/03_commit_generation.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-26a7c4e2
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/api-usage/03_commit_generation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/03_commit_generation.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5e7fd1ad
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in examples/api-usage/03_commit_generation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/03_commit_generation.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0c0b01c1
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/api-usage/03_commit_generation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/03_commit_generation.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d8a5fd93
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in examples/api-usage/01_basic_api.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/01_basic_api.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6ce598f4
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/api-usage/01_basic_api.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/01_basic_api.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-69da7e0f
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in examples/api-usage/01_basic_api.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/api-usage/01_basic_api.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b4a4f07a
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/api-usage/01_basic_api.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/01_basic_api.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3e3aeddf
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in examples/api-usage/04_version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/04_version_validation.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b4c77793
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/api-usage/04_version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/04_version_validation.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-cd93bccd
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in examples/api-usage/04_version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/api-usage/04_version_validation.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b8748b1a
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in examples/api-usage/04_version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/04_version_validation.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-147a27ab
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/api-usage/04_version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/04_version_validation.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e4700044
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in examples/api-usage/02_git_operations.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/02_git_operations.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c2e40204
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/api-usage/02_git_operations.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/02_git_operations.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5fd9a508
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in examples/api-usage/02_git_operations.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/api-usage/02_git_operations.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5161efdb
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in examples/api-usage/02_git_operations.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/02_git_operations.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-54d70962
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/api-usage/02_git_operations.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/02_git_operations.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-736906aa
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/api-usage/05_programmatic_workflow.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/05_programmatic_workflow.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e8219611
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in examples/api-usage/05_programmatic_workflow.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/05_programmatic_workflow.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6fdc6e8c
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in examples/api-usage/05_programmatic_workflow.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/05_programmatic_workflow.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c7eed05c
-    name: Fix smart-return-type issues
-    description: Resolve 5 smart-return-type issues in examples/custom-hooks/post-commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/custom-hooks/post-commit.py
-    rule_id: smart-return-type
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-251af8ff
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in examples/custom-hooks/post-commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/custom-hooks/post-commit.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2f2b7a84
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/custom-hooks/post-commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/custom-hooks/post-commit.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e9b9f418
-    name: Fix smart-return-type issues
-    description: Resolve 4 smart-return-type issues in examples/custom-hooks/pre-commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/custom-hooks/pre-commit.py
-    rule_id: smart-return-type
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-905e7053
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/custom-hooks/pre-commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/custom-hooks/pre-commit.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-114501e4
-    name: Fix smart-return-type issues
-    description: Resolve 12 smart-return-type issues in examples/api-usage/test_integration.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - examples/api-usage/test_integration.py
-    rule_id: smart-return-type
-    count: 12
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b70775c5
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in examples/api-usage/test_integration.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/api-usage/test_integration.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-56cf5f7d
-    name: Fix duplicate-imports issues
-    description: Resolve 3 duplicate-imports issues in examples/api-usage/test_integration.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/test_integration.py
-    rule_id: duplicate-imports
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0aa571a3
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in examples/api-usage/test_integration.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/test_integration.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ae5a7772
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in examples/api-usage/test_integration.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/api-usage/test_integration.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c4a4e677
-    name: Fix smart-return-type issues
-    description: Resolve 5 smart-return-type issues in examples/custom-hooks/pre-publish.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/custom-hooks/pre-publish.py
-    rule_id: smart-return-type
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6ef1ccc3
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in examples/custom-hooks/pre-publish.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/custom-hooks/pre-publish.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c808f292
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/custom-hooks/pre-publish.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/custom-hooks/pre-publish.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-44afdd03
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/template-generator/generate.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/template-generator/generate.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c4ea6b78
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in examples/template-generator/generate.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/template-generator/generate.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3a00d5f3
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/template-generator/generate.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/template-generator/generate.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9cfd9d22
-    name: Fix smart-return-type issues
-    description: Resolve 3 smart-return-type issues in examples/run_all_examples.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/run_all_examples.py
-    rule_id: smart-return-type
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-474c8384
-    name: Fix string-concat issues
-    description: Resolve 5 string-concat issues in examples/run_all_examples.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/run_all_examples.py
-    rule_id: string-concat
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-86634dce
-    name: Fix magic-numbers issues
-    description: Resolve 7 magic-numbers issues in examples/run_all_examples.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - examples/run_all_examples.py
-    rule_id: magic-numbers
-    count: 7
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ac153a97
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in examples/run_all_examples.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/run_all_examples.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9376b731
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/run_all_examples.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/run_all_examples.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-74f626fa
-    name: Fix smart-return-type issues
-    description: Resolve 6 smart-return-type issues in examples/testing/01_duplicate_call_detection.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - examples/testing/01_duplicate_call_detection.py
-    rule_id: smart-return-type
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e24f8933
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/testing/01_duplicate_call_detection.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/01_duplicate_call_detection.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2bae89d4
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in examples/testing/01_duplicate_call_detection.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/testing/01_duplicate_call_detection.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7839b691
-    name: Fix duplicate-imports issues
-    description: Resolve 2 duplicate-imports issues in examples/testing/01_duplicate_call_detection.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/01_duplicate_call_detection.py
-    rule_id: duplicate-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d1683d0d
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in examples/testing/01_duplicate_call_detection.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/01_duplicate_call_detection.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-45fe8f2a
-    name: Fix smart-return-type issues
-    description: Resolve 4 smart-return-type issues in examples/testing/02_project_detection_tests.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/testing/02_project_detection_tests.py
-    rule_id: smart-return-type
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-494249c6
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/testing/02_project_detection_tests.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/02_project_detection_tests.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1047a7cd
-    name: Fix duplicate-imports issues
-    description: Resolve 2 duplicate-imports issues in examples/testing/02_project_detection_tests.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/02_project_detection_tests.py
-    rule_id: duplicate-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-66acbce1
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in examples/testing/02_project_detection_tests.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/02_project_detection_tests.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a112c847
-    name: Fix smart-return-type issues
-    description: Resolve 10 smart-return-type issues in examples/testing/03_advanced_mocking.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - examples/testing/03_advanced_mocking.py
-    rule_id: smart-return-type
-    count: 10
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a64e0ed4
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/testing/03_advanced_mocking.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/03_advanced_mocking.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f0016308
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in examples/testing/03_advanced_mocking.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/03_advanced_mocking.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8be42d9d
-    name: Fix duplicate-imports issues
-    description: Resolve 2 duplicate-imports issues in examples/testing/03_advanced_mocking.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/03_advanced_mocking.py
-    rule_id: duplicate-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c90887b4
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in examples/testing/03_advanced_mocking.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/03_advanced_mocking.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f6719cf0
-    name: Fix smart-return-type issues
-    description: Resolve 9 smart-return-type issues in examples/testing/04_debugging_diagnostics.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - examples/testing/04_debugging_diagnostics.py
-    rule_id: smart-return-type
-    count: 9
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-51d3cb91
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in examples/testing/04_debugging_diagnostics.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/04_debugging_diagnostics.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d449e6b7
-    name: Fix duplicate-imports issues
-    description: Resolve 4 duplicate-imports issues in examples/testing/04_debugging_diagnostics.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/testing/04_debugging_diagnostics.py
-    rule_id: duplicate-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ef24defc
-    name: Fix magic-numbers issues
-    description: Resolve 5 magic-numbers issues in examples/testing/04_debugging_diagnostics.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/testing/04_debugging_diagnostics.py
-    rule_id: magic-numbers
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-22ab3397
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in examples/testing/04_debugging_diagnostics.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/testing/04_debugging_diagnostics.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5fa9baf8
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/validation/run_all_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/run_all_validation.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-162db73c
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in examples/validation/run_all_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/run_all_validation.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4b8132ef
-    name: Fix magic-numbers issues
-    description: Resolve 8 magic-numbers issues in examples/validation/run_all_validation.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - examples/validation/run_all_validation.py
-    rule_id: magic-numbers
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-fc757004
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/validation/run_all_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/run_all_validation.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4311914f
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/validation/test_api_signatures.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_api_signatures.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0cd1498e
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in examples/validation/test_api_signatures.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_api_signatures.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e9f8b389
-    name: Fix unused-imports issues
-    description: Resolve 8 unused-imports issues in examples/validation/test_api_signatures.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - examples/validation/test_api_signatures.py
-    rule_id: unused-imports
-    count: 8
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5fb6f214
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/validation/test_api_signatures.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_api_signatures.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9a9f1285
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/validation/test_imports.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_imports.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0ea4b57d
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/validation/test_imports.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_imports.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ade3d464
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/validation/test_imports.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_imports.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8c6049ff
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/validation/test_readme_consistency.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_readme_consistency.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-70bde475
-    name: Fix string-concat issues
-    description: Resolve 5 string-concat issues in examples/validation/test_readme_consistency.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/validation/test_readme_consistency.py
-    rule_id: string-concat
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-520bc420
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/validation/test_readme_consistency.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_readme_consistency.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-585fa109
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/validation/test_syntax_check.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_syntax_check.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-53069f77
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in examples/validation/test_syntax_check.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_syntax_check.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8367cc7d
-    name: Fix unused-imports issues
-    description: Resolve 4 unused-imports issues in examples/validation/test_syntax_check.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/validation/test_syntax_check.py
-    rule_id: unused-imports
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e51c67a5
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/validation/test_syntax_check.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/validation/test_syntax_check.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-956564dd
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/webhooks/discord-webhook.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/webhooks/discord-webhook.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6babf634
-    name: Fix magic-numbers issues
-    description: Resolve 4 magic-numbers issues in examples/webhooks/discord-webhook.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - examples/webhooks/discord-webhook.py
-    rule_id: magic-numbers
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-99b1bd9a
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/webhooks/discord-webhook.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/webhooks/discord-webhook.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9fa46c37
-    name: Fix smart-return-type issues
-    description: Resolve 2 smart-return-type issues in examples/webhooks/slack-webhook.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/webhooks/slack-webhook.py
-    rule_id: smart-return-type
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0add6e1d
-    name: Fix magic-numbers issues
-    description: Resolve 3 magic-numbers issues in examples/webhooks/slack-webhook.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/webhooks/slack-webhook.py
-    rule_id: magic-numbers
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a2957074
-    name: Fix ai-boilerplate issues
-    description: Resolve 2 ai-boilerplate issues in examples/webhooks/slack-webhook.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - examples/webhooks/slack-webhook.py
-    rule_id: ai-boilerplate
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9f353b29
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/cli/tests.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/tests.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2bc855c2
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/doctor/python.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/doctor/python.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-cb167f51
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/toml_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/toml_validation.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9009a38a
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/toml_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/toml_validation.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bbf26324
-    name: Fix llm-generated-code issues
-    description: Resolve 3 llm-generated-code issues in goal/toml_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/toml_validation.py
-    rule_id: llm-generated-code
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-59df6747
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/cli/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/cli/__init__.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-28ea3db1
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/push/stages/commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/commit.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-66f1db01
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/recovery/auth.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/auth.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e8209e60
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/recovery/corrupted.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/corrupted.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d13fc8f8
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/recovery/divergent.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/divergent.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c182c048
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/recovery/force_push.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/force_push.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-cbf29d30
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/recovery/large_file.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/large_file.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f18ec1ff
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in goal/recovery/large_file.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/large_file.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d4172bb7
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in goal/recovery/lfs.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/lfs.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-fdef3cbf
-    name: Fix duplicate-imports issues
-    description: Resolve 12 duplicate-imports issues in goal/validators/__init__.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - goal/validators/__init__.py
-    rule_id: duplicate-imports
-    count: 12
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-23c7639f
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/validators/dot_folders.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/dot_folders.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-557c9d13
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in goal/validators/dot_folders.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/dot_folders.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-47839822
-    name: Fix llm-generated-code issues
-    description: Resolve 2 llm-generated-code issues in goal/validators/dot_folders.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/dot_folders.py
-    rule_id: llm-generated-code
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7e2efb16
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in goal/validators/file_validator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/file_validator.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e1798adc
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/validators/gitignore.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/gitignore.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2ba6ac2f
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/validators/tokens.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/tokens.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5bffe6eb
-    name: Fix outdated-dependency issues
-    description: Resolve 1 outdated-dependency issues in pyproject.toml
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - pyproject.toml
-    rule_id: outdated-dependency
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-6df723a3
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/__init__.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/__init__.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8c0c85e6
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/config.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a44a0d95
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/deep_analyzer.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/deep_analyzer.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-508933be
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/enhanced_summary.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/enhanced_summary.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4a3846ab
-    name: Fix smart-return-type issues
-    description: Resolve 1 smart-return-type issues in goal/push/stages/costs.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/costs.py
-    rule_id: smart-return-type
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ce157c5e
-    name: Fix duplicate-imports issues
-    description: Resolve 1 duplicate-imports issues in goal/push/stages/costs.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/costs.py
-    rule_id: duplicate-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1617f838
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in goal/push/stages/costs.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/push/stages/costs.py
-    rule_id: magic-numbers
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-320340cf
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/smart_commit.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/smart_commit.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-d5deb2f6
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in goal/summary/body_formatter.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/body_formatter.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e21fa7ff
-    name: Fix llm-generated-code issues
-    description: Resolve 1 llm-generated-code issues in goal/summary/body_formatter.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/summary/body_formatter.py
-    rule_id: llm-generated-code
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a6b6c749
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/user_config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/user_config.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0678a360
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in goal/version_validation.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/version_validation.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-8057661f
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/recovery/base.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/recovery/base.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-055e3416
-    name: Fix wildcard-imports issues
-    description: Resolve 2 wildcard-imports issues in goal/user_config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/user_config.py
-    rule_id: wildcard-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f0741dec
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in goal/validators/tokens.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - goal/validators/tokens.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bbe82c9b
-    name: Fix wildcard-imports issues
-    description: Resolve 6 wildcard-imports issues in goal/version_validation.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - goal/version_validation.py
-    rule_id: wildcard-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
+schema: '1.0'
+project: goal
+version: 2.1.189
+generated: '2026-04-19'
+generator: redsl planfile sync
+sources:
+- project/analysis.toon.yaml
+- project/duplication.toon.yaml
+stats:
+  total: 51
+  todo: 49
+  done: 2
+tasks:
+- id: Q01
+  title: 'reduce_complexity: validation (CC=14)'
+  description: Module 'validation' has cyclomatic complexity CC=14 (474 lines, 2 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/config/validation.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-14
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q02
+  title: 'reduce_complexity: manager (CC=10)'
+  description: Module 'manager' has cyclomatic complexity CC=10 (457 lines, 1 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/hooks/manager.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-10
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q03
+  title: 'reduce_complexity: analyzer (CC=14)'
+  description: Module 'analyzer' has cyclomatic complexity CC=14 (442 lines, 2 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/generator/analyzer.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-14
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q04
+  title: 'reduce_complexity: core (CC=10)'
+  description: Module 'core' has cyclomatic complexity CC=10 (412 lines, 1 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/push/core.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-10
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q05
+  title: 'reduce_complexity: push_remote (CC=11)'
+  description: Module 'push_remote' has cyclomatic complexity CC=11 (382 lines, 0
+    complex functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/push/stages/push_remote.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-11
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q06
+  title: 'reduce_complexity: generator (CC=12)'
+  description: Module 'generator' has cyclomatic complexity CC=12 (381 lines, 1 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/generator/generator.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-12
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q07
+  title: 'reduce_complexity: validator (CC=10)'
+  description: Module 'validator' has cyclomatic complexity CC=10 (364 lines, 1 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/summary/validator.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-10
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q08
+  title: 'reduce_complexity: quality_filter (CC=14)'
+  description: Module 'quality_filter' has cyclomatic complexity CC=14 (344 lines,
+    1 complex functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/summary/quality_filter.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-14
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q09
+  title: 'reduce_complexity: wizard_cmd (CC=12)'
+  description: Module 'wizard_cmd' has cyclomatic complexity CC=12 (340 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/cli/wizard_cmd.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-12
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q10
+  title: 'reduce_complexity: large_file (CC=11)'
+  description: Module 'large_file' has cyclomatic complexity CC=11 (334 lines, 1 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/recovery/large_file.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-11
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q11
+  title: 'reduce_complexity: version_utils (CC=12)'
+  description: Module 'version_utils' has cyclomatic complexity CC=12 (316 lines,
+    0 complex functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/cli/version_utils.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-12
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q12
+  title: 'reduce_complexity: formatter (CC=13)'
+  description: Module 'formatter' has cyclomatic complexity CC=13 (272 lines, 1 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/formatter.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-13
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q13
+  title: 'reduce_complexity: abstraction (CC=12)'
+  description: Module 'abstraction' has cyclomatic complexity CC=12 (260 lines, 1
+    complex functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/smart_commit/abstraction.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-12
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q14
+  title: 'reduce_complexity: user_config (CC=11)'
+  description: Module 'user_config' has cyclomatic complexity CC=11 (252 lines, 1
+    complex functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/user_config.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-11
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q15
+  title: 'reduce_complexity: file_validator (CC=12)'
+  description: Module 'file_validator' has cyclomatic complexity CC=12 (247 lines,
+    0 complex functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/validators/file_validator.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-12
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q16
+  title: 'reduce_complexity: __init__ (CC=14)'
+  description: Module '__init__' has cyclomatic complexity CC=14 (245 lines, 1 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/__init__.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-14
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q17
+  title: 'reduce_complexity: commit (CC=14)'
+  description: Module 'commit' has cyclomatic complexity CC=14 (244 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/push/stages/commit.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-14
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q18
+  title: 'reduce_complexity: publish (CC=13)'
+  description: Module 'publish' has cyclomatic complexity CC=13 (232 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/cli/publish.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-13
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q19
+  title: 'reduce_complexity: tokens (CC=10)'
+  description: Module 'tokens' has cyclomatic complexity CC=10 (225 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/validators/tokens.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-10
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q20
+  title: 'reduce_complexity: spdx (CC=14)'
+  description: Module 'spdx' has cyclomatic complexity CC=14 (222 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/license/spdx.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-14
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q21
+  title: 'reduce_complexity: rules (CC=11)'
+  description: Module 'rules' has cyclomatic complexity CC=11 (220 lines, 6 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/validation/rules.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-11
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q22
+  title: 'reduce_complexity: utils_cmd (CC=10)'
+  description: Module 'utils_cmd' has cyclomatic complexity CC=10 (207 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/cli/utils_cmd.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-10
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q23
+  title: 'reduce_complexity: commit_cmd (CC=13)'
+  description: Module 'commit_cmd' has cyclomatic complexity CC=13 (204 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/cli/commit_cmd.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-13
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q24
+  title: 'reduce_complexity: git_ops (CC=11)'
+  description: Module 'git_ops' has cyclomatic complexity CC=11 (171 lines, 1 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/git_ops.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-11
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q25
+  title: 'reduce_complexity: costs (CC=11)'
+  description: Module 'costs' has cyclomatic complexity CC=11 (120 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/push/stages/costs.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-11
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q26
+  title: 'reduce_complexity: doctor_cmd (CC=12)'
+  description: Module 'doctor_cmd' has cyclomatic complexity CC=12 (99 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/cli/doctor_cmd.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-12
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: Q27
+  title: 'reduce_complexity: nodejs (CC=13)'
+  description: Module 'nodejs' has cyclomatic complexity CC=13 (77 lines, 0 complex
+    functions). Apply guard clauses, extract helpers, reduce nesting.
+  file: goal/doctor/nodejs.py
+  action: reduce_complexity
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - complexity
+  - cc-13
+  source: project/analysis.toon.yaml
+  priority_label: medium
+- id: R01
+  title: 'extract_function: uninstall_hooks.py'
+  description: 3 occurrences of 11-line block across 3 files — saves 22 lines
+  file: goal/utils/uninstall_hooks.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R02
+  title: 'extract_function: authors_list.py'
+  description: 6 occurrences of 4-line block across 4 files — saves 20 lines
+  file: goal/cli/utils/authors_list.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R03
+  title: 'extract_function: main.py'
+  description: 2 occurrences of 19-line block across 2 files — saves 19 lines
+  file: examples/webhooks/utils/main.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R04
+  title: 'extract_function: hooks_uninstall.py'
+  description: 3 occurrences of 9-line block across 3 files — saves 18 lines
+  file: goal/cli/utils/hooks_uninstall.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R05
+  title: 'extract_function: _update_toml_version.py'
+  description: 2 occurrences of 18-line block across 1 files — saves 18 lines
+  file: goal/cli/utils/_update_toml_version.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R06
+  title: 'extract_function: authors.py'
+  description: 6 occurrences of 3-line block across 6 files — saves 15 lines
+  file: goal/cli/utils/authors.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R07
+  title: 'extract_function: get_git_user_name.py'
+  description: 2 occurrences of 14-line block across 1 files — saves 14 lines
+  file: goal/utils/get_git_user_name.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R08
+  title: 'extract_function: install_hooks.py'
+  description: 2 occurrences of 12-line block across 1 files — saves 12 lines
+  file: goal/hooks/utils/install_hooks.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R09
+  title: 'extract_function: postcommit_validate.py'
+  description: 2 occurrences of 11-line block across 2 files — saves 11 lines
+  file: goal/cli/utils/postcommit_validate.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R10
+  title: 'extract_function: is_copyleft.py'
+  description: 2 occurrences of 10-line block across 1 files — saves 10 lines
+  file: goal/license/utils/is_copyleft.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R11
+  title: 'extract_function: get_npm_version.py'
+  description: 2 occurrences of 9-line block across 1 files — saves 9 lines
+  file: goal/utils/get_npm_version.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R12
+  title: 'extract_function: __init__.py'
+  description: 2 occurrences of 8-line block across 2 files — saves 8 lines
+  file: goal/utils/__init__.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R13
+  title: 'extract_function: validate_summary.py'
+  description: 2 occurrences of 8-line block across 1 files — saves 8 lines
+  file: goal/summary/utils/validate_summary.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R14
+  title: 'extract_function: authors_add.py'
+  description: 2 occurrences of 4-line block across 1 files — saves 4 lines
+  file: goal/cli/utils/authors_add.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R15
+  title: 'extract_function: get_name.py'
+  description: 2 occurrences of 3-line block across 2 files — saves 3 lines
+  file: goal/utils/get_name.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: R16
+  title: 'extract_function: validate_config.py'
+  description: 2 occurrences of 3-line block across 2 files — saves 3 lines
+  file: goal/utils/validate_config.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: D17
+  title: 'extract_function: uninstall_hooks (saves 22L)'
+  description: 'Duplicated ''uninstall_hooks'': 3 occurrences, 11 lines each, saves
+    22 lines. Files: goal/hooks/manager.py, goal/postcommit/manager.py, goal/validation/manager.py'
+  file: goal/hooks/manager.py
+  action: extract_function
+  priority: 3
+  effort: low
+  status: todo
+  labels:
+  - refactor
+  - duplication
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: D18
+  title: 'extract_function: authors_list (saves 20L)'
+  description: 'Duplicated ''authors_list'': 6 occurrences, 4 lines each, saves 20
+    lines. Files: goal/cli/authors_cmd.py, goal/cli/authors_cmd.py, goal/cli/authors_cmd.py'
+  file: goal/cli/authors_cmd.py
+  action: extract_function
+  priority: 3
+  effort: low
+  status: done
+  labels:
+  - refactor
+  - duplication
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+  completed_at: '2026-04-20T06:31:26.614072+00:00'
+- id: D19
+  title: 'extract_function: main (saves 19L)'
+  description: 'Duplicated ''main'': 2 occurrences, 19 lines each, saves 19 lines.
+    Files: examples/webhooks/discord-webhook.py, examples/webhooks/slack-webhook.py'
+  file: examples/webhooks/discord-webhook.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - duplication
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: D20
+  title: 'extract_function: hooks_uninstall (saves 18L)'
+  description: 'Duplicated ''hooks_uninstall'': 3 occurrences, 9 lines each, saves
+    18 lines. Files: goal/cli/hooks_cmd.py, goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py'
+  file: goal/cli/hooks_cmd.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: done
+  labels:
+  - refactor
+  - duplication
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+  completed_at: '2026-04-20T07:53:52.716813+00:00'
+- id: D21
+  title: 'extract_function: _update_toml_version (saves 18L)'
+  description: 'Duplicated ''_update_toml_version'': 2 occurrences, 18 lines each,
+    saves 18 lines. Files: goal/cli/version_sync.py, goal/cli/version_sync.py'
+  file: goal/cli/version_sync.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - duplication
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: D23
+  title: 'extract_function: get_git_user_name (saves 14L)'
+  description: 'Duplicated ''get_git_user_name'': 2 occurrences, 14 lines each, saves
+    14 lines. Files: goal/user_config.py, goal/user_config.py'
+  file: goal/user_config.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - duplication
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: D25
+  title: 'extract_function: postcommit_validate (saves 11L)'
+  description: 'Duplicated ''postcommit_validate'': 2 occurrences, 11 lines each,
+    saves 11 lines. Files: goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py'
+  file: goal/cli/postcommit_cmd.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - duplication
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium
+- id: D26
+  title: 'extract_function: is_copyleft (saves 10L)'
+  description: 'Duplicated ''is_copyleft'': 2 occurrences, 10 lines each, saves 10
+    lines. Files: goal/license/spdx.py, goal/license/spdx.py'
+  file: goal/license/spdx.py
+  action: extract_function
+  priority: 3
+  effort: medium
+  status: todo
+  labels:
+  - refactor
+  - duplication
+  - extract-function
+  source: project/duplication.toon.yaml
+  priority_label: medium

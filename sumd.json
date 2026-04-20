@@ -1,0 +1,406 @@
+{
+  "project_name": "goal",
+  "description": "SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorization",
+  "files": [
+    {
+      "path": "test_recovery.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_version_validation.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_file_validation.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_git_ops.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_project_bootstrap.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_config_shim.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_changelog.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_project_doctor.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_user_config.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_smart_commit_shim.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_formatter.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_config_validation.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_version_sync.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_cli_options.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_clone_repo.py",
+      "type": "python"
+    },
+    {
+      "path": "tests/test_push_e2e.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/project_bootstrap.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/config.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/enhanced_summary.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/toml_validation.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/user_config.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/version_validation.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/commit_generator.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/changelog.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/package_managers.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/deep_analyzer.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/__main__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/smart_commit.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/formatter.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/git_ops.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/project_doctor.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/generator/analyzer.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/generator/generator.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/generator/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/generator/git_ops.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/hooks/config.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/hooks/manager.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/hooks/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validators/exceptions.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validators/dot_folders.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validators/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validators/gitignore.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validators/tokens.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validators/file_validator.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/large_file.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/exceptions.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/base.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/manager.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/strategies.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/auth.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/lfs.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/corrupted.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/force_push.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/recovery/divergent.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/push/commands.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/push/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/push/core.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/version_sync.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/recover_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/version.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/license_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/hooks_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/config_validate_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/tests.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/authors_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/doctor_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/commit_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/postcommit_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/utils_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/version_utils.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/wizard_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/publish.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/version_types.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/validation_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/publish_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/push_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/cli/config_cmd.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/postcommit/manager.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/postcommit/actions.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/postcommit/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/config/manager.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/config/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/config/validation.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/config/constants.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/summary/validator.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/summary/generator.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/summary/body_formatter.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/summary/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/summary/quality_filter.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validation/manager.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validation/__init__.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/validation/rules.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/doctor/rust.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/doctor/ruby.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/doctor/python.py",
+      "type": "python"
+    },
+    {
+      "path": "goal/doctor/nodejs.py",
+      "type": "python"
+    }
+  ]
+}

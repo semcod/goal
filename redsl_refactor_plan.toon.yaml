@@ -1,0 +1,24 @@
+# redsl | refactor | 2026-04-19
+# mode=dry-run | files=13 | lines=0
+# CC̄=27.2 | critical=0 | decisions=3
+
+STATUS[planned]
+
+DECISIONS[3]:
+  1. extract_functions → goal/enhanced_summary.py (score=1.90) Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+  2. extract_functions → goal/cli.py (score=1.90) Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+  3. extract_functions → goal/commit_generator.py (score=1.90) Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+
+METRICS[10]:
+  🟢 test_version_validation.py::None CC=7 LOC=0
+  🟢 tests/test_cli_options.py::None CC=1 LOC=0
+  🟡 goal/config.py::None CC=10 LOC=0
+  🔴 goal/enhanced_summary.py::None CC=35 LOC=0
+  🔴 goal/cli.py::None CC=159 LOC=0
+  🟡 goal/user_config.py::None CC=11 LOC=0
+  🔴 goal/version_validation.py::None CC=30 LOC=0
+  🔴 goal/commit_generator.py::None CC=58 LOC=0
+  🟢 goal/__init__.py::None CC=0 LOC=0
+  🔴 goal/deep_analyzer.py::None CC=38 LOC=0
+
+LOG: /home/tom/github/semcod/goal/logs/redsl_20260419_212122.log

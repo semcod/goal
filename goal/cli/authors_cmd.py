@@ -1,9 +1,33 @@
 """Authors command for managing project authors."""
 
 import click
+from typing import Dict, Optional
 
 from goal.cli import main
 from goal.authors import AuthorsManager
+
+
+def display_author_details(identifier: str, author: Optional[Dict[str, str]]) -> None:
+    """Display details of a found author or indicate not found."""
+    if author:
+        click.echo()
+        click.echo(click.style("Author Found:", fg='green', bold=True))
+        click.echo(f"  Name: {author.get('name', 'Unknown')}")
+        click.echo(f"  Email: {author.get('email', 'Unknown')}")
+        if author.get('role'):
+            click.echo(f"  Role: {author.get('role')}")
+        if author.get('alias'):
+            click.echo(f"  Alias: {author.get('alias')}")
+    else:
+        click.echo(click.style(f"Author '{identifier}' not found", fg='red'))
+
+
+def display_current_author(current: Dict[str, str]) -> None:
+    """Display current author's information."""
+    click.echo()
+    click.echo(click.style("Current Author:", fg='cyan', bold=True))
+    click.echo(f"  Name: {current['name']}")
+    click.echo(f"  Email: {current['email']}")
 
 
 @main.group()
@@ -69,18 +93,7 @@ def authors_find(identifier) -> None:
     """Find an author by name, email, or alias."""
     manager = AuthorsManager()
     author = manager.find_author(identifier)
-    
-    if author:
-        click.echo()
-        click.echo(click.style("Author Found:", fg='green', bold=True))
-        click.echo(f"  Name: {author.get('name', 'Unknown')}")
-        click.echo(f"  Email: {author.get('email', 'Unknown')}")
-        if author.get('role'):
-            click.echo(f"  Role: {author.get('role')}")
-        if author.get('alias'):
-            click.echo(f"  Alias: {author.get('alias')}")
-    else:
-        click.echo(click.style(f"Author '{identifier}' not found", fg='red'))
+    display_author_details(identifier, author)
 
 
 @authors.command(name='co-author')
@@ -97,11 +110,7 @@ def authors_current():
     """Show current user's author information."""
     manager = AuthorsManager()
     current = manager.get_current_author()
-    
-    click.echo()
-    click.echo(click.style("Current Author:", fg='cyan', bold=True))
-    click.echo(f"  Name: {current['name']}")
-    click.echo(f"  Email: {current['email']}")
+    display_current_author(current)
 
 
 __all__ = [
