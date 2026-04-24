@@ -214,12 +214,11 @@ def get_default_token_patterns() -> List[str]:
         r'sk_live_[a-zA-Z0-9]{24}',
         r'sk_test_[a-zA-Z0-9]{24}',
         r'sk-or-v1-(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9_-]{32,}',
-        r'CS:^[A-Z][A-Z0-9_]{5,}=(?=(?:.*[a-z]))(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9_-]{20,}',
+        r'CS:^[A-Z][A-Z0-9_]*(?:API|KEY|TOKEN|SECRET|AUTH|PASS|PWD|CREDENTIAL|ACCESS)[A-Z0-9_]*=(?=(?:.*[a-z]))(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9_-]{20,}',
         r'\bBearer\s+(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9_-]{32,}\b',
         r'\bToken\s+(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9_-]{32,}\b',
         r'-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----',
         r'-----BEGIN\s+EC\s+PRIVATE\s+KEY-----',
         r'-----BEGIN\s+OPENSSH\s+PRIVATE\s+KEY-----',
         r'-----BEGIN\s+DSA\s+PRIVATE\s+KEY-----',
-        r'CS:^[A-Z][A-Z0-9_]+=(?=(?:.*[a-z]))(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9_-]{20,}',
     ]

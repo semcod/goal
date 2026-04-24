@@ -1,15 +1,15 @@
 schema: '1.0'
 project: goal
 version: 2.1.189
-generated: '2026-04-19'
+generated: '2026-04-20'
 generator: redsl planfile sync
 sources:
 - project/analysis.toon.yaml
 - project/duplication.toon.yaml
 stats:
-  total: 51
-  todo: 49
-  done: 2
+  total: 56
+  todo: 53
+  done: 3
 tasks:
 - id: Q01
   title: 'reduce_complexity: validation (CC=14)'
@@ -34,7 +34,7 @@ tasks:
   action: reduce_complexity
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - complexity
@@ -423,7 +423,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -436,7 +436,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -449,7 +449,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -462,7 +462,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -475,7 +475,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -488,7 +488,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -501,7 +501,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -514,7 +514,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -527,7 +527,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -540,7 +540,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -553,7 +553,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -566,7 +566,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -579,7 +579,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -592,7 +592,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -605,7 +605,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -618,7 +618,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: stale
   labels:
   - refactor
   - extract-function
@@ -654,7 +654,6 @@ tasks:
   - extract-function
   source: project/duplication.toon.yaml
   priority_label: medium
-  completed_at: '2026-04-20T06:31:26.614072+00:00'
 - id: D19
   title: 'extract_function: main (saves 19L)'
   description: 'Duplicated ''main'': 2 occurrences, 19 lines each, saves 19 lines.
@@ -685,7 +684,6 @@ tasks:
   - extract-function
   source: project/duplication.toon.yaml
   priority_label: medium
-  completed_at: '2026-04-20T07:53:52.716813+00:00'
 - id: D21
   title: 'extract_function: _update_toml_version (saves 18L)'
   description: 'Duplicated ''_update_toml_version'': 2 occurrences, 18 lines each,
@@ -694,7 +692,7 @@ tasks:
   action: extract_function
   priority: 3
   effort: medium
-  status: todo
+  status: done
   labels:
   - refactor
   - duplication
@@ -746,3 +744,58 @@ tasks:
   - extract-function
   source: project/duplication.toon.yaml
   priority_label: medium
+- id: refactor-2026-04-20-052
+  title: 'extract_functions: enhanced_summary.py'
+  status: stale
+  action: extract_functions
+  file: goal/enhanced_summary.py
+  priority: 3
+  score: 1.9
+  created_at: '2026-04-20T09:20:10.182948+00:00'
+  source: redsl:dry_run
+  description: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+  rule: split_extreme_cc
+- id: refactor-2026-04-20-054
+  title: 'extract_functions: cli.py'
+  status: stale
+  action: extract_functions
+  file: goal/cli.py
+  priority: 3
+  score: 1.9
+  created_at: '2026-04-20T09:20:10.182948+00:00'
+  source: redsl:dry_run
+  description: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+  rule: split_extreme_cc
+- id: refactor-2026-04-20-056
+  title: 'extract_functions: commit_generator.py'
+  status: stale
+  action: extract_functions
+  file: goal/commit_generator.py
+  priority: 3
+  score: 1.9
+  created_at: '2026-04-20T09:20:10.182948+00:00'
+  source: redsl:dry_run
+  description: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+  rule: split_extreme_cc
+- id: refactor-2026-04-20-058
+  title: 'extract_functions: deep_analyzer.py'
+  status: stale
+  action: extract_functions
+  file: goal/deep_analyzer.py
+  priority: 3
+  score: 1.9
+  created_at: '2026-04-20T09:20:10.182948+00:00'
+  source: redsl:dry_run
+  description: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+  rule: split_extreme_cc
+- id: refactor-2026-04-20-060
+  title: 'extract_functions: smart_commit.py'
+  status: stale
+  action: extract_functions
+  file: goal/smart_commit.py
+  priority: 3
+  score: 1.9
+  created_at: '2026-04-20T09:20:10.182948+00:00'
+  source: redsl:dry_run
+  description: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+  rule: split_extreme_cc

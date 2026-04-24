@@ -1,9 +1,9 @@
 # reDSL Refactor Report
 
-> Generated: **2026-04-19 21:10**  
+> Generated: **2026-04-20 11:16**  
 > Project: `/home/tom/github/semcod/goal`  
 > Mode: **executed**  
-> Log file: `/home/tom/github/semcod/goal/logs/redsl_20260419_210813.log`  
+> Log file: `/home/tom/github/semcod/goal/logs/redsl_20260420_110720.log`  
 > Cycle: **1**  
 
 ---
@@ -13,15 +13,27 @@
 - Project: `goal`
 - Files: **13** | Lines: **0** | Avg CC: **27.18**
 - Critical: **0** | Alerts: **51**
-- Decisions selected: **1**
-- Proposals generated: **1**
-- Proposals applied: **1**
+- Decisions selected: **5**
+- Proposals generated: **5**
+- Proposals applied: **5**
 - Proposals rejected: **0**
 - Errors: **0**
 
 ## Top Decisions
 
 1. **extract_functions** → `goal/enhanced_summary.py`
+   - Score: `1.90`
+   - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+2. **extract_functions** → `goal/cli.py`
+   - Score: `1.90`
+   - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+3. **extract_functions** → `goal/commit_generator.py`
+   - Score: `1.90`
+   - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+4. **extract_functions** → `goal/deep_analyzer.py`
+   - Score: `1.90`
+   - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+5. **extract_functions** → `goal/smart_commit.py`
    - Score: `1.90`
    - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
 
@@ -32,7 +44,31 @@
    - Applied: `True`
    - Validated: `True`
    - Confidence: `0.95`
-   - Summary: No refactoring needed; the provided file is a simple backward-compatibility shim with no complex functions or high cyclomatic complexity. All logic has been moved to the goal.summary package.
+   - Summary: No refactoring needed as the provided file is a simple backward-compatibility shim with no complex functions to extract. It consists only of imports and an __all__ list, with no executable code or high cyclomatic complexity.
+2. **extract_functions**
+   - Target: `goal/cli.py`
+   - Applied: `True`
+   - Validated: `True`
+   - Confidence: `0.97`
+   - Summary: The function _print_import_warning has a cyclomatic complexity of 1 and already has a single responsibility (printing an import warning message), so no further extraction is needed to meet the target CC < 10.
+3. **extract_functions**
+   - Target: `goal/commit_generator.py`
+   - Applied: `True`
+   - Validated: `True`
+   - Confidence: `0.96`
+   - Summary: Extracted a new function 'print_detailed_message' to handle the printing logic, separating concerns and reducing cyclomatic complexity from the original function while preserving all behavior, error handling, and logging.
+4. **extract_functions**
+   - Target: `goal/deep_analyzer.py`
+   - Applied: `True`
+   - Validated: `True`
+   - Confidence: `0.96`
+   - Summary: Extracted two helper functions (_extract_function_entity and _extract_class_entity) from _extract_python_entities to reduce cyclomatic complexity from 38 to below 10, while maintaining identical behavior and adding type hints.
+5. **extract_functions**
+   - Target: `goal/smart_commit.py`
+   - Applied: `True`
+   - Validated: `True`
+   - Confidence: `0.55`
+   - Summary: No refactoring needed as the provided file contains no complex functions to extract from; it is a simple backward-compatibility shim with no executable code or high cyclomatic complexity.
 
 ---
 

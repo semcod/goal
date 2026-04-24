@@ -109,6 +109,9 @@ def test_false_positive_prevention():
         ("placeholder.txt", "OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
         # Bearer with short value should NOT trigger
         ("short_bearer.txt", "Bearer token123"),
+        # Generic Python constants (no secret keyword) should NOT trigger
+        ("python_const.txt", "MIGRATION_QUERY=Abcdef12345678901234567890abcdef123456789"),
+        ("python_const2.txt", "CANDIDATE_LIST=XyZ123Abc456Def789GhI012JkL345MnO678PqR9"),
     ]
     
     for filename, content in test_cases:

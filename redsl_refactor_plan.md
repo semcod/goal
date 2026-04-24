@@ -1,9 +1,9 @@
 # reDSL Refactor Plan
 
-> Generated: **2026-04-19 21:21**  
+> Generated: **2026-04-20 11:02**  
 > Project: `/home/tom/github/semcod/goal`  
 > Mode: **dry-run**  
-> Log file: `/home/tom/github/semcod/goal/logs/redsl_20260419_212122.log`  
+> Log file: `/home/tom/github/semcod/goal/logs/redsl_20260420_110135.log`  
 
 ---
 
@@ -12,7 +12,7 @@
 - Project: `goal`
 - Files: **13** | Lines: **0** | Avg CC: **27.18**
 - Critical: **0** | Alerts: **51**
-- Decisions selected: **3**
+- Decisions selected: **5**
 
 ## Top Decisions
 
@@ -23,6 +23,12 @@
    - Score: `1.90`
    - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
 3. **extract_functions** → `goal/commit_generator.py`
+   - Score: `1.90`
+   - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+4. **extract_functions** → `goal/deep_analyzer.py`
+   - Score: `1.90`
+   - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
+5. **extract_functions** → `goal/smart_commit.py`
    - Score: `1.90`
    - Rationale: Funkcja o CC > 30 — krytycznie złożona, rozbij natychmiast
 

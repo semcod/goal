@@ -3,6 +3,22 @@
 ### Fixed
 - Remove `--asyncio-mode=auto` from pytest configuration for compatibility with older pytest-asyncio versions used by `goal -a`
 
+## [2.1.191] - 2026-04-24
+
+### Docs
+- Update README.md
+- Update redsl_refactor_plan.md
+- Update redsl_refactor_report.md
+
+### Test
+- Update tests/test_file_validation.py
+
+### Other
+- Update .redsl/history.jsonl
+- Update planfile.yaml
+- Update redsl_refactor_plan.toon.yaml
+- Update redsl_refactor_report.toon.yaml
+
 ## [2.1.190] - 2026-04-20
 
 ### Docs
