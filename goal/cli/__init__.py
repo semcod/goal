@@ -2,6 +2,8 @@
 
 import os
 import re
+import subprocess
+import sys
 from importlib import import_module
 from typing import List, Dict, Any
 
@@ -141,13 +143,60 @@ def confirm(prompt: str, default: bool = True) -> bool:
             click.echo(click.style("Please respond with 'y' or 'n'", fg='red'))
 
 
+def _auto_update_goal(current_version: str, latest_version: str) -> bool:
+    """Attempt to auto-update goal to the latest version.
+    
+    Returns True if update was successful, False otherwise.
+    """
+    click.echo(click.style(f"\n🔄 Auto-updating goal from v{current_version} to v{latest_version}...", fg='cyan'))
+    
+    try:
+        # Use the same Python interpreter to run pip install
+        result = subprocess.run(
+            [sys.executable, '-m', 'pip', 'install', '-U', 'goal'],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        
+        if result.returncode == 0:
+            click.echo(click.style(f"✅ Successfully updated to v{latest_version}", fg='green', bold=True))
+            return True
+        else:
+            click.echo(click.style(f"❌ Update failed: {result.stderr}", fg='red'))
+            return False
+    except Exception as e:
+        click.echo(click.style(f"❌ Update failed: {e}", fg='red'))
+        return False
+
+
 def _show_goal_version_banner() -> None:
     from goal import __version__
     from goal.version_validation import get_pypi_version
 
     latest = get_pypi_version("goal")
     if latest and latest != __version__:
-        click.echo(click.style(f"Goal v{__version__} (latest: v{latest} → pip install -U goal)", fg='yellow', bold=True))
+        click.echo(click.style(f"Goal v{__version__} (latest: v{latest})", fg='yellow', bold=True))
+        
+        # Check if auto-update is enabled (via environment variable or config)
+        auto_update = os.environ.get('GOAL_AUTO_UPDATE', '').lower() in ('1', 'true', 'yes')
+        
+        # Also check config if env var is not set
+        if not auto_update:
+            try:
+                from goal.config import ensure_config
+                config = ensure_config()
+                auto_update = config.get('advanced.auto_update_config', False)
+            except Exception:
+                pass
+        
+        if auto_update:
+            if confirm("Auto-update to latest version?", default=True):
+                success = _auto_update_goal(__version__, latest)
+                if success:
+                    # Restart goal with the new version
+                    click.echo(click.style("\n🔄 Restarting goal with new version...", fg='cyan'))
+                    os.execv(sys.executable, [sys.executable] + sys.argv)
     else:
         click.echo(click.style(f"Goal v{__version__} ✓", fg='cyan', bold=True))
 
