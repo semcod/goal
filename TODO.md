@@ -8,18 +8,6 @@
 
 ## ✅ Completed Tasks
 
-- [x] examples/validation/test_readme_consistency.py:88 - String concatenation can be converted to f-string
-- [x] examples/validation/test_readme_consistency.py:117 - String concatenation can be converted to f-string
-- [x] goal/cli.py:11 - module execution block
-- [x] goal/cli.py:18 - standalone main function
-- [x] goal/cli.py:23 - module execution block
-- [x] goal/deep_analyzer.py:25 - module execution block
-- [x] goal/formatter.py:3 - Magic number: 20 - use named constant
-- [x] goal/formatter.py:4 - Magic number: 50 - use named constant
-- [x] goal/formatter.py:73 - LLM-style docstring in _build_functional_overview
-- [x] goal/formatter.py:169 - Magic number in comparison: 50
-- [x] pyproject.toml:21 - Outdated dependency: click 8.3.1 → 8.3.2 (wheel)
-- [x] pyproject.toml:24 - Outdated dependency: costs 0.1.23 → 0.1.48 (wheel)
 
 ## 📋 Current Issues
 
@@ -296,3 +284,18 @@
 - [ ] test_recovery.py:126 - module execution block
 
 ---
+
+## Done (moved to CHANGELOG)
+
+- [x] examples/validation/test_readme_consistency.py:88 - String concatenation can be converted to f-string
+- [x] examples/validation/test_readme_consistency.py:117 - String concatenation can be converted to f-string
+- [x] goal/cli.py:11 - module execution block
+- [x] goal/cli.py:18 - standalone main function
+- [x] goal/cli.py:23 - module execution block
+- [x] goal/deep_analyzer.py:25 - module execution block
+- [x] goal/formatter.py:3 - Magic number: 20 - use named constant
+- [x] goal/formatter.py:4 - Magic number: 50 - use named constant
+- [x] goal/formatter.py:73 - LLM-style docstring in _build_functional_overview
+- [x] goal/formatter.py:169 - Magic number in comparison: 50
+- [x] pyproject.toml:21 - Outdated dependency: click 8.3.1 → 8.3.2 (wheel)
+- [x] pyproject.toml:24 - Outdated dependency: costs 0.1.23 → 0.1.48 (wheel)

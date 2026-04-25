@@ -474,15 +474,55 @@ def _ensure_python_env(project_dir: Path, cfg: dict, yes: bool) -> bool:
     return _ensure_python_test_dependency(project_dir, python_bin, test_dep)
 
 
+def _should_skip_install(project_dir: Path, markers: List[str]) -> bool:
+    """Check if dependency installation can be skipped based on file modification times."""
+    venv_dir = project_dir / '.venv'
+    if not venv_dir.exists():
+        return False
+    
+    sync_marker = venv_dir / '.goal_deps_ok'
+    if not sync_marker.exists():
+        return False
+    
+    marker_mtime = sync_marker.stat().st_mtime
+    for marker in markers:
+        config_file = project_dir / marker
+        if config_file.exists() and config_file.stat().st_mtime > marker_mtime:
+            return False
+            
+    return True
+
+
 def _install_python_deps(project_dir: Path, cfg: dict, python_bin: str) -> None:
-    """Run the first matching dependency install command for a Python project."""
+    """Run the first matching dependency install command for a Python project.
+    
+    Optimized to use 'uv' if available and skip if dependencies are already synced.
+    """
+    marker_files = cfg.get('marker_files', [])
+    if _should_skip_install(project_dir, marker_files):
+        # click.echo(click.style("  ✓ Dependencies already synced (skipping install)", fg='green'))
+        return
+
+    import shutil
+    has_uv = bool(shutil.which('uv'))
+
     for dep_cfg in cfg['dep_install_commands']:
         if not _match_marker(project_dir, dep_cfg['condition']):
             continue
+        
         cmd = dep_cfg['cmd'].format(python=python_bin)
+        
+        # Optimize with uv if available
+        if has_uv and '-m pip install' in cmd:
+            cmd = cmd.replace(f'{python_bin} -m pip install', 'uv pip install')
+            # uv doesn't need the python prefix if we are in the right env or using --python
+            if not cmd.startswith('uv'):
+                cmd = f"uv pip install {cmd.split('install ', 1)[1]}"
+
         click.echo(click.style(f"  Installing deps: {cmd}", fg='cyan'))
         result = subprocess.run(cmd, shell=True, cwd=str(project_dir),
                                 capture_output=True, text=True)
+        
         if result.returncode != 0:
             fallback = dep_cfg.get('fallback')
             if fallback:
@@ -490,10 +530,19 @@ def _install_python_deps(project_dir: Path, cfg: dict, python_bin: str) -> None:
                 click.echo(click.style(f"  Retrying: {cmd}", fg='yellow'))
                 result = subprocess.run(cmd, shell=True, cwd=str(project_dir),
                                         capture_output=True, text=True)
+            
             if result.returncode != 0:
                 click.echo(click.style(f"  ⚠  Dependency install had issues (exit {result.returncode})", fg='yellow'))
-        else:
-            click.echo(click.style("  ✓ Dependencies installed", fg='green'))
+                if result.stderr:
+                    click.echo(click.style(f"    Error: {result.stderr.strip().splitlines()[-1]}", fg='red'))
+                return
+        
+        # Mark as synced
+        venv_dir = project_dir / '.venv'
+        if venv_dir.exists():
+            (venv_dir / '.goal_deps_ok').touch()
+            
+        click.echo(click.style("  ✓ Dependencies installed", fg='green'))
         break  # Only run the first matching dep install
 
 

@@ -3,6 +3,25 @@
 ### Fixed
 - Remove `--asyncio-mode=auto` from pytest configuration for compatibility with older pytest-asyncio versions used by `goal -a`
 
+- feat(goal): configuration management system
+- feat(goal): code analysis engine / intelligent analysis pipeline
+- feat(goal): CLI interface improvements and output/markdown support
+- feat(goal): improved commit message generation
+- fix: TODO batch fixes
+- refactor(goal): multi-language support and configuration refactors
+- docs(docs): update README and documentation for configuration management and markdown output
+- chore(goal): update CLI docs and tests
+
+## [2.1.196] - 2026-04-25
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+
+### Other
+- Update .taskill/state.json
+
 ## [2.1.195] - 2026-04-24
 
 ### Docs
