@@ -1,9 +1,0 @@
-{
-  "project_name": "goal",
-  "report_type": "SUMR",
-  "generated_at": "2026-04-19T12:29:15.283044",
-  "metrics": {
-    "python_files": 149,
-    "has_pyqual_config": true
-  }
-}

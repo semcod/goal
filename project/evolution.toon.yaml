@@ -1,9 +1,9 @@
-# code2llm/evolution | 783 func | 87f | 2026-04-09
+# code2llm/evolution | 20122 func | 100f | 2026-04-26
 
 NEXT[3] (ranked by impact):
   [1] !! SPLIT           goal/project_bootstrap.py
-      WHY: 1216L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 17024
+      WHY: 1288L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 18032
 
   [2] !! SPLIT           goal/doctor/python.py
       WHY: 625L, 1 classes, max CC=10
@@ -15,15 +15,15 @@ NEXT[3] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting goal/project_bootstrap.py may break 38 import paths
+  ⚠ Splitting goal/project_bootstrap.py may break 40 import paths
   ⚠ Splitting goal/doctor/python.py may break 31 import paths
   ⚠ Splitting goal/package_managers.py may break 16 import paths
 
 METRICS-TARGET:
-  CC̄:          4.3 → ≤3.0
-  max-CC:      15 → ≤7
+  CC̄:          0.2 → ≤0.1
+  max-CC:      14 → ≤7
   god-modules: 8 → 0
-  high-CC(≥15): 1 → ≤0
+  high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -51,4 +51,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.3 → now CC̄=4.3
+  prev CC̄=2.7 → now CC̄=0.2

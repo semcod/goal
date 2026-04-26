@@ -14,6 +14,13 @@ from typing import Dict, List, Optional, Tuple
 import click
 
 from goal.project_doctor import diagnose_and_report
+from goal.installers import PackageManagerBroker
+
+# Import from refactored bootstrap module for backward compatibility
+from goal.bootstrap.detector import detect_project_types_deep, guess_package_name
+from goal.bootstrap.templates import PROJECT_BOOTSTRAP, PROJECT_TEMPLATES
+from goal.bootstrap.installer import ensure_project_environment, _install_python_deps_broker
+from goal.bootstrap.configurator import scaffold_test_file as _scaffold_test_file_impl
 
 
 # =============================================================================
@@ -544,6 +551,28 @@ def _install_python_deps(project_dir: Path, cfg: dict, python_bin: str) -> None:
             
         click.echo(click.style("  ✓ Dependencies installed", fg='green'))
         break  # Only run the first matching dep install
+
+
+def _install_python_deps_broker(project_dir: Path, extras: Optional[List[str]] = None) -> bool:
+    """Install Python dependencies using PackageManagerBroker.
+    
+    Delegates to intelligent broker that auto-detects and prioritizes
+    fast package managers (uv, pdm, poetry) with pip as fallback.
+    
+    Args:
+        project_dir: Project root directory
+        extras: Optional list of extra dependency groups (e.g., ["dev", "test"])
+    
+    Returns:
+        True if installation succeeded, False otherwise
+    """
+    broker = PackageManagerBroker(str(project_dir))
+    try:
+        result = broker.install(extras=extras, auto_install_uv=True)
+        return result.success
+    except RuntimeError as e:
+        click.echo(click.style(f"  ⚠  {e}", fg='yellow'))
+        return False
 
 
 def _ensure_generic_env(project_dir: Path, project_type: str, cfg: dict, yes: bool) -> bool:
@@ -1263,3 +1292,20 @@ deduplicate = true
     except Exception as e:
         click.echo(click.style(f"  ⚠ Could not add pfix config: {e}", fg='yellow'))
         return False
+
+
+# Backward compatibility: delegate to new bootstrap module
+def scaffold_test_file(project_dir: Path, project_type: str) -> bool:
+    """Create a sample test file if none exist - delegates to bootstrap module."""
+    return _scaffold_test_file_impl(project_dir, project_type)
+
+
+__all__ = [
+    'detect_project_types_deep',
+    'guess_package_name',
+    'ensure_project_environment',
+    'scaffold_test_file',
+    'bootstrap_project',
+    'bootstrap_all_projects',
+    'PROJECT_BOOTSTRAP',
+]

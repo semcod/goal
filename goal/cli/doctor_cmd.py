@@ -6,6 +6,7 @@ from datetime import datetime
 
 from goal.project_doctor import diagnose_and_report_with_todo
 from goal.project_bootstrap import detect_project_types_deep
+from goal.installers import PackageManagerBroker
 from goal.cli import main
 
 
@@ -13,8 +14,9 @@ from goal.cli import main
 @click.option('--fix', is_flag=True, help='Auto-fix detected issues')
 @click.option('--path', default='.', help='Project path to diagnose')
 @click.option('--todo', is_flag=True, help='Add issues to TODO.md')
+@click.option('--manager', '-m', default=None, help='Force specific package manager (uv, pip, poetry, pdm)')
 @click.pass_context
-def doctor(ctx, fix, path, todo) -> None:
+def doctor(ctx, fix, path, todo, manager) -> None:
     """Diagnose and auto-fix common project configuration issues."""
     project_path = Path(path).resolve()
     
@@ -74,6 +76,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Last updated: """ + datetime.now().strftime('%Y-%m-%d')
         changelog_file.write_text(changelog_content)
         click.echo(click.style("✓ CHANGELOG.md file created", fg='green'))
+    
+    # Show available package managers for Python projects
+    broker = PackageManagerBroker(str(project_path))
+    broker.show_available()
     
     detected = detect_project_types_deep(project_path)
     if detected:

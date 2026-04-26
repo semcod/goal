@@ -1,0 +1,243 @@
+// LESS format — define @variables here as needed
+
+app {
+  name: goal;
+  version: 2.1.197;
+}
+
+dependencies {
+  runtime: "click>=8.0.0, PyYAML>=6.0, clickmd>=0.1.0, costs>=0.1.21";
+  dev: "pytest>=7.0.0, build, twine, pfix>=0.1.60, tox>=4.0.0";
+}
+
+interface[type="cli"] {
+  framework: click;
+}
+interface[type="cli"] page[name="goal"] {
+
+}
+
+workflow[name="install"] {
+  trigger: manual;
+  step-1: run cmd=pip install .;
+}
+
+workflow[name="dev"] {
+  trigger: manual;
+  step-1: run cmd=pip install -e ".[dev]";
+}
+
+workflow[name="test"] {
+  trigger: manual;
+  step-1: run cmd=python -m pytest -q;
+}
+
+workflow[name="build"] {
+  trigger: manual;
+  step-1: run cmd=python -m pip install --upgrade build twine;
+  step-2: run cmd=python -m build --sdist --wheel;
+}
+
+workflow[name="publish"] {
+  trigger: manual;
+  step-1: run cmd=python -m twine upload dist/*;
+}
+
+workflow[name="clean"] {
+  trigger: manual;
+  step-1: run cmd=rm -rf dist build *.egg-info .pytest_cache __pycache__ goal/__pycache__;
+}
+
+workflow[name="push"] {
+  trigger: manual;
+  step-1: run cmd=if command -v goal &> /dev/null; then \;
+  step-2: run cmd=goal push; \;
+  step-3: run cmd=else \;
+  step-4: run cmd=echo "Goal not installed. Run 'make install' first."; \;
+  step-5: run cmd=fi;
+}
+
+workflow[name="docker-matrix"] {
+  trigger: manual;
+  step-1: run cmd=bash integration/run_docker_matrix.sh;
+}
+
+workflow[name="bump-version"] {
+  trigger: manual;
+  step-1: run cmd=if [ -z "$(PART)" ]; then \;
+  step-2: run cmd=echo "${YELLOW}Error: PART variable not set. Usage: make bump-version PART=<major|minor|patch>${RESET}"; \;
+  step-3: run cmd=exit 1; \;
+  step-4: run cmd=fi;
+  step-5: run cmd=echo "${YELLOW}Bumping $(PART) version...${RESET}";
+  step-6: run cmd=current_version=$$(grep '^version = ' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/'); \;
+  step-7: run cmd=echo "Current version: $$current_version"; \;
+  step-8: run cmd=IFS='.' read -r major minor patch <<< "$$current_version"; \;
+  step-9: run cmd=case "$(PART)" in \;
+  step-10: run cmd=major) major=$$((major + 1)); minor=0; patch=0 ;; \;
+  step-11: run cmd=minor) minor=$$((minor + 1)); patch=0 ;; \;
+  step-12: run cmd=patch) patch=$$((patch + 1)) ;; \;
+  step-13: run cmd=*) echo "${YELLOW}Error: PART must be major, minor, or patch${RESET}"; exit 1 ;; \;
+  step-14: run cmd=esac; \;
+  step-15: run cmd=new_version="$${major}.$${minor}.$${patch}"; \;
+  step-16: run cmd=sed -i "s/^version = \"$$current_version\"/version = \"$$new_version\"/" pyproject.toml; \;
+  step-17: run cmd=echo "${GREEN}Version bumped to $$new_version${RESET}"; \;
+  step-18: run cmd=git add pyproject.toml; \;
+  step-19: run cmd=git commit -m "Bump version to $$new_version"; \;
+  step-20: run cmd=if git rev-parse "v$$new_version" >/dev/null 2>&1; then \;
+  step-21: run cmd=echo "${YELLOW}Error: tag 'v$$new_version' already exists${RESET}"; \;
+  step-22: run cmd=exit 1; \;
+  step-23: run cmd=fi; \;
+  step-24: run cmd=git tag -a "v$$new_version" -m "Version $$new_version"; \;
+  step-25: run cmd=echo "${GREEN}Created tag v$$new_version${RESET}";
+}
+
+workflow[name="help"] {
+  trigger: manual;
+  step-1: run cmd=echo "Targets:";
+  step-2: run cmd=echo "  make install  - install goal locally";
+  step-3: run cmd=echo "  make dev      - install in development mode";
+  step-4: run cmd=echo "  make test     - run tests";
+  step-5: run cmd=echo "  make build    - build package for PyPI";
+  step-6: run cmd=echo "  make publish  - build and upload to PyPI";
+  step-7: run cmd=echo "  make clean    - remove build artifacts";
+  step-8: run cmd=echo "  make push     - use goal to push changes";
+}
+
+workflow[name="health"] {
+  trigger: manual;
+  step-1: run cmd=docker compose ps;
+  step-2: run cmd=docker compose exec app echo "Health check passed";
+}
+
+workflow[name="import-makefile-hint"] {
+  trigger: manual;
+  step-1: run cmd=echo 'Run: taskfile import Makefile to import existing targets.';
+}
+
+workflow[name="all"] {
+  trigger: manual;
+  step-1: run cmd=taskfile run install;
+  step-2: run cmd=taskfile run lint;
+  step-3: run cmd=taskfile run test;
+}
+
+workflow[name="sumd"] {
+  trigger: manual;
+  step-1: run cmd=echo "# $(basename $(pwd))" > SUMD.md
+echo "" >> SUMD.md
+echo "$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('description','Project description'))" 2>/dev/null || echo 'Project description')" >> SUMD.md
+echo "" >> SUMD.md
+echo "## Contents" >> SUMD.md
+echo "" >> SUMD.md
+echo "- [Metadata](#metadata)" >> SUMD.md
+echo "- [Architecture](#architecture)" >> SUMD.md
+echo "- [Dependencies](#dependencies)" >> SUMD.md
+echo "- [Source Map](#source-map)" >> SUMD.md
+echo "- [Intent](#intent)" >> SUMD.md
+echo "" >> SUMD.md
+echo "## Metadata" >> SUMD.md
+echo "" >> SUMD.md
+echo "- **name**: \`$(basename $(pwd))\`" >> SUMD.md
+echo "- **version**: \`$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('version','unknown'))" 2>/dev/null || echo 'unknown')\`" >> SUMD.md
+echo "- **python_requires**: \`>=$(python3 --version 2>/dev/null | cut -d' ' -f2 | cut -d. -f1,2)\`" >> SUMD.md
+echo "- **license**: $(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('license',{}).get('text','MIT'))" 2>/dev/null || echo 'MIT')" >> SUMD.md
+echo "- **ecosystem**: SUMD + DOQL + testql + taskfile" >> SUMD.md
+echo "- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, src/" >> SUMD.md
+echo "" >> SUMD.md
+echo "## Architecture" >> SUMD.md
+echo "" >> SUMD.md
+echo '```' >> SUMD.md
+echo "SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (verification)" >> SUMD.md
+echo '```' >> SUMD.md
+echo "" >> SUMD.md
+echo "## Source Map" >> SUMD.md
+echo "" >> SUMD.md
+find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' -not -path './__pycache__/*' -not -path './.git/*' | head -50 | sed 's|^./||' | sed 's|^|- |' >> SUMD.md
+echo "Generated SUMD.md";
+  step-2: run cmd=python3 -c "
+import json, os, subprocess
+from pathlib import Path
+project_name = Path.cwd().name
+py_files = list(Path('.').rglob('*.py'))
+py_files = [f for f in py_files if not any(x in str(f) for x in ['.venv', 'venv', '__pycache__', '.git'])]
+data = {
+    'project_name': project_name,
+    'description': 'SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorization',
+    'files': [{'path': str(f), 'type': 'python'} for f in py_files[:100]]
+}
+with open('sumd.json', 'w') as f:
+    json.dump(data, f, indent=2)
+print('Generated sumd.json')
+" 2>/dev/null || echo 'Python generation failed, using fallback';
+}
+
+workflow[name="sumr"] {
+  trigger: manual;
+  step-1: run cmd=echo "# $(basename $(pwd)) - Summary Report" > SUMR.md
+echo "" >> SUMR.md
+echo "SUMR - Summary Report for project analysis" >> SUMR.md
+echo "" >> SUMR.md
+echo "## Contents" >> SUMR.md
+echo "" >> SUMR.md
+echo "- [Metadata](#metadata)" >> SUMR.md
+echo "- [Quality Status](#quality-status)" >> SUMR.md
+echo "- [Metrics](#metrics)" >> SUMR.md
+echo "- [Refactoring Analysis](#refactoring-analysis)" >> SUMR.md
+echo "- [Intent](#intent)" >> SUMR.md
+echo "" >> SUMR.md
+echo "## Metadata" >> SUMR.md
+echo "" >> SUMR.md
+echo "- **name**: \`$(basename $(pwd))\`" >> SUMR.md
+echo "- **version**: \`$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('version','unknown'))" 2>/dev/null || echo 'unknown')\`" >> SUMR.md
+echo "- **generated_at**: \`$(date -Iseconds)\`" >> SUMR.md
+echo "" >> SUMR.md
+echo "## Quality Status" >> SUMR.md
+echo "" >> SUMR.md
+if [ -f pyqual.yaml ]; then
+  echo "- **pyqual_config**: ✅ Present" >> SUMR.md
+  echo "- **last_run**: $(stat -c %y .pyqual/pipeline.db 2>/dev/null | cut -d' ' -f1 || echo 'N/A')" >> SUMR.md
+else
+  echo "- **pyqual_config**: ❌ Missing" >> SUMR.md
+fi
+echo "" >> SUMR.md
+echo "## Metrics" >> SUMR.md
+echo "" >> SUMR.md
+py_files=$(find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' | wc -l)
+echo "- **python_files**: $py_files" >> SUMR.md
+lines=$(find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' -exec cat {} \; 2>/dev/null | wc -l)
+echo "- **total_lines**: $lines" >> SUMR.md
+echo "" >> SUMR.md
+echo "## Refactoring Analysis" >> SUMR.md
+echo "" >> SUMR.md
+echo "Run \`code2llm ./ -f evolution\` for detailed refactoring queue." >> SUMR.md
+echo "Generated SUMR.md";
+  step-2: run cmd=python3 -c "
+import json, os, subprocess
+from pathlib import Path
+from datetime import datetime
+project_name = Path.cwd().name
+py_files = len([f for f in Path('.').rglob('*.py') if not any(x in str(f) for x in ['.venv', 'venv', '__pycache__', '.git'])])
+data = {
+    'project_name': project_name,
+    'report_type': 'SUMR',
+    'generated_at': datetime.now().isoformat(),
+    'metrics': {
+        'python_files': py_files,
+        'has_pyqual_config': Path('pyqual.yaml').exists()
+    }
+}
+with open('SUMR.json', 'w') as f:
+    json.dump(data, f, indent=2)
+print('Generated SUMR.json')
+" 2>/dev/null || echo 'Python generation failed, using fallback';
+}
+
+deploy {
+  target: docker;
+}
+
+environment[name="local"] {
+  runtime: docker-compose;
+  env_file: .env;
+  python_version: >=3.8;
+}

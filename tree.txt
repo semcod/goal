@@ -1,0 +1,383 @@
+.
+├── app.doql.css
+├── app.doql.less
+├── CHANGELOG.md
+├── claude-taking-longer-than-usual.webm
+├── examples
+│   ├── advanced-workflows
+│   │   ├── feature-branch.md
+│   │   ├── hotfix-workflow.md
+│   │   └── README.md
+│   ├── api-usage
+│   │   ├── 01_basic_api.py
+│   │   ├── 02_git_operations.py
+│   │   ├── 03_commit_generation.py
+│   │   ├── 04_version_validation.py
+│   │   ├── 05_programmatic_workflow.py
+│   │   ├── README.md
+│   │   └── test_integration.py
+│   ├── configurations
+│   │   └── goal-yaml-examples.md
+│   ├── custom-hooks
+│   │   ├── post-commit.py
+│   │   ├── pre-commit.py
+│   │   ├── pre-publish.py
+│   │   └── README.md
+│   ├── docker-integration
+│   │   └── README.md
+│   ├── dotnet-project
+│   │   ├── Calculator.cs
+│   │   ├── CalculatorTests.cs
+│   │   ├── GoalExample.csproj
+│   │   └── README.md
+│   ├── enhanced-summary
+│   │   ├── before-after.md
+│   │   ├── config-example.yaml
+│   │   ├── README.md
+│   │   └── sample-output.md
+│   ├── git-hooks
+│   │   ├── install.sh
+│   │   └── prepare-commit-msg
+│   ├── github-actions
+│   ├── gitlab-ci
+│   │   └── README.md
+│   ├── go-project
+│   │   ├── go.mod
+│   │   ├── main.go
+│   │   └── README.md
+│   ├── java-project
+│   │   ├── pom.xml
+│   │   ├── README.md
+│   │   └── src
+│   │       ├── main
+│   │       │   └── java
+│   │       │       └── com
+│   │       └── test
+│   │           └── java
+│   │               └── com
+│   ├── license-management
+│   │   └── README.md
+│   ├── makefile
+│   │   └── Makefile
+│   ├── markdown-demo.sh
+│   ├── monorepo
+│   │   └── README.md
+│   ├── multi-author
+│   │   └── README.md
+│   ├── my-new-project
+│   │   ├── goal.yaml
+│   │   ├── pyproject.toml
+│   │   ├── src
+│   │   │   └── my-new-project
+│   │   │       └── __init__.py
+│   │   └── tests
+│   │       └── test_my-new-project.py
+│   ├── nodejs-app
+│   │   └── package.json
+│   ├── performance
+│   │   └── README.md
+│   ├── php-project
+│   │   ├── composer.json
+│   │   ├── README.md
+│   │   └── src
+│   │       └── Example.php
+│   ├── python-package
+│   │   └── pyproject.toml
+│   ├── README.md
+│   ├── ruby-project
+│   │   ├── goal_example.gemspec
+│   │   ├── lib
+│   │   │   └── goal_example.rb
+│   │   └── README.md
+│   ├── rust-crate
+│   │   └── Cargo.toml
+│   ├── template-generator
+│   │   ├── demo-project
+│   │   ├── generate.py
+│   │   └── README.md
+│   ├── testing
+│   │   ├── 03_advanced_mocking.py
+│   │   └── 04_debugging_diagnostics.py
+│   ├── testing-guide
+│   │   └── README.md
+│   ├── test-project
+│   ├── validation
+│   │   ├── README.md
+│   │   ├── run_all_validation.py
+│   │   ├── test_api_signatures.py
+│   │   ├── test_imports.py
+│   │   ├── test_readme_consistency.py
+│   │   └── test_syntax_check.py
+│   ├── webhooks
+│   │   ├── discord-webhook.py
+│   │   ├── README.md
+│   │   └── slack-webhook.py
+│   └── wizard-setup
+│       └── README.md
+├── goal
+│   ├── authors
+│   │   ├── __init__.py
+│   │   ├── manager.py
+│   │   └── utils.py
+│   ├── bootstrap
+│   │   ├── detector.py
+│   │   ├── __init__.py
+│   │   └── templates.py
+│   ├── changelog.py
+│   ├── cli
+│   │   ├── authors_cmd.py
+│   │   ├── commit_cmd.py
+│   │   ├── config_cmd.py
+│   │   ├── config_validate_cmd.py
+│   │   ├── doctor_cmd.py
+│   │   ├── hooks_cmd.py
+│   │   ├── __init__.py
+│   │   ├── license_cmd.py
+│   │   ├── postcommit_cmd.py
+│   │   ├── publish_cmd.py
+│   │   ├── publish.py
+│   │   ├── push_cmd.py
+│   │   ├── recover_cmd.py
+│   │   ├── tests.py
+│   │   ├── utils_cmd.py
+│   │   ├── validation_cmd.py
+│   │   ├── version.py
+│   │   ├── version_sync.py
+│   │   ├── version_types.py
+│   │   ├── version_utils.py
+│   │   └── wizard_cmd.py
+│   ├── cli.py
+│   ├── commit_generator.py
+│   ├── config
+│   │   ├── constants.py
+│   │   ├── __init__.py
+│   │   ├── manager.py
+│   │   └── validation.py
+│   ├── config.py
+│   ├── deep_analyzer.py
+│   ├── doctor
+│   │   ├── core.py
+│   │   ├── dotnet.py
+│   │   ├── go.py
+│   │   ├── __init__.py
+│   │   ├── java.py
+│   │   ├── logging.py
+│   │   ├── models.py
+│   │   ├── nodejs.py
+│   │   ├── php.py
+│   │   ├── python.py
+│   │   ├── ruby.py
+│   │   ├── rust.py
+│   │   └── todo.py
+│   ├── enhanced_summary.py
+│   ├── formatter.py
+│   ├── generator
+│   │   ├── analyzer.py
+│   │   ├── generator.py
+│   │   ├── git_ops.py
+│   │   └── __init__.py
+│   ├── git_ops.py
+│   ├── hooks
+│   │   ├── config.py
+│   │   ├── __init__.py
+│   │   └── manager.py
+│   ├── __init__.py
+│   ├── installers
+│   │   ├── broker.py
+│   │   ├── config.py
+│   │   ├── __init__.py
+│   │   └── managers
+│   │       ├── base.py
+│   │       ├── __init__.py
+│   │       ├── pdm.py
+│   │       ├── pip.py
+│   │       ├── poetry.py
+│   │       └── uv.py
+│   ├── license
+│   │   ├── __init__.py
+│   │   ├── manager.py
+│   │   └── spdx.py
+│   ├── __main__.py
+│   ├── package_managers.py
+│   ├── postcommit
+│   │   ├── actions.py
+│   │   ├── __init__.py
+│   │   └── manager.py
+│   ├── project_bootstrap.py
+│   ├── project_doctor.py
+│   ├── push
+│   │   ├── commands.py
+│   │   ├── core.py
+│   │   ├── __init__.py
+│   │   └── stages
+│   │       ├── changelog.py
+│   │       ├── commit.py
+│   │       ├── costs.py
+│   │       ├── dry_run.py
+│   │       ├── __init__.py
+│   │       ├── publish.py
+│   │       ├── push_remote.py
+│   │       ├── tag.py
+│   │       ├── test.py
+│   │       ├── todo.py
+│   │       └── version.py
+│   ├── recovery
+│   │   ├── auth.py
+│   │   ├── base.py
+│   │   ├── corrupted.py
+│   │   ├── divergent.py
+│   │   ├── exceptions.py
+│   │   ├── force_push.py
+│   │   ├── __init__.py
+│   │   ├── large_file.py
+│   │   ├── lfs.py
+│   │   ├── manager.py
+│   │   └── strategies.py
+│   ├── smart_commit
+│   │   ├── abstraction.py
+│   │   ├── generator.py
+│   │   └── __init__.py
+│   ├── smart_commit.py
+│   ├── summary
+│   │   ├── body_formatter.py
+│   │   ├── generator.py
+│   │   ├── __init__.py
+│   │   ├── quality_filter.py
+│   │   └── validator.py
+│   ├── toml_validation.py
+│   ├── user_config.py
+│   ├── validation
+│   │   ├── __init__.py
+│   │   ├── manager.py
+│   │   └── rules.py
+│   ├── validators
+│   │   ├── dot_folders.py
+│   │   ├── exceptions.py
+│   │   ├── file_validator.py
+│   │   ├── gitignore.py
+│   │   ├── __init__.py
+│   │   └── tokens.py
+│   └── version_validation.py
+├── goal.egg-info
+│   ├── dependency_links.txt
+│   ├── entry_points.txt
+│   ├── PKG-INFO
+│   ├── requires.txt
+│   ├── SOURCES.txt
+│   └── top_level.txt
+├── goal.yaml
+├── integration
+│   ├── Dockerfile
+│   ├── run_docker_matrix.sh
+│   └── run_matrix.sh
+├── LICENSE
+├── logs
+│   ├── redsl_20260408_141217.log
+│   ├── redsl_20260408_141325.log
+│   ├── redsl_20260408_165051.log
+│   ├── redsl_20260408_170705.log
+│   ├── redsl_20260419_181031.log
+│   ├── redsl_20260419_181038.log
+│   ├── redsl_20260419_181045.log
+│   ├── redsl_20260419_181117.log
+│   ├── redsl_20260419_192837.log
+│   ├── redsl_20260419_192913.log
+│   ├── redsl_20260419_192956.log
+│   ├── redsl_20260419_210059.log
+│   ├── redsl_20260419_210530.log
+│   ├── redsl_20260419_210813.log
+│   ├── redsl_20260419_211314.log
+│   ├── redsl_20260419_211415.log
+│   ├── redsl_20260419_211734.log
+│   ├── redsl_20260419_211856.log
+│   ├── redsl_20260419_211935.log
+│   ├── redsl_20260419_212122.log
+│   ├── redsl_20260419_212330.log
+│   ├── redsl_20260419_212443.log
+│   ├── redsl_20260419_212545.log
+│   ├── redsl_20260419_212750.log
+│   ├── redsl_20260419_212851.log
+│   ├── redsl_20260419_213107.log
+│   ├── redsl_20260419_213221.log
+│   ├── redsl_20260420_080817.log
+│   ├── redsl_20260420_080922.log
+│   ├── redsl_20260420_081236.log
+│   ├── redsl_20260420_081703.log
+│   ├── redsl_20260420_082208.log
+│   ├── redsl_20260420_082713.log
+│   ├── redsl_20260420_094909.log
+│   ├── redsl_20260420_102440.log
+│   ├── redsl_20260420_102511.log
+│   ├── redsl_20260420_110135.log
+│   ├── redsl_20260420_110626.log
+│   ├── redsl_20260420_110720.log
+│   ├── redsl_20260420_111946.log
+│   └── redsl_20260420_112820.log
+├── Makefile
+├── planfile.yaml
+├── prefact.yaml
+├── project
+│   ├── analysis.toon.yaml
+│   ├── calls.mmd
+│   ├── calls.png
+│   ├── calls.toon.yaml
+│   ├── calls.yaml
+│   ├── compact_flow.mmd
+│   ├── compact_flow.png
+│   ├── context.md
+│   ├── dashboard.html
+│   ├── duplication.toon.yaml
+│   ├── evolution.toon.yaml
+│   ├── flow.mmd
+│   ├── flow.png
+│   ├── index.html
+│   ├── map.toon.yaml
+│   ├── mermaid.export
+│   ├── project.toon.yaml
+│   ├── project.yaml
+│   ├── prompt.txt
+│   ├── README.md
+│   └── validation.toon.yaml
+├── project.functions.toon
+├── project.sh
+├── project.toon-schema.json
+├── pyproject.toml
+├── pyqual.yaml
+├── README.md
+├── redsl_refactor_plan.md
+├── redsl_refactor_plan.toon.yaml
+├── redsl_refactor_report.md
+├── redsl_refactor_report.toon.yaml
+├── redsl.yaml
+├── refactor_output
+├── REFACTOR_PLAN.md
+├── SUMD.md
+├── SUMR.md
+├── Taskfile.yml
+├── testql-scenarios
+│   ├── generated-cli-tests.testql.toon.yaml
+│   └── generated-from-pytests.testql.toon.yaml
+├── test_recovery.py
+├── tests
+│   ├── test_changelog.py
+│   ├── test_cli_options.py
+│   ├── test_clone_repo.py
+│   ├── test_config_shim.py
+│   ├── test_config_validation.py
+│   ├── test_file_validation.py
+│   ├── test_formatter.py
+│   ├── test_git_ops.py
+│   ├── test_project_bootstrap.py
+│   ├── test_project_doctor.py
+│   ├── test_push_e2e.py
+│   ├── test_smart_commit_shim.py
+│   ├── test_user_config.py
+│   ├── test_version_sync.py
+│   └── test_version_validation.py
+├── TICKET
+├── TODO.md
+├── tree.sh
+├── tree.txt
+└── VERSION
+
+71 directories, 310 files

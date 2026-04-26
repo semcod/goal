@@ -143,23 +143,34 @@ class EnhancedSummaryGenerator:
     def _file_stems(files: List[str]) -> List[str]:
         return [Path(f).stem.lower() for f in files]
 
+    # Special title patterns: (stem_check, area_check) -> title
+    _SPECIAL_TITLE_RULES = [
+        # Analysis-related files
+        (lambda s: 'analyzer' in s or 'analysis' in s, None,
+         lambda s: "intelligent code analysis pipeline" if any('deep' in x or 'smart' in x for x in s) else "code analysis engine"),
+        # Commit-related files
+        (lambda s: 'commit' in s, None,
+         lambda s: "smart commit generation system" if any('smart' in x for x in s) else "commit message generator"),
+        # CLI area with CLI files
+        (lambda s: 'cli' in s, 'cli', lambda _: "CLI interface improvements"),
+    ]
+
+    _AREA_TITLES = {
+        'configuration': "configuration management system",
+    }
+
     @staticmethod
     def _special_title_from_files(file_stems: List[str], areas: List[str]) -> str:
-        if any('analyzer' in s or 'analysis' in s for s in file_stems):
-            if any('deep' in s or 'smart' in s for s in file_stems):
-                return "intelligent code analysis pipeline"
-            return "code analysis engine"
+        # Check combined stem/area rules
+        for stem_check, area_key, title_fn in EnhancedSummaryGenerator._SPECIAL_TITLE_RULES:
+            if any(stem_check(s) for s in file_stems):
+                if area_key is None or area_key in areas:
+                    return title_fn(file_stems)
 
-        if any('commit' in s for s in file_stems):
-            if any('smart' in s for s in file_stems):
-                return "smart commit generation system"
-            return "commit message generator"
-
-        if 'cli' in areas and any('cli' in s for s in file_stems):
-            return "CLI interface improvements"
-
-        if 'configuration' in areas:
-            return "configuration management system"
+        # Check area-only rules
+        for area, title in EnhancedSummaryGenerator._AREA_TITLES.items():
+            if area in areas:
+                return title
 
         return ''
 

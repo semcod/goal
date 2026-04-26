@@ -1,53 +1,55 @@
-# goal | 783 func | 87f | 22957L | python | 2026-04-09
+# goal | 20179 func | 119f | 226177L | python | 2026-04-26
 
 HEALTH:
-  CC̄=4.3  critical=72 (limit:10)  dup=0  cycles=0
+  CC̄=0.2  critical=79 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     execute_push_workflow = 26 (limit:10)
+  !!! high_fan_out     execute_push_workflow = 27 (limit:10)
   !!! high_fan_out     EnhancedSummaryGenerator.generate_enhanced_summary = 24 (limit:10)
   !!! high_fan_out     doctor = 20 (limit:10)
   !!  high_fan_out     update_cost_badges = 19 (limit:10)
+  !!  high_fan_out     _install_python_deps = 19 (limit:10)
   !!  high_fan_out     fix_summary = 18 (limit:10)
   !!  high_fan_out     validate = 18 (limit:10)
-  !!  high_fan_out     _analyze_python_diff = 17 (limit:10)
+  !!  high_fan_out     CodeChangeAnalyzer._analyze_python_diff = 17 (limit:10)
   !!  high_fan_out     CommitMessageGenerator.generate_detailed_message = 17 (limit:10)
   !!  high_fan_out     commit = 17 (limit:10)
-  !!  high_fan_out     add_issues_to_todo = 17 (limit:10)
 
-MODULES[111] (top by size):
-  M[goal/project_bootstrap.py] 1216L C:0 F:38 CC↑14 D:3 (python)
+MODULES[184] (top by size):
+  M[project/map.toon.yaml] 53852L C:0 F:19289 CC↑0 D:45 (yaml)
+  M[.aider/caches/model_prices_and_context_window.json] 37479L C:0 F:0 CC↑0 D:0 (json)
+  M[.aider/caches/openrouter_models.json] 17810L C:0 F:0 CC↑0 D:0 (json)
+  M[project/calls.yaml] 5563L C:0 F:0 CC↑0 D:0 (yaml)
+  M[planfile.yaml] 2108L C:0 F:0 CC↑0 D:0 (yaml)
+  M[project/project.yaml] 1323L C:0 F:0 CC↑0 D:0 (yaml)
+  M[goal/project_bootstrap.py] 1288L C:0 F:40 CC↑14 D:6 (python)
   M[goal/doctor/python.py] 625L C:1 F:31 CC↑10 D:0 (python)
   M[goal/package_managers.py] 616L C:1 F:16 CC↑5 D:1 (python)
-  M[goal/deep_analyzer.py] 598L C:1 F:27 CC↑13 D:0 (python)
-  M[goal/git_ops.py] 574L C:0 F:28 CC↑11 D:16 (python)
+  M[goal/deep_analyzer.py] 584L C:1 F:27 CC↑13 D:0 (python)
+  M[goal/git_ops.py] 574L C:0 F:28 CC↑11 D:19 (python)
   M[goal/license/manager.py] 570L C:1 F:12 CC↑10 D:1 (python)
+  M[project/validation.toon.yaml] 554L C:0 F:0 CC↑0 D:0 (yaml)
+  M[goal/summary/generator.py] 534L C:1 F:14 CC↑14 D:0 (python)
   M[goal/smart_commit/generator.py] 527L C:1 F:25 CC↑13 D:0 (python)
-  M[goal/summary/generator.py] 523L C:1 F:14 CC↑15 D:0 (python)
-  M[goal/config/validation.py] 474L C:2 F:15 CC↑14 D:2 (python)
-  M[goal/config/manager.py] 457L C:1 F:25 CC↑10 D:7 (python)
-  M[goal/generator/analyzer.py] 442L C:2 F:27 CC↑14 D:0 (python)
-  M[goal/config/constants.py] 436L C:0 F:0 CC↑0 D:0 (python)
-  M[goal/push/core.py] 412L C:1 F:17 CC↑10 D:3 (python)
-  M[goal/push/stages/push_remote.py] 382L C:0 F:17 CC↑11 D:1 (python)
-  M[goal/generator/generator.py] 381L C:1 F:24 CC↑12 D:6 (python)
-  LANGS: python:108/shell:3
+  LANGS: python:135/yaml:20/json:8/shell:5/toml:4/other:3/csharp:2/txt:2/go:1/java:1/php:1/yml:1/xml:1
 
 HOTSPOTS[10]:
-  ★ execute_push_workflow fan=26  // Execute the complete push workflow.
+  ★ execute_push_workflow fan=27  // Execute the complete push workflow.
   ★ EnhancedSummaryGenerator.generate_enhanced_summary fan=24  // Generate complete enhanced summary with business value focus.
   ★ doctor fan=20  // Diagnose and auto-fix common project configuration issues.
   ★ update_cost_badges fan=19  // Update AI cost badges in README using costs package.
-  ★ fix_summary fan=18  // Auto-fix commit summary quality issues.
+  ★ _install_python_deps fan=19  // Run the first matching dependency install command for a Python project.
 
-REFACTOR[12]:
-  [1] H/H Split god module goal/summary/generator.py (523L, 1 classes)
-  [2] H/H Split god module goal/project_bootstrap.py (1216L, 0 classes)
-  [3] H/H Split god module goal/deep_analyzer.py (598L, 1 classes)
+Optimiz
+
+REFACTOR[15]:
+  [1] H/H Split god module goal/project_bootstrap.py (1288L, 0 classes)
+  [2] H/H Split god module goal/summary/generator.py (534L, 1 classes)
+  [3] H/H Split god module goal/deep_analyzer.py (584L, 1 classes)
   [4] H/H Split god module goal/smart_commit/generator.py (527L, 1 classes)
   [5] H/H Split god module goal/git_ops.py (574L, 0 classes)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-04-09 CC̄=4.3 crit=72 22957L // Automated analysis
+  2026-04-26 CC̄=0.2 crit=79 226177L // Automated analysis

@@ -1,0 +1,63 @@
+# SCENARIO: Auto-generated from Python Tests
+# TYPE: integration
+# GENERATED: true
+
+CONFIG[2]{key, value}:
+  base_url, ${api_url:-http://localhost:8101}
+  timeout_ms, 10000
+
+# Converted 53 assertions from pytest
+ASSERT[53]{field, operator, expected}:
+  any(i.code, ==, 'RB001' for i in issues)
+  any(i.code, ==, 'RB001' for i in issues)
+  repo_dir, ==, "cloned"
+  repo_dir, ==, "cloned"
+  current, ==, '1.0.0'
+  new, ==, '1.0.1'
+  section, ==, ""
+  tests, ==, []
+  title, ==, 'Summary'
+  entities, ==, []
+  title, ==, 'Overview'
+  result.exit_code, ==, 0
+  exc.value.code, ==, 1
+  mman.num_file_handles(), ==, 0
+  mman.mapped_memory_size(), ==, 0
+  mman.num_file_handles(), ==, 0
+  mman.mapped_memory_size(), ==, 0
+  schema["$id"], ==, "http://json-schema.org/draft-07/schema#"
+  schema["title"], ==, "Core schema meta-schema"
+  result, ==, expected
+  scalar_result, ==, expected
+  scalar_result, ==, expected
+  str(expr), ==, expected_str
+  str(expr), ==, expected_str
+  str(expr), ==, expected_str
+  str(expr), ==, expected_str
+  str(expr), ==, expected_str, str(expr)
+  str(expr), ==, expected_str, str(expr)
+  str(expr), ==, expected_str, str(expr)
+  result, ==, expected
+  result.nlevels, ==, 1
+  result, ==, [getattr(v, method)("_") for v in s]
+  result.nlevels, ==, 1
+  all(result.dtypes, ==, nullable_string_dtype)
+  ArrowStringArrayMixin._has_unsupported_regex(pat), ==, expected
+  result, ==, expected
+  result, ==, expected
+  result, ==, expected
+  result, ==, expected
+  result, ==, expected
+  result, ==, expected
+  res, ==, expected
+  result5, ==, expected
+  result7, ==, expected
+  result, ==, expected
+  result, ==, expected
+  result, ==, expected
+  result, ==, expected
+  result, ==, expected
+  result, ==, expected
+  res, ==, expected
+  result5, ==, expected
+  result7, ==, expected

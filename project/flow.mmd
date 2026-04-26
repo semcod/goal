@@ -4,8 +4,8 @@ flowchart TD
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
 
     subgraph CLI
-        goal__cli___print_import_warning["_print_import_warning"]
         goal__cli___format_import_warning_message["_format_import_warning_message"]
+        goal__cli___print_import_warning["_print_import_warning"]
         goal__cli__version_sync___update_version_file["_update_version_file"]
         goal__cli__version_sync___update_json_version_file["_update_json_version_file"]
         goal__cli__version_sync___update_toml_version["_update_toml_version"]
@@ -17,12 +17,16 @@ flowchart TD
         goal__cli__version_sync__sync_all_versions["sync_all_versions"]
         goal__cli__recover_cmd__recover["recover"]
         goal__cli__recover_cmd___get_error_output["_get_error_output"]
-        goal__cli__hooks_cmd__hooks["hooks"]
-        goal__cli__hooks_cmd__hooks_install["hooks_install"]
-        ...["+96 more"]
+        goal__cli__license_cmd__license["license"]
+        goal__cli__license_cmd__license_create["license_create"]
+        ...["+110 more"]
     end
 
     subgraph Core
+        goal__user_config__UserConfig___load["_load"]
+        goal__user_config__UserConfig___save["_save"]
+        goal__user_config__UserConfig__get["get"]
+        goal__user_config__UserConfig__is_initialized["is_initialized"]
         goal__version_validation__get_npm_version["get_npm_version"]
         goal__version_validation__get_cargo_version["get_cargo_version"]
         goal__version_validation__get_rubygems_version["get_rubygems_version"]
@@ -31,18 +35,29 @@ flowchart TD
         goal__version_validation___detect_nodejs_package["_detect_nodejs_package"]
         goal__version_validation___detect_rust_package["_detect_rust_package"]
         goal__version_validation___detect_ruby_package["_detect_ruby_package"]
-        goal__commit_generator__main["main"]
-        goal__user_config__UserConfig___load["_load"]
-        goal__user_config__UserConfig___save["_save"]
-        goal__user_config__UserConfig__get["get"]
-        goal__user_config__UserConfig__is_initialized["is_initialized"]
-        goal__changelog__update_changelog["update_changelog"]
-        goal__project_bootstrap___guess_python_name["_guess_python_name"]
-        ...["+408 more"]
+        goal__commit_generator__is_detailed_output_requested["is_detailed_output_requested"]
+        goal__commit_generator__display_commit_message["display_commit_message"]
+        goal__commit_generator__display_detailed_message["display_detailed_message"]
+        ...["+19697 more"]
     end
 
     subgraph Exporters
         goal__authors__manager__AuthorsManager__export_to_contributors["export_to_contributors"]
+        project__map__toon___build_cache_export_payload["_build_cache_export_payload"]
+        project__map__toon__export_entries_as_dduf["export_entries_as_dduf"]
+        project__map__toon__export_folder_as_dduf["export_folder_as_dduf"]
+        project__map__toon__cloudzero_dry_run_export["cloudzero_dry_run_export"]
+        project__map__toon__cloudzero_export["cloudzero_export"]
+        project__map__toon__vantage_dry_run_export["vantage_dry_run_export"]
+        project__map__toon__vantage_export["vantage_export"]
+        project__map__toon__test_NPY_NO_EXPORT["test_NPY_NO_EXPORT"]
+        project__map__toon__test_export["test_export"]
+        project__map__toon__read_exports["read_exports"]
+        project__map__toon__write_exports["write_exports"]
+        project__map__toon__get_export_entry["get_export_entry"]
+        project__map__toon__escape_before_html_export["escape_before_html_export"]
+        project__map__toon__authors_export["authors_export"]
+        ...["+2 more"]
     end
 
-    class goal__cli___print_import_warning,goal__cli___format_import_warning_message,goal__version_validation__get_npm_version,goal__version_validation__get_cargo_version,goal__version_validation__get_rubygems_version,goal__version_validation__get_registry_version,goal__version_validation___detect_python_package,goal__version_validation___detect_nodejs_package,goal__version_validation___detect_rust_package,goal__version_validation___detect_ruby_package entry
+    class goal__cli___format_import_warning_message,goal__cli___print_import_warning,goal__user_config__UserConfig___load,goal__user_config__UserConfig___save,goal__user_config__UserConfig__get,goal__user_config__UserConfig__is_initialized,goal__version_validation__get_npm_version,goal__version_validation__get_cargo_version,goal__version_validation__get_rubygems_version,goal__version_validation__get_registry_version entry
