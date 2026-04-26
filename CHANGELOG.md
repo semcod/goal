@@ -31,6 +31,17 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.214] - 2026-04-26
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_project_bootstrap.py
+
+### Other
+- Update uv.lock
+
 ## [2.1.213] - 2026-04-26
 
 ### Docs

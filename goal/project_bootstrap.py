@@ -1279,48 +1279,59 @@ def _validate_pfix_env(project_dir: Path) -> bool:
 
 def _ensure_pfix_installed(project_dir: Path, yes: bool = False) -> bool:
     """Ensure pfix package is installed for auto-fixing errors.
-    
-    Installs from local development path /home/tom/github/semcod/pfix
-    in editable mode for development workflow integration.
-    
+
+    By default installs from PyPI. For local development, set
+    GOAL_PFIX_LOCAL_PATH to install from a specific editable path.
+
     Returns True if pfix is ready to use.
     """
-    import subprocess
-    
     python_bin = _find_python_bin(project_dir)
-    
+
     # Check if pfix is already installed
     result = subprocess.run(
         [python_bin, '-c', 'import pfix; print(pfix.__version__)'],
         capture_output=True, text=True, cwd=str(project_dir)
     )
-    
-    PFIX_LOCAL_PATH = "/home/tom/github/semcod/pfix"
-    
+
     if result.returncode != 0:
-        # Install pfix from local path in editable mode
-        click.echo(click.style(f"  Installing pfix from local path...", fg='cyan'))
+        local_pfix_path = os.environ.get('GOAL_PFIX_LOCAL_PATH', '').strip()
+        if local_pfix_path:
+            local_pfix = Path(local_pfix_path).expanduser().resolve()
+            if local_pfix.exists():
+                click.echo(click.style("  Installing pfix from configured local path...", fg='cyan'))
+                install_cmd = [python_bin, '-m', 'pip', 'install', '-e', str(local_pfix)]
+            else:
+                click.echo(click.style(
+                    f"  ⚠ GOAL_PFIX_LOCAL_PATH does not exist: {local_pfix}. Falling back to PyPI.",
+                    fg='yellow'
+                ))
+                click.echo(click.style("  Installing pfix from PyPI...", fg='cyan'))
+                install_cmd = [python_bin, '-m', 'pip', 'install', 'pfix>=0.1.60']
+        else:
+            click.echo(click.style("  Installing pfix from PyPI...", fg='cyan'))
+            install_cmd = [python_bin, '-m', 'pip', 'install', 'pfix>=0.1.60']
+
         install_result = subprocess.run(
-            [python_bin, '-m', 'pip', 'install', '-e', PFIX_LOCAL_PATH],
+            install_cmd,
             capture_output=True, text=True, cwd=str(project_dir)
         )
         if install_result.returncode != 0:
             click.echo(click.style(f"  ⚠ Could not install pfix package", fg='yellow'))
             return False
-        click.echo(click.style("  ✓ Pfix package installed (editable)", fg='green'))
+        click.echo(click.style("  ✓ Pfix package installed", fg='green'))
     else:
         click.echo(click.style(f"  ✓ Pfix package already installed ({result.stdout.strip()})", fg='green'))
-    
+
     # Check/add pfix config to pyproject.toml
     _ensure_pfix_config(project_dir, yes=yes)
-    
+
     # Create .env template for API key if not exists
     env_ok = _ensure_pfix_env(project_dir)
-    
+
     # Validate API key is configured
     if env_ok:
         _validate_pfix_env(project_dir)
-    
+
     return True
 
 

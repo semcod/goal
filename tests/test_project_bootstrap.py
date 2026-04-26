@@ -25,6 +25,7 @@ from goal.project_bootstrap import (
     _find_git_root,
     _ensure_costs_installed,
     _ensure_python_test_dependency,
+    _ensure_pfix_installed,
     _validate_pfix_env,
     _ensure_pfix_env,
 )
@@ -365,6 +366,54 @@ class TestPythonTestDependency:
 
         assert mock_run.call_args_list[0].args[0] == ['/usr/bin/python3', '-c', 'import pytest; print(pytest.__version__)']
         assert mock_run.call_args_list[1].args[0] == ['/usr/bin/python3', '-m', 'pip', 'install', 'pytest']
+
+
+# ---------------------------------------------------------------------------
+# pfix installation source selection
+# ---------------------------------------------------------------------------
+
+class TestPfixInstallSource:
+    def test_installs_pfix_from_pypi_by_default(self, tmp_path):
+        with mock.patch.dict(os.environ, {}, clear=False), \
+             mock.patch('goal.project_bootstrap._find_python_bin', return_value='/usr/bin/python3'), \
+             mock.patch('goal.project_bootstrap._ensure_pfix_config', return_value=True), \
+             mock.patch('goal.project_bootstrap._ensure_pfix_env', return_value=True), \
+             mock.patch('goal.project_bootstrap._validate_pfix_env', return_value=True), \
+             mock.patch('subprocess.run') as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=1, stdout='', stderr='ModuleNotFoundError'),
+                mock.MagicMock(returncode=0, stdout='', stderr=''),
+            ]
+
+            assert _ensure_pfix_installed(tmp_path, yes=True) is True
+
+        assert mock_run.call_args_list[1].args[0] == ['/usr/bin/python3', '-m', 'pip', 'install', 'pfix>=0.1.60']
+
+    def test_installs_pfix_from_local_path_when_configured(self, tmp_path):
+        local_pfix = tmp_path / 'local-pfix'
+        local_pfix.mkdir()
+
+        with mock.patch.dict(os.environ, {'GOAL_PFIX_LOCAL_PATH': str(local_pfix)}, clear=False), \
+             mock.patch('goal.project_bootstrap._find_python_bin', return_value='/usr/bin/python3'), \
+             mock.patch('goal.project_bootstrap._ensure_pfix_config', return_value=True), \
+             mock.patch('goal.project_bootstrap._ensure_pfix_env', return_value=True), \
+             mock.patch('goal.project_bootstrap._validate_pfix_env', return_value=True), \
+             mock.patch('subprocess.run') as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=1, stdout='', stderr='ModuleNotFoundError'),
+                mock.MagicMock(returncode=0, stdout='', stderr=''),
+            ]
+
+            assert _ensure_pfix_installed(tmp_path, yes=True) is True
+
+        assert mock_run.call_args_list[1].args[0] == [
+            '/usr/bin/python3',
+            '-m',
+            'pip',
+            'install',
+            '-e',
+            str(local_pfix.resolve()),
+        ]
 
 
 # ---------------------------------------------------------------------------
