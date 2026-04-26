@@ -1,6 +1,8 @@
 import subprocess
+from unittest import mock
 from click.testing import CliRunner
 
+import goal.cli as goal_cli
 from goal.cli import main
 
 
@@ -62,3 +64,27 @@ def test_missing_push_command_shows_install_hint() -> None:
     assert res.exit_code == 2
     assert 'push' in res.output.lower()
     assert 'force-reinstall' in res.output
+    assert '-m pip install -U --force-reinstall goal' in res.output
+
+
+def test_goal_update_command_prefers_active_venv_python(monkeypatch) -> None:
+    monkeypatch.setenv('VIRTUAL_ENV', '/tmp/my venv')
+
+    with mock.patch('goal.cli.os.path.exists', return_value=True):
+        cmd = goal_cli._goal_update_command()
+
+    assert '/tmp/my venv/bin/python' in cmd
+    assert cmd.endswith('-m pip install -U goal')
+
+
+def test_version_banner_includes_ready_to_run_update_command(monkeypatch, capsys) -> None:
+    monkeypatch.setenv('VIRTUAL_ENV', '/tmp/venv')
+
+    with mock.patch('goal.cli.os.path.exists', return_value=True), \
+         mock.patch('goal.version_validation.get_pypi_version', return_value='9999.0.0'):
+        goal_cli._show_goal_version_banner()
+
+    out = capsys.readouterr().out
+    assert 'Update now:' in out
+    assert '/tmp/venv/bin/python' in out
+    assert '-m pip install -U goal' in out

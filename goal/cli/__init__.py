@@ -2,6 +2,7 @@
 
 import os
 import re
+import shlex
 import subprocess
 import sys
 from importlib import import_module
@@ -25,6 +26,20 @@ from goal.cli_helpers import split_paths_by_type, stage_paths, confirm, strip_an
 
 
 DOCS_URL = "https://github.com/wronai/goal#readme"
+
+
+def _goal_update_command() -> str:
+    """Build a safe update command for the current runtime environment."""
+    venv = os.environ.get("VIRTUAL_ENV")
+    if venv:
+        venv_python = os.path.join(venv, "bin", "python")
+        if os.path.exists(venv_python):
+            return f"{shlex.quote(venv_python)} -m pip install -U goal"
+
+    if sys.executable:
+        return f"{shlex.quote(sys.executable)} -m pip install -U goal"
+
+    return "pip install -U goal"
 
 
 def _warn_goal_binary_mismatch() -> None:
@@ -139,9 +154,9 @@ def _show_goal_version_banner() -> None:
 
     latest = get_pypi_version("goal")
     if latest and latest != __version__:
-        click.echo(click.style(f"Goal v{__version__} (latest: v{latest})", fg='yellow', bold=True))
-        # Auto-update disabled temporarily due to bugs
-        click.echo(click.style("  (Auto-update disabled - run: pip install -U goal)", fg='cyan'))
+        update_cmd = _goal_update_command()
+        click.echo(click.style(f"Goal v{__version__} (latest: v{latest} → {update_cmd})", fg='yellow', bold=True))
+        click.echo(click.style(f"  Update now: {update_cmd}", fg='cyan'))
     else:
         click.echo(click.style(f"Goal v{__version__} ✓", fg='cyan', bold=True))
 
@@ -170,7 +185,7 @@ class GoalGroup(click.Group):
             return rv
         if cmd_name == 'push':
             click.echo(click.style("Command 'push' is unavailable (likely incomplete/broken goal installation).", fg='red', bold=True))
-            click.echo(click.style("Try: python -m pip install -U --force-reinstall goal", fg='cyan'))
+            click.echo(click.style(f"Try: {_goal_update_command().replace(' -U goal', ' -U --force-reinstall goal')}", fg='cyan'))
             click.echo(click.style("If multiple goal binaries exist, run the one from your project venv.", fg='yellow'))
             click.echo()
         # Unknown command - show helpful message with docs URL
