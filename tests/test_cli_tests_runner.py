@@ -72,3 +72,30 @@ def test_active_venv_python_is_preferred_for_root_run(monkeypatch):
     commands = [call.args[0] for call in mock_run.call_args_list]
     assert ['/tmp/venv-active/bin/python', '-c', 'import pytest'] in commands
     assert ['/tmp/venv-active/bin/python', '-m', 'pytest'] in commands
+
+
+def test_run_tests_uses_configured_python_strategy_and_skips_subdir_scan():
+    config = MagicMock()
+    config.get_strategy.return_value = {'test': 'pytest tests/ -v --ignore=my-api --ignore=test-api-qwen'}
+
+    with patch('goal.cli.tests.run_command') as mock_run_command, \
+         patch('goal.cli.tests._run_tests_in_subdirs') as mock_run_subdirs, \
+         patch('goal.cli.tests.subprocess.run') as mock_subprocess_run:
+        mock_subprocess_run.side_effect = [
+            MagicMock(returncode=0),  # import pytest check
+            MagicMock(returncode=0),  # actual pytest run
+        ]
+
+        assert cli_tests.run_tests(['python'], config=config) is True
+
+    mock_run_command.assert_not_called()
+    mock_run_subdirs.assert_not_called()
+    commands = [call.args[0] for call in mock_subprocess_run.call_args_list]
+    assert len(commands) == 2
+
+    check_cmd, run_cmd = commands
+    assert check_cmd[1:] == ['-c', 'import pytest']
+    assert run_cmd[1:4] == ['-m', 'pytest', 'tests/']
+    assert '--ignore=my-api' in run_cmd
+    assert '--ignore=test-api-qwen' in run_cmd
+    assert check_cmd[0] == run_cmd[0]

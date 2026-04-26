@@ -46,6 +46,11 @@ def _warn_goal_binary_mismatch() -> None:
     """Warn when a global goal package is used while a virtualenv is active."""
     venv = os.environ.get("VIRTUAL_ENV")
     if not venv:
+        cwd_venv = os.path.join(os.getcwd(), ".venv")
+        cwd_venv_python = os.path.join(cwd_venv, "bin", "python")
+        if os.path.exists(cwd_venv_python):
+            venv = cwd_venv
+    if not venv:
         return
 
     try:
@@ -58,12 +63,19 @@ def _warn_goal_binary_mismatch() -> None:
         return
 
     venv_goal_bin = os.path.join(venv, "bin", "goal")
+    venv_python = os.path.join(venv, "bin", "python")
     if os.path.exists(venv_goal_bin):
         click.echo(click.style(
             f"⚠ Using global goal from {pkg_path} while VIRTUAL_ENV={venv}",
             fg="yellow",
         ))
         click.echo(click.style(f"  Prefer: {venv_goal_bin} ...", fg="cyan"))
+    elif os.path.exists(venv_python):
+        click.echo(click.style(
+            f"⚠ Using global goal from {pkg_path} while project venv exists at {venv}",
+            fg="yellow",
+        ))
+        click.echo(click.style(f"  Install goal in project venv: {venv_python} -m pip install -U goal", fg="cyan"))
 
 
 def _setup_nfo_logging(nfo_format: str = "markdown", nfo_sink: str = ""):

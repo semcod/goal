@@ -29,7 +29,7 @@ def run_test_stage(
     if not yes:
         if confirm("Run tests?"):
             click.echo(click.style("\nRunning tests...", fg='cyan'))
-            test_success = run_tests(project_types)
+            test_success = run_tests(project_types, config=ctx_obj.get('config'))
             if not test_success:
                 test_exit_code = 1
                 if not confirm("Tests failed. Continue anyway?", default=False):
@@ -55,7 +55,7 @@ def run_test_stage(
     else:
         click.echo(click.style("\n🤖 AUTO: Running tests (--all mode)", fg='cyan'))
         try:
-            test_success = run_tests(project_types)
+            test_success = run_tests(project_types, config=ctx_obj.get('config'))
             if not test_success:
                 test_exit_code = 1
                 test_result = "Tests failed"

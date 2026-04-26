@@ -1,6 +1,7 @@
 """Test running functions - extracted from cli.py."""
 
 import os
+import shlex
 import subprocess
 import shutil
 from pathlib import Path
@@ -11,6 +12,23 @@ import click
 from goal.git_ops import run_command
 from goal.cli.version import PROJECT_TYPES
 from goal.project_bootstrap import _find_python_bin
+
+
+def _get_project_strategy(config: object, project_type: str) -> dict:
+    """Get strategy config for a project type from GoalConfig/dict."""
+    if config is None:
+        return {}
+
+    if hasattr(config, 'get_strategy'):
+        try:
+            return config.get_strategy(project_type) or {}
+        except Exception:
+            return {}
+
+    if isinstance(config, dict):
+        return config.get('strategies', {}).get(project_type, {}) or {}
+
+    return {}
 
 
 def _has_usable_test_script(project_dir: Path, project_type: str) -> bool:
@@ -79,6 +97,26 @@ def _resolve_project_python(project_root: Optional[Path], fallback_python: str) 
         return str(candidate)
     except Exception:
         return fallback_python
+
+
+def _coerce_python_strategy_to_project_pytest(test_cmd_str: str, python_bin: str) -> Optional[List[str]]:
+    """Convert common pytest strategy commands to use the resolved project Python."""
+    try:
+        args = shlex.split(test_cmd_str)
+    except Exception:
+        return None
+
+    if not args:
+        return None
+
+    first = Path(args[0]).name
+    if first in {'pytest', 'py.test'}:
+        return [python_bin, '-m', 'pytest', *args[1:]]
+
+    if first in {'python', 'python3'} and len(args) >= 3 and args[1] == '-m' and args[2] == 'pytest':
+        return [python_bin, '-m', 'pytest', *args[3:]]
+
+    return None
 
 
 def _find_python_test_dirs() -> List[str]:
@@ -277,16 +315,23 @@ def _run_tests_in_subdirs(project_type: str, base_cmd: List[str]) -> bool:
     return all(_run_subdir_test(project_type, base_cmd, d) for d in test_dirs[:5])
 
 
-def run_tests(project_types: List[str]) -> bool:
+def run_tests(project_types: List[str], config: object = None) -> bool:
     """Run tests for detected project types."""
     success = True
     
     for ptype in project_types:
-        config = PROJECT_TYPES.get(ptype, {})
-        test_cmd_str = config.get('test_command', '')
+        project_config = PROJECT_TYPES.get(ptype, {})
+        strategy = _get_project_strategy(config, ptype)
+        strategy_test_cmd = strategy.get('test', '') if isinstance(strategy, dict) else ''
+        if not isinstance(strategy_test_cmd, str):
+            strategy_test_cmd = ''
+        test_cmd_str = strategy_test_cmd or project_config.get('test_command', '')
+        run_subdir_scan = not bool(strategy_test_cmd)
         
         if not test_cmd_str:
             continue
+
+        use_subprocess = False
 
         if ptype == 'python':
             active_python = _active_venv_python()
@@ -297,15 +342,32 @@ def run_tests(project_types: List[str]) -> bool:
                 if not detected_python.is_absolute():
                     detected_python = (Path.cwd() / detected_python).resolve()
                 python_bin = str(detected_python)
-            test_cmd = [python_bin, '-m', 'pytest']
 
-            if not _ensure_pytest_for_project(Path.cwd(), python_bin):
-                click.echo(click.style("\n  ❌ Root python environment is missing pytest.", fg='red'))
-                success = False
-                # Continue with subprojects to provide fuller diagnostics in monorepos.
-                if not _run_tests_in_subdirs(ptype, test_cmd):
+            if strategy_test_cmd:
+                coerced_cmd = _coerce_python_strategy_to_project_pytest(test_cmd_str, python_bin)
+                if coerced_cmd is not None:
+                    test_cmd = coerced_cmd
+                    use_subprocess = True
+                    if not _ensure_pytest_for_project(Path.cwd(), python_bin):
+                        click.echo(click.style("\n  ❌ Root python environment is missing pytest.", fg='red'))
+                        success = False
+                        # Continue with subprojects to provide fuller diagnostics in monorepos.
+                        if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
+                            success = False
+                        continue
+                else:
+                    test_cmd = test_cmd_str.split()
+            else:
+                test_cmd = [python_bin, '-m', 'pytest']
+                use_subprocess = True
+
+                if not _ensure_pytest_for_project(Path.cwd(), python_bin):
+                    click.echo(click.style("\n  ❌ Root python environment is missing pytest.", fg='red'))
                     success = False
-                continue
+                    # Continue with subprojects to provide fuller diagnostics in monorepos.
+                    if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
+                        success = False
+                    continue
         else:
             test_cmd = test_cmd_str.split()
         
@@ -315,7 +377,7 @@ def run_tests(project_types: List[str]) -> bool:
                 continue
         
         try:
-            if ptype == 'python':
+            if use_subprocess:
                 result = subprocess.run(
                     test_cmd,
                     capture_output=False,
@@ -327,7 +389,7 @@ def run_tests(project_types: List[str]) -> bool:
                 success = False
             
             # Also try running in subdirs for monorepos
-            if not _run_tests_in_subdirs(ptype, test_cmd):
+            if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
                 success = False
                 
         except Exception:

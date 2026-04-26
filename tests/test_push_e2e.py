@@ -382,6 +382,7 @@ class TestPushWorkflowE2E:
         from goal.cli.tests import run_tests
 
         with patch('goal.cli.tests._find_python_test_dirs', return_value=[]), \
+             patch('goal.cli.tests._active_venv_python', return_value=None), \
              patch('goal.cli.tests._find_python_bin', return_value='/tmp/project/.venv/bin/python') as mock_find_python_bin, \
              patch('goal.cli.tests.subprocess.run') as mock_subprocess_run:
             mock_subprocess_run.return_value = MagicMock(returncode=0)

@@ -88,3 +88,34 @@ def test_version_banner_includes_ready_to_run_update_command(monkeypatch, capsys
     assert 'Update now:' in out
     assert '/tmp/venv/bin/python' in out
     assert '-m pip install -U goal' in out
+
+
+def test_warn_goal_binary_mismatch_detects_local_venv_without_active_virtual_env(monkeypatch, tmp_path, capsys) -> None:
+    monkeypatch.delenv('VIRTUAL_ENV', raising=False)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / '.venv' / 'bin').mkdir(parents=True)
+    (tmp_path / '.venv' / 'bin' / 'python').write_text('')
+
+    monkeypatch.setattr(goal_cli.goal, '__file__', '/home/tom/.local/lib/python3.13/site-packages/goal/__init__.py')
+
+    goal_cli._warn_goal_binary_mismatch()
+
+    out = capsys.readouterr().out
+    assert 'project venv exists at' in out
+    assert '.venv/bin/python -m pip install -U goal' in out
+
+
+def test_warn_goal_binary_mismatch_prefers_local_goal_binary_hint(monkeypatch, tmp_path, capsys) -> None:
+    monkeypatch.delenv('VIRTUAL_ENV', raising=False)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / '.venv' / 'bin').mkdir(parents=True)
+    (tmp_path / '.venv' / 'bin' / 'python').write_text('')
+    (tmp_path / '.venv' / 'bin' / 'goal').write_text('')
+
+    monkeypatch.setattr(goal_cli.goal, '__file__', '/home/tom/.local/lib/python3.13/site-packages/goal/__init__.py')
+
+    goal_cli._warn_goal_binary_mismatch()
+
+    out = capsys.readouterr().out
+    assert 'Prefer:' in out
+    assert '.venv/bin/goal' in out
