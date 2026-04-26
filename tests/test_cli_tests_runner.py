@@ -55,3 +55,20 @@ def test_ensure_pytest_for_project_tries_multiple_install_strategies():
     assert calls[1] == ['/usr/bin/python3', '-m', 'pip', 'install', '-e', '.[dev]']
     assert calls[2] == ['/usr/bin/python3', '-m', 'pip', 'install', '-e', '.']
     assert calls[3] == ['/usr/bin/python3', '-c', 'import pytest']
+
+
+def test_active_venv_python_is_preferred_for_root_run(monkeypatch):
+    monkeypatch.setenv('VIRTUAL_ENV', '/tmp/venv-active')
+
+    with patch('goal.cli.tests.Path.exists', return_value=True), \
+         patch('goal.cli.tests._find_python_bin', return_value='/tmp/other/.venv/bin/python') as mock_find_python_bin, \
+         patch('goal.cli.tests._find_python_test_dirs', return_value=[]), \
+         patch('goal.cli.tests.subprocess.run') as mock_run:
+        mock_run.return_value = MagicMock(returncode=0)
+
+        assert cli_tests.run_tests(['python']) is True
+
+    mock_find_python_bin.assert_not_called()
+    commands = [call.args[0] for call in mock_run.call_args_list]
+    assert ['/tmp/venv-active/bin/python', '-c', 'import pytest'] in commands
+    assert ['/tmp/venv-active/bin/python', '-m', 'pytest'] in commands

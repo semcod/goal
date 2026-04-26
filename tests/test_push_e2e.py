@@ -392,6 +392,7 @@ class TestPushWorkflowE2E:
         assert mock_subprocess_run.call_count == 2
         mock_subprocess_run.assert_any_call(
             ['/tmp/project/.venv/bin/python', '-c', 'import pytest'],
+            cwd=Path.cwd(),
             capture_output=True,
             text=True,
         )

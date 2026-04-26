@@ -1,5 +1,6 @@
 """Test running functions - extracted from cli.py."""
 
+import os
 import subprocess
 import shutil
 from pathlib import Path
@@ -54,6 +55,17 @@ def _find_project_root(path: Path, project_type: str) -> Optional[Path]:
 
 
 _SKIP_DIRS = {'venv', '.venv', 'build', 'dist', '__pycache__', 'node_modules'}
+
+
+def _active_venv_python() -> Optional[str]:
+    """Return active virtualenv Python path when VIRTUAL_ENV is set."""
+    venv = os.environ.get('VIRTUAL_ENV')
+    if not venv:
+        return None
+    candidate = Path(venv) / 'bin' / 'python'
+    if candidate.exists():
+        return str(candidate)
+    return None
 
 
 def _resolve_project_python(project_root: Optional[Path], fallback_python: str) -> str:
@@ -277,17 +289,23 @@ def run_tests(project_types: List[str]) -> bool:
             continue
 
         if ptype == 'python':
-            python_bin = _find_python_bin(Path.cwd())
-            check = subprocess.run([python_bin, '-c', 'import pytest'], capture_output=True, text=True)
-            if check.returncode != 0:
-                pytest_path = shutil.which('pytest')
-                if pytest_path:
-                    test_cmd = [pytest_path]
-                else:
-                    import sys
-                    test_cmd = [sys.executable, '-m', 'pytest']
+            active_python = _active_venv_python()
+            if active_python:
+                python_bin = active_python
             else:
-                test_cmd = [python_bin, '-m', 'pytest']
+                detected_python = Path(_find_python_bin(Path.cwd()))
+                if not detected_python.is_absolute():
+                    detected_python = (Path.cwd() / detected_python).resolve()
+                python_bin = str(detected_python)
+            test_cmd = [python_bin, '-m', 'pytest']
+
+            if not _ensure_pytest_for_project(Path.cwd(), python_bin):
+                click.echo(click.style("\n  ❌ Root python environment is missing pytest.", fg='red'))
+                success = False
+                # Continue with subprojects to provide fuller diagnostics in monorepos.
+                if not _run_tests_in_subdirs(ptype, test_cmd):
+                    success = False
+                continue
         else:
             test_cmd = test_cmd_str.split()
         
