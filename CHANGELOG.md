@@ -31,6 +31,18 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.205] - 2026-04-26
+
+### Docs
+- Update README.md
+- Update project/context.md
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/map.toon.yaml
+- Update project/mermaid.export
+
 ## [2.1.204] - 2026-04-26
 
 ### Docs

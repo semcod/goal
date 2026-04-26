@@ -1,9 +1,9 @@
-# code2llm/evolution | 20122 func | 100f | 2026-04-26
+# code2llm/evolution | 20145 func | 104f | 2026-04-26
 
-NEXT[3] (ranked by impact):
+NEXT[6] (ranked by impact):
   [1] !! SPLIT           goal/project_bootstrap.py
-      WHY: 1288L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 18032
+      WHY: 1313L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 18382
 
   [2] !! SPLIT           goal/doctor/python.py
       WHY: 625L, 1 classes, max CC=10
@@ -13,17 +13,29 @@ NEXT[3] (ranked by impact):
       WHY: 616L, 1 classes, max CC=5
       EFFORT: ~4h  IMPACT: 3080
 
+  [4] !  SPLIT-FUNC      _run_subdir_test  CC=22  fan=12
+      WHY: CC=22 exceeds 15
+      EFFORT: ~1h  IMPACT: 264
+
+  [5] !  SPLIT-FUNC      _ensure_generic_env  CC=19  fan=12
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 228
+
+  [6] !  SPLIT-FUNC      _update_pyproject_metadata  CC=17  fan=11
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 187
+
 
 RISKS[3]:
-  ⚠ Splitting goal/project_bootstrap.py may break 40 import paths
+  ⚠ Splitting goal/project_bootstrap.py may break 41 import paths
   ⚠ Splitting goal/doctor/python.py may break 31 import paths
   ⚠ Splitting goal/package_managers.py may break 16 import paths
 
 METRICS-TARGET:
   CC̄:          0.2 → ≤0.1
-  max-CC:      14 → ≤7
+  max-CC:      22 → ≤11
   god-modules: 8 → 0
-  high-CC(≥15): 0 → ≤0
+  high-CC(≥15): 3 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -51,4 +63,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=2.7 → now CC̄=0.2
+  prev CC̄=0.2 → now CC̄=0.2

@@ -4,21 +4,21 @@
 
 - **Project**: /home/tom/github/semcod/goal
 - **Primary Language**: python
-- **Languages**: python: 134, yaml: 20, json: 8, shell: 5, toml: 4
+- **Languages**: python: 140, yaml: 20, json: 8, shell: 5, toml: 4
 - **Analysis Mode**: static
-- **Total Functions**: 20179
-- **Total Classes**: 74
-- **Modules**: 183
-- **Entry Points**: 19878
+- **Total Functions**: 20202
+- **Total Classes**: 75
+- **Modules**: 189
+- **Entry Points**: 19889
 
 ## Architecture by Module
 
 ### project.map.toon
-- **Functions**: 21767
+- **Functions**: 21768
 - **File**: `map.toon.yaml`
 
 ### goal.project_bootstrap
-- **Functions**: 40
+- **Functions**: 41
 - **File**: `project_bootstrap.py`
 
 ### goal.doctor.python
@@ -116,6 +116,10 @@ Main execution flows into the system:
 > Validate commit summary against quality gates.
 - **Calls**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats, ctx.obj.get, CommitMessageGenerator, generator.generate_detailed_message
 
+### goal.cli.doctor_cmd.doctor
+> Diagnose and auto-fix common project configuration issues.
+- **Calls**: main.command, click.option, click.option, click.option, click.option, None.resolve, PackageManagerBroker, broker.show_available
+
 ### examples.api-usage.02_git_operations.main
 > Demonstrate git operations.
 - **Calls**: Taskfile.print, Taskfile.print, Taskfile.print, Taskfile.print, Taskfile.print, Taskfile.print, goal.git_ops.get_staged_files, Taskfile.print
@@ -127,10 +131,6 @@ Main execution flows into the system:
 ### goal.cli.commit_cmd.fix_summary
 > Auto-fix commit summary quality issues.
 - **Calls**: main.command, click.option, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats, ctx.obj.get, CommitMessageGenerator
-
-### goal.cli.doctor_cmd.doctor
-> Diagnose and auto-fix common project configuration issues.
-- **Calls**: main.command, click.option, click.option, click.option, None.resolve, goal.project_bootstrap.detect_project_types_deep, todo_file.exists, None.format
 
 ### goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary
 > Generate complete enhanced summary with business value focus.
@@ -257,29 +257,29 @@ validate [goal.cli.commit_cmd]
       └─> run_git
 ```
 
-### Flow 2: main
+### Flow 2: doctor
+```
+doctor [goal.cli.doctor_cmd]
+```
+
+### Flow 3: main
 ```
 main [examples.api-usage.02_git_operations]
   └─ →> print
   └─ →> print
 ```
 
-### Flow 3: recover
+### Flow 4: recover
 ```
 recover [goal.recovery.large_file.LargeFileStrategy]
 ```
 
-### Flow 4: fix_summary
+### Flow 5: fix_summary
 ```
 fix_summary [goal.cli.commit_cmd]
   └─ →> get_staged_files
       └─> run_git
           └─ →> list
-```
-
-### Flow 5: doctor
-```
-doctor [goal.cli.doctor_cmd]
 ```
 
 ### Flow 6: generate_enhanced_summary
@@ -546,10 +546,10 @@ Functions exposed as public API (no underscore prefix):
 
 - `goal.user_config.initialize_user_config` - 52 calls
 - `goal.cli.commit_cmd.validate` - 45 calls
+- `goal.cli.doctor_cmd.doctor` - 40 calls
 - `examples.api-usage.02_git_operations.main` - 38 calls
 - `goal.recovery.large_file.LargeFileStrategy.recover` - 38 calls
 - `goal.cli.commit_cmd.fix_summary` - 38 calls
-- `goal.cli.doctor_cmd.doctor` - 36 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary` - 36 calls
 - `examples.api-usage.01_basic_api.main` - 34 calls
 - `goal.cli.wizard_cmd.wizard` - 34 calls
@@ -572,18 +572,18 @@ Functions exposed as public API (no underscore prefix):
 - `goal.git_ops.ensure_remote` - 23 calls
 - `goal.recovery.manager.RecoveryManager.recover_from_push_failure` - 23 calls
 - `goal.cli.recover_cmd.recover` - 23 calls
-- `goal.cli.version_utils.update_readme_metadata` - 23 calls
 - `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
+- `goal.cli.version_utils.update_readme_metadata` - 23 calls
 - `examples.testing.04_debugging_diagnostics.create_debug_report` - 22 calls
 - `goal.recovery.auth.AuthErrorStrategy.recover` - 22 calls
 - `goal.push.core.show_workflow_preview` - 22 calls
-- `goal.push.stages.commit.handle_split_commits` - 22 calls
 - `goal.push.stages.todo.handle_todo_stage` - 22 calls
 - `goal.config.validation.validate_config_interactive` - 22 calls
+- `goal.push.stages.commit.handle_split_commits` - 22 calls
 - `examples.testing.04_debugging_diagnostics.test_debug_output_capture` - 21 calls
 - `goal.formatter.format_push_result` - 21 calls
-- `goal.push.stages.commit.get_commit_message` - 21 calls
 - `goal.cli.license_cmd.license_create` - 21 calls
+- `goal.cli.utils_cmd.status` - 21 calls
 
 ## System Interactions
 
@@ -595,15 +595,14 @@ graph TD
     validate --> option
     validate --> get_staged_files
     validate --> get_diff_stats
+    doctor --> command
+    doctor --> option
     main --> print
     recover --> echo
     recover --> _extract_file_paths
     fix_summary --> command
     fix_summary --> option
     fix_summary --> get_staged_files
-    doctor --> command
-    doctor --> option
-    doctor --> resolve
     generate_enhanced_su --> dedupe_files
     generate_enhanced_su --> generate_functional_
     generate_enhanced_su --> detect_capabilities
@@ -621,6 +620,7 @@ graph TD
     _analyze_python_diff --> set
     _analyze_python_diff --> sum
     commit --> command
+    commit --> option
 ```
 
 ## Reverse Engineering Guidelines

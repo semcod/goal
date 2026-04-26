@@ -146,6 +146,12 @@ class GoalGroup(click.Group):
             return rv
         # Unknown command - show helpful message with docs URL
         click.echo(click.style(f"The requested command {cmd_name} does not exist.\n", fg='red', bold=True))
+        
+        # Special hint for push command (indicates old version)
+        if cmd_name == 'push':
+            click.echo(click.style("💡 This command was added in recent versions. Update goal:\n", fg='cyan'))
+            click.echo(click.style("   pip install -U goal\n", fg='yellow'))
+        
         click.echo(click.style(f"Documentation: {DOCS_URL}", fg='cyan'))
         click.echo()
         click.echo(click.style("Available commands:", fg='cyan', bold=True))
