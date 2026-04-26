@@ -76,13 +76,16 @@ class PackageManagerBroker:
         if not manager:
             raise RuntimeError("No package manager available!")
         
-        # Check for lockfile-based install
+        # Check for lockfile-based install first (fastest if it works)
         if use_lockfile:
             lockfile_result = manager.install_from_lockfile()
             if lockfile_result:
                 click.echo(f"📦 Installing via {manager.name} (lockfile)...")
                 self._report(lockfile_result, available)
-                return lockfile_result
+                if lockfile_result.success:
+                    return lockfile_result
+                # Lockfile install failed, fall through to editable install
+                click.echo(f"⚠️  Lockfile install failed, trying editable install...")
         
         click.echo(f"📦 Installing via {manager.name} (priority={manager.priority})...")
         result = manager.install_editable(extras or [])

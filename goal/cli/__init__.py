@@ -263,7 +263,9 @@ class GoalGroup(click.Group):
 @click.pass_context
 def main(ctx, bump, target_version, yes, all_flags, no_publish, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink) -> None:
     """Goal - Automated git push with smart commit messages."""
-    _show_goal_version_banner()
+    # Skip version banner for help requests to avoid blocking help output
+    if '--help' not in sys.argv and '-h' not in sys.argv:
+        _show_goal_version_banner()
     _setup_nfo_logging(nfo_format, nfo_sink)
 
     _configure_main_context(ctx, bump, target_version, yes, all_flags, no_publish, todo,
