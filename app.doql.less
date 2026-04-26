@@ -2,11 +2,11 @@
 
 app {
   name: goal;
-  version: 2.1.197;
+  version: 2.1.206;
 }
 
 dependencies {
-  runtime: "click>=8.0.0, PyYAML>=6.0, clickmd>=0.1.0, costs>=0.1.21";
+  runtime: "click>=8.0.0, PyYAML>=6.0, clickmd>=0.1.0, costs>=0.1.21, tomlkit>=0.12.0";
   dev: "pytest>=7.0.0, build, twine, pfix>=0.1.60, tox>=4.0.0";
 }
 
@@ -239,5 +239,5 @@ deploy {
 environment[name="local"] {
   runtime: docker-compose;
   env_file: .env;
-  python_version: >=3.8;
+  python_version: >=3.10;
 }

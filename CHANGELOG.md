@@ -31,6 +31,19 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.207] - 2026-04-26
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+
+### Other
+- Update app.doql.less
+- Update project/map.toon.yaml
+- Update uv.lock
+
 ## [2.1.206] - 2026-04-26
 
 ### Docs
