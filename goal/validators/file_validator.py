@@ -170,6 +170,21 @@ def handle_large_files(large_files: List[str]) -> None:
             click.echo(click.style(f"  → Unstaged: {file_path} ({size_mb:.1f}MB)", fg='yellow'))
 
 
+def _get_deleted_staged_files() -> set:
+    """Return the set of file paths staged for deletion."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ['git', 'diff', '--cached', '--name-only', '--diff-filter=D'],
+            capture_output=True, text=True, check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return set(result.stdout.strip().split('\n'))
+    except Exception:
+        pass
+    return set()
+
+
 def validate_staged_files(config) -> None:
     """Validate staged files using configuration.
 
@@ -186,6 +201,13 @@ def validate_staged_files(config) -> None:
 
     files = get_staged_files()
     if not files or files == ['']:
+        return
+
+    # Exclude files staged for deletion — they are being removed, not added.
+    deleted = _get_deleted_staged_files()
+    if deleted:
+        files = [f for f in files if f not in deleted]
+    if not files:
         return
 
     # First, manage dot folders

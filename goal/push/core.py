@@ -226,7 +226,10 @@ def execute_push_workflow(
     
     # Handle TODO update via prefact
     ctx_obj['todo'] = todo
-    handle_todo_stage(ctx_obj, yes, dry_run)
+    todo_stage_ok = handle_todo_stage(ctx_obj, yes, dry_run)
+    if not todo_stage_ok:
+        click.echo(click.style("Aborting workflow because TODO stage failed.", fg='red', bold=True))
+        sys.exit(2)
     
     if not dry_run:
         run_git('add', '-A')
@@ -273,12 +276,6 @@ def execute_push_workflow(
                          files, ticket, new_version, current_version, no_version_sync,
                          no_changelog)
     
-    tag_name = create_tag(new_version, no_tag)
-    
-    from goal.git_ops import get_remote_branch
-    branch = get_remote_branch()
-    push_to_remote(branch, tag_name, no_tag, ctx_obj['yes'])
-    
     publish_success = handle_publish(
         project_types,
         new_version,
@@ -286,6 +283,12 @@ def execute_push_workflow(
         no_publish=no_publish,
         config=ctx_obj.get('config'),
     )
+    
+    tag_name = create_tag(new_version, no_tag)
+    
+    from goal.git_ops import get_remote_branch
+    branch = get_remote_branch()
+    push_to_remote(branch, tag_name, no_tag, ctx_obj['yes'])
     
     elapsed = time.time() - start_time
     ctx_obj['_elapsed_time'] = elapsed

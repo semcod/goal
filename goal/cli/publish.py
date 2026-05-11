@@ -1,6 +1,7 @@
 """Publishing functions - extracted from cli.py."""
 
 import subprocess
+import time
 from pathlib import Path
 from typing import Any, List
 
@@ -152,27 +153,56 @@ def _prepare_python_publish(strategy: dict) -> tuple:
     return python_bin, True
 
 
+_RETRY_DELAYS = [60, 120, 300]
+
+
+def _is_rate_limited(result) -> bool:
+    """Check if a publish result indicates PyPI rate limiting (HTTP 429)."""
+    combined = f"{result.stdout or ''}\n{result.stderr or ''}"
+    return "429" in combined and "Too Many Requests" in combined
+
+
 def _run_publish_command(ptype: str, publish_cmd: str) -> bool:
-    """Execute the publish command and handle output. Returns True on success."""
+    """Execute the publish command and handle output. Returns True on success.
+
+    Retries automatically when PyPI returns HTTP 429 (Too Many Requests),
+    waiting between attempts with increasing backoff.
+    """
     click.echo(f"  Publishing {ptype}: {publish_cmd}")
-    try:
-        result = run_command_tee(publish_cmd)
-        if result.returncode == 0:
-            click.echo(click.style(f"  ✓ Published {ptype} successfully", fg='green'))
-            return True
-        combined_output = f"{result.stdout or ''}\n{result.stderr or ''}"
-        if "File already exists" in combined_output:
-            click.echo(click.style("  ⚠  Artifact already exists on registry; skipping upload.", fg='yellow'))
-            return True  # Not a failure
-        click.echo(click.style(f"  Publish failed with exit code {result.returncode}", fg='red'), err=True)
-        if result.stderr:
-            click.echo(click.style(f"  stderr: {result.stderr}", fg='red'), err=True)
-        if result.stdout:
-            click.echo(click.style(f"  stdout: {result.stdout}", fg='yellow'), err=True)
-        return False
-    except Exception as e:
-        click.echo(click.style(f"  Publish exception: {e}", fg='red'), err=True)
-        return False
+    attempts = 1 + len(_RETRY_DELAYS)  # first try + retries
+    for attempt in range(attempts):
+        try:
+            result = run_command_tee(publish_cmd)
+            if result.returncode == 0:
+                click.echo(click.style(f"  ✓ Published {ptype} successfully", fg='green'))
+                return True
+            combined_output = f"{result.stdout or ''}\n{result.stderr or ''}"
+            if "File already exists" in combined_output:
+                click.echo(click.style("  ⚠  Artifact already exists on registry; skipping upload.", fg='yellow'))
+                return True  # Not a failure
+            if _is_rate_limited(result) and attempt < len(_RETRY_DELAYS):
+                delay = _RETRY_DELAYS[attempt]
+                click.echo(click.style(
+                    f"  ⏳ PyPI rate limit (429). Retrying in {delay}s "
+                    f"(attempt {attempt + 2}/{attempts})...",
+                    fg='yellow',
+                ))
+                time.sleep(delay)
+                continue
+            click.echo(click.style(f"  Publish failed with exit code {result.returncode}", fg='red'), err=True)
+            if result.stderr:
+                click.echo(click.style(f"  stderr: {result.stderr}", fg='red'), err=True)
+            if result.stdout:
+                click.echo(click.style(f"  stdout: {result.stdout}", fg='yellow'), err=True)
+            return False
+        except Exception as e:
+            click.echo(click.style(f"  Publish exception: {e}", fg='red'), err=True)
+            return False
+    click.echo(click.style(
+        f"  ✗ Publish failed after {attempts} attempts due to PyPI rate limiting.",
+        fg='red',
+    ), err=True)
+    return False
 
 
 def publish_project(

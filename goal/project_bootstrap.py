@@ -8,6 +8,7 @@ import os
 import subprocess
 import shutil
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -21,6 +22,14 @@ from goal.bootstrap.detector import detect_project_types_deep, guess_package_nam
 from goal.bootstrap.templates import PROJECT_BOOTSTRAP, PROJECT_TEMPLATES
 from goal.bootstrap.installer import ensure_project_environment, _install_python_deps_broker
 from goal.bootstrap.configurator import scaffold_test_file as _scaffold_test_file_impl
+
+logger = logging.getLogger(__name__)
+
+try:
+    from git.exc import InvalidGitRepositoryError
+except ImportError:  # pragma: no cover - gitpython is optional in some environments
+    class InvalidGitRepositoryError(Exception):
+        """Fallback exception when gitpython is unavailable."""
 
 
 # =============================================================================
@@ -271,8 +280,8 @@ def _guess_python_name(project_dir: Path) -> Optional[str]:
             m = _re.search(pattern, path.read_text(errors='ignore'), flags)
             if m:
                 return m.group(1).replace('-', '_')
-        except Exception:
-            pass
+        except (OSError, UnicodeDecodeError, ValueError, TypeError) as exc:
+            logger.debug("Failed to parse %s for python package name: %s", path, exc)
     return None
 
 
@@ -285,7 +294,8 @@ def _guess_nodejs_name(project_dir: Path) -> Optional[str]:
         data = json.loads(pkg.read_text(errors='ignore'))
         name = data.get('name', '')
         return name.split('/')[-1] if '/' in name else name
-    except Exception:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        logger.debug("Failed to parse package.json in %s: %s", project_dir, exc)
         return None
 
 
@@ -298,7 +308,8 @@ def _guess_rust_name(project_dir: Path) -> Optional[str]:
     try:
         m = _re.search(r'^name\s*=\s*"([^"]+)"', cargo.read_text(errors='ignore'), _re.MULTILINE)
         return m.group(1) if m else None
-    except Exception:
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        logger.debug("Failed to parse Cargo.toml in %s: %s", project_dir, exc)
         return None
 
 
@@ -312,8 +323,8 @@ def _guess_go_name(project_dir: Path) -> Optional[str]:
         parts = first_line.strip().split()
         if len(parts) >= 2:
             return parts[1].rsplit('/', 1)[-1]
-    except Exception:
-        pass
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        logger.debug("Failed to parse go.mod in %s: %s", project_dir, exc)
     return None
 
 
@@ -363,7 +374,8 @@ def _read_openrouter_api_key(env_file: Path) -> str:
     """Extract OPENROUTER_API_KEY from a .env file."""
     try:
         content = env_file.read_text(encoding='utf-8')
-    except Exception:
+    except OSError as exc:
+        logger.debug("Failed to read %s: %s", env_file, exc)
         return ''
 
     for line in content.splitlines():
@@ -876,7 +888,8 @@ def _calculate_ai_costs(repo_root: Path):
             diff = get_commit_diff(str(repo_root), commit_obj.hexsha)
             if diff:
                 total_cost += ai_cost(diff, model='openrouter/qwen/qwen3-coder-next').get('cost', 0.0)
-        except Exception:
+        except (OSError, ValueError, TypeError) as exc:
+            logger.debug("Unable to evaluate AI cost for commit %s: %s", commit_obj.hexsha, exc)
             total_cost += 0.15
 
     if total_cost == 0 and all_commits_data:
@@ -937,7 +950,8 @@ def _generate_costs_badge(project_dir: Path) -> None:
                 click.echo(click.style("  ⚠ Failed to update README badge", fg='yellow'))
         else:
             click.echo(click.style("  ⚠ README.md not found", fg='yellow'))
-    except Exception as e:
+    except (OSError, ValueError, TypeError, ImportError, InvalidGitRepositoryError) as e:
+        logger.warning("AI badge generation failed in %s: %s", project_dir, e)
         click.echo(click.style(f"  ⚠ Badge generation failed: {str(e)[:100]}", fg='yellow'))
 
 
@@ -1124,7 +1138,8 @@ def _ensure_costs_config(project_dir: Path) -> bool:
             f.write(_COSTS_CONFIG_TEMPLATE)
         click.echo(click.style("  ✓ Added [tool.costs] to pyproject.toml", fg='green'))
         return True
-    except Exception as e:
+    except OSError as e:
+        logger.warning("Failed to append [tool.costs] config to %s: %s", pyproject, e)
         click.echo(click.style(f"  ⚠ Could not add costs config: {e}", fg='yellow'))
         return False
 
@@ -1175,7 +1190,8 @@ LLM_MODEL=openrouter/qwen/qwen3-coder-next
         
         click.echo(click.style("  ✓ Created .env template (add your OPENROUTER_API_KEY)", fg='green'))
         return True
-    except Exception as e:
+    except OSError as e:
+        logger.warning("Failed to create .env template in %s: %s", project_dir, e)
         click.echo(click.style(f"  ⚠ Could not create .env: {e}", fg='yellow'))
         return False
 
@@ -1242,7 +1258,8 @@ PFIX_CREATE_BACKUPS=false     # false = disable .pfix_backups/ directory
             gitignore.write_text('.env\n.env.local\n', encoding='utf-8')
         
         return True
-    except Exception as e:
+    except OSError as e:
+        logger.warning("Failed to create pfix env template in %s: %s", project_dir, e)
         click.echo(click.style(f"  ⚠ Could not create pfix .env: {e}", fg='yellow'))
         return False
 
@@ -1373,7 +1390,8 @@ deduplicate = true
             f.write(pfix_config)
         click.echo(click.style("  ✓ Added [tool.pfix] to pyproject.toml", fg='green'))
         return True
-    except Exception as e:
+    except OSError as e:
+        logger.warning("Failed to append [tool.pfix] config to %s: %s", pyproject, e)
         click.echo(click.style(f"  ⚠ Could not add pfix config: {e}", fg='yellow'))
         return False
 

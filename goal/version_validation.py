@@ -3,10 +3,13 @@
 
 import re
 import json
+import logging
 import urllib.request
 import urllib.error
 from typing import Dict, List, Optional, Tuple
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def get_pypi_version(package_name: str) -> Optional[str]:
@@ -147,8 +150,8 @@ def _detect_python_package() -> Optional[str]:
                 (data.get("project") or {}).get("name")
                 or ((data.get("tool") or {}).get("poetry") or {}).get("name")
             )
-    except Exception:
-        pass
+    except (OSError, UnicodeDecodeError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        logger.debug("Unable to detect python package name from pyproject.toml: %s", exc)
     return None
 
 
@@ -160,7 +163,8 @@ def _detect_nodejs_package() -> Optional[str]:
     try:
         data = json.loads(package_json_path.read_text())
         return data.get("name")
-    except Exception:
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        logger.debug("Unable to detect node package name from package.json: %s", exc)
         return None
 
 
@@ -173,7 +177,8 @@ def _detect_rust_package() -> Optional[str]:
         content = cargo_path.read_text()
         match = re.search(r'^name\s*=\s*"([^"]+)"', content, re.MULTILINE)
         return match.group(1) if match else None
-    except Exception:
+    except (OSError, UnicodeDecodeError, re.error) as exc:
+        logger.debug("Unable to detect rust package name from Cargo.toml: %s", exc)
         return None
 
 
@@ -185,8 +190,8 @@ def _detect_ruby_package() -> Optional[str]:
             match = re.search(r'\.name\s*=\s*["\']([^"\']+)["\']', content)
             if match:
                 return match.group(1)
-        except Exception:
-            pass
+        except (OSError, UnicodeDecodeError, re.error) as exc:
+            logger.debug("Unable to detect ruby package name from %s: %s", gemspec_path, exc)
     return None
 
 

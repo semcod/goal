@@ -1,4 +1,4 @@
-version: '1'
+version: '3'
 name: goal
 description: Minimal Taskfile
 variables:
@@ -34,6 +34,10 @@ tasks:
     desc: Run pytest suite
     cmds:
     - pytest -q
+  koru-gate:
+    desc: Run strict Koru quality gates (fails on regix hard violations)
+    cmds:
+    - ./scripts/koru_verify_ci.sh
   build:
     desc: Build wheel + sdist
     cmds:

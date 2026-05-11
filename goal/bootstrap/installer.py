@@ -195,7 +195,17 @@ def _ensure_python_env(project_dir: Path, cfg: ProjectTemplate, yes: bool) -> bo
         _install_python_deps_legacy(project_dir, cfg, python_bin)
 
     test_dep = cfg.test_dep if isinstance(cfg, ProjectTemplate) else cfg.get('test_dep')
-    return _ensure_python_test_dependency(project_dir, python_bin, test_dep)
+    test_dep_ok = _ensure_python_test_dependency(project_dir, python_bin, test_dep)
+    if test_dep_ok:
+        return True
+
+    # In non-interactive/automation mode, keep bootstrap successful even if
+    # registry/network access prevents installing optional test tooling.
+    if yes:
+        click.echo(click.style("  ⚠ Continuing bootstrap without test dependency (non-interactive mode).", fg='yellow'))
+        return True
+
+    return False
 
 
 def _needs_install(project_dir: Path, cfg: ProjectTemplate) -> bool:

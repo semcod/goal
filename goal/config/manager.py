@@ -1,13 +1,17 @@
 """Goal configuration manager - GoalConfig class and related functions."""
 
 import re
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from datetime import datetime
+import json
 
 import yaml
 
 from goal.config.constants import DEFAULT_CONFIG
+
+logger = logging.getLogger(__name__)
 
 
 class GoalConfig:
@@ -73,7 +77,8 @@ class GoalConfig:
                     loaded = yaml.safe_load(f) or {}
                 # Merge with defaults to ensure all keys exist
                 self._config = self._merge_configs(self._get_default_config(), loaded)
-            except Exception:
+            except (OSError, yaml.YAMLError, TypeError, ValueError) as exc:
+                logger.warning("Failed to load config from %s: %s", self.config_path, exc)
                 self._config = self._get_default_config()
         
         self._loaded = True
@@ -136,8 +141,8 @@ class GoalConfig:
                 match = re.search(r'^name\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
                 if match:
                     return match.group(1)
-            except Exception:
-                pass
+            except (OSError, UnicodeDecodeError, re.error) as exc:
+                logger.debug("Unable to parse project name from pyproject.toml: %s", exc)
         
         # Try package.json
         if Path('package.json').exists():
@@ -146,8 +151,8 @@ class GoalConfig:
                 data = json.loads(Path('package.json').read_text())
                 if 'name' in data:
                     return data['name']
-            except Exception:
-                pass
+            except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                logger.debug("Unable to parse project name from package.json: %s", exc)
         
         # Try Cargo.toml
         if Path('Cargo.toml').exists():
@@ -156,8 +161,8 @@ class GoalConfig:
                 match = re.search(r'^name\s*=\s*"([^"]+)"', content, re.MULTILINE)
                 if match:
                     return match.group(1)
-            except Exception:
-                pass
+            except (OSError, UnicodeDecodeError, re.error) as exc:
+                logger.debug("Unable to parse project name from Cargo.toml: %s", exc)
         
         # Fallback to directory name
         return Path.cwd().name
@@ -198,8 +203,8 @@ class GoalConfig:
                 match = re.search(r'^description\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
                 if match:
                     return match.group(1)
-            except Exception:
-                pass
+            except (OSError, UnicodeDecodeError, re.error) as exc:
+                logger.debug("Unable to parse project description from pyproject.toml: %s", exc)
         
         # Try package.json
         if Path('package.json').exists():
@@ -208,8 +213,8 @@ class GoalConfig:
                 data = json.loads(Path('package.json').read_text())
                 if 'description' in data:
                     return data['description']
-            except Exception:
-                pass
+            except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                logger.debug("Unable to parse project description from package.json: %s", exc)
         
         return ''
     
@@ -239,8 +244,8 @@ class GoalConfig:
                 if '__version__' in content:
                     version_files.append(f'{init_file}:__version__')
                     break
-            except Exception:
-                pass
+            except OSError as exc:
+                logger.debug("Unable to scan %s for __version__: %s", init_file, exc)
         
         if not version_files:
             version_files.append('VERSION')

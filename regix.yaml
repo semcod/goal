@@ -1,0 +1,51 @@
+regix:
+  workdir: .
+
+  # ── Quality gates ──────────────────────────────────────────
+  gates:
+    # Hard — violations block the pipeline (exit code 1)
+    hard:
+      cc: 15
+      mi: 20
+      coverage: 70
+      length: 100
+      docstring: 60
+      quality: 0.85
+
+    # Target — aspirational goals, reported as warnings
+    target:
+      cc: 10
+      mi: 30
+      coverage: 85
+      length: 50
+      docstring: 80
+      quality: 0.95
+
+    on_regression: warn
+    fail_exit_code: 1
+
+  # ── Delta thresholds (relative change between commits) ─────
+  deltas:
+    warn: 2
+    error: 5
+
+  # ── Backends ───────────────────────────────────────────────
+  backends:
+    cc: lizard
+    mi: radon
+    coverage: pytest-cov
+    quality: none
+    docstring: builtin
+
+  # ── File filtering ─────────────────────────────────────────
+  exclude:
+    - "tests/**"
+    - "docs/**"
+    - "examples/**"
+    - ".venv/**"
+
+  # ── Output ─────────────────────────────────────────────────
+  output:
+    format: rich
+    dir: .regix/
+    show_improvements: true

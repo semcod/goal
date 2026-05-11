@@ -209,12 +209,30 @@ class GoalGroup(click.Group):
         ctx.exit(2)
     
     def parse_args(self, ctx, args) -> Any:
-        # Check if -a or --all is in args without any command
+        # Check if -a or --all is in args without any command.
+        # We must skip option *values* (e.g. 'major' in '--bump major') so
+        # they are not mistaken for subcommand names.
         has_all_flag = '-a' in args or '--all' in args
-        has_subcommand = any(
-            not a.startswith('-') and a not in ('--help', '-h')
-            for a in args
-        )
+        known_cmds = set(self.list_commands(ctx) or [])
+        # Options whose next token is a value (not a flag).
+        _VALUE_OPTIONS = {
+            '--bump', '--target-version', '--config', '--abstraction',
+            '--nfo-format', '--nfo-sink',
+        }
+        has_subcommand = False
+        skip_next = False
+        for a in args:
+            if skip_next:
+                skip_next = False
+                continue
+            if a in _VALUE_OPTIONS:
+                skip_next = True
+                continue
+            if a.startswith('-'):
+                continue
+            if a in known_cmds:
+                has_subcommand = True
+                break
         
         if has_all_flag and not has_subcommand:
             push_cmd = click.Group.get_command(self, ctx, 'push')

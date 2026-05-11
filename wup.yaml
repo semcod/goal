@@ -1,0 +1,90 @@
+# WUP (What's Up) Configuration
+# Version: 0.2.21
+# Generated: 2026-05-11T11:45:57.358121
+#
+# Documentation:
+#   PyPI: https://pypi.org/project/wup/
+#   GitHub: https://github.com/semcod/wup
+#   Docs: https://github.com/semcod/wup/blob/main/README.md
+#
+# Dependencies:
+#   wup==0.2.21
+#   wupbro (optional dashboard): pip install wupbro
+#
+# Quick Start:
+#   1. wup watch .                    # Start watching
+#   2. wup watch . --dashboard        # With live dashboard
+#   3. wup map-deps .                 # Build dependency map
+#
+project:
+  name: goal
+  description: Auto-generated config for goal
+watch:
+  paths:
+  - goal/**
+  - tests/**
+  - pyproject.toml
+  - Taskfile.yml
+  - regix.yaml
+  exclude_patterns:
+  - '*.md'
+  - '*.txt'
+  - '.git/**'
+  - '.venv/**'
+  - 'venv/**'
+  - '.planfile/**'
+  - 'dist/**'
+  - 'build/**'
+  - node_modules/**
+services: []
+test_strategy:
+  quick:
+    debounce_s: 2
+    max_queue: 5
+    timeout_s: 10
+  detail:
+    debounce_s: 10
+    max_queue: 1
+    timeout_s: 30
+testql:
+  scenario_dir: testql-scenarios
+  smoke_scenario: health-check.testql.toon.yaml
+  output_format: json
+  extra_args:
+  - --timeout 10s
+  endpoint_discovery: true
+  base_url: ''
+  base_url_env: WUP_BASE_URL
+  explicit_endpoints: []
+  endpoints_by_service: {}
+visual_diff:
+  enabled: false
+  base_url: ''
+  base_url_env: WUP_BASE_URL
+  delay_seconds: 5.0
+  max_depth: 10
+  snapshot_dir: .wup/visual-snapshots
+  diff_dir: .wup/visual-diffs
+  pages: []
+  pages_from_endpoints: true
+  threshold_added: 3
+  threshold_removed: 3
+  threshold_changed: 5
+  min_text_length: 200
+  min_dom_nodes: 20
+  error_selectors:
+  - '#error-container'
+  - .error-container
+  - '[data-testid=''error-container'']'
+  - '[class*=''error''][class*=''container'']'
+  headless: true
+# wupbro dashboard integration - optional web UI for viewing events
+# Install: pip install wupbro
+# Run: wupbro --reload --port 8000
+# Docs: https://github.com/semcod/wup/tree/main/wupbro
+web:
+  enabled: false
+  endpoint: ''
+  endpoint_env: WUPBRO_ENDPOINT
+  timeout_s: 2.0
+  api_key: ''

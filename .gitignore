@@ -244,3 +244,6 @@ marimo/_lsp/
 __marimo__/
 .redsl/
 *.bak
+
+# koru runtime artefacts (generated)
+.planfile/.koru/

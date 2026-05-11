@@ -13,6 +13,149 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
+class TestPublishRetry:
+    """Tests for 429 rate-limit retry logic in _run_publish_command."""
+
+    def test_retries_on_429_then_succeeds(self):
+        """Test that publish retries on 429 and eventually succeeds."""
+        from goal.cli.publish import _run_publish_command
+
+        call_count = 0
+
+        def fake_run(cmd):
+            nonlocal call_count
+            call_count += 1
+            m = MagicMock()
+            if call_count < 3:
+                m.returncode = 1
+                m.stdout = "Uploading koru-0.1.7-py3-none-any.whl"
+                m.stderr = "ERROR    HTTPError: 429 Too Many Requests\n         Too Many Requests"
+            else:
+                m.returncode = 0
+                m.stdout = "OK"
+                m.stderr = ""
+            return m
+
+        with patch('goal.cli.publish.run_command_tee', side_effect=fake_run), \
+             patch('goal.cli.publish.time.sleep') as mock_sleep:
+            result = _run_publish_command('python', 'twine upload dist/*')
+
+        assert result is True
+        assert call_count == 3
+        assert mock_sleep.call_count == 2
+
+    def test_gives_up_after_max_retries_on_429(self):
+        """Test that publish stops retrying after exhausting backoff delays."""
+        from goal.cli.publish import _run_publish_command, _RETRY_DELAYS
+
+        def fake_run(cmd):
+            m = MagicMock()
+            m.returncode = 1
+            m.stdout = ""
+            m.stderr = "HTTPError: 429 Too Many Requests\nToo Many Requests"
+            return m
+
+        with patch('goal.cli.publish.run_command_tee', side_effect=fake_run), \
+             patch('goal.cli.publish.time.sleep') as mock_sleep:
+            result = _run_publish_command('python', 'twine upload dist/*')
+
+        assert result is False
+        assert mock_sleep.call_count == len(_RETRY_DELAYS)
+
+    def test_no_retry_on_non_429_failure(self):
+        """Test that non-429 failures are not retried."""
+        from goal.cli.publish import _run_publish_command
+
+        def fake_run(cmd):
+            m = MagicMock()
+            m.returncode = 1
+            m.stdout = ""
+            m.stderr = "ERROR: Invalid credentials"
+            return m
+
+        with patch('goal.cli.publish.run_command_tee', side_effect=fake_run), \
+             patch('goal.cli.publish.time.sleep') as mock_sleep:
+            result = _run_publish_command('python', 'twine upload dist/*')
+
+        assert result is False
+        mock_sleep.assert_not_called()
+
+    def test_is_rate_limited_detection(self):
+        """Test that _is_rate_limited correctly identifies 429 responses."""
+        from goal.cli.publish import _is_rate_limited
+
+        rate_limited = MagicMock()
+        rate_limited.stdout = ""
+        rate_limited.stderr = "HTTPError: 429 Too Many Requests\nToo Many Requests"
+        assert _is_rate_limited(rate_limited) is True
+
+        not_limited = MagicMock()
+        not_limited.stdout = ""
+        not_limited.stderr = "HTTPError: 403 Forbidden"
+        assert _is_rate_limited(not_limited) is False
+
+
+class TestWorkflowOrder:
+    """Tests that publish happens before tag+push in the workflow."""
+
+    def test_publish_runs_before_tag_and_push(self):
+        """Verify publish is called before create_tag and push_to_remote."""
+        from goal.push.core import execute_push_workflow
+
+        call_order = []
+
+        ctx_obj = {
+            'yes': True,
+            'markdown': False,
+            'config': {},
+            'user_config': {},
+        }
+
+        def track(name, retval=None):
+            def side_effect(*args, **kwargs):
+                call_order.append(name)
+                return retval
+            return side_effect
+
+        with patch('goal.push.core.check_pyproject_toml', return_value=None), \
+             patch('goal.push.core._initialize_context'), \
+             patch('goal.push.core._detect_and_bootstrap_projects', return_value=['python']), \
+             patch('goal.push.core.run_git'), \
+             patch('goal.push.core.get_staged_files', return_value=['test.txt']), \
+             patch('goal.push.core._validate_staged_files'), \
+             patch('goal.push.core.get_diff_content', return_value='diff'), \
+             patch('goal.push.core.get_diff_stats', return_value={'test.txt': (1, 0)}), \
+             patch('goal.push.core.get_commit_message', return_value=('feat: test', None, {})), \
+             patch('goal.push.core.get_version_info', return_value=('0.1.0', '0.1.1')), \
+             patch('goal.push.core.run_test_stage', return_value=('Tests passed', 0)), \
+             patch('goal.push.core._handle_commit_phase', side_effect=track('commit')), \
+             patch('goal.push.core.handle_publish', side_effect=track('publish', True)), \
+             patch('goal.push.core.create_tag', side_effect=track('tag', 'v0.1.1')), \
+             patch('goal.git_ops.get_remote_branch', return_value='main'), \
+             patch('goal.push.core.push_to_remote', side_effect=track('push')), \
+             patch('goal.push.core.handle_todo_stage'), \
+             patch('goal.push.core.output_final_summary'):
+            execute_push_workflow(
+                ctx_obj=ctx_obj,
+                bump='patch',
+                no_tag=False,
+                no_changelog=False,
+                no_version_sync=False,
+                no_publish=False,
+                message=None,
+                dry_run=False,
+                yes=True,
+                markdown=False,
+                split=False,
+                ticket=None,
+                abstraction=None,
+                todo=False,
+            )
+
+        assert call_order == ['commit', 'publish', 'tag', 'push'], \
+            f"Expected [commit, publish, tag, push] but got {call_order}"
+
+
 class TestPushWorkflowImports:
     """Test that all push workflow imports work correctly."""
     

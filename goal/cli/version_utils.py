@@ -1,14 +1,21 @@
 """Version management - detection and update utilities."""
 
+from __future__ import annotations
+
 import re
 import json
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 
 try:
     import tomlkit
 except ImportError:
     tomlkit = None
+
+if TYPE_CHECKING:
+    from tomlkit import TOMLDocument
+else:
+    TOMLDocument = Any
 
 from .version_types import PROJECT_TYPES
 
@@ -155,13 +162,13 @@ def _build_author_block(existing_authors: str, author_name: str, author_email: s
     return authors_block
 
 
-def _update_tomlkit_license(doc: tomlkit.TOMLDocument, license_id: str) -> None:
+def _update_tomlkit_license(doc: TOMLDocument, license_id: str) -> None:
     """Update license in tomlkit document."""
     if 'project' in doc:
         doc['project']['license'] = {'text': license_id}
 
 
-def _update_tomlkit_authors(doc: tomlkit.TOMLDocument, author_name: str, author_email: str) -> None:
+def _update_tomlkit_authors(doc: TOMLDocument, author_name: str, author_email: str) -> None:
     """Update authors in tomlkit document."""
     if 'project' in doc and 'authors' in doc['project']:
         authors = doc['project']['authors']
@@ -173,7 +180,7 @@ def _update_tomlkit_authors(doc: tomlkit.TOMLDocument, author_name: str, author_
             authors.append({'name': author_name, 'email': author_email})
 
 
-def _update_tomlkit_classifier(doc: tomlkit.TOMLDocument, license_classifier: str) -> None:
+def _update_tomlkit_classifier(doc: TOMLDocument, license_classifier: str) -> None:
     """Update license classifier in tomlkit document."""
     if 'project' in doc and 'classifiers' in doc['project']:
         classifiers = doc['project']['classifiers']
