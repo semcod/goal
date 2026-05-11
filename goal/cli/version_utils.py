@@ -163,9 +163,13 @@ def _build_author_block(existing_authors: str, author_name: str, author_email: s
 
 
 def _update_tomlkit_license(doc: TOMLDocument, license_id: str) -> None:
-    """Update license in tomlkit document."""
+    """Update license in tomlkit document.
+
+    PEP 639 / setuptools>=77 requires ``license`` to be a plain SPDX
+    identifier string, **not** a table like ``{text = "..."}``.
+    """
     if 'project' in doc:
-        doc['project']['license'] = {'text': license_id}
+        doc['project']['license'] = license_id
 
 
 def _update_tomlkit_authors(doc: TOMLDocument, author_name: str, author_email: str) -> None:
@@ -210,7 +214,7 @@ def _update_regex_license(content: str, license_id: str) -> str:
     """Update license field using regex."""
     content = re.sub(
         r'^license\s*=\s*[{{\[].*?[}}\]]',
-        f'license = {{text = "{license_id}"}}',
+        f'license = "{license_id}"',
         content,
         flags=re.MULTILINE
     )
