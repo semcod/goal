@@ -9,8 +9,8 @@ def test_calculate_ai_costs_uses_commit_diff_tuple_and_message_filter() -> None:
     ai_commit = SimpleNamespace(message="AI: improve bootstrap", hexsha="abc123")
     normal_commit = SimpleNamespace(message="docs: readme", hexsha="def456")
     commits = [
-        (ai_commit, "+++ code changes"),
-        (normal_commit, "+++ docs changes"),
+        (ai_commit, "diff --git a/goal.py b/goal.py\n@@ -1 +1 @@\n-print('a')\n+print('b')"),
+        (normal_commit, "diff --git a/README.md b/README.md"),
     ]
 
     with patch("costs.git_parser.parse_commits", return_value=commits), patch(

@@ -867,7 +867,7 @@ def _load_costs_api():
 
 def _calculate_ai_costs(repo_root: Path):
     """Parse commits and calculate AI-related costs. Returns (total_cost, total_commits, all_commits_data)."""
-    from costs.git_parser import parse_commits
+    from costs.git_parser import parse_commits, get_commit_diff
     from costs.calculator import ai_cost
 
     all_commits_data = parse_commits(
@@ -877,17 +877,32 @@ def _calculate_ai_costs(repo_root: Path):
     ai_indicators = ['🤖', 'ai:', '[ai]', '(ai)', 'automat', 'cascade', 'claude', 'gpt', 'llm']
     ai_commits = [
         c for c in all_commits_data
-        if any(ind in (c[0].message or "").lower() for ind in ai_indicators)
+        if any(
+            ind in (
+                f"{getattr(c[0], 'message', '')} {c[1] if isinstance(c[1], str) else ''}"
+            ).lower()
+            for ind in ai_indicators
+        )
     ]
 
     total_cost = 0.0
     total_commits = len(ai_commits)
 
-    for commit_obj, diff in ai_commits[:50]:
+    for commit_obj, parsed_diff in ai_commits[:50]:
         try:
+            diff = parsed_diff if isinstance(parsed_diff, str) and (
+                "diff --git" in parsed_diff or "\n@@ " in parsed_diff or parsed_diff.startswith("@@")
+            ) else ""
+            if not diff:
+                # costs.git_parser signatures differ across versions; try both.
+                try:
+                    diff = get_commit_diff(str(repo_root), getattr(commit_obj, "hexsha", commit_obj))
+                except (OSError, ValueError, TypeError, AttributeError):
+                    from git import Repo as _GitRepo
+                    diff = get_commit_diff(_GitRepo(str(repo_root)), commit_obj)
             if diff:
                 total_cost += ai_cost(diff, model='openrouter/qwen/qwen3-coder-next').get('cost', 0.0)
-        except (OSError, ValueError, TypeError) as exc:
+        except (OSError, ValueError, TypeError, AttributeError, ImportError, InvalidGitRepositoryError) as exc:
             commit_hash = getattr(commit_obj, "hexsha", "unknown")
             logger.debug("Unable to evaluate AI cost for commit %s: %s", commit_hash, exc)
             total_cost += 0.15
