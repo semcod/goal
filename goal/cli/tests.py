@@ -3,7 +3,6 @@
 import os
 import shlex
 import subprocess
-import shutil
 from pathlib import Path
 from typing import List, Optional
 
@@ -12,6 +11,16 @@ import click
 from goal.git_ops import run_command
 from goal.cli.version import PROJECT_TYPES
 from goal.project_bootstrap import _find_python_bin
+from goal.cli.tests_discovery import (
+    _find_project_root,
+    _has_usable_test_script,
+    find_nodejs_test_dirs as _find_nodejs_test_dirs,
+    find_python_test_dirs as _find_python_test_dirs,
+)
+from goal.cli.tests_pytest_setup import (
+    check_python_venv as _check_python_venv,
+    ensure_pytest_for_project as _ensure_pytest_for_project,
+)
 
 
 def _get_project_strategy(config: object, project_type: str) -> dict:
@@ -29,50 +38,6 @@ def _get_project_strategy(config: object, project_type: str) -> dict:
         return config.get('strategies', {}).get(project_type, {}) or {}
 
     return {}
-
-
-def _has_usable_test_script(project_dir: Path, project_type: str) -> bool:
-    """Check if project has a usable test script defined."""
-    if project_type == 'nodejs':
-        package_json = project_dir / 'package.json'
-        if package_json.exists():
-            import json
-            try:
-                data = json.loads(package_json.read_text())
-                scripts = data.get('scripts', {})
-                if 'test' in scripts:
-                    test_cmd = scripts['test']
-                    # Check if it's not the default placeholder
-                    if test_cmd and test_cmd not in ['echo "Error: no test specified"', 'echo "Error: no test specified" && exit 1']:
-                        return True
-            except Exception:
-                pass
-    return False
-
-
-def _has_project_marker(project_dir: Path, marker: str) -> bool:
-    """Check whether a marker file or glob exists in a directory."""
-    if '*' in marker:
-        return any(project_dir.glob(marker))
-    return (project_dir / marker).exists()
-
-
-def _find_project_root(path: Path, project_type: str) -> Optional[Path]:
-    """Find the nearest ancestor that looks like a project root."""
-    markers = PROJECT_TYPES.get(project_type, {}).get('files', [])
-    current = path
-
-    while True:
-        if any(_has_project_marker(current, marker) for marker in markers):
-            return current
-
-        if current.parent == current:
-            return None
-
-        current = current.parent
-
-
-_SKIP_DIRS = {'venv', '.venv', 'build', 'dist', '__pycache__', 'node_modules'}
 
 
 def _active_venv_python() -> Optional[str]:
@@ -117,115 +82,6 @@ def _coerce_python_strategy_to_project_pytest(test_cmd_str: str, python_bin: str
         return [python_bin, '-m', 'pytest', *args[3:]]
 
     return None
-
-
-def _find_python_test_dirs() -> List[str]:
-    """Find Python subproject test targets (tests/ dir preferred, otherwise project root)."""
-    cwd = Path('.').resolve()
-    seen_roots: set[str] = set()
-    project_roots: List[Path] = []
-
-    for test_file in Path('.').rglob('test_*.py'):
-        if set(test_file.parts) & _SKIP_DIRS:
-            continue
-
-        project_root = _find_project_root(test_file.parent, 'python')
-        if project_root is None:
-            continue
-
-        try:
-            resolved_root = project_root.resolve()
-        except Exception:
-            resolved_root = project_root
-
-        if resolved_root == cwd:
-            continue
-
-        root_key = str(resolved_root)
-        if root_key in seen_roots:
-            continue
-        seen_roots.add(root_key)
-        project_roots.append(project_root)
-
-    dirs: List[str] = []
-    for root in project_roots:
-        tests_dir = root / 'tests'
-        if tests_dir.is_dir():
-            dirs.append(str(tests_dir))
-        else:
-            dirs.append(str(root))
-
-    return dirs
-
-
-def _find_nodejs_test_dirs() -> List[str]:
-    """Find subdirectories with a usable Node.js test script."""
-    if shutil.which('npm') is None:
-        return []
-    dirs: List[str] = []
-    for package_json in Path('.').rglob('package.json'):
-        if set(package_json.parts) & _SKIP_DIRS:
-            continue
-        if str(package_json.parent) != '.' and _has_usable_test_script(package_json.parent, 'nodejs'):
-            dirs.append(str(package_json.parent))
-    return dirs
-
-
-def _check_python_venv(project_root: Optional[Path]) -> tuple[bool, Optional[Path]]:
-    """Check if Python project has a virtual environment. Returns (has_venv, project_root)."""
-    if not project_root:
-        return False, None
-    venv_paths = [
-        project_root / '.venv',
-        project_root / 'venv',
-        project_root / 'env',
-    ]
-    has_venv = any(v.exists() for v in venv_paths)
-    return has_venv, project_root
-
-
-def _ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
-    """Ensure pytest is available in the subproject environment."""
-    check_result = subprocess.run(
-        [python_bin, '-c', 'import pytest'],
-        cwd=project_root,
-        capture_output=True,
-        text=True,
-    )
-    if check_result.returncode == 0:
-        return True
-
-    click.echo(click.style(f"\n  📦 Installing test dependencies in {project_root}/", fg='cyan'))
-
-    install_attempts = [
-        [python_bin, '-m', 'pip', 'install', '-e', '.[dev]'],
-        [python_bin, '-m', 'pip', 'install', '-e', '.'],
-        [python_bin, '-m', 'pip', 'install', 'pytest', 'pytest-cov'],
-    ]
-
-    for cmd in install_attempts:
-        install_result = subprocess.run(
-            cmd,
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if install_result.returncode != 0:
-            continue
-
-        verify = subprocess.run(
-            [python_bin, '-c', 'import pytest'],
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-        )
-        if verify.returncode == 0:
-            return True
-
-    click.echo(click.style(f"\n  ❌ Failed to install test dependencies in {project_root}/", fg='red'))
-    click.echo(click.style(f"  💡 Fix: cd {project_root} && {python_bin} -m pip install -e .[dev]", fg='cyan'))
-    return False
 
 
 def _display_test_error(result: subprocess.CompletedProcess, test_dir: str, project_type: str) -> None:

@@ -565,10 +565,18 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-11T11:13:15.664823+00:00'
-      description: 'BLOCKED: Blocked: regix hard violations persist (6) and require
-        broader cross-module refactors across project_bootstrap/doctor/python/deep_analyzer/smart_commit
-        and CC hotspot in cli/tests. Current no-commit policy prevents iterative metric
-        convergence workflow.'
+      description: 'BLOCKED: Working-tree refactor is complete and verified: regix
+        compare HEAD --local reports ''0 errors, 0 warnings, 96 improvements; Gates:
+        PASS''. radon MI >= 20 and lizard CC < 16 for every module/function in goal/.
+        task test: 302 passed, 2 skipped. New modules: goal/bootstrap/costs_badge.py,
+        goal/bootstrap/pyproject_costs_setup.py, goal/deep_analyzer_patterns.py, goal/deep_analyzer_aggregate.py,
+        goal/doctor/python_diag_core.py, goal/doctor/python_diag_extended.py, goal/smart_commit/generator_core.py,
+        goal/smart_commit/generator_generate.py, goal/cli/tests_discovery.py, goal/cli/tests_pytest_setup.py.
+        Cannot mark done: regix gates reads git HEAD and the changes are uncommitted;
+        koru policy allow_commit=False forbids me from committing. Needs human/CI
+        to: 1) git commit -a, 2) bash scripts/koru_verify_ci.sh (will be exit 0),
+        3) planfile ticket done STARTER-012, 4) planfile ticket update STARTER-011
+        --status open && planfile ticket done STARTER-011.'
       execution:
         attempt: 0
         max_attempts: 1
@@ -614,4 +622,4 @@ sprint:
       sprint: current
       status: blocked
       sync: {}
-      updated_at: '2026-05-11T11:15:06.946500'
+      updated_at: '2026-05-11T12:27:23.505992'

@@ -31,6 +31,17 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.224] - 2026-05-11
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_project_bootstrap_costs.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+
 ## [2.1.222] - 2026-05-11
 
 ### Docs

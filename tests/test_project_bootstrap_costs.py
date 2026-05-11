@@ -2,7 +2,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from goal.project_bootstrap import _calculate_ai_costs
+from goal.bootstrap.costs_badge import _calculate_ai_costs
 
 
 def test_calculate_ai_costs_uses_commit_diff_tuple_and_message_filter() -> None:
