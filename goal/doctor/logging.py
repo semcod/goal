@@ -12,6 +12,7 @@ _SEVERITY_STYLE = {
 
 
 def _log_issue(issue: Issue):
+    """Render a single diagnostic ``Issue`` to the console with severity styling."""
     icon, color = _SEVERITY_STYLE.get(issue.severity, ('•', 'white'))
     tag = click.style(f"[{issue.code}]", fg='bright_black')
     msg = click.style(f"{icon} {issue.title}", fg=color, bold=issue.severity == 'error')
@@ -22,4 +23,5 @@ def _log_issue(issue: Issue):
 
 
 def _log_fix(issue: Issue):
+    """Render a one-line confirmation that ``issue`` was auto-fixed."""
     click.echo(click.style(f"  ✓ FIXED [{issue.code}]: {issue.fix_description}", fg='green'))

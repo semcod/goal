@@ -9,7 +9,7 @@ CONFIG[2]{key, value}:
 # Test 1: CLI help command
 SHELL "python -m goal --help" 5000
 ASSERT_EXIT_CODE 0
-ASSERT_STDOUT_CONTAINS "usage"
+ASSERT_STDOUT_CONTAINS "Usage:"
 
 # Test 2: CLI version command
 SHELL "python -m goal --version" 5000

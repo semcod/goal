@@ -9,6 +9,9 @@ from goal.doctor.python_diag_core import PythonDiagnosticsCore
 
 
 class PythonDiagnostics(PythonDiagnosticsCore):
+    """Python project diagnostics — extended PY010–PY014 checks layered on
+    top of :class:`PythonDiagnosticsCore`.
+    """
     CHECK_METHODS = [
         'check_py002_build_system',
         'check_py003_license_classifiers',
@@ -26,6 +29,7 @@ class PythonDiagnostics(PythonDiagnosticsCore):
     ]
 
     def _collect_py010_inconsistencies(self, pyproject_name: str, setup_py: Path, goal_yaml: Path) -> List[str]:
+        """Collect human-readable mismatches between ``pyproject_name`` and other config files."""
         inconsistencies: List[str] = []
 
         if setup_py.exists():
@@ -43,6 +47,7 @@ class PythonDiagnostics(PythonDiagnosticsCore):
         return inconsistencies
 
     def _sync_py010_files(self, pyproject_name: str, setup_py: Path, goal_yaml: Path) -> List[str]:
+        """Rewrite ``setup.py`` / ``goal.yaml`` to use ``pyproject_name`` and return touched filenames."""
         fixed_files: List[str] = []
 
         if setup_py.exists():
@@ -87,6 +92,7 @@ class PythonDiagnostics(PythonDiagnosticsCore):
 
     def _collect_py011_inconsistencies(self, pyproject_version: str, setup_py: Path,
                                        init_py: Optional[Path], version_file: Path) -> List[str]:
+        """Collect human-readable mismatches between ``pyproject_version`` and other version sources."""
         inconsistencies: List[str] = []
 
         if setup_py.exists():

@@ -31,6 +31,14 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.226] - 2026-05-11
+
+### Docs
+- Update README.md
+
+### Test
+- Update testql-scenarios/generated-cli-tests.testql.toon.yaml
+
 ## [2.1.225] - 2026-05-11
 
 ### Docs

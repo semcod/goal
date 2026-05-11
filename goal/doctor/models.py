@@ -26,16 +26,20 @@ class DoctorReport:
 
     @property
     def errors(self) -> List[Issue]:
+        """Return issues whose severity is ``'error'``."""
         return [i for i in self.issues if i.severity == 'error']
 
     @property
     def warnings(self) -> List[Issue]:
+        """Return issues whose severity is ``'warning'``."""
         return [i for i in self.issues if i.severity == 'warning']
 
     @property
     def fixed(self) -> List[Issue]:
+        """Return issues that were auto-fixed by the doctor run."""
         return [i for i in self.issues if i.fixed]
 
     @property
     def has_problems(self) -> bool:
+        """True when at least one error or warning was collected."""
         return any(i.severity in ('error', 'warning') for i in self.issues)

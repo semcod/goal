@@ -41,12 +41,15 @@ class NotificationAction(PostCommitAction):
     """Send desktop notification after commit."""
     
     def get_name(self) -> str:
+        """Return the registry name ``"notification"``."""
         return "notification"
     
     def validate_config(self) -> bool:
+        """Notifications have no required config — always valid."""
         return True
     
     def execute(self, commit_info: Dict[str, str]) -> bool:
+        """Send a desktop notification (or fallback to stdout) for ``commit_info``."""
         title = self.config.get('title', 'Goal Commit')
         message = self.config.get('message', f"Committed: {commit_info.get('message', '')[:50]}...")
         
@@ -83,9 +86,11 @@ class WebhookAction(PostCommitAction):
     """Send webhook POST request after commit."""
     
     def get_name(self) -> str:
+        """Return the registry name ``"webhook"``."""
         return "webhook"
     
     def validate_config(self) -> bool:
+        """Require a ``url`` key in the action config."""
         return 'url' in self.config
     
     def execute(self, commit_info: Dict[str, str]) -> bool:
@@ -123,9 +128,11 @@ class ScriptAction(PostCommitAction):
     """Run custom script after commit."""
     
     def get_name(self) -> str:
+        """Return the registry name ``"script"``."""
         return "script"
     
     def validate_config(self) -> bool:
+        """Require a ``command`` key in the action config."""
         return 'command' in self.config
     
     def execute(self, commit_info: Dict[str, str]) -> bool:

@@ -112,6 +112,7 @@ class PushContext:
 
 
 def _validate_toml_or_exit(dry_run: bool) -> None:
+    """Abort the workflow when ``pyproject.toml`` has a syntax error (skipped on dry-run)."""
     if dry_run:
         return
     toml_error = check_pyproject_toml()

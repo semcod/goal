@@ -40,9 +40,11 @@ class MessagePatternRule(ValidationRule):
     """Validate commit message against pattern."""
     
     def get_name(self) -> str:
+        """Return the registry name ``"message_pattern"``."""
         return "message_pattern"
     
     def validate_config(self) -> bool:
+        """Require a ``pattern`` key in the rule config."""
         return 'pattern' in self.config
     
     def validate(self, context: Dict[str, Any]) -> tuple[bool, Optional[str]]:
@@ -67,9 +69,11 @@ class FilePatternRule(ValidationRule):
     """Validate files against pattern rules."""
     
     def get_name(self) -> str:
+        """Return the registry name ``"file_pattern"``."""
         return "file_pattern"
     
     def validate_config(self) -> bool:
+        """Require a ``pattern`` key in the rule config."""
         return 'pattern' in self.config
     
     def validate(self, context: Dict[str, Any]) -> tuple[bool, Optional[str]]:
@@ -106,9 +110,11 @@ class ScriptRule(ValidationRule):
     """Run custom validation script."""
     
     def get_name(self) -> str:
+        """Return the registry name ``"script"``."""
         return "script"
     
     def validate_config(self) -> bool:
+        """Require a ``command`` key in the rule config."""
         return 'command' in self.config
     
     def validate(self, context: Dict[str, Any]) -> tuple[bool, Optional[str]]:
