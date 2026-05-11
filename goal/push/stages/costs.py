@@ -66,6 +66,7 @@ def update_cost_badges(
             from collections import defaultdict
 
             def calculate_human_time(commits):
+                """Fallback estimator: assume each commit takes ~30 minutes, capped at 8h/author/day."""
                 if not commits:
                     return 0.0
                 daily = defaultdict(lambda: defaultdict(list))
