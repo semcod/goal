@@ -561,3 +561,57 @@ sprint:
       status: blocked
       sync: {}
       updated_at: '2026-05-11T11:06:01.604564'
+    STARTER-012:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-11T11:13:15.664823+00:00'
+      description: 'BLOCKED: Blocked: regix hard violations persist (6) and require
+        broader cross-module refactors across project_bootstrap/doctor/python/deep_analyzer/smart_commit
+        and CC hotspot in cli/tests. Current no-commit policy prevents iterative metric
+        convergence workflow.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: Reduce regix hard violations by refactoring highest-complexity hotspots
+          in core modules (lower CC, improve maintainability index) without loosening
+          thresholds.
+        source: koru task
+        timestamp: '2026-05-11T11:13:15.664823+00:00'
+      id: STARTER-012
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: Reduce regix hard violations by refactoring highest-complexity hotspots
+          in core modules (lower CC, improve maintainability index) without loosening
+          thresholds.
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: Reduce regix hard violations by refactoring highest-complexity hotspots
+        in core modules (lower CC, improve maintainab...
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: Reduce regix hard violations by refactoring highest-complexity hotspots
+            in core modules (lower CC, improve maintainability index) without loosening
+            thresholds.
+        timestamp: '2026-05-11T11:13:15.664823+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: blocked
+      sync: {}
+      updated_at: '2026-05-11T11:15:06.946500'

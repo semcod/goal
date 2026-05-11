@@ -867,29 +867,29 @@ def _load_costs_api():
 
 def _calculate_ai_costs(repo_root: Path):
     """Parse commits and calculate AI-related costs. Returns (total_cost, total_commits, all_commits_data)."""
-    from costs.git_parser import parse_commits, get_commit_diff
+    from costs.git_parser import parse_commits
     from costs.calculator import ai_cost
 
     all_commits_data = parse_commits(
         str(repo_root), max_count=500, ai_only=False, full_history=True
     )
 
-    ai_indicators = ['🤖', 'AI:', '[AI]', '(AI)', 'automat', 'cascade', 'claude', 'gpt', 'llm']
+    ai_indicators = ['🤖', 'ai:', '[ai]', '(ai)', 'automat', 'cascade', 'claude', 'gpt', 'llm']
     ai_commits = [
         c for c in all_commits_data
-        if any(ind in c[1].lower() for ind in ai_indicators)
+        if any(ind in (c[0].message or "").lower() for ind in ai_indicators)
     ]
 
     total_cost = 0.0
     total_commits = len(ai_commits)
 
-    for commit_obj, _msg in ai_commits[:50]:
+    for commit_obj, diff in ai_commits[:50]:
         try:
-            diff = get_commit_diff(str(repo_root), commit_obj.hexsha)
             if diff:
                 total_cost += ai_cost(diff, model='openrouter/qwen/qwen3-coder-next').get('cost', 0.0)
         except (OSError, ValueError, TypeError) as exc:
-            logger.debug("Unable to evaluate AI cost for commit %s: %s", commit_obj.hexsha, exc)
+            commit_hash = getattr(commit_obj, "hexsha", "unknown")
+            logger.debug("Unable to evaluate AI cost for commit %s: %s", commit_hash, exc)
             total_cost += 0.15
 
     if total_cost == 0 and all_commits_data:

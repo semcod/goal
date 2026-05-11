@@ -315,83 +315,94 @@ def _run_tests_in_subdirs(project_type: str, base_cmd: List[str]) -> bool:
     return all(_run_subdir_test(project_type, base_cmd, d) for d in test_dirs[:5])
 
 
+def _resolve_root_python() -> str:
+    """Resolve python executable for root test run."""
+    active_python = _active_venv_python()
+    if active_python:
+        return active_python
+    detected_python = Path(_find_python_bin(Path.cwd()))
+    if not detected_python.is_absolute():
+        detected_python = (Path.cwd() / detected_python).resolve()
+    return str(detected_python)
+
+
+def _build_python_test_command(test_cmd_str: str, strategy_test_cmd: str) -> tuple[List[str], bool, str]:
+    """Build python test command and execution mode."""
+    python_bin = _resolve_root_python()
+    use_subprocess = True
+    if strategy_test_cmd:
+        coerced_cmd = _coerce_python_strategy_to_project_pytest(test_cmd_str, python_bin)
+        if coerced_cmd is not None:
+            return coerced_cmd, use_subprocess, python_bin
+        return test_cmd_str.split(), False, python_bin
+    return [python_bin, '-m', 'pytest'], use_subprocess, python_bin
+
+
+def _ensure_root_pytest_or_mark_failed(
+    python_bin: str,
+    run_subdir_scan: bool,
+    ptype: str,
+    test_cmd: List[str],
+) -> bool:
+    """Ensure root pytest is available; optionally continue with subdir diagnostics."""
+    if _ensure_pytest_for_project(Path.cwd(), python_bin):
+        return True
+    click.echo(click.style("\n  ❌ Root python environment is missing pytest.", fg='red'))
+    if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
+        return False
+    return False
+
+
+def _run_root_test(test_cmd: List[str], test_cmd_str: str, use_subprocess: bool) -> bool:
+    """Run root project tests."""
+    if use_subprocess:
+        result = subprocess.run(
+            test_cmd,
+            capture_output=False,
+            text=True,
+        )
+    else:
+        result = run_command(test_cmd_str, capture=False)
+    return result.returncode == 0
+
+
+def _run_project_type_tests(ptype: str, config: object) -> bool:
+    """Run tests for a single detected project type."""
+    project_config = PROJECT_TYPES.get(ptype, {})
+    strategy = _get_project_strategy(config, ptype)
+    strategy_test_cmd = strategy.get('test', '') if isinstance(strategy, dict) else ''
+    if not isinstance(strategy_test_cmd, str):
+        strategy_test_cmd = ''
+    test_cmd_str = strategy_test_cmd or project_config.get('test_command', '')
+    run_subdir_scan = not bool(strategy_test_cmd)
+    if not test_cmd_str:
+        return True
+
+    if ptype == 'nodejs' and not _has_usable_test_script(Path('.'), 'nodejs'):
+        return True
+
+    if ptype == 'python':
+        test_cmd, use_subprocess, python_bin = _build_python_test_command(test_cmd_str, strategy_test_cmd)
+        if not _ensure_root_pytest_or_mark_failed(python_bin, run_subdir_scan, ptype, test_cmd):
+            return False
+    else:
+        test_cmd = test_cmd_str.split()
+        use_subprocess = False
+
+    ok = _run_root_test(test_cmd, test_cmd_str, use_subprocess)
+    if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
+        ok = False
+    return ok
+
+
 def run_tests(project_types: List[str], config: object = None) -> bool:
     """Run tests for detected project types."""
     success = True
     
     for ptype in project_types:
-        project_config = PROJECT_TYPES.get(ptype, {})
-        strategy = _get_project_strategy(config, ptype)
-        strategy_test_cmd = strategy.get('test', '') if isinstance(strategy, dict) else ''
-        if not isinstance(strategy_test_cmd, str):
-            strategy_test_cmd = ''
-        test_cmd_str = strategy_test_cmd or project_config.get('test_command', '')
-        run_subdir_scan = not bool(strategy_test_cmd)
-        
-        if not test_cmd_str:
-            continue
-
-        use_subprocess = False
-
-        if ptype == 'python':
-            active_python = _active_venv_python()
-            if active_python:
-                python_bin = active_python
-            else:
-                detected_python = Path(_find_python_bin(Path.cwd()))
-                if not detected_python.is_absolute():
-                    detected_python = (Path.cwd() / detected_python).resolve()
-                python_bin = str(detected_python)
-
-            if strategy_test_cmd:
-                coerced_cmd = _coerce_python_strategy_to_project_pytest(test_cmd_str, python_bin)
-                if coerced_cmd is not None:
-                    test_cmd = coerced_cmd
-                    use_subprocess = True
-                    if not _ensure_pytest_for_project(Path.cwd(), python_bin):
-                        click.echo(click.style("\n  ❌ Root python environment is missing pytest.", fg='red'))
-                        success = False
-                        # Continue with subprojects to provide fuller diagnostics in monorepos.
-                        if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
-                            success = False
-                        continue
-                else:
-                    test_cmd = test_cmd_str.split()
-            else:
-                test_cmd = [python_bin, '-m', 'pytest']
-                use_subprocess = True
-
-                if not _ensure_pytest_for_project(Path.cwd(), python_bin):
-                    click.echo(click.style("\n  ❌ Root python environment is missing pytest.", fg='red'))
-                    success = False
-                    # Continue with subprojects to provide fuller diagnostics in monorepos.
-                    if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
-                        success = False
-                    continue
-        else:
-            test_cmd = test_cmd_str.split()
-        
-        # Special handling for Node.js to check if tests are configured
-        if ptype == 'nodejs':
-            if not _has_usable_test_script(Path('.'), 'nodejs'):
-                continue
-        
         try:
-            if use_subprocess:
-                result = subprocess.run(
-                    test_cmd,
-                    capture_output=False,
-                    text=True,
-                )
-            else:
-                result = run_command(test_cmd_str, capture=False)
-            if result.returncode != 0:
+            if not _run_project_type_tests(ptype, config):
                 success = False
-            
-            # Also try running in subdirs for monorepos
-            if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
-                success = False
-                
         except Exception:
             success = False
     
