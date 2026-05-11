@@ -211,19 +211,47 @@ def _update_pyproject_with_tomlkit(content: str, author_name: str, author_email:
 
 
 def _update_regex_license(content: str, license_id: str) -> str:
-    """Update license field using regex."""
+    """Update license field using regex.
+
+    PEP 639 / setuptools>=77 requires ``license`` to be a plain SPDX
+    string.  This handles three legacy forms:
+
+    1. ``license = {text = "..."}`` (inline table)
+    2. ``license = "..."`` (already correct — just update the value)
+    3. ``[project.license]\\ntext = "..."`` (sub-table section)
+    """
+    # Form 1: inline table  license = {text = "..."}
     content = re.sub(
         r'^license\s*=\s*[{{\[].*?[}}\]]',
         f'license = "{license_id}"',
         content,
         flags=re.MULTILINE
     )
+    # Form 2: plain string  license = "..."
     content = re.sub(
         r'^license\s*=\s*["\'].*?["\']',
         f'license = "{license_id}"',
         content,
         flags=re.MULTILINE
     )
+    # Form 3: separate section  [project.license]\ntext = "..."
+    # Remove the section header and its text= line, inject inline under [project]
+    if re.search(r'^\[project\.license\]', content, re.MULTILINE):
+        # Remove the [project.license] section (header + text line + surrounding blanks)
+        content = re.sub(
+            r'\n*^\[project\.license\]\s*\n\s*text\s*=\s*["\'].*?["\']\s*\n*',
+            '\n',
+            content,
+            flags=re.MULTILINE,
+        )
+        # Ensure there's an inline license = "..." under [project]
+        if not re.search(r'^license\s*=', content, re.MULTILINE):
+            content = re.sub(
+                r'^(\[project\]\s*\n)',
+                f'\\1license = "{license_id}"\n',
+                content,
+                flags=re.MULTILINE,
+            )
     return content
 
 
