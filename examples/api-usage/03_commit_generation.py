@@ -18,19 +18,19 @@ def main():
     print("=" * 60)
     print("Goal API - Commit Message Generation")
     print("=" * 60)
-    
+
     # Get staged files and diff
     files = get_staged_files()
     diff = get_diff_content()
-    
-    if not files or files == ['']:
+
+    if not files or files == [""]:
         print("\n✗ No staged files to analyze")
         print("   Run: git add <files>")
         return
-    
+
     print(f"\n1. Analyzing {len(files)} staged files...")
     print(f"   Diff size: {len(diff)} chars")
-    
+
     # Generate smart commit message
     print("\n2. Generating smart commit message...")
     try:
@@ -41,30 +41,28 @@ def main():
             print("   (no message generated - check if files are staged)")
     except Exception as e:
         print(f"   ✗ Error: {e}")
-    
+
     # Alternative: Generate with abstraction levels
     print("\n3. Alternative: Using CommitMessageGenerator directly...")
     try:
         from goal.generator import CommitMessageGenerator
-        
+
         generator = CommitMessageGenerator()
-        
+
         # Try different abstraction levels
-        for level in ['minimal', 'summary', 'detailed']:
+        for level in ["minimal", "summary", "detailed"]:
             try:
                 msg = generator.generate_commit_message(
-                    cached=False, 
-                    paths=files[:5],
-                    abstraction_level=level
+                    cached=False, paths=files[:5], abstraction_level=level
                 )
                 if msg:
                     print(f"   {level}: {msg[:50]}...")
             except Exception as e:
                 print(f"   {level}: (error: {e})")
-                
+
     except Exception as e:
         print(f"   ✗ Error: {e}")
-    
+
     print("\n" + "=" * 60)
 
 

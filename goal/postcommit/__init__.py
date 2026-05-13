@@ -13,15 +13,15 @@ from .actions import (
     WebhookAction,
     ScriptAction,
     GitPushAction,
-    AVAILABLE_ACTIONS
+    AVAILABLE_ACTIONS,
 )
 
 __all__ = [
-    'PostCommitManager',
-    'run_post_commit_actions',
-    'NotificationAction',
-    'WebhookAction',
-    'ScriptAction',
-    'GitPushAction',
-    'AVAILABLE_ACTIONS',
+    "PostCommitManager",
+    "run_post_commit_actions",
+    "NotificationAction",
+    "WebhookAction",
+    "ScriptAction",
+    "GitPushAction",
+    "AVAILABLE_ACTIONS",
 ]

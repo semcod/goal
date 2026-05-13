@@ -9,20 +9,20 @@ import click
 def _get_version_module():
     """Lazy import version functions to avoid circular imports."""
     from goal.cli.version import get_current_version, bump_version, sync_all_versions
+
     return get_current_version, bump_version, sync_all_versions
 
 
-def sync_all_versions_wrapper(new_version: str, user_config: Optional[Dict]) -> List[str]:
+def sync_all_versions_wrapper(
+    new_version: str, user_config: Optional[Dict]
+) -> List[str]:
     """Wrapper to sync versions to all project files."""
     _, _, sync_all_versions = _get_version_module()
     return sync_all_versions(new_version, user_config)
 
 
 def handle_version_sync(
-    new_version: str,
-    no_version_sync: bool,
-    user_config: Optional[Dict],
-    yes: bool
+    new_version: str, no_version_sync: bool, user_config: Optional[Dict], yes: bool
 ) -> None:
     """Sync versions to all project files."""
     _, _, sync_all_versions = _get_version_module()
@@ -32,18 +32,22 @@ def handle_version_sync(
         # Use stage_paths with chunking to avoid "Argument list too long"
         # Lazy import to avoid circular dependency
         from goal.cli import stage_paths
+
         stage_paths(updated_files)
         for f in updated_files:
-            click.echo(click.style(f"✓ Updated {f} to {new_version}", fg='green'))
+            click.echo(click.style(f"✓ Updated {f} to {new_version}", fg="green"))
     else:
-        Path('VERSION').write_text(new_version + '\n')
+        Path("VERSION").write_text(new_version + "\n")
         # Lazy import to avoid circular dependency
         from goal.cli import stage_paths
-        stage_paths(['VERSION'])
-        click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg='green'))
+
+        stage_paths(["VERSION"])
+        click.echo(click.style(f"✓ Updated VERSION to {new_version}", fg="green"))
 
 
-def get_version_info(current_version: Optional[str] = None, bump: str = 'patch') -> tuple:
+def get_version_info(
+    current_version: Optional[str] = None, bump: str = "patch"
+) -> tuple:
     """Get current and new version info."""
     get_current_version, bump_version, _ = _get_version_module()
     if current_version is None:

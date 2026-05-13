@@ -8,10 +8,11 @@ from typing import List, Optional
 @dataclass
 class Issue:
     """A single diagnosed issue."""
-    severity: str          # 'error', 'warning', 'info'
-    code: str              # e.g. 'PY001'
-    title: str             # short one-liner
-    detail: str            # longer explanation for the user
+
+    severity: str  # 'error', 'warning', 'info'
+    code: str  # e.g. 'PY001'
+    title: str  # short one-liner
+    detail: str  # longer explanation for the user
     file: Optional[str] = None
     fixed: bool = False
     fix_description: str = ""
@@ -20,6 +21,7 @@ class Issue:
 @dataclass
 class DoctorReport:
     """Aggregated report from a doctor run."""
+
     project_dir: Path
     project_type: str
     issues: List[Issue] = field(default_factory=list)
@@ -27,12 +29,12 @@ class DoctorReport:
     @property
     def errors(self) -> List[Issue]:
         """Return issues whose severity is ``'error'``."""
-        return [i for i in self.issues if i.severity == 'error']
+        return [i for i in self.issues if i.severity == "error"]
 
     @property
     def warnings(self) -> List[Issue]:
         """Return issues whose severity is ``'warning'``."""
-        return [i for i in self.issues if i.severity == 'warning']
+        return [i for i in self.issues if i.severity == "warning"]
 
     @property
     def fixed(self) -> List[Issue]:
@@ -42,4 +44,4 @@ class DoctorReport:
     @property
     def has_problems(self) -> bool:
         """True when at least one error or warning was collected."""
-        return any(i.severity in ('error', 'warning') for i in self.issues)
+        return any(i.severity in ("error", "warning") for i in self.issues)

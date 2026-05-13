@@ -120,14 +120,18 @@ def _fetch_commit_diff(repo_root: Path, commit_obj, parsed_diff: str, get_commit
     if _parsed_diff_is_usable(parsed_diff):
         return parsed_diff
     try:
-        return get_commit_diff(str(repo_root), getattr(commit_obj, "hexsha", commit_obj))
+        return get_commit_diff(
+            str(repo_root), getattr(commit_obj, "hexsha", commit_obj)
+        )
     except (OSError, ValueError, TypeError, AttributeError):
         from git import Repo as _GitRepo
 
         return get_commit_diff(_GitRepo(str(repo_root)), commit_obj)
 
 
-def _single_commit_ai_cost(repo_root, commit_obj, parsed_diff, get_commit_diff, ai_cost):
+def _single_commit_ai_cost(
+    repo_root, commit_obj, parsed_diff, get_commit_diff, ai_cost
+):
     try:
         diff = _fetch_commit_diff(repo_root, commit_obj, parsed_diff, get_commit_diff)
         if not diff:
@@ -219,11 +223,23 @@ def _generate_costs_badge(project_dir: Path) -> None:
         if readme_path.exists():
             success = update_readme_badge(repo_root, results)
             if success:
-                click.echo(click.style("  ✓ AI cost badge updated in README", fg="green"))
+                click.echo(
+                    click.style("  ✓ AI cost badge updated in README", fg="green")
+                )
             else:
-                click.echo(click.style("  ⚠ Failed to update README badge", fg="yellow"))
+                click.echo(
+                    click.style("  ⚠ Failed to update README badge", fg="yellow")
+                )
         else:
             click.echo(click.style("  ⚠ README.md not found", fg="yellow"))
-    except (OSError, ValueError, TypeError, ImportError, InvalidGitRepositoryError) as e:
+    except (
+        OSError,
+        ValueError,
+        TypeError,
+        ImportError,
+        InvalidGitRepositoryError,
+    ) as e:
         logger.warning("AI badge generation failed in %s: %s", project_dir, e)
-        click.echo(click.style(f"  ⚠ Badge generation failed: {str(e)[:100]}", fg="yellow"))
+        click.echo(
+            click.style(f"  ⚠ Badge generation failed: {str(e)[:100]}", fg="yellow")
+        )

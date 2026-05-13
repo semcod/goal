@@ -14,7 +14,7 @@ from goal.smart_commit import (
 
 # Maintain backward compatibility for direct access
 __all__ = [
-    'CodeAbstraction',
-    'SmartCommitGenerator',
-    'create_smart_generator',
+    "CodeAbstraction",
+    "SmartCommitGenerator",
+    "create_smart_generator",
 ]

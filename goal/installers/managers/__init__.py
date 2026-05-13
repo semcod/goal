@@ -7,10 +7,10 @@ from goal.installers.managers.poetry import PoetryManager
 from goal.installers.managers.pip import PipManager
 
 __all__ = [
-    'AbstractPackageManager', 
-    'InstallResult', 
-    'UvManager', 
-    'PdmManager',
-    'PoetryManager',
-    'PipManager'
+    "AbstractPackageManager",
+    "InstallResult",
+    "UvManager",
+    "PdmManager",
+    "PoetryManager",
+    "PipManager",
 ]

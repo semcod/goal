@@ -11,7 +11,7 @@ from goal.user_config import UserConfig
 
 # License templates
 LICENSE_TEMPLATES = {
-    'MIT': """MIT License
+    "MIT": """MIT License
 
 Copyright (c) {year} {fullname}
 
@@ -33,8 +33,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """,
-    
-    'Apache-2.0': """                                 Apache License
+    "Apache-2.0": """                                 Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
 
@@ -238,8 +237,7 @@ SOFTWARE.
    See the License for the specific language governing permissions and
    limitations under the License.
 """,
-    
-    'GPL-3.0': """                    GNU GENERAL PUBLIC LICENSE
+    "GPL-3.0": """                    GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
  Copyright (C) {year} {fullname}
@@ -258,8 +256,7 @@ SOFTWARE.
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """,
-    
-    'BSD-3-Clause': """BSD 3-Clause License
+    "BSD-3-Clause": """BSD 3-Clause License
 
 Copyright (c) {year} {fullname}
 
@@ -288,8 +285,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """,
-    
-    'ISC': """ISC License
+    "ISC": """ISC License
 
 Copyright (c) {year} {fullname}
 
@@ -310,170 +306,181 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 class LicenseManager:
     """Manages license operations including template handling and file creation."""
-    
+
     def __init__(self, project_dir: Optional[Path] = None):
         """Initialize license manager.
-        
+
         Args:
             project_dir: Project directory path (defaults to current directory)
         """
         self.project_dir = project_dir or Path.cwd()
-        self.custom_templates_dir = self.project_dir / '.goal' / 'license-templates'
-        self.license_file = self.project_dir / 'LICENSE'
-    
+        self.custom_templates_dir = self.project_dir / ".goal" / "license-templates"
+        self.license_file = self.project_dir / "LICENSE"
+
     def get_available_licenses(self) -> List[str]:
         """Get list of available license templates."""
         licenses = list(LICENSE_TEMPLATES.keys())
-        
+
         # Add custom templates
         if self.custom_templates_dir.exists():
-            for template_file in self.custom_templates_dir.glob('*.txt'):
+            for template_file in self.custom_templates_dir.glob("*.txt"):
                 license_id = template_file.stem
                 if license_id not in licenses:
                     licenses.append(license_id)
-        
+
         return sorted(licenses)
-    
+
     def get_license_template(self, license_id: str) -> Optional[str]:
         """Get license template by ID.
-        
+
         Args:
             license_id: SPDX license ID
-            
+
         Returns:
             License template string or None if not found
         """
         # Check built-in templates first
         if license_id in LICENSE_TEMPLATES:
             return LICENSE_TEMPLATES[license_id]
-        
+
         # Check custom templates
-        template_file = self.custom_templates_dir / f'{license_id}.txt'
+        template_file = self.custom_templates_dir / f"{license_id}.txt"
         if template_file.exists():
-            return template_file.read_text(encoding='utf-8')
-        
+            return template_file.read_text(encoding="utf-8")
+
         return None
-    
+
     def add_custom_template(self, license_id: str, template: str) -> None:
         """Add a custom license template.
-        
+
         Args:
             license_id: SPDX license ID or custom identifier
             template: License template text with {year} and {fullname} placeholders
         """
         # Create directory if it doesn't exist
         self.custom_templates_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Write template
-        template_file = self.custom_templates_dir / f'{license_id}.txt'
-        template_file.write_text(template, encoding='utf-8')
-        
-        click.echo(click.style(f"✓ Added custom template: {license_id}", fg='green'))
-    
-    def create_license_file(self, license_id: str, fullname: Optional[str] = None, 
-                           year: Optional[int] = None, force: bool = False) -> bool:
+        template_file = self.custom_templates_dir / f"{license_id}.txt"
+        template_file.write_text(template, encoding="utf-8")
+
+        click.echo(click.style(f"✓ Added custom template: {license_id}", fg="green"))
+
+    def create_license_file(
+        self,
+        license_id: str,
+        fullname: Optional[str] = None,
+        year: Optional[int] = None,
+        force: bool = False,
+    ) -> bool:
         """Create a LICENSE file with the specified license.
-        
+
         Args:
             license_id: SPDX license ID
             fullname: Full name of the copyright holder
             year: Copyright year (defaults to current year)
             force: Overwrite existing LICENSE file
-            
+
         Returns:
             True if file was created successfully
         """
         # Validate license ID
         is_valid, msg = validate_spdx_id(license_id)
         if not is_valid and license_id not in self.get_available_licenses():
-            click.echo(click.style(f"✗ Invalid license ID: {msg}", fg='red'))
+            click.echo(click.style(f"✗ Invalid license ID: {msg}", fg="red"))
             return False
-        
+
         # Check if file exists
         if self.license_file.exists() and not force:
-            click.echo(click.style("⚠ LICENSE file already exists", fg='yellow'))
-            if not click.confirm(click.style("Overwrite?", fg='cyan'), default=False):
+            click.echo(click.style("⚠ LICENSE file already exists", fg="yellow"))
+            if not click.confirm(click.style("Overwrite?", fg="cyan"), default=False):
                 return False
-        
+
         # Get template
         template = self.get_license_template(license_id)
         if not template:
-            click.echo(click.style(f"✗ No template found for license: {license_id}", fg='red'))
+            click.echo(
+                click.style(f"✗ No template found for license: {license_id}", fg="red")
+            )
             return False
-        
+
         # Get user info if not provided
         if not fullname:
             user_config = UserConfig()
-            fullname = user_config.get('author_name', 'Author Name')
-        
+            fullname = user_config.get("author_name", "Author Name")
+
         if not year:
             year = datetime.now().year
-        
+
         # Fill template
-        content = template.format(
-            year=year,
-            fullname=fullname
-        )
-        
+        content = template.format(year=year, fullname=fullname)
+
         # Write file
         try:
-            self.license_file.write_text(content, encoding='utf-8')
-            click.echo(click.style(f"✓ Created LICENSE file with {license_id}", fg='green'))
+            self.license_file.write_text(content, encoding="utf-8")
+            click.echo(
+                click.style(f"✓ Created LICENSE file with {license_id}", fg="green")
+            )
             return True
         except Exception as e:
-            click.echo(click.style(f"✗ Failed to create LICENSE file: {e}", fg='red'))
+            click.echo(click.style(f"✗ Failed to create LICENSE file: {e}", fg="red"))
             return False
-    
-    def update_license_file(self, license_id: Optional[str] = None, 
-                           fullname: Optional[str] = None,
-                           year: Optional[int] = None) -> bool:
+
+    def update_license_file(
+        self,
+        license_id: Optional[str] = None,
+        fullname: Optional[str] = None,
+        year: Optional[int] = None,
+    ) -> bool:
         """Update existing LICENSE file.
-        
+
         Args:
             license_id: New SPDX license ID (if None, keeps current)
             fullname: New full name (if None, keeps current)
             year: New year (if None, keeps current)
-            
+
         Returns:
             True if file was updated successfully
         """
         if not self.license_file.exists():
-            click.echo(click.style("✗ No LICENSE file found", fg='red'))
+            click.echo(click.style("✗ No LICENSE file found", fg="red"))
             return False
-        
+
         # If no changes requested, just validate
         if not any([license_id, fullname, year]):
-            click.echo(click.style("ℹ No updates specified", fg='cyan'))
+            click.echo(click.style("ℹ No updates specified", fg="cyan"))
             return True
-        
-        current_content = self.license_file.read_text(encoding='utf-8')
+
+        current_content = self.license_file.read_text(encoding="utf-8")
 
         license_id = self._resolve_license_id(current_content, license_id)
         if not license_id:
             return False
 
         if not fullname:
-            extracted_year, extracted_fullname = self._extract_owner_from_content(current_content)
+            extracted_year, extracted_fullname = self._extract_owner_from_content(
+                current_content
+            )
             if extracted_fullname:
                 year = extracted_year
                 fullname = extracted_fullname
             else:
                 user_config = UserConfig()
-                fullname = user_config.get('author_name', 'Author Name')
-        
+                fullname = user_config.get("author_name", "Author Name")
+
         if not year:
             year = datetime.now().year
-        
+
         # Create new content
         return self.create_license_file(license_id, fullname, year, force=True)
-    
+
     # Ordered (license_id, required_substrings) for detection; first match wins.
     _LICENSE_SIGNATURES = [
-        ('MIT',          ['Permission is hereby granted']),
-        ('Apache-2.0',   ['Apache License', 'Version 2.0']),
-        ('GPL-3.0',      ['GNU GENERAL PUBLIC LICENSE']),
-        ('BSD-3-Clause', ['BSD 3-Clause License']),
-        ('ISC',          ['ISC License']),
+        ("MIT", ["Permission is hereby granted"]),
+        ("Apache-2.0", ["Apache License", "Version 2.0"]),
+        ("GPL-3.0", ["GNU GENERAL PUBLIC LICENSE"]),
+        ("BSD-3-Clause", ["BSD 3-Clause License"]),
+        ("ISC", ["ISC License"]),
     ]
 
     @classmethod
@@ -484,7 +491,9 @@ class LicenseManager:
                 return lid
         return None
 
-    def _resolve_license_id(self, current_content: str, license_id: Optional[str]) -> Optional[str]:
+    def _resolve_license_id(
+        self, current_content: str, license_id: Optional[str]
+    ) -> Optional[str]:
         if license_id:
             return license_id
 
@@ -492,33 +501,35 @@ class LicenseManager:
         if license_id:
             return license_id
 
-        click.echo(click.style("⚠ Could not detect current license type", fg='yellow'))
-        if not click.confirm(click.style("Proceed anyway?", fg='cyan'), default=False):
+        click.echo(click.style("⚠ Could not detect current license type", fg="yellow"))
+        if not click.confirm(click.style("Proceed anyway?", fg="cyan"), default=False):
             return None
         return license_id
 
     @staticmethod
-    def _extract_owner_from_content(content: str) -> tuple[Optional[int], Optional[str]]:
-        match = re.search(r'Copyright(?: \(c\))? (\d+) (.+)', content)
+    def _extract_owner_from_content(
+        content: str,
+    ) -> tuple[Optional[int], Optional[str]]:
+        match = re.search(r"Copyright(?: \(c\))? (\d+) (.+)", content)
         if match:
             return int(match.group(1)), match.group(2)
         return None, None
 
     def validate_license_file(self) -> Tuple[bool, List[str]]:
         """Validate the LICENSE file.
-        
+
         Returns:
             Tuple of (is_valid, list_of_issues)
         """
         if not self.license_file.exists():
             return False, ["LICENSE file does not exist"]
-        
+
         issues: List[str] = []
-        content = self.license_file.read_text(encoding='utf-8')
-        
+        content = self.license_file.read_text(encoding="utf-8")
+
         if not content.strip():
             return False, ["LICENSE file is empty"]
-        
+
         detected = self._detect_license_type(content)
         if not detected:
             issues.append("Could not detect license type")
@@ -526,26 +537,30 @@ class LicenseManager:
             is_valid, msg = validate_spdx_id(detected)
             if not is_valid:
                 issues.append(f"Invalid SPDX license: {msg}")
-        
-        if '{year}' in content or '{fullname}' in content:
+
+        if "{year}" in content or "{fullname}" in content:
             issues.append("License contains unfilled placeholders")
-        
-        if not re.search(r'copyright', content, re.IGNORECASE):
+
+        if not re.search(r"copyright", content, re.IGNORECASE):
             issues.append("No copyright notice found")
-        
+
         return len(issues) == 0, issues
 
 
-def create_license_file(license_id: str, fullname: Optional[str] = None,
-                       year: Optional[int] = None, force: bool = False) -> bool:
+def create_license_file(
+    license_id: str,
+    fullname: Optional[str] = None,
+    year: Optional[int] = None,
+    force: bool = False,
+) -> bool:
     """Convenience function to create a LICENSE file.
-    
+
     Args:
         license_id: SPDX license ID
         fullname: Full name of the copyright holder
         year: Copyright year (defaults to current year)
         force: Overwrite existing LICENSE file
-        
+
     Returns:
         True if file was created successfully
     """
@@ -553,16 +568,18 @@ def create_license_file(license_id: str, fullname: Optional[str] = None,
     return manager.create_license_file(license_id, fullname, year, force)
 
 
-def update_license_file(license_id: Optional[str] = None,
-                       fullname: Optional[str] = None,
-                       year: Optional[int] = None) -> bool:
+def update_license_file(
+    license_id: Optional[str] = None,
+    fullname: Optional[str] = None,
+    year: Optional[int] = None,
+) -> bool:
     """Convenience function to update a LICENSE file.
-    
+
     Args:
         license_id: New SPDX license ID (if None, keeps current)
         fullname: New full name (if None, keeps current)
         year: New year (if None, keeps current)
-        
+
     Returns:
         True if file was updated successfully
     """

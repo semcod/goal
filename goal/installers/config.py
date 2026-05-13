@@ -8,12 +8,13 @@ from typing import Any
 @dataclass
 class InstallerConfig:
     """Configuration for package manager installer behavior."""
+
     preferred: list[str] = field(default_factory=lambda: ["uv", "pdm", "poetry", "pip"])
     auto_install_uv: bool = True
     timeout: int = 300
     default_extras: list[str] = field(default_factory=lambda: ["dev"])
     detection_cache_ttl: int = 300
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "InstallerConfig":
         """Create config from dictionary (e.g., from pyproject.toml)."""
@@ -31,9 +32,10 @@ def load_installer_config(project_dir: str = ".") -> InstallerConfig:
     pyproject = Path(project_dir) / "pyproject.toml"
     if not pyproject.exists():
         return InstallerConfig()
-    
+
     try:
         import tomllib
+
         with open(pyproject, "rb") as f:
             data = tomllib.load(f)
         cfg = data.get("tool", {}).get("goal", {}).get("installers", {})

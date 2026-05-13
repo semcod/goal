@@ -1,7 +1,6 @@
 """Project configuration and scaffolding - extracted from project_bootstrap.py."""
 
 import os
-import subprocess
 from pathlib import Path
 from typing import Optional
 
@@ -44,13 +43,13 @@ def scaffold_test_file(project_dir: Path, project_type: str) -> bool:
     test_dir = project_dir / cfg.test_dirs[0]
     test_dir.mkdir(exist_ok=True)
 
-    if project_type == 'python':
+    if project_type == "python":
         test_file = test_dir / f"test_{package_name}.py"
-    elif project_type == 'nodejs':
+    elif project_type == "nodejs":
         test_file = test_dir / f"{package_name}.test.js"
-    elif project_type == 'rust':
-        test_file = project_dir / 'src' / 'lib.rs'
-    elif project_type == 'go':
+    elif project_type == "rust":
+        test_file = project_dir / "src" / "lib.rs"
+    elif project_type == "go":
         test_file = test_dir / f"{package_name}_test.go"
     else:
         return True  # Unknown type
@@ -59,44 +58,49 @@ def scaffold_test_file(project_dir: Path, project_type: str) -> bool:
         return True
 
     test_file.write_text(test_content)
-    click.echo(click.style(f"  ✓ Created sample test: {test_file.relative_to(project_dir)}", fg='green'))
+    click.echo(
+        click.style(
+            f"  ✓ Created sample test: {test_file.relative_to(project_dir)}", fg="green"
+        )
+    )
     return True
 
 
 def _find_python_bin(project_dir: Path) -> str:
     """Return the best python binary path for a project directory."""
     # Check common venv names in order of preference
-    for venv_name in ['.venv', 'venv', 'env']:
-        venv_python = project_dir / venv_name / 'bin' / 'python'
+    for venv_name in [".venv", "venv", "env"]:
+        venv_python = project_dir / venv_name / "bin" / "python"
         if venv_python.exists():
             return str(venv_python)
     # Check active virtualenv
-    venv_env = os.environ.get('VIRTUAL_ENV')
+    venv_env = os.environ.get("VIRTUAL_ENV")
     if venv_env:
-        candidate = Path(venv_env) / 'bin' / 'python'
+        candidate = Path(venv_env) / "bin" / "python"
         if candidate.exists():
             return str(candidate)
     # sys.executable
     import sys
+
     return sys.executable
 
 
 def _read_openrouter_api_key(env_file: Path) -> str:
     """Extract OPENROUTER_API_KEY from a .env file."""
     try:
-        content = env_file.read_text(encoding='utf-8')
+        content = env_file.read_text(encoding="utf-8")
     except Exception:
-        return ''
+        return ""
 
     for line in content.splitlines():
         stripped = line.strip()
-        if not stripped or stripped.startswith('#'):
+        if not stripped or stripped.startswith("#"):
             continue
-        if stripped.startswith('export '):
-            stripped = stripped[len('export '):].strip()
+        if stripped.startswith("export "):
+            stripped = stripped[len("export ") :].strip()
 
-        key_name, sep, value = stripped.partition('=')
-        if not sep or key_name.strip() != 'OPENROUTER_API_KEY':
+        key_name, sep, value = stripped.partition("=")
+        if not sep or key_name.strip() != "OPENROUTER_API_KEY":
             continue
 
         value = value.strip()
@@ -104,18 +108,18 @@ def _read_openrouter_api_key(env_file: Path) -> str:
             value = value[1:-1].strip()
         return value
 
-    return ''
+    return ""
 
 
 def _find_openrouter_api_key(project_dir: Path) -> tuple[Optional[Path], str]:
     """Find an OpenRouter API key in the environment or any ancestor .env file."""
-    env_key = os.environ.get('OPENROUTER_API_KEY', '').strip()
+    env_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if env_key:
         return None, env_key
 
     search_dir = project_dir.resolve()
     while True:
-        candidate = search_dir / '.env'
+        candidate = search_dir / ".env"
         if candidate.exists():
             api_key = _read_openrouter_api_key(candidate)
             if api_key:
@@ -125,14 +129,14 @@ def _find_openrouter_api_key(project_dir: Path) -> tuple[Optional[Path], str]:
             break
         search_dir = search_dir.parent
 
-    return None, ''
+    return None, ""
 
 
 def _find_git_root(project_dir: Path) -> Optional[Path]:
     """Find the git repository root for a project directory."""
     current = project_dir.resolve()
     while current != current.parent:
-        if (current / '.git').exists():
+        if (current / ".git").exists():
             return current
         current = current.parent
     return None

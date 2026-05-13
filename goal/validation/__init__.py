@@ -13,15 +13,15 @@ from .rules import (
     FilePatternRule,
     ScriptRule,
     CommitSizeRule,
-    AVAILABLE_RULES
+    AVAILABLE_RULES,
 )
 
 __all__ = [
-    'ValidationRuleManager',
-    'run_custom_validations',
-    'MessagePatternRule',
-    'FilePatternRule',
-    'ScriptRule',
-    'CommitSizeRule',
-    'AVAILABLE_RULES',
+    "ValidationRuleManager",
+    "run_custom_validations",
+    "MessagePatternRule",
+    "FilePatternRule",
+    "ScriptRule",
+    "CommitSizeRule",
+    "AVAILABLE_RULES",
 ]

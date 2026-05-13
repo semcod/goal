@@ -3,11 +3,13 @@
 
 class ValidationError(Exception):
     """Base validation error."""
+
     pass
 
 
 class FileSizeError(ValidationError):
     """Error for files exceeding size limit."""
+
     def __init__(self, file_path: str, size_mb: float, limit_mb: float):
         """Record the oversize ``file_path`` with measured and allowed sizes in MB."""
         self.file_path = file_path
@@ -20,6 +22,7 @@ class FileSizeError(ValidationError):
 
 class TokenDetectedError(ValidationError):
     """Error when API tokens are detected in files."""
+
     def __init__(self, file_path: str, token_type: str, line_num: int | None = None):
         """Record the leaked-secret location: ``file_path``, ``token_type`` and optional ``line_num``."""
         self.file_path = file_path
@@ -34,6 +37,7 @@ class TokenDetectedError(ValidationError):
 
 class DotFolderError(ValidationError):
     """Error when dot folders are detected that should be in .gitignore."""
+
     def __init__(self, dot_folders: list[str]):
         """Record the list of detected ``dot_folders`` that should be gitignored."""
         self.dot_folders = dot_folders

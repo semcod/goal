@@ -34,7 +34,9 @@ def ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
         return True
 
     click.echo(
-        click.style(f"\n  📦 Installing test dependencies in {project_root}/", fg="cyan")
+        click.style(
+            f"\n  📦 Installing test dependencies in {project_root}/", fg="cyan"
+        )
     )
 
     install_attempts = [

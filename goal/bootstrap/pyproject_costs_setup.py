@@ -54,7 +54,10 @@ def _find_dep_list_end(content: str, start_idx: int) -> int:
 
 def _try_merge_optional_dev_deps(content: str) -> tuple[str, bool]:
     """Strategy 1: [project.optional-dependencies] dev = [...]"""
-    if "[project.optional-dependencies]" not in content or "dev = [" not in content.lower():
+    if (
+        "[project.optional-dependencies]" not in content
+        or "dev = [" not in content.lower()
+    ):
         return content, False
     dev_match = re.search(r"(dev\s*=\s*\[)", content, flags=re.IGNORECASE)
     if not dev_match:
@@ -161,7 +164,9 @@ def _ensure_costs_config(project_dir: Path) -> bool:
     if deps_updated:
         pyproject.write_text(content, encoding="utf-8")
         click.echo(
-            click.style("  ✓ Added goal, costs and pfix to dev dependencies", fg="green")
+            click.style(
+                "  ✓ Added goal, costs and pfix to dev dependencies", fg="green"
+            )
         )
 
     if "[tool.costs]" in content:

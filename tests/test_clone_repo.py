@@ -2,8 +2,6 @@
 
 import os
 import subprocess
-import tempfile
-from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -14,7 +12,6 @@ from goal.git_ops import (
     validate_repo_url,
     clone_repository,
     ensure_git_repository,
-    ensure_remote,
     list_remotes,
 )
 from goal.cli import main
@@ -24,34 +21,44 @@ from goal.cli import main
 # validate_repo_url
 # ---------------------------------------------------------------------------
 
+
 class TestValidateRepoUrl:
     """Tests for URL validation (HTTP/HTTPS/SSH)."""
 
-    @pytest.mark.parametrize("url", [
-        "https://github.com/user/repo.git",
-        "https://github.com/user/repo",
-        "http://gitlab.com/org/project.git",
-        "https://bitbucket.org/team/repo",
-    ])
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://github.com/user/repo.git",
+            "https://github.com/user/repo",
+            "http://gitlab.com/org/project.git",
+            "https://bitbucket.org/team/repo",
+        ],
+    )
     def test_valid_http_urls(self, url):
         assert validate_repo_url(url) is True
 
-    @pytest.mark.parametrize("url", [
-        "git@github.com:user/repo.git",
-        "git@gitlab.com:org/project.git",
-        "git@bitbucket.org:team/repo",
-    ])
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "git@github.com:user/repo.git",
+            "git@gitlab.com:org/project.git",
+            "git@bitbucket.org:team/repo",
+        ],
+    )
     def test_valid_ssh_urls(self, url):
         assert validate_repo_url(url) is True
 
-    @pytest.mark.parametrize("url", [
-        "",
-        "not-a-url",
-        "ftp://example.com/repo.git",
-        "/local/path/to/repo",
-        "github.com/user/repo",
-        "git@:missing-host.git",
-    ])
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "",
+            "not-a-url",
+            "ftp://example.com/repo.git",
+            "/local/path/to/repo",
+            "github.com/user/repo",
+            "git@:missing-host.git",
+        ],
+    )
     def test_invalid_urls(self, url):
         assert validate_repo_url(url) is False
 
@@ -62,6 +69,7 @@ class TestValidateRepoUrl:
 # ---------------------------------------------------------------------------
 # is_git_repository
 # ---------------------------------------------------------------------------
+
 
 class TestIsGitRepository:
     def test_true_inside_git_repo(self, tmp_path):
@@ -88,6 +96,7 @@ class TestIsGitRepository:
 # clone_repository
 # ---------------------------------------------------------------------------
 
+
 class TestCloneRepository:
     def test_invalid_url_returns_failure(self):
         success, msg = clone_repository("not-a-url")
@@ -99,15 +108,18 @@ class TestCloneRepository:
         # Create a bare repo to clone from
         bare = tmp_path / "bare.git"
         bare.mkdir()
-        subprocess.run(["git", "init", "--bare", str(bare)], check=True,
-                        capture_output=True)
+        subprocess.run(
+            ["git", "init", "--bare", str(bare)], check=True, capture_output=True
+        )
 
         old = os.getcwd()
         try:
             os.chdir(tmp_path)
             # Use file:// protocol which matches http pattern after we patch validation
             with mock.patch("goal.git_ops.validate_repo_url", return_value=True):
-                success, repo_dir = clone_repository(f"file://{bare}", target_dir="cloned")
+                success, repo_dir = clone_repository(
+                    f"file://{bare}", target_dir="cloned"
+                )
             assert success is True
             assert repo_dir == "cloned"
             assert (tmp_path / "cloned" / ".git").exists()
@@ -120,7 +132,9 @@ class TestCloneRepository:
         try:
             os.chdir(tmp_path)
             with mock.patch("goal.git_ops.validate_repo_url", return_value=True):
-                success, msg = clone_repository("https://invalid.example.com/no/repo.git")
+                success, msg = clone_repository(
+                    "https://invalid.example.com/no/repo.git"
+                )
             assert success is False
             assert "Failed to clone" in msg
         finally:
@@ -130,6 +144,7 @@ class TestCloneRepository:
 # ---------------------------------------------------------------------------
 # ensure_git_repository (interactive)
 # ---------------------------------------------------------------------------
+
 
 class TestEnsureGitRepository:
     def test_returns_true_when_already_in_repo(self, tmp_path):
@@ -176,8 +191,9 @@ class TestEnsureGitRepository:
         """User chooses option 2 (clone) with a valid local bare repo."""
         bare = tmp_path / "bare.git"
         bare.mkdir()
-        subprocess.run(["git", "init", "--bare", str(bare)], check=True,
-                        capture_output=True)
+        subprocess.run(
+            ["git", "init", "--bare", str(bare)], check=True, capture_output=True
+        )
 
         work = tmp_path / "work"
         work.mkdir()
@@ -185,8 +201,10 @@ class TestEnsureGitRepository:
         try:
             os.chdir(work)
             url = f"file://{bare}"
-            with mock.patch("click.prompt", side_effect=[2, url]), \
-                 mock.patch("goal.git_ops.validate_repo_url", return_value=True):
+            with (
+                mock.patch("click.prompt", side_effect=[2, url]),
+                mock.patch("goal.git_ops.validate_repo_url", return_value=True),
+            ):
                 result = ensure_git_repository()
             assert result is True
             # We should now be inside the cloned repo
@@ -209,8 +227,9 @@ class TestEnsureGitRepository:
         """User chooses option 1 (init + remote) with empty remote."""
         bare = tmp_path / "bare.git"
         bare.mkdir()
-        subprocess.run(["git", "init", "--bare", str(bare)], check=True,
-                        capture_output=True)
+        subprocess.run(
+            ["git", "init", "--bare", str(bare)], check=True, capture_output=True
+        )
 
         work = tmp_path / "work"
         work.mkdir()
@@ -220,8 +239,10 @@ class TestEnsureGitRepository:
             os.chdir(work)
             url = f"file://{bare}"
             # Option 1 (init+remote), URL, then merge-action 1 (keep local)
-            with mock.patch("click.prompt", side_effect=[1, url, 1]), \
-                 mock.patch("goal.git_ops.validate_repo_url", return_value=True):
+            with (
+                mock.patch("click.prompt", side_effect=[1, url, 1]),
+                mock.patch("goal.git_ops.validate_repo_url", return_value=True),
+            ):
                 result = ensure_git_repository()
             assert result is True
             assert is_git_repository() is True
@@ -234,6 +255,7 @@ class TestEnsureGitRepository:
 # ---------------------------------------------------------------------------
 # CLI: goal clone <url>
 # ---------------------------------------------------------------------------
+
 
 class TestCloneCommand:
     def test_clone_help(self):
@@ -252,8 +274,9 @@ class TestCloneCommand:
         """End-to-end: clone a local bare repo via the CLI command."""
         bare = tmp_path / "bare.git"
         bare.mkdir()
-        subprocess.run(["git", "init", "--bare", str(bare)], check=True,
-                        capture_output=True)
+        subprocess.run(
+            ["git", "init", "--bare", str(bare)], check=True, capture_output=True
+        )
 
         runner = CliRunner()
         target = str(tmp_path / "cloned")

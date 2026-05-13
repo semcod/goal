@@ -21,19 +21,20 @@ from goal.doctor.java import diagnose_java
 
 # Dispatcher mapping project types to diagnostic functions
 _DIAGNOSTICS: Dict[str, Callable[[Path, bool], List[Issue]]] = {
-    'python': diagnose_python,
-    'nodejs': diagnose_nodejs,
-    'rust':   diagnose_rust,
-    'go':     diagnose_go,
-    'ruby':   diagnose_ruby,
-    'php':    diagnose_php,
-    'dotnet': diagnose_dotnet,
-    'java':   diagnose_java,
+    "python": diagnose_python,
+    "nodejs": diagnose_nodejs,
+    "rust": diagnose_rust,
+    "go": diagnose_go,
+    "ruby": diagnose_ruby,
+    "php": diagnose_php,
+    "dotnet": diagnose_dotnet,
+    "java": diagnose_java,
 }
 
 
-def diagnose_project(project_dir: Path, project_type: str,
-                     auto_fix: bool = True) -> DoctorReport:
+def diagnose_project(
+    project_dir: Path, project_type: str, auto_fix: bool = True
+) -> DoctorReport:
     """Run diagnostics for a single project directory.
 
     Args:
@@ -51,19 +52,24 @@ def diagnose_project(project_dir: Path, project_type: str,
     return report
 
 
-def diagnose_and_report(project_dir: Path, project_type: str,
-                        auto_fix: bool = True) -> DoctorReport:
+def diagnose_and_report(
+    project_dir: Path, project_type: str, auto_fix: bool = True
+) -> DoctorReport:
     """Diagnose, fix, and print a human-readable report."""
     try:
-        rel = project_dir.relative_to(Path('.').resolve())
+        rel = project_dir.relative_to(Path(".").resolve())
     except ValueError:
         rel = project_dir
 
-    click.echo(click.style(f"\n🩺 Diagnosing {project_type} project in {rel}", fg='cyan', bold=True))
+    click.echo(
+        click.style(
+            f"\n🩺 Diagnosing {project_type} project in {rel}", fg="cyan", bold=True
+        )
+    )
     report = diagnose_project(project_dir, project_type, auto_fix=auto_fix)
 
     if not report.issues:
-        click.echo(click.style("  ✓ No issues found", fg='green'))
+        click.echo(click.style("  ✓ No issues found", fg="green"))
         return report
 
     for issue in report.issues:
@@ -77,11 +83,11 @@ def diagnose_and_report(project_dir: Path, project_type: str,
     n_fixed = len(report.fixed)
     parts = []
     if n_err:
-        parts.append(click.style(f"{n_err} error(s)", fg='red'))
+        parts.append(click.style(f"{n_err} error(s)", fg="red"))
     if n_warn:
-        parts.append(click.style(f"{n_warn} warning(s)", fg='yellow'))
+        parts.append(click.style(f"{n_warn} warning(s)", fg="yellow"))
     if n_fixed:
-        parts.append(click.style(f"{n_fixed} auto-fixed", fg='green'))
+        parts.append(click.style(f"{n_fixed} auto-fixed", fg="green"))
     click.echo(f"  {', '.join(parts)}")
 
     return report

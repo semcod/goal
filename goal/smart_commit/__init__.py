@@ -8,7 +8,7 @@ from .abstraction import CodeAbstraction
 from .generator import SmartCommitGenerator, create_smart_generator
 
 __all__ = [
-    'CodeAbstraction',
-    'SmartCommitGenerator',
-    'create_smart_generator',
+    "CodeAbstraction",
+    "SmartCommitGenerator",
+    "create_smart_generator",
 ]

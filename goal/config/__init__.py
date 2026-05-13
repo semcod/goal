@@ -24,13 +24,13 @@ from .validation import (
 )
 
 __all__ = [
-    'GoalConfig',
-    'init_config',
-    'load_config',
-    'ensure_config',
-    'DEFAULT_CONFIG',
-    'ConfigValidator',
-    'ConfigValidationError',
-    'validate_config_file',
-    'validate_config_interactive',
+    "GoalConfig",
+    "init_config",
+    "load_config",
+    "ensure_config",
+    "DEFAULT_CONFIG",
+    "ConfigValidator",
+    "ConfigValidationError",
+    "validate_config_file",
+    "validate_config_interactive",
 ]

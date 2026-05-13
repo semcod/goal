@@ -5,23 +5,25 @@ from .models import Issue
 
 
 _SEVERITY_STYLE = {
-    'error':   ('✗', 'red'),
-    'warning': ('⚠', 'yellow'),
-    'info':    ('ℹ', 'cyan'),
+    "error": ("✗", "red"),
+    "warning": ("⚠", "yellow"),
+    "info": ("ℹ", "cyan"),
 }
 
 
 def _log_issue(issue: Issue):
     """Render a single diagnostic ``Issue`` to the console with severity styling."""
-    icon, color = _SEVERITY_STYLE.get(issue.severity, ('•', 'white'))
-    tag = click.style(f"[{issue.code}]", fg='bright_black')
-    msg = click.style(f"{icon} {issue.title}", fg=color, bold=issue.severity == 'error')
+    icon, color = _SEVERITY_STYLE.get(issue.severity, ("•", "white"))
+    tag = click.style(f"[{issue.code}]", fg="bright_black")
+    msg = click.style(f"{icon} {issue.title}", fg=color, bold=issue.severity == "error")
     click.echo(f"  {tag} {msg}")
     if issue.detail:
         for line in issue.detail.strip().splitlines():
-            click.echo(click.style(f"       {line}", fg='bright_black'))
+            click.echo(click.style(f"       {line}", fg="bright_black"))
 
 
 def _log_fix(issue: Issue):
     """Render a one-line confirmation that ``issue`` was auto-fixed."""
-    click.echo(click.style(f"  ✓ FIXED [{issue.code}]: {issue.fix_description}", fg='green'))
+    click.echo(
+        click.style(f"  ✓ FIXED [{issue.code}]: {issue.fix_description}", fg="green")
+    )

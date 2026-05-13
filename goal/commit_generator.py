@@ -2,12 +2,10 @@
 short summary and detailed (title + body) output formats consumed by the
 ``goal`` CLI.
 """
+
 from goal.generator import (
     CommitMessageGenerator,
     generate_smart_commit_message,
-    GitDiffOperations,
-    ChangeAnalyzer,
-    ContentAnalyzer,
 )
 
 from typing import Dict, Any
@@ -15,7 +13,7 @@ from typing import Dict, Any
 
 def is_detailed_output_requested(args: list) -> bool:
     """Return True when ``--detailed`` appears in the CLI argument vector."""
-    return '--detailed' in args
+    return "--detailed" in args
 
 
 def display_commit_message(generator: CommitMessageGenerator) -> None:
@@ -26,9 +24,9 @@ def display_commit_message(generator: CommitMessageGenerator) -> None:
 def print_detailed_message(result: Dict[str, Any]) -> None:
     """Print a ``title``/``body`` commit message dict produced by ``generator``."""
     if result:
-        print(result['title'])
+        print(result["title"])
         print()
-        print(result['body'])
+        print(result["body"])
 
 
 def display_detailed_message(generator: CommitMessageGenerator) -> None:

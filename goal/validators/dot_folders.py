@@ -1,7 +1,8 @@
 """Dot folder validation and management."""
+
 import os
 from pathlib import Path
-from typing import List, Set
+from typing import List
 
 from goal.validators.gitignore import load_gitignore, save_gitignore
 from goal.validators.exceptions import DotFolderError
@@ -9,32 +10,52 @@ from goal.validators.exceptions import DotFolderError
 
 # Common safe dot files that shouldn't trigger warnings
 _SAFE_DOT_FILES = {
-    '.gitignore', '.gitattributes', '.editorconfig', '.git',
-    '.github', '.gitlab-ci.yml', '.pre-commit-config.yaml'
+    ".gitignore",
+    ".gitattributes",
+    ".editorconfig",
+    ".git",
+    ".github",
+    ".gitlab-ci.yml",
+    ".pre-commit-config.yaml",
 }
 
 # Default problematic dot folders/files
 _DEFAULT_PROBLEMATIC = {
-    '.idea', '.vscode', '.DS_Store', 'Thumbs.db', '.pytest_cache',
-    '.coverage', '.mypy_cache', '.tox', '.nox', '.venv', '.env',
-    '.python-version', '.ruff_cache', '.cursorignore', '.cursorindexingignore'
+    ".idea",
+    ".vscode",
+    ".DS_Store",
+    "Thumbs.db",
+    ".pytest_cache",
+    ".coverage",
+    ".mypy_cache",
+    ".tox",
+    ".nox",
+    ".venv",
+    ".env",
+    ".python-version",
+    ".ruff_cache",
+    ".cursorignore",
+    ".cursorindexingignore",
 }
 
 
 def _is_dot_path(path: Path) -> bool:
     """True if the file or any parent (except root) is a dot-name."""
-    return path.name.startswith('.') or any(p.startswith('.') for p in path.parts[:-1])
+    return path.name.startswith(".") or any(p.startswith(".") for p in path.parts[:-1])
 
 
 def _is_safe_path(path: Path) -> bool:
     """True if the path or a parent is in the safe-list."""
-    return path.name in _SAFE_DOT_FILES or any(p in _SAFE_DOT_FILES for p in path.parts[:-1])
+    return path.name in _SAFE_DOT_FILES or any(
+        p in _SAFE_DOT_FILES for p in path.parts[:-1]
+    )
 
 
 def _is_whitelisted_path(path: Path, whitelist: set) -> bool:
     """True if the path matches any whitelist pattern."""
     return any(
-        path.match(pattern) or any(p.match(pattern) for p in [path] + list(path.parents))
+        path.match(pattern)
+        or any(p.match(pattern) for p in [path] + list(path.parents))
         for pattern in whitelist
     )
 
@@ -43,9 +64,8 @@ def _matches_problematic(path: Path, problematic_folders: set) -> bool:
     """True if the path name or prefix matches a problematic folder."""
     name = path.name
     path_str = str(path)
-    return (
-        name in problematic_folders
-        or any(name.startswith(f) or path_str.startswith(f + '/') for f in problematic_folders)
+    return name in problematic_folders or any(
+        name.startswith(f) or path_str.startswith(f + "/") for f in problematic_folders
     )
 
 
@@ -57,7 +77,9 @@ def check_dot_folders(files: List[str], config) -> List[str]:
     """
     ignored, whitelisted = load_gitignore()
 
-    known_dot_folders = config.get('advanced.file_validation.known_dot_folders', []) if config else []
+    known_dot_folders = (
+        config.get("advanced.file_validation.known_dot_folders", []) if config else []
+    )
     problematic_folders = _DEFAULT_PROBLEMATIC | set(known_dot_folders)
 
     problematic_found = []
@@ -97,7 +119,11 @@ def manage_dot_folders(files: List[str], config, dry_run: bool = False) -> None:
         return
 
     # Get configuration
-    auto_add = config.get('advanced.file_validation.auto_add_dot_folders', True) if config else True
+    auto_add = (
+        config.get("advanced.file_validation.auto_add_dot_folders", True)
+        if config
+        else True
+    )
 
     if auto_add and not dry_run:
         # Load current ignored patterns
@@ -114,20 +140,22 @@ def manage_dot_folders(files: List[str], config, dry_run: bool = False) -> None:
         # Save updated .gitignore
         save_gitignore(ignored)
 
-        click.echo(click.style(
-            f"✅ Added {len(problematic)} dot folder(s)/file(s) to .gitignore: {', '.join(problematic)}",
-            fg='green'
-        ))
+        click.echo(
+            click.style(
+                f"✅ Added {len(problematic)} dot folder(s)/file(s) to .gitignore: {', '.join(problematic)}",
+                fg="green",
+            )
+        )
 
         # Re-stage files to unstage the newly ignored ones
-        run_git('add', '.gitignore')
-        run_git('update-index', '--refresh')
+        run_git("add", ".gitignore")
+        run_git("update-index", "--refresh")
 
         # Show which files were unstaged
         for item in problematic:
             if os.path.exists(item):
-                run_git('reset', '--', item)
-                click.echo(click.style(f"  → Unstaged: {item}", fg='yellow'))
+                run_git("reset", "--", item)
+                click.echo(click.style(f"  → Unstaged: {item}", fg="yellow"))
     else:
         # Just report the issue
         raise DotFolderError(problematic)

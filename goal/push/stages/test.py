@@ -20,20 +20,20 @@ def run_test_stage(
     current_version: str,
     new_version: str,
     commit_msg: str,
-    commit_body: str
+    commit_body: str,
 ) -> Tuple[str, int]:
     """Run tests with interactive or auto mode."""
     test_result = None
     test_exit_code = 0
-    
+
     if not yes:
         if confirm("Run tests?"):
-            click.echo(click.style("\nRunning tests...", fg='cyan'))
-            test_success = run_tests(project_types, config=ctx_obj.get('config'))
+            click.echo(click.style("\nRunning tests...", fg="cyan"))
+            test_success = run_tests(project_types, config=ctx_obj.get("config"))
             if not test_success:
                 test_exit_code = 1
                 if not confirm("Tests failed. Continue anyway?", default=False):
-                    if markdown or ctx_obj.get('markdown'):
+                    if markdown or ctx_obj.get("markdown"):
                         md_output = format_push_result(
                             project_types=project_types,
                             files=files,
@@ -44,29 +44,41 @@ def run_test_stage(
                             commit_body=commit_body,
                             test_result="Tests failed - aborted by user",
                             test_exit_code=1,
-                            actions=["Detected project types", "Staged changes", "Attempted to run tests"],
-                            error="User aborted due to test failures"
+                            actions=[
+                                "Detected project types",
+                                "Staged changes",
+                                "Attempted to run tests",
+                            ],
+                            error="User aborted due to test failures",
                         )
                         click.echo(md_output)
-                    click.echo(click.style("Aborted.", fg='red'))
+                    click.echo(click.style("Aborted.", fg="red"))
                     sys.exit(1)
         else:
-            click.echo(click.style("  🤖 AUTO: Skipping tests (user chose N)", fg='cyan'))
+            click.echo(
+                click.style("  🤖 AUTO: Skipping tests (user chose N)", fg="cyan")
+            )
     else:
-        click.echo(click.style("\n🤖 AUTO: Running tests (--all mode)", fg='cyan'))
+        click.echo(click.style("\n🤖 AUTO: Running tests (--all mode)", fg="cyan"))
         try:
-            test_success = run_tests(project_types, config=ctx_obj.get('config'))
+            test_success = run_tests(project_types, config=ctx_obj.get("config"))
             if not test_success:
                 test_exit_code = 1
                 test_result = "Tests failed"
-                click.echo(click.style("⚠️  Tests failed.", fg='red', bold=True))
+                click.echo(click.style("⚠️  Tests failed.", fg="red", bold=True))
             else:
                 test_exit_code = 0
                 test_result = "Tests passed"
-                click.echo(click.style("✓ All tests passed successfully", fg='green', bold=True))
+                click.echo(
+                    click.style(
+                        "✓ All tests passed successfully", fg="green", bold=True
+                    )
+                )
         except Exception as e:
             test_exit_code = 1
             test_result = f"Test execution error: {str(e)}"
-            click.echo(click.style(f"⚠️  Error running tests: {str(e)}", fg='red', bold=True))
-    
+            click.echo(
+                click.style(f"⚠️  Error running tests: {str(e)}", fg="red", bold=True)
+            )
+
     return test_result, test_exit_code

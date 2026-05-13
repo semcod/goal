@@ -14,10 +14,10 @@ from goal.summary import (
 )
 
 __all__ = [
-    'SummaryQualityFilter',
-    'QualityValidator',
-    'EnhancedSummaryGenerator',
-    'generate_business_summary',
-    'validate_summary',
-    'auto_fix_summary',
+    "SummaryQualityFilter",
+    "QualityValidator",
+    "EnhancedSummaryGenerator",
+    "generate_business_summary",
+    "validate_summary",
+    "auto_fix_summary",
 ]

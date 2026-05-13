@@ -21,15 +21,15 @@ from .version_sync import sync_all_versions
 
 # Make all re-exported names available in __all__
 __all__ = [
-    'PROJECT_TYPES',
-    'detect_project_types',
-    'find_version_files',
-    'get_version_from_file',
-    'get_current_version',
-    'bump_version',
-    'update_version_in_file',
-    'update_json_version',
-    'update_project_metadata',
-    'update_readme_metadata',
-    'sync_all_versions',
+    "PROJECT_TYPES",
+    "detect_project_types",
+    "find_version_files",
+    "get_version_from_file",
+    "get_current_version",
+    "bump_version",
+    "update_version_in_file",
+    "update_json_version",
+    "update_project_metadata",
+    "update_readme_metadata",
+    "sync_all_versions",
 ]

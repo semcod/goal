@@ -1,11 +1,8 @@
 """Tests for project environment bootstrapping and test scaffolding."""
 
-import json
 import os
 import sys
-import subprocess
 import types
-from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -36,6 +33,7 @@ from goal.cli import main
 # _match_marker
 # ---------------------------------------------------------------------------
 
+
 class TestMatchMarker:
     def test_exact_file(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text("[project]")
@@ -51,6 +49,7 @@ class TestMatchMarker:
 # ---------------------------------------------------------------------------
 # detect_project_types_deep
 # ---------------------------------------------------------------------------
+
 
 class TestDetectProjectTypesDeep:
     def test_root_python(self, tmp_path):
@@ -109,6 +108,7 @@ class TestDetectProjectTypesDeep:
 # guess_package_name
 # ---------------------------------------------------------------------------
 
+
 class TestGuessPackageName:
     def test_python_from_pyproject(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text('name = "my-cool-lib"')
@@ -133,6 +133,7 @@ class TestGuessPackageName:
 # ---------------------------------------------------------------------------
 # find_existing_tests
 # ---------------------------------------------------------------------------
+
 
 class TestFindExistingTests:
     def test_finds_python_tests(self, tmp_path):
@@ -170,6 +171,7 @@ class TestFindExistingTests:
 # ---------------------------------------------------------------------------
 # scaffold_test
 # ---------------------------------------------------------------------------
+
 
 class TestScaffoldTest:
     def test_creates_python_test(self, tmp_path):
@@ -247,33 +249,45 @@ class TestScaffoldTest:
 # ensure_project_environment (Python)
 # ---------------------------------------------------------------------------
 
+
 class TestEnsureProjectEnvironmentPython:
     def test_creates_venv_and_installs(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "testpkg"\nversion = "0.1.0"'
         )
         # Mock subprocess to avoid slow venv creation and pip installs
-        with mock.patch('subprocess.run') as mock_run:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             result = ensure_project_environment(tmp_path, "python", yes=True)
             assert result is True
             # Verify venv creation was attempted
-            venv_calls = [call for call in mock_run.call_args_list 
-                         if '-m' in str(call) and 'venv' in str(call)]
+            venv_calls = [
+                call
+                for call in mock_run.call_args_list
+                if "-m" in str(call) and "venv" in str(call)
+            ]
             assert len(venv_calls) >= 1
 
     def test_skips_if_venv_exists(self, tmp_path):
         (tmp_path / ".venv" / "bin").mkdir(parents=True)
         (tmp_path / ".venv" / "bin" / "python").write_text("#!/bin/sh")
         (tmp_path / ".venv" / "bin" / "python").chmod(0o755)
-        with mock.patch('subprocess.run') as mock_run:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             result = ensure_project_environment(tmp_path, "python", yes=True)
             assert result is True
             # Should not create venv (no call with -m venv), but pip upgrade is still called
             calls_args = [call.args[0] for call in mock_run.call_args_list if call.args]
-            venv_module_calls = [args for args in calls_args if '-m' in args and 'venv' in args]
-            assert len(venv_module_calls) == 0, "venv creation should be skipped when .venv exists"
+            venv_module_calls = [
+                args for args in calls_args if "-m" in args and "venv" in args
+            ]
+            assert len(venv_module_calls) == 0, (
+                "venv creation should be skipped when .venv exists"
+            )
 
     def test_interactive_decline(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"')
@@ -286,6 +300,7 @@ class TestEnsureProjectEnvironmentPython:
 # ---------------------------------------------------------------------------
 # ensure_project_environment (generic / non-Python)
 # ---------------------------------------------------------------------------
+
 
 class TestEnsureProjectEnvironmentGeneric:
     def test_unknown_type_returns_true(self, tmp_path):
@@ -301,6 +316,7 @@ class TestEnsureProjectEnvironmentGeneric:
 # ---------------------------------------------------------------------------
 # OpenRouter / pfix env discovery
 # ---------------------------------------------------------------------------
+
 
 class TestOpenRouterEnvDiscovery:
     def test_finds_parent_env_over_blank_local_env(self, tmp_path):
@@ -354,64 +370,97 @@ class TestOpenRouterEnvDiscovery:
 # Python test dependency installation
 # ---------------------------------------------------------------------------
 
+
 class TestPythonTestDependency:
     def test_installs_missing_pytest(self, tmp_path):
-        with mock.patch('subprocess.run') as mock_run:
+        with mock.patch("subprocess.run") as mock_run:
             mock_run.side_effect = [
-                mock.MagicMock(returncode=1, stdout='', stderr='ModuleNotFoundError'),
-                mock.MagicMock(returncode=0, stdout='', stderr=''),
+                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),
+                mock.MagicMock(returncode=0, stdout="", stderr=""),
             ]
 
-            assert _ensure_python_test_dependency(tmp_path, '/usr/bin/python3', 'pytest') is True
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/python3", "pytest")
+                is True
+            )
 
-        assert mock_run.call_args_list[0].args[0] == ['/usr/bin/python3', '-c', 'import pytest; print(pytest.__version__)']
-        assert mock_run.call_args_list[1].args[0] == ['/usr/bin/python3', '-m', 'pip', 'install', 'pytest']
+        assert mock_run.call_args_list[0].args[0] == [
+            "/usr/bin/python3",
+            "-c",
+            "import pytest; print(pytest.__version__)",
+        ]
+        assert mock_run.call_args_list[1].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pip",
+            "install",
+            "pytest",
+        ]
 
 
 # ---------------------------------------------------------------------------
 # pfix installation source selection
 # ---------------------------------------------------------------------------
 
+
 class TestPfixInstallSource:
     def test_installs_pfix_from_pypi_by_default(self, tmp_path):
-        with mock.patch.dict(os.environ, {}, clear=False), \
-             mock.patch('goal.project_bootstrap._find_python_bin', return_value='/usr/bin/python3'), \
-             mock.patch('goal.project_bootstrap._ensure_pfix_config', return_value=True), \
-             mock.patch('goal.project_bootstrap._ensure_pfix_env', return_value=True), \
-             mock.patch('goal.project_bootstrap._validate_pfix_env', return_value=True), \
-             mock.patch('subprocess.run') as mock_run:
+        with (
+            mock.patch.dict(os.environ, {}, clear=False),
+            mock.patch(
+                "goal.project_bootstrap._find_python_bin",
+                return_value="/usr/bin/python3",
+            ),
+            mock.patch("goal.project_bootstrap._ensure_pfix_config", return_value=True),
+            mock.patch("goal.project_bootstrap._ensure_pfix_env", return_value=True),
+            mock.patch("goal.project_bootstrap._validate_pfix_env", return_value=True),
+            mock.patch("subprocess.run") as mock_run,
+        ):
             mock_run.side_effect = [
-                mock.MagicMock(returncode=1, stdout='', stderr='ModuleNotFoundError'),
-                mock.MagicMock(returncode=0, stdout='', stderr=''),
-            ]
-
-            assert _ensure_pfix_installed(tmp_path, yes=True) is True
-
-        assert mock_run.call_args_list[1].args[0] == ['/usr/bin/python3', '-m', 'pip', 'install', 'pfix>=0.1.60']
-
-    def test_installs_pfix_from_local_path_when_configured(self, tmp_path):
-        local_pfix = tmp_path / 'local-pfix'
-        local_pfix.mkdir()
-
-        with mock.patch.dict(os.environ, {'GOAL_PFIX_LOCAL_PATH': str(local_pfix)}, clear=False), \
-             mock.patch('goal.project_bootstrap._find_python_bin', return_value='/usr/bin/python3'), \
-             mock.patch('goal.project_bootstrap._ensure_pfix_config', return_value=True), \
-             mock.patch('goal.project_bootstrap._ensure_pfix_env', return_value=True), \
-             mock.patch('goal.project_bootstrap._validate_pfix_env', return_value=True), \
-             mock.patch('subprocess.run') as mock_run:
-            mock_run.side_effect = [
-                mock.MagicMock(returncode=1, stdout='', stderr='ModuleNotFoundError'),
-                mock.MagicMock(returncode=0, stdout='', stderr=''),
+                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),
+                mock.MagicMock(returncode=0, stdout="", stderr=""),
             ]
 
             assert _ensure_pfix_installed(tmp_path, yes=True) is True
 
         assert mock_run.call_args_list[1].args[0] == [
-            '/usr/bin/python3',
-            '-m',
-            'pip',
-            'install',
-            '-e',
+            "/usr/bin/python3",
+            "-m",
+            "pip",
+            "install",
+            "pfix>=0.1.60",
+        ]
+
+    def test_installs_pfix_from_local_path_when_configured(self, tmp_path):
+        local_pfix = tmp_path / "local-pfix"
+        local_pfix.mkdir()
+
+        with (
+            mock.patch.dict(
+                os.environ, {"GOAL_PFIX_LOCAL_PATH": str(local_pfix)}, clear=False
+            ),
+            mock.patch(
+                "goal.project_bootstrap._find_python_bin",
+                return_value="/usr/bin/python3",
+            ),
+            mock.patch("goal.project_bootstrap._ensure_pfix_config", return_value=True),
+            mock.patch("goal.project_bootstrap._ensure_pfix_env", return_value=True),
+            mock.patch("goal.project_bootstrap._validate_pfix_env", return_value=True),
+            mock.patch("subprocess.run") as mock_run,
+        ):
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),
+                mock.MagicMock(returncode=0, stdout="", stderr=""),
+            ]
+
+            assert _ensure_pfix_installed(tmp_path, yes=True) is True
+
+        assert mock_run.call_args_list[1].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pip",
+            "install",
+            "-e",
             str(local_pfix.resolve()),
         ]
 
@@ -419,6 +468,7 @@ class TestPfixInstallSource:
 # ---------------------------------------------------------------------------
 # costs / badge generation
 # ---------------------------------------------------------------------------
+
 
 class TestCostsBadgeGeneration:
     def test_uses_git_root_for_subproject_analysis(self, tmp_path):
@@ -473,18 +523,27 @@ class TestCostsBadgeGeneration:
         fake_calculator = types.ModuleType("costs.calculator")
         fake_calculator.ai_cost = lambda diff, model=None, api_key=None: {"cost": 0.25}
 
-        with mock.patch.dict(
-            sys.modules,
-            {
-                "costs": fake_costs,
-                "costs.git_parser": fake_git_parser,
-                "costs.calculator": fake_calculator,
-            },
-            clear=False,
-        ), mock.patch("subprocess.run") as mock_run, \
-             mock.patch("goal.project_bootstrap._ensure_costs_config", return_value=True), \
-             mock.patch("goal.project_bootstrap._ensure_env_template", return_value=True):
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout="0.1.48", stderr="")
+        with (
+            mock.patch.dict(
+                sys.modules,
+                {
+                    "costs": fake_costs,
+                    "costs.git_parser": fake_git_parser,
+                    "costs.calculator": fake_calculator,
+                },
+                clear=False,
+            ),
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch(
+                "goal.project_bootstrap._ensure_costs_config", return_value=True
+            ),
+            mock.patch(
+                "goal.project_bootstrap._ensure_env_template", return_value=True
+            ),
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="0.1.48", stderr=""
+            )
             result = _ensure_costs_installed(subproject, "/usr/bin/python")
 
         assert result is True
@@ -499,16 +558,21 @@ class TestCostsBadgeGeneration:
 # bootstrap_project
 # ---------------------------------------------------------------------------
 
+
 class TestBootstrapProject:
     def test_full_bootstrap_python(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "testpkg"\nversion = "0.1.0"'
         )
         # Mock expensive operations
-        with mock.patch('subprocess.run') as mock_run, \
-             mock.patch('goal.project_bootstrap._ensure_costs_installed') as mock_costs, \
-             mock.patch('goal.project_bootstrap._ensure_pfix_installed') as mock_pfix:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with (
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
+            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             mock_costs.return_value = True
             mock_pfix.return_value = True
             result = bootstrap_project(tmp_path, "python", yes=True)
@@ -527,10 +591,14 @@ class TestBootstrapProject:
         tests_dir.mkdir()
         (tests_dir / "test_existing.py").write_text("def test_x(): pass")
         # Mock expensive operations
-        with mock.patch('subprocess.run') as mock_run, \
-             mock.patch('goal.project_bootstrap._ensure_costs_installed') as mock_costs, \
-             mock.patch('goal.project_bootstrap._ensure_pfix_installed') as mock_pfix:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with (
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
+            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             mock_costs.return_value = True
             mock_pfix.return_value = True
             result = bootstrap_project(tmp_path, "python", yes=True)
@@ -541,6 +609,7 @@ class TestBootstrapProject:
 # ---------------------------------------------------------------------------
 # bootstrap_all_projects
 # ---------------------------------------------------------------------------
+
 
 class TestBootstrapAllProjects:
     def test_detects_and_bootstraps(self, tmp_path):
@@ -555,14 +624,20 @@ class TestBootstrapAllProjects:
         try:
             os.chdir(tmp_path)
             # Mock expensive operations
-            with mock.patch('subprocess.run') as mock_run, \
-                 mock.patch('goal.project_bootstrap._ensure_costs_installed') as mock_costs, \
-                 mock.patch('goal.project_bootstrap._ensure_pfix_installed') as mock_pfix, \
-                 mock.patch('shutil.which') as mock_which:
+            with (
+                mock.patch("subprocess.run") as mock_run,
+                mock.patch(
+                    "goal.project_bootstrap._ensure_costs_installed"
+                ) as mock_costs,
+                mock.patch(
+                    "goal.project_bootstrap._ensure_pfix_installed"
+                ) as mock_pfix,
+                mock.patch("shutil.which") as mock_which,
+            ):
                 mock_run.return_value = mock.MagicMock(returncode=0)
                 mock_costs.return_value = True
                 mock_pfix.return_value = True
-                mock_which.return_value = '/usr/bin/npm'
+                mock_which.return_value = "/usr/bin/npm"
                 results = bootstrap_all_projects(tmp_path, yes=True)
         finally:
             os.chdir(old)
@@ -586,6 +661,7 @@ class TestBootstrapAllProjects:
 # CLI: goal bootstrap
 # ---------------------------------------------------------------------------
 
+
 class TestBootstrapCommand:
     def test_bootstrap_help(self):
         runner = CliRunner()
@@ -605,10 +681,14 @@ class TestBootstrapCommand:
         )
         runner = CliRunner()
         # Mock subprocess to avoid slow venv/pip operations
-        with mock.patch('subprocess.run') as mock_run, \
-             mock.patch('goal.project_bootstrap._ensure_costs_installed') as mock_costs, \
-             mock.patch('goal.project_bootstrap._ensure_pfix_installed') as mock_pfix:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with (
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
+            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             mock_costs.return_value = True
             mock_pfix.return_value = True
             result = runner.invoke(main, ["bootstrap", "-y", "--path", str(tmp_path)])
@@ -620,6 +700,7 @@ class TestBootstrapCommand:
 # ---------------------------------------------------------------------------
 # All project types have required keys in PROJECT_BOOTSTRAP
 # ---------------------------------------------------------------------------
+
 
 class TestProjectBootstrapConfig:
     @pytest.mark.parametrize("ptype", list(PROJECT_BOOTSTRAP.keys()))

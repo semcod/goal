@@ -16,9 +16,9 @@ from goal.config import (
 
 # Maintain backward compatibility for direct access
 __all__ = [
-    'GoalConfig',
-    'init_config',
-    'load_config',
-    'ensure_config',
-    'DEFAULT_CONFIG',
+    "GoalConfig",
+    "init_config",
+    "load_config",
+    "ensure_config",
+    "DEFAULT_CONFIG",
 ]

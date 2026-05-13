@@ -13,11 +13,11 @@ from .lfs import LFSIssueStrategy
 from .force_push import ForcePushStrategy
 
 __all__ = [
-    'RecoveryStrategy',
-    'AuthErrorStrategy',
-    'LargeFileStrategy',
-    'DivergentHistoryStrategy',
-    'CorruptedObjectStrategy',
-    'LFSIssueStrategy',
-    'ForcePushStrategy',
+    "RecoveryStrategy",
+    "AuthErrorStrategy",
+    "LargeFileStrategy",
+    "DivergentHistoryStrategy",
+    "CorruptedObjectStrategy",
+    "LFSIssueStrategy",
+    "ForcePushStrategy",
 ]
