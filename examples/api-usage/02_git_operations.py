@@ -18,20 +18,18 @@ from goal.git_ops import (
 )
 
 
-def main():
-    """Demonstrate git operations."""
-    print("=" * 60)
-    print("Goal API - Git Operations")
-    print("=" * 60)
-
-    # Check if in git repo
+def _check_git_repository() -> bool:
+    """Check if current directory is a git repository."""
     print("\n1. Checking git repository...")
     if not is_git_repository():
         print("   ✗ Not a git repository!")
-        return
+        return False
     print("   ✓ Git repository found")
+    return True
 
-    # Get staged files
+
+def _display_staged_files() -> None:
+    """Display staged files."""
     print("\n2. Staged files:")
     staged = get_staged_files()
     if staged and staged != [""]:
@@ -42,7 +40,9 @@ def main():
     else:
         print("   (no staged files)")
 
-    # Get unstaged files
+
+def _display_unstaged_files() -> None:
+    """Display unstaged files."""
     print("\n3. Unstaged files:")
     unstaged = get_unstaged_files()
     if unstaged and unstaged != [""]:
@@ -53,7 +53,9 @@ def main():
     else:
         print("   (no unstaged files)")
 
-    # Get diff stats
+
+def _display_diff_stats() -> None:
+    """Display diff statistics."""
     print("\n4. Diff statistics:")
     stats = get_diff_stats()
     if stats:
@@ -65,7 +67,9 @@ def main():
     else:
         print("   (no changes)")
 
-    # Get diff content (truncated)
+
+def _display_diff_content() -> None:
+    """Display diff content preview."""
     print("\n5. Diff preview (first 500 chars):")
     diff = get_diff_content()
     if diff:
@@ -73,6 +77,21 @@ def main():
         print(f"   {preview}...")
     else:
         print("   (no diff)")
+
+
+def main():
+    """Demonstrate git operations."""
+    print("=" * 60)
+    print("Goal API - Git Operations")
+    print("=" * 60)
+
+    if not _check_git_repository():
+        return
+
+    _display_staged_files()
+    _display_unstaged_files()
+    _display_diff_stats()
+    _display_diff_content()
 
     print("\n" + "=" * 60)
 

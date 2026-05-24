@@ -1,53 +1,56 @@
-# goal | 20202 func | 123f | 246515L | python | 2026-04-26
+# goal | 947 func | 129f | 28797L | python | 2026-05-24
+# generated in 0.00s
 
 HEALTH:
-  CC̄=0.2  critical=86 (limit:10)  dup=0  cycles=0
+  CC̄=4.3  critical=86 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     execute_push_workflow = 27 (limit:10)
+  !!! high_fan_out     execute_push_workflow = 28 (limit:10)
   !!! high_fan_out     EnhancedSummaryGenerator.generate_enhanced_summary = 24 (limit:10)
   !!! high_fan_out     doctor = 22 (limit:10)
   !!! high_fan_out     _install_python_deps_legacy = 20 (limit:10)
-  !!  cc_exceeded      _run_subdir_test = 22 (limit:15)
-  !!  high_fan_out     update_cost_badges = 19 (limit:10)
   !!  high_fan_out     _install_python_deps = 19 (limit:10)
+  !!  high_fan_out     update_cost_badges = 19 (limit:10)
   !!  high_fan_out     fix_summary = 18 (limit:10)
   !!  high_fan_out     validate = 18 (limit:10)
   !!  high_fan_out     CodeChangeAnalyzer._analyze_python_diff = 17 (limit:10)
+  !!  high_fan_out     CommitMessageGenerator.generate_detailed_message = 17 (limit:10)
 
-MODULES[190] (top by size):
-  M[project/map.toon.yaml] 53859L C:0 F:19290 CC↑0 D:48 (yaml)
-  M[.aider/caches/model_prices_and_context_window.json] 37479L C:0 F:0 CC↑0 D:0 (json)
-  M[project/calls.yaml] 24506L C:0 F:0 CC↑0 D:0 (yaml)
-  M[.aider/caches/openrouter_models.json] 17810L C:0 F:0 CC↑0 D:0 (json)
-  M[planfile.yaml] 2108L C:0 F:0 CC↑0 D:0 (yaml)
-  M[project/project.yaml] 1323L C:0 F:0 CC↑0 D:0 (yaml)
-  M[goal/project_bootstrap.py] 1313L C:0 F:41 CC↑14 D:6 (python)
-  M[goal/doctor/python.py] 625L C:1 F:31 CC↑10 D:0 (python)
-  M[goal/package_managers.py] 616L C:1 F:16 CC↑5 D:1 (python)
-  M[goal/deep_analyzer.py] 584L C:1 F:27 CC↑13 D:0 (python)
-  M[goal/git_ops.py] 574L C:0 F:28 CC↑11 D:19 (python)
-  M[goal/license/manager.py] 570L C:1 F:12 CC↑10 D:1 (python)
-  M[project/validation.toon.yaml] 554L C:0 F:0 CC↑0 D:0 (yaml)
-  M[goal/summary/generator.py] 534L C:1 F:14 CC↑14 D:0 (python)
-  M[goal/smart_commit/generator.py] 527L C:1 F:25 CC↑13 D:0 (python)
-  LANGS: python:141/yaml:20/json:8/shell:5/toml:4/other:3/csharp:2/txt:2/go:1/java:1/php:1/yml:1/xml:1
+MODULES[187] (top by size):
+  M[goal/project_bootstrap.py] 1214L C:0 F:32 CC↑14 D:7 (python)
+  M[goal/git_ops.py] 672L C:0 F:28 CC↑11 D:19 (python)
+  M[goal/package_managers.py] 607L C:1 F:16 CC↑5 D:1 (python)
+  M[goal/summary/generator.py] 589L C:1 F:14 CC↑14 D:0 (python)
+  M[goal/push/core.py] 588L C:1 F:17 CC↑10 D:3 (python)
+  M[goal/license/manager.py] 587L C:1 F:12 CC↑10 D:1 (python)
+  M[goal/generator/analyzer.py] 563L C:2 F:27 CC↑14 D:0 (python)
+  M[goal/config/validation.py] 528L C:2 F:15 CC↑14 D:2 (python)
+  M[goal/summary/validator.py] 489L C:1 F:24 CC↑10 D:0 (python)
+  M[goal/config/constants.py] 487L C:0 F:0 CC↑0 D:0 (python)
+  M[goal/config/manager.py] 485L C:1 F:25 CC↑10 D:7 (python)
+  M[goal/cli/version_utils.py] 478L C:0 F:21 CC↑12 D:7 (python)
+  M[goal/push/stages/push_remote.py] 467L C:0 F:17 CC↑11 D:1 (python)
+  M[goal/generator/generator.py] 432L C:1 F:24 CC↑12 D:2 (python)
+  M[goal/formatter.py] 430L C:1 F:23 CC↑13 D:4 (python)
+  LANGS: python:151/yaml:13/shell:7/toml:4/other:3/csharp:2/json:2/go:1/java:1/php:1/yml:1/xml:1
 
 HOTSPOTS[10]:
-  ★ execute_push_workflow fan=27  // Execute the complete push workflow.
+  ★ execute_push_workflow fan=28  // Execute the complete push workflow.
   ★ EnhancedSummaryGenerator.generate_enhanced_summary fan=24  // Generate complete enhanced summary with business value focus.
   ★ doctor fan=22  // Diagnose and auto-fix common project configuration issues.
   ★ _install_python_deps_legacy fan=20  // Legacy dependency installation using config-based commands.
-  ★ update_cost_badges fan=19  // Update AI cost badges in README using costs package.
+  ★ _install_python_deps fan=19  // Run the first matching dependency install command for a Python project.
 
-REFACTOR[15]:
-  [1] H/H Split god module goal/project_bootstrap.py (1313L, 0 classes)
-  [2] H/H Split god module goal/summary/generator.py (534L, 1 classes)
-  [3] H/H Split god module goal/deep_analyzer.py (584L, 1 classes)
-  [4] H/H Split god module goal/smart_commit/generator.py (527L, 1 classes)
-  [5] H/H Split god module goal/git_ops.py (574L, 0 classes)
+Optimiz
+
+REFACTOR[12]:
+  [1] H/H Split god module goal/config/validation.py (528L, 2 classes)
+  [2] H/H Split god module goal/generator/analyzer.py (563L, 2 classes)
+  [3] H/H Split god module goal/project_bootstrap.py (1214L, 0 classes)
+  [4] H/H Split god module goal/summary/generator.py (589L, 1 classes)
+  [5] H/H Split god module goal/git_ops.py (672L, 0 classes)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-04-26 CC̄=0.2 crit=86 246515L // Automated analysis
+  2026-05-24 CC̄=4.3 crit=86 28797L // Automated analysis

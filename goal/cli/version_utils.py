@@ -407,6 +407,53 @@ def update_project_metadata(filepath: Path, user_config) -> bool:
     return False
 
 
+def _update_license_section(content: str, license_id: str) -> str:
+    """Update or add the license section in README.md content."""
+    license_matches = list(
+        re.finditer(r"^## License[ \t]*$", content, re.MULTILINE)
+    )
+    if license_matches:
+        # Use the last match (real License section is typically at the end)
+        last_match = license_matches[-1]
+        start_pos = last_match.start()
+        # Find where this section ends (next ## header or end of file)
+        rest = content[last_match.end() :]
+        next_header = re.search(r"^##[ \t]", rest, re.MULTILINE)
+        if next_header:
+            end_pos = last_match.end() + next_header.start()
+        else:
+            end_pos = len(content)
+        # Replace only this section
+        new_section = f"## License\n\nLicensed under {license_id}.\n"
+        return content[:start_pos] + new_section + content[end_pos:]
+    else:
+        # Add license section at the end, but only if license info is not already present
+        license_line = f"Licensed under {license_id}."
+        if license_line not in content and license_id not in content:
+            return content + f"\n\n## License\n\n{license_line}\n"
+    return content
+
+
+def _update_author_section(content: str, author_name: str) -> str:
+    """Update the author section in README.md content if present."""
+    author_matches = list(re.finditer(r"^## Author[ \t]*$", content, re.MULTILINE))
+    if author_matches:
+        # Use the last match (real Author section is typically at the end)
+        last_match = author_matches[-1]
+        start_pos = last_match.start()
+        # Find where this section ends (next ## header or end of file)
+        rest = content[last_match.end() :]
+        next_header = re.search(r"^##[ \t]", rest, re.MULTILINE)
+        if next_header:
+            end_pos = last_match.end() + next_header.start()
+        else:
+            end_pos = len(content)
+        # Replace only this section
+        new_section = f"## Author\n\n{author_name}\n"
+        return content[:start_pos] + new_section + content[end_pos:]
+    return content
+
+
 def update_readme_metadata(user_config) -> bool:
     """Update README.md with author and license information."""
     if not user_config:
@@ -426,48 +473,8 @@ def update_readme_metadata(user_config) -> bool:
         content = readme_path.read_text()
         original_content = content
 
-        # Update or add license section - only match H2 headers at line start
-        # Find the LAST occurrence (the real section, not code blocks)
-        license_matches = list(
-            re.finditer(r"^## License[ \t]*$", content, re.MULTILINE)
-        )
-        if license_matches:
-            # Use the last match (real License section is typically at the end)
-            last_match = license_matches[-1]
-            start_pos = last_match.start()
-            # Find where this section ends (next ## header or end of file)
-            rest = content[last_match.end() :]
-            next_header = re.search(r"^##[ \t]", rest, re.MULTILINE)
-            if next_header:
-                end_pos = last_match.end() + next_header.start()
-            else:
-                end_pos = len(content)
-            # Replace only this section
-            new_section = f"## License\n\nLicensed under {license_id}.\n"
-            content = content[:start_pos] + new_section + content[end_pos:]
-        else:
-            # Add license section at the end, but only if license info is not already present
-            license_line = f"Licensed under {license_id}."
-            if license_line not in content and license_id not in content:
-                content += f"\n\n## License\n\n{license_line}\n"
-
-        # Update author information if present - only match H2 headers at line start
-        # Find the LAST occurrence (the real section, not code blocks)
-        author_matches = list(re.finditer(r"^## Author[ \t]*$", content, re.MULTILINE))
-        if author_matches:
-            # Use the last match (real Author section is typically at the end)
-            last_match = author_matches[-1]
-            start_pos = last_match.start()
-            # Find where this section ends (next ## header or end of file)
-            rest = content[last_match.end() :]
-            next_header = re.search(r"^##[ \t]", rest, re.MULTILINE)
-            if next_header:
-                end_pos = last_match.end() + next_header.start()
-            else:
-                end_pos = len(content)
-            # Replace only this section
-            new_section = f"## Author\n\n{author_name}\n"
-            content = content[:start_pos] + new_section + content[end_pos:]
+        content = _update_license_section(content, license_id)
+        content = _update_author_section(content, author_name)
 
         if content != original_content:
             readme_path.write_text(content)

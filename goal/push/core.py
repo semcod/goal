@@ -69,6 +69,117 @@ def show_workflow_preview(
             click.echo(commit_body)
 
 
+def add_slow_test_tickets_to_planfile(test_details: Dict[str, Any]) -> List[str]:
+    """Create tasks in project/planfile-tickets.yaml for slow tests."""
+    from pathlib import Path
+    import yaml
+    import os
+
+    planfile_path = Path("project/planfile-tickets.yaml")
+    if not planfile_path.exists():
+        return []
+
+    try:
+        with open(planfile_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except Exception:
+        return []
+
+    if not isinstance(data, dict):
+        data = {}
+
+    if "tickets" not in data or not isinstance(data["tickets"], list):
+        data["tickets"] = []
+
+    added_titles = []
+    slow_tests = test_details.get("slow_tests", [])
+
+    # Threshold of 0.5 seconds for a test to require improvement
+    THRESHOLD = 0.5
+
+    for test in slow_tests:
+        duration = test.get("duration", 0.0)
+        if duration < THRESHOLD:
+            continue
+
+        classname = test.get("classname", "unknown")
+        name = test.get("name", "unknown")
+
+        # Map classname to file
+        parts = classname.split(".")
+        file_path = "tests"  # fallback
+        for i in range(len(parts), 0, -1):
+            candidate = "/".join(parts[:i]) + ".py"
+            if os.path.exists(candidate):
+                file_path = candidate
+                break
+
+        title = f"Address slow test: {classname}.{name}"
+        dedupe_key = f"test-optimization:{classname}:{name}"
+
+        # Check if ticket already exists
+        exists = False
+        for ticket in data["tickets"]:
+            if isinstance(ticket, dict) and ticket.get("dedupe_key") == dedupe_key:
+                exists = True
+                break
+
+        if not exists:
+            new_ticket = {
+                "signal": "slow_test_warning",
+                "title": title,
+                "description": (
+                    f"Test `{classname}.{name}` took {duration:.2f}s to run.\n\n"
+                    f"Optimize its setup, mock slow external dependencies, or "
+                    f"refactor its logic to reduce overall test suite execution time."
+                ),
+                "priority": "medium",
+                "labels": ["llm-ready", "test-optimization", "slow-test"],
+                "files": [file_path],
+                "dedupe_key": dedupe_key
+            }
+            data["tickets"].append(new_ticket)
+            added_titles.append(title)
+
+    # Also add a general startup/collection overhead ticket if overhead is high (> 3.0s)
+    startup_overhead = test_details.get("startup_overhead", 0.0)
+    if startup_overhead > 3.0:
+        title = "Address high test suite startup overhead"
+        dedupe_key = "test-optimization:general:startup-overhead"
+        exists = False
+        for ticket in data["tickets"]:
+            if isinstance(ticket, dict) and ticket.get("dedupe_key") == dedupe_key:
+                exists = True
+                break
+
+        if not exists:
+            new_ticket = {
+                "signal": "slow_test_warning",
+                "title": title,
+                "description": (
+                    f"The test suite startup and collection overhead is high: {startup_overhead:.2f}s.\n\n"
+                    f"This overhead is spent on imports, collection, and test environment initialization.\n"
+                    f"Analyze fixtures with broad scopes, reduce heavy imports on test collection, "
+                    f"and optimize pytest-xdist startup settings to decrease the delay before tests start running."
+                ),
+                "priority": "high",
+                "labels": ["llm-ready", "test-optimization", "startup-overhead"],
+                "files": ["pyproject.toml"],
+                "dedupe_key": dedupe_key
+            }
+            data["tickets"].append(new_ticket)
+            added_titles.append(title)
+
+    if added_titles:
+        try:
+            with open(planfile_path, "w", encoding="utf-8") as f:
+                yaml.dump(data, f, sort_keys=False, allow_unicode=True)
+        except Exception:
+            pass
+
+    return added_titles
+
+
 def output_final_summary(
     ctx_obj: Dict[str, Any],
     markdown: bool,
@@ -83,7 +194,59 @@ def output_final_summary(
     publish_success: bool,
     no_tag: bool,
 ) -> None:
-    """Output final summary in markdown format if requested."""
+    """Output final summary in YAML or markdown format."""
+    import yaml
+    from datetime import datetime
+
+    test_details = ctx_obj.get("test_details", {})
+    added_tickets = []
+    if test_details:
+        added_tickets = add_slow_test_tickets_to_planfile(test_details)
+
+    is_all_mode = ctx_obj.get("yes") or markdown or ctx_obj.get("markdown")
+
+    if is_all_mode:
+        # Build YAML report
+        slowest = []
+        needs_improvement = []
+        for t in test_details.get("slow_tests", []):
+            duration = t.get("duration", 0.0)
+            formatted_test = f"{t.get('classname')}.{t.get('name')} ({duration:.2f}s)"
+            if len(slowest) < 5:
+                slowest.append(formatted_test)
+            if duration >= 0.5:
+                needs_improvement.append(formatted_test)
+
+        yaml_report = {
+            "goal_summary": {
+                "timestamp": datetime.now().isoformat(),
+                "status": "SUCCESS" if test_exit_code == 0 else "FAILED",
+                "version_update": {
+                    "from": current_version,
+                    "to": new_version
+                },
+                "git": {
+                    "commit_message": commit_msg,
+                    "files_changed": len(files)
+                },
+                "test_execution": {
+                    "status": "passed" if test_exit_code == 0 else "failed",
+                    "total_wall_time_seconds": round(test_details.get("wall_time", 0.0), 2),
+                    "sum_individual_test_time_seconds": round(test_details.get("total_test_time", 0.0), 2),
+                    "startup_and_collection_overhead_seconds": round(test_details.get("startup_overhead", 0.0), 2),
+                    "slowest_tests_top_5": slowest,
+                    "tests_requiring_improvement": needs_improvement,
+                },
+                "planfile_updates": {
+                    "tickets_added": added_tickets
+                }
+            }
+        }
+
+        click.echo(click.style("\n=== GOAL RESULT (YAML) ===", fg="green", bold=True))
+        click.echo(yaml.dump(yaml_report, sort_keys=False, allow_unicode=True))
+        click.echo(click.style("==========================\n", fg="green", bold=True))
+
     if not (markdown or ctx_obj.get("markdown")):
         return
 

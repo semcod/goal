@@ -31,6 +31,32 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.233] - 2026-05-24
+
+### Docs
+- Update README.md
+- Update TODO/zaproponuj refaktoryzacje, aby ta paczka goal potr.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_installers_e2e.py
+- Update tests/test_version_sync.py
+
+### Other
+- Update "TODO/chcia\305\202by uruchamia\304\207 unit tetsy i inne z pytest, it.md"
+- Update "TODO/stworz liste projektow github i pypi, ktore przy\305\233.md"
+- Update VERSION
+- Update examples/api-usage/02_git_operations.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- ... and 11 more files
+
 ## [2.1.230] - 2026-05-13
 
 ### Docs

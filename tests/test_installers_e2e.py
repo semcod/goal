@@ -137,7 +137,11 @@ class TestBootstrapIntegration:
         (tmp_path / "pyproject.toml").write_text('[project]\nname = "test"')
 
         # Should not fail (may skip if no venv needed)
-        with patch("click.confirm", return_value=False):
+        with (
+            patch("click.confirm", return_value=False),
+            patch("subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = MagicMock(returncode=0)
             result = ensure_project_environment(tmp_path, "python", yes=True)
 
         assert result is True

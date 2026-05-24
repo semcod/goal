@@ -115,8 +115,28 @@ def _display_test_error(
             )
 
 
+_last_test_wall_time = 0.0
+
+
+def _has_package(python_bin: str, package_name: str) -> bool:
+    """Check if a package is available in the specified python interpreter."""
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return False
+    try:
+        res = subprocess.run(
+            [python_bin, "-c", f"import {package_name}"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        return res.returncode == 0
+    except Exception:
+        return False
+
+
 def _run_python_test(test_dir: str, base_cmd: List[str]) -> tuple[bool, bool]:
     """Run Python tests in a subdirectory. Returns (success, skipped)."""
+    import shutil
     project_root = _find_project_root(Path(test_dir), "python")
     if not project_root:
         return True, True
@@ -138,10 +158,32 @@ def _run_python_test(test_dir: str, base_cmd: List[str]) -> tuple[bool, bool]:
         )
         return True, True
 
-    subdir_cmd = [python_bin, "-m", "pytest"]
+    has_uv = bool(shutil.which("uv")) and "PYTEST_CURRENT_TEST" not in os.environ
+    if has_uv:
+        subdir_cmd = ["uv", "run", "pytest"]
+    else:
+        subdir_cmd = [python_bin, "-m", "pytest"]
+
+    # Automatically enable parallel testing if xdist is installed
+    if _has_package(python_bin, "xdist"):
+        subdir_cmd += ["-n", "auto", "--dist", "loadscope"]
+
+    # Automatically enable incremental testing if testmon is installed
+    if _has_package(python_bin, "testmon"):
+        subdir_cmd += ["--testmon"]
+
+    # Enable JUnit XML report to measure individual test durations
+    if "PYTEST_CURRENT_TEST" not in os.environ:
+        subdir_cmd += ["--junitxml=.goal_test_report.xml"]
+
+    import time
+    start_time = time.time()
     result = subprocess.run(
         subdir_cmd + [test_dir], capture_output=True, text=True, timeout=120
     )
+    elapsed = time.time() - start_time
+    global _last_test_wall_time
+    _last_test_wall_time = elapsed
     if result.returncode != 0:
         _display_test_error(result, test_dir, "python")
         return False, False
@@ -211,16 +253,37 @@ def _build_python_test_command(
     test_cmd_str: str, strategy_test_cmd: str
 ) -> tuple[List[str], bool, str]:
     """Build python test command and execution mode."""
+    import shutil
     python_bin = _resolve_root_python()
     use_subprocess = True
+    has_uv = bool(shutil.which("uv")) and "PYTEST_CURRENT_TEST" not in os.environ
+
     if strategy_test_cmd:
         coerced_cmd = _coerce_python_strategy_to_project_pytest(
             test_cmd_str, python_bin
         )
         if coerced_cmd is not None:
+            if has_uv:
+                if coerced_cmd[0] == python_bin and coerced_cmd[1:3] == ["-m", "pytest"]:
+                    coerced_cmd = ["uv", "run", "pytest"] + coerced_cmd[3:]
             return coerced_cmd, use_subprocess, python_bin
         return test_cmd_str.split(), False, python_bin
-    return [python_bin, "-m", "pytest"], use_subprocess, python_bin
+
+    # Default command
+    if has_uv:
+        cmd = ["uv", "run", "pytest"]
+    else:
+        cmd = [python_bin, "-m", "pytest"]
+
+    # Automatically enable parallel testing if xdist is installed
+    if _has_package(python_bin, "xdist"):
+        cmd += ["-n", "auto", "--dist", "loadscope"]
+
+    # Automatically enable incremental testing if testmon is installed
+    if _has_package(python_bin, "testmon"):
+        cmd += ["--testmon"]
+
+    return cmd, use_subprocess, python_bin
 
 
 def _ensure_root_pytest_or_mark_failed(
@@ -244,6 +307,13 @@ def _run_root_test(
     test_cmd: List[str], test_cmd_str: str, use_subprocess: bool
 ) -> bool:
     """Run root project tests."""
+    import time
+    # Ensure --junitxml is added to capture test durations
+    if use_subprocess and "pytest" in test_cmd_str and "PYTEST_CURRENT_TEST" not in os.environ:
+        if "--junitxml=.goal_test_report.xml" not in test_cmd:
+            test_cmd = test_cmd + ["--junitxml=.goal_test_report.xml"]
+
+    start_time = time.time()
     if use_subprocess:
         result = subprocess.run(
             test_cmd,
@@ -252,6 +322,11 @@ def _run_root_test(
         )
     else:
         result = run_command(test_cmd_str, capture=False)
+    elapsed = time.time() - start_time
+
+    global _last_test_wall_time
+    _last_test_wall_time = elapsed
+
     return result.returncode == 0
 
 
@@ -302,8 +377,69 @@ def run_tests(project_types: List[str], config: object = None) -> bool:
     return success
 
 
+def get_test_execution_details() -> dict:
+    """Parse .goal_test_report.xml to extract execution details, test durations, and startup overhead."""
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+
+    report_path = Path(".goal_test_report.xml")
+    details = {
+        "wall_time": globals().get("_last_test_wall_time", 0.0),
+        "total_test_time": 0.0,
+        "startup_overhead": 0.0,
+        "slow_tests": []
+    }
+
+    if not report_path.exists():
+        return details
+
+    try:
+        tree = ET.parse(report_path)
+        root = tree.getroot()
+
+        # Get total test execution time
+        total_time = 0.0
+        test_cases = []
+
+        # Find all test cases in the XML
+        for tc in root.iter("testcase"):
+            name = tc.get("name", "unknown")
+            classname = tc.get("classname", "unknown")
+            try:
+                tc_time = float(tc.get("time", 0.0))
+            except (ValueError, TypeError):
+                tc_time = 0.0
+
+            total_time += tc_time
+            test_cases.append({
+                "name": name,
+                "classname": classname,
+                "duration": tc_time
+            })
+
+        # Sort test cases by duration descending
+        test_cases.sort(key=lambda x: x["duration"], reverse=True)
+
+        details["total_test_time"] = total_time
+        # Startup overhead is wall-clock time minus sum of test execution times
+        details["startup_overhead"] = max(0.0, details["wall_time"] - total_time)
+        details["slow_tests"] = test_cases
+
+        # Clean up the XML report
+        try:
+            report_path.unlink()
+        except Exception:
+            pass
+
+    except Exception:
+        pass
+
+    return details
+
+
 __all__ = [
     "_has_usable_test_script",
     "_run_tests_in_subdirs",
     "run_tests",
+    "get_test_execution_details",
 ]

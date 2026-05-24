@@ -81,4 +81,7 @@ def run_test_stage(
                 click.style(f"⚠️  Error running tests: {str(e)}", fg="red", bold=True)
             )
 
+    from goal.cli.tests import get_test_execution_details
+    ctx_obj["test_details"] = get_test_execution_details()
+
     return test_result, test_exit_code

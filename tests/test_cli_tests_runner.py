@@ -118,3 +118,56 @@ def test_run_tests_uses_configured_python_strategy_and_skips_subdir_scan():
     assert "--ignore=my-api" in run_cmd
     assert "--ignore=test-api-qwen" in run_cmd
     assert check_cmd[0] == run_cmd[0]
+
+
+def test_get_test_execution_details_and_planfile_update(tmp_path, monkeypatch):
+    import yaml
+    from goal.cli.tests import get_test_execution_details
+    from goal.push.core import add_slow_test_tickets_to_planfile
+
+    # Create dummy XML test report
+    report_xml = """<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" errors="0" failures="0" skipped="0" tests="2" time="3.5">
+    <testcase classname="tests.test_slow" name="test_one" time="1.2" />
+    <testcase classname="tests.test_fast" name="test_two" time="0.1" />
+  </testsuite>
+</testsuites>
+"""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".goal_test_report.xml").write_text(report_xml)
+
+    # Set mock wall time
+    monkeypatch.setattr("goal.cli.tests._last_test_wall_time", 4.0)
+
+    # Retrieve test details
+    details = get_test_execution_details()
+
+    assert details["wall_time"] == 4.0
+    assert abs(details["total_test_time"] - 1.3) < 1e-5  # 1.2 + 0.1
+    assert abs(details["startup_overhead"] - 2.7) < 1e-5  # 4.0 - 1.3
+    assert len(details["slow_tests"]) == 2
+    assert details["slow_tests"][0]["name"] == "test_one"
+    assert details["slow_tests"][0]["duration"] == 1.2
+
+    # Check XML cleanup
+    assert not (tmp_path / ".goal_test_report.xml").exists()
+
+    # Now verify planfile update logic
+    planfile = tmp_path / "project" / "planfile-tickets.yaml"
+    planfile.parent.mkdir()
+    planfile.write_text("tickets: []\n")
+
+    # Let's mock os.path.exists to return true for test files
+    monkeypatch.setattr("os.path.exists", lambda x: True)
+
+    added = add_slow_test_tickets_to_planfile(details)
+
+    assert "Address slow test: tests.test_slow.test_one" in added
+
+    # Read the updated planfile
+    data = yaml.safe_load(planfile.read_text())
+    assert len(data["tickets"]) == 1
+    assert data["tickets"][0]["title"] == "Address slow test: tests.test_slow.test_one"
+    assert data["tickets"][0]["priority"] == "medium"
+    assert data["tickets"][0]["labels"] == ["llm-ready", "test-optimization", "slow-test"]
