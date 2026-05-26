@@ -31,6 +31,16 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.239] - 2026-05-26
+
+### Docs
+- Update README.md
+
+### Other
+- Update VERSION
+- Update examples/my-new-project/src/my-new-project/__init__.py
+- Update project/duplication.toon.yaml
+
 ## [2.1.237] - 2026-05-26
 
 ### Docs

@@ -6,7 +6,7 @@ SUMMARY:
   dup_groups:    32
   dup_fragments: 82
   saved_lines:   384
-  scan_ms:       5208
+  scan_ms:       3072
 
 HOTSPOTS[7] (files with most duplication):
   goal/project_bootstrap.py  dup=148L  groups=8  frags=8  (0.6%)
