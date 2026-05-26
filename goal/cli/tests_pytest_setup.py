@@ -28,23 +28,35 @@ def _is_uv_project(project_root: Path) -> bool:
 
 
 def _try_uv_install(project_root: Path) -> bool:
-    """Try to install dependencies using uv sync."""
-    result = subprocess.run(
+    """Try to install dependencies using uv sync variants."""
+    uv_attempts = [
+        ["uv", "sync", "--extra", "dev"],
+        ["uv", "sync", "--group", "dev"],
+        ["uv", "sync", "--all-extras"],
         ["uv", "sync"],
-        cwd=project_root,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    if result.returncode != 0:
-        return False
-    verify = subprocess.run(
-        ["uv", "run", "python", "-c", "import pytest"],
-        cwd=project_root,
-        capture_output=True,
-        text=True,
-    )
-    return verify.returncode == 0
+    ]
+
+    for cmd in uv_attempts:
+        result = subprocess.run(
+            cmd,
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode != 0:
+            continue
+
+        verify = subprocess.run(
+            ["uv", "run", "python", "-c", "import pytest"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+        )
+        if verify.returncode == 0:
+            return True
+
+    return False
 
 
 def ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
@@ -113,7 +125,7 @@ def ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
     )
     click.echo(
         click.style(
-            f"  💡 Fix: cd {project_root} && uv sync",
+            f"  💡 Fix: cd {project_root} && uv sync --extra dev",
             fg="cyan",
         )
     )
