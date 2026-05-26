@@ -299,7 +299,19 @@ def _ensure_root_pytest_or_mark_failed(
     test_cmd: List[str],
 ) -> bool:
     """Ensure root pytest is available; optionally continue with subdir diagnostics."""
-    if _ensure_pytest_for_project(Path.cwd(), python_bin):
+    import shutil
+    
+    # Check if project is managed by uv - if so, skip pip-based pytest installation
+    has_uv = bool(shutil.which("uv")) and "PYTEST_CURRENT_TEST" not in os.environ
+    uv_lock = Path.cwd() / "uv.lock"
+    pyproject_toml = Path.cwd() / "pyproject.toml"
+    is_uv_project = has_uv and (uv_lock.exists() or pyproject_toml.exists())
+    
+    if not is_uv_project:
+        if _ensure_pytest_for_project(Path.cwd(), python_bin):
+            return True
+    else:
+        # For uv projects, skip the pip check - uv run pytest handles dependencies
         return True
     click.echo(
         click.style("\n  ❌ Root python environment is missing pytest.", fg="red")
