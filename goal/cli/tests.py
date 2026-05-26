@@ -152,13 +152,19 @@ def _run_python_test(test_dir: str, base_cmd: List[str]) -> tuple[bool, bool]:
         return True, True
 
     python_bin = _resolve_project_python(project_root, base_cmd[0])
-    if not _ensure_pytest_for_project(project_root, python_bin):
-        click.echo(
-            click.style(f"\n  ⏭️  Skipping {project_root.name}/ tests", fg="yellow")
-        )
-        return True, True
-
+    
+    # Check if project is managed by uv - if so, skip pip-based pytest installation
     has_uv = bool(shutil.which("uv")) and "PYTEST_CURRENT_TEST" not in os.environ
+    uv_lock = project_root / "uv.lock"
+    pyproject_toml = project_root / "pyproject.toml"
+    is_uv_project = has_uv and (uv_lock.exists() or pyproject_toml.exists())
+    
+    if not is_uv_project:
+        if not _ensure_pytest_for_project(project_root, python_bin):
+            click.echo(
+                click.style(f"\n  ⏭️  Skipping {project_root.name}/ tests", fg="yellow")
+            )
+            return True, True
     if has_uv:
         subdir_cmd = ["uv", "run", "pytest"]
     else:
