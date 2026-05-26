@@ -22,6 +22,31 @@ def check_python_venv(project_root: Optional[Path]) -> tuple[bool, Optional[Path
     return has_venv, project_root
 
 
+def _is_uv_project(project_root: Path) -> bool:
+    """Check if project is managed by uv."""
+    return (project_root / "uv.lock").exists()
+
+
+def _try_uv_install(project_root: Path) -> bool:
+    """Try to install dependencies using uv sync."""
+    result = subprocess.run(
+        ["uv", "sync"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if result.returncode != 0:
+        return False
+    verify = subprocess.run(
+        ["uv", "run", "python", "-c", "import pytest"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+    )
+    return verify.returncode == 0
+
+
 def ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
     """Ensure pytest is available in the subproject environment."""
     check_result = subprocess.run(
@@ -33,11 +58,27 @@ def ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
     if check_result.returncode == 0:
         return True
 
+    # For uv-managed projects, also check via uv run
+    if _is_uv_project(project_root):
+        uv_check = subprocess.run(
+            ["uv", "run", "python", "-c", "import pytest"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+        )
+        if uv_check.returncode == 0:
+            return True
+
     click.echo(
         click.style(
             f"\n  📦 Installing test dependencies in {project_root}/", fg="cyan"
         )
     )
+
+    # For uv-managed projects, use uv sync first
+    if _is_uv_project(project_root):
+        if _try_uv_install(project_root):
+            return True
 
     install_attempts = [
         [python_bin, "-m", "pip", "install", "-e", ".[dev]"],
@@ -72,7 +113,7 @@ def ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
     )
     click.echo(
         click.style(
-            f"  💡 Fix: cd {project_root} && {python_bin} -m pip install -e .[dev]",
+            f"  💡 Fix: cd {project_root} && uv sync",
             fg="cyan",
         )
     )
