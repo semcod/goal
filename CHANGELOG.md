@@ -31,6 +31,26 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.237] - 2026-05-26
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update .code2llm_cache/__init___1779814332916493610_36.pkl
+- Update .code2llm_cache/__init___1779816442203796225_125.pkl
+- Update .code2llm_cache/pyproject_1779816432734638797_3131.pkl
+- Update .code2llm_cache/tests_1779814803254668281_14882.pkl
+- Update .code2llm_cache/tests_pytest_setup_1779815863157928008_3285.pkl
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- ... and 10 more files
+
 ## [2.1.235] - 2026-05-26
 
 ### Docs

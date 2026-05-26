@@ -1,49 +1,49 @@
 # code2llm call graph | /home/tom/github/semcod/goal
-# generated in 0.39s
-# nodes: 423 | edges: 500 | modules: 81
+# generated in 0.23s
+# nodes: 419 | edges: 500 | modules: 76
 # CC̄=4.3
 
 HUBS[20]:
   integration.run_matrix.print
     CC=0  in:255  out:0  total:255
-  goal.cli.wizard_cmd._setup_project_config
-    CC=9  in:1  out:55  total:56
   goal.user_config.initialize_user_config
     CC=11  in:4  out:52  total:56
+  goal.cli.wizard_cmd._setup_project_config
+    CC=9  in:1  out:55  total:56
   goal.git_ops.run_git
     CC=1  in:46  out:2  total:48
   goal.cli.commit_cmd.validate
     CC=13  in:0  out:45  total:45
   goal.user_config.UserConfig.set
     CC=1  in:43  out:1  total:44
+  goal.cli.doctor_cmd.doctor
+    CC=12  in:0  out:40  total:40
   goal.cli.wizard_cmd._show_setup_summary
     CC=7  in:1  out:39  total:40
   goal.cli.wizard_cmd._setup_user_config
     CC=12  in:1  out:39  total:40
-  goal.cli.doctor_cmd.doctor
-    CC=12  in:0  out:40  total:40
   goal.cli.commit_cmd.fix_summary
     CC=12  in:0  out:38  total:38
-  goal.push.core.execute_push_workflow
-    CC=7  in:2  out:32  total:34
   examples.api-usage.01_basic_api.main
     CC=10  in:0  out:34  total:34
   goal.cli.wizard_cmd._setup_git_repository
     CC=10  in:1  out:33  total:34
+  goal.push.core.execute_push_workflow
+    CC=7  in:2  out:32  total:34
   goal.push.core.output_final_summary
     CC=19  in:1  out:33  total:34
-  goal.bootstrap.installer._install_python_deps_legacy
-    CC=14  in:1  out:32  total:33
   goal.push.stages.todo.handle_todo_stage
     CC=14  in:1  out:32  total:33
-  goal.user_config.show_user_config
-    CC=2  in:1  out:31  total:32
+  goal.bootstrap.installer._install_python_deps_legacy
+    CC=14  in:1  out:32  total:33
   goal.project_bootstrap._ensure_pfix_installed
     CC=6  in:1  out:30  total:31
-  examples.api-usage.04_version_validation.main
-    CC=11  in:0  out:30  total:30
   goal.project_bootstrap._install_python_deps
     CC=12  in:1  out:29  total:30
+  examples.api-usage.04_version_validation.main
+    CC=11  in:0  out:30  total:30
+  goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
+    CC=10  in:0  out:29  total:29
 
 MODULES:
   examples.api-usage.01_basic_api  [1 funcs]
@@ -110,10 +110,8 @@ MODULES:
     send_slack_notification  CC=5  out:16
   goal.authors.utils  [1 funcs]
     format_co_author_trailer  CC=1  out:0
-  goal.bootstrap.configurator  [5 funcs]
-    _find_git_root  CC=3  out:2
+  goal.bootstrap.configurator  [3 funcs]
     _find_openrouter_api_key  CC=6  out:5
-    _find_python_bin  CC=5  out:6
     _read_openrouter_api_key  CC=11  out:12
     scaffold_test_file  CC=14  out:12
   goal.bootstrap.costs_badge  [10 funcs]
@@ -127,10 +125,9 @@ MODULES:
     _parsed_diff_is_usable  CC=4  out:2
     _read_model_from_pyproject  CC=3  out:4
     _single_commit_ai_cost  CC=3  out:5
-  goal.bootstrap.detector  [3 funcs]
+  goal.bootstrap.detector  [2 funcs]
     _match_marker  CC=2  out:4
     detect_project_types_deep  CC=11  out:11
-    guess_package_name  CC=2  out:0
   goal.bootstrap.installer  [12 funcs]
     _ensure_costs_installed  CC=3  out:8
     _ensure_generic_env  CC=6  out:9
@@ -157,9 +154,13 @@ MODULES:
     _find_unreleased_insert_pos  CC=3  out:6
     _insert_entry  CC=5  out:3
     update_changelog  CC=5  out:12
-  goal.cli  [2 funcs]
+  goal.cli  [6 funcs]
+    parse_args  CC=11  out:6
+    _configure_main_context  CC=3  out:4
     _format_import_warning_message  CC=1  out:0
+    _goal_update_command  CC=4  out:5
     _print_import_warning  CC=1  out:2
+    _show_goal_version_banner  CC=3  out:8
   goal.cli.authors_cmd  [5 funcs]
     authors_co_author  CC=1  out:5
     authors_current  CC=1  out:4
@@ -170,13 +171,12 @@ MODULES:
     commit  CC=8  out:27
     fix_summary  CC=12  out:38
     validate  CC=13  out:45
-  goal.cli.config_cmd  [6 funcs]
+  goal.cli.config_cmd  [5 funcs]
     config_get  CC=2  out:6
     config_set  CC=2  out:8
     config_show  CC=4  out:11
     config_update  CC=1  out:4
     config_validate  CC=3  out:8
-    setup  CC=3  out:10
   goal.cli.config_validate_cmd  [1 funcs]
     validate_cmd  CC=3  out:11
   goal.cli.doctor_cmd  [1 funcs]
@@ -210,23 +210,27 @@ MODULES:
   goal.cli.recover_cmd  [2 funcs]
     _get_error_output  CC=5  out:4
     recover  CC=6  out:23
-  goal.cli.tests  [17 funcs]
+  goal.cli.tests  [16 funcs]
     _active_venv_python  CC=3  out:4
     _build_python_test_command  CC=10  out:7
     _coerce_python_strategy_to_project_pytest  CC=8  out:3
     _display_test_error  CC=9  out:18
-    _ensure_root_pytest_or_mark_failed  CC=4  out:5
     _get_project_strategy  CC=7  out:5
     _has_package  CC=3  out:1
     _resolve_project_python  CC=4  out:6
     _resolve_root_python  CC=3  out:8
     _run_nodejs_test  CC=2  out:2
+    _run_project_type_tests  CC=11  out:14
   goal.cli.tests_discovery  [5 funcs]
     _find_project_root  CC=5  out:4
     _has_project_marker  CC=2  out:3
     _has_usable_test_script  CC=7  out:4
     find_nodejs_test_dirs  CC=6  out:8
     find_python_test_dirs  CC=9  out:16
+  goal.cli.tests_pytest_setup  [3 funcs]
+    _is_uv_project  CC=1  out:1
+    _try_uv_install  CC=2  out:2
+    ensure_pytest_for_project  CC=9  out:13
   goal.cli.utils_cmd  [8 funcs]
     bootstrap  CC=4  out:11
     check_versions  CC=2  out:12
@@ -272,11 +276,10 @@ MODULES:
     display_commit_message  CC=1  out:2
     display_detailed_message  CC=1  out:2
     print_detailed_message  CC=2  out:3
-  goal.config.manager  [4 funcs]
-    set  CC=4  out:2
-    update_from_detection  CC=4  out:11
+  goal.config.manager  [3 funcs]
     ensure_config  CC=5  out:8
     init_config  CC=3  out:4
+    load_config  CC=1  out:2
   goal.config.validation  [2 funcs]
     validate_config_file  CC=11  out:25
     validate_config_interactive  CC=10  out:22
@@ -290,12 +293,6 @@ MODULES:
     detect_relations  CC=6  out:8
   goal.doctor.core  [1 funcs]
     diagnose_and_report  CC=8  out:21
-  goal.doctor.todo  [5 funcs]
-    _format_todo_entry  CC=3  out:2
-    _generate_ticket_id  CC=1  out:2
-    _read_existing_tickets  CC=4  out:8
-    add_issues_to_todo  CC=9  out:19
-    diagnose_and_report_with_todo  CC=6  out:2
   goal.formatter  [15 funcs]
     _add_optional_sections  CC=3  out:2
     _build_capabilities_content  CC=4  out:1
@@ -332,14 +329,18 @@ MODULES:
     check_compatibility  CC=14  out:8
     get_license_info  CC=4  out:4
     validate_spdx_id  CC=11  out:13
-  goal.package_managers  [6 funcs]
+  goal.package_managers  [13 funcs]
     _detect_package_manager  CC=2  out:2
     _has_any_matching_path  CC=2  out:2
+    _has_language_extension  CC=2  out:3
     _path_matches  CC=2  out:4
     detect_package_managers  CC=3  out:4
     detect_project_language  CC=3  out:3
-    suggest_package_managers  CC=5  out:7
-  goal.project_bootstrap  [26 funcs]
+    get_available_package_managers  CC=3  out:2
+    get_package_manager_info  CC=1  out:1
+    get_package_managers_by_language  CC=3  out:1
+    get_preferred_package_manager  CC=5  out:1
+  goal.project_bootstrap  [27 funcs]
     _ensure_bootstrap_tests  CC=3  out:2
     _ensure_costs_installed  CC=2  out:4
     _ensure_generic_env  CC=14  out:21
@@ -348,8 +349,8 @@ MODULES:
     _ensure_pfix_installed  CC=6  out:30
     _ensure_python_env  CC=6  out:22
     _ensure_python_test_dependency  CC=5  out:15
+    _find_git_root  CC=3  out:2
     _find_openrouter_api_key  CC=6  out:5
-    _find_python_bin  CC=5  out:6
   goal.push.core  [15 funcs]
     _apply_enhanced_quality_gates  CC=6  out:6
     _detect_and_bootstrap_projects  CC=7  out:7
@@ -411,31 +412,18 @@ MODULES:
     _remove_large_files  CC=6  out:17
     _skip_large_files  CC=2  out:5
     _run_git_chunked  CC=4  out:4
-  goal.smart_commit.abstraction  [1 funcs]
-    _dedupe_entities  CC=3  out:3
-  goal.summary.generator  [1 funcs]
-    detect_capabilities  CC=5  out:7
-  goal.summary.quality_filter  [3 funcs]
-    dedupe_files  CC=3  out:4
-    dedupe_relations  CC=4  out:5
-    has_banned_words  CC=4  out:5
-  goal.summary.validator  [1 funcs]
-    _validate_title  CC=10  out:21
   goal.toml_validation  [4 funcs]
     check_pyproject_toml  CC=3  out:3
     get_tomllib  CC=3  out:0
     validate_project_toml_files  CC=4  out:4
     validate_toml_file  CC=9  out:19
-  goal.user_config  [7 funcs]
+  goal.user_config  [6 funcs]
     set  CC=1  out:1
     get_git_user_email  CC=3  out:2
     get_git_user_name  CC=3  out:2
     get_user_config  CC=2  out:3
     initialize_user_config  CC=11  out:52
     prompt_for_license  CC=4  out:25
-    show_user_config  CC=2  out:31
-  goal.validation.manager  [1 funcs]
-    get_validation_context  CC=2  out:6
   goal.validators.dot_folders  [6 funcs]
     _is_dot_path  CC=3  out:3
     _is_safe_path  CC=3  out:1
@@ -476,10 +464,12 @@ MODULES:
 
 EDGES:
   examples.dotnet-project.Calculator.Program.Main → examples.dotnet-project.Calculator.Calculator.Add
-  examples.api-usage.04_version_validation.main → integration.run_matrix.print
-  examples.api-usage.04_version_validation.main → goal.cli.version_utils.get_current_version
-  examples.api-usage.04_version_validation.main → goal.version_validation.get_pypi_version
-  examples.api-usage.04_version_validation.main → goal.cli.version_utils.detect_project_types
+  examples.webhooks.slack-webhook.send_slack_notification → integration.run_matrix.print
+  examples.webhooks.slack-webhook.main → examples.webhooks.slack-webhook.send_slack_notification
+  examples.webhooks.slack-webhook.main → integration.run_matrix.print
+  examples.webhooks.discord-webhook.send_discord_notification → integration.run_matrix.print
+  examples.webhooks.discord-webhook.main → examples.webhooks.discord-webhook.send_discord_notification
+  examples.webhooks.discord-webhook.main → integration.run_matrix.print
   examples.custom-hooks.post-commit.notify_slack → integration.run_matrix.print
   examples.custom-hooks.post-commit.update_changelog → integration.run_matrix.print
   examples.custom-hooks.post-commit.log_to_file → integration.run_matrix.print
@@ -488,40 +478,38 @@ EDGES:
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.notify_slack
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.update_changelog
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.log_to_file
-  goal.cli._print_import_warning → goal.cli._format_import_warning_message
-  goal.cli._print_import_warning → integration.run_matrix.print
-  goal.toml_validation.validate_toml_file → goal.toml_validation.get_tomllib
-  goal.toml_validation.validate_project_toml_files → goal.toml_validation.validate_toml_file
-  goal.toml_validation.check_pyproject_toml → goal.toml_validation.validate_toml_file
+  examples.custom-hooks.pre-publish.test_build → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.test_install → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.check_version → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.run_security_check → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.main → integration.run_matrix.print
+  examples.custom-hooks.pre-commit.main → integration.run_matrix.print
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_secrets
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_file_sizes
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.run_tests
+  examples.api-usage.04_version_validation.main → integration.run_matrix.print
+  examples.api-usage.04_version_validation.main → goal.cli.version_utils.get_current_version
+  examples.api-usage.04_version_validation.main → goal.version_validation.get_pypi_version
+  examples.api-usage.04_version_validation.main → goal.cli.version_utils.detect_project_types
   examples.api-usage.05_programmatic_workflow.run_custom_workflow → integration.run_matrix.print
   examples.api-usage.05_programmatic_workflow.create_minimal_workflow → integration.run_matrix.print
-  goal.commit_generator.display_commit_message → integration.run_matrix.print
-  goal.commit_generator.display_commit_message → goal.generator.generator.generate_smart_commit_message
-  goal.commit_generator.print_detailed_message → integration.run_matrix.print
-  goal.commit_generator.display_detailed_message → goal.commit_generator.print_detailed_message
-  goal.user_config.initialize_user_config → goal.user_config.get_git_user_name
-  goal.user_config.initialize_user_config → goal.user_config.get_git_user_email
-  goal.user_config.initialize_user_config → goal.user_config.prompt_for_license
-  goal.user_config.get_user_config → goal.user_config.initialize_user_config
-  examples.webhooks.discord-webhook.send_discord_notification → integration.run_matrix.print
-  examples.webhooks.discord-webhook.main → examples.webhooks.discord-webhook.send_discord_notification
-  examples.webhooks.discord-webhook.main → integration.run_matrix.print
-  goal.version_validation.validate_project_versions → goal.version_validation._validate_single_type
-  goal.version_validation.check_readme_badges → goal.version_validation.extract_badge_versions
-  goal.changelog._build_domain_entry → goal.changelog._classify_file_domain
-  goal.changelog._insert_entry → goal.changelog._find_unreleased_insert_pos
-  goal.changelog.update_changelog → goal.changelog._build_domain_entry
-  goal.changelog.update_changelog → goal.changelog._build_simple_entry
-  goal.changelog.update_changelog → goal.changelog._insert_entry
+  examples.api-usage.01_basic_api.main → integration.run_matrix.print
+  examples.api-usage.01_basic_api.main → goal.cli.version_utils.detect_project_types
+  examples.api-usage.01_basic_api.main → goal.cli.version_utils.get_current_version
   examples.api-usage.03_commit_generation.main → integration.run_matrix.print
   examples.api-usage.03_commit_generation.main → goal.git_ops.get_staged_files
   examples.api-usage.03_commit_generation.main → goal.git_ops.get_diff_content
-  examples.template-generator.generate.generate_project → integration.run_matrix.print
-  examples.template-generator.generate.main → examples.template-generator.generate.generate_project
-  goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin.aggregate_changes → goal.user_config.UserConfig.set
-  goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin.detect_relations → goal.user_config.UserConfig.set
-  goal.cli_helpers.stage_paths → goal.git_ops.run_git
-  examples.webhooks.slack-webhook.send_slack_notification → integration.run_matrix.print
-  examples.webhooks.slack-webhook.main → examples.webhooks.slack-webhook.send_slack_notification
-  examples.webhooks.slack-webhook.main → integration.run_matrix.print
-  goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff → goal.user_config.UserConfig.set
+  examples.api-usage.02_git_operations._check_git_repository → integration.run_matrix.print
+  examples.api-usage.02_git_operations._check_git_repository → goal.git_ops.is_git_repository
+  examples.api-usage.02_git_operations._display_staged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_staged_files → goal.git_ops.get_staged_files
+  examples.api-usage.02_git_operations._display_unstaged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_unstaged_files → goal.git_ops.get_unstaged_files
+  examples.api-usage.02_git_operations._display_diff_stats → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_stats → goal.git_ops.get_diff_stats
+  examples.api-usage.02_git_operations._display_diff_content → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_content → goal.git_ops.get_diff_content
+  examples.api-usage.02_git_operations.main → integration.run_matrix.print
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_staged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_unstaged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_diff_stats

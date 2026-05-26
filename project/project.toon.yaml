@@ -1,5 +1,5 @@
-# goal | 962 func | 129f | 29573L | python | 2026-05-26
-# generated in 0.01s
+# goal | 964 func | 129f | 29632L | python | 2026-05-26
+# generated in 0.00s
 
 HEALTH:
   CC̄=4.3  critical=86 (limit:10)  dup=0  cycles=0
@@ -17,7 +17,7 @@ ALERTS[20]:
   !!  high_fan_out     CodeChangeAnalyzer._analyze_python_diff = 17 (limit:10)
 
 MODULES[187] (top by size):
-  M[goal/project_bootstrap.py] 1214L C:0 F:32 CC↑14 D:4 (python)
+  M[goal/project_bootstrap.py] 1214L C:0 F:32 CC↑14 D:9 (python)
   M[goal/push/core.py] 751L C:1 F:18 CC↑22 D:3 (python)
   M[goal/git_ops.py] 672L C:0 F:28 CC↑11 D:19 (python)
   M[goal/package_managers.py] 607L C:1 F:16 CC↑5 D:1 (python)
@@ -30,7 +30,7 @@ MODULES[187] (top by size):
   M[goal/config/manager.py] 485L C:1 F:25 CC↑10 D:7 (python)
   M[goal/cli/version_utils.py] 485L C:0 F:23 CC↑8 D:7 (python)
   M[goal/push/stages/push_remote.py] 467L C:0 F:17 CC↑11 D:1 (python)
-  M[goal/cli/tests.py] 445L C:0 F:17 CC↑11 D:1 (python)
+  M[goal/cli/tests.py] 463L C:0 F:17 CC↑13 D:1 (python)
   M[goal/generator/generator.py] 432L C:1 F:24 CC↑12 D:2 (python)
   LANGS: python:151/yaml:13/shell:6/toml:4/other:3/csharp:2/json:2/go:1/java:1/php:1/yml:1/xml:1/txt:1
 
@@ -53,4 +53,4 @@ REFACTOR[13]:
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-05-26 CC̄=4.3 crit=86 29573L // Automated analysis
+  2026-05-26 CC̄=4.3 crit=86 29632L // Automated analysis

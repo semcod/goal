@@ -1,9 +1,9 @@
-# goal | 186f 29573L | yaml:13,python:150,shell:6,txt:1,yml:1,toml:4,json:2,xml:1,csharp:2,go:1,php:1,java:1 | 2026-05-26
-# generated in 0.04s
-# stats: 962 func | 0 cls | 186 mod | CC̄=4.3 | critical:2 | cycles:0
+# goal | 186f 29632L | yaml:13,python:150,toml:4,txt:1,yml:1,shell:6,csharp:2,json:2,go:1,xml:1,java:1,php:1 | 2026-05-26
+# generated in 0.02s
+# stats: 964 func | 0 cls | 186 mod | CC̄=4.3 | critical:2 | cycles:0
 # alerts[5]: fan-out execute_push_workflow=28; fan-out EnhancedSummaryGenerator.generate_enhanced_summary=24; fan-out doctor=22; fan-out _install_python_deps_legacy=20; CC add_slow_test_tickets_to_planfile=22
 # hotspots[5]: execute_push_workflow fan=28; EnhancedSummaryGenerator.generate_enhanced_summary fan=24; doctor fan=22; _install_python_deps_legacy fan=20; _install_python_deps fan=19
-# evolution: CC̄ 4.3→4.3 (flat 0.0)
+# evolution: CC̄ 4.4→4.3 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[186]:
   .pre-commit-config.yaml,38
@@ -66,9 +66,9 @@ M[186]:
   goal/cli/publish_cmd.py,66
   goal/cli/push_cmd.py,139
   goal/cli/recover_cmd.py,132
-  goal/cli/tests.py,445
+  goal/cli/tests.py,463
   goal/cli/tests_discovery.py,107
-  goal/cli/tests_pytest_setup.py,79
+  goal/cli/tests_pytest_setup.py,120
   goal/cli/utils_cmd.py,229
   goal/cli/validation_cmd.py,85
   goal/cli/version.py,35
@@ -212,33 +212,6 @@ D:
     _handle_no_changes(ctx_obj;project_types;dry_run;markdown)
     _validate_staged_files(ctx_obj;dry_run;force)
     _handle_commit_phase(ctx_obj;split;message;commit_title;commit_body;commit_msg;files;ticket;new_version;current_version;no_version_sync;no_changelog)
-  goal/cli_helpers.py:
-    e: strip_ansi,split_paths_by_type,stage_paths,confirm
-    strip_ansi(text)
-    split_paths_by_type(paths)
-    stage_paths(paths)
-    confirm(prompt;default)
-  goal/generator/analyzer.py:
-    e: ChangeAnalyzer,ContentAnalyzer
-    ChangeAnalyzer: classify_change_type(3),_detect_signals(2),_has_package_code(1),_is_docs_only(1),_is_ci_only(1),_has_new_goal_python_file(2),_score_by_file_patterns(2),_score_by_diff_content(2),_score_by_statistics(3),_score_by_signals(4),_score_package_signals(3),_score_text_signals(2),_score_file_signals(2),_score_path_signals(2),_score_new_functionality(3),_resolve_change_type(4),detect_scope(1),extract_functions_changed(1)  # Analyze git changes to classify type, detect scope, and extr...
-    ContentAnalyzer: short_action_summary(2),_detect_tags(2),_summary_from_tags(1),_summary_from_paths(2),per_file_notes(2),_get_added_lines(1),_notes_python(2),_notes_docs(3),_notes_shell(2)  # Analyze content for short summaries and per-file notes...
-  goal/bootstrap/configurator.py:
-    e: scaffold_test_file,_find_python_bin,_read_openrouter_api_key,_find_openrouter_api_key,_find_git_root
-    scaffold_test_file(project_dir;project_type)
-    _find_python_bin(project_dir)
-    _read_openrouter_api_key(env_file)
-    _find_openrouter_api_key(project_dir)
-    _find_git_root(project_dir)
-  goal/validators/file_validator.py:
-    e: get_file_size_mb,_is_excluded,_handle_oversized_file,_check_file_for_tokens,validate_files,handle_large_files,_get_deleted_staged_files,validate_staged_files
-    get_file_size_mb(file_path)
-    _is_excluded(file_path;exclude_patterns)
-    _handle_oversized_file(file_path;size_mb;max_size_mb;auto_handle;block)
-    _check_file_for_tokens(file_path;token_patterns)
-    validate_files(files;max_size_mb;block_large_files;token_patterns;detect_tokens;exclude_patterns;auto_handle_large)
-    handle_large_files(large_files)
-    _get_deleted_staged_files()
-    validate_staged_files(config)
   goal/project_bootstrap.py:
     e: _match_marker,detect_project_types_deep,_guess_python_name,_guess_nodejs_name,_guess_rust_name,_guess_go_name,guess_package_name,_find_python_bin,_read_openrouter_api_key,_find_openrouter_api_key,_find_git_root,_ensure_python_test_dependency,_ensure_python_env,_should_skip_install,_install_python_deps,_install_python_deps_broker,_ensure_generic_env,ensure_project_environment,find_existing_tests,_resolve_scaffold_test_path,scaffold_test,_new_bootstrap_result,_run_bootstrap_diagnostics,_ensure_bootstrap_tests,bootstrap_project,bootstrap_all_projects,_ensure_costs_installed,_ensure_pfix_env,_validate_pfix_env,_ensure_pfix_installed,_ensure_pfix_config,scaffold_test_file
     _match_marker(base;pattern)
@@ -273,20 +246,23 @@ D:
     _ensure_pfix_installed(project_dir;yes)
     _ensure_pfix_config(project_dir;yes)
     scaffold_test_file(project_dir;project_type)
-  goal/push/stages/commit.py:
-    e: get_commit_message,_build_validation_summary,_confirm_suggested_title,_echo_applied_title_fix,enforce_quality_gates,handle_single_commit,_commit_file_group,_commit_release_metadata,handle_split_commits
-    get_commit_message(ctx_obj;files;diff_content;message;ticket;abstraction)
-    _build_validation_summary(commit_msg;detailed_result;total_adds;total_dels)
-    _confirm_suggested_title(commit_msg;suggested_title;yes)
-    _echo_applied_title_fix(ctx_obj;commit_msg;markdown)
-    enforce_quality_gates(ctx_obj;commit_msg;detailed_result;files;total_adds;total_dels;yes;markdown)
-    handle_single_commit(commit_title;commit_body;commit_msg;message;yes)
-    _commit_file_group(gname;paths;generator;ticket;yes)
-    _commit_release_metadata(ctx_obj;files;config_dict;ticket;new_version;current_version;no_version_sync;no_changelog)
-    handle_split_commits(ctx_obj;files;ticket;new_version;current_version;no_version_sync;no_changelog;yes)
-  goal/push/stages/todo.py:
-    e: handle_todo_stage
-    handle_todo_stage(ctx_obj;yes;dry_run)
+  goal/cli_helpers.py:
+    e: strip_ansi,split_paths_by_type,stage_paths,confirm
+    strip_ansi(text)
+    split_paths_by_type(paths)
+    stage_paths(paths)
+    confirm(prompt;default)
+  goal/generator/analyzer.py:
+    e: ChangeAnalyzer,ContentAnalyzer
+    ChangeAnalyzer: classify_change_type(3),_detect_signals(2),_has_package_code(1),_is_docs_only(1),_is_ci_only(1),_has_new_goal_python_file(2),_score_by_file_patterns(2),_score_by_diff_content(2),_score_by_statistics(3),_score_by_signals(4),_score_package_signals(3),_score_text_signals(2),_score_file_signals(2),_score_path_signals(2),_score_new_functionality(3),_resolve_change_type(4),detect_scope(1),extract_functions_changed(1)  # Analyze git changes to classify type, detect scope, and extr...
+    ContentAnalyzer: short_action_summary(2),_detect_tags(2),_summary_from_tags(1),_summary_from_paths(2),per_file_notes(2),_get_added_lines(1),_notes_python(2),_notes_docs(3),_notes_shell(2)  # Analyze content for short summaries and per-file notes...
+  goal/bootstrap/configurator.py:
+    e: scaffold_test_file,_find_python_bin,_read_openrouter_api_key,_find_openrouter_api_key,_find_git_root
+    scaffold_test_file(project_dir;project_type)
+    _find_python_bin(project_dir)
+    _read_openrouter_api_key(env_file)
+    _find_openrouter_api_key(project_dir)
+    _find_git_root(project_dir)
   goal/bootstrap/installer.py:
     e: _match_marker,_should_skip_install,_ensure_costs_installed,_install_python_deps_legacy,_install_python_deps_broker,_ensure_python_test_dependency,_ensure_python_env,_needs_install,_run_dep_install,_get_matching_dep_command,_ensure_generic_env,ensure_project_environment
     _match_marker(base;pattern)
@@ -301,6 +277,30 @@ D:
     _get_matching_dep_command(project_dir;dep_commands)
     _ensure_generic_env(project_dir;project_type;cfg;yes)
     ensure_project_environment(project_dir;project_type;yes)
+  goal/validators/file_validator.py:
+    e: get_file_size_mb,_is_excluded,_handle_oversized_file,_check_file_for_tokens,validate_files,handle_large_files,_get_deleted_staged_files,validate_staged_files
+    get_file_size_mb(file_path)
+    _is_excluded(file_path;exclude_patterns)
+    _handle_oversized_file(file_path;size_mb;max_size_mb;auto_handle;block)
+    _check_file_for_tokens(file_path;token_patterns)
+    validate_files(files;max_size_mb;block_large_files;token_patterns;detect_tokens;exclude_patterns;auto_handle_large)
+    handle_large_files(large_files)
+    _get_deleted_staged_files()
+    validate_staged_files(config)
+  goal/push/stages/commit.py:
+    e: get_commit_message,_build_validation_summary,_confirm_suggested_title,_echo_applied_title_fix,enforce_quality_gates,handle_single_commit,_commit_file_group,_commit_release_metadata,handle_split_commits
+    get_commit_message(ctx_obj;files;diff_content;message;ticket;abstraction)
+    _build_validation_summary(commit_msg;detailed_result;total_adds;total_dels)
+    _confirm_suggested_title(commit_msg;suggested_title;yes)
+    _echo_applied_title_fix(ctx_obj;commit_msg;markdown)
+    enforce_quality_gates(ctx_obj;commit_msg;detailed_result;files;total_adds;total_dels;yes;markdown)
+    handle_single_commit(commit_title;commit_body;commit_msg;message;yes)
+    _commit_file_group(gname;paths;generator;ticket;yes)
+    _commit_release_metadata(ctx_obj;files;config_dict;ticket;new_version;current_version;no_version_sync;no_changelog)
+    handle_split_commits(ctx_obj;files;ticket;new_version;current_version;no_version_sync;no_changelog;yes)
+  goal/push/stages/todo.py:
+    e: handle_todo_stage
+    handle_todo_stage(ctx_obj;yes;dry_run)
   goal/config/validation.py:
     e: ConfigValidationError,ConfigValidator,validate_config_file,validate_config_interactive,_auto_fix_config
     ConfigValidationError(Exception): __init__(2)  # Error raised when configuration validation fails...
@@ -308,12 +308,12 @@ D:
     validate_config_file(config_path;strict)
     validate_config_interactive(config_path)
     _auto_fix_config(config;warnings)
-  goal/summary/quality_filter.py:
-    e: SummaryQualityFilter
-    SummaryQualityFilter: __init__(0),is_noise(2),filter_entities(1),has_banned_words(1),classify_intent(2),prioritize_capabilities(1),format_complexity_delta(2),dedupe_relations(1),dedupe_files(1),categorize_files(1),filter_generic_nodes(1),format_net_lines(2),_classify_by_churn(1),_classify_by_file_type(0),_score_intent_patterns(1),_resolve_scored_intent(2),classify_intent_smart(4),generate_architecture_title(2)  # Filter noise and improve summary quality...
   goal/summary/generator.py:
     e: EnhancedSummaryGenerator
     EnhancedSummaryGenerator: __init__(1),map_entity_to_role(1),_file_stems(0),_special_title_from_files(1),_title_from_capabilities(0),detect_capabilities(2),detect_file_relations(2),_infer_domain(1),_build_relation_chain(1),_render_relations_ascii(2),calculate_quality_metrics(2),generate_value_title(3),generate_enhanced_summary(4),validate_summary_quality(2)  # Generate business-value focused commit summaries...
+  goal/summary/quality_filter.py:
+    e: SummaryQualityFilter
+    SummaryQualityFilter: __init__(0),is_noise(2),filter_entities(1),has_banned_words(1),classify_intent(2),prioritize_capabilities(1),format_complexity_delta(2),dedupe_relations(1),dedupe_files(1),categorize_files(1),filter_generic_nodes(1),format_net_lines(2),_classify_by_churn(1),_classify_by_file_type(0),_score_intent_patterns(1),_resolve_scored_intent(2),classify_intent_smart(4),generate_architecture_title(2)  # Filter noise and improve summary quality...
   goal/license/spdx.py:
     e: _load_spdx_data,validate_spdx_id,get_license_info,check_compatibility,get_compatible_licenses,is_copyleft,is_permissive
     _load_spdx_data()
@@ -323,12 +323,12 @@ D:
     get_compatible_licenses(license_id)
     is_copyleft(license_id)
     is_permissive(license_id)
-  goal/deep_analyzer_aggregate.py:
-    e: CodeChangeAggregatorMixin
-    CodeChangeAggregatorMixin: aggregate_changes(1),_detect_file_patterns(1),_check_analyzer_value(2),_check_cli_value(2),_check_area_values(2),_check_complexity_value(1),_check_architecture_value(1),_build_entity_fallback(2),infer_functional_value(2),detect_relations(1),generate_functional_summary(1),_format_entity_names(1),_format_relations(0),_format_complexity_change(0),_format_areas(0),_build_summary(3)
   goal/deep_analyzer.py:
     e: CodeChangeAnalyzer
     CodeChangeAnalyzer(CodeChangeAggregatorMixin): __init__(0),analyze_file_diff(3),_detect_language(1),_analyze_python_diff(2),_detect_value_indicators(0),_extract_python_entities(1),_get_decorator_name(1),_calculate_complexity(1),_analyze_js_diff(2),_analyze_generic_diff(2),_detect_functional_areas(2)  # Analyzes code changes to extract functional meaning...
+  goal/deep_analyzer_aggregate.py:
+    e: CodeChangeAggregatorMixin
+    CodeChangeAggregatorMixin: aggregate_changes(1),_detect_file_patterns(1),_check_analyzer_value(2),_check_cli_value(2),_check_area_values(2),_check_complexity_value(1),_check_architecture_value(1),_build_entity_fallback(2),infer_functional_value(2),detect_relations(1),generate_functional_summary(1),_format_entity_names(1),_format_relations(0),_format_complexity_change(0),_format_areas(0),_build_summary(3)
   goal/formatter.py:
     e: MarkdownFormatter,_build_functional_overview,_build_files_section,_determine_next_steps,format_push_result,_format_complexity_metric,_format_metrics_section,_format_relations_section,_build_capabilities_content,_build_roles_content,_build_details_content,_get_optional_sections,_build_enhanced_summary_section,_add_optional_sections,format_enhanced_summary,format_status_output
     MarkdownFormatter: __init__(0),add_header(2),add_metadata(0),add_section(4),add_list(3),add_command_output(3),add_summary(2),render(0)  # Formats Goal output as structured markdown for LLM consumpti...
@@ -364,6 +364,25 @@ D:
     _sync_dependency_locks_after_manifest_updates(updated)
     _update_init_py_versions(new_version;updated)
     sync_all_versions(new_version;user_config)
+  goal/cli/tests.py:
+    e: _get_project_strategy,_active_venv_python,_resolve_project_python,_coerce_python_strategy_to_project_pytest,_display_test_error,_has_package,_run_python_test,_run_nodejs_test,_run_subdir_test,_run_tests_in_subdirs,_resolve_root_python,_build_python_test_command,_ensure_root_pytest_or_mark_failed,_run_root_test,_run_project_type_tests,run_tests,get_test_execution_details
+    _get_project_strategy(config;project_type)
+    _active_venv_python()
+    _resolve_project_python(project_root;fallback_python)
+    _coerce_python_strategy_to_project_pytest(test_cmd_str;python_bin)
+    _display_test_error(result;test_dir;project_type)
+    _has_package(python_bin;package_name)
+    _run_python_test(test_dir;base_cmd)
+    _run_nodejs_test(test_dir;base_cmd)
+    _run_subdir_test(project_type;base_cmd;test_dir)
+    _run_tests_in_subdirs(project_type;base_cmd)
+    _resolve_root_python()
+    _build_python_test_command(test_cmd_str;strategy_test_cmd)
+    _ensure_root_pytest_or_mark_failed(python_bin;run_subdir_scan;ptype;test_cmd)
+    _run_root_test(test_cmd;test_cmd_str;use_subprocess)
+    _run_project_type_tests(ptype;config)
+    run_tests(project_types;config)
+    get_test_execution_details()
   goal/cli/commit_cmd.py:
     e: _output_detailed,_output_simple,commit,fix_summary,validate
     _output_detailed(title;body;use_markdown)
@@ -382,12 +401,16 @@ D:
     _is_rate_limited(result)
     _run_publish_command(ptype;publish_cmd)
     publish_project(project_types;version;yes;config)
-  goal/smart_commit/generator_generate.py:
-    e: SmartCommitGeneratorGenerateMixin
-    SmartCommitGeneratorGenerateMixin: generate_message(2),_is_docs_only_change(1),_generate_docs_message(1),_generate_high_abstraction_message(1),_generate_medium_abstraction_message(1),_generate_low_abstraction_message(1),_filter_meaningful_entities(1),_infer_message_from_files(1),generate_functional_body(1),generate_changelog_entry(2),format_changelog_entry(1)
   goal/doctor/nodejs.py:
     e: diagnose_nodejs
     diagnose_nodejs(project_dir;auto_fix)
+  goal/smart_commit/generator_generate.py:
+    e: SmartCommitGeneratorGenerateMixin
+    SmartCommitGeneratorGenerateMixin: generate_message(2),_is_docs_only_change(1),_generate_docs_message(1),_generate_high_abstraction_message(1),_generate_medium_abstraction_message(1),_generate_low_abstraction_message(1),_filter_meaningful_entities(1),_infer_message_from_files(1),generate_functional_body(1),generate_changelog_entry(2),format_changelog_entry(1)
+  goal/generator/generator.py:
+    e: CommitMessageGenerator,generate_smart_commit_message
+    CommitMessageGenerator: __init__(1),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),classify_change_type(3),detect_scope(1),extract_functions_changed(1),_short_action_summary(2),_per_file_notes(2),generate_commit_message(3),generate_abstraction_message(2),generate_changelog_entry(2),generate_enhanced_summary(2),_try_enhanced_summary(2),_classify_files(2),_build_statistics_section(1),_build_summary_section(5),_build_file_lists(4),_build_per_file_notes(3),_build_implementation_notes(0),generate_detailed_message(2)  # Generate conventional commit messages using diff analysis an...
+    generate_smart_commit_message(cached)
   goal/bootstrap/pyproject_costs_setup.py:
     e: _find_dep_list_end,_try_merge_optional_dev_deps,_try_merge_hatch_default_deps,_try_add_deps,_add_deps_to_section_match,_ensure_costs_config,_ensure_env_template
     _find_dep_list_end(content;start_idx)
@@ -397,10 +420,6 @@ D:
     _add_deps_to_section_match(section_start;existing;required_deps)
     _ensure_costs_config(project_dir)
     _ensure_env_template(project_dir)
-  goal/generator/generator.py:
-    e: CommitMessageGenerator,generate_smart_commit_message
-    CommitMessageGenerator: __init__(1),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),classify_change_type(3),detect_scope(1),extract_functions_changed(1),_short_action_summary(2),_per_file_notes(2),generate_commit_message(3),generate_abstraction_message(2),generate_changelog_entry(2),generate_enhanced_summary(2),_try_enhanced_summary(2),_classify_files(2),_build_statistics_section(1),_build_summary_section(5),_build_file_lists(4),_build_per_file_notes(3),_build_implementation_notes(0),generate_detailed_message(2)  # Generate conventional commit messages using diff analysis an...
-    generate_smart_commit_message(cached)
   goal/cli/doctor_cmd.py:
     e: doctor
     doctor(ctx;fix;path;todo;manager)
@@ -470,6 +489,9 @@ D:
     get_diff_content(cached;max_lines)
     read_ticket(path)
     apply_ticket_prefix(title;ticket)
+  goal/generator/git_ops.py:
+    e: GitDiffOperations
+    GitDiffOperations: __init__(0),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),clear_cache(0)  # Git diff operations with caching...
   goal/bootstrap/detector.py:
     e: _match_marker,detect_project_types_deep,_guess_python_name,_guess_nodejs_name,_guess_rust_name,_guess_go_name,guess_package_name
     _match_marker(base;pattern)
@@ -479,9 +501,6 @@ D:
     _guess_rust_name(project_dir)
     _guess_go_name(project_dir)
     guess_package_name(project_dir;project_type)
-  goal/generator/git_ops.py:
-    e: GitDiffOperations
-    GitDiffOperations: __init__(0),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),clear_cache(0)  # Git diff operations with caching...
   goal/recovery/large_file.py:
     e: LargeFileStrategy,_run_git_chunked
     LargeFileStrategy(RecoveryStrategy): __init__(2),can_handle(1),recover(1),_files_in_history(1),_remove_from_history(1),_extract_file_paths(1),_find_large_files(1),_get_file_size_mb(1),_remove_large_files(1),_move_to_lfs(1),_skip_large_files(1)  # Handles large file errors...
@@ -510,25 +529,6 @@ D:
     _handle_pull_merge()
     _handle_view_diff()
     _handle_automatic_recovery(error_output)
-  goal/cli/tests.py:
-    e: _get_project_strategy,_active_venv_python,_resolve_project_python,_coerce_python_strategy_to_project_pytest,_display_test_error,_has_package,_run_python_test,_run_nodejs_test,_run_subdir_test,_run_tests_in_subdirs,_resolve_root_python,_build_python_test_command,_ensure_root_pytest_or_mark_failed,_run_root_test,_run_project_type_tests,run_tests,get_test_execution_details
-    _get_project_strategy(config;project_type)
-    _active_venv_python()
-    _resolve_project_python(project_root;fallback_python)
-    _coerce_python_strategy_to_project_pytest(test_cmd_str;python_bin)
-    _display_test_error(result;test_dir;project_type)
-    _has_package(python_bin;package_name)
-    _run_python_test(test_dir;base_cmd)
-    _run_nodejs_test(test_dir;base_cmd)
-    _run_subdir_test(project_type;base_cmd;test_dir)
-    _run_tests_in_subdirs(project_type;base_cmd)
-    _resolve_root_python()
-    _build_python_test_command(test_cmd_str;strategy_test_cmd)
-    _ensure_root_pytest_or_mark_failed(python_bin;run_subdir_scan;ptype;test_cmd)
-    _run_root_test(test_cmd;test_cmd_str;use_subprocess)
-    _run_project_type_tests(ptype;config)
-    run_tests(project_types;config)
-    get_test_execution_details()
   goal/validation/rules.py:
     e: ValidationRule,MessagePatternRule,FilePatternRule,ScriptRule,CommitSizeRule,MessageLengthRule
     ValidationRule(ABC): __init__(1),validate(1),get_name(0),validate_config(0)  # Base class for custom validation rules...
@@ -571,14 +571,17 @@ D:
   goal/summary/validator.py:
     e: QualityValidator
     QualityValidator: __init__(1),validate(2),_extract_intent(2),_validate_title(3),_validate_intent(7),_validate_metrics(3),_validate_relations(3),_validate_files(3),_validate_capabilities(3),_validate_body(3),_validate_value_score(4),_calculate_score(2),_apply_title_fixes(7),_get_entities(1),_fix_banned_words_title(6),_fix_wrong_intent(5),_expand_short_title(6),_clean_relations(1),_apply_relation_fixes(2),_apply_file_dedupe(2),_apply_capability_priority(2),_apply_net_lines(4),_apply_categories(2),auto_fix(4)  # Validate commit summary against quality gates...
+  goal/doctor/python_diag_extended.py:
+    e: PythonDiagnostics
+    PythonDiagnostics(PythonDiagnosticsCore): _collect_py010_inconsistencies(3),_sync_py010_files(3),check_py010_project_name_consistency(0),_collect_py011_inconsistencies(4),_sync_py011_files(4),check_py011_version_consistency(0),check_py012_dist_cleanup(0),_collect_stale_dist_files(1),_remove_stale_dist_files(1),check_py013_goal_publish_pattern(0),_extract_goal_publish_pattern(0),_goal_publish_pattern_is_acceptable(2),_rewrite_goal_publish_pattern(1),check_py014_pypi_token(0),_is_publish_enabled(0),_has_pypi_credentials(0),run_all_checks(0),write_fixes(1)  # Python project diagnostics — extended PY010–PY014 checks lay...
   goal/license/manager.py:
     e: LicenseManager,create_license_file,update_license_file
     LicenseManager: __init__(1),get_available_licenses(0),get_license_template(1),add_custom_template(2),create_license_file(4),update_license_file(3),_detect_license_type(1),_resolve_license_id(2),_extract_owner_from_content(0),validate_license_file(0)  # Manages license operations including template handling and f...
     create_license_file(license_id;fullname;year;force)
     update_license_file(license_id;fullname;year)
-  goal/doctor/python_diag_extended.py:
-    e: PythonDiagnostics
-    PythonDiagnostics(PythonDiagnosticsCore): _collect_py010_inconsistencies(3),_sync_py010_files(3),check_py010_project_name_consistency(0),_collect_py011_inconsistencies(4),_sync_py011_files(4),check_py011_version_consistency(0),check_py012_dist_cleanup(0),_collect_stale_dist_files(1),_remove_stale_dist_files(1),check_py013_goal_publish_pattern(0),_extract_goal_publish_pattern(0),_goal_publish_pattern_is_acceptable(2),_rewrite_goal_publish_pattern(1),check_py014_pypi_token(0),_is_publish_enabled(0),_has_pypi_credentials(0),run_all_checks(0),write_fixes(1)  # Python project diagnostics — extended PY010–PY014 checks lay...
+  examples/api-usage/03_commit_generation.py:
+    e: main
+    main()
   goal/toml_validation.py:
     e: get_tomllib,validate_toml_file,validate_project_toml_files,check_pyproject_toml
     get_tomllib()
@@ -602,9 +605,6 @@ D:
     validate_project_versions(project_types;current_version)
     check_readme_badges(current_version)
     format_validation_results(results)
-  examples/api-usage/03_commit_generation.py:
-    e: main
-    main()
   goal/validators/dot_folders.py:
     e: _is_dot_path,_is_safe_path,_is_whitelisted_path,_matches_problematic,check_dot_folders,manage_dot_folders
     _is_dot_path(path)
@@ -623,6 +623,12 @@ Detects available manage...
   goal/push/stages/test.py:
     e: run_test_stage
     run_test_stage(project_types;yes;markdown;ctx_obj;files;stats;current_version;new_version;commit_msg;commit_body)
+  goal/cli/tests_pytest_setup.py:
+    e: check_python_venv,_is_uv_project,_try_uv_install,ensure_pytest_for_project
+    check_python_venv(project_root)
+    _is_uv_project(project_root)
+    _try_uv_install(project_root)
+    ensure_pytest_for_project(project_root;python_bin)
   goal/cli/tests_discovery.py:
     e: _has_usable_test_script,_has_project_marker,_find_project_root,find_python_test_dirs,find_nodejs_test_dirs
     _has_usable_test_script(project_dir;project_type)
@@ -637,14 +643,6 @@ Detects available manage...
     _format_todo_entry(issue)
     add_issues_to_todo(project_dir;issues;todo_file)
     diagnose_and_report_with_todo(project_dir;project_type;auto_fix;todo_file)
-  goal/hooks/config.py:
-    e: get_hook_config,create_precommit_config
-    get_hook_config(project_dir)
-    create_precommit_config(project_dir;include_goal)
-  goal/validators/gitignore.py:
-    e: load_gitignore,save_gitignore
-    load_gitignore(gitignore_path)
-    save_gitignore(ignored;gitignore_path)
   examples/custom-hooks/pre-commit.py:
     e: check_secrets,check_file_sizes,run_tests,main
     check_secrets()
@@ -659,6 +657,14 @@ Detects available manage...
     test_import_tracing()
     test_config_diagnostics()
     create_debug_report()
+  goal/hooks/config.py:
+    e: get_hook_config,create_precommit_config
+    get_hook_config(project_dir)
+    create_precommit_config(project_dir;include_goal)
+  goal/validators/gitignore.py:
+    e: load_gitignore,save_gitignore
+    load_gitignore(gitignore_path)
+    save_gitignore(ignored;gitignore_path)
   goal/recovery/auth.py:
     e: AuthErrorStrategy
     AuthErrorStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles authentication errors...
@@ -668,10 +674,6 @@ Detects available manage...
     _format_markdown_dry_run(ctx_obj;project_types;files;stats;current_version;new_version;commit_msg;commit_body;detailed_result)
     _print_plain_dry_run(project_types;files;stats;current_version;new_version;commit_msg)
     handle_dry_run(ctx_obj;project_types;files;stats;current_version;new_version;commit_msg;commit_body;detailed_result;split;ticket;bump;no_version_sync;no_changelog;no_tag;markdown)
-  goal/cli/publish_cmd.py:
-    e: _publish_impl,publish
-    _publish_impl(ctx_obj;use_make;target;version_arg)
-    publish(ctx;use_make;target;version_arg)
   goal/cli/version_utils.py:
     e: detect_project_types,find_version_files,get_version_from_file,get_current_version,bump_version,update_version_in_file,update_json_version,_build_author_block,_update_tomlkit_license,_update_tomlkit_authors,_update_tomlkit_classifier,_update_pyproject_with_tomlkit,_update_regex_license,_update_regex_authors,_update_regex_classifier,_update_pyproject_with_regex,_update_pyproject_metadata,_update_package_json_metadata,_update_setup_py_metadata,update_project_metadata,_update_license_section,_update_author_section,update_readme_metadata
     detect_project_types()
@@ -697,13 +699,17 @@ Detects available manage...
     _update_license_section(content;license_id)
     _update_author_section(content;author_name)
     update_readme_metadata(user_config)
+  goal/cli/publish_cmd.py:
+    e: _publish_impl,publish
+    _publish_impl(ctx_obj;use_make;target;version_arg)
+    publish(ctx;use_make;target;version_arg)
+  goal/doctor/python_diag_core.py:
+    e: PythonDiagnosticsCore
+    PythonDiagnosticsCore: __init__(3),check_py001_missing_config(4),check_py002_build_system(0),check_py003_license_classifiers(0),check_py004_deprecated_backends(0),check_py005_license_table(0),check_py006_duplicate_authors(0),check_py007_requires_python(0),check_py008_empty_classifiers(0),check_py009_string_authors(0),_should_skip_string_author_check(0),_convert_string_author_block(0)  # Container for Python diagnostic checks with shared state...
   goal/doctor/core.py:
     e: diagnose_project,diagnose_and_report
     diagnose_project(project_dir;project_type;auto_fix)
     diagnose_and_report(project_dir;project_type;auto_fix)
-  goal/doctor/python_diag_core.py:
-    e: PythonDiagnosticsCore
-    PythonDiagnosticsCore: __init__(3),check_py001_missing_config(4),check_py002_build_system(0),check_py003_license_classifiers(0),check_py004_deprecated_backends(0),check_py005_license_table(0),check_py006_duplicate_authors(0),check_py007_requires_python(0),check_py008_empty_classifiers(0),check_py009_string_authors(0),_should_skip_string_author_check(0),_convert_string_author_block(0)  # Container for Python diagnostic checks with shared state...
   goal/changelog.py:
     e: _classify_file_domain,_build_domain_entry,_build_simple_entry,_insert_entry,_find_unreleased_insert_pos,update_changelog
     _classify_file_domain(filepath;domain_mapping)
@@ -736,13 +742,13 @@ Detects available manage...
     WebhookAction(PostCommitAction): get_name(0),validate_config(0),execute(1)  # Send webhook POST request after commit...
     ScriptAction(PostCommitAction): get_name(0),validate_config(0),execute(1)  # Run custom script after commit...
     GitPushAction(PostCommitAction): get_name(0),validate_config(0),execute(1)  # Automatically push after commit...
+  goal/summary/body_formatter.py:
+    e: CommitBodyFormatter
+    CommitBodyFormatter: __init__(1),_format_entity_list(2),_split_added_entities(0),_append_file_header(3),_append_added_entities(3),_append_entity_change(3),_format_file_change(5),format_changes_section(2),format_testing_section(1),format_dependencies_section(1),format_stats_section(2),format_body(7)  # Format enhanced commit body sections...
   goal/validation/manager.py:
     e: ValidationRuleManager,run_custom_validations
     ValidationRuleManager: __init__(1),get_rules(0),get_validation_context(0),validate_all(0),list_rules(0),validate_config(0)  # Manages custom validation rules for Goal...
     run_custom_validations(project_dir)
-  goal/summary/body_formatter.py:
-    e: CommitBodyFormatter
-    CommitBodyFormatter: __init__(1),_format_entity_list(2),_split_added_entities(0),_append_file_header(3),_append_added_entities(3),_append_entity_change(3),_format_file_change(5),format_changes_section(2),format_testing_section(1),format_dependencies_section(1),format_stats_section(2),format_body(7)  # Format enhanced commit body sections...
   goal/doctor/php.py:
     e: diagnose_php
     diagnose_php(project_dir;auto_fix)
@@ -751,6 +757,26 @@ Detects available manage...
     AuthorsManager: __init__(1),get_authors(0),add_author(4),remove_author(1),update_author(4),find_author(1),list_authors(0),get_current_author(0),import_from_git(0),export_to_contributors(0)  # Manages project authors and team members...
     get_project_authors(project_dir)
     add_project_author(name;email;role;alias;project_dir)
+  examples/custom-hooks/pre-publish.py:
+    e: test_build,test_install,check_version,run_security_check,main
+    test_build()
+    test_install()
+    check_version()
+    run_security_check()
+    main()
+  examples/validation/run_all_validation.py:
+    e: ValidationRunner,main
+    ValidationRunner: __init__(1),run_test(2),run_all(0),print_summary(0)  # Runs all validation tests and aggregates results...
+    main()
+  examples/testing/03_advanced_mocking.py:
+    e: test_mocking_external_services,test_mocking_git_operations,test_mocking_click_interactions,test_spies_and_call_counting,test_mocking_file_system,test_conditional_mocking,test_mock_context_manager
+    test_mocking_external_services()
+    test_mocking_git_operations()
+    test_mocking_click_interactions()
+    test_spies_and_call_counting()
+    test_mocking_file_system()
+    test_conditional_mocking()
+    test_mock_context_manager()
   goal/bootstrap/costs_badge.py:
     e: _install_costs_package,_load_costs_api,_commit_blob_lower,_filter_ai_commits,_parsed_diff_is_usable,_fetch_commit_diff,_single_commit_ai_cost,_calculate_ai_costs,_read_model_from_pyproject,_generate_costs_badge
     _install_costs_package(project_dir;python_bin)
@@ -763,23 +789,12 @@ Detects available manage...
     _calculate_ai_costs(repo_root)
     _read_model_from_pyproject(project_dir)
     _generate_costs_badge(project_dir)
-  examples/validation/run_all_validation.py:
-    e: ValidationRunner,main
-    ValidationRunner: __init__(1),run_test(2),run_all(0),print_summary(0)  # Runs all validation tests and aggregates results...
-    main()
-  goal/recovery/lfs.py:
-    e: LFSIssueStrategy
-    LFSIssueStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles Git LFS issues...
   goal/recovery/manager.py:
     e: RecoveryManager
     RecoveryManager: __init__(2),_ensure_recovery_dir(0),run_git(0),recover_from_push_failure(1),_identify_strategy(1),_create_backup(0),_cleanup_backup(1),_rollback_to_backup(1),_attempt_push(0),setup_clean_clone(0),identify_new_commits(0),cherry_pick_commits(1),push_from_clean_clone(0),full_recovery_workflow(0)  # Manages the recovery process for failed git pushes...
-  examples/custom-hooks/pre-publish.py:
-    e: test_build,test_install,check_version,run_security_check,main
-    test_build()
-    test_install()
-    check_version()
-    run_security_check()
-    main()
+  goal/recovery/lfs.py:
+    e: LFSIssueStrategy
+    LFSIssueStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles Git LFS issues...
   goal/push/stages/publish.py:
     e: handle_publish
     handle_publish(project_types;new_version;yes;no_publish;config)
@@ -804,22 +819,13 @@ Detects available manage...
   goal/doctor/java.py:
     e: diagnose_java
     diagnose_java(project_dir;auto_fix)
-  examples/testing/03_advanced_mocking.py:
-    e: test_mocking_external_services,test_mocking_git_operations,test_mocking_click_interactions,test_spies_and_call_counting,test_mocking_file_system,test_conditional_mocking,test_mock_context_manager
-    test_mocking_external_services()
-    test_mocking_git_operations()
-    test_mocking_click_interactions()
-    test_spies_and_call_counting()
-    test_mocking_file_system()
-    test_conditional_mocking()
-    test_mock_context_manager()
-  examples/webhooks/discord-webhook.py:
-    e: send_discord_notification,main
-    send_discord_notification(message;commit_info)
-    main()
   examples/webhooks/slack-webhook.py:
     e: send_slack_notification,main
     send_slack_notification(message;commit_info)
+    main()
+  examples/webhooks/discord-webhook.py:
+    e: send_discord_notification,main
+    send_discord_notification(message;commit_info)
     main()
   examples/api-usage/02_git_operations.py:
     e: _check_git_repository,_display_staged_files,_display_unstaged_files,_display_diff_stats,_display_diff_content,main
@@ -829,16 +835,6 @@ Detects available manage...
     _display_diff_stats()
     _display_diff_content()
     main()
-  goal/recovery/force_push.py:
-    e: ForcePushStrategy
-    ForcePushStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles force push recovery scenarios...
-  goal/cli/tests_pytest_setup.py:
-    e: check_python_venv,ensure_pytest_for_project
-    check_python_venv(project_root)
-    ensure_pytest_for_project(project_root;python_bin)
-  goal/doctor/go.py:
-    e: diagnose_go
-    diagnose_go(project_dir;auto_fix)
   goal/package_managers.py:
     e: PackageManager,_path_matches,_has_any_matching_path,_detect_package_manager,_has_language_extension,detect_package_managers,get_package_manager,get_package_managers_by_language,is_package_manager_available,get_available_package_managers,get_preferred_package_manager,format_package_manager_command,get_package_manager_info,list_all_package_managers,detect_project_language,suggest_package_managers
     PackageManager: __post_init__(0)  # Package manager configuration and capabilities...
@@ -857,6 +853,12 @@ Detects available manage...
     list_all_package_managers()
     detect_project_language(project_path)
     suggest_package_managers(project_path)
+  goal/recovery/force_push.py:
+    e: ForcePushStrategy
+    ForcePushStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles force push recovery scenarios...
+  goal/doctor/go.py:
+    e: diagnose_go
+    diagnose_go(project_dir;auto_fix)
   goal/authors/utils.py:
     e: format_co_author_trailer,parse_co_authors,add_co_authors_to_message,remove_co_authors_from_message,validate_author_format,deduplicate_co_authors,get_co_authors_from_command_line,format_commit_message_with_co_authors,extract_current_author_from_config
     format_co_author_trailer(name;email)
@@ -920,6 +922,14 @@ Detects available manage...
   goal/doctor/dotnet.py:
     e: diagnose_dotnet
     diagnose_dotnet(project_dir;auto_fix)
+  goal/installers/config.py:
+    e: InstallerConfig,load_installer_config
+    InstallerConfig: from_dict(1)  # Configuration for package manager installer behavior...
+    load_installer_config(project_dir)
+  goal/installers/managers/base.py:
+    e: InstallResult,AbstractPackageManager
+    InstallResult:  # Result of a package manager operation...
+    AbstractPackageManager(ABC): is_available(0),install_editable(1),install_requirements(1),install_from_lockfile(0),_run(1)  # Abstract base class for package managers...
   goal/recovery/exceptions.py:
     e: RecoveryError,AuthError,LargeFileError,DivergentHistoryError,CorruptedObjectError,LFSIssueError,RollbackError,NetworkError,QuotaExceededError
     RecoveryError(Exception): __init__(2)  # Base exception for all recovery operations...
@@ -940,10 +950,6 @@ Detects available manage...
   goal/cli/config_validate_cmd.py:
     e: validate_cmd
     validate_cmd(ctx;config;strict;fix)
-  goal/installers/config.py:
-    e: InstallerConfig,load_installer_config
-    InstallerConfig: from_dict(1)  # Configuration for package manager installer behavior...
-    load_installer_config(project_dir)
   goal/doctor/ruby.py:
     e: diagnose_ruby
     diagnose_ruby(project_dir;auto_fix)
@@ -951,10 +957,6 @@ Detects available manage...
     e: _log_issue,_log_fix
     _log_issue(issue)
     _log_fix(issue)
-  goal/installers/managers/base.py:
-    e: InstallResult,AbstractPackageManager
-    InstallResult:  # Result of a package manager operation...
-    AbstractPackageManager(ABC): is_available(0),install_editable(1),install_requirements(1),install_from_lockfile(0),_run(1)  # Abstract base class for package managers...
   goal/commit_generator.py:
     e: is_detailed_output_requested,display_commit_message,print_detailed_message,display_detailed_message
     is_detailed_output_requested(args)
@@ -967,12 +969,24 @@ Detects available manage...
     FileSizeError(ValidationError): __init__(3)  # Error for files exceeding size limit...
     TokenDetectedError(ValidationError): __init__(3)  # Error when API tokens are detected in files...
     DotFolderError(ValidationError): __init__(1)  # Error when dot folders are detected that should be in .gitig...
-  goal/push/commands.py:
-    e: push
-    push(ctx;bump;no_tag;no_changelog;no_version_sync;no_publish;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
+  goal/installers/managers/uv.py:
+    e: UvManager
+    UvManager(AbstractPackageManager): install_editable(1),install_requirements(1),sync_lockfile(0),install_self(0),install_from_lockfile(0)  # UV package manager implementation...
+  goal/installers/managers/pip.py:
+    e: PipManager
+    PipManager(AbstractPackageManager): is_available(0),install_editable(1),install_requirements(1)  # Pip package manager implementation - always available fallba...
+  goal/installers/managers/poetry.py:
+    e: PoetryManager
+    PoetryManager(AbstractPackageManager): install_editable(1),install_requirements(1),install_from_lockfile(0)  # Poetry package manager implementation...
+  goal/installers/managers/pdm.py:
+    e: PdmManager
+    PdmManager(AbstractPackageManager): install_editable(1),install_requirements(1),install_from_lockfile(0)  # PDM package manager implementation...
   goal/recovery/base.py:
     e: RecoveryStrategy
     RecoveryStrategy(ABC): __init__(2),can_handle(1),recover(1),run_git(0),run_git_with_output(0)  # Base class for all recovery strategies...
+  goal/push/commands.py:
+    e: push
+    push(ctx;bump;no_tag;no_changelog;no_version_sync;no_publish;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
   goal/push/stages/changelog.py:
     e: handle_changelog,update_changelog_stage
     handle_changelog(new_version;files;commit_msg;config;no_changelog)
@@ -995,18 +1009,6 @@ Detects available manage...
     generate_business_summary(files;diff_content;config)
     validate_summary(summary;files;config)
     auto_fix_summary(summary;files;config)
-  goal/installers/managers/uv.py:
-    e: UvManager
-    UvManager(AbstractPackageManager): install_editable(1),install_requirements(1),sync_lockfile(0),install_self(0),install_from_lockfile(0)  # UV package manager implementation...
-  goal/installers/managers/pip.py:
-    e: PipManager
-    PipManager(AbstractPackageManager): is_available(0),install_editable(1),install_requirements(1)  # Pip package manager implementation - always available fallba...
-  goal/installers/managers/pdm.py:
-    e: PdmManager
-    PdmManager(AbstractPackageManager): install_editable(1),install_requirements(1),install_from_lockfile(0)  # PDM package manager implementation...
-  goal/installers/managers/poetry.py:
-    e: PoetryManager
-    PoetryManager(AbstractPackageManager): install_editable(1),install_requirements(1),install_from_lockfile(0)  # Poetry package manager implementation...
   examples/dotnet-project/CalculatorTests.cs:
     i: Xunit
     e: CalculatorTests
@@ -1019,43 +1021,44 @@ Detects available manage...
     i: fmt
     e: main
     main()
-  examples/php-project/src/Example.php:
-    e: Example
-    Example: greet(-1)
-  examples/java-project/src/main/java/com/example/Main.java:
-    e: Main
-    Main: main(-1),greet(-1)
   examples/api-usage/05_programmatic_workflow.py:
     e: run_custom_workflow,create_minimal_workflow
     run_custom_workflow()
     create_minimal_workflow()
+  examples/java-project/src/main/java/com/example/Main.java:
+    e: Main
+    Main: main(-1),greet(-1)
+  examples/php-project/src/Example.php:
+    e: Example
+    Example: greet(-1)
   goal/smart_commit/generator.py:
     e: SmartCommitGenerator,create_smart_generator
     SmartCommitGenerator(SmartCommitGeneratorGenerateMixin,SmartCommitGeneratorCore):  # Generates smart commit messages using code abstraction...
     create_smart_generator(config)
-  regix.yaml:
-  Makefile:
-  goal/__init__.py:
-  examples/enhanced-summary/config-example.yaml:
   redsl_refactor_report.toon.yaml:
+  redsl.yaml:
+  goal/__init__.py:
+  regix.yaml:
+  planfile.yaml:
+  Makefile:
+  redsl_refactor_plan.toon.yaml:
   wup.yaml:
-  examples/markdown-demo.sh:
+  .pre-commit-config.yaml:
+  pyqual.yaml:
+  pyproject.toml:
   tree.txt:
   prefact.yaml:
   Taskfile.yml:
-  redsl.yaml:
   project.sh:
-  examples/my-new-project/pyproject.toml:
-  examples/nodejs-app/package.json:
-  redsl_refactor_plan.toon.yaml:
+  examples/markdown-demo.sh:
   examples/makefile/Makefile:
-  pyqual.yaml:
-  examples/git-hooks/install.sh:
-  planfile.yaml:
-  pyproject.toml:
-  .pre-commit-config.yaml:
   examples/my-new-project/goal.yaml:
+  examples/my-new-project/pyproject.toml:
+  examples/my-new-project/src/my-new-project/__init__.py:
   examples/python-package/pyproject.toml:
+  examples/nodejs-app/package.json:
+  examples/enhanced-summary/config-example.yaml:
+  examples/git-hooks/install.sh:
   examples/java-project/pom.xml:
   examples/php-project/composer.json:
   examples/rust-crate/Cargo.toml:
@@ -1068,14 +1071,13 @@ Detects available manage...
   goal/project_doctor.py:
   goal/generator/__init__.py:
   goal/bootstrap/__init__.py:
-  examples/my-new-project/src/my-new-project/__init__.py:
+  goal/bootstrap/templates.py:
+    e: ProjectTemplate
+    ProjectTemplate:  # Template configuration for a project type...
   goal/hooks/__init__.py:
   goal/validators/__init__.py:
   goal/installers/__init__.py:
   goal/installers/managers/__init__.py:
-  goal/bootstrap/templates.py:
-    e: ProjectTemplate
-    ProjectTemplate:  # Template configuration for a project type...
   goal/recovery/strategies.py:
   goal/recovery/__init__.py:
   goal/push/__init__.py:
@@ -1086,9 +1088,14 @@ Detects available manage...
   goal/config/constants.py:
   goal/validation/__init__.py:
   goal/doctor/__init__.py:
+  goal/doctor/models.py:
+    e: Issue,DoctorReport
+    Issue:  # A single diagnosed issue...
+    DoctorReport:  # Aggregated report from a doctor run...
   goal/authors/__init__.py:
   goal/license/__init__.py:
   testql-scenarios/generated-from-pytests.testql.toon.yaml:
+  testql-scenarios/generated-cli-tests.testql.toon.yaml:
   integration/run_docker_matrix.sh:
   integration/run_matrix.sh:
     e: App,run_case,print,main,self
@@ -1097,9 +1104,4 @@ Detects available manage...
     print()
     main()
     self()
-  testql-scenarios/generated-cli-tests.testql.toon.yaml:
   integration/Dockerfile:
-  goal/doctor/models.py:
-    e: Issue,DoctorReport
-    Issue:  # A single diagnosed issue...
-    DoctorReport:  # Aggregated report from a doctor run...

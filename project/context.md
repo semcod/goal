@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
+<!-- generated in 0.00s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/goal
 - **Primary Language**: python
-- **Languages**: python: 150, yaml: 13, shell: 6, toml: 4, json: 2
+- **Languages**: python: 150, yaml: 13, shell: 6, toml: 4, csharp: 2
 - **Analysis Mode**: static
-- **Total Functions**: 962
+- **Total Functions**: 964
 - **Total Classes**: 79
 - **Modules**: 186
-- **Entry Points**: 614
+- **Entry Points**: 617
 
 ## Architecture by Module
 
@@ -79,6 +79,11 @@
 - **Functions**: 17
 - **File**: `tests.py`
 
+### goal.package_managers
+- **Functions**: 16
+- **Classes**: 1
+- **File**: `package_managers.py`
+
 ### goal.deep_analyzer_aggregate
 - **Functions**: 16
 - **Classes**: 1
@@ -88,11 +93,6 @@
 - **Functions**: 16
 - **Classes**: 5
 - **File**: `actions.py`
-
-### goal.package_managers
-- **Functions**: 16
-- **Classes**: 1
-- **File**: `package_managers.py`
 
 ### goal.version_validation
 - **Functions**: 15
@@ -185,13 +185,19 @@ Użyteczne do wykrywania spowolnienia spowodowanego duplikatami.
 > Validate git configuration.
 - **Calls**: self.config.get, git.get, commit.get, commit.get, commit.get, git.get, remote.get, remote.get
 
+### examples.custom-hooks.pre-commit.main
+> Run all pre-commit checks.
+- **Calls**: integration.run_matrix.print, integration.run_matrix.print, examples.custom-hooks.pre-commit.check_secrets, integration.run_matrix.print, examples.custom-hooks.pre-commit.check_file_sizes, integration.run_matrix.print, examples.custom-hooks.pre-commit.run_tests, integration.run_matrix.print
+
 ### examples.api-usage.03_commit_generation.main
 > Demonstrate commit message generation.
 - **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.git_ops.get_staged_files, goal.git_ops.get_diff_content, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print
 
-### examples.custom-hooks.pre-commit.main
-> Run all pre-commit checks.
-- **Calls**: integration.run_matrix.print, integration.run_matrix.print, examples.custom-hooks.pre-commit.check_secrets, integration.run_matrix.print, examples.custom-hooks.pre-commit.check_file_sizes, integration.run_matrix.print, examples.custom-hooks.pre-commit.run_tests, integration.run_matrix.print
+### examples.testing.03_advanced_mocking.test_spies_and_call_counting
+> Szpiegowanie funkcji i liczenie wywołań.
+
+Użyteczne do wykrywania duplikatów i wycieków wydajności.
+- **Calls**: tempfile.TemporaryDirectory, Path, None.write_text, subprocess.run, integration.run_matrix.print, enumerate, integration.run_matrix.print, call_history.append
 
 ### goal.recovery.manager.RecoveryManager.recover_from_push_failure
 > Attempt to recover from a git push failure.
@@ -206,15 +212,13 @@ git push failures including:
 - Authentication
 - **Calls**: main.command, click.option, click.option, click.option, click.option, click.option, os.getcwd, goal.cli.recover_cmd._get_error_output
 
-### examples.testing.03_advanced_mocking.test_spies_and_call_counting
-> Szpiegowanie funkcji i liczenie wywołań.
-
-Użyteczne do wykrywania duplikatów i wycieków wydajności.
-- **Calls**: tempfile.TemporaryDirectory, Path, None.write_text, subprocess.run, integration.run_matrix.print, enumerate, integration.run_matrix.print, call_history.append
-
 ### goal.doctor.nodejs.diagnose_nodejs
 > Run all Node.js-specific diagnostics.
 - **Calls**: json.dumps, data.get, json.dumps, pkg_json.exists, json.loads, data.get, issues.append, data.get
+
+### examples.testing.04_debugging_diagnostics.create_debug_report
+> Tworzenie pełnego raportu debugowego.
+- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print
 
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._build_summary
 > Build human-readable summary.
@@ -223,10 +227,6 @@ Użyteczne do wykrywania duplikatów i wycieków wydajności.
 ### goal.generator.generator.CommitMessageGenerator._build_summary_section
 > Build high-level summary section.
 - **Calls**: Counter, Counter, parts.append, parts.append, parts.append, parts.append, parts.append, parts.append
-
-### examples.testing.04_debugging_diagnostics.create_debug_report
-> Tworzenie pełnego raportu debugowego.
-- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print
 
 ### goal.recovery.auth.AuthErrorStrategy.recover
 > Attempt to recover from authentication error.
@@ -416,8 +416,11 @@ top of :class:`PythonDiagnostics
 
 Key functions that process and transform data:
 
-### goal.cli._format_import_warning_message
-> Return a single-line warning describing a failed ``goal.cli`` import.
+### goal.project_bootstrap._validate_pfix_env
+> Validate that OPENROUTER_API_KEY is configured in .env.
+
+Shows error message if key is missing or em
+- **Output to**: goal.project_bootstrap._find_openrouter_api_key, click.echo, click.echo, click.echo, click.echo
 
 ### goal.toml_validation.validate_toml_file
 > Validate a TOML file and return helpful error message if invalid.
@@ -434,6 +437,9 @@ Args:
 
 Ret
 - **Output to**: Path, toml_file.exists, goal.toml_validation.validate_toml_file, errors.append
+
+### goal.cli._format_import_warning_message
+> Return a single-line warning describing a failed ``goal.cli`` import.
 
 ### goal.version_validation._validate_single_type
 > Validate a single project type against its registry.
@@ -452,6 +458,14 @@ Returns:
 > Format validation results for display.
 - **Output to**: results.items, messages.append, messages.append, messages.append, messages.append
 
+### goal.package_managers.format_package_manager_command
+> Format a package manager command with the given parameters.
+
+Args:
+    pm: Package manager instance
+
+- **Output to**: getattr, ValueError, command_template.format, ValueError
+
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._format_entity_names
 
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._format_relations
@@ -461,13 +475,6 @@ Returns:
 
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._format_areas
 - **Output to**: None.join
-
-### goal.git_ops.validate_repo_url
-> Validate that a URL looks like a git repository (HTTP/HTTPS/SSH/file).
-- **Output to**: url.strip, re.match, re.match, re.match
-
-### goal.bootstrap.costs_badge._parsed_diff_is_usable
-- **Output to**: isinstance, parsed_diff.startswith
 
 ### goal.formatter.format_push_result
 > Format push command result as markdown.
@@ -493,6 +500,13 @@ Returns:
 > Format status command output as markdown.
 - **Output to**: MarkdownFormatter, formatter.add_header, None.strip, formatter.add_section, formatter.add_list
 
+### goal.git_ops.validate_repo_url
+> Validate that a URL looks like a git repository (HTTP/HTTPS/SSH/file).
+- **Output to**: url.strip, re.match, re.match, re.match
+
+### goal.bootstrap.costs_badge._parsed_diff_is_usable
+- **Output to**: isinstance, parsed_diff.startswith
+
 ### goal.validators.file_validator.validate_files
 > Validate files before commit.
 
@@ -507,22 +521,6 @@ Args:
 This is a convenience function that extracts validation 
 - **Output to**: goal.git_ops.get_staged_files, goal.validators.file_validator._get_deleted_staged_files, goal.validators.dot_folders.manage_dot_folders, goal.git_ops.get_staged_files, goal.validators.file_validator.validate_files
 
-### goal.project_bootstrap._validate_pfix_env
-> Validate that OPENROUTER_API_KEY is configured in .env.
-
-Shows error message if key is missing or em
-- **Output to**: goal.project_bootstrap._find_openrouter_api_key, click.echo, click.echo, click.echo, click.echo
-
-### goal.push.stages.dry_run._format_markdown_dry_run
-> Return markdown-formatted dry-run output.
-- **Output to**: goal.formatter.format_push_result, detailed_result.get, goal.formatter.format_enhanced_summary, detailed_result.get, detailed_result.get
-
-### goal.cli.config_validate_cmd.validate_cmd
-> Validate goal.yaml configuration file.
-
-Checks that the configuration file is valid, complete, and f
-- **Output to**: click.command, click.option, click.option, click.option, click.echo
-
 ### goal.push.core._validate_toml_or_exit
 > Abort the workflow when ``pyproject.toml`` has a syntax error (skipped on dry-run).
 - **Output to**: goal.toml_validation.check_pyproject_toml, click.echo, click.echo, sys.exit, click.style
@@ -530,6 +528,10 @@ Checks that the configuration file is valid, complete, and f
 ### goal.push.core._validate_staged_files
 > Validate staged files for security issues.
 - **Output to**: goal.validators.file_validator.validate_staged_files, click.echo, ctx_obj.get, click.echo, click.echo
+
+### goal.push.stages.dry_run._format_markdown_dry_run
+> Return markdown-formatted dry-run output.
+- **Output to**: goal.formatter.format_push_result, detailed_result.get, goal.formatter.format_enhanced_summary, detailed_result.get, detailed_result.get
 
 ## Behavioral Patterns
 
@@ -551,8 +553,8 @@ Functions exposed as public API (no underscore prefix):
 - `examples.api-usage.01_basic_api.main` - 34 calls
 - `goal.cli.wizard_cmd.wizard` - 34 calls
 - `goal.push.core.output_final_summary` - 33 calls
-- `goal.push.stages.todo.handle_todo_stage` - 32 calls
 - `goal.push.core.execute_push_workflow` - 32 calls
+- `goal.push.stages.todo.handle_todo_stage` - 32 calls
 - `goal.user_config.show_user_config` - 31 calls
 - `examples.api-usage.04_version_validation.main` - 30 calls
 - `goal.push.stages.test.run_test_stage` - 27 calls
@@ -565,23 +567,23 @@ Functions exposed as public API (no underscore prefix):
 - `goal.recovery.divergent.DivergentHistoryStrategy.recover` - 25 calls
 - `goal.push.stages.costs.update_cost_badges` - 25 calls
 - `goal.config.validation.validate_config_file` - 25 calls
+- `examples.custom-hooks.pre-commit.main` - 23 calls
 - `examples.api-usage.03_commit_generation.main` - 23 calls
 - `examples.template-generator.generate.generate_project` - 23 calls
+- `examples.testing.03_advanced_mocking.test_spies_and_call_counting` - 23 calls
 - `goal.git_ops.ensure_remote` - 23 calls
-- `examples.custom-hooks.pre-commit.main` - 23 calls
 - `goal.recovery.manager.RecoveryManager.recover_from_push_failure` - 23 calls
 - `goal.cli.recover_cmd.recover` - 23 calls
-- `examples.testing.03_advanced_mocking.test_spies_and_call_counting` - 23 calls
 - `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
 - `examples.testing.04_debugging_diagnostics.create_debug_report` - 22 calls
 - `goal.recovery.auth.AuthErrorStrategy.recover` - 22 calls
-- `goal.push.stages.commit.handle_split_commits` - 22 calls
 - `goal.push.core.show_workflow_preview` - 22 calls
+- `goal.push.stages.commit.handle_split_commits` - 22 calls
 - `goal.config.validation.validate_config_interactive` - 22 calls
-- `goal.formatter.format_push_result` - 21 calls
 - `examples.testing.04_debugging_diagnostics.test_debug_output_capture` - 21 calls
+- `goal.formatter.format_push_result` - 21 calls
 - `goal.push.stages.commit.get_commit_message` - 21 calls
-- `goal.cli.utils_cmd.status` - 21 calls
+- `goal.cli.license_cmd.license_create` - 21 calls
 
 ## System Interactions
 
