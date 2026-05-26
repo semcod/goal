@@ -1,16 +1,16 @@
-# goal | 186f 28797L | yaml:13,python:150,toml:4,shell:7,yml:1,json:2,xml:1,csharp:2,java:1,go:1,php:1 | 2026-05-24
-# generated in 0.02s
-# stats: 947 func | 0 cls | 186 mod | CC̄=4.3 | critical:1 | cycles:0
-# alerts[5]: fan-out execute_push_workflow=28; fan-out EnhancedSummaryGenerator.generate_enhanced_summary=24; fan-out doctor=22; fan-out _install_python_deps_legacy=20; fan-out _install_python_deps=19
+# goal | 186f 29573L | yaml:13,python:150,shell:6,txt:1,yml:1,toml:4,json:2,xml:1,csharp:2,go:1,php:1,java:1 | 2026-05-26
+# generated in 0.04s
+# stats: 962 func | 0 cls | 186 mod | CC̄=4.3 | critical:2 | cycles:0
+# alerts[5]: fan-out execute_push_workflow=28; fan-out EnhancedSummaryGenerator.generate_enhanced_summary=24; fan-out doctor=22; fan-out _install_python_deps_legacy=20; CC add_slow_test_tickets_to_planfile=22
 # hotspots[5]: execute_push_workflow fan=28; EnhancedSummaryGenerator.generate_enhanced_summary fan=24; doctor fan=22; _install_python_deps_legacy fan=20; _install_python_deps fan=19
-# evolution: CC̄ 0.2→4.3 (regressed +4.1)
+# evolution: CC̄ 4.3→4.3 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[186]:
   .pre-commit-config.yaml,38
   Makefile,91
   Taskfile.yml,244
   examples/api-usage/01_basic_api.py,74
-  examples/api-usage/02_git_operations.py,81
+  examples/api-usage/02_git_operations.py,100
   examples/api-usage/03_commit_generation.py,70
   examples/api-usage/04_version_validation.py,79
   examples/api-usage/05_programmatic_workflow.py,120
@@ -66,15 +66,15 @@ M[186]:
   goal/cli/publish_cmd.py,66
   goal/cli/push_cmd.py,139
   goal/cli/recover_cmd.py,132
-  goal/cli/tests.py,309
+  goal/cli/tests.py,445
   goal/cli/tests_discovery.py,107
   goal/cli/tests_pytest_setup.py,79
   goal/cli/utils_cmd.py,229
   goal/cli/validation_cmd.py,85
   goal/cli/version.py,35
-  goal/cli/version_sync.py,229
+  goal/cli/version_sync.py,285
   goal/cli/version_types.py,135
-  goal/cli/version_utils.py,478
+  goal/cli/version_utils.py,485
   goal/cli/wizard_cmd.py,367
   goal/cli_helpers.py,97
   goal/commit_generator.py,35
@@ -130,7 +130,7 @@ M[186]:
   goal/project_doctor.py,43
   goal/push/__init__.py,56
   goal/push/commands.py,63
-  goal/push/core.py,588
+  goal/push/core.py,751
   goal/push/stages/__init__.py,36
   goal/push/stages/changelog.py,24
   goal/push/stages/commit.py,303
@@ -139,7 +139,7 @@ M[186]:
   goal/push/stages/publish.py,57
   goal/push/stages/push_remote.py,467
   goal/push/stages/tag.py,32
-  goal/push/stages/test.py,84
+  goal/push/stages/test.py,87
   goal/push/stages/todo.py,100
   goal/push/stages/version.py,56
   goal/recovery/__init__.py,48
@@ -190,12 +190,28 @@ M[186]:
   scripts/koru_verify_ci.sh,49
   testql-scenarios/generated-cli-tests.testql.toon.yaml,20
   testql-scenarios/generated-from-pytests.testql.toon.yaml,79
-  tree.sh,1
+  tree.txt,393
   wup.yaml,90
 D:
-  examples/api-usage/02_git_operations.py:
-    e: main
-    main()
+  goal/push/core.py:
+    e: PushContext,run_git_local,show_workflow_preview,add_slow_test_tickets_to_planfile,output_final_summary,_validate_toml_or_exit,_apply_enhanced_quality_gates,_handle_no_files,_abort_if_missing_commit_title,_maybe_show_workflow_preview,_run_test_stage_or_exit,execute_push_workflow,_initialize_context,_detect_and_bootstrap_projects,_handle_no_changes,_validate_staged_files,_handle_commit_phase
+    PushContext: __init__(1),get(2)  # Context object wrapper for push command...
+    run_git_local()
+    show_workflow_preview(files;stats;current_version;new_version;commit_msg;commit_body;markdown;ctx_obj)
+    add_slow_test_tickets_to_planfile(test_details)
+    output_final_summary(ctx_obj;markdown;project_types;files;stats;current_version;new_version;commit_msg;commit_body;test_exit_code;publish_success;no_tag)
+    _validate_toml_or_exit(dry_run)
+    _apply_enhanced_quality_gates(ctx_obj;commit_msg;detailed_result;files;stats;message;markdown)
+    _handle_no_files(ctx_obj;project_types;dry_run;markdown;files)
+    _abort_if_missing_commit_title(commit_title)
+    _maybe_show_workflow_preview(ctx_obj;files;stats;current_version;new_version;commit_msg;commit_body;markdown)
+    _run_test_stage_or_exit(project_types;ctx_obj;markdown;files;stats;current_version;new_version;commit_msg;commit_body)
+    execute_push_workflow(ctx_obj;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo;force;model;api_key;no_publish)
+    _initialize_context(ctx_obj;bump;message;yes;markdown)
+    _detect_and_bootstrap_projects(ctx_obj;dry_run;yes)
+    _handle_no_changes(ctx_obj;project_types;dry_run;markdown)
+    _validate_staged_files(ctx_obj;dry_run;force)
+    _handle_commit_phase(ctx_obj;split;message;commit_title;commit_body;commit_msg;files;ticket;new_version;current_version;no_version_sync;no_changelog)
   goal/cli_helpers.py:
     e: strip_ansi,split_paths_by_type,stage_paths,confirm
     strip_ansi(text)
@@ -206,6 +222,23 @@ D:
     e: ChangeAnalyzer,ContentAnalyzer
     ChangeAnalyzer: classify_change_type(3),_detect_signals(2),_has_package_code(1),_is_docs_only(1),_is_ci_only(1),_has_new_goal_python_file(2),_score_by_file_patterns(2),_score_by_diff_content(2),_score_by_statistics(3),_score_by_signals(4),_score_package_signals(3),_score_text_signals(2),_score_file_signals(2),_score_path_signals(2),_score_new_functionality(3),_resolve_change_type(4),detect_scope(1),extract_functions_changed(1)  # Analyze git changes to classify type, detect scope, and extr...
     ContentAnalyzer: short_action_summary(2),_detect_tags(2),_summary_from_tags(1),_summary_from_paths(2),per_file_notes(2),_get_added_lines(1),_notes_python(2),_notes_docs(3),_notes_shell(2)  # Analyze content for short summaries and per-file notes...
+  goal/bootstrap/configurator.py:
+    e: scaffold_test_file,_find_python_bin,_read_openrouter_api_key,_find_openrouter_api_key,_find_git_root
+    scaffold_test_file(project_dir;project_type)
+    _find_python_bin(project_dir)
+    _read_openrouter_api_key(env_file)
+    _find_openrouter_api_key(project_dir)
+    _find_git_root(project_dir)
+  goal/validators/file_validator.py:
+    e: get_file_size_mb,_is_excluded,_handle_oversized_file,_check_file_for_tokens,validate_files,handle_large_files,_get_deleted_staged_files,validate_staged_files
+    get_file_size_mb(file_path)
+    _is_excluded(file_path;exclude_patterns)
+    _handle_oversized_file(file_path;size_mb;max_size_mb;auto_handle;block)
+    _check_file_for_tokens(file_path;token_patterns)
+    validate_files(files;max_size_mb;block_large_files;token_patterns;detect_tokens;exclude_patterns;auto_handle_large)
+    handle_large_files(large_files)
+    _get_deleted_staged_files()
+    validate_staged_files(config)
   goal/project_bootstrap.py:
     e: _match_marker,detect_project_types_deep,_guess_python_name,_guess_nodejs_name,_guess_rust_name,_guess_go_name,guess_package_name,_find_python_bin,_read_openrouter_api_key,_find_openrouter_api_key,_find_git_root,_ensure_python_test_dependency,_ensure_python_env,_should_skip_install,_install_python_deps,_install_python_deps_broker,_ensure_generic_env,ensure_project_environment,find_existing_tests,_resolve_scaffold_test_path,scaffold_test,_new_bootstrap_result,_run_bootstrap_diagnostics,_ensure_bootstrap_tests,bootstrap_project,bootstrap_all_projects,_ensure_costs_installed,_ensure_pfix_env,_validate_pfix_env,_ensure_pfix_installed,_ensure_pfix_config,scaffold_test_file
     _match_marker(base;pattern)
@@ -240,23 +273,20 @@ D:
     _ensure_pfix_installed(project_dir;yes)
     _ensure_pfix_config(project_dir;yes)
     scaffold_test_file(project_dir;project_type)
-  goal/bootstrap/configurator.py:
-    e: scaffold_test_file,_find_python_bin,_read_openrouter_api_key,_find_openrouter_api_key,_find_git_root
-    scaffold_test_file(project_dir;project_type)
-    _find_python_bin(project_dir)
-    _read_openrouter_api_key(env_file)
-    _find_openrouter_api_key(project_dir)
-    _find_git_root(project_dir)
-  goal/validators/file_validator.py:
-    e: get_file_size_mb,_is_excluded,_handle_oversized_file,_check_file_for_tokens,validate_files,handle_large_files,_get_deleted_staged_files,validate_staged_files
-    get_file_size_mb(file_path)
-    _is_excluded(file_path;exclude_patterns)
-    _handle_oversized_file(file_path;size_mb;max_size_mb;auto_handle;block)
-    _check_file_for_tokens(file_path;token_patterns)
-    validate_files(files;max_size_mb;block_large_files;token_patterns;detect_tokens;exclude_patterns;auto_handle_large)
-    handle_large_files(large_files)
-    _get_deleted_staged_files()
-    validate_staged_files(config)
+  goal/push/stages/commit.py:
+    e: get_commit_message,_build_validation_summary,_confirm_suggested_title,_echo_applied_title_fix,enforce_quality_gates,handle_single_commit,_commit_file_group,_commit_release_metadata,handle_split_commits
+    get_commit_message(ctx_obj;files;diff_content;message;ticket;abstraction)
+    _build_validation_summary(commit_msg;detailed_result;total_adds;total_dels)
+    _confirm_suggested_title(commit_msg;suggested_title;yes)
+    _echo_applied_title_fix(ctx_obj;commit_msg;markdown)
+    enforce_quality_gates(ctx_obj;commit_msg;detailed_result;files;total_adds;total_dels;yes;markdown)
+    handle_single_commit(commit_title;commit_body;commit_msg;message;yes)
+    _commit_file_group(gname;paths;generator;ticket;yes)
+    _commit_release_metadata(ctx_obj;files;config_dict;ticket;new_version;current_version;no_version_sync;no_changelog)
+    handle_split_commits(ctx_obj;files;ticket;new_version;current_version;no_version_sync;no_changelog;yes)
+  goal/push/stages/todo.py:
+    e: handle_todo_stage
+    handle_todo_stage(ctx_obj;yes;dry_run)
   goal/bootstrap/installer.py:
     e: _match_marker,_should_skip_install,_ensure_costs_installed,_install_python_deps_legacy,_install_python_deps_broker,_ensure_python_test_dependency,_ensure_python_env,_needs_install,_run_dep_install,_get_matching_dep_command,_ensure_generic_env,ensure_project_environment
     _match_marker(base;pattern)
@@ -271,20 +301,6 @@ D:
     _get_matching_dep_command(project_dir;dep_commands)
     _ensure_generic_env(project_dir;project_type;cfg;yes)
     ensure_project_environment(project_dir;project_type;yes)
-  goal/push/stages/todo.py:
-    e: handle_todo_stage
-    handle_todo_stage(ctx_obj;yes;dry_run)
-  goal/push/stages/commit.py:
-    e: get_commit_message,_build_validation_summary,_confirm_suggested_title,_echo_applied_title_fix,enforce_quality_gates,handle_single_commit,_commit_file_group,_commit_release_metadata,handle_split_commits
-    get_commit_message(ctx_obj;files;diff_content;message;ticket;abstraction)
-    _build_validation_summary(commit_msg;detailed_result;total_adds;total_dels)
-    _confirm_suggested_title(commit_msg;suggested_title;yes)
-    _echo_applied_title_fix(ctx_obj;commit_msg;markdown)
-    enforce_quality_gates(ctx_obj;commit_msg;detailed_result;files;total_adds;total_dels;yes;markdown)
-    handle_single_commit(commit_title;commit_body;commit_msg;message;yes)
-    _commit_file_group(gname;paths;generator;ticket;yes)
-    _commit_release_metadata(ctx_obj;files;config_dict;ticket;new_version;current_version;no_version_sync;no_changelog)
-    handle_split_commits(ctx_obj;files;ticket;new_version;current_version;no_version_sync;no_changelog;yes)
   goal/config/validation.py:
     e: ConfigValidationError,ConfigValidator,validate_config_file,validate_config_interactive,_auto_fix_config
     ConfigValidationError(Exception): __init__(2)  # Error raised when configuration validation fails...
@@ -332,7 +348,7 @@ D:
     format_enhanced_summary(commit_title;commit_body;capabilities;roles;relations;metrics;files;stats;current_version;new_version)
     format_status_output(version;branch;staged_files;unstaged_files)
   goal/cli/version_sync.py:
-    e: _update_version_file,_update_json_version_file,_update_toml_version,_update_cargo_version,_update_csproj_versions,_update_pom_xml,_update_readme_metadata,_sync_uv_lock,_update_init_py_versions,sync_all_versions
+    e: _update_version_file,_update_json_version_file,_update_toml_version,_update_cargo_version,_update_csproj_versions,_update_pom_xml,_update_readme_metadata,_warn_lock_refresh,_snapshot_paths,_append_changed_paths,_sync_dependency_lockfiles,_sync_uv_lock,_sync_dependency_locks_after_manifest_updates,_update_init_py_versions,sync_all_versions
     _update_version_file(new_version;updated)
     _update_json_version_file(filename;new_version;user_config;updated)
     _update_toml_version(filename;new_version;user_config;updated)
@@ -340,9 +356,21 @@ D:
     _update_csproj_versions(new_version;updated)
     _update_pom_xml(new_version;updated)
     _update_readme_metadata(user_config;new_version;updated)
+    _warn_lock_refresh(message)
+    _snapshot_paths(paths)
+    _append_changed_paths(updated;before;paths)
+    _sync_dependency_lockfiles(updated)
     _sync_uv_lock(updated)
+    _sync_dependency_locks_after_manifest_updates(updated)
     _update_init_py_versions(new_version;updated)
     sync_all_versions(new_version;user_config)
+  goal/cli/commit_cmd.py:
+    e: _output_detailed,_output_simple,commit,fix_summary,validate
+    _output_detailed(title;body;use_markdown)
+    _output_simple(title;co_authors;use_markdown)
+    commit(ctx;detailed;unstaged;markdown;ticket;abstraction;co_author)
+    fix_summary(ctx;fix;preview;cached)
+    validate(ctx;fix;cached)
   goal/cli/publish.py:
     e: makefile_has_target,_get_project_strategy,_get_configured_project_types,_get_python_bin,_ensure_publish_deps,_prepare_python_publish,_is_rate_limited,_run_publish_command,publish_project
     makefile_has_target(target)
@@ -354,23 +382,12 @@ D:
     _is_rate_limited(result)
     _run_publish_command(ptype;publish_cmd)
     publish_project(project_types;version;yes;config)
-  goal/cli/commit_cmd.py:
-    e: _output_detailed,_output_simple,commit,fix_summary,validate
-    _output_detailed(title;body;use_markdown)
-    _output_simple(title;co_authors;use_markdown)
-    commit(ctx;detailed;unstaged;markdown;ticket;abstraction;co_author)
-    fix_summary(ctx;fix;preview;cached)
-    validate(ctx;fix;cached)
   goal/smart_commit/generator_generate.py:
     e: SmartCommitGeneratorGenerateMixin
     SmartCommitGeneratorGenerateMixin: generate_message(2),_is_docs_only_change(1),_generate_docs_message(1),_generate_high_abstraction_message(1),_generate_medium_abstraction_message(1),_generate_low_abstraction_message(1),_filter_meaningful_entities(1),_infer_message_from_files(1),generate_functional_body(1),generate_changelog_entry(2),format_changelog_entry(1)
   goal/doctor/nodejs.py:
     e: diagnose_nodejs
     diagnose_nodejs(project_dir;auto_fix)
-  goal/generator/generator.py:
-    e: CommitMessageGenerator,generate_smart_commit_message
-    CommitMessageGenerator: __init__(1),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),classify_change_type(3),detect_scope(1),extract_functions_changed(1),_short_action_summary(2),_per_file_notes(2),generate_commit_message(3),generate_abstraction_message(2),generate_changelog_entry(2),generate_enhanced_summary(2),_try_enhanced_summary(2),_classify_files(2),_build_statistics_section(1),_build_summary_section(5),_build_file_lists(4),_build_per_file_notes(3),_build_implementation_notes(0),generate_detailed_message(2)  # Generate conventional commit messages using diff analysis an...
-    generate_smart_commit_message(cached)
   goal/bootstrap/pyproject_costs_setup.py:
     e: _find_dep_list_end,_try_merge_optional_dev_deps,_try_merge_hatch_default_deps,_try_add_deps,_add_deps_to_section_match,_ensure_costs_config,_ensure_env_template
     _find_dep_list_end(content;start_idx)
@@ -380,32 +397,13 @@ D:
     _add_deps_to_section_match(section_start;existing;required_deps)
     _ensure_costs_config(project_dir)
     _ensure_env_template(project_dir)
+  goal/generator/generator.py:
+    e: CommitMessageGenerator,generate_smart_commit_message
+    CommitMessageGenerator: __init__(1),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),classify_change_type(3),detect_scope(1),extract_functions_changed(1),_short_action_summary(2),_per_file_notes(2),generate_commit_message(3),generate_abstraction_message(2),generate_changelog_entry(2),generate_enhanced_summary(2),_try_enhanced_summary(2),_classify_files(2),_build_statistics_section(1),_build_summary_section(5),_build_file_lists(4),_build_per_file_notes(3),_build_implementation_notes(0),generate_detailed_message(2)  # Generate conventional commit messages using diff analysis an...
+    generate_smart_commit_message(cached)
   goal/cli/doctor_cmd.py:
     e: doctor
     doctor(ctx;fix;path;todo;manager)
-  goal/cli/version_utils.py:
-    e: detect_project_types,find_version_files,get_version_from_file,get_current_version,bump_version,update_version_in_file,update_json_version,_build_author_block,_update_tomlkit_license,_update_tomlkit_authors,_update_tomlkit_classifier,_update_pyproject_with_tomlkit,_update_regex_license,_update_regex_authors,_update_regex_classifier,_update_pyproject_with_regex,_update_pyproject_metadata,_update_package_json_metadata,_update_setup_py_metadata,update_project_metadata,update_readme_metadata
-    detect_project_types()
-    find_version_files()
-    get_version_from_file(filepath;pattern)
-    get_current_version()
-    bump_version(version;bump_type)
-    update_version_in_file(filepath;pattern;old_version;new_version)
-    update_json_version(filepath;new_version)
-    _build_author_block(existing_authors;author_name;author_email)
-    _update_tomlkit_license(doc;license_id)
-    _update_tomlkit_authors(doc;author_name;author_email)
-    _update_tomlkit_classifier(doc;license_classifier)
-    _update_pyproject_with_tomlkit(content;author_name;author_email;license_id;license_classifier)
-    _update_regex_license(content;license_id)
-    _update_regex_authors(content;author_name;author_email)
-    _update_regex_classifier(content;license_classifier)
-    _update_pyproject_with_regex(content;author_name;author_email;license_id;license_classifier)
-    _update_pyproject_metadata(content;author_name;author_email;license_id;license_classifier)
-    _update_package_json_metadata(content;author_name;author_email;license_id)
-    _update_setup_py_metadata(content;author_name;author_email;license_id)
-    update_project_metadata(filepath;user_config)
-    update_readme_metadata(user_config)
   goal/cli/wizard_cmd.py:
     e: wizard,_setup_git_repository,_find_git_root,_add_git_remote,_setup_user_config,_setup_project_config,_show_setup_summary
     wizard(reset;skip_git;skip_user;skip_project)
@@ -418,6 +416,9 @@ D:
   goal/smart_commit/abstraction.py:
     e: CodeAbstraction
     CodeAbstraction: __init__(1),get_domain(1),get_language(1),_added_lines_from_diff(0),_dedupe_entities(0),extract_entities(2),extract_markdown_topics(1),infer_benefit(5),detect_features(2),determine_abstraction_level(1),get_action_verb(1)  # Extracts meaningful abstractions from code changes...
+  examples/api-usage/04_version_validation.py:
+    e: main
+    main()
   goal/cli/__init__.py:
     e: GoalGroup,_goal_update_command,_warn_goal_binary_mismatch,_setup_nfo_logging,_nfo_log_call,load_command_modules,_auto_update_goal,_show_goal_version_banner,_configure_main_context,main
     GoalGroup(click.Group): get_command(2),parse_args(2)  # Custom Click Group that shows docs URL for unknown commands ...
@@ -439,25 +440,6 @@ D:
     initialize_user_config(force)
     get_user_config()
     show_user_config()
-  goal/generator/git_ops.py:
-    e: GitDiffOperations
-    GitDiffOperations: __init__(0),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),clear_cache(0)  # Git diff operations with caching...
-  goal/bootstrap/detector.py:
-    e: _match_marker,detect_project_types_deep,_guess_python_name,_guess_nodejs_name,_guess_rust_name,_guess_go_name,guess_package_name
-    _match_marker(base;pattern)
-    detect_project_types_deep(root;max_depth)
-    _guess_python_name(project_dir)
-    _guess_nodejs_name(project_dir)
-    _guess_rust_name(project_dir)
-    _guess_go_name(project_dir)
-    guess_package_name(project_dir;project_type)
-  examples/api-usage/04_version_validation.py:
-    e: main
-    main()
-  goal/recovery/large_file.py:
-    e: LargeFileStrategy,_run_git_chunked
-    LargeFileStrategy(RecoveryStrategy): __init__(2),can_handle(1),recover(1),_files_in_history(1),_remove_from_history(1),_extract_file_paths(1),_find_large_files(1),_get_file_size_mb(1),_remove_large_files(1),_move_to_lfs(1),_skip_large_files(1)  # Handles large file errors...
-    _run_git_chunked(run_git_fn;cmd_base;paths;chunk_size)
   goal/git_ops.py:
     e: run_git,run_command,_echo_cmd,_run_git_verbose,run_git_with_status,run_command_tee,is_git_repository,validate_repo_url,get_remote_url,list_remotes,_prompt_remote_url,_list_remote_branches,get_remote_branch,clone_repository,_select_branch,_handle_merge_strategy,_handle_init_remote,_handle_clone,_handle_local_init,ensure_git_repository,ensure_remote,get_staged_files,get_unstaged_files,get_working_tree_files,get_diff_stats,get_diff_content,read_ticket,apply_ticket_prefix
     run_git()
@@ -488,6 +470,27 @@ D:
     get_diff_content(cached;max_lines)
     read_ticket(path)
     apply_ticket_prefix(title;ticket)
+  goal/bootstrap/detector.py:
+    e: _match_marker,detect_project_types_deep,_guess_python_name,_guess_nodejs_name,_guess_rust_name,_guess_go_name,guess_package_name
+    _match_marker(base;pattern)
+    detect_project_types_deep(root;max_depth)
+    _guess_python_name(project_dir)
+    _guess_nodejs_name(project_dir)
+    _guess_rust_name(project_dir)
+    _guess_go_name(project_dir)
+    guess_package_name(project_dir;project_type)
+  goal/generator/git_ops.py:
+    e: GitDiffOperations
+    GitDiffOperations: __init__(0),get_diff_stats(1),get_name_status(2),get_numstat_map(2),get_changed_files(2),get_diff_content(2),clear_cache(0)  # Git diff operations with caching...
+  goal/recovery/large_file.py:
+    e: LargeFileStrategy,_run_git_chunked
+    LargeFileStrategy(RecoveryStrategy): __init__(2),can_handle(1),recover(1),_files_in_history(1),_remove_from_history(1),_extract_file_paths(1),_find_large_files(1),_get_file_size_mb(1),_remove_large_files(1),_move_to_lfs(1),_skip_large_files(1)  # Handles large file errors...
+    _run_git_chunked(run_git_fn;cmd_base;paths;chunk_size)
+  goal/push/stages/costs.py:
+    e: _is_cost_tracking_enabled,_compute_ai_costs,update_cost_badges
+    _is_cost_tracking_enabled()
+    _compute_ai_costs(project_dir;model;api_key)
+    update_cost_badges(ctx_obj;version;model;api_key)
   goal/push/stages/push_remote.py:
     e: _print_push_header,_push_tag_if_needed,_handle_push_failure,push_to_remote,_offer_recovery,_is_large_file_error,_handle_large_file_error,_handle_large_files_in_history,_handle_large_files_staged,_execute_recovery,_show_diff_info,_show_recovery_menu,_handle_recovery_choice,_handle_force_push,_handle_pull_merge,_handle_view_diff,_handle_automatic_recovery
     _print_push_header(branch;yes)
@@ -507,18 +510,14 @@ D:
     _handle_pull_merge()
     _handle_view_diff()
     _handle_automatic_recovery(error_output)
-  goal/push/stages/costs.py:
-    e: _is_cost_tracking_enabled,_compute_ai_costs,update_cost_badges
-    _is_cost_tracking_enabled()
-    _compute_ai_costs(project_dir;model;api_key)
-    update_cost_badges(ctx_obj;version;model;api_key)
   goal/cli/tests.py:
-    e: _get_project_strategy,_active_venv_python,_resolve_project_python,_coerce_python_strategy_to_project_pytest,_display_test_error,_run_python_test,_run_nodejs_test,_run_subdir_test,_run_tests_in_subdirs,_resolve_root_python,_build_python_test_command,_ensure_root_pytest_or_mark_failed,_run_root_test,_run_project_type_tests,run_tests
+    e: _get_project_strategy,_active_venv_python,_resolve_project_python,_coerce_python_strategy_to_project_pytest,_display_test_error,_has_package,_run_python_test,_run_nodejs_test,_run_subdir_test,_run_tests_in_subdirs,_resolve_root_python,_build_python_test_command,_ensure_root_pytest_or_mark_failed,_run_root_test,_run_project_type_tests,run_tests,get_test_execution_details
     _get_project_strategy(config;project_type)
     _active_venv_python()
     _resolve_project_python(project_root;fallback_python)
     _coerce_python_strategy_to_project_pytest(test_cmd_str;python_bin)
     _display_test_error(result;test_dir;project_type)
+    _has_package(python_bin;package_name)
     _run_python_test(test_dir;base_cmd)
     _run_nodejs_test(test_dir;base_cmd)
     _run_subdir_test(project_type;base_cmd;test_dir)
@@ -529,6 +528,7 @@ D:
     _run_root_test(test_cmd;test_cmd_str;use_subprocess)
     _run_project_type_tests(ptype;config)
     run_tests(project_types;config)
+    get_test_execution_details()
   goal/validation/rules.py:
     e: ValidationRule,MessagePatternRule,FilePatternRule,ScriptRule,CommitSizeRule,MessageLengthRule
     ValidationRule(ABC): __init__(1),validate(1),get_name(0),validate_config(0)  # Base class for custom validation rules...
@@ -552,24 +552,6 @@ D:
     _extract_token_value(match;line)
     detect_tokens_in_content(content;patterns)
     get_default_token_patterns()
-  goal/push/core.py:
-    e: PushContext,run_git_local,show_workflow_preview,output_final_summary,_validate_toml_or_exit,_apply_enhanced_quality_gates,_handle_no_files,_abort_if_missing_commit_title,_maybe_show_workflow_preview,_run_test_stage_or_exit,execute_push_workflow,_initialize_context,_detect_and_bootstrap_projects,_handle_no_changes,_validate_staged_files,_handle_commit_phase
-    PushContext: __init__(1),get(2)  # Context object wrapper for push command...
-    run_git_local()
-    show_workflow_preview(files;stats;current_version;new_version;commit_msg;commit_body;markdown;ctx_obj)
-    output_final_summary(ctx_obj;markdown;project_types;files;stats;current_version;new_version;commit_msg;commit_body;test_exit_code;publish_success;no_tag)
-    _validate_toml_or_exit(dry_run)
-    _apply_enhanced_quality_gates(ctx_obj;commit_msg;detailed_result;files;stats;message;markdown)
-    _handle_no_files(ctx_obj;project_types;dry_run;markdown;files)
-    _abort_if_missing_commit_title(commit_title)
-    _maybe_show_workflow_preview(ctx_obj;files;stats;current_version;new_version;commit_msg;commit_body;markdown)
-    _run_test_stage_or_exit(project_types;ctx_obj;markdown;files;stats;current_version;new_version;commit_msg;commit_body)
-    execute_push_workflow(ctx_obj;bump;no_tag;no_changelog;no_version_sync;message;dry_run;yes;markdown;split;ticket;abstraction;todo;force;model;api_key;no_publish)
-    _initialize_context(ctx_obj;bump;message;yes;markdown)
-    _detect_and_bootstrap_projects(ctx_obj;dry_run;yes)
-    _handle_no_changes(ctx_obj;project_types;dry_run;markdown)
-    _validate_staged_files(ctx_obj;dry_run;force)
-    _handle_commit_phase(ctx_obj;split;message;commit_title;commit_body;commit_msg;files;ticket;new_version;current_version;no_version_sync;no_changelog)
   goal/cli/utils_cmd.py:
     e: status,init,info,version,package_managers,check_versions,clone,bootstrap
     status(ctx;markdown)
@@ -655,20 +637,6 @@ Detects available manage...
     _format_todo_entry(issue)
     add_issues_to_todo(project_dir;issues;todo_file)
     diagnose_and_report_with_todo(project_dir;project_type;auto_fix;todo_file)
-  examples/testing/04_debugging_diagnostics.py:
-    e: test_debug_output_capture,test_stack_trace_analysis,test_performance_timing,test_import_tracing,test_config_diagnostics,create_debug_report
-    test_debug_output_capture()
-    test_stack_trace_analysis()
-    test_performance_timing()
-    test_import_tracing()
-    test_config_diagnostics()
-    create_debug_report()
-  examples/custom-hooks/pre-commit.py:
-    e: check_secrets,check_file_sizes,run_tests,main
-    check_secrets()
-    check_file_sizes(max_size_mb)
-    run_tests()
-    main()
   goal/hooks/config.py:
     e: get_hook_config,create_precommit_config
     get_hook_config(project_dir)
@@ -677,6 +645,20 @@ Detects available manage...
     e: load_gitignore,save_gitignore
     load_gitignore(gitignore_path)
     save_gitignore(ignored;gitignore_path)
+  examples/custom-hooks/pre-commit.py:
+    e: check_secrets,check_file_sizes,run_tests,main
+    check_secrets()
+    check_file_sizes(max_size_mb)
+    run_tests()
+    main()
+  examples/testing/04_debugging_diagnostics.py:
+    e: test_debug_output_capture,test_stack_trace_analysis,test_performance_timing,test_import_tracing,test_config_diagnostics,create_debug_report
+    test_debug_output_capture()
+    test_stack_trace_analysis()
+    test_performance_timing()
+    test_import_tracing()
+    test_config_diagnostics()
+    create_debug_report()
   goal/recovery/auth.py:
     e: AuthErrorStrategy
     AuthErrorStrategy(RecoveryStrategy): can_handle(1),recover(1)  # Handles authentication errors...
@@ -690,6 +672,31 @@ Detects available manage...
     e: _publish_impl,publish
     _publish_impl(ctx_obj;use_make;target;version_arg)
     publish(ctx;use_make;target;version_arg)
+  goal/cli/version_utils.py:
+    e: detect_project_types,find_version_files,get_version_from_file,get_current_version,bump_version,update_version_in_file,update_json_version,_build_author_block,_update_tomlkit_license,_update_tomlkit_authors,_update_tomlkit_classifier,_update_pyproject_with_tomlkit,_update_regex_license,_update_regex_authors,_update_regex_classifier,_update_pyproject_with_regex,_update_pyproject_metadata,_update_package_json_metadata,_update_setup_py_metadata,update_project_metadata,_update_license_section,_update_author_section,update_readme_metadata
+    detect_project_types()
+    find_version_files()
+    get_version_from_file(filepath;pattern)
+    get_current_version()
+    bump_version(version;bump_type)
+    update_version_in_file(filepath;pattern;old_version;new_version)
+    update_json_version(filepath;new_version)
+    _build_author_block(existing_authors;author_name;author_email)
+    _update_tomlkit_license(doc;license_id)
+    _update_tomlkit_authors(doc;author_name;author_email)
+    _update_tomlkit_classifier(doc;license_classifier)
+    _update_pyproject_with_tomlkit(content;author_name;author_email;license_id;license_classifier)
+    _update_regex_license(content;license_id)
+    _update_regex_authors(content;author_name;author_email)
+    _update_regex_classifier(content;license_classifier)
+    _update_pyproject_with_regex(content;author_name;author_email;license_id;license_classifier)
+    _update_pyproject_metadata(content;author_name;author_email;license_id;license_classifier)
+    _update_package_json_metadata(content;author_name;author_email;license_id)
+    _update_setup_py_metadata(content;author_name;author_email;license_id)
+    update_project_metadata(filepath;user_config)
+    _update_license_section(content;license_id)
+    _update_author_section(content;author_name)
+    update_readme_metadata(user_config)
   goal/doctor/core.py:
     e: diagnose_project,diagnose_and_report
     diagnose_project(project_dir;project_type;auto_fix)
@@ -744,13 +751,6 @@ Detects available manage...
     AuthorsManager: __init__(1),get_authors(0),add_author(4),remove_author(1),update_author(4),find_author(1),list_authors(0),get_current_author(0),import_from_git(0),export_to_contributors(0)  # Manages project authors and team members...
     get_project_authors(project_dir)
     add_project_author(name;email;role;alias;project_dir)
-  examples/custom-hooks/pre-publish.py:
-    e: test_build,test_install,check_version,run_security_check,main
-    test_build()
-    test_install()
-    check_version()
-    run_security_check()
-    main()
   goal/bootstrap/costs_badge.py:
     e: _install_costs_package,_load_costs_api,_commit_blob_lower,_filter_ai_commits,_parsed_diff_is_usable,_fetch_commit_diff,_single_commit_ai_cost,_calculate_ai_costs,_read_model_from_pyproject,_generate_costs_badge
     _install_costs_package(project_dir;python_bin)
@@ -773,6 +773,13 @@ Detects available manage...
   goal/recovery/manager.py:
     e: RecoveryManager
     RecoveryManager: __init__(2),_ensure_recovery_dir(0),run_git(0),recover_from_push_failure(1),_identify_strategy(1),_create_backup(0),_cleanup_backup(1),_rollback_to_backup(1),_attempt_push(0),setup_clean_clone(0),identify_new_commits(0),cherry_pick_commits(1),push_from_clean_clone(0),full_recovery_workflow(0)  # Manages the recovery process for failed git pushes...
+  examples/custom-hooks/pre-publish.py:
+    e: test_build,test_install,check_version,run_security_check,main
+    test_build()
+    test_install()
+    check_version()
+    run_security_check()
+    main()
   goal/push/stages/publish.py:
     e: handle_publish
     handle_publish(project_types;new_version;yes;no_publish;config)
@@ -787,15 +794,6 @@ Detects available manage...
     postcommit_list()
     postcommit_validate()
     postcommit_info()
-  examples/testing/03_advanced_mocking.py:
-    e: test_mocking_external_services,test_mocking_git_operations,test_mocking_click_interactions,test_spies_and_call_counting,test_mocking_file_system,test_conditional_mocking,test_mock_context_manager
-    test_mocking_external_services()
-    test_mocking_git_operations()
-    test_mocking_click_interactions()
-    test_spies_and_call_counting()
-    test_mocking_file_system()
-    test_conditional_mocking()
-    test_mock_context_manager()
   goal/postcommit/manager.py:
     e: PostCommitManager,run_post_commit_actions
     PostCommitManager: __init__(1),get_config(0),get_commit_info(0),run_actions(0),list_actions(0),validate_actions(0)  # Manages post-commit actions for Goal...
@@ -806,6 +804,15 @@ Detects available manage...
   goal/doctor/java.py:
     e: diagnose_java
     diagnose_java(project_dir;auto_fix)
+  examples/testing/03_advanced_mocking.py:
+    e: test_mocking_external_services,test_mocking_git_operations,test_mocking_click_interactions,test_spies_and_call_counting,test_mocking_file_system,test_conditional_mocking,test_mock_context_manager
+    test_mocking_external_services()
+    test_mocking_git_operations()
+    test_mocking_click_interactions()
+    test_spies_and_call_counting()
+    test_mocking_file_system()
+    test_conditional_mocking()
+    test_mock_context_manager()
   examples/webhooks/discord-webhook.py:
     e: send_discord_notification,main
     send_discord_notification(message;commit_info)
@@ -813,6 +820,14 @@ Detects available manage...
   examples/webhooks/slack-webhook.py:
     e: send_slack_notification,main
     send_slack_notification(message;commit_info)
+    main()
+  examples/api-usage/02_git_operations.py:
+    e: _check_git_repository,_display_staged_files,_display_unstaged_files,_display_diff_stats,_display_diff_content,main
+    _check_git_repository()
+    _display_staged_files()
+    _display_unstaged_files()
+    _display_diff_stats()
+    _display_diff_content()
     main()
   goal/recovery/force_push.py:
     e: ForcePushStrategy
@@ -824,17 +839,6 @@ Detects available manage...
   goal/doctor/go.py:
     e: diagnose_go
     diagnose_go(project_dir;auto_fix)
-  goal/authors/utils.py:
-    e: format_co_author_trailer,parse_co_authors,add_co_authors_to_message,remove_co_authors_from_message,validate_author_format,deduplicate_co_authors,get_co_authors_from_command_line,format_commit_message_with_co_authors,extract_current_author_from_config
-    format_co_author_trailer(name;email)
-    parse_co_authors(message)
-    add_co_authors_to_message(message;co_authors)
-    remove_co_authors_from_message(message)
-    validate_author_format(author_str)
-    deduplicate_co_authors(co_authors)
-    get_co_authors_from_command_line(co_author_args)
-    format_commit_message_with_co_authors(title;body;co_authors)
-    extract_current_author_from_config()
   goal/package_managers.py:
     e: PackageManager,_path_matches,_has_any_matching_path,_detect_package_manager,_has_language_extension,detect_package_managers,get_package_manager,get_package_managers_by_language,is_package_manager_available,get_available_package_managers,get_preferred_package_manager,format_package_manager_command,get_package_manager_info,list_all_package_managers,detect_project_language,suggest_package_managers
     PackageManager: __post_init__(0)  # Package manager configuration and capabilities...
@@ -853,6 +857,17 @@ Detects available manage...
     list_all_package_managers()
     detect_project_language(project_path)
     suggest_package_managers(project_path)
+  goal/authors/utils.py:
+    e: format_co_author_trailer,parse_co_authors,add_co_authors_to_message,remove_co_authors_from_message,validate_author_format,deduplicate_co_authors,get_co_authors_from_command_line,format_commit_message_with_co_authors,extract_current_author_from_config
+    format_co_author_trailer(name;email)
+    parse_co_authors(message)
+    add_co_authors_to_message(message;co_authors)
+    remove_co_authors_from_message(message)
+    validate_author_format(author_str)
+    deduplicate_co_authors(co_authors)
+    get_co_authors_from_command_line(co_author_args)
+    format_commit_message_with_co_authors(title;body;co_authors)
+    extract_current_author_from_config()
   examples/custom-hooks/post-commit.py:
     e: get_commit_info,notify_slack,update_changelog,log_to_file,main
     get_commit_info()
@@ -922,13 +937,13 @@ Detects available manage...
     sync_all_versions_wrapper(new_version;user_config)
     handle_version_sync(new_version;no_version_sync;user_config;yes)
     get_version_info(current_version;bump)
+  goal/cli/config_validate_cmd.py:
+    e: validate_cmd
+    validate_cmd(ctx;config;strict;fix)
   goal/installers/config.py:
     e: InstallerConfig,load_installer_config
     InstallerConfig: from_dict(1)  # Configuration for package manager installer behavior...
     load_installer_config(project_dir)
-  goal/cli/config_validate_cmd.py:
-    e: validate_cmd
-    validate_cmd(ctx;config;strict;fix)
   goal/doctor/ruby.py:
     e: diagnose_ruby
     diagnose_ruby(project_dir;auto_fix)
@@ -952,16 +967,16 @@ Detects available manage...
     FileSizeError(ValidationError): __init__(3)  # Error for files exceeding size limit...
     TokenDetectedError(ValidationError): __init__(3)  # Error when API tokens are detected in files...
     DotFolderError(ValidationError): __init__(1)  # Error when dot folders are detected that should be in .gitig...
+  goal/push/commands.py:
+    e: push
+    push(ctx;bump;no_tag;no_changelog;no_version_sync;no_publish;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
+  goal/recovery/base.py:
+    e: RecoveryStrategy
+    RecoveryStrategy(ABC): __init__(2),can_handle(1),recover(1),run_git(0),run_git_with_output(0)  # Base class for all recovery strategies...
   goal/push/stages/changelog.py:
     e: handle_changelog,update_changelog_stage
     handle_changelog(new_version;files;commit_msg;config;no_changelog)
     update_changelog_stage(new_version;files;commit_msg;config)
-  goal/recovery/base.py:
-    e: RecoveryStrategy
-    RecoveryStrategy(ABC): __init__(2),can_handle(1),recover(1),run_git(0),run_git_with_output(0)  # Base class for all recovery strategies...
-  goal/push/commands.py:
-    e: push
-    push(ctx;bump;no_tag;no_changelog;no_version_sync;no_publish;message;dry_run;yes;markdown;split;ticket;abstraction;todo)
   goal/cli/hooks_cmd.py:
     e: display_success_message,display_failure_message,display_install_success,hooks,hooks_install,hooks_uninstall,hooks_run,hooks_status
     display_success_message(message)
@@ -980,9 +995,6 @@ Detects available manage...
     generate_business_summary(files;diff_content;config)
     validate_summary(summary;files;config)
     auto_fix_summary(summary;files;config)
-  goal/installers/managers/poetry.py:
-    e: PoetryManager
-    PoetryManager(AbstractPackageManager): install_editable(1),install_requirements(1),install_from_lockfile(0)  # Poetry package manager implementation...
   goal/installers/managers/uv.py:
     e: UvManager
     UvManager(AbstractPackageManager): install_editable(1),install_requirements(1),sync_lockfile(0),install_self(0),install_from_lockfile(0)  # UV package manager implementation...
@@ -992,6 +1004,9 @@ Detects available manage...
   goal/installers/managers/pdm.py:
     e: PdmManager
     PdmManager(AbstractPackageManager): install_editable(1),install_requirements(1),install_from_lockfile(0)  # PDM package manager implementation...
+  goal/installers/managers/poetry.py:
+    e: PoetryManager
+    PoetryManager(AbstractPackageManager): install_editable(1),install_requirements(1),install_from_lockfile(0)  # Poetry package manager implementation...
   examples/dotnet-project/CalculatorTests.cs:
     i: Xunit
     e: CalculatorTests
@@ -1000,9 +1015,6 @@ Detects available manage...
     e: Calculator,Program
     Calculator: Add(-1),Subtract(-1),Multiply(-1),Divide(-1)
     Program: Main(-1)
-  examples/java-project/src/main/java/com/example/Main.java:
-    e: Main
-    Main: main(-1),greet(-1)
   examples/go-project/main.go:
     i: fmt
     e: main
@@ -1010,6 +1022,9 @@ Detects available manage...
   examples/php-project/src/Example.php:
     e: Example
     Example: greet(-1)
+  examples/java-project/src/main/java/com/example/Main.java:
+    e: Main
+    Main: main(-1),greet(-1)
   examples/api-usage/05_programmatic_workflow.py:
     e: run_custom_workflow,create_minimal_workflow
     run_custom_workflow()
@@ -1018,29 +1033,29 @@ Detects available manage...
     e: SmartCommitGenerator,create_smart_generator
     SmartCommitGenerator(SmartCommitGeneratorGenerateMixin,SmartCommitGeneratorCore):  # Generates smart commit messages using code abstraction...
     create_smart_generator(config)
-  redsl_refactor_report.toon.yaml:
-  redsl.yaml:
-  goal/__init__.py:
   regix.yaml:
-  redsl_refactor_plan.toon.yaml:
-  wup.yaml:
-  planfile.yaml:
   Makefile:
-  .pre-commit-config.yaml:
-  pyqual.yaml:
-  pyproject.toml:
-  prefact.yaml:
-  tree.sh:
-  Taskfile.yml:
-  examples/my-new-project/pyproject.toml:
-  examples/python-package/pyproject.toml:
-  project.sh:
-  examples/nodejs-app/package.json:
-  examples/my-new-project/goal.yaml:
+  goal/__init__.py:
   examples/enhanced-summary/config-example.yaml:
-  examples/git-hooks/install.sh:
+  redsl_refactor_report.toon.yaml:
+  wup.yaml:
   examples/markdown-demo.sh:
+  tree.txt:
+  prefact.yaml:
+  Taskfile.yml:
+  redsl.yaml:
+  project.sh:
+  examples/my-new-project/pyproject.toml:
+  examples/nodejs-app/package.json:
+  redsl_refactor_plan.toon.yaml:
   examples/makefile/Makefile:
+  pyqual.yaml:
+  examples/git-hooks/install.sh:
+  planfile.yaml:
+  pyproject.toml:
+  .pre-commit-config.yaml:
+  examples/my-new-project/goal.yaml:
+  examples/python-package/pyproject.toml:
   examples/java-project/pom.xml:
   examples/php-project/composer.json:
   examples/rust-crate/Cargo.toml:
@@ -1053,11 +1068,11 @@ Detects available manage...
   goal/project_doctor.py:
   goal/generator/__init__.py:
   goal/bootstrap/__init__.py:
+  examples/my-new-project/src/my-new-project/__init__.py:
   goal/hooks/__init__.py:
   goal/validators/__init__.py:
   goal/installers/__init__.py:
   goal/installers/managers/__init__.py:
-  examples/my-new-project/src/my-new-project/__init__.py:
   goal/bootstrap/templates.py:
     e: ProjectTemplate
     ProjectTemplate:  # Template configuration for a project type...
@@ -1074,7 +1089,6 @@ Detects available manage...
   goal/authors/__init__.py:
   goal/license/__init__.py:
   testql-scenarios/generated-from-pytests.testql.toon.yaml:
-  testql-scenarios/generated-cli-tests.testql.toon.yaml:
   integration/run_docker_matrix.sh:
   integration/run_matrix.sh:
     e: App,run_case,print,main,self
@@ -1083,6 +1097,7 @@ Detects available manage...
     print()
     main()
     self()
+  testql-scenarios/generated-cli-tests.testql.toon.yaml:
   integration/Dockerfile:
   goal/doctor/models.py:
     e: Issue,DoctorReport
