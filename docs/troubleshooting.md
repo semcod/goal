@@ -304,6 +304,41 @@ goal config validate
 goal config set project.name "my-project"
 ```
 
+### `test_import` fails with `ModuleNotFoundError` after `goal -a`
+
+Goal may detect a `tests/` folder (with its own `pyproject.toml`) as a separate Python
+subproject during `goal -a` / `goal bootstrap`. Older versions scaffolded
+`tests/tests/test_<name>.py` and used `import <pyproject_name_with_underscores>` even when
+that package does not exist (common for test harnesses named `*-tests`).
+
+**Symptoms**
+
+```text
+FAILED tests/tests/test_myapp_tests.py::test_import - ModuleNotFoundError: No module named 'myapp_tests'
+```
+
+**Fix (goal >= 2.1.241)**
+
+```bash
+python -m pip install -U goal
+goal bootstrap -y
+```
+
+Scaffold imports now prefer an importable directory name (`tests` / `test`) when the
+PyPI/project name ends with `-tests` and no matching package exists on disk.
+
+**Manual cleanup (optional)**
+
+Remove the redundant nested scaffold if real tests already live at `tests/test_*.py`:
+
+```bash
+rm -f tests/tests/test_*.py
+rmdir tests/tests 2>/dev/null || true
+```
+
+Ensure `test_import` uses an import that exists, for example `import tests` in a `tests/`
+harness project.
+
 ### Check version
 
 ```bash

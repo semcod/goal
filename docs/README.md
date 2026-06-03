@@ -480,7 +480,7 @@ goal/
 - `test_cli_output()` — —
 - `main()` — —
 - `detect_project_types_deep(root, max_depth)` — Detect project types in *root* and up to *max_depth* subfolder levels.
-- `guess_package_name(project_dir, project_type)` — Best-effort guess of the package/module name for scaffold templates.
+- `guess_package_name(project_dir, project_type)` — Import name for scaffold `test_import` (uses on-disk packages; `tests/` harnesses fall back to `tests` when the pyproject name ends with `-tests`).
 - `ensure_project_environment(project_dir, project_type, yes)` — Ensure the project environment is properly set up.
 - `find_existing_tests(project_dir, project_type)` — Find existing test files for the given project type.
 - `scaffold_test(project_dir, project_type, yes)` — Create a sample test file if no tests exist.

@@ -47,6 +47,19 @@ def detect_project_types_deep(
     return results
 
 
+def _python_package_dir_exists(project_dir: Path, package_name: str) -> bool:
+    """Return True when *package_name* looks like an on-disk Python package."""
+    for base in (project_dir, project_dir / "src"):
+        pkg_dir = base / package_name
+        if not pkg_dir.is_dir():
+            continue
+        if (pkg_dir / "__init__.py").exists():
+            return True
+        if any(pkg_dir.glob("*.py")):
+            return True
+    return False
+
+
 def _guess_python_name(project_dir: Path) -> Optional[str]:
     """Guess Python package name from pyproject.toml or setup.py."""
     for filename, pattern, flags in [
@@ -63,6 +76,18 @@ def _guess_python_name(project_dir: Path) -> Optional[str]:
         except Exception:
             pass
     return None
+
+
+def _python_scaffold_import_name(project_dir: Path, name: str) -> str:
+    """Pick an import name for scaffold tests when pyproject name is not a package."""
+    if _python_package_dir_exists(project_dir, name):
+        return name
+    dirname = project_dir.name.replace("-", "_")
+    if dirname in ("tests", "test"):
+        return dirname
+    if name.endswith("_tests") or name.endswith("_test"):
+        return dirname
+    return name
 
 
 def _guess_nodejs_name(project_dir: Path) -> Optional[str]:
@@ -106,8 +131,9 @@ def _guess_go_name(project_dir: Path) -> Optional[str]:
         return None
 
 
-def guess_package_name(project_dir: Path, project_type: str) -> Optional[str]:
-    """Guess package name based on project type."""
+def guess_package_name(project_dir: Path, project_type: str) -> str:
+    """Best-effort guess of the package/module name for scaffold templates."""
+    project_dir = project_dir.resolve()
     guessers = {
         "python": _guess_python_name,
         "nodejs": _guess_nodejs_name,
@@ -115,5 +141,9 @@ def guess_package_name(project_dir: Path, project_type: str) -> Optional[str]:
         "go": _guess_go_name,
     }
     if project_type in guessers:
-        return guessers[project_type](project_dir)
-    return None
+        name = guessers[project_type](project_dir)
+        if name:
+            if project_type == "python":
+                return _python_scaffold_import_name(project_dir, name)
+            return name
+    return project_dir.name.replace("-", "_")

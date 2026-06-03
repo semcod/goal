@@ -1,3 +1,13 @@
+## [2.1.241] - 2026-06-03
+
+### Fixed
+- Python test scaffold in `tests/` subprojects no longer generates broken `import <project>_tests` when no on-disk package exists (e.g. `nlp2dsl-tests` → `import tests`)
+- Scaffold sample tests are no longer placed under nested `tests/tests/` when the project directory is already named `tests` or `test`
+- Removed duplicate `guess_package_name` implementation from `project_bootstrap.py` (canonical logic in `goal/bootstrap/detector.py`)
+
+### Added
+- Regression tests for test-harness package naming and scaffold path resolution
+
 ## [Unreleased]
 
 ### Fixed

@@ -280,98 +280,6 @@ def detect_project_types_deep(
     return results
 
 
-def _guess_python_name(project_dir: Path) -> Optional[str]:
-    """Guess Python package name from pyproject.toml or setup.py."""
-    import re as _re
-
-    for filename, pattern, flags in [
-        ("pyproject.toml", r'^name\s*=\s*["\']([^"\']+)["\']', _re.MULTILINE),
-        ("setup.py", r'name\s*=\s*["\']([^"\']+)["\']', 0),
-    ]:
-        path = project_dir / filename
-        if not path.exists():
-            continue
-        try:
-            m = _re.search(pattern, path.read_text(errors="ignore"), flags)
-            if m:
-                return m.group(1).replace("-", "_")
-        except (OSError, UnicodeDecodeError, ValueError, TypeError) as exc:
-            logger.debug("Failed to parse %s for python package name: %s", path, exc)
-    return None
-
-
-def _guess_nodejs_name(project_dir: Path) -> Optional[str]:
-    """Guess Node.js package name from package.json."""
-    pkg = project_dir / "package.json"
-    if not pkg.exists():
-        return None
-    try:
-        data = json.loads(pkg.read_text(errors="ignore"))
-        name = data.get("name", "")
-        return name.split("/")[-1] if "/" in name else name
-    except (
-        OSError,
-        UnicodeDecodeError,
-        json.JSONDecodeError,
-        TypeError,
-        ValueError,
-    ) as exc:
-        logger.debug("Failed to parse package.json in %s: %s", project_dir, exc)
-        return None
-
-
-def _guess_rust_name(project_dir: Path) -> Optional[str]:
-    """Guess Rust crate name from Cargo.toml."""
-    import re as _re
-
-    cargo = project_dir / "Cargo.toml"
-    if not cargo.exists():
-        return None
-    try:
-        m = _re.search(
-            r'^name\s*=\s*"([^"]+)"', cargo.read_text(errors="ignore"), _re.MULTILINE
-        )
-        return m.group(1) if m else None
-    except (OSError, UnicodeDecodeError, ValueError) as exc:
-        logger.debug("Failed to parse Cargo.toml in %s: %s", project_dir, exc)
-        return None
-
-
-def _guess_go_name(project_dir: Path) -> Optional[str]:
-    """Guess Go module name from go.mod."""
-    gomod = project_dir / "go.mod"
-    if not gomod.exists():
-        return None
-    try:
-        first_line = gomod.read_text(errors="ignore").split("\n")[0]
-        parts = first_line.strip().split()
-        if len(parts) >= 2:
-            return parts[1].rsplit("/", 1)[-1]
-    except (OSError, UnicodeDecodeError, ValueError) as exc:
-        logger.debug("Failed to parse go.mod in %s: %s", project_dir, exc)
-    return None
-
-
-_PACKAGE_NAME_DETECTORS = {
-    "python": _guess_python_name,
-    "nodejs": _guess_nodejs_name,
-    "rust": _guess_rust_name,
-    "go": _guess_go_name,
-}
-
-
-def guess_package_name(project_dir: Path, project_type: str) -> str:
-    """Best-effort guess of the package/module name for scaffold templates."""
-    project_dir = project_dir.resolve()
-    detector = _PACKAGE_NAME_DETECTORS.get(project_type)
-    if detector:
-        name = detector(project_dir)
-        if name:
-            return name
-    # Fallback: directory name
-    return project_dir.name.replace("-", "_")
-
-
 # =============================================================================
 # Environment bootstrapping
 # =============================================================================
@@ -786,9 +694,12 @@ def _resolve_scaffold_test_path(
         return None
 
     test_dir_name = cfg["test_dirs"][0]
-    test_dir = project_dir / test_dir_name
     base_key, name_fmt = template
-    base = test_dir if base_key == "test_dir" else project_dir
+    if project_dir.name == test_dir_name:
+        base = project_dir
+    else:
+        test_dir = project_dir / test_dir_name
+        base = test_dir if base_key == "test_dir" else project_dir
     return base / name_fmt.format(package_name=package_name)
 
 

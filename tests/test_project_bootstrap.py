@@ -129,6 +129,12 @@ class TestGuessPackageName:
     def test_fallback_to_dirname(self, tmp_path):
         assert guess_package_name(tmp_path, "php") == tmp_path.name.replace("-", "_")
 
+    def test_test_harness_uses_directory_name(self, tmp_path):
+        tests_proj = tmp_path / "tests"
+        tests_proj.mkdir()
+        (tests_proj / "pyproject.toml").write_text('name = "myapp-tests"')
+        assert guess_package_name(tests_proj, "python") == "tests"
+
 
 # ---------------------------------------------------------------------------
 # find_existing_tests
@@ -233,6 +239,15 @@ class TestScaffoldTest:
         (tests_dir / "test_existing.py").write_text("def test_x(): pass")
         created = scaffold_test(tmp_path, "python", yes=True)
         assert created is None
+
+    def test_scaffold_in_tests_project_avoids_nested_dir(self, tmp_path):
+        tests_proj = tmp_path / "tests"
+        tests_proj.mkdir()
+        (tests_proj / "pyproject.toml").write_text('name = "myapp-tests"')
+        created = scaffold_test(tests_proj, "python", yes=True)
+        assert created is not None
+        assert created.parent == tests_proj
+        assert "import tests" in created.read_text()
 
     def test_skips_unknown_type(self, tmp_path):
         created = scaffold_test(tmp_path, "unknown_lang", yes=True)
