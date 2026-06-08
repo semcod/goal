@@ -2,11 +2,18 @@
 
 app {
   name: goal;
-  version: 2.1.206;
+  version: 2.1.241;
+  description: "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management.";
+  license: Apache-2.0;
+  authors: "Tom Sapletta <tom@sapletta.com>";
+  keywords: "git, automation, commit, changelog, versioning, cli";
+  homepage: https://github.com/wronai/goal;
+  repository: https://github.com/wronai/goal;
 }
 
 dependencies {
-  runtime: "click>=8.0.0, PyYAML>=6.0, clickmd>=0.1.0, costs>=0.1.21, tomlkit>=0.12.0";
+  runtime: "click>=8.0.0, typer>=0.24, PyYAML>=6.0, clickmd>=0.1.0, costs>=0.1.21, tomlkit>=0.12.0";
+  nfo: nfo>=0.2.22;
   dev: "pytest>=7.0.0, build, twine, pfix>=0.1.60, tox>=4.0.0";
 }
 
@@ -14,7 +21,7 @@ interface[type="cli"] {
   framework: click;
 }
 interface[type="cli"] page[name="goal"] {
-
+  entry: goal.cli:main;
 }
 
 workflow[name="install"] {
@@ -72,23 +79,11 @@ workflow[name="bump-version"] {
   step-6: run cmd=current_version=$$(grep '^version = ' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/'); \;
   step-7: run cmd=echo "Current version: $$current_version"; \;
   step-8: run cmd=IFS='.' read -r major minor patch <<< "$$current_version"; \;
-  step-9: run cmd=case "$(PART)" in \;
-  step-10: run cmd=major) major=$$((major + 1)); minor=0; patch=0 ;; \;
-  step-11: run cmd=minor) minor=$$((minor + 1)); patch=0 ;; \;
-  step-12: run cmd=patch) patch=$$((patch + 1)) ;; \;
-  step-13: run cmd=*) echo "${YELLOW}Error: PART must be major, minor, or patch${RESET}"; exit 1 ;; \;
-  step-14: run cmd=esac; \;
-  step-15: run cmd=new_version="$${major}.$${minor}.$${patch}"; \;
-  step-16: run cmd=sed -i "s/^version = \"$$current_version\"/version = \"$$new_version\"/" pyproject.toml; \;
-  step-17: run cmd=echo "${GREEN}Version bumped to $$new_version${RESET}"; \;
-  step-18: run cmd=git add pyproject.toml; \;
-  step-19: run cmd=git commit -m "Bump version to $$new_version"; \;
-  step-20: run cmd=if git rev-parse "v$$new_version" >/dev/null 2>&1; then \;
-  step-21: run cmd=echo "${YELLOW}Error: tag 'v$$new_version' already exists${RESET}"; \;
-  step-22: run cmd=exit 1; \;
-  step-23: run cmd=fi; \;
-  step-24: run cmd=git tag -a "v$$new_version" -m "Version $$new_version"; \;
-  step-25: run cmd=echo "${GREEN}Created tag v$$new_version${RESET}";
+}
+
+workflow[name="koru-gate"] {
+  trigger: manual;
+  step-1: run cmd=./scripts/koru_verify_ci.sh;
 }
 
 workflow[name="help"] {
@@ -232,6 +227,14 @@ print('Generated SUMR.json')
 " 2>/dev/null || echo 'Python generation failed, using fallback';
 }
 
+tests {
+  import: testql-scenarios/**/*.testql.toon.yaml;
+}
+
+env_vars {
+  keys: OPENROUTER_API_KEY, LLM_MODEL;
+}
+
 deploy {
   target: docker;
 }
@@ -239,5 +242,8 @@ deploy {
 environment[name="local"] {
   runtime: docker-compose;
   env_file: .env;
+  template_file: .env.example;
   python_version: >=3.10;
+  vars: LLM_MODEL, OPENROUTER_API_KEY;
+  runtime_llm: OPENROUTER_API_KEY;
 }
