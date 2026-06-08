@@ -150,6 +150,11 @@
 ### Docs
 - Update README.md
 
+## [2.1.243] - 2026-06-08
+
+### Docs
+- Update README.md
+
 ## [2.1.242] - 2026-06-08
 
 ### Docs
