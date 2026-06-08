@@ -646,4 +646,5 @@ class TestPushWorkflowE2E:
         assert hasattr(publish, "callback")
 
 
-pytest.main([__file__, "-v"])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

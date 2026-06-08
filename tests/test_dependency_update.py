@@ -110,6 +110,8 @@ def test_has_cli_flag_detects_combined_short_options() -> None:
 
 
 def test_au_sets_upgrade_deps_in_context() -> None:
+    import goal.cli.push_cmd as push_cmd
+
     runner = CliRunner()
     captured = {}
 
@@ -120,11 +122,12 @@ def test_au_sets_upgrade_deps_in_context() -> None:
     with (
         patch("goal.cli._show_goal_version_banner"),
         patch("goal.cli._warn_goal_binary_mismatch"),
-        patch("goal.cli.push_cmd.execute_push_workflow", side_effect=fake_execute),
-        patch("goal.push.commands.execute_push_workflow", side_effect=fake_execute),
+        patch.object(push_cmd, "execute_push_workflow", side_effect=fake_execute) as mock_execute,
+        patch("goal.push.core.execute_push_workflow", side_effect=fake_execute),
     ):
         result = runner.invoke(main, ["-au"])
 
-    assert result.exit_code == 0
+    assert mock_execute.called, "execute_push_workflow mock was not invoked"
+    assert result.exit_code == 0, result.output
     assert captured["upgrade_deps"] is True
     assert captured["yes"] is True
