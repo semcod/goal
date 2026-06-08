@@ -503,6 +503,43 @@ def get_preferred_package_manager(
     return available[0] if available else None
 
 
+def _pip_update_all_command(project_root: Path) -> Optional[str]:
+    """Build a pip command that upgrades all project dependencies."""
+    requirements = [
+        path
+        for path in ("requirements.txt", "requirements-dev.txt")
+        if (project_root / path).exists()
+    ]
+    if requirements:
+        files = " ".join(f"-r {path}" for path in requirements)
+        return f"pip install --upgrade {files}"
+
+    if (project_root / "pyproject.toml").exists():
+        return "pip install --upgrade -e ."
+
+    return None
+
+
+def get_update_all_command(
+    pm: PackageManager, project_root: Path
+) -> Optional[str]:
+    """Return a command that updates all dependencies for the given manager."""
+    special_commands = {
+        "pip": _pip_update_all_command(project_root),
+        "go": "go get -u ./...",
+        "gem": "gem update",
+        "conda": "conda update --all",
+        "mix": "mix deps.update --all",
+    }
+    if pm.name in special_commands:
+        return special_commands[pm.name]
+
+    if "{package}" in pm.update_cmd:
+        return None
+
+    return pm.update_cmd
+
+
 def format_package_manager_command(
     pm: PackageManager, command_type: str, **kwargs
 ) -> str:

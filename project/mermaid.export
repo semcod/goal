@@ -106,13 +106,6 @@ flowchart TD
         goal__authors__utils__extract_current_author_from_config["extract_current_author_from_config"]
     end
     subgraph goal__bootstrap
-        goal__bootstrap__detector___match_marker["_match_marker"]
-        goal__bootstrap__detector__detect_project_types_deep("detect_project_types_deep CC=11")
-        goal__bootstrap__detector___guess_python_name["_guess_python_name"]
-        goal__bootstrap__detector___guess_nodejs_name["_guess_nodejs_name"]
-        goal__bootstrap__detector___guess_rust_name["_guess_rust_name"]
-        goal__bootstrap__detector___guess_go_name["_guess_go_name"]
-        goal__bootstrap__detector__guess_package_name["guess_package_name"]
         goal__bootstrap__configurator__scaffold_test_file("scaffold_test_file CC=14")
         goal__bootstrap__configurator___find_python_bin["_find_python_bin"]
         goal__bootstrap__configurator___read_openrouter_api_key("_read_openrouter_api_key CC=11")
@@ -147,6 +140,15 @@ flowchart TD
         goal__bootstrap__installer___get_matching_dep_command["_get_matching_dep_command"]
         goal__bootstrap__installer___ensure_generic_env["_ensure_generic_env"]
         goal__bootstrap__installer__ensure_project_environment["ensure_project_environment"]
+        goal__bootstrap__detector___match_marker["_match_marker"]
+        goal__bootstrap__detector__detect_project_types_deep("detect_project_types_deep CC=11")
+        goal__bootstrap__detector___python_package_dir_exists["_python_package_dir_exists"]
+        goal__bootstrap__detector___guess_python_name["_guess_python_name"]
+        goal__bootstrap__detector___python_scaffold_import_name["_python_scaffold_import_name"]
+        goal__bootstrap__detector___guess_nodejs_name["_guess_nodejs_name"]
+        goal__bootstrap__detector___guess_rust_name["_guess_rust_name"]
+        goal__bootstrap__detector___guess_go_name["_guess_go_name"]
+        goal__bootstrap__detector__guess_package_name["guess_package_name"]
     end
     subgraph goal__changelog
         goal__changelog___classify_file_domain["_classify_file_domain"]
@@ -583,11 +585,6 @@ flowchart TD
     subgraph goal__project_bootstrap
         goal__project_bootstrap___match_marker["_match_marker"]
         goal__project_bootstrap__detect_project_types_deep("detect_project_types_deep CC=11")
-        goal__project_bootstrap___guess_python_name["_guess_python_name"]
-        goal__project_bootstrap___guess_nodejs_name["_guess_nodejs_name"]
-        goal__project_bootstrap___guess_rust_name["_guess_rust_name"]
-        goal__project_bootstrap___guess_go_name["_guess_go_name"]
-        goal__project_bootstrap__guess_package_name["guess_package_name"]
         goal__project_bootstrap___find_python_bin["_find_python_bin"]
         goal__project_bootstrap___read_openrouter_api_key("_read_openrouter_api_key CC=11")
         goal__project_bootstrap___find_openrouter_api_key["_find_openrouter_api_key"]
@@ -1011,41 +1008,6 @@ flowchart TD
     examples__testing__03_advanced_mocking__test_conditional_mocking --> integration__run_matrix__print
     examples__testing__03_advanced_mocking__test_mock_context_manager --> goal__project_bootstrap__bootstrap_project
     examples__testing__03_advanced_mocking__test_mock_context_manager --> integration__run_matrix__print
-    goal__project_bootstrap__detect_project_types_deep --> goal__project_bootstrap___match_marker
-    goal__project_bootstrap___find_openrouter_api_key --> goal__project_bootstrap___read_openrouter_api_key
-    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___find_python_bin
-    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___ensure_costs_installed
-    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___install_python_deps_broker
-    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___ensure_python_test_dependency
-    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___install_python_deps
-    goal__project_bootstrap___install_python_deps --> goal__project_bootstrap___should_skip_install
-    goal__project_bootstrap___install_python_deps --> goal__project_bootstrap___match_marker
-    goal__project_bootstrap___ensure_generic_env --> goal__project_bootstrap___match_marker
-    goal__project_bootstrap__ensure_project_environment --> goal__project_bootstrap___ensure_generic_env
-    goal__project_bootstrap__ensure_project_environment --> goal__project_bootstrap___ensure_python_env
-    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap__find_existing_tests
-    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap__guess_package_name
-    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap___resolve_scaffold_test_path
-    goal__project_bootstrap___run_bootstrap_diagnostics --> goal__doctor__core__diagnose_and_report
-    goal__project_bootstrap___ensure_bootstrap_tests --> goal__project_bootstrap__find_existing_tests
-    goal__project_bootstrap___ensure_bootstrap_tests --> goal__project_bootstrap__scaffold_test
-    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap___new_bootstrap_result
-    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap___run_bootstrap_diagnostics
-    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap___ensure_pfix_installed
-    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__ensure_project_environment
-    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap___ensure_bootstrap_tests
-    goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__detect_project_types_deep
-    goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__bootstrap_project
-    goal__project_bootstrap___ensure_costs_installed --> goal__bootstrap__pyproject_costs_setup___ensure_costs_config
-    goal__project_bootstrap___ensure_costs_installed --> goal__bootstrap__pyproject_costs_setup___ensure_env_template
-    goal__project_bootstrap___ensure_costs_installed --> goal__bootstrap__costs_badge___generate_costs_badge
-    goal__project_bootstrap___ensure_costs_installed --> goal__bootstrap__costs_badge___install_costs_package
-    goal__project_bootstrap___ensure_pfix_env --> goal__project_bootstrap___find_openrouter_api_key
-    goal__project_bootstrap___validate_pfix_env --> goal__project_bootstrap___find_openrouter_api_key
-    goal__project_bootstrap___ensure_pfix_installed --> goal__project_bootstrap___find_python_bin
-    goal__project_bootstrap___ensure_pfix_installed --> goal__project_bootstrap___ensure_pfix_config
-    goal__project_bootstrap___ensure_pfix_installed --> goal__project_bootstrap___ensure_pfix_env
-    goal__project_bootstrap___ensure_pfix_installed --> goal__project_bootstrap___validate_pfix_env
     goal__toml_validation__validate_toml_file --> goal__toml_validation__get_tomllib
     goal__toml_validation__validate_project_toml_files --> goal__toml_validation__validate_toml_file
     goal__toml_validation__check_pyproject_toml --> goal__toml_validation__validate_toml_file
@@ -1133,8 +1095,7 @@ flowchart TD
     goal__generator__analyzer__ChangeAnalyzer__extract_functions_changed --> goal__user_config__UserConfig__set
     goal__generator__analyzer__ContentAnalyzer___notes_python --> goal__user_config__UserConfig__set
     goal__generator__generator__CommitMessageGenerator___classify_files --> goal__user_config__UserConfig__set
-    goal__bootstrap__detector__detect_project_types_deep --> goal__bootstrap__detector___match_marker
-    goal__bootstrap__configurator__scaffold_test_file --> goal__project_bootstrap__guess_package_name
+    goal__bootstrap__configurator__scaffold_test_file --> goal__bootstrap__detector__guess_package_name
     goal__bootstrap__configurator___find_openrouter_api_key --> goal__bootstrap__configurator___read_openrouter_api_key
     goal__bootstrap__pyproject_costs_setup___try_merge_optional_dev_deps --> goal__bootstrap__pyproject_costs_setup___find_dep_list_end
     goal__bootstrap__pyproject_costs_setup___try_merge_optional_dev_deps --> goal__bootstrap__pyproject_costs_setup___add_deps_to_section_match
@@ -1151,10 +1112,10 @@ flowchart TD
     goal__bootstrap__costs_badge___generate_costs_badge --> goal__bootstrap__costs_badge___load_costs_api
     goal__bootstrap__costs_badge___generate_costs_badge --> goal__bootstrap__costs_badge___calculate_ai_costs
     goal__bootstrap__costs_badge___generate_costs_badge --> goal__bootstrap__costs_badge___read_model_from_pyproject
-    goal__bootstrap__costs_badge___generate_costs_badge --> goal__project_bootstrap___find_git_root
+    goal__bootstrap__costs_badge___generate_costs_badge --> goal__bootstrap__configurator___find_git_root
     goal__bootstrap__installer___install_python_deps_legacy --> goal__bootstrap__installer___should_skip_install
     goal__bootstrap__installer___install_python_deps_legacy --> goal__bootstrap__installer___match_marker
-    goal__bootstrap__installer___ensure_python_env --> goal__project_bootstrap___find_python_bin
+    goal__bootstrap__installer___ensure_python_env --> goal__bootstrap__configurator___find_python_bin
     goal__bootstrap__installer___ensure_python_env --> goal__bootstrap__installer___ensure_costs_installed
     goal__bootstrap__installer___ensure_python_env --> goal__bootstrap__installer___install_python_deps_broker
     goal__bootstrap__installer___ensure_python_env --> goal__bootstrap__installer___ensure_python_test_dependency
@@ -1343,7 +1304,7 @@ flowchart TD
     goal__cli__hooks_cmd__hooks_run --> goal__cli__hooks_cmd__display_failure_message
     goal__cli__config_validate_cmd__validate_cmd --> goal__config__validation__validate_config_interactive
     goal__cli__config_validate_cmd__validate_cmd --> goal__config__validation__validate_config_file
-    goal__cli__tests___resolve_project_python --> goal__project_bootstrap___find_python_bin
+    goal__cli__tests___resolve_project_python --> goal__bootstrap__configurator___find_python_bin
     goal__cli__tests___run_python_test --> goal__cli__tests_discovery___find_project_root
     goal__cli__tests___run_python_test --> goal__cli__tests___resolve_project_python
     goal__cli__tests___run_python_test --> goal__cli__tests___has_package
@@ -1353,7 +1314,7 @@ flowchart TD
     goal__cli__tests___run_subdir_test --> goal__cli__tests___run_nodejs_test
     goal__cli__tests___run_tests_in_subdirs --> goal__cli__tests___run_subdir_test
     goal__cli__tests___resolve_root_python --> goal__cli__tests___active_venv_python
-    goal__cli__tests___resolve_root_python --> goal__project_bootstrap___find_python_bin
+    goal__cli__tests___resolve_root_python --> goal__bootstrap__configurator___find_python_bin
     goal__cli__tests___build_python_test_command --> goal__cli__tests___resolve_root_python
     goal__cli__tests___build_python_test_command --> goal__cli__tests___has_package
     goal__cli__tests___build_python_test_command --> goal__cli__tests___coerce_python_strategy_to_project_pytest
@@ -1444,8 +1405,6 @@ flowchart TD
     goal__cli__publish__publish_project --> goal__cli__publish___get_configured_project_types
     goal__cli__publish__publish_project --> goal__cli__publish___get_project_strategy
     goal__cli__publish__publish_project --> goal__cli__publish___prepare_python_publish
-    goal__cli__tests_pytest_setup__ensure_pytest_for_project --> goal__cli__tests_pytest_setup___is_uv_project
-    goal__cli__tests_pytest_setup__ensure_pytest_for_project --> goal__cli__tests_pytest_setup___try_uv_install
     goal__cli__publish_cmd___publish_impl --> goal__cli__version_utils__detect_project_types
     goal__cli__publish_cmd___publish_impl --> goal__cli__publish__makefile_has_target
     goal__cli__publish_cmd___publish_impl --> goal__git_ops__run_command_tee
@@ -1498,8 +1457,48 @@ flowchart TD
     goal__license__spdx__get_license_info --> goal__license__spdx___load_spdx_data
     goal__license__spdx__check_compatibility --> goal__license__spdx__validate_spdx_id
     goal__license__spdx__check_compatibility --> goal__license__spdx__get_license_info
+    goal__project_bootstrap__detect_project_types_deep --> goal__project_bootstrap___match_marker
+    goal__project_bootstrap___find_openrouter_api_key --> goal__project_bootstrap___read_openrouter_api_key
+    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___find_python_bin
+    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___ensure_costs_installed
+    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___install_python_deps_broker
+    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___ensure_python_test_dependency
+    goal__project_bootstrap___ensure_python_env --> goal__project_bootstrap___install_python_deps
+    goal__project_bootstrap___install_python_deps --> goal__project_bootstrap___should_skip_install
+    goal__project_bootstrap___install_python_deps --> goal__project_bootstrap___match_marker
+    goal__project_bootstrap___ensure_generic_env --> goal__project_bootstrap___match_marker
+    goal__project_bootstrap__ensure_project_environment --> goal__project_bootstrap___ensure_generic_env
+    goal__project_bootstrap__ensure_project_environment --> goal__project_bootstrap___ensure_python_env
+    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap__find_existing_tests
+    goal__project_bootstrap__scaffold_test --> goal__bootstrap__detector__guess_package_name
+    goal__project_bootstrap__scaffold_test --> goal__project_bootstrap___resolve_scaffold_test_path
+    goal__project_bootstrap___run_bootstrap_diagnostics --> goal__doctor__core__diagnose_and_report
+    goal__project_bootstrap___ensure_bootstrap_tests --> goal__project_bootstrap__find_existing_tests
+    goal__project_bootstrap___ensure_bootstrap_tests --> goal__project_bootstrap__scaffold_test
+    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap___new_bootstrap_result
+    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap___run_bootstrap_diagnostics
+    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap___ensure_pfix_installed
+    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap__ensure_project_environment
+    goal__project_bootstrap__bootstrap_project --> goal__project_bootstrap___ensure_bootstrap_tests
+    goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__detect_project_types_deep
+    goal__project_bootstrap__bootstrap_all_projects --> goal__project_bootstrap__bootstrap_project
+    goal__project_bootstrap___ensure_costs_installed --> goal__bootstrap__pyproject_costs_setup___ensure_costs_config
+    goal__project_bootstrap___ensure_costs_installed --> goal__bootstrap__pyproject_costs_setup___ensure_env_template
+    goal__project_bootstrap___ensure_costs_installed --> goal__bootstrap__costs_badge___generate_costs_badge
+    goal__project_bootstrap___ensure_costs_installed --> goal__bootstrap__costs_badge___install_costs_package
+    goal__project_bootstrap___ensure_pfix_env --> goal__project_bootstrap___find_openrouter_api_key
+    goal__project_bootstrap___validate_pfix_env --> goal__project_bootstrap___find_openrouter_api_key
+    goal__project_bootstrap___ensure_pfix_installed --> goal__project_bootstrap___find_python_bin
+    goal__project_bootstrap___ensure_pfix_installed --> goal__project_bootstrap___ensure_pfix_config
+    goal__project_bootstrap___ensure_pfix_installed --> goal__project_bootstrap___ensure_pfix_env
+    goal__project_bootstrap___ensure_pfix_installed --> goal__project_bootstrap___validate_pfix_env
+    goal__bootstrap__detector__detect_project_types_deep --> goal__bootstrap__detector___match_marker
+    goal__bootstrap__detector___python_scaffold_import_name --> goal__bootstrap__detector___python_package_dir_exists
+    goal__bootstrap__detector__guess_package_name --> goal__bootstrap__detector___python_scaffold_import_name
+    goal__cli__tests_pytest_setup__ensure_pytest_for_project --> goal__cli__tests_pytest_setup___is_uv_project
+    goal__cli__tests_pytest_setup__ensure_pytest_for_project --> goal__cli__tests_pytest_setup___try_uv_install
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
     class goal__push__core__add_slow_test_tickets_to_planfile,goal__push__core__output_final_summary highCC
-    class examples__custom_hooks__pre_commit__check_secrets,examples__api_usage__04_version_validation__main,examples__api_usage__01_basic_api__main,examples__api_usage__03_commit_generation__main,examples__testing__04_debugging_diagnostics__test_debug_output_capture,goal__project_bootstrap__detect_project_types_deep,goal__project_bootstrap___read_openrouter_api_key,goal__project_bootstrap___install_python_deps,goal__project_bootstrap___ensure_generic_env,goal__project_bootstrap__scaffold_test,goal__toml_validation__validate_toml_file,goal__user_config__initialize_user_config,goal__version_validation___detect_python_package,goal__deep_analyzer__CodeChangeAnalyzer___analyze_python_diff,goal__deep_analyzer__CodeChangeAnalyzer___extract_python_entities,goal__deep_analyzer__CodeChangeAnalyzer___analyze_js_diff,goal__deep_analyzer_aggregate__CodeChangeAggregatorMixin___check_cli_value,goal__deep_analyzer_aggregate__CodeChangeAggregatorMixin___check_area_values,goal__deep_analyzer_aggregate__CodeChangeAggregatorMixin___build_summary,goal__cli_helpers__split_paths_by_type,goal__formatter___build_functional_overview,goal__formatter___build_files_section,goal__formatter__format_push_result,goal__formatter___build_enhanced_summary_section,goal__git_ops___run_git_verbose,goal__git_ops__run_git_with_status,goal__git_ops___handle_merge_strategy,goal__generator__analyzer__ChangeAnalyzer___score_by_statistics,goal__generator__analyzer__ChangeAnalyzer___score_path_signals,goal__generator__analyzer__ChangeAnalyzer___resolve_change_type medCC
+    class examples__custom_hooks__pre_commit__check_secrets,examples__api_usage__04_version_validation__main,examples__api_usage__01_basic_api__main,examples__api_usage__03_commit_generation__main,examples__testing__04_debugging_diagnostics__test_debug_output_capture,goal__toml_validation__validate_toml_file,goal__user_config__initialize_user_config,goal__version_validation___detect_python_package,goal__deep_analyzer__CodeChangeAnalyzer___analyze_python_diff,goal__deep_analyzer__CodeChangeAnalyzer___extract_python_entities,goal__deep_analyzer__CodeChangeAnalyzer___analyze_js_diff,goal__deep_analyzer_aggregate__CodeChangeAggregatorMixin___check_cli_value,goal__deep_analyzer_aggregate__CodeChangeAggregatorMixin___check_area_values,goal__deep_analyzer_aggregate__CodeChangeAggregatorMixin___build_summary,goal__cli_helpers__split_paths_by_type,goal__formatter___build_functional_overview,goal__formatter___build_files_section,goal__formatter__format_push_result,goal__formatter___build_enhanced_summary_section,goal__git_ops___run_git_verbose,goal__git_ops__run_git_with_status,goal__git_ops___handle_merge_strategy,goal__generator__analyzer__ChangeAnalyzer___score_by_statistics,goal__generator__analyzer__ChangeAnalyzer___score_path_signals,goal__generator__analyzer__ChangeAnalyzer___resolve_change_type,goal__generator__analyzer__ChangeAnalyzer__detect_scope,goal__generator__analyzer__ContentAnalyzer___detect_tags,goal__generator__analyzer__ContentAnalyzer___summary_from_paths,goal__generator__analyzer__ContentAnalyzer___notes_docs,goal__generator__generator__CommitMessageGenerator____init__ medCC

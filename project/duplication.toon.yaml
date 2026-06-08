@@ -1,12 +1,12 @@
-# redup/duplication | 32 groups | 144f 24947L | 2026-05-26
+# redup/duplication | 32 groups | 144f 24888L | 2026-06-08
 
 SUMMARY:
   files_scanned: 144
-  total_lines:   24947
+  total_lines:   24888
   dup_groups:    32
   dup_fragments: 82
   saved_lines:   384
-  scan_ms:       3072
+  scan_ms:       4737
 
 HOTSPOTS[7] (files with most duplication):
   goal/project_bootstrap.py  dup=148L  groups=8  frags=8  (0.6%)
@@ -20,17 +20,17 @@ HOTSPOTS[7] (files with most duplication):
 DUPLICATES[32] (ranked by impact):
   [c63c6249e55cb28f] ! EXAC  _ensure_python_test_dependency  L=40 N=2 saved=40 sim=1.00
       goal/bootstrap/installer.py:164-203  (_ensure_python_test_dependency)
-      goal/project_bootstrap.py:457-496  (_ensure_python_test_dependency)
+      goal/project_bootstrap.py:365-404  (_ensure_python_test_dependency)
   [fa0b74b14de61573]   EXAC  _install_python_deps_broker  L=22 N=2 saved=22 sim=1.00
       goal/bootstrap/installer.py:140-161  (_install_python_deps_broker)
-      goal/project_bootstrap.py:642-663  (_install_python_deps_broker)
+      goal/project_bootstrap.py:550-571  (_install_python_deps_broker)
   [92a676278db9e76e]   STRU  uninstall_hooks  L=11 N=3 saved=22 sim=1.00
       goal/hooks/manager.py:289-299  (uninstall_hooks)
       goal/postcommit/manager.py:201-211  (run_post_commit_actions)
       goal/validation/manager.py:197-207  (run_custom_validations)
   [632e6e2ec1a0e267]   STRU  ensure_project_environment  L=20 N=2 saved=20 sim=1.00
       goal/bootstrap/installer.py:372-391  (ensure_project_environment)
-      goal/project_bootstrap.py:723-742  (ensure_project_environment)
+      goal/project_bootstrap.py:631-650  (ensure_project_environment)
   [0269aa7743a3214a]   STRU  authors_list  L=4 N=6 saved=20 sim=1.00
       goal/cli/authors_cmd.py:40-43  (authors_list)
       goal/cli/authors_cmd.py:77-80  (authors_import)
@@ -43,13 +43,13 @@ DUPLICATES[32] (ranked by impact):
       examples/webhooks/slack-webhook.py:94-112  (main)
   [116594718eb1c607]   STRU  _find_openrouter_api_key  L=19 N=2 saved=19 sim=1.00
       goal/bootstrap/configurator.py:114-132  (_find_openrouter_api_key)
-      goal/project_bootstrap.py:426-444  (_find_openrouter_api_key)
+      goal/project_bootstrap.py:334-352  (_find_openrouter_api_key)
   [4b00d0a6a1f57e43]   EXAC  _find_python_bin  L=17 N=2 saved=17 sim=1.00
       goal/bootstrap/configurator.py:69-85  (_find_python_bin)
-      goal/project_bootstrap.py:380-396  (_find_python_bin)
+      goal/project_bootstrap.py:288-304  (_find_python_bin)
   [ee9bc07d711dabc5]   EXAC  _should_skip_install  L=17 N=2 saved=17 sim=1.00
       goal/bootstrap/installer.py:22-38  (_should_skip_install)
-      goal/project_bootstrap.py:553-569  (_should_skip_install)
+      goal/project_bootstrap.py:461-477  (_should_skip_install)
   [90e6c0a8cb78d015]   STRU  authors  L=3 N=6 saved=15 sim=1.00
       goal/cli/authors_cmd.py:34-36  (authors)
       goal/cli/config_cmd.py:11-13  (config)
@@ -97,7 +97,7 @@ DUPLICATES[32] (ranked by impact):
       goal/version_validation.py:37-45  (get_cargo_version)
   [9be14950000fe561]   EXAC  _find_git_root  L=8 N=2 saved=8 sim=1.00
       goal/bootstrap/configurator.py:135-142  (_find_git_root)
-      goal/project_bootstrap.py:447-454  (_find_git_root)
+      goal/project_bootstrap.py:355-362  (_find_git_root)
   [95a03c7e292f0023]   EXAC  __init__  L=8 N=2 saved=8 sim=1.00
       goal/postcommit/manager.py:15-22  (__init__)
       goal/validation/manager.py:16-23  (__init__)

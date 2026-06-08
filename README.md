@@ -5,7 +5,7 @@
 
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.239-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.242-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -23,13 +23,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.239-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$17.52-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-86.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.242-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$17.48-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-89.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
 
-- 🤖 **LLM usage:** $17.5199 (271 commits)
-- 👤 **Human dev:** ~$8675 (86.8h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $17.4767 (275 commits)
+- 👤 **Human dev:** ~$8906 (89.1h @ $100/h, 30min dedup)
 
-Generated on 2026-05-26 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
+Generated on 2026-06-08 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
 
 ---
 
@@ -192,6 +192,7 @@ goal push
 
 # Also works with automation modes:
 goal -a          # Full automation with validation
+goal -au         # Full automation + update dependencies to latest
 goal --all       # All stages with validation
 goal --yes       # Auto-confirm with validation
 
@@ -815,6 +816,7 @@ Main command for the complete workflow.
 - `--bump, -b`: Version bump type [patch|minor|major] (default: patch)
 - `--yes, -y`: Skip all prompts (run automatically)
 - `--all, -a`: Automate all stages including tests, commit, push, and publish
+- `--upgrade-deps, -u`: Update project dependencies to latest available versions
 - `--todo/--no-todo, -t`: Add unfixed issues to TODO.md during doctor phase (default: no)
 - `--markdown/--ascii`: Output format (default: markdown)
 - `--split`: Create separate commits per change type (docs/code/ci/examples)
@@ -1024,6 +1026,10 @@ goal --all
 
 # Short form
 goal -a
+
+# Update dependencies and run full workflow
+goal -au
+goal -a -u
 
 # With specific version bump
 goal --all --bump minor

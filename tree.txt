@@ -97,7 +97,6 @@
 │   ├── rust-crate
 │   │   └── Cargo.toml
 │   ├── template-generator
-│   │   ├── demo-project
 │   │   ├── generate.py
 │   │   └── README.md
 │   ├── testing
@@ -105,7 +104,6 @@
 │   │   └── 04_debugging_diagnostics.py
 │   ├── testing-guide
 │   │   └── README.md
-│   ├── test-project
 │   ├── validation
 │   │   ├── README.md
 │   │   ├── run_all_validation.py
@@ -126,9 +124,11 @@
 │   │   └── utils.py
 │   ├── bootstrap
 │   │   ├── configurator.py
+│   │   ├── costs_badge.py
 │   │   ├── detector.py
 │   │   ├── __init__.py
 │   │   ├── installer.py
+│   │   ├── pyproject_costs_setup.py
 │   │   └── templates.py
 │   ├── changelog.py
 │   ├── cli
@@ -145,7 +145,9 @@
 │   │   ├── publish.py
 │   │   ├── push_cmd.py
 │   │   ├── recover_cmd.py
+│   │   ├── tests_discovery.py
 │   │   ├── tests.py
+│   │   ├── tests_pytest_setup.py
 │   │   ├── utils_cmd.py
 │   │   ├── validation_cmd.py
 │   │   ├── version.py
@@ -162,6 +164,8 @@
 │   │   ├── manager.py
 │   │   └── validation.py
 │   ├── config.py
+│   ├── deep_analyzer_aggregate.py
+│   ├── deep_analyzer_patterns.py
 │   ├── deep_analyzer.py
 │   ├── doctor
 │   │   ├── core.py
@@ -173,6 +177,8 @@
 │   │   ├── models.py
 │   │   ├── nodejs.py
 │   │   ├── php.py
+│   │   ├── python_diag_core.py
+│   │   ├── python_diag_extended.py
 │   │   ├── python.py
 │   │   ├── ruby.py
 │   │   ├── rust.py
@@ -243,6 +249,8 @@
 │   │   └── strategies.py
 │   ├── smart_commit
 │   │   ├── abstraction.py
+│   │   ├── generator_core.py
+│   │   ├── generator_generate.py
 │   │   ├── generator.py
 │   │   └── __init__.py
 │   ├── smart_commit.py
@@ -339,8 +347,10 @@
 │   ├── flow.mmd
 │   ├── flow.png
 │   ├── index.html
+│   ├── logic.pl
 │   ├── map.toon.yaml
 │   ├── mermaid.export
+│   ├── planfile-tickets.yaml
 │   ├── project.toon.yaml
 │   ├── project.yaml
 │   ├── prompt.txt
@@ -357,8 +367,10 @@
 ├── redsl_refactor_report.md
 ├── redsl_refactor_report.toon.yaml
 ├── redsl.yaml
-├── refactor_output
 ├── REFACTOR_PLAN.md
+├── regix.yaml
+├── scripts
+│   └── koru_verify_ci.sh
 ├── SUMD.md
 ├── SUMR.md
 ├── Taskfile.yml
@@ -367,8 +379,10 @@
 │   └── generated-from-pytests.testql.toon.yaml
 ├── test_recovery.py
 ├── tests
+│   ├── conftest.py
 │   ├── test_changelog.py
 │   ├── test_cli_options.py
+│   ├── test_cli_tests_runner.py
 │   ├── test_clone_repo.py
 │   ├── test_config_shim.py
 │   ├── test_config_validation.py
@@ -376,18 +390,27 @@
 │   ├── test_formatter.py
 │   ├── test_git_ops.py
 │   ├── test_installers_e2e.py
+│   ├── test_project_bootstrap_costs.py
 │   ├── test_project_bootstrap.py
 │   ├── test_project_doctor.py
 │   ├── test_push_e2e.py
+│   ├── test_push_todo_stage.py
 │   ├── test_smart_commit_shim.py
 │   ├── test_user_config.py
 │   ├── test_version_sync.py
 │   └── test_version_validation.py
 ├── TICKET
+├── TODO
+│   ├── chciałby uruchamiać unit tetsy i inne z pytest, it.md
+│   ├── stworz liste projektow github i pypi, ktore przyś.md
+│   └── zaproponuj refaktoryzacje, aby ta paczka goal potr.md
 ├── TODO.md
 ├── tree.sh
 ├── tree.txt
 ├── uv.lock
-└── VERSION
+├── VERSION
+├── workflows
+│   └── on-change-gates.md
+└── wup.yaml
 
-72 directories, 319 files
+72 directories, 342 files

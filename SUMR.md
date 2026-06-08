@@ -18,12 +18,12 @@ SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorizati
 ## Metadata
 
 - **name**: `goal`
-- **version**: `2.1.206`
+- **version**: `2.1.241`
 - **python_requires**: `>=3.10`
-- **license**: {'text': 'Apache-2.0'}
+- **license**: Apache-2.0
 - **ai_model**: `openrouter/x-ai/grok-code-fast-1`
 - **ecosystem**: SUMD + DOQL + testql + taskfile
-- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, testql(2), app.doql.less, pyqual.yaml, goal.yaml, .env.example, src(16 mod), project/(6 analysis files)
+- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, testql(2), app.doql.less, pyqual.yaml, goal.yaml, .env.example, src(18 mod), project/(6 analysis files)
 
 ## Architecture
 
@@ -38,11 +38,12 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: goal;
-  version: 2.1.206;
+  version: 2.1.241;
 }
 
 dependencies {
-  runtime: "click>=8.0.0, PyYAML>=6.0, clickmd>=0.1.0, costs>=0.1.21, tomlkit>=0.12.0";
+  runtime: "click>=8.0.0, typer>=0.24, PyYAML>=6.0, clickmd>=0.1.0, costs>=0.1.21, tomlkit>=0.12.0";
+  nfo: nfo>=0.2.22;
   dev: "pytest>=7.0.0, build, twine, pfix>=0.1.60, tox>=4.0.0";
 }
 
@@ -50,7 +51,7 @@ interface[type="cli"] {
   framework: click;
 }
 interface[type="cli"] page[name="goal"] {
-
+  entry: goal.cli:main;
 }
 
 workflow[name="install"] {
@@ -108,23 +109,11 @@ workflow[name="bump-version"] {
   step-6: run cmd=current_version=$$(grep '^version = ' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/'); \;
   step-7: run cmd=echo "Current version: $$current_version"; \;
   step-8: run cmd=IFS='.' read -r major minor patch <<< "$$current_version"; \;
-  step-9: run cmd=case "$(PART)" in \;
-  step-10: run cmd=major) major=$$((major + 1)); minor=0; patch=0 ;; \;
-  step-11: run cmd=minor) minor=$$((minor + 1)); patch=0 ;; \;
-  step-12: run cmd=patch) patch=$$((patch + 1)) ;; \;
-  step-13: run cmd=*) echo "${YELLOW}Error: PART must be major, minor, or patch${RESET}"; exit 1 ;; \;
-  step-14: run cmd=esac; \;
-  step-15: run cmd=new_version="$${major}.$${minor}.$${patch}"; \;
-  step-16: run cmd=sed -i "s/^version = \"$$current_version\"/version = \"$$new_version\"/" pyproject.toml; \;
-  step-17: run cmd=echo "${GREEN}Version bumped to $$new_version${RESET}"; \;
-  step-18: run cmd=git add pyproject.toml; \;
-  step-19: run cmd=git commit -m "Bump version to $$new_version"; \;
-  step-20: run cmd=if git rev-parse "v$$new_version" >/dev/null 2>&1; then \;
-  step-21: run cmd=echo "${YELLOW}Error: tag 'v$$new_version' already exists${RESET}"; \;
-  step-22: run cmd=exit 1; \;
-  step-23: run cmd=fi; \;
-  step-24: run cmd=git tag -a "v$$new_version" -m "Version $$new_version"; \;
-  step-25: run cmd=echo "${GREEN}Created tag v$$new_version${RESET}";
+}
+
+workflow[name="koru-gate"] {
+  trigger: manual;
+  step-1: run cmd=./scripts/koru_verify_ci.sh;
 }
 
 workflow[name="help"] {
@@ -268,6 +257,14 @@ print('Generated SUMR.json')
 " 2>/dev/null || echo 'Python generation failed, using fallback';
 }
 
+tests {
+  import: testql-scenarios/**/*.testql.toon.yaml;
+}
+
+env_vars {
+  keys: OPENROUTER_API_KEY, LLM_MODEL;
+}
+
 deploy {
   target: docker;
 }
@@ -275,7 +272,10 @@ deploy {
 environment[name="local"] {
   runtime: docker-compose;
   env_file: .env;
+  template_file: .env.example;
   python_version: >=3.10;
+  vars: LLM_MODEL, OPENROUTER_API_KEY;
+  runtime_llm: OPENROUTER_API_KEY;
 }
 ```
 
@@ -287,6 +287,8 @@ environment[name="local"] {
 - `goal.commit_generator`
 - `goal.config`
 - `goal.deep_analyzer`
+- `goal.deep_analyzer_aggregate`
+- `goal.deep_analyzer_patterns`
 - `goal.enhanced_summary`
 - `goal.formatter`
 - `goal.git_ops`
@@ -303,7 +305,7 @@ environment[name="local"] {
 ### Taskfile Tasks (`Taskfile.yml`)
 
 ```yaml markpact:taskfile path=Taskfile.yml
-version: '1'
+version: '3'
 name: goal
 description: Minimal Taskfile
 variables:
@@ -339,6 +341,10 @@ tasks:
     desc: Run pytest suite
     cmds:
     - pytest -q
+  koru-gate:
+    desc: Run strict Koru quality gates (fails on regix hard violations)
+    cmds:
+    - ./scripts/koru_verify_ci.sh
   build:
     desc: Build wheel + sdist
     cmds:
@@ -717,6 +723,7 @@ pipeline:
 
 ```text markpact:deps python
 click>=8.0.0
+typer>=0.24
 PyYAML>=6.0
 clickmd>=0.1.0
 costs>=0.1.21
@@ -736,53 +743,6 @@ tox>=4.0.0
 ## Source Map
 
 *Top 5 modules by symbol density — signatures for LLM orientation.*
-
-### `goal.project_bootstrap` (`goal/project_bootstrap.py`)
-
-```python
-def _match_marker(base, pattern)  # CC=2, fan=4
-def detect_project_types_deep(root, max_depth)  # CC=11, fan=10 ⚠
-def _guess_python_name(project_dir)  # CC=5, fan=5
-def _guess_nodejs_name(project_dir)  # CC=4, fan=5
-def _guess_rust_name(project_dir)  # CC=4, fan=4
-def _guess_go_name(project_dir)  # CC=4, fan=6
-def guess_package_name(project_dir, project_type)  # CC=3, fan=4
-def _find_python_bin(project_dir)  # CC=5, fan=4
-def _read_openrouter_api_key(env_file)  # CC=11, fan=6 ⚠
-def _find_openrouter_api_key(project_dir)  # CC=6, fan=5
-def _find_git_root(project_dir)  # CC=3, fan=2
-def _ensure_python_test_dependency(project_dir, python_bin, test_dep)  # CC=5, fan=5
-def _ensure_python_env(project_dir, cfg, yes)  # CC=6, fan=13
-def _should_skip_install(project_dir, markers)  # CC=6, fan=2
-def _install_python_deps(project_dir, cfg, python_bin)  # CC=12, fan=17 ⚠
-def _install_python_deps_broker(project_dir, extras)  # CC=2, fan=5
-def _ensure_generic_env(project_dir, project_type, cfg, yes)  # CC=14, fan=10 ⚠
-def ensure_project_environment(project_dir, project_type, yes)  # CC=3, fan=4
-def find_existing_tests(project_dir, project_type)  # CC=5, fan=4
-def _resolve_scaffold_test_path(project_dir, project_type, cfg, package_name)  # CC=3, fan=2
-def scaffold_test(project_dir, project_type, yes)  # CC=8, fan=12
-def _new_bootstrap_result(project_dir, project_type)  # CC=1, fan=0
-def _run_bootstrap_diagnostics(project_dir, project_type, yes)  # CC=1, fan=3
-def _ensure_bootstrap_tests(project_dir, project_type, yes)  # CC=3, fan=2
-def bootstrap_project(project_dir, project_type, yes)  # CC=1, fan=5
-def bootstrap_all_projects(root, yes)  # CC=6, fan=9
-def _install_costs_package(project_dir, python_bin)  # CC=3, fan=5
-def _load_costs_api()  # CC=2, fan=6
-def _calculate_ai_costs(repo_root)  # CC=9, fan=8
-def _read_model_from_pyproject(project_dir)  # CC=3, fan=4
-def _generate_costs_badge(project_dir)  # CC=6, fan=13
-def _ensure_costs_installed(project_dir, python_bin)  # CC=2, fan=4
-def _add_deps_to_section(match, required_deps)  # CC=10, fan=9 ⚠
-def _try_add_deps(content)  # CC=13, fan=10 ⚠
-def _add_deps_to_section_match(section_start, existing, required_deps)  # CC=10, fan=8 ⚠
-def _ensure_costs_config(project_dir)  # CC=5, fan=8
-def _ensure_env_template(project_dir)  # CC=6, fan=7
-def _ensure_pfix_env(project_dir)  # CC=7, fan=8
-def _validate_pfix_env(project_dir)  # CC=4, fan=4
-def _ensure_pfix_installed(project_dir, yes)  # CC=4, fan=9
-def _ensure_pfix_config(project_dir, yes)  # CC=4, fan=6
-def scaffold_test_file(project_dir, project_type)  # CC=1, fan=1
-```
 
 ### `goal.git_ops` (`goal/git_ops.py`)
 
@@ -817,37 +777,36 @@ def read_ticket(path)  # CC=7, fan=7
 def apply_ticket_prefix(title, ticket)  # CC=6, fan=4
 ```
 
-### `goal.deep_analyzer` (`goal/deep_analyzer.py`)
+### `goal.project_bootstrap` (`goal/project_bootstrap.py`)
 
 ```python
-class CodeChangeAnalyzer:  # Analyzes code changes to extract functional meaning.
-    def __init__()  # CC=1
-    def analyze_file_diff(filepath, old_content, new_content)  # CC=3
-    def _detect_language(filepath)  # CC=1
-    def _analyze_python_diff(old_content, new_content)  # CC=10 ⚠
-    def _detect_value_indicators(added_entities)  # CC=6
-    def _extract_python_entities(tree)  # CC=13 ⚠
-    def _get_decorator_name(decorator)  # CC=4
-    def _calculate_complexity(node)  # CC=4
-    def _analyze_js_diff(old_content, new_content)  # CC=13 ⚠
-    def _analyze_generic_diff(old_content, new_content)  # CC=1
-    def _detect_functional_areas(entities, content)  # CC=7
-    def aggregate_changes(file_analyses)  # CC=3
-    def _detect_file_patterns(files)  # CC=6
-    def _check_analyzer_value(file_patterns, added)  # CC=4
-    def _check_cli_value(areas, added)  # CC=8
-    def _check_area_values(areas, added)  # CC=12 ⚠
-    def _check_complexity_value(complexity)  # CC=3
-    def _check_architecture_value(added)  # CC=4
-    def _build_entity_fallback(added, modified)  # CC=7
-    def infer_functional_value(aggregated, files)  # CC=6
-    def detect_relations(file_analyses)  # CC=6
-    def generate_functional_summary(files)  # CC=5
-    def _format_entity_names(items, limit)  # CC=2
-    def _format_relations(relations)  # CC=2
-    def _format_complexity_change(complexity)  # CC=2
-    def _format_areas(areas)  # CC=1
-    def _build_summary(aggregated, value, relations)  # CC=13 ⚠
+def _match_marker(base, pattern)  # CC=2, fan=4
+def detect_project_types_deep(root, max_depth)  # CC=11, fan=10 ⚠
+def _find_python_bin(project_dir)  # CC=5, fan=4
+def _read_openrouter_api_key(env_file)  # CC=11, fan=7 ⚠
+def _find_openrouter_api_key(project_dir)  # CC=6, fan=5
+def _find_git_root(project_dir)  # CC=3, fan=2
+def _ensure_python_test_dependency(project_dir, python_bin, test_dep)  # CC=5, fan=5
+def _ensure_python_env(project_dir, cfg, yes)  # CC=6, fan=13
+def _should_skip_install(project_dir, markers)  # CC=6, fan=2
+def _install_python_deps(project_dir, cfg, python_bin)  # CC=12, fan=17 ⚠
+def _install_python_deps_broker(project_dir, extras)  # CC=2, fan=5
+def _ensure_generic_env(project_dir, project_type, cfg, yes)  # CC=14, fan=10 ⚠
+def ensure_project_environment(project_dir, project_type, yes)  # CC=3, fan=4
+def find_existing_tests(project_dir, project_type)  # CC=5, fan=4
+def _resolve_scaffold_test_path(project_dir, project_type, cfg, package_name)  # CC=4, fan=2
+def scaffold_test(project_dir, project_type, yes)  # CC=8, fan=12
+def _new_bootstrap_result(project_dir, project_type)  # CC=1, fan=0
+def _run_bootstrap_diagnostics(project_dir, project_type, yes)  # CC=1, fan=3
+def _ensure_bootstrap_tests(project_dir, project_type, yes)  # CC=3, fan=2
+def bootstrap_project(project_dir, project_type, yes)  # CC=1, fan=5
+def bootstrap_all_projects(root, yes)  # CC=6, fan=9
+def _ensure_costs_installed(project_dir, python_bin)  # CC=2, fan=4
+def _ensure_pfix_env(project_dir)  # CC=7, fan=9
+def _validate_pfix_env(project_dir)  # CC=4, fan=4
+def _ensure_pfix_installed(project_dir, yes)  # CC=6, fan=14
+def _ensure_pfix_config(project_dir, yes)  # CC=4, fan=7
+def scaffold_test_file(project_dir, project_type)  # CC=1, fan=1
 ```
 
 ### `goal.formatter` (`goal/formatter.py`)
@@ -879,6 +838,28 @@ class MarkdownFormatter:  # Formats Goal output as structured markdown for LLM c
     def render()  # CC=4
 ```
 
+### `goal.deep_analyzer_aggregate` (`goal/deep_analyzer_aggregate.py`)
+
+```python
+class CodeChangeAggregatorMixin:
+    def aggregate_changes(file_analyses)  # CC=3
+    def _detect_file_patterns(files)  # CC=6
+    def _check_analyzer_value(file_patterns, added)  # CC=4
+    def _check_cli_value(areas, added)  # CC=8
+    def _check_area_values(areas, added)  # CC=12 ⚠
+    def _check_complexity_value(complexity)  # CC=3
+    def _check_architecture_value(added)  # CC=4
+    def _build_entity_fallback(added, modified)  # CC=7
+    def infer_functional_value(aggregated, files)  # CC=6
+    def detect_relations(file_analyses)  # CC=6
+    def generate_functional_summary(files)  # CC=5
+    def _format_entity_names(items, limit)  # CC=2
+    def _format_relations(relations)  # CC=2
+    def _format_complexity_change(complexity)  # CC=2
+    def _format_areas(areas)  # CC=1
+    def _build_summary(aggregated, value, relations)  # CC=13 ⚠
+```
+
 ### `goal.package_managers` (`goal/package_managers.py`)
 
 ```python
@@ -903,75 +884,79 @@ class PackageManager:  # Package manager configuration and capabilities.
 
 ## Call Graph
 
-*398 nodes · 500 edges · 91 modules · CC̄=0.2*
+*425 nodes · 500 edges · 83 modules · CC̄=4.3*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in Taskfile)* | 0 | 255 | 0 | **255** |
-| `any` *(in testql-scenarios.generated-from-pytests.testql.toon)* | 0 | 67 | 0 | **67** |
+| `print` *(in integration.run_matrix)* | 0 | 255 | 0 | **255** |
 | `_setup_project_config` *(in goal.cli.wizard_cmd)* | 9 | 1 | 55 | **56** |
 | `initialize_user_config` *(in goal.user_config)* | 11 ⚠ | 4 | 52 | **56** |
-| `run_git` *(in goal.git_ops)* | 1 | 47 | 2 | **49** |
+| `run_git` *(in goal.git_ops)* | 1 | 46 | 2 | **48** |
 | `validate` *(in goal.cli.commit_cmd)* | 13 ⚠ | 0 | 45 | **45** |
-| `sum` *(in project.map.toon)* | 0 | 44 | 0 | **44** |
+| `set` *(in goal.user_config.UserConfig)* | 1 | 43 | 1 | **44** |
+| `doctor` *(in goal.cli.doctor_cmd)* | 12 ⚠ | 0 | 40 | **40** |
 | `_show_setup_summary` *(in goal.cli.wizard_cmd)* | 7 | 1 | 39 | **40** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/goal
-# nodes: 398 | edges: 500 | modules: 91
-# CC̄=0.2
+# generated in 0.30s
+# nodes: 425 | edges: 500 | modules: 83
+# CC̄=4.3
 
 HUBS[20]:
-  Taskfile.print
+  integration.run_matrix.print
     CC=0  in:255  out:0  total:255
-  testql-scenarios.generated-from-pytests.testql.toon.any
-    CC=0  in:67  out:0  total:67
   goal.cli.wizard_cmd._setup_project_config
     CC=9  in:1  out:55  total:56
   goal.user_config.initialize_user_config
     CC=11  in:4  out:52  total:56
   goal.git_ops.run_git
-    CC=1  in:47  out:2  total:49
+    CC=1  in:46  out:2  total:48
   goal.cli.commit_cmd.validate
     CC=13  in:0  out:45  total:45
-  project.map.toon.sum
-    CC=0  in:44  out:0  total:44
+  goal.user_config.UserConfig.set
+    CC=1  in:43  out:1  total:44
+  goal.cli.doctor_cmd.doctor
+    CC=12  in:0  out:40  total:40
   goal.cli.wizard_cmd._show_setup_summary
     CC=7  in:1  out:39  total:40
   goal.cli.wizard_cmd._setup_user_config
     CC=12  in:1  out:39  total:40
-  goal.user_config.UserConfig.set
-    CC=1  in:38  out:1  total:39
   goal.cli.commit_cmd.fix_summary
     CC=12  in:0  out:38  total:38
-  examples.api-usage.02_git_operations.main
-    CC=15  in:0  out:38  total:38
-  project.map.toon.list
-    CC=0  in:37  out:0  total:37
+  goal.push.core.execute_push_workflow
+    CC=7  in:2  out:32  total:34
   goal.cli.wizard_cmd._setup_git_repository
     CC=10  in:1  out:33  total:34
   examples.api-usage.01_basic_api.main
     CC=10  in:0  out:34  total:34
+  goal.push.core.output_final_summary
+    CC=19  in:1  out:33  total:34
+  goal.push.stages.todo.handle_todo_stage
+    CC=14  in:1  out:32  total:33
+  goal.bootstrap.installer._install_python_deps_legacy
+    CC=14  in:1  out:32  total:33
   goal.user_config.show_user_config
     CC=2  in:1  out:31  total:32
-  goal.push.core.execute_push_workflow
-    CC=6  in:2  out:29  total:31
   examples.api-usage.04_version_validation.main
     CC=11  in:0  out:30  total:30
-  project.map.toon.open
-    CC=0  in:29  out:0  total:29
   goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
     CC=10  in:0  out:29  total:29
+  goal.push.stages.test.run_test_stage
+    CC=9  in:1  out:27  total:28
 
 MODULES:
-  Taskfile  [1 funcs]
-    print  CC=0  out:0
   examples.api-usage.01_basic_api  [1 funcs]
     main  CC=10  out:34
-  examples.api-usage.02_git_operations  [1 funcs]
-    main  CC=15  out:38
+  examples.api-usage.02_git_operations  [6 funcs]
+    _check_git_repository  CC=2  out:4
+    _display_diff_content  CC=2  out:5
+    _display_diff_stats  CC=5  out:11
+    _display_staged_files  CC=5  out:7
+    _display_unstaged_files  CC=5  out:7
+    main  CC=2  out:9
   examples.api-usage.03_commit_generation  [1 funcs]
     main  CC=9  out:23
   examples.api-usage.04_version_validation  [1 funcs]
@@ -1002,12 +987,10 @@ MODULES:
   examples.template-generator.generate  [2 funcs]
     generate_project  CC=4  out:23
     main  CC=2  out:12
-  examples.testing.03_advanced_mocking  [7 funcs]
+  examples.testing.03_advanced_mocking  [5 funcs]
     test_conditional_mocking  CC=1  out:8
-    test_mock_context_manager  CC=2  out:13
     test_mocking_click_interactions  CC=2  out:14
     test_mocking_external_services  CC=3  out:10
-    test_mocking_file_system  CC=1  out:3
     test_mocking_git_operations  CC=2  out:7
     test_spies_and_call_counting  CC=6  out:23
   examples.testing.04_debugging_diagnostics  [6 funcs]
@@ -1039,9 +1022,42 @@ MODULES:
     parse_co_authors  CC=2  out:7
     remove_co_authors_from_message  CC=5  out:7
     validate_author_format  CC=3  out:8
-  goal.bootstrap.detector  [2 funcs]
+  goal.bootstrap.configurator  [5 funcs]
+    _find_git_root  CC=3  out:2
+    _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
+    _read_openrouter_api_key  CC=11  out:12
+    scaffold_test_file  CC=14  out:12
+  goal.bootstrap.costs_badge  [9 funcs]
+    _calculate_ai_costs  CC=4  out:8
+    _commit_blob_lower  CC=3  out:3
+    _fetch_commit_diff  CC=3  out:7
+    _filter_ai_commits  CC=4  out:2
+    _generate_costs_badge  CC=6  out:23
+    _load_costs_api  CC=2  out:9
+    _parsed_diff_is_usable  CC=4  out:2
+    _read_model_from_pyproject  CC=3  out:4
+    _single_commit_ai_cost  CC=3  out:5
+  goal.bootstrap.detector  [1 funcs]
+    guess_package_name  CC=4  out:3
+  goal.bootstrap.installer  [12 funcs]
+    _ensure_costs_installed  CC=3  out:8
+    _ensure_generic_env  CC=6  out:9
+    _ensure_python_env  CC=9  out:25
+    _ensure_python_test_dependency  CC=5  out:15
+    _get_matching_dep_command  CC=4  out:3
+    _install_python_deps_broker  CC=2  out:5
+    _install_python_deps_legacy  CC=14  out:32
     _match_marker  CC=2  out:4
-    detect_project_types_deep  CC=11  out:11
+    _needs_install  CC=10  out:9
+    _run_dep_install  CC=4  out:14
+  goal.bootstrap.pyproject_costs_setup  [6 funcs]
+    _add_deps_to_section_match  CC=10  out:9
+    _ensure_costs_config  CC=5  out:13
+    _find_dep_list_end  CC=12  out:2
+    _try_add_deps  CC=4  out:4
+    _try_merge_hatch_default_deps  CC=6  out:6
+    _try_merge_optional_dev_deps  CC=6  out:7
   goal.changelog  [6 funcs]
     _build_domain_entry  CC=7  out:12
     _build_simple_entry  CC=3  out:4
@@ -1049,9 +1065,13 @@ MODULES:
     _find_unreleased_insert_pos  CC=3  out:6
     _insert_entry  CC=5  out:3
     update_changelog  CC=5  out:12
-  goal.cli  [2 funcs]
+  goal.cli  [6 funcs]
+    parse_args  CC=11  out:6
+    _configure_main_context  CC=3  out:4
     _format_import_warning_message  CC=1  out:0
+    _goal_update_command  CC=4  out:5
     _print_import_warning  CC=1  out:2
+    _show_goal_version_banner  CC=3  out:8
   goal.cli.authors_cmd  [5 funcs]
     authors_co_author  CC=1  out:5
     authors_current  CC=1  out:4
@@ -1071,6 +1091,8 @@ MODULES:
     setup  CC=3  out:10
   goal.cli.config_validate_cmd  [1 funcs]
     validate_cmd  CC=3  out:11
+  goal.cli.doctor_cmd  [1 funcs]
+    doctor  CC=12  out:40
   goal.cli.hooks_cmd  [6 funcs]
     display_failure_message  CC=1  out:3
     display_install_success  CC=1  out:8
@@ -1084,13 +1106,14 @@ MODULES:
     license_info  CC=6  out:19
     license_list  CC=7  out:20
     license_update  CC=3  out:13
-  goal.cli.publish  [8 funcs]
+  goal.cli.publish  [9 funcs]
     _ensure_publish_deps  CC=5  out:20
     _get_configured_project_types  CC=13  out:13
     _get_project_strategy  CC=7  out:5
     _get_python_bin  CC=3  out:4
+    _is_rate_limited  CC=4  out:0
     _prepare_python_publish  CC=7  out:15
-    _run_publish_command  CC=8  out:14
+    _run_publish_command  CC=11  out:23
     makefile_has_target  CC=4  out:6
     publish_project  CC=13  out:21
   goal.cli.publish_cmd  [2 funcs]
@@ -1099,6 +1122,23 @@ MODULES:
   goal.cli.recover_cmd  [2 funcs]
     _get_error_output  CC=5  out:4
     recover  CC=6  out:23
+  goal.cli.tests  [16 funcs]
+    _active_venv_python  CC=3  out:4
+    _build_python_test_command  CC=10  out:7
+    _coerce_python_strategy_to_project_pytest  CC=8  out:3
+    _display_test_error  CC=9  out:18
+    _get_project_strategy  CC=7  out:5
+    _has_package  CC=3  out:1
+    _resolve_project_python  CC=4  out:6
+    _resolve_root_python  CC=3  out:8
+    _run_nodejs_test  CC=2  out:2
+    _run_project_type_tests  CC=11  out:14
+  goal.cli.tests_discovery  [5 funcs]
+    _find_project_root  CC=5  out:4
+    _has_project_marker  CC=2  out:3
+    _has_usable_test_script  CC=7  out:4
+    find_nodejs_test_dirs  CC=6  out:8
+    find_python_test_dirs  CC=9  out:16
   goal.cli.utils_cmd  [8 funcs]
     bootstrap  CC=4  out:11
     check_versions  CC=2  out:12
@@ -1108,12 +1148,28 @@ MODULES:
     package_managers  CC=8  out:16
     status  CC=10  out:21
     version  CC=2  out:14
-  goal.cli.version_sync  [1 funcs]
-    sync_all_versions  CC=1  out:9
-  goal.cli.version_utils  [3 funcs]
-    bump_version  CC=5  out:9
-    detect_project_types  CC=6  out:8
-    get_current_version  CC=5  out:7
+  goal.cli.version_sync  [15 funcs]
+    _append_changed_paths  CC=5  out:6
+    _snapshot_paths  CC=3  out:4
+    _sync_dependency_lockfiles  CC=9  out:13
+    _sync_dependency_locks_after_manifest_updates  CC=1  out:1
+    _sync_uv_lock  CC=1  out:1
+    _update_cargo_version  CC=6  out:8
+    _update_csproj_versions  CC=3  out:7
+    _update_init_py_versions  CC=7  out:9
+    _update_json_version_file  CC=6  out:6
+    _update_pom_xml  CC=3  out:6
+  goal.cli.version_utils  [22 funcs]
+    _build_author_block  CC=5  out:6
+    _update_author_section  CC=3  out:8
+    _update_license_section  CC=5  out:8
+    _update_package_json_metadata  CC=4  out:3
+    _update_pyproject_metadata  CC=2  out:2
+    _update_pyproject_with_regex  CC=1  out:3
+    _update_pyproject_with_tomlkit  CC=4  out:5
+    _update_regex_authors  CC=3  out:5
+    _update_regex_classifier  CC=2  out:1
+    _update_regex_license  CC=3  out:6
   goal.cli.wizard_cmd  [5 funcs]
     _find_git_root  CC=3  out:2
     _setup_git_repository  CC=10  out:33
@@ -1128,38 +1184,28 @@ MODULES:
     display_commit_message  CC=1  out:2
     display_detailed_message  CC=1  out:2
     print_detailed_message  CC=2  out:3
-  goal.config.manager  [7 funcs]
-    _detect_project_types  CC=6  out:8
-    load  CC=5  out:7
-    save  CC=3  out:6
+  goal.config.manager  [5 funcs]
     set  CC=4  out:2
     update_from_detection  CC=4  out:11
     ensure_config  CC=5  out:8
     init_config  CC=3  out:4
+    load_config  CC=1  out:2
   goal.config.validation  [2 funcs]
     validate_config_file  CC=11  out:25
     validate_config_interactive  CC=10  out:22
-  goal.deep_analyzer  [12 funcs]
+  goal.deep_analyzer  [4 funcs]
     _analyze_generic_diff  CC=1  out:6
     _analyze_js_diff  CC=13  out:12
     _analyze_python_diff  CC=10  out:29
-    _check_architecture_value  CC=4  out:4
-    _check_cli_value  CC=8  out:4
-    _detect_file_patterns  CC=6  out:10
     _detect_functional_areas  CC=7  out:12
-    _detect_value_indicators  CC=6  out:8
-    _extract_python_entities  CC=13  out:17
+  goal.deep_analyzer_aggregate  [2 funcs]
     aggregate_changes  CC=3  out:16
+    detect_relations  CC=6  out:8
   goal.doctor.core  [2 funcs]
     diagnose_and_report  CC=8  out:21
     diagnose_project  CC=2  out:4
-  goal.doctor.dotnet  [1 funcs]
-    diagnose_dotnet  CC=4  out:7
   goal.doctor.logging  [1 funcs]
     _log_issue  CC=3  out:8
-  goal.doctor.python  [2 funcs]
-    check_py006_duplicate_authors  CC=8  out:18
-    run_all_checks  CC=2  out:2
   goal.doctor.todo  [5 funcs]
     _format_todo_entry  CC=3  out:2
     _generate_ticket_id  CC=1  out:2
@@ -1177,22 +1223,12 @@ MODULES:
     _determine_next_steps  CC=4  out:0
     _format_complexity_metric  CC=6  out:3
     _format_metrics_section  CC=5  out:9
-  goal.generator.analyzer  [17 funcs]
-    _has_new_goal_python_file  CC=4  out:3
-    _has_package_code  CC=7  out:7
-    _is_ci_only  CC=4  out:4
-    _is_docs_only  CC=4  out:3
-    _resolve_change_type  CC=11  out:10
-    _score_by_statistics  CC=8  out:3
-    _score_package_signals  CC=2  out:2
-    _score_path_signals  CC=9  out:2
-    _score_text_signals  CC=3  out:2
-    detect_scope  CC=14  out:12
-  goal.generator.generator  [3 funcs]
+  goal.generator.analyzer  [1 funcs]
+    extract_functions_changed  CC=3  out:10
+  goal.generator.generator  [2 funcs]
     _classify_files  CC=11  out:7
-    generate_enhanced_summary  CC=8  out:14
     generate_smart_commit_message  CC=1  out:2
-  goal.git_ops  [27 funcs]
+  goal.git_ops  [28 funcs]
     _echo_cmd  CC=2  out:5
     _handle_clone  CC=3  out:7
     _handle_init_remote  CC=5  out:25
@@ -1203,18 +1239,10 @@ MODULES:
     _run_git_verbose  CC=8  out:13
     _select_branch  CC=3  out:9
     apply_ticket_prefix  CC=6  out:5
-  goal.hooks.config  [1 funcs]
-    get_hook_config  CC=8  out:7
-  goal.hooks.manager  [2 funcs]
-    create_precommit_config  CC=3  out:9
+  goal.hooks.manager  [1 funcs]
     run_validation  CC=4  out:4
-  goal.installers.config  [2 funcs]
-    from_dict  CC=1  out:6
-    load_installer_config  CC=3  out:10
-  goal.license.manager  [5 funcs]
-    _detect_license_type  CC=4  out:1
+  goal.license.manager  [3 funcs]
     create_license_file  CC=10  out:21
-    get_available_licenses  CC=4  out:6
     update_license_file  CC=7  out:13
     validate_license_file  CC=8  out:11
   goal.license.spdx  [4 funcs]
@@ -1233,11 +1261,16 @@ MODULES:
     get_package_manager_info  CC=1  out:1
     get_package_managers_by_language  CC=3  out:1
     get_preferred_package_manager  CC=5  out:1
-  goal.postcommit.manager  [1 funcs]
-    get_config  CC=5  out:3
-  goal.project_bootstrap  [1 funcs]
+  goal.project_bootstrap  [8 funcs]
+    _ensure_costs_installed  CC=2  out:4
+    _ensure_python_env  CC=6  out:22
+    _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
+    _match_marker  CC=2  out:4
+    _read_openrouter_api_key  CC=11  out:13
     bootstrap_project  CC=1  out:5
-  goal.push.core  [14 funcs]
+    detect_project_types_deep  CC=11  out:11
+  goal.push.core  [15 funcs]
     _apply_enhanced_quality_gates  CC=6  out:6
     _detect_and_bootstrap_projects  CC=7  out:7
     _handle_commit_phase  CC=8  out:19
@@ -1250,8 +1283,13 @@ MODULES:
     _validate_toml_or_exit  CC=3  out:6
   goal.push.stages.changelog  [1 funcs]
     handle_changelog  CC=2  out:4
-  goal.push.stages.commit  [3 funcs]
+  goal.push.stages.commit  [8 funcs]
+    _build_validation_summary  CC=1  out:1
+    _commit_file_group  CC=5  out:14
+    _commit_release_metadata  CC=5  out:16
+    _confirm_suggested_title  CC=4  out:1
     enforce_quality_gates  CC=10  out:14
+    get_commit_message  CC=11  out:21
     handle_single_commit  CC=7  out:7
     handle_split_commits  CC=14  out:22
   goal.push.stages.costs  [3 funcs]
@@ -1279,75 +1317,36 @@ MODULES:
   goal.push.stages.tag  [1 funcs]
     create_tag  CC=4  out:8
   goal.push.stages.test  [1 funcs]
-    run_test_stage  CC=9  out:24
+    run_test_stage  CC=9  out:27
   goal.push.stages.todo  [1 funcs]
-    handle_todo_stage  CC=10  out:22
+    handle_todo_stage  CC=14  out:32
   goal.push.stages.version  [4 funcs]
     _get_version_module  CC=1  out:0
     get_version_info  CC=2  out:3
     handle_version_sync  CC=3  out:10
     sync_all_versions_wrapper  CC=1  out:2
-  goal.recovery.auth  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.base  [1 funcs]
-    run_git  CC=2  out:5
-  goal.recovery.corrupted  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.divergent  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.force_push  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.large_file  [6 funcs]
+  goal.recovery.large_file  [5 funcs]
     _extract_file_paths  CC=8  out:9
     _move_to_lfs  CC=4  out:13
     _remove_large_files  CC=6  out:17
     _skip_large_files  CC=2  out:5
-    can_handle  CC=2  out:2
     _run_git_chunked  CC=4  out:4
-  goal.recovery.lfs  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.manager  [2 funcs]
-    _ensure_recovery_dir  CC=3  out:8
-    run_git  CC=2  out:5
-  goal.smart_commit.abstraction  [2 funcs]
+  goal.smart_commit.abstraction  [1 funcs]
     _dedupe_entities  CC=3  out:3
-    extract_markdown_topics  CC=9  out:11
-  goal.smart_commit.generator  [5 funcs]
-    _analyze_file_diffs  CC=10  out:17
-    _generate_docs_message  CC=7  out:11
-    _infer_message_from_files  CC=12  out:15
-    _is_docs_only_change  CC=5  out:5
-    _merge_deep_analysis  CC=10  out:8
-  goal.summary.generator  [5 funcs]
-    _special_title_from_files  CC=8  out:4
-    calculate_quality_metrics  CC=6  out:26
+  goal.summary.generator  [1 funcs]
     detect_capabilities  CC=5  out:7
-    detect_file_relations  CC=10  out:10
-    validate_summary_quality  CC=8  out:19
-  goal.summary.quality_filter  [10 funcs]
-    _classify_by_file_type  CC=6  out:5
-    _resolve_scored_intent  CC=6  out:7
-    _score_intent_patterns  CC=7  out:6
-    categorize_files  CC=11  out:15
-    classify_intent  CC=14  out:17
+  goal.summary.quality_filter  [3 funcs]
     dedupe_files  CC=3  out:4
     dedupe_relations  CC=4  out:5
-    generate_architecture_title  CC=12  out:10
     has_banned_words  CC=4  out:5
-    is_noise  CC=3  out:2
-  goal.summary.validator  [4 funcs]
-    _calculate_score  CC=1  out:4
-    _expand_short_title  CC=6  out:13
-    _validate_body  CC=5  out:6
+  goal.summary.validator  [1 funcs]
     _validate_title  CC=10  out:21
   goal.toml_validation  [4 funcs]
     check_pyproject_toml  CC=3  out:3
     get_tomllib  CC=3  out:0
     validate_project_toml_files  CC=4  out:4
     validate_toml_file  CC=9  out:19
-  goal.user_config  [9 funcs]
-    _load  CC=3  out:3
-    _save  CC=2  out:5
+  goal.user_config  [7 funcs]
     set  CC=1  out:1
     get_git_user_email  CC=3  out:2
     get_git_user_name  CC=3  out:2
@@ -1355,11 +1354,8 @@ MODULES:
     initialize_user_config  CC=11  out:52
     prompt_for_license  CC=4  out:25
     show_user_config  CC=2  out:31
-  goal.validation.manager  [2 funcs]
-    get_rules  CC=5  out:3
+  goal.validation.manager  [1 funcs]
     get_validation_context  CC=2  out:6
-  goal.validation.rules  [1 funcs]
-    validate  CC=9  out:12
   goal.validators.dot_folders  [6 funcs]
     _is_dot_path  CC=3  out:3
     _is_safe_path  CC=3  out:1
@@ -1367,14 +1363,15 @@ MODULES:
     _matches_problematic  CC=4  out:4
     check_dot_folders  CC=9  out:12
     manage_dot_folders  CC=9  out:18
-  goal.validators.file_validator  [7 funcs]
+  goal.validators.file_validator  [8 funcs]
     _check_file_for_tokens  CC=3  out:4
+    _get_deleted_staged_files  CC=4  out:6
     _handle_oversized_file  CC=3  out:3
     _is_excluded  CC=3  out:3
     get_file_size_mb  CC=2  out:1
     handle_large_files  CC=5  out:14
     validate_files  CC=12  out:8
-    validate_staged_files  CC=10  out:11
+    validate_staged_files  CC=14  out:12
   goal.validators.gitignore  [2 funcs]
     load_gitignore  CC=6  out:9
     save_gitignore  CC=8  out:11
@@ -1386,95 +1383,79 @@ MODULES:
     _is_dummy_value  CC=8  out:7
     detect_tokens_in_content  CC=10  out:13
     get_default_token_patterns  CC=1  out:0
-  goal.version_validation  [6 funcs]
+  goal.version_validation  [7 funcs]
     _validate_single_type  CC=4  out:3
     check_readme_badges  CC=5  out:4
     extract_badge_versions  CC=4  out:10
     format_validation_results  CC=5  out:5
     get_pypi_version  CC=2  out:6
+    update_badge_versions  CC=3  out:5
     validate_project_versions  CC=2  out:1
-  project.map.toon  [13 funcs]
-    ai_cost  CC=0  out:0
-    cls  CC=0  out:0
-    get_commit_diff  CC=0  out:0
-    get_repo_stats  CC=0  out:0
-    list  CC=0  out:0
-    max  CC=0  out:0
-    method  CC=0  out:0
-    min  CC=0  out:0
-    open  CC=0  out:0
-    parse_commits  CC=0  out:0
-  testql-scenarios.generated-from-pytests.testql.toon  [2 funcs]
-    all  CC=0  out:0
-    any  CC=0  out:0
+  integration.run_matrix  [1 funcs]
+    print  CC=0  out:0
 
 EDGES:
   examples.dotnet-project.Calculator.Program.Main → examples.dotnet-project.Calculator.Calculator.Add
-  examples.webhooks.slack-webhook.send_slack_notification → Taskfile.print
+  examples.webhooks.slack-webhook.send_slack_notification → integration.run_matrix.print
   examples.webhooks.slack-webhook.main → examples.webhooks.slack-webhook.send_slack_notification
-  examples.webhooks.slack-webhook.main → Taskfile.print
-  examples.webhooks.discord-webhook.send_discord_notification → Taskfile.print
+  examples.webhooks.slack-webhook.main → integration.run_matrix.print
+  examples.webhooks.discord-webhook.send_discord_notification → integration.run_matrix.print
   examples.webhooks.discord-webhook.main → examples.webhooks.discord-webhook.send_discord_notification
-  examples.webhooks.discord-webhook.main → Taskfile.print
-  examples.custom-hooks.post-commit.notify_slack → Taskfile.print
-  examples.custom-hooks.post-commit.update_changelog → project.map.toon.open
-  examples.custom-hooks.post-commit.update_changelog → Taskfile.print
-  examples.custom-hooks.post-commit.log_to_file → Taskfile.print
-  examples.custom-hooks.post-commit.log_to_file → project.map.toon.open
-  examples.custom-hooks.post-commit.main → Taskfile.print
+  examples.webhooks.discord-webhook.main → integration.run_matrix.print
+  examples.custom-hooks.post-commit.notify_slack → integration.run_matrix.print
+  examples.custom-hooks.post-commit.update_changelog → integration.run_matrix.print
+  examples.custom-hooks.post-commit.log_to_file → integration.run_matrix.print
+  examples.custom-hooks.post-commit.main → integration.run_matrix.print
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.get_commit_info
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.notify_slack
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.update_changelog
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.log_to_file
-  examples.custom-hooks.pre-publish.test_build → Taskfile.print
-  examples.custom-hooks.pre-publish.test_build → project.map.toon.list
-  examples.custom-hooks.pre-publish.test_install → Taskfile.print
-  examples.custom-hooks.pre-publish.test_install → project.map.toon.list
-  examples.custom-hooks.pre-publish.check_version → Taskfile.print
-  examples.custom-hooks.pre-publish.check_version → project.map.toon.open
-  examples.custom-hooks.pre-publish.run_security_check → Taskfile.print
-  examples.custom-hooks.pre-publish.main → Taskfile.print
-  examples.custom-hooks.pre-publish.main → testql-scenarios.generated-from-pytests.testql.toon.all
-  examples.custom-hooks.pre-commit.main → Taskfile.print
+  examples.custom-hooks.pre-publish.test_build → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.test_install → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.check_version → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.run_security_check → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.main → integration.run_matrix.print
+  examples.custom-hooks.pre-commit.main → integration.run_matrix.print
   examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_secrets
   examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_file_sizes
   examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.run_tests
-  examples.api-usage.04_version_validation.main → Taskfile.print
+  examples.api-usage.04_version_validation.main → integration.run_matrix.print
   examples.api-usage.04_version_validation.main → goal.cli.version_utils.get_current_version
   examples.api-usage.04_version_validation.main → goal.version_validation.get_pypi_version
   examples.api-usage.04_version_validation.main → goal.cli.version_utils.detect_project_types
-  examples.api-usage.05_programmatic_workflow.run_custom_workflow → Taskfile.print
-  examples.api-usage.05_programmatic_workflow.create_minimal_workflow → Taskfile.print
-  examples.api-usage.01_basic_api.main → Taskfile.print
+  examples.api-usage.05_programmatic_workflow.run_custom_workflow → integration.run_matrix.print
+  examples.api-usage.05_programmatic_workflow.create_minimal_workflow → integration.run_matrix.print
+  examples.api-usage.01_basic_api.main → integration.run_matrix.print
   examples.api-usage.01_basic_api.main → goal.cli.version_utils.detect_project_types
   examples.api-usage.01_basic_api.main → goal.cli.version_utils.get_current_version
-  examples.api-usage.03_commit_generation.main → Taskfile.print
+  examples.api-usage.03_commit_generation.main → integration.run_matrix.print
   examples.api-usage.03_commit_generation.main → goal.git_ops.get_staged_files
   examples.api-usage.03_commit_generation.main → goal.git_ops.get_diff_content
-  examples.api-usage.02_git_operations.main → Taskfile.print
-  examples.api-usage.02_git_operations.main → goal.git_ops.get_staged_files
-  examples.api-usage.02_git_operations.main → goal.git_ops.get_unstaged_files
-  examples.validation.run_all_validation.ValidationRunner.run_test → Taskfile.print
-  examples.validation.run_all_validation.ValidationRunner.run_all → Taskfile.print
-  examples.validation.run_all_validation.ValidationRunner.print_summary → Taskfile.print
-  examples.validation.run_all_validation.ValidationRunner.print_summary → project.map.toon.sum
-  examples.template-generator.generate.generate_project → Taskfile.print
+  examples.api-usage.02_git_operations._check_git_repository → integration.run_matrix.print
+  examples.api-usage.02_git_operations._check_git_repository → goal.git_ops.is_git_repository
+  examples.api-usage.02_git_operations._display_staged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_staged_files → goal.git_ops.get_staged_files
+  examples.api-usage.02_git_operations._display_unstaged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_unstaged_files → goal.git_ops.get_unstaged_files
+  examples.api-usage.02_git_operations._display_diff_stats → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_stats → goal.git_ops.get_diff_stats
+  examples.api-usage.02_git_operations._display_diff_content → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_content → goal.git_ops.get_diff_content
+  examples.api-usage.02_git_operations.main → integration.run_matrix.print
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_staged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_unstaged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_diff_stats
 ```
 
 ## Test Contracts
 
 *Scenarios as contract signatures — what the system guarantees.*
 
-### Cli (1)
+### Cli (2)
 
 **`CLI Command Tests`**
 
-### Integration (1)
-
-**`Auto-generated from Python Tests`**
-- assert `repo_dir == "cloned"`
-- assert `repo_dir == "cloned"`
-- assert `current == '1.0.0'`
+**`Functional probes derived from pytest coverage areas`**
 
 ## Refactoring Analysis
 
@@ -1484,58 +1465,62 @@ EDGES:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/goal
-# nodes: 398 | edges: 500 | modules: 91
-# CC̄=0.2
+# generated in 0.30s
+# nodes: 425 | edges: 500 | modules: 83
+# CC̄=4.3
 
 HUBS[20]:
-  Taskfile.print
+  integration.run_matrix.print
     CC=0  in:255  out:0  total:255
-  testql-scenarios.generated-from-pytests.testql.toon.any
-    CC=0  in:67  out:0  total:67
   goal.cli.wizard_cmd._setup_project_config
     CC=9  in:1  out:55  total:56
   goal.user_config.initialize_user_config
     CC=11  in:4  out:52  total:56
   goal.git_ops.run_git
-    CC=1  in:47  out:2  total:49
+    CC=1  in:46  out:2  total:48
   goal.cli.commit_cmd.validate
     CC=13  in:0  out:45  total:45
-  project.map.toon.sum
-    CC=0  in:44  out:0  total:44
+  goal.user_config.UserConfig.set
+    CC=1  in:43  out:1  total:44
+  goal.cli.doctor_cmd.doctor
+    CC=12  in:0  out:40  total:40
   goal.cli.wizard_cmd._show_setup_summary
     CC=7  in:1  out:39  total:40
   goal.cli.wizard_cmd._setup_user_config
     CC=12  in:1  out:39  total:40
-  goal.user_config.UserConfig.set
-    CC=1  in:38  out:1  total:39
   goal.cli.commit_cmd.fix_summary
     CC=12  in:0  out:38  total:38
-  examples.api-usage.02_git_operations.main
-    CC=15  in:0  out:38  total:38
-  project.map.toon.list
-    CC=0  in:37  out:0  total:37
+  goal.push.core.execute_push_workflow
+    CC=7  in:2  out:32  total:34
   goal.cli.wizard_cmd._setup_git_repository
     CC=10  in:1  out:33  total:34
   examples.api-usage.01_basic_api.main
     CC=10  in:0  out:34  total:34
+  goal.push.core.output_final_summary
+    CC=19  in:1  out:33  total:34
+  goal.push.stages.todo.handle_todo_stage
+    CC=14  in:1  out:32  total:33
+  goal.bootstrap.installer._install_python_deps_legacy
+    CC=14  in:1  out:32  total:33
   goal.user_config.show_user_config
     CC=2  in:1  out:31  total:32
-  goal.push.core.execute_push_workflow
-    CC=6  in:2  out:29  total:31
   examples.api-usage.04_version_validation.main
     CC=11  in:0  out:30  total:30
-  project.map.toon.open
-    CC=0  in:29  out:0  total:29
   goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
     CC=10  in:0  out:29  total:29
+  goal.push.stages.test.run_test_stage
+    CC=9  in:1  out:27  total:28
 
 MODULES:
-  Taskfile  [1 funcs]
-    print  CC=0  out:0
   examples.api-usage.01_basic_api  [1 funcs]
     main  CC=10  out:34
-  examples.api-usage.02_git_operations  [1 funcs]
-    main  CC=15  out:38
+  examples.api-usage.02_git_operations  [6 funcs]
+    _check_git_repository  CC=2  out:4
+    _display_diff_content  CC=2  out:5
+    _display_diff_stats  CC=5  out:11
+    _display_staged_files  CC=5  out:7
+    _display_unstaged_files  CC=5  out:7
+    main  CC=2  out:9
   examples.api-usage.03_commit_generation  [1 funcs]
     main  CC=9  out:23
   examples.api-usage.04_version_validation  [1 funcs]
@@ -1566,12 +1551,10 @@ MODULES:
   examples.template-generator.generate  [2 funcs]
     generate_project  CC=4  out:23
     main  CC=2  out:12
-  examples.testing.03_advanced_mocking  [7 funcs]
+  examples.testing.03_advanced_mocking  [5 funcs]
     test_conditional_mocking  CC=1  out:8
-    test_mock_context_manager  CC=2  out:13
     test_mocking_click_interactions  CC=2  out:14
     test_mocking_external_services  CC=3  out:10
-    test_mocking_file_system  CC=1  out:3
     test_mocking_git_operations  CC=2  out:7
     test_spies_and_call_counting  CC=6  out:23
   examples.testing.04_debugging_diagnostics  [6 funcs]
@@ -1603,9 +1586,42 @@ MODULES:
     parse_co_authors  CC=2  out:7
     remove_co_authors_from_message  CC=5  out:7
     validate_author_format  CC=3  out:8
-  goal.bootstrap.detector  [2 funcs]
+  goal.bootstrap.configurator  [5 funcs]
+    _find_git_root  CC=3  out:2
+    _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
+    _read_openrouter_api_key  CC=11  out:12
+    scaffold_test_file  CC=14  out:12
+  goal.bootstrap.costs_badge  [9 funcs]
+    _calculate_ai_costs  CC=4  out:8
+    _commit_blob_lower  CC=3  out:3
+    _fetch_commit_diff  CC=3  out:7
+    _filter_ai_commits  CC=4  out:2
+    _generate_costs_badge  CC=6  out:23
+    _load_costs_api  CC=2  out:9
+    _parsed_diff_is_usable  CC=4  out:2
+    _read_model_from_pyproject  CC=3  out:4
+    _single_commit_ai_cost  CC=3  out:5
+  goal.bootstrap.detector  [1 funcs]
+    guess_package_name  CC=4  out:3
+  goal.bootstrap.installer  [12 funcs]
+    _ensure_costs_installed  CC=3  out:8
+    _ensure_generic_env  CC=6  out:9
+    _ensure_python_env  CC=9  out:25
+    _ensure_python_test_dependency  CC=5  out:15
+    _get_matching_dep_command  CC=4  out:3
+    _install_python_deps_broker  CC=2  out:5
+    _install_python_deps_legacy  CC=14  out:32
     _match_marker  CC=2  out:4
-    detect_project_types_deep  CC=11  out:11
+    _needs_install  CC=10  out:9
+    _run_dep_install  CC=4  out:14
+  goal.bootstrap.pyproject_costs_setup  [6 funcs]
+    _add_deps_to_section_match  CC=10  out:9
+    _ensure_costs_config  CC=5  out:13
+    _find_dep_list_end  CC=12  out:2
+    _try_add_deps  CC=4  out:4
+    _try_merge_hatch_default_deps  CC=6  out:6
+    _try_merge_optional_dev_deps  CC=6  out:7
   goal.changelog  [6 funcs]
     _build_domain_entry  CC=7  out:12
     _build_simple_entry  CC=3  out:4
@@ -1613,9 +1629,13 @@ MODULES:
     _find_unreleased_insert_pos  CC=3  out:6
     _insert_entry  CC=5  out:3
     update_changelog  CC=5  out:12
-  goal.cli  [2 funcs]
+  goal.cli  [6 funcs]
+    parse_args  CC=11  out:6
+    _configure_main_context  CC=3  out:4
     _format_import_warning_message  CC=1  out:0
+    _goal_update_command  CC=4  out:5
     _print_import_warning  CC=1  out:2
+    _show_goal_version_banner  CC=3  out:8
   goal.cli.authors_cmd  [5 funcs]
     authors_co_author  CC=1  out:5
     authors_current  CC=1  out:4
@@ -1635,6 +1655,8 @@ MODULES:
     setup  CC=3  out:10
   goal.cli.config_validate_cmd  [1 funcs]
     validate_cmd  CC=3  out:11
+  goal.cli.doctor_cmd  [1 funcs]
+    doctor  CC=12  out:40
   goal.cli.hooks_cmd  [6 funcs]
     display_failure_message  CC=1  out:3
     display_install_success  CC=1  out:8
@@ -1648,13 +1670,14 @@ MODULES:
     license_info  CC=6  out:19
     license_list  CC=7  out:20
     license_update  CC=3  out:13
-  goal.cli.publish  [8 funcs]
+  goal.cli.publish  [9 funcs]
     _ensure_publish_deps  CC=5  out:20
     _get_configured_project_types  CC=13  out:13
     _get_project_strategy  CC=7  out:5
     _get_python_bin  CC=3  out:4
+    _is_rate_limited  CC=4  out:0
     _prepare_python_publish  CC=7  out:15
-    _run_publish_command  CC=8  out:14
+    _run_publish_command  CC=11  out:23
     makefile_has_target  CC=4  out:6
     publish_project  CC=13  out:21
   goal.cli.publish_cmd  [2 funcs]
@@ -1663,6 +1686,23 @@ MODULES:
   goal.cli.recover_cmd  [2 funcs]
     _get_error_output  CC=5  out:4
     recover  CC=6  out:23
+  goal.cli.tests  [16 funcs]
+    _active_venv_python  CC=3  out:4
+    _build_python_test_command  CC=10  out:7
+    _coerce_python_strategy_to_project_pytest  CC=8  out:3
+    _display_test_error  CC=9  out:18
+    _get_project_strategy  CC=7  out:5
+    _has_package  CC=3  out:1
+    _resolve_project_python  CC=4  out:6
+    _resolve_root_python  CC=3  out:8
+    _run_nodejs_test  CC=2  out:2
+    _run_project_type_tests  CC=11  out:14
+  goal.cli.tests_discovery  [5 funcs]
+    _find_project_root  CC=5  out:4
+    _has_project_marker  CC=2  out:3
+    _has_usable_test_script  CC=7  out:4
+    find_nodejs_test_dirs  CC=6  out:8
+    find_python_test_dirs  CC=9  out:16
   goal.cli.utils_cmd  [8 funcs]
     bootstrap  CC=4  out:11
     check_versions  CC=2  out:12
@@ -1672,12 +1712,28 @@ MODULES:
     package_managers  CC=8  out:16
     status  CC=10  out:21
     version  CC=2  out:14
-  goal.cli.version_sync  [1 funcs]
-    sync_all_versions  CC=1  out:9
-  goal.cli.version_utils  [3 funcs]
-    bump_version  CC=5  out:9
-    detect_project_types  CC=6  out:8
-    get_current_version  CC=5  out:7
+  goal.cli.version_sync  [15 funcs]
+    _append_changed_paths  CC=5  out:6
+    _snapshot_paths  CC=3  out:4
+    _sync_dependency_lockfiles  CC=9  out:13
+    _sync_dependency_locks_after_manifest_updates  CC=1  out:1
+    _sync_uv_lock  CC=1  out:1
+    _update_cargo_version  CC=6  out:8
+    _update_csproj_versions  CC=3  out:7
+    _update_init_py_versions  CC=7  out:9
+    _update_json_version_file  CC=6  out:6
+    _update_pom_xml  CC=3  out:6
+  goal.cli.version_utils  [22 funcs]
+    _build_author_block  CC=5  out:6
+    _update_author_section  CC=3  out:8
+    _update_license_section  CC=5  out:8
+    _update_package_json_metadata  CC=4  out:3
+    _update_pyproject_metadata  CC=2  out:2
+    _update_pyproject_with_regex  CC=1  out:3
+    _update_pyproject_with_tomlkit  CC=4  out:5
+    _update_regex_authors  CC=3  out:5
+    _update_regex_classifier  CC=2  out:1
+    _update_regex_license  CC=3  out:6
   goal.cli.wizard_cmd  [5 funcs]
     _find_git_root  CC=3  out:2
     _setup_git_repository  CC=10  out:33
@@ -1692,38 +1748,28 @@ MODULES:
     display_commit_message  CC=1  out:2
     display_detailed_message  CC=1  out:2
     print_detailed_message  CC=2  out:3
-  goal.config.manager  [7 funcs]
-    _detect_project_types  CC=6  out:8
-    load  CC=5  out:7
-    save  CC=3  out:6
+  goal.config.manager  [5 funcs]
     set  CC=4  out:2
     update_from_detection  CC=4  out:11
     ensure_config  CC=5  out:8
     init_config  CC=3  out:4
+    load_config  CC=1  out:2
   goal.config.validation  [2 funcs]
     validate_config_file  CC=11  out:25
     validate_config_interactive  CC=10  out:22
-  goal.deep_analyzer  [12 funcs]
+  goal.deep_analyzer  [4 funcs]
     _analyze_generic_diff  CC=1  out:6
     _analyze_js_diff  CC=13  out:12
     _analyze_python_diff  CC=10  out:29
-    _check_architecture_value  CC=4  out:4
-    _check_cli_value  CC=8  out:4
-    _detect_file_patterns  CC=6  out:10
     _detect_functional_areas  CC=7  out:12
-    _detect_value_indicators  CC=6  out:8
-    _extract_python_entities  CC=13  out:17
+  goal.deep_analyzer_aggregate  [2 funcs]
     aggregate_changes  CC=3  out:16
+    detect_relations  CC=6  out:8
   goal.doctor.core  [2 funcs]
     diagnose_and_report  CC=8  out:21
     diagnose_project  CC=2  out:4
-  goal.doctor.dotnet  [1 funcs]
-    diagnose_dotnet  CC=4  out:7
   goal.doctor.logging  [1 funcs]
     _log_issue  CC=3  out:8
-  goal.doctor.python  [2 funcs]
-    check_py006_duplicate_authors  CC=8  out:18
-    run_all_checks  CC=2  out:2
   goal.doctor.todo  [5 funcs]
     _format_todo_entry  CC=3  out:2
     _generate_ticket_id  CC=1  out:2
@@ -1741,22 +1787,12 @@ MODULES:
     _determine_next_steps  CC=4  out:0
     _format_complexity_metric  CC=6  out:3
     _format_metrics_section  CC=5  out:9
-  goal.generator.analyzer  [17 funcs]
-    _has_new_goal_python_file  CC=4  out:3
-    _has_package_code  CC=7  out:7
-    _is_ci_only  CC=4  out:4
-    _is_docs_only  CC=4  out:3
-    _resolve_change_type  CC=11  out:10
-    _score_by_statistics  CC=8  out:3
-    _score_package_signals  CC=2  out:2
-    _score_path_signals  CC=9  out:2
-    _score_text_signals  CC=3  out:2
-    detect_scope  CC=14  out:12
-  goal.generator.generator  [3 funcs]
+  goal.generator.analyzer  [1 funcs]
+    extract_functions_changed  CC=3  out:10
+  goal.generator.generator  [2 funcs]
     _classify_files  CC=11  out:7
-    generate_enhanced_summary  CC=8  out:14
     generate_smart_commit_message  CC=1  out:2
-  goal.git_ops  [27 funcs]
+  goal.git_ops  [28 funcs]
     _echo_cmd  CC=2  out:5
     _handle_clone  CC=3  out:7
     _handle_init_remote  CC=5  out:25
@@ -1767,18 +1803,10 @@ MODULES:
     _run_git_verbose  CC=8  out:13
     _select_branch  CC=3  out:9
     apply_ticket_prefix  CC=6  out:5
-  goal.hooks.config  [1 funcs]
-    get_hook_config  CC=8  out:7
-  goal.hooks.manager  [2 funcs]
-    create_precommit_config  CC=3  out:9
+  goal.hooks.manager  [1 funcs]
     run_validation  CC=4  out:4
-  goal.installers.config  [2 funcs]
-    from_dict  CC=1  out:6
-    load_installer_config  CC=3  out:10
-  goal.license.manager  [5 funcs]
-    _detect_license_type  CC=4  out:1
+  goal.license.manager  [3 funcs]
     create_license_file  CC=10  out:21
-    get_available_licenses  CC=4  out:6
     update_license_file  CC=7  out:13
     validate_license_file  CC=8  out:11
   goal.license.spdx  [4 funcs]
@@ -1797,11 +1825,16 @@ MODULES:
     get_package_manager_info  CC=1  out:1
     get_package_managers_by_language  CC=3  out:1
     get_preferred_package_manager  CC=5  out:1
-  goal.postcommit.manager  [1 funcs]
-    get_config  CC=5  out:3
-  goal.project_bootstrap  [1 funcs]
+  goal.project_bootstrap  [8 funcs]
+    _ensure_costs_installed  CC=2  out:4
+    _ensure_python_env  CC=6  out:22
+    _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
+    _match_marker  CC=2  out:4
+    _read_openrouter_api_key  CC=11  out:13
     bootstrap_project  CC=1  out:5
-  goal.push.core  [14 funcs]
+    detect_project_types_deep  CC=11  out:11
+  goal.push.core  [15 funcs]
     _apply_enhanced_quality_gates  CC=6  out:6
     _detect_and_bootstrap_projects  CC=7  out:7
     _handle_commit_phase  CC=8  out:19
@@ -1814,8 +1847,13 @@ MODULES:
     _validate_toml_or_exit  CC=3  out:6
   goal.push.stages.changelog  [1 funcs]
     handle_changelog  CC=2  out:4
-  goal.push.stages.commit  [3 funcs]
+  goal.push.stages.commit  [8 funcs]
+    _build_validation_summary  CC=1  out:1
+    _commit_file_group  CC=5  out:14
+    _commit_release_metadata  CC=5  out:16
+    _confirm_suggested_title  CC=4  out:1
     enforce_quality_gates  CC=10  out:14
+    get_commit_message  CC=11  out:21
     handle_single_commit  CC=7  out:7
     handle_split_commits  CC=14  out:22
   goal.push.stages.costs  [3 funcs]
@@ -1843,75 +1881,36 @@ MODULES:
   goal.push.stages.tag  [1 funcs]
     create_tag  CC=4  out:8
   goal.push.stages.test  [1 funcs]
-    run_test_stage  CC=9  out:24
+    run_test_stage  CC=9  out:27
   goal.push.stages.todo  [1 funcs]
-    handle_todo_stage  CC=10  out:22
+    handle_todo_stage  CC=14  out:32
   goal.push.stages.version  [4 funcs]
     _get_version_module  CC=1  out:0
     get_version_info  CC=2  out:3
     handle_version_sync  CC=3  out:10
     sync_all_versions_wrapper  CC=1  out:2
-  goal.recovery.auth  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.base  [1 funcs]
-    run_git  CC=2  out:5
-  goal.recovery.corrupted  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.divergent  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.force_push  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.large_file  [6 funcs]
+  goal.recovery.large_file  [5 funcs]
     _extract_file_paths  CC=8  out:9
     _move_to_lfs  CC=4  out:13
     _remove_large_files  CC=6  out:17
     _skip_large_files  CC=2  out:5
-    can_handle  CC=2  out:2
     _run_git_chunked  CC=4  out:4
-  goal.recovery.lfs  [1 funcs]
-    can_handle  CC=2  out:2
-  goal.recovery.manager  [2 funcs]
-    _ensure_recovery_dir  CC=3  out:8
-    run_git  CC=2  out:5
-  goal.smart_commit.abstraction  [2 funcs]
+  goal.smart_commit.abstraction  [1 funcs]
     _dedupe_entities  CC=3  out:3
-    extract_markdown_topics  CC=9  out:11
-  goal.smart_commit.generator  [5 funcs]
-    _analyze_file_diffs  CC=10  out:17
-    _generate_docs_message  CC=7  out:11
-    _infer_message_from_files  CC=12  out:15
-    _is_docs_only_change  CC=5  out:5
-    _merge_deep_analysis  CC=10  out:8
-  goal.summary.generator  [5 funcs]
-    _special_title_from_files  CC=8  out:4
-    calculate_quality_metrics  CC=6  out:26
+  goal.summary.generator  [1 funcs]
     detect_capabilities  CC=5  out:7
-    detect_file_relations  CC=10  out:10
-    validate_summary_quality  CC=8  out:19
-  goal.summary.quality_filter  [10 funcs]
-    _classify_by_file_type  CC=6  out:5
-    _resolve_scored_intent  CC=6  out:7
-    _score_intent_patterns  CC=7  out:6
-    categorize_files  CC=11  out:15
-    classify_intent  CC=14  out:17
+  goal.summary.quality_filter  [3 funcs]
     dedupe_files  CC=3  out:4
     dedupe_relations  CC=4  out:5
-    generate_architecture_title  CC=12  out:10
     has_banned_words  CC=4  out:5
-    is_noise  CC=3  out:2
-  goal.summary.validator  [4 funcs]
-    _calculate_score  CC=1  out:4
-    _expand_short_title  CC=6  out:13
-    _validate_body  CC=5  out:6
+  goal.summary.validator  [1 funcs]
     _validate_title  CC=10  out:21
   goal.toml_validation  [4 funcs]
     check_pyproject_toml  CC=3  out:3
     get_tomllib  CC=3  out:0
     validate_project_toml_files  CC=4  out:4
     validate_toml_file  CC=9  out:19
-  goal.user_config  [9 funcs]
-    _load  CC=3  out:3
-    _save  CC=2  out:5
+  goal.user_config  [7 funcs]
     set  CC=1  out:1
     get_git_user_email  CC=3  out:2
     get_git_user_name  CC=3  out:2
@@ -1919,11 +1918,8 @@ MODULES:
     initialize_user_config  CC=11  out:52
     prompt_for_license  CC=4  out:25
     show_user_config  CC=2  out:31
-  goal.validation.manager  [2 funcs]
-    get_rules  CC=5  out:3
+  goal.validation.manager  [1 funcs]
     get_validation_context  CC=2  out:6
-  goal.validation.rules  [1 funcs]
-    validate  CC=9  out:12
   goal.validators.dot_folders  [6 funcs]
     _is_dot_path  CC=3  out:3
     _is_safe_path  CC=3  out:1
@@ -1931,14 +1927,15 @@ MODULES:
     _matches_problematic  CC=4  out:4
     check_dot_folders  CC=9  out:12
     manage_dot_folders  CC=9  out:18
-  goal.validators.file_validator  [7 funcs]
+  goal.validators.file_validator  [8 funcs]
     _check_file_for_tokens  CC=3  out:4
+    _get_deleted_staged_files  CC=4  out:6
     _handle_oversized_file  CC=3  out:3
     _is_excluded  CC=3  out:3
     get_file_size_mb  CC=2  out:1
     handle_large_files  CC=5  out:14
     validate_files  CC=12  out:8
-    validate_staged_files  CC=10  out:11
+    validate_staged_files  CC=14  out:12
   goal.validators.gitignore  [2 funcs]
     load_gitignore  CC=6  out:9
     save_gitignore  CC=8  out:11
@@ -1950,97 +1947,85 @@ MODULES:
     _is_dummy_value  CC=8  out:7
     detect_tokens_in_content  CC=10  out:13
     get_default_token_patterns  CC=1  out:0
-  goal.version_validation  [6 funcs]
+  goal.version_validation  [7 funcs]
     _validate_single_type  CC=4  out:3
     check_readme_badges  CC=5  out:4
     extract_badge_versions  CC=4  out:10
     format_validation_results  CC=5  out:5
     get_pypi_version  CC=2  out:6
+    update_badge_versions  CC=3  out:5
     validate_project_versions  CC=2  out:1
-  project.map.toon  [13 funcs]
-    ai_cost  CC=0  out:0
-    cls  CC=0  out:0
-    get_commit_diff  CC=0  out:0
-    get_repo_stats  CC=0  out:0
-    list  CC=0  out:0
-    max  CC=0  out:0
-    method  CC=0  out:0
-    min  CC=0  out:0
-    open  CC=0  out:0
-    parse_commits  CC=0  out:0
-  testql-scenarios.generated-from-pytests.testql.toon  [2 funcs]
-    all  CC=0  out:0
-    any  CC=0  out:0
+  integration.run_matrix  [1 funcs]
+    print  CC=0  out:0
 
 EDGES:
   examples.dotnet-project.Calculator.Program.Main → examples.dotnet-project.Calculator.Calculator.Add
-  examples.webhooks.slack-webhook.send_slack_notification → Taskfile.print
+  examples.webhooks.slack-webhook.send_slack_notification → integration.run_matrix.print
   examples.webhooks.slack-webhook.main → examples.webhooks.slack-webhook.send_slack_notification
-  examples.webhooks.slack-webhook.main → Taskfile.print
-  examples.webhooks.discord-webhook.send_discord_notification → Taskfile.print
+  examples.webhooks.slack-webhook.main → integration.run_matrix.print
+  examples.webhooks.discord-webhook.send_discord_notification → integration.run_matrix.print
   examples.webhooks.discord-webhook.main → examples.webhooks.discord-webhook.send_discord_notification
-  examples.webhooks.discord-webhook.main → Taskfile.print
-  examples.custom-hooks.post-commit.notify_slack → Taskfile.print
-  examples.custom-hooks.post-commit.update_changelog → project.map.toon.open
-  examples.custom-hooks.post-commit.update_changelog → Taskfile.print
-  examples.custom-hooks.post-commit.log_to_file → Taskfile.print
-  examples.custom-hooks.post-commit.log_to_file → project.map.toon.open
-  examples.custom-hooks.post-commit.main → Taskfile.print
+  examples.webhooks.discord-webhook.main → integration.run_matrix.print
+  examples.custom-hooks.post-commit.notify_slack → integration.run_matrix.print
+  examples.custom-hooks.post-commit.update_changelog → integration.run_matrix.print
+  examples.custom-hooks.post-commit.log_to_file → integration.run_matrix.print
+  examples.custom-hooks.post-commit.main → integration.run_matrix.print
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.get_commit_info
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.notify_slack
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.update_changelog
   examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.log_to_file
-  examples.custom-hooks.pre-publish.test_build → Taskfile.print
-  examples.custom-hooks.pre-publish.test_build → project.map.toon.list
-  examples.custom-hooks.pre-publish.test_install → Taskfile.print
-  examples.custom-hooks.pre-publish.test_install → project.map.toon.list
-  examples.custom-hooks.pre-publish.check_version → Taskfile.print
-  examples.custom-hooks.pre-publish.check_version → project.map.toon.open
-  examples.custom-hooks.pre-publish.run_security_check → Taskfile.print
-  examples.custom-hooks.pre-publish.main → Taskfile.print
-  examples.custom-hooks.pre-publish.main → testql-scenarios.generated-from-pytests.testql.toon.all
-  examples.custom-hooks.pre-commit.main → Taskfile.print
+  examples.custom-hooks.pre-publish.test_build → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.test_install → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.check_version → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.run_security_check → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.main → integration.run_matrix.print
+  examples.custom-hooks.pre-commit.main → integration.run_matrix.print
   examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_secrets
   examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_file_sizes
   examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.run_tests
-  examples.api-usage.04_version_validation.main → Taskfile.print
+  examples.api-usage.04_version_validation.main → integration.run_matrix.print
   examples.api-usage.04_version_validation.main → goal.cli.version_utils.get_current_version
   examples.api-usage.04_version_validation.main → goal.version_validation.get_pypi_version
   examples.api-usage.04_version_validation.main → goal.cli.version_utils.detect_project_types
-  examples.api-usage.05_programmatic_workflow.run_custom_workflow → Taskfile.print
-  examples.api-usage.05_programmatic_workflow.create_minimal_workflow → Taskfile.print
-  examples.api-usage.01_basic_api.main → Taskfile.print
+  examples.api-usage.05_programmatic_workflow.run_custom_workflow → integration.run_matrix.print
+  examples.api-usage.05_programmatic_workflow.create_minimal_workflow → integration.run_matrix.print
+  examples.api-usage.01_basic_api.main → integration.run_matrix.print
   examples.api-usage.01_basic_api.main → goal.cli.version_utils.detect_project_types
   examples.api-usage.01_basic_api.main → goal.cli.version_utils.get_current_version
-  examples.api-usage.03_commit_generation.main → Taskfile.print
+  examples.api-usage.03_commit_generation.main → integration.run_matrix.print
   examples.api-usage.03_commit_generation.main → goal.git_ops.get_staged_files
   examples.api-usage.03_commit_generation.main → goal.git_ops.get_diff_content
-  examples.api-usage.02_git_operations.main → Taskfile.print
-  examples.api-usage.02_git_operations.main → goal.git_ops.get_staged_files
-  examples.api-usage.02_git_operations.main → goal.git_ops.get_unstaged_files
-  examples.validation.run_all_validation.ValidationRunner.run_test → Taskfile.print
-  examples.validation.run_all_validation.ValidationRunner.run_all → Taskfile.print
-  examples.validation.run_all_validation.ValidationRunner.print_summary → Taskfile.print
-  examples.validation.run_all_validation.ValidationRunner.print_summary → project.map.toon.sum
-  examples.template-generator.generate.generate_project → Taskfile.print
+  examples.api-usage.02_git_operations._check_git_repository → integration.run_matrix.print
+  examples.api-usage.02_git_operations._check_git_repository → goal.git_ops.is_git_repository
+  examples.api-usage.02_git_operations._display_staged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_staged_files → goal.git_ops.get_staged_files
+  examples.api-usage.02_git_operations._display_unstaged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_unstaged_files → goal.git_ops.get_unstaged_files
+  examples.api-usage.02_git_operations._display_diff_stats → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_stats → goal.git_ops.get_diff_stats
+  examples.api-usage.02_git_operations._display_diff_content → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_content → goal.git_ops.get_diff_content
+  examples.api-usage.02_git_operations.main → integration.run_matrix.print
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_staged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_unstaged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_diff_stats
 ```
 
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 190f 163988L | python:140,yaml:20,json:8,shell:5,toml:4,txt:2,csharp:2,yml:1,go:1,xml:1,java:1,php:1 | 2026-04-26
-# CC̄=0.2 | critical:4/20202 | dups:0 | cycles:0
+# code2llm | 187f 29585L | python:150,yaml:13,shell:6,toml:4,csharp:2,json:2,txt:1,yml:1,go:1,xml:1,java:1,php:1 | 2026-06-08
+# generated in 0.11s
+# CC̅=4.3 | critical:2/961 | dups:0 | cycles:0
 
-HEALTH[4]:
-  🟡 CC    main CC=15 (limit:15)
-  🟡 CC    _run_subdir_test CC=22 (limit:15)
-  🟡 CC    _ensure_generic_env CC=19 (limit:15)
-  🟡 CC    _update_pyproject_metadata CC=17 (limit:15)
+HEALTH[2]:
+  🟡 CC    add_slow_test_tickets_to_planfile CC=22 (limit:15)
+  🟡 CC    output_final_summary CC=19 (limit:15)
 
 REFACTOR[1]:
-  1. split 4 high-CC methods  (CC>15)
+  1. split 2 high-CC methods  (CC>15)
 
-PIPELINES[549]:
+PIPELINES[547]:
   [1] Src [Add_ReturnsSum]: Add_ReturnsSum
       PURITY: 100% pure
   [2] Src [Subtract_ReturnsDifference]: Subtract_ReturnsDifference
@@ -2051,122 +2036,221 @@ PIPELINES[549]:
       PURITY: 100% pure
   [5] Src [Main]: Main → Add
       PURITY: 100% pure
+  [6] Src [main]: main → send_slack_notification → print
+      PURITY: 100% pure
+  [7] Src [main]: main → send_discord_notification → print
+      PURITY: 100% pure
+  [8] Src [main]: main → print
+      PURITY: 100% pure
+  [9] Src [test_build]: test_build → print
+      PURITY: 100% pure
+  [10] Src [test_install]: test_install → print
+      PURITY: 100% pure
+  [11] Src [check_version]: check_version → print
+      PURITY: 100% pure
+  [12] Src [run_security_check]: run_security_check → print
+      PURITY: 100% pure
+  [13] Src [main]: main → print
+      PURITY: 100% pure
+  [14] Src [main]: main → print
+      PURITY: 100% pure
+  [15] Src [main]: main
+      PURITY: 100% pure
+  [16] Src [main]: main → print
+      PURITY: 100% pure
+  [17] Src [run_custom_workflow]: run_custom_workflow → print
+      PURITY: 100% pure
+  [18] Src [create_minimal_workflow]: create_minimal_workflow → print
+      PURITY: 100% pure
+  [19] Src [main]: main → print
+      PURITY: 100% pure
+  [20] Src [main]: main → print
+      PURITY: 100% pure
+  [21] Src [main]: main → print
+      PURITY: 100% pure
+  [22] Src [run_test]: run_test → print
+      PURITY: 100% pure
+  [23] Src [run_all]: run_all → print
+      PURITY: 100% pure
+  [24] Src [print_summary]: print_summary → print
+      PURITY: 100% pure
+  [25] Src [main]: main
+      PURITY: 100% pure
+  [26] Src [main]: main
+      PURITY: 100% pure
+  [27] Src [main]: main → generate_project → print
+      PURITY: 100% pure
+  [28] Src [test_debug_output_capture]: test_debug_output_capture → print
+      PURITY: 100% pure
+  [29] Src [test_stack_trace_analysis]: test_stack_trace_analysis → print
+      PURITY: 100% pure
+  [30] Src [test_performance_timing]: test_performance_timing → print
+      PURITY: 100% pure
+  [31] Src [test_import_tracing]: test_import_tracing → set
+      PURITY: 100% pure
+  [32] Src [test_config_diagnostics]: test_config_diagnostics → print
+      PURITY: 100% pure
+  [33] Src [create_debug_report]: create_debug_report → print
+      PURITY: 100% pure
+  [34] Src [test_mocking_external_services]: test_mocking_external_services → validate_project_versions → _validate_single_type
+      PURITY: 100% pure
+  [35] Src [test_mocking_git_operations]: test_mocking_git_operations → run_git
+      PURITY: 100% pure
+  [36] Src [test_mocking_click_interactions]: test_mocking_click_interactions → print
+      PURITY: 100% pure
+  [37] Src [test_spies_and_call_counting]: test_spies_and_call_counting → print
+      PURITY: 100% pure
+  [38] Src [test_mocking_file_system]: test_mocking_file_system
+      PURITY: 100% pure
+  [39] Src [test_conditional_mocking]: test_conditional_mocking → run_git
+      PURITY: 100% pure
+  [40] Src [test_mock_context_manager]: test_mock_context_manager → bootstrap_project → _new_bootstrap_result
+      PURITY: 100% pure
+  [41] Src [_print_import_warning]: _print_import_warning → _format_import_warning_message
+      PURITY: 100% pure
+  [42] Src [__init__]: __init__
+      PURITY: 100% pure
+  [43] Src [_load]: _load
+      PURITY: 100% pure
+  [44] Src [_save]: _save
+      PURITY: 100% pure
+  [45] Src [get]: get
+      PURITY: 100% pure
+  [46] Src [get_npm_version]: get_npm_version
+      PURITY: 100% pure
+  [47] Src [get_cargo_version]: get_cargo_version
+      PURITY: 100% pure
+  [48] Src [get_rubygems_version]: get_rubygems_version
+      PURITY: 100% pure
+  [49] Src [get_registry_version]: get_registry_version
+      PURITY: 100% pure
+  [50] Src [_detect_python_package]: _detect_python_package
+      PURITY: 100% pure
 
 LAYERS:
-  goal/                           CC̄=4.4    ←in:155  →out:58  !! split
-  │ !! project_bootstrap         1313L  0C   41m  CC=14     ←6
-  │ !! python                     625L  1C   31m  CC=10     ←0
-  │ !! package_managers           616L  1C   16m  CC=5      ←1
-  │ !! deep_analyzer              584L  1C   27m  CC=13     ←0
-  │ !! git_ops                    574L  0C   28m  CC=11     ←19
-  │ !! manager                    570L  1C   12m  CC=10     ←1
-  │ !! generator                  534L  1C   14m  CC=14     ←0
-  │ !! generator                  527L  1C   25m  CC=13     ←0
-  │ validation                 475L  2C   15m  CC=14     ←2
-  │ manager                    457L  1C   25m  CC=10     ←7
-  │ analyzer                   442L  2C   27m  CC=14     ←0
-  │ constants                  435L  0C    0m  CC=0.0    ←0
-  │ core                       416L  1C   17m  CC=10     ←3
-  │ push_remote                382L  0C   17m  CC=11     ←1
-  │ generator                  381L  1C   24m  CC=12     ←2
-  │ !! version_utils              374L  0C   13m  CC=17     ←7
-  │ validator                  364L  1C   24m  CC=10     ←0
-  │ quality_filter             344L  1C   18m  CC=14     ←0
-  │ wizard_cmd                 340L  0C    7m  CC=12     ←0
-  │ large_file                 334L  1C   12m  CC=11     ←0
-  │ manager                    315L  1C   12m  CC=7      ←0
-  │ manager                    311L  1C   14m  CC=6      ←0
-  │ manager                    302L  1C   14m  CC=4      ←1
-  │ version_validation         299L  0C   15m  CC=9      ←5
-  │ !! installer                  263L  0C    9m  CC=19     ←0
-  │ abstraction                260L  1C   11m  CC=12     ←0
-  │ formatter                  257L  1C   23m  CC=13     ←4
-  │ user_config                250L  1C   12m  CC=11     ←24
-  │ file_validator             247L  0C    7m  CC=12     ←2
-  │ commit                     244L  0C    9m  CC=14     ←2
-  │ publish                    232L  0C    8m  CC=13     ←2
-  │ !! tests                      227L  0C    8m  CC=22     ←0
-  │ tokens                     224L  0C    7m  CC=10     ←1
-  │ spdx                       222L  0C    7m  CC=14     ←2
-  │ actions                    221L  5C   16m  CC=7      ←0
-  │ rules                      220L  6C   19m  CC=11     ←0
-  │ __init__                   219L  1C    9m  CC=6      ←0
-  │ utils                      212L  0C    9m  CC=5      ←2
-  │ utils_cmd                  207L  0C    8m  CC=10     ←0
-  │ commit_cmd                 204L  0C    5m  CC=13     ←0
-  │ license_cmd                198L  0C    8m  CC=7      ←0
-  │ body_formatter             193L  1C   12m  CC=7      ←0
-  │ manager                    192L  1C    7m  CC=6      ←0
-  │ manager                    190L  1C    7m  CC=7      ←0
-  │ version_sync               186L  0C    9m  CC=13     ←2
-  │ templates                  183L  1C    0m  CC=0.0    ←0
-  │ git_ops                    171L  1C    7m  CC=11     ←0
-  │ broker                     159L  1C    8m  CC=9      ←0
-  │ dry_run                    139L  0C    4m  CC=8      ←1
-  │ configurator               138L  0C    5m  CC=14     ←0
-  │ dot_folders                133L  0C    6m  CC=9      ←1
-  │ config_cmd                 129L  0C    7m  CC=4      ←0
-  │ todo                       128L  0C    5m  CC=9      ←1
+  goal/                           CC̄=4.4    ←in:159  →out:14  !! split
+  │ !! project_bootstrap         1125L  0C   27m  CC=14     ←5
+  │ !! core                       751L  1C   18m  CC=22     ←3
+  │ !! git_ops                    672L  0C   28m  CC=11     ←19
+  │ !! package_managers           607L  1C   16m  CC=5      ←1
+  │ !! generator                  589L  1C   14m  CC=14     ←0
+  │ !! manager                    587L  1C   12m  CC=10     ←1
+  │ !! analyzer                   563L  2C   27m  CC=14     ←0
+  │ !! validation                 528L  2C   15m  CC=14     ←2
+  │ validator                  489L  1C   24m  CC=10     ←0
+  │ constants                  487L  0C    0m  CC=0.0    ←0
+  │ version_utils              485L  0C   23m  CC=8      ←7
+  │ manager                    485L  1C   25m  CC=10     ←7
+  │ push_remote                467L  0C   17m  CC=11     ←1
+  │ tests                      463L  0C   17m  CC=13     ←1
+  │ generator                  432L  1C   24m  CC=12     ←2
+  │ formatter                  430L  1C   23m  CC=13     ←4
+  │ __init__                   401L  1C   11m  CC=11     ←0
+  │ large_file                 397L  1C   12m  CC=11     ←0
+  │ python_diag_extended       393L  1C   18m  CC=10     ←0
+  │ installer                  391L  0C   12m  CC=14     ←0
+  │ quality_filter             389L  1C   18m  CC=14     ←0
+  │ wizard_cmd                 367L  0C    7m  CC=12     ←0
+  │ manager                    348L  1C   12m  CC=7      ←0
+  │ manager                    346L  1C   14m  CC=6      ←0
+  │ version_validation         341L  0C   15m  CC=9      ←5
+  │ python_diag_core           338L  1C   12m  CC=8      ←0
+  │ user_config                323L  1C   12m  CC=11     ←26
+  │ publish                    319L  0C    9m  CC=13     ←2
+  │ manager                    313L  1C   14m  CC=4      ←0
+  │ deep_analyzer              304L  1C   11m  CC=13     ←0
+  │ commit                     303L  0C    9m  CC=14     ←2
+  │ file_validator             298L  0C    8m  CC=14     ←2
+  │ version_sync               285L  0C   15m  CC=13     ←2
+  │ spdx                       283L  0C    7m  CC=14     ←2
+  │ deep_analyzer_aggregate    280L  1C   16m  CC=13     ←0
+  │ abstraction                278L  1C   11m  CC=12     ←0
+  │ generator_generate         278L  1C   11m  CC=13     ←0
+  │ generator_core             267L  1C   13m  CC=11     ←0
+  │ rules                      252L  6C   19m  CC=11     ←0
+  │ tokens                     248L  0C    7m  CC=10     ←1
+  │ costs_badge                245L  0C   10m  CC=6      ←1
+  │ actions                    239L  5C   16m  CC=7      ←0
+  │ pyproject_costs_setup      234L  0C    7m  CC=12     ←1
+  │ utils_cmd                  229L  0C    8m  CC=10     ←0
+  │ commit_cmd                 228L  0C    5m  CC=13     ←0
+  │ utils                      217L  0C    9m  CC=5      ←2
+  │ body_formatter             214L  1C   12m  CC=7      ←0
+  │ manager                    211L  1C    7m  CC=6      ←0
+  │ manager                    207L  1C    7m  CC=7      ←0
+  │ license_cmd                206L  0C    8m  CC=7      ←0
+  │ templates                  194L  1C    0m  CC=0.0    ←0
+  │ git_ops                    177L  1C    7m  CC=11     ←0
+  │ dot_folders                161L  0C    6m  CC=9      ←1
+  │ broker                     158L  1C    8m  CC=9      ←0
+  │ dry_run                    151L  0C    4m  CC=8      ←1
+  │ detector                   149L  0C    9m  CC=11     ←2
+  │ todo                       144L  0C    5m  CC=9      ←1
+  │ configurator               142L  0C    5m  CC=14     ←3
+  │ push_cmd                   139L  0C    1m  CC=2      ←0
+  │ version_types              135L  0C    0m  CC=0.0    ←0
+  │ recover_cmd                132L  0C    2m  CC=6      ←0
+  │ tests_pytest_setup         132L  0C    4m  CC=9      ←0
+  │ costs                      130L  0C    3m  CC=11     ←0
+  │ changelog                  129L  0C    6m  CC=7      ←0
+  │ divergent                  129L  1C    6m  CC=9      ←0
   │ authors_cmd                127L  0C   12m  CC=4      ←0
-  │ recover_cmd                125L  0C    2m  CC=6      ←0
-  │ costs                      120L  0C    3m  CC=11     ←0
-  │ divergent                  119L  1C    6m  CC=9      ←0
-  │ changelog                  115L  0C    6m  CC=7      ←0
-  │ push_cmd                   114L  0C    1m  CC=2      ←0
-  │ detector                   113L  0C    7m  CC=11     ←4
-  │ version_types              113L  0C    0m  CC=0.0    ←0
-  │ toml_validation            112L  0C    4m  CC=9      ←2
-  │ config                     105L  0C    2m  CC=8      ←0
-  │ doctor_cmd                 105L  0C    1m  CC=12     ←0
-  │ core                        87L  0C    2m  CC=8      ←3
+  │ doctor_cmd                 125L  0C    1m  CC=12     ←0
+  │ config_cmd                 125L  0C    7m  CC=4      ←0
+  │ toml_validation            117L  0C    4m  CC=9      ←2
+  │ tests_discovery            107L  0C    5m  CC=9      ←1
+  │ config                     106L  0C    2m  CC=8      ←0
+  │ todo                       100L  0C    1m  CC=14     ←1
+  │ cli_helpers                 97L  0C    4m  CC=14     ←7
+  │ core                        93L  0C    2m  CC=8      ←3
+  │ nodejs                      91L  0C    1m  CC=13     ←0
+  │ test                        87L  0C    1m  CC=9      ←1
+  │ hooks_cmd                   87L  0C    8m  CC=2      ←0
   │ validation_cmd              85L  0C    5m  CC=7      ←0
-  │ hooks_cmd                   83L  0C    8m  CC=2      ←0
+  │ auth                        83L  1C    2m  CC=8      ←0
   │ postcommit_cmd              82L  0C    5m  CC=6      ←0
-  │ cli_helpers                 82L  0C    4m  CC=14     ←7
-  │ nodejs                      77L  0C    1m  CC=13     ←0
-  │ auth                        75L  1C    2m  CC=8      ←0
-  │ test                        72L  0C    1m  CC=9      ←1
-  │ base                        68L  2C    5m  CC=3      ←0
-  │ exceptions                  58L  9C    9m  CC=3      ←0
-  │ lfs                         57L  1C    2m  CC=6      ←0
+  │ exceptions                  78L  9C    9m  CC=3      ←0
+  │ publish_cmd                 66L  0C    2m  CC=8      ←0
+  │ commands                    63L  0C    1m  CC=2      ←0
+  │ deep_analyzer_patterns      63L  0C    0m  CC=0.0    ←0
+  │ base                        60L  2C    5m  CC=3      ←0
+  │ lfs                         59L  1C    2m  CC=6      ←0
+  │ corrupted                   57L  1C    2m  CC=4      ←0
+  │ publish                     57L  0C    1m  CC=6      ←1
+  │ version                     56L  0C    4m  CC=3      ←2
   │ __init__                    56L  0C    0m  CC=0.0    ←0
   │ __init__                    55L  0C    0m  CC=0.0    ←0
-  │ publish_cmd                 54L  0C    2m  CC=8      ←0
-  │ corrupted                   53L  1C    2m  CC=4      ←0
-  │ version                     52L  0C    4m  CC=3      ←2
-  │ todo                        52L  0C    1m  CC=10     ←1
-  │ config_validate_cmd         50L  0C    1m  CC=3      ←0
+  │ php                         54L  0C    1m  CC=7      ←0
+  │ force_push                  51L  1C    2m  CC=5      ←0
+  │ base                        50L  1C    5m  CC=2      ←0
   │ __init__                    50L  0C    0m  CC=0.0    ←0
-  │ base                        48L  1C    5m  CC=2      ←0
+  │ gitignore                   49L  0C    2m  CC=8      ←2
   │ __init__                    48L  0C    0m  CC=0.0    ←0
-  │ gitignore                   46L  0C    2m  CC=8      ←2
-  │ force_push                  45L  1C    2m  CC=5      ←0
-  │ php                         45L  0C    1m  CC=7      ←0
-  │ commands                    43L  0C    1m  CC=2      ←0
-  │ config                      42L  1C    2m  CC=3      ←0
+  │ config_validate_cmd         47L  0C    1m  CC=3      ←0
+  │ models                      47L  2C    0m  CC=0.0    ←0
+  │ exceptions                  46L  4C    3m  CC=2      ←0
+  │ config                      44L  1C    2m  CC=3      ←0
+  │ python                      44L  0C    1m  CC=6      ←0
+  │ project_doctor              43L  0C    0m  CC=0.0    ←0
   │ __init__                    42L  0C    3m  CC=2      ←0
-  │ models                      41L  2C    0m  CC=0.0    ←0
-  │ exceptions                  39L  4C    3m  CC=2      ←0
+  │ rust                        41L  0C    1m  CC=4      ←0
+  │ go                          41L  0C    1m  CC=5      ←0
+  │ java                        39L  0C    1m  CC=6      ←0
   │ uv                          37L  1C    5m  CC=2      ←0
-  │ publish                     37L  0C    1m  CC=6      ←1
   │ __init__                    36L  0C    0m  CC=0.0    ←0
-  │ rust                        35L  0C    1m  CC=4      ←0
-  │ go                          35L  0C    1m  CC=5      ←0
+  │ __init__                    36L  0C    0m  CC=0.0    ←0
+  │ commit_generator            35L  0C    4m  CC=2      ←0
   │ version                     35L  0C    0m  CC=0.0    ←0
-  │ java                        33L  0C    1m  CC=6      ←0
-  │ commit_generator            32L  0C    4m  CC=2      ←0
   │ poetry                      32L  1C    3m  CC=2      ←0
-  │ project_doctor              32L  0C    0m  CC=0.0    ←0
-  │ __init__                    31L  0C    0m  CC=0.0    ←0
-  │ changelog                   30L  0C    2m  CC=2      ←1
+  │ tag                         32L  0C    1m  CC=4      ←1
+  │ dotnet                      31L  0C    1m  CC=4      ←0
   │ pdm                         29L  1C    3m  CC=2      ←0
+  │ logging                     29L  0C    2m  CC=3      ←1
   │ pip                         28L  1C    3m  CC=2      ←0
-  │ tag                         28L  0C    1m  CC=4      ←1
+  │ ruby                        28L  0C    1m  CC=3      ←0
   │ __init__                    27L  0C    0m  CC=0.0    ←0
   │ __init__                    27L  0C    0m  CC=0.0    ←0
-  │ dotnet                      26L  0C    1m  CC=4      ←0
-  │ ruby                        25L  0C    1m  CC=3      ←0
-  │ logging                     25L  0C    2m  CC=3      ←1
+  │ changelog                   24L  0C    2m  CC=2      ←1
   │ enhanced_summary            23L  0C    0m  CC=0.0    ←0
   │ strategies                  23L  0C    0m  CC=0.0    ←0
   │ __init__                    20L  0C    0m  CC=0.0    ←0
@@ -2174,29 +2258,31 @@ LAYERS:
   │ __init__                    19L  0C    0m  CC=0.0    ←0
   │ __main__                    18L  0C    0m  CC=0.0    ←0
   │ __init__                    16L  0C    0m  CC=0.0    ←0
+  │ generator                   15L  1C    1m  CC=1      ←0
   │ __init__                    14L  0C    0m  CC=0.0    ←0
   │ __init__                    14L  0C    0m  CC=0.0    ←0
-  │ cli                         11L  0C    2m  CC=1      ←0
   │ __init__                    11L  0C    0m  CC=0.0    ←0
   │ __init__                     9L  0C    0m  CC=0.0    ←0
   │ __init__                     3L  0C    0m  CC=0.0    ←0
+  │ cli                          0L  0C    2m  CC=1      ←0
   │
-  examples/                       CC̄=3.5    ←in:0  →out:0
-  │ 04_debugging_diagnostics   284L  0C    6m  CC=8      ←0
-  │ generate                   267L  0C    2m  CC=4      ←0
-  │ 03_advanced_mocking        265L  0C    7m  CC=6      ←0
+  examples/                       CC̄=3.3    ←in:0  →out:0
+  │ 04_debugging_diagnostics   301L  0C    6m  CC=8      ←0
+  │ 03_advanced_mocking        283L  0C    7m  CC=6      ←0
+  │ generate                   240L  0C    2m  CC=4      ←0
   │ config-example.yaml        183L  0C    0m  CC=0.0    ←0
-  │ pre-publish                171L  0C    5m  CC=6      ←0
-  │ post-commit                151L  0C    5m  CC=4      ←1
+  │ pre-publish                167L  0C    5m  CC=6      ←0
+  │ post-commit                144L  0C    5m  CC=4      ←1
   │ pre-commit                 128L  0C    4m  CC=8      ←1
-  │ slack-webhook              123L  0C    2m  CC=5      ←0
-  │ 05_programmatic_workflow   123L  0C    2m  CC=1      ←0
+  │ 05_programmatic_workflow   120L  0C    2m  CC=1      ←0
   │ run_all_validation         120L  1C    5m  CC=6      ←0
-  │ discord-webhook            111L  0C    2m  CC=5      ←0
-  │ 04_version_validation       78L  0C    1m  CC=11     ←0
-  │ !! 02_git_operations           78L  0C    1m  CC=15     ←0
-  │ 01_basic_api                73L  0C    1m  CC=10     ←0
-  │ 03_commit_generation        72L  0C    1m  CC=9      ←0
+  │ slack-webhook              116L  0C    2m  CC=5      ←0
+  │ discord-webhook            109L  0C    2m  CC=5      ←0
+  │ Makefile                   105L  0C    0m  CC=0.0    ←0
+  │ 02_git_operations          100L  0C    6m  CC=5      ←0
+  │ 04_version_validation       79L  0C    1m  CC=11     ←0
+  │ 01_basic_api                74L  0C    1m  CC=10     ←0
+  │ 03_commit_generation        70L  0C    1m  CC=9      ←0
   │ markdown-demo.sh            70L  0C    0m  CC=0.0    ←0
   │ package.json                64L  0C    0m  CC=0.0    ←0
   │ pyproject.toml              57L  0C    0m  CC=0.0    ←0
@@ -2212,97 +2298,72 @@ LAYERS:
   │ Example.php                 11L  1C    1m  CC=1      ←0
   │ main.go                     10L  0C    1m  CC=1      ←0
   │ __init__                     3L  0C    0m  CC=0.0    ←0
-  │ Makefile                     0L  0C    0m  CC=0.0    ←0
+  │
+  integration/                    CC̄=0.0    ←in:255  →out:0
+  │ run_matrix.sh              216L  1C    4m  CC=0.0    ←16
+  │ Dockerfile                  15L  0C    0m  CC=0.0    ←0
+  │ run_docker_matrix.sh         5L  0C    0m  CC=0.0    ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
-  │ !! planfile.yaml             2108L  0C    0m  CC=0.0    ←0
-  │ tree.txt                   383L  0C    0m  CC=0.0    ←0
-  │ Taskfile.yml               240L  0C    1m  CC=0.0    ←16
+  │ tree.txt                   393L  0C    0m  CC=0.0    ←0
+  │ Taskfile.yml               244L  0C    0m  CC=0.0    ←0
   │ pyqual.yaml                161L  0C    0m  CC=0.0    ←0
-  │ pyproject.toml             138L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml             139L  0C    0m  CC=0.0    ←0
+  │ Makefile                    91L  0C    0m  CC=0.0    ←0
+  │ wup.yaml                    90L  0C    0m  CC=0.0    ←0
   │ prefact.yaml                82L  0C    0m  CC=0.0    ←0
   │ redsl.yaml                  78L  0C    0m  CC=0.0    ←0
-  │ project.toon-schema.json    66L  0C    0m  CC=0.0    ←0
+  │ regix.yaml                  51L  0C    0m  CC=0.0    ←0
   │ project.sh                  48L  0C    0m  CC=0.0    ←0
   │ .pre-commit-config.yaml     38L  0C    0m  CC=0.0    ←0
   │ redsl_refactor_report.toon.yaml    33L  0C    0m  CC=0.0    ←0
   │ redsl_refactor_plan.toon.yaml    26L  0C    0m  CC=0.0    ←0
-  │ Makefile                     0L  0C    0m  CC=0.0    ←0
+  │ planfile.yaml               16L  0C    0m  CC=0.0    ←0
+  │
+  scripts/                        CC̄=0.0    ←in:0  →out:0
+  │ koru_verify_ci.sh           49L  0C    0m  CC=0.0    ←0
   │
   testql-scenarios/               CC̄=0.0    ←in:0  →out:0
-  │ generated-from-pytests.testql.toon.yaml    63L  0C    2m  CC=0.0    ←26
+  │ generated-from-pytests.testql.toon.yaml    79L  0C    0m  CC=0.0    ←0
   │ generated-cli-tests.testql.toon.yaml    20L  0C    0m  CC=0.0    ←0
   │
-  integration/                    CC̄=0.0    ←in:0  →out:0
-  │ run_matrix.sh              216L  1C    4m  CC=0.0    ←0
-  │ run_docker_matrix.sh         5L  0C    0m  CC=0.0    ←0
-  │ Dockerfile                   0L  0C    0m  CC=0.0    ←0
-  │
-  project/                        CC̄=0.0    ←in:0  →out:0
-  │ !! map.toon.yaml            53859L  0C  19290m  CC=0.0    ←48
-  │ !! calls.yaml               24506L  0C    0m  CC=0.0    ←0
-  │ !! project.yaml              1323L  0C    0m  CC=0.0    ←0
-  │ !! validation.toon.yaml       554L  0C    0m  CC=0.0    ←0
-  │ !! calls.toon.yaml            508L  0C    0m  CC=0.0    ←0
-  │ analysis.toon.yaml         270L  0C    0m  CC=0.0    ←0
-  │ duplication.toon.yaml      185L  0C    0m  CC=0.0    ←0
-  │ project.toon.yaml           55L  0C    0m  CC=0.0    ←0
-  │ evolution.toon.yaml         54L  0C    0m  CC=0.0    ←0
-  │ prompt.txt                  47L  0C    0m  CC=0.0    ←0
-  │
-  .taskill/                       CC̄=0.0    ←in:0  →out:0
-  │ state.json                  11L  0C    0m  CC=0.0    ←0
-  │
-  .aider/                         CC̄=0.0    ←in:0  →out:0
-  │ !! model_prices_and_context_window.json 37479L  0C    0m  CC=0.0    ←0
-  │ !! openrouter_models.json   17810L  0C    0m  CC=0.0    ←0
-  │ analytics.json               5L  0C    0m  CC=0.0    ←0
-  │ installs.json                3L  0C    0m  CC=0.0    ←0
-  │
   ── zero ──
-     Makefile                                  0L
-     examples/makefile/Makefile                0L
-     integration/Dockerfile                    0L
+     goal/cli.py                               0L
 
 COUPLING:
-                                                                          Taskfile                                     goal                              project.map                       examples.api-usage                         examples.testing                                 goal.cli                                goal.push  testql-scenarios.generated-from-pytests                    examples.custom-hooks                             goal.summary                           goal.generator                          goal.validators                      examples.validation                              goal.config                            goal.recovery
-                                 Taskfile                                       ──                                       ←5                                                                              ←102                                      ←59                                                                                                                                                                 ←50                                                                                                                                                                 ←20                                                                                    hub
-                                     goal                                        5                                       ──                                       31                                      ←11                                      ←13                                      ←42                                      ←54                                       18                                                                                ←6                                        1                                      ←13                                                                                 2                                       ←1  hub
-                              project.map                                                                               ←31                                       ──                                       ←3                                      ←30                                      ←12                                      ←14                                                                                ←6                                      ←31                                       ←8                                       ←7                                       ←1                                       ←3                                       ←6  hub
-                       examples.api-usage                                      102                                       11                                        3                                       ──                                                                                 4                                                                                                                                                                                                            1                                                                                                                          1                                           !! fan-out
-                         examples.testing                                       59                                       13                                       30                                                                                ──                                                                                 1                                                                                                                                                                                                                                                                                                                                          !! fan-out
-                                 goal.cli                                                                                42                                       12                                       ←4                                                                                ──                                        1                                        9                                                                                                                                                                                                                                                    11                                           hub
-                                goal.push                                                                                54                                       14                                                                                ←1                                        7                                       ──                                        1                                        3                                                                                                                          1                                                                                                                             !! fan-out
-  testql-scenarios.generated-from-pytests                                                                               ←18                                                                                                                                                                  ←9                                       ←1                                       ──                                       ←1                                       ←9                                      ←19                                       ←7                                                                                                                         ←6  hub
-                    examples.custom-hooks                                       50                                                                                 6                                                                                                                                                                  ←3                                        1                                       ──                                                                                                                                                                                                                                                        !! fan-out
-                             goal.summary                                                                                 6                                       31                                                                                                                                                                                                            9                                                                                ──                                                                                                                                                                                                               !! fan-out
-                           goal.generator                                                                                 4                                        8                                       ←1                                                                                                                                                                  19                                                                                                                         ──                                                                                                                                                                      !! fan-out
-                          goal.validators                                                                                13                                        7                                                                                                                                                                  ←1                                        7                                                                                                                                                                  ──                                                                                                                             !! fan-out
-                      examples.validation                                       20                                                                                 1                                                                                                                                                                                                                                                                                                                                                                                                                        ──                                                                                    !! fan-out
-                              goal.config                                                                                 1                                        3                                       ←1                                                                               ←11                                                                                                                                                                                                                                                                                                                                      ──                                           hub
-                            goal.recovery                                                                                 1                                        6                                                                                                                                                                                                            6                                                                                                                                                                                                                                                                                             ──  !! fan-out
+                                               integration                         goal           examples.api-usage                     goal.cli             examples.testing                    goal.push        examples.custom-hooks          examples.validation              goal.validators                  goal.config            examples.webhooks  examples.template-generator               goal.bootstrap                 goal.license                 goal.authors
+                  integration                           ──                           ←5                         ←102                                                       ←59                                                       ←50                          ←20                                                                                    ←10                           ←9                                                                                         hub
+                         goal                            5                           ──                          ←11                          ←45                          ←13                          ←54                                                                                    ←15                            2                                                                                      5                                                        ←2  hub
+           examples.api-usage                          102                           11                           ──                            4                                                                                                                                                                             1                                                                                                                                                   !! fan-out
+                     goal.cli                                                        45                           ←4                           ──                                                         1                                                                                                                  11                                                                                      2                            7                            3  hub
+             examples.testing                           59                           13                                                                                     ──                            1                                                                                                                                                                                                                                                                       !! fan-out
+                    goal.push                                                        54                                                         8                           ←1                           ──                            3                                                         1                                                                                                                                                                                !! fan-out
+        examples.custom-hooks                           50                                                                                                                                               ←3                           ──                                                                                                                                                                                                                                          !! fan-out
+          examples.validation                           20                                                                                                                                                                                                         ──                                                                                                                                                                                                             !! fan-out
+              goal.validators                                                        15                                                                                                                  ←1                                                                                     ──                                                                                                                                                                                !! fan-out
+                  goal.config                                                         1                           ←1                          ←11                                                                                                                                                                            ──                                                                                                                                               ←1  hub
+            examples.webhooks                           10                                                                                                                                                                                                                                                                                                ──                                                                                                                      !! fan-out
+  examples.template-generator                            9                                                                                                                                                                                                                                                                                                                             ──                                                                                         !! fan-out
+               goal.bootstrap                                                        ←5                                                        ←2                                                                                                                                                                                                                                                                   ──                                                            hub
+                 goal.license                                                                                                                  ←7                                                                                                                                                                                                                                                                                                ──                               hub
+                 goal.authors                                                         2                                                        ←3                                                                                                                                                                             1                                                                                                                                               ──
   CYCLES: none
-  HUB: project.map/ (fan-in=172)
-  HUB: goal.license/ (fan-in=7)
-  HUB: goal.cli/ (fan-in=11)
-  HUB: Taskfile/ (fan-in=255)
-  HUB: testql-scenarios.generated-from-pytests/ (fan-in=81)
+  HUB: goal.bootstrap/ (fan-in=7)
+  HUB: goal/ (fan-in=159)
   HUB: goal.config/ (fan-in=15)
-  HUB: goal/ (fan-in=155)
-  SMELL: examples.testing/ fan-out=103 → split needed
-  SMELL: goal.summary/ fan-out=46 → split needed
-  SMELL: goal.smart_commit/ fan-out=11 → split needed
-  SMELL: examples.custom-hooks/ fan-out=57 → split needed
-  SMELL: examples.validation/ fan-out=21 → split needed
-  SMELL: goal.generator/ fan-out=31 → split needed
-  SMELL: goal.cli/ fan-out=91 → split needed
-  SMELL: examples.template-generator/ fan-out=10 → split needed
-  SMELL: goal.recovery/ fan-out=13 → split needed
-  SMELL: goal.validators/ fan-out=27 → split needed
-  SMELL: examples.api-usage/ fan-out=123 → split needed
+  HUB: goal.cli/ (fan-in=12)
+  HUB: integration/ (fan-in=255)
+  HUB: goal.license/ (fan-in=7)
+  SMELL: goal/ fan-out=14 → split needed
+  SMELL: examples.api-usage/ fan-out=120 → split needed
+  SMELL: goal.validators/ fan-out=15 → split needed
+  SMELL: examples.custom-hooks/ fan-out=50 → split needed
+  SMELL: goal.cli/ fan-out=70 → split needed
+  SMELL: examples.template-generator/ fan-out=9 → split needed
+  SMELL: examples.testing/ fan-out=73 → split needed
   SMELL: examples.webhooks/ fan-out=10 → split needed
-  SMELL: goal.push/ fan-out=81 → split needed
-  SMELL: goal/ fan-out=58 → split needed
+  SMELL: examples.validation/ fan-out=20 → split needed
+  SMELL: goal.push/ fan-out=66 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
@@ -2312,97 +2373,107 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 28 groups | 138f 21561L | 2026-04-26
+# redup/duplication | 32 groups | 144f 24888L | 2026-06-08
 
 SUMMARY:
-  files_scanned: 138
-  total_lines:   21561
-  dup_groups:    28
-  dup_fragments: 67
-  saved_lines:   356
-  scan_ms:       9156
+  files_scanned: 144
+  total_lines:   24888
+  dup_groups:    32
+  dup_fragments: 82
+  saved_lines:   384
+  scan_ms:       4737
 
 HOTSPOTS[7] (files with most duplication):
-  goal/project_bootstrap.py  dup=166L  groups=10  frags=10  (0.8%)
-  goal/bootstrap/installer.py  dup=88L  groups=5  frags=5  (0.4%)
-  goal/bootstrap/configurator.py  dup=67L  groups=4  frags=4  (0.3%)
-  goal/hooks/manager.py  dup=35L  groups=2  frags=3  (0.2%)
-  goal/user_config.py  dup=28L  groups=1  frags=2  (0.1%)
+  goal/project_bootstrap.py  dup=148L  groups=8  frags=8  (0.6%)
+  goal/bootstrap/installer.py  dup=104L  groups=5  frags=5  (0.4%)
+  goal/bootstrap/configurator.py  dup=44L  groups=3  frags=3  (0.2%)
+  goal/hooks/manager.py  dup=35L  groups=2  frags=3  (0.1%)
   goal/cli/postcommit_cmd.py  dup=27L  groups=4  frags=4  (0.1%)
   goal/cli/validation_cmd.py  dup=27L  groups=4  frags=4  (0.1%)
+  goal/validation/rules.py  dup=24L  groups=4  frags=8  (0.1%)
 
-DUPLICATES[28] (ranked by impact):
-  [3ca623f2c7cef5f7]   EXAC  _ensure_python_test_dependency  L=28 N=2 saved=28 sim=1.00
-      goal/bootstrap/installer.py:133-160  (_ensure_python_test_dependency)
-      goal/project_bootstrap.py:419-446  (_ensure_python_test_dependency)
-  [68ebad56e63cec81]   EXAC  _read_openrouter_api_key  L=24 N=2 saved=24 sim=1.00
-      goal/bootstrap/configurator.py:84-107  (_read_openrouter_api_key)
-      goal/project_bootstrap.py:362-385  (_read_openrouter_api_key)
+DUPLICATES[32] (ranked by impact):
+  [c63c6249e55cb28f] ! EXAC  _ensure_python_test_dependency  L=40 N=2 saved=40 sim=1.00
+      goal/bootstrap/installer.py:164-203  (_ensure_python_test_dependency)
+      goal/project_bootstrap.py:365-404  (_ensure_python_test_dependency)
+  [fa0b74b14de61573]   EXAC  _install_python_deps_broker  L=22 N=2 saved=22 sim=1.00
+      goal/bootstrap/installer.py:140-161  (_install_python_deps_broker)
+      goal/project_bootstrap.py:550-571  (_install_python_deps_broker)
   [92a676278db9e76e]   STRU  uninstall_hooks  L=11 N=3 saved=22 sim=1.00
-      goal/hooks/manager.py:278-288  (uninstall_hooks)
-      goal/postcommit/manager.py:182-192  (run_post_commit_actions)
-      goal/validation/manager.py:180-190  (run_custom_validations)
-  [4958a83bb9f5d53c]   EXAC  _install_python_deps_broker  L=20 N=2 saved=20 sim=1.00
-      goal/bootstrap/installer.py:111-130  (_install_python_deps_broker)
-      goal/project_bootstrap.py:558-577  (_install_python_deps_broker)
+      goal/hooks/manager.py:289-299  (uninstall_hooks)
+      goal/postcommit/manager.py:201-211  (run_post_commit_actions)
+      goal/validation/manager.py:197-207  (run_custom_validations)
+  [632e6e2ec1a0e267]   STRU  ensure_project_environment  L=20 N=2 saved=20 sim=1.00
+      goal/bootstrap/installer.py:372-391  (ensure_project_environment)
+      goal/project_bootstrap.py:631-650  (ensure_project_environment)
   [0269aa7743a3214a]   STRU  authors_list  L=4 N=6 saved=20 sim=1.00
       goal/cli/authors_cmd.py:40-43  (authors_list)
       goal/cli/authors_cmd.py:77-80  (authors_import)
       goal/cli/authors_cmd.py:84-87  (authors_export)
-      goal/cli/hooks_cmd.py:71-74  (hooks_status)
+      goal/cli/hooks_cmd.py:75-78  (hooks_status)
       goal/cli/postcommit_cmd.py:28-31  (postcommit_list)
       goal/cli/validation_cmd.py:28-31  (validation_list)
   [cb9ebedb82c1a435]   STRU  main  L=19 N=2 saved=19 sim=1.00
-      examples/webhooks/discord-webhook.py:89-107  (main)
-      examples/webhooks/slack-webhook.py:101-119  (main)
+      examples/webhooks/discord-webhook.py:87-105  (main)
+      examples/webhooks/slack-webhook.py:94-112  (main)
   [116594718eb1c607]   STRU  _find_openrouter_api_key  L=19 N=2 saved=19 sim=1.00
-      goal/bootstrap/configurator.py:110-128  (_find_openrouter_api_key)
-      goal/project_bootstrap.py:388-406  (_find_openrouter_api_key)
-  [632e6e2ec1a0e267]   STRU  ensure_project_environment  L=18 N=2 saved=18 sim=1.00
-      goal/bootstrap/installer.py:246-263  (ensure_project_environment)
-      goal/project_bootstrap.py:621-638  (ensure_project_environment)
-  [46adb307bd5a442b]   EXAC  _should_skip_install  L=17 N=2 saved=17 sim=1.00
-      goal/bootstrap/installer.py:23-39  (_should_skip_install)
-      goal/project_bootstrap.py:486-502  (_should_skip_install)
-  [cab65114a71c7a9a]   EXAC  _find_python_bin  L=16 N=2 saved=16 sim=1.00
-      goal/bootstrap/configurator.py:66-81  (_find_python_bin)
-      goal/project_bootstrap.py:344-359  (_find_python_bin)
+      goal/bootstrap/configurator.py:114-132  (_find_openrouter_api_key)
+      goal/project_bootstrap.py:334-352  (_find_openrouter_api_key)
+  [4b00d0a6a1f57e43]   EXAC  _find_python_bin  L=17 N=2 saved=17 sim=1.00
+      goal/bootstrap/configurator.py:69-85  (_find_python_bin)
+      goal/project_bootstrap.py:288-304  (_find_python_bin)
+  [ee9bc07d711dabc5]   EXAC  _should_skip_install  L=17 N=2 saved=17 sim=1.00
+      goal/bootstrap/installer.py:22-38  (_should_skip_install)
+      goal/project_bootstrap.py:461-477  (_should_skip_install)
   [90e6c0a8cb78d015]   STRU  authors  L=3 N=6 saved=15 sim=1.00
       goal/cli/authors_cmd.py:34-36  (authors)
       goal/cli/config_cmd.py:11-13  (config)
-      goal/cli/hooks_cmd.py:33-35  (hooks)
+      goal/cli/hooks_cmd.py:35-37  (hooks)
       goal/cli/license_cmd.py:18-20  (license)
       goal/cli/postcommit_cmd.py:10-12  (postcommit)
       goal/cli/validation_cmd.py:10-12  (validation)
-  [79664e1b14e94359]   STRU  get_git_user_name  L=14 N=2 saved=14 sim=1.00
-      goal/user_config.py:75-88  (get_git_user_name)
-      goal/user_config.py:91-104  (get_git_user_email)
+  [e925cb15bbf37024]   STRU  get_name  L=3 N=6 saved=15 sim=1.00
+      goal/postcommit/actions.py:43-45  (get_name)
+      goal/postcommit/actions.py:95-97  (get_name)
+      goal/postcommit/actions.py:141-143  (get_name)
+      goal/validation/rules.py:42-44  (get_name)
+      goal/validation/rules.py:73-75  (get_name)
+      goal/validation/rules.py:123-125  (get_name)
   [61866fcb488af822]   STRU  install_hooks  L=12 N=2 saved=12 sim=1.00
-      goal/hooks/manager.py:264-275  (install_hooks)
-      goal/hooks/manager.py:291-302  (run_hooks)
-  [375e6f760a777f2d]   EXAC  _guess_nodejs_name  L=11 N=2 saved=11 sim=1.00
-      goal/bootstrap/detector.py:66-76  (_guess_nodejs_name)
-      goal/project_bootstrap.py:279-289  (_guess_nodejs_name)
+      goal/hooks/manager.py:275-286  (install_hooks)
+      goal/hooks/manager.py:302-313  (run_hooks)
+  [c1baa8942e76bd7e]   STRU  validate_config  L=3 N=5 saved=12 sim=1.00
+      goal/postcommit/actions.py:99-101  (validate_config)
+      goal/postcommit/actions.py:145-147  (validate_config)
+      goal/validation/rules.py:46-48  (validate_config)
+      goal/validation/rules.py:77-79  (validate_config)
+      goal/validation/rules.py:127-129  (validate_config)
+  [a9e49749ba7879d1]   STRU  _display_staged_files  L=11 N=2 saved=11 sim=1.00
+      examples/api-usage/02_git_operations.py:31-41  (_display_staged_files)
+      examples/api-usage/02_git_operations.py:44-54  (_display_unstaged_files)
   [7aa96675d99bbfa5]   STRU  postcommit_validate  L=11 N=2 saved=11 sim=1.00
       goal/cli/postcommit_cmd.py:35-45  (postcommit_validate)
       goal/cli/validation_cmd.py:35-45  (validation_validate)
-  [ea0ee7af576e6a69]   EXAC  _match_marker  L=5 N=3 saved=10 sim=1.00
+  [79664e1b14e94359]   STRU  get_git_user_name  L=11 N=2 saved=11 sim=1.00
+      goal/user_config.py:113-123  (get_git_user_name)
+      goal/user_config.py:126-136  (get_git_user_email)
+  [ecb29c37ddf8ec5c]   EXAC  _match_marker  L=5 N=3 saved=10 sim=1.00
       goal/bootstrap/detector.py:11-15  (_match_marker)
-      goal/bootstrap/installer.py:16-20  (_match_marker)
-      goal/project_bootstrap.py:223-227  (_match_marker)
+      goal/bootstrap/installer.py:15-19  (_match_marker)
+      goal/project_bootstrap.py:244-248  (_match_marker)
   [647457419bebba7a]   STRU  is_copyleft  L=10 N=2 saved=10 sim=1.00
-      goal/license/spdx.py:201-210  (is_copyleft)
-      goal/license/spdx.py:213-222  (is_permissive)
+      goal/license/spdx.py:262-271  (is_copyleft)
+      goal/license/spdx.py:274-283  (is_permissive)
   [be5dc2ccfaf1a50f]   STRU  postcommit_run  L=9 N=2 saved=9 sim=1.00
       goal/cli/postcommit_cmd.py:16-24  (postcommit_run)
       goal/cli/validation_cmd.py:16-24  (validation_run)
   [395199f7c31b5150]   STRU  get_npm_version  L=9 N=2 saved=9 sim=1.00
-      goal/version_validation.py:23-31  (get_npm_version)
-      goal/version_validation.py:34-42  (get_cargo_version)
-  [fefe73fb3f5aeff9]   EXAC  _find_git_root  L=8 N=2 saved=8 sim=1.00
-      goal/bootstrap/configurator.py:131-138  (_find_git_root)
-      goal/project_bootstrap.py:409-416  (_find_git_root)
-  [79344c1fc3ff9956]   EXAC  __init__  L=8 N=2 saved=8 sim=1.00
+      goal/version_validation.py:26-34  (get_npm_version)
+      goal/version_validation.py:37-45  (get_cargo_version)
+  [9be14950000fe561]   EXAC  _find_git_root  L=8 N=2 saved=8 sim=1.00
+      goal/bootstrap/configurator.py:135-142  (_find_git_root)
+      goal/project_bootstrap.py:355-362  (_find_git_root)
+  [95a03c7e292f0023]   EXAC  __init__  L=8 N=2 saved=8 sim=1.00
       goal/postcommit/manager.py:15-22  (__init__)
       goal/validation/manager.py:16-23  (__init__)
   [ec98b40481b22142]   STRU  install_editable  L=8 N=2 saved=8 sim=1.00
@@ -2415,6 +2486,9 @@ DUPLICATES[28] (ranked by impact):
       goal/installers/managers/pdm.py:27-29  (install_from_lockfile)
       goal/installers/managers/poetry.py:30-32  (install_from_lockfile)
       goal/installers/managers/uv.py:35-37  (install_from_lockfile)
+  [8da890bc2ee176f1]   STRU  __init__  L=5 N=2 saved=5 sim=1.00
+      goal/recovery/exceptions.py:35-39  (__init__)
+      goal/recovery/exceptions.py:45-49  (__init__)
   [dbda8ef1dc9b7e17]   STRU  authors_add  L=4 N=2 saved=4 sim=1.00
       goal/cli/authors_cmd.py:51-54  (authors_add)
       goal/cli/authors_cmd.py:70-73  (authors_update)
@@ -2427,18 +2501,24 @@ DUPLICATES[28] (ranked by impact):
   [8d361abedd2fedda]   EXAC  validate_config  L=3 N=2 saved=3 sim=1.00
       goal/postcommit/actions.py:35-37  (validate_config)
       goal/validation/rules.py:34-36  (validate_config)
+  [41defae02867c5b3]   STRU  _sync_uv_lock  L=3 N=2 saved=3 sim=1.00
+      goal/cli/version_sync.py:228-230  (_sync_uv_lock)
+      goal/cli/version_sync.py:233-235  (_sync_dependency_locks_after_manifest_updates)
+  [5ea2c6da8fc2aeed]   STRU  __init__  L=3 N=2 saved=3 sim=1.00
+      goal/recovery/exceptions.py:17-19  (__init__)
+      goal/recovery/exceptions.py:55-57  (__init__)
 
-REFACTOR[28] (ranked by priority):
-  [1] ○ extract_function   → goal/utils/_ensure_python_test_dependency.py
-      WHY: 2 occurrences of 28-line block across 2 files — saves 28 lines
+REFACTOR[32] (ranked by priority):
+  [1] ◐ extract_function   → goal/utils/_ensure_python_test_dependency.py
+      WHY: 2 occurrences of 40-line block across 2 files — saves 40 lines
       FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
-  [2] ○ extract_function   → goal/utils/_read_openrouter_api_key.py
-      WHY: 2 occurrences of 24-line block across 2 files — saves 24 lines
-      FILES: goal/bootstrap/configurator.py, goal/project_bootstrap.py
+  [2] ○ extract_function   → goal/utils/_install_python_deps_broker.py
+      WHY: 2 occurrences of 22-line block across 2 files — saves 22 lines
+      FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
   [3] ○ extract_function   → goal/utils/uninstall_hooks.py
       WHY: 3 occurrences of 11-line block across 3 files — saves 22 lines
       FILES: goal/hooks/manager.py, goal/postcommit/manager.py, goal/validation/manager.py
-  [4] ○ extract_function   → goal/utils/_install_python_deps_broker.py
+  [4] ○ extract_function   → goal/utils/ensure_project_environment.py
       WHY: 2 occurrences of 20-line block across 2 files — saves 20 lines
       FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
   [5] ○ extract_function   → goal/cli/utils/authors_list.py
@@ -2450,78 +2530,88 @@ REFACTOR[28] (ranked by priority):
   [7] ○ extract_function   → goal/utils/_find_openrouter_api_key.py
       WHY: 2 occurrences of 19-line block across 2 files — saves 19 lines
       FILES: goal/bootstrap/configurator.py, goal/project_bootstrap.py
-  [8] ○ extract_function   → goal/utils/ensure_project_environment.py
-      WHY: 2 occurrences of 18-line block across 2 files — saves 18 lines
-      FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
+  [8] ○ extract_function   → goal/utils/_find_python_bin.py
+      WHY: 2 occurrences of 17-line block across 2 files — saves 17 lines
+      FILES: goal/bootstrap/configurator.py, goal/project_bootstrap.py
   [9] ○ extract_function   → goal/utils/_should_skip_install.py
       WHY: 2 occurrences of 17-line block across 2 files — saves 17 lines
       FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
-  [10] ○ extract_function   → goal/utils/_find_python_bin.py
-      WHY: 2 occurrences of 16-line block across 2 files — saves 16 lines
-      FILES: goal/bootstrap/configurator.py, goal/project_bootstrap.py
-  [11] ○ extract_function   → goal/cli/utils/authors.py
+  [10] ○ extract_function   → goal/cli/utils/authors.py
       WHY: 6 occurrences of 3-line block across 6 files — saves 15 lines
       FILES: goal/cli/authors_cmd.py, goal/cli/config_cmd.py, goal/cli/hooks_cmd.py, goal/cli/license_cmd.py, goal/cli/postcommit_cmd.py +1 more
-  [12] ○ extract_function   → goal/utils/get_git_user_name.py
-      WHY: 2 occurrences of 14-line block across 1 files — saves 14 lines
-      FILES: goal/user_config.py
-  [13] ○ extract_function   → goal/hooks/utils/install_hooks.py
+  [11] ○ extract_function   → goal/utils/get_name.py
+      WHY: 6 occurrences of 3-line block across 2 files — saves 15 lines
+      FILES: goal/postcommit/actions.py, goal/validation/rules.py
+  [12] ○ extract_function   → goal/hooks/utils/install_hooks.py
       WHY: 2 occurrences of 12-line block across 1 files — saves 12 lines
       FILES: goal/hooks/manager.py
-  [14] ○ extract_function   → goal/utils/_guess_nodejs_name.py
-      WHY: 2 occurrences of 11-line block across 2 files — saves 11 lines
-      FILES: goal/bootstrap/detector.py, goal/project_bootstrap.py
+  [13] ○ extract_function   → goal/utils/validate_config.py
+      WHY: 5 occurrences of 3-line block across 2 files — saves 12 lines
+      FILES: goal/postcommit/actions.py, goal/validation/rules.py
+  [14] ○ extract_function   → examples/api-usage/utils/_display_staged_files.py
+      WHY: 2 occurrences of 11-line block across 1 files — saves 11 lines
+      FILES: examples/api-usage/02_git_operations.py
   [15] ○ extract_function   → goal/cli/utils/postcommit_validate.py
       WHY: 2 occurrences of 11-line block across 2 files — saves 11 lines
       FILES: goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
-  [16] ○ extract_function   → goal/utils/_match_marker.py
+  [16] ○ extract_function   → goal/utils/get_git_user_name.py
+      WHY: 2 occurrences of 11-line block across 1 files — saves 11 lines
+      FILES: goal/user_config.py
+  [17] ○ extract_function   → goal/utils/_match_marker.py
       WHY: 3 occurrences of 5-line block across 3 files — saves 10 lines
       FILES: goal/bootstrap/detector.py, goal/bootstrap/installer.py, goal/project_bootstrap.py
-  [17] ○ extract_function   → goal/license/utils/is_copyleft.py
+  [18] ○ extract_function   → goal/license/utils/is_copyleft.py
       WHY: 2 occurrences of 10-line block across 1 files — saves 10 lines
       FILES: goal/license/spdx.py
-  [18] ○ extract_function   → goal/cli/utils/postcommit_run.py
+  [19] ○ extract_function   → goal/cli/utils/postcommit_run.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
-  [19] ○ extract_function   → goal/utils/get_npm_version.py
+  [20] ○ extract_function   → goal/utils/get_npm_version.py
       WHY: 2 occurrences of 9-line block across 1 files — saves 9 lines
       FILES: goal/version_validation.py
-  [20] ○ extract_function   → goal/utils/_find_git_root.py
+  [21] ○ extract_function   → goal/utils/_find_git_root.py
       WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
       FILES: goal/bootstrap/configurator.py, goal/project_bootstrap.py
-  [21] ○ extract_function   → goal/utils/__init__.py
+  [22] ○ extract_function   → goal/utils/__init__.py
       WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
       FILES: goal/postcommit/manager.py, goal/validation/manager.py
-  [22] ○ extract_function   → goal/installers/managers/utils/install_editable.py
+  [23] ○ extract_function   → goal/installers/managers/utils/install_editable.py
       WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
       FILES: goal/installers/managers/pdm.py, goal/installers/managers/poetry.py
-  [23] ○ extract_function   → goal/summary/utils/validate_summary.py
+  [24] ○ extract_function   → goal/summary/utils/validate_summary.py
       WHY: 2 occurrences of 8-line block across 1 files — saves 8 lines
       FILES: goal/summary/__init__.py
-  [24] ○ extract_function   → goal/installers/managers/utils/install_from_lockfile.py
+  [25] ○ extract_function   → goal/installers/managers/utils/install_from_lockfile.py
       WHY: 3 occurrences of 3-line block across 3 files — saves 6 lines
       FILES: goal/installers/managers/pdm.py, goal/installers/managers/poetry.py, goal/installers/managers/uv.py
-  [25] ○ extract_function   → goal/cli/utils/authors_add.py
+  [26] ○ extract_function   → goal/recovery/utils/__init__.py
+      WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
+      FILES: goal/recovery/exceptions.py
+  [27] ○ extract_function   → goal/cli/utils/authors_add.py
       WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
       FILES: goal/cli/authors_cmd.py
-  [26] ○ extract_function   → goal/cli/utils/display_success_message.py
+  [28] ○ extract_function   → goal/cli/utils/display_success_message.py
       WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
       FILES: goal/cli/hooks_cmd.py
-  [27] ○ extract_function   → goal/utils/get_name.py
+  [29] ○ extract_function   → goal/utils/get_name.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: goal/postcommit/actions.py, goal/validation/rules.py
-  [28] ○ extract_function   → goal/utils/validate_config.py
+  [30] ○ extract_function   → goal/utils/validate_config.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: goal/postcommit/actions.py, goal/validation/rules.py
+  [31] ○ extract_function   → goal/cli/utils/_sync_uv_lock.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: goal/cli/version_sync.py
+  [32] ○ extract_function   → goal/recovery/utils/__init__.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: goal/recovery/exceptions.py
 
 QUICK_WINS[24] (low risk, high savings — do first):
-  [1] extract_function   saved=28L  → goal/utils/_ensure_python_test_dependency.py
+  [2] extract_function   saved=22L  → goal/utils/_install_python_deps_broker.py
       FILES: installer.py, project_bootstrap.py
-  [2] extract_function   saved=24L  → goal/utils/_read_openrouter_api_key.py
-      FILES: configurator.py, project_bootstrap.py
   [3] extract_function   saved=22L  → goal/utils/uninstall_hooks.py
       FILES: manager.py, manager.py, manager.py
-  [4] extract_function   saved=20L  → goal/utils/_install_python_deps_broker.py
+  [4] extract_function   saved=20L  → goal/utils/ensure_project_environment.py
       FILES: installer.py, project_bootstrap.py
   [5] extract_function   saved=20L  → goal/cli/utils/authors_list.py
       FILES: authors_cmd.py, hooks_cmd.py, postcommit_cmd.py +1
@@ -2529,72 +2619,71 @@ QUICK_WINS[24] (low risk, high savings — do first):
       FILES: discord-webhook.py, slack-webhook.py
   [7] extract_function   saved=19L  → goal/utils/_find_openrouter_api_key.py
       FILES: configurator.py, project_bootstrap.py
-  [8] extract_function   saved=18L  → goal/utils/ensure_project_environment.py
-      FILES: installer.py, project_bootstrap.py
+  [8] extract_function   saved=17L  → goal/utils/_find_python_bin.py
+      FILES: configurator.py, project_bootstrap.py
   [9] extract_function   saved=17L  → goal/utils/_should_skip_install.py
       FILES: installer.py, project_bootstrap.py
-  [10] extract_function   saved=16L  → goal/utils/_find_python_bin.py
-      FILES: configurator.py, project_bootstrap.py
+  [10] extract_function   saved=15L  → goal/cli/utils/authors.py
+      FILES: authors_cmd.py, config_cmd.py, hooks_cmd.py +3
+  [11] extract_function   saved=15L  → goal/utils/get_name.py
+      FILES: actions.py, rules.py
 
-EFFORT_ESTIMATE (total ≈ 11.9h):
-  medium _ensure_python_test_dependency      saved=28L  ~56min
-  medium _read_openrouter_api_key            saved=24L  ~48min
+EFFORT_ESTIMATE (total ≈ 13.5h):
+  hard   _ensure_python_test_dependency      saved=40L  ~120min
+  medium _install_python_deps_broker         saved=22L  ~44min
   medium uninstall_hooks                     saved=22L  ~44min
-  medium _install_python_deps_broker         saved=20L  ~40min
+  medium ensure_project_environment          saved=20L  ~40min
   medium authors_list                        saved=20L  ~40min
   medium main                                saved=19L  ~38min
   medium _find_openrouter_api_key            saved=19L  ~38min
-  medium ensure_project_environment          saved=18L  ~36min
+  medium _find_python_bin                    saved=17L  ~34min
   medium _should_skip_install                saved=17L  ~34min
-  medium _find_python_bin                    saved=16L  ~32min
-  ... +18 more (~306min)
+  medium authors                             saved=15L  ~30min
+  ... +22 more (~346min)
 
 METRICS-TARGET:
-  dup_groups:  28 → 0
-  saved_lines: 356 lines recoverable
+  dup_groups:  32 → 0
+  saved_lines: 384 lines recoverable
 ```
 
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 20145 func | 104f | 2026-04-26
+# code2llm/evolution | 899 func | 110f | 2026-06-08
+# generated in 0.00s
 
-NEXT[6] (ranked by impact):
-  [1] !! SPLIT           goal/project_bootstrap.py
-      WHY: 1313L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 18382
+NEXT[5] (ranked by impact):
+  [1] !! SPLIT           goal/push/core.py
+      WHY: 751L, 1 classes, max CC=22
+      EFFORT: ~4h  IMPACT: 16522
 
-  [2] !! SPLIT           goal/doctor/python.py
-      WHY: 625L, 1 classes, max CC=10
-      EFFORT: ~4h  IMPACT: 6250
+  [2] !! SPLIT           goal/project_bootstrap.py
+      WHY: 1125L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 15750
 
-  [3] !! SPLIT           goal/package_managers.py
-      WHY: 616L, 1 classes, max CC=5
-      EFFORT: ~4h  IMPACT: 3080
+  [3] !! SPLIT           goal/git_ops.py
+      WHY: 672L, 0 classes, max CC=11
+      EFFORT: ~4h  IMPACT: 7392
 
-  [4] !  SPLIT-FUNC      _run_subdir_test  CC=22  fan=12
+  [4] !  SPLIT-FUNC      add_slow_test_tickets_to_planfile  CC=22  fan=16
       WHY: CC=22 exceeds 15
-      EFFORT: ~1h  IMPACT: 264
+      EFFORT: ~1h  IMPACT: 352
 
-  [5] !  SPLIT-FUNC      _ensure_generic_env  CC=19  fan=12
+  [5] !  SPLIT-FUNC      output_final_summary  CC=19  fan=15
       WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 228
-
-  [6] !  SPLIT-FUNC      _update_pyproject_metadata  CC=17  fan=11
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 187
+      EFFORT: ~1h  IMPACT: 285
 
 
 RISKS[3]:
-  ⚠ Splitting goal/project_bootstrap.py may break 41 import paths
-  ⚠ Splitting goal/doctor/python.py may break 31 import paths
-  ⚠ Splitting goal/package_managers.py may break 16 import paths
+  ⚠ Splitting goal/project_bootstrap.py may break 27 import paths
+  ⚠ Splitting goal/push/core.py may break 18 import paths
+  ⚠ Splitting goal/git_ops.py may break 28 import paths
 
 METRICS-TARGET:
-  CC̄:          0.2 → ≤0.1
+  CC̄:          4.4 → ≤3.1
   max-CC:      22 → ≤11
   god-modules: 8 → 0
-  high-CC(≥15): 3 → ≤1
+  high-CC(≥15): 2 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -2622,7 +2711,7 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=0.2 → now CC̄=0.2
+  prev CC̄=4.4 → now CC̄=4.4
 ```
 
 ### Validation (`project/validation.toon.yaml`)

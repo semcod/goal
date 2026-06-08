@@ -1,4 +1,4 @@
-# goal | 964 func | 129f | 29632L | python | 2026-05-26
+# goal | 961 func | 129f | 29585L | python | 2026-06-08
 # generated in 0.00s
 
 HEALTH:
@@ -10,14 +10,14 @@ ALERTS[20]:
   !!! high_fan_out     doctor = 22 (limit:10)
   !!! high_fan_out     _install_python_deps_legacy = 20 (limit:10)
   !!  cc_exceeded      add_slow_test_tickets_to_planfile = 22 (limit:15)
-  !!  high_fan_out     _install_python_deps = 19 (limit:10)
   !!  high_fan_out     update_cost_badges = 19 (limit:10)
+  !!  high_fan_out     _install_python_deps = 19 (limit:10)
   !!  high_fan_out     fix_summary = 18 (limit:10)
   !!  high_fan_out     validate = 18 (limit:10)
   !!  high_fan_out     CodeChangeAnalyzer._analyze_python_diff = 17 (limit:10)
 
 MODULES[187] (top by size):
-  M[goal/project_bootstrap.py] 1214L C:0 F:32 CC↑14 D:9 (python)
+  M[goal/project_bootstrap.py] 1125L C:0 F:27 CC↑14 D:5 (python)
   M[goal/push/core.py] 751L C:1 F:18 CC↑22 D:3 (python)
   M[goal/git_ops.py] 672L C:0 F:28 CC↑11 D:19 (python)
   M[goal/package_managers.py] 607L C:1 F:16 CC↑5 D:1 (python)
@@ -39,18 +39,16 @@ HOTSPOTS[10]:
   ★ EnhancedSummaryGenerator.generate_enhanced_summary fan=24  // Generate complete enhanced summary with business value focus.
   ★ doctor fan=22  // Diagnose and auto-fix common project configuration issues.
   ★ _install_python_deps_legacy fan=20  // Legacy dependency installation using config-based commands.
-  ★ _install_python_deps fan=19  // Run the first matching dependency install command for a Python project.
-
-Optimiz
+  ★ update_cost_badges fan=19  // Update AI cost badges in README using costs package.
 
 REFACTOR[13]:
   [1] H/H Split god module goal/push/core.py (751L, 1 classes)
   [2] H/H Split god module goal/config/validation.py (528L, 2 classes)
   [3] H/H Split god module goal/generator/analyzer.py (563L, 2 classes)
-  [4] H/H Split god module goal/project_bootstrap.py (1214L, 0 classes)
+  [4] H/H Split god module goal/project_bootstrap.py (1125L, 0 classes)
   [5] H/H Split god module goal/summary/generator.py (589L, 1 classes)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-05-26 CC̄=4.3 crit=86 29632L // Automated analysis
+  2026-06-08 CC̄=4.3 crit=86 29585L // Automated analysis

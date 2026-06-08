@@ -449,6 +449,23 @@ def execute_push_workflow(
 
     project_types = _detect_and_bootstrap_projects(ctx_obj, dry_run, yes)
 
+    if ctx_obj.get("upgrade_deps"):
+        from goal.dependency_update import update_project_dependencies
+
+        update_results = update_project_dependencies(
+            yes=ctx_obj["yes"],
+            dry_run=dry_run,
+        )
+        if update_results and not all(result.success for result in update_results):
+            click.echo(
+                click.style(
+                    "Aborting workflow because dependency updates failed.",
+                    fg="red",
+                    bold=True,
+                )
+            )
+            sys.exit(1)
+
     # Handle TODO update via prefact
     ctx_obj["todo"] = todo
     todo_stage_ok = handle_todo_stage(ctx_obj, yes, dry_run)

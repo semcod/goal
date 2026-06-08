@@ -29,6 +29,20 @@ from goal.cli_helpers import split_paths_by_type, stage_paths, confirm, strip_an
 DOCS_URL = "https://github.com/wronai/goal#readme"
 
 
+def _has_cli_flag(args: List[str], short: str, long: str) -> bool:
+    """Detect a short or long CLI flag, including combined forms like -au."""
+    if long in args or f"-{short}" in args:
+        return True
+
+    for arg in args:
+        if arg.startswith("--"):
+            continue
+        if arg.startswith("-") and len(arg) > 1 and short in arg[1:]:
+            return True
+
+    return False
+
+
 def _goal_update_command() -> str:
     """Build a safe update command for the current runtime environment."""
     venv = os.environ.get("VIRTUAL_ENV")
@@ -208,6 +222,7 @@ def _configure_main_context(
     target_version,
     yes,
     all_flags,
+    upgrade_deps,
     no_publish,
     todo,
     markdown,
@@ -219,6 +234,7 @@ def _configure_main_context(
     ctx.obj["bump"] = bump
     ctx.obj["version"] = target_version
     ctx.obj["yes"] = yes or all_flags
+    ctx.obj["upgrade_deps"] = upgrade_deps
     ctx.obj["no_publish"] = no_publish
     ctx.obj["todo"] = todo
     ctx.obj["markdown"] = markdown
@@ -275,7 +291,7 @@ class GoalGroup(click.Group):
         # Check if -a or --all is in args without any command.
         # We must skip option *values* (e.g. 'major' in '--bump major') so
         # they are not mistaken for subcommand names.
-        has_all_flag = "-a" in args or "--all" in args
+        has_all_flag = _has_cli_flag(args, "a", "--all")
         known_cmds = set(self.list_commands(ctx) or [])
         # Options whose next token is a value (not a flag).
         _VALUE_OPTIONS = {
@@ -321,6 +337,13 @@ class GoalGroup(click.Group):
     is_flag=True,
     help="Run full workflow (tests, push, publish)",
 )
+@click.option(
+    "--upgrade-deps",
+    "-u",
+    "upgrade_deps",
+    is_flag=True,
+    help="Update project dependencies to latest available versions",
+)
 @click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
 @click.option(
     "--todo", "-t", is_flag=True, help="Create TODO.md file with detected issues"
@@ -344,6 +367,7 @@ def main(
     target_version,
     yes,
     all_flags,
+    upgrade_deps,
     no_publish,
     todo,
     markdown,
@@ -368,6 +392,7 @@ def main(
         target_version,
         yes,
         all_flags,
+        upgrade_deps,
         no_publish,
         todo,
         markdown,

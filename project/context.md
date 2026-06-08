@@ -7,16 +7,12 @@
 - **Primary Language**: python
 - **Languages**: python: 150, yaml: 13, shell: 6, toml: 4, csharp: 2
 - **Analysis Mode**: static
-- **Total Functions**: 964
+- **Total Functions**: 961
 - **Total Classes**: 79
 - **Modules**: 186
-- **Entry Points**: 617
+- **Entry Points**: 611
 
 ## Architecture by Module
-
-### goal.project_bootstrap
-- **Functions**: 32
-- **File**: `project_bootstrap.py`
 
 ### goal.git_ops
 - **Functions**: 28
@@ -26,6 +22,10 @@
 - **Functions**: 27
 - **Classes**: 2
 - **File**: `analyzer.py`
+
+### goal.project_bootstrap
+- **Functions**: 27
+- **File**: `project_bootstrap.py`
 
 ### goal.config.manager
 - **Functions**: 25
@@ -416,12 +416,6 @@ top of :class:`PythonDiagnostics
 
 Key functions that process and transform data:
 
-### goal.project_bootstrap._validate_pfix_env
-> Validate that OPENROUTER_API_KEY is configured in .env.
-
-Shows error message if key is missing or em
-- **Output to**: goal.project_bootstrap._find_openrouter_api_key, click.echo, click.echo, click.echo, click.echo
-
 ### goal.toml_validation.validate_toml_file
 > Validate a TOML file and return helpful error message if invalid.
 
@@ -532,6 +526,10 @@ This is a convenience function that extracts validation
 ### goal.push.stages.dry_run._format_markdown_dry_run
 > Return markdown-formatted dry-run output.
 - **Output to**: goal.formatter.format_push_result, detailed_result.get, goal.formatter.format_enhanced_summary, detailed_result.get, detailed_result.get
+
+### goal.cli.license_cmd.license_validate
+> Validate the LICENSE file.
+- **Output to**: license.command, LicenseManager, manager.validate_license_file, click.echo, click.echo
 
 ## Behavioral Patterns
 

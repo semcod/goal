@@ -1,15 +1,15 @@
 # code2llm call graph | /home/tom/github/semcod/goal
-# generated in 0.23s
-# nodes: 419 | edges: 500 | modules: 76
+# generated in 0.30s
+# nodes: 425 | edges: 500 | modules: 83
 # CC̄=4.3
 
 HUBS[20]:
   integration.run_matrix.print
     CC=0  in:255  out:0  total:255
-  goal.user_config.initialize_user_config
-    CC=11  in:4  out:52  total:56
   goal.cli.wizard_cmd._setup_project_config
     CC=9  in:1  out:55  total:56
+  goal.user_config.initialize_user_config
+    CC=11  in:4  out:52  total:56
   goal.git_ops.run_git
     CC=1  in:46  out:2  total:48
   goal.cli.commit_cmd.validate
@@ -24,26 +24,26 @@ HUBS[20]:
     CC=12  in:1  out:39  total:40
   goal.cli.commit_cmd.fix_summary
     CC=12  in:0  out:38  total:38
-  examples.api-usage.01_basic_api.main
-    CC=10  in:0  out:34  total:34
-  goal.cli.wizard_cmd._setup_git_repository
-    CC=10  in:1  out:33  total:34
   goal.push.core.execute_push_workflow
     CC=7  in:2  out:32  total:34
+  goal.cli.wizard_cmd._setup_git_repository
+    CC=10  in:1  out:33  total:34
+  examples.api-usage.01_basic_api.main
+    CC=10  in:0  out:34  total:34
   goal.push.core.output_final_summary
     CC=19  in:1  out:33  total:34
   goal.push.stages.todo.handle_todo_stage
     CC=14  in:1  out:32  total:33
   goal.bootstrap.installer._install_python_deps_legacy
     CC=14  in:1  out:32  total:33
-  goal.project_bootstrap._ensure_pfix_installed
-    CC=6  in:1  out:30  total:31
-  goal.project_bootstrap._install_python_deps
-    CC=12  in:1  out:29  total:30
+  goal.user_config.show_user_config
+    CC=2  in:1  out:31  total:32
   examples.api-usage.04_version_validation.main
     CC=11  in:0  out:30  total:30
   goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
     CC=10  in:0  out:29  total:29
+  goal.push.stages.test.run_test_stage
+    CC=9  in:1  out:27  total:28
 
 MODULES:
   examples.api-usage.01_basic_api  [1 funcs]
@@ -108,26 +108,36 @@ MODULES:
   examples.webhooks.slack-webhook  [2 funcs]
     main  CC=4  out:9
     send_slack_notification  CC=5  out:16
-  goal.authors.utils  [1 funcs]
+  goal.authors.manager  [2 funcs]
+    __init__  CC=2  out:2
+    import_from_git  CC=6  out:14
+  goal.authors.utils  [8 funcs]
+    add_co_authors_to_message  CC=5  out:3
+    deduplicate_co_authors  CC=4  out:5
     format_co_author_trailer  CC=1  out:0
-  goal.bootstrap.configurator  [3 funcs]
+    format_commit_message_with_co_authors  CC=3  out:1
+    get_co_authors_from_command_line  CC=3  out:4
+    parse_co_authors  CC=2  out:7
+    remove_co_authors_from_message  CC=5  out:7
+    validate_author_format  CC=3  out:8
+  goal.bootstrap.configurator  [5 funcs]
+    _find_git_root  CC=3  out:2
     _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
     _read_openrouter_api_key  CC=11  out:12
     scaffold_test_file  CC=14  out:12
-  goal.bootstrap.costs_badge  [10 funcs]
+  goal.bootstrap.costs_badge  [9 funcs]
     _calculate_ai_costs  CC=4  out:8
     _commit_blob_lower  CC=3  out:3
     _fetch_commit_diff  CC=3  out:7
     _filter_ai_commits  CC=4  out:2
     _generate_costs_badge  CC=6  out:23
-    _install_costs_package  CC=3  out:13
     _load_costs_api  CC=2  out:9
     _parsed_diff_is_usable  CC=4  out:2
     _read_model_from_pyproject  CC=3  out:4
     _single_commit_ai_cost  CC=3  out:5
-  goal.bootstrap.detector  [2 funcs]
-    _match_marker  CC=2  out:4
-    detect_project_types_deep  CC=11  out:11
+  goal.bootstrap.detector  [1 funcs]
+    guess_package_name  CC=4  out:3
   goal.bootstrap.installer  [12 funcs]
     _ensure_costs_installed  CC=3  out:8
     _ensure_generic_env  CC=6  out:9
@@ -139,10 +149,9 @@ MODULES:
     _match_marker  CC=2  out:4
     _needs_install  CC=10  out:9
     _run_dep_install  CC=4  out:14
-  goal.bootstrap.pyproject_costs_setup  [7 funcs]
+  goal.bootstrap.pyproject_costs_setup  [6 funcs]
     _add_deps_to_section_match  CC=10  out:9
     _ensure_costs_config  CC=5  out:13
-    _ensure_env_template  CC=6  out:14
     _find_dep_list_end  CC=12  out:2
     _try_add_deps  CC=4  out:4
     _try_merge_hatch_default_deps  CC=6  out:6
@@ -171,12 +180,13 @@ MODULES:
     commit  CC=8  out:27
     fix_summary  CC=12  out:38
     validate  CC=13  out:45
-  goal.cli.config_cmd  [5 funcs]
+  goal.cli.config_cmd  [6 funcs]
     config_get  CC=2  out:6
     config_set  CC=2  out:8
     config_show  CC=4  out:11
     config_update  CC=1  out:4
     config_validate  CC=3  out:8
+    setup  CC=3  out:10
   goal.cli.config_validate_cmd  [1 funcs]
     validate_cmd  CC=3  out:11
   goal.cli.doctor_cmd  [1 funcs]
@@ -227,10 +237,6 @@ MODULES:
     _has_usable_test_script  CC=7  out:4
     find_nodejs_test_dirs  CC=6  out:8
     find_python_test_dirs  CC=9  out:16
-  goal.cli.tests_pytest_setup  [3 funcs]
-    _is_uv_project  CC=1  out:1
-    _try_uv_install  CC=2  out:2
-    ensure_pytest_for_project  CC=9  out:13
   goal.cli.utils_cmd  [8 funcs]
     bootstrap  CC=4  out:11
     check_versions  CC=2  out:12
@@ -276,7 +282,9 @@ MODULES:
     display_commit_message  CC=1  out:2
     display_detailed_message  CC=1  out:2
     print_detailed_message  CC=2  out:3
-  goal.config.manager  [3 funcs]
+  goal.config.manager  [5 funcs]
+    set  CC=4  out:2
+    update_from_detection  CC=4  out:11
     ensure_config  CC=5  out:8
     init_config  CC=3  out:4
     load_config  CC=1  out:2
@@ -291,8 +299,17 @@ MODULES:
   goal.deep_analyzer_aggregate  [2 funcs]
     aggregate_changes  CC=3  out:16
     detect_relations  CC=6  out:8
-  goal.doctor.core  [1 funcs]
+  goal.doctor.core  [2 funcs]
     diagnose_and_report  CC=8  out:21
+    diagnose_project  CC=2  out:4
+  goal.doctor.logging  [1 funcs]
+    _log_issue  CC=3  out:8
+  goal.doctor.todo  [5 funcs]
+    _format_todo_entry  CC=3  out:2
+    _generate_ticket_id  CC=1  out:2
+    _read_existing_tickets  CC=4  out:8
+    add_issues_to_todo  CC=9  out:19
+    diagnose_and_report_with_todo  CC=6  out:2
   goal.formatter  [15 funcs]
     _add_optional_sections  CC=3  out:2
     _build_capabilities_content  CC=4  out:1
@@ -322,10 +339,12 @@ MODULES:
     apply_ticket_prefix  CC=6  out:5
   goal.hooks.manager  [1 funcs]
     run_validation  CC=4  out:4
-  goal.license.manager  [2 funcs]
+  goal.license.manager  [3 funcs]
     create_license_file  CC=10  out:21
     update_license_file  CC=7  out:13
-  goal.license.spdx  [3 funcs]
+    validate_license_file  CC=8  out:11
+  goal.license.spdx  [4 funcs]
+    _load_spdx_data  CC=4  out:4
     check_compatibility  CC=14  out:8
     get_license_info  CC=4  out:4
     validate_spdx_id  CC=11  out:13
@@ -340,17 +359,15 @@ MODULES:
     get_package_manager_info  CC=1  out:1
     get_package_managers_by_language  CC=3  out:1
     get_preferred_package_manager  CC=5  out:1
-  goal.project_bootstrap  [27 funcs]
-    _ensure_bootstrap_tests  CC=3  out:2
+  goal.project_bootstrap  [8 funcs]
     _ensure_costs_installed  CC=2  out:4
-    _ensure_generic_env  CC=14  out:21
-    _ensure_pfix_config  CC=4  out:9
-    _ensure_pfix_env  CC=7  out:15
-    _ensure_pfix_installed  CC=6  out:30
     _ensure_python_env  CC=6  out:22
-    _ensure_python_test_dependency  CC=5  out:15
-    _find_git_root  CC=3  out:2
     _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
+    _match_marker  CC=2  out:4
+    _read_openrouter_api_key  CC=11  out:13
+    bootstrap_project  CC=1  out:5
+    detect_project_types_deep  CC=11  out:11
   goal.push.core  [15 funcs]
     _apply_enhanced_quality_gates  CC=6  out:6
     _detect_and_bootstrap_projects  CC=7  out:7
@@ -412,18 +429,31 @@ MODULES:
     _remove_large_files  CC=6  out:17
     _skip_large_files  CC=2  out:5
     _run_git_chunked  CC=4  out:4
+  goal.smart_commit.abstraction  [1 funcs]
+    _dedupe_entities  CC=3  out:3
+  goal.summary.generator  [1 funcs]
+    detect_capabilities  CC=5  out:7
+  goal.summary.quality_filter  [3 funcs]
+    dedupe_files  CC=3  out:4
+    dedupe_relations  CC=4  out:5
+    has_banned_words  CC=4  out:5
+  goal.summary.validator  [1 funcs]
+    _validate_title  CC=10  out:21
   goal.toml_validation  [4 funcs]
     check_pyproject_toml  CC=3  out:3
     get_tomllib  CC=3  out:0
     validate_project_toml_files  CC=4  out:4
     validate_toml_file  CC=9  out:19
-  goal.user_config  [6 funcs]
+  goal.user_config  [7 funcs]
     set  CC=1  out:1
     get_git_user_email  CC=3  out:2
     get_git_user_name  CC=3  out:2
     get_user_config  CC=2  out:3
     initialize_user_config  CC=11  out:52
     prompt_for_license  CC=4  out:25
+    show_user_config  CC=2  out:31
+  goal.validation.manager  [1 funcs]
+    get_validation_context  CC=2  out:6
   goal.validators.dot_folders  [6 funcs]
     _is_dot_path  CC=3  out:3
     _is_safe_path  CC=3  out:1
