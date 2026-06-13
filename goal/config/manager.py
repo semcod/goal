@@ -85,6 +85,11 @@ class GoalConfig:
         self._loaded = True
         return self._config
 
+    def reload(self) -> Dict[str, Any]:
+        """Reload configuration from disk, discarding any in-memory cache."""
+        self._loaded = False
+        return self.load()
+
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration with auto-detected values."""
         config = DEFAULT_CONFIG.copy()

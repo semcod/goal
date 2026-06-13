@@ -71,6 +71,25 @@ def test_python_publish_command_skips_existing():
     assert "--skip-existing" in cmd
 
 
+def test_sync_updates_setup_py_version(tmp_path, monkeypatch):
+    """sync_all_versions must update setup.py because legacy builds read it."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "VERSION").write_text("4.0.0\n")
+    (tmp_path / "setup.py").write_text(
+        'from setuptools import setup\n'
+        'setup(name="tellm", version="4.0.0", packages=["tellm"])\n'
+    )
+
+    func = sync_all_versions
+    while hasattr(func, "__wrapped__"):
+        func = func.__wrapped__
+
+    updated = func("4.0.1")
+
+    assert "setup.py" in updated
+    assert 'version="4.0.1"' in (tmp_path / "setup.py").read_text()
+
+
 def test_sync_updates_uv_lock_after_pyproject_version_change(tmp_path, monkeypatch):
     """sync_all_versions refreshes uv.lock and stages it for version commits."""
     old_cwd = os.getcwd()

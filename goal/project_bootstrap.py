@@ -362,6 +362,61 @@ def _find_git_root(project_dir: Path) -> Optional[Path]:
     return None
 
 
+def refresh_test_dependencies(
+    project_types: List[str],
+    *,
+    yes: bool = True,
+    dry_run: bool = False,
+) -> None:
+    """Re-ensure test runner deps after dependency upgrades (e.g. uv sync --upgrade)."""
+    if dry_run or "python" not in project_types:
+        return
+
+    cfg = PROJECT_BOOTSTRAP.get("python", {})
+    test_dep = cfg.get("test_dep")
+    if not test_dep:
+        return
+
+    for project_dir in detect_project_types_deep().get("python", [Path.cwd()]):
+        project_dir = Path(project_dir)
+        has_uv = bool(shutil.which("uv")) and (
+            (project_dir / "uv.lock").exists() or (project_dir / "pyproject.toml").exists()
+        )
+
+        if has_uv:
+            check = subprocess.run(
+                ["uv", "run", "python", "-c", f"import {test_dep}"],
+                capture_output=True,
+                text=True,
+                cwd=str(project_dir),
+            )
+            if check.returncode == 0:
+                continue
+            click.echo(
+                click.style(
+                    f"  Reinstalling {test_dep} after dependency upgrade (uv project)",
+                    fg="cyan",
+                )
+            )
+            install = subprocess.run(
+                ["uv", "pip", "install", test_dep],
+                capture_output=True,
+                text=True,
+                cwd=str(project_dir),
+            )
+            if install.returncode != 0:
+                click.echo(
+                    click.style(
+                        f"  ⚠ Could not reinstall {test_dep} via uv pip",
+                        fg="yellow",
+                    )
+                )
+            continue
+
+        python_bin = _find_python_bin(project_dir)
+        _ensure_python_test_dependency(project_dir, python_bin, test_dep)
+
+
 def _ensure_python_test_dependency(
     project_dir: Path, python_bin: str, test_dep: Optional[str]
 ) -> bool:
@@ -1118,6 +1173,7 @@ __all__ = [
     "detect_project_types_deep",
     "guess_package_name",
     "ensure_project_environment",
+    "refresh_test_dependencies",
     "scaffold_test_file",
     "bootstrap_project",
     "bootstrap_all_projects",

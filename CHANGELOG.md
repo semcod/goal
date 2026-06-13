@@ -145,6 +145,21 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.247] - 2026-06-14
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_dependency_update.py
+- Update tests/test_publish_pattern.py
+- Update tests/test_push_e2e.py
+- Update tests/test_version_sync.py
+
+### Other
+- Update project/planfile-tickets.yaml
+
 ## [2.1.246] - 2026-06-08
 
 ### Docs

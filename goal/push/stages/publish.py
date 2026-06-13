@@ -46,7 +46,8 @@ def handle_publish(
         else:
             click.echo(
                 click.style(
-                    "⚠ Publish failed. Continuing with remaining tasks.", fg="yellow"
+                    "⚠ Publish failed. Release tag and remote push will be skipped in auto mode.",
+                    fg="yellow",
                 )
             )
         return publish_success

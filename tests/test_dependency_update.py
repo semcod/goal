@@ -30,6 +30,45 @@ def test_get_update_all_command_for_go() -> None:
     assert command == "go get -u ./..."
 
 
+def test_select_managers_uses_only_highest_priority_python_lockfile(
+    tmp_path: Path, monkeypatch
+) -> None:
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='demo'\n")
+    (tmp_path / "uv.lock").write_text("")
+    (tmp_path / "poetry.lock").write_text("")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "goal.dependency_update.get_available_package_managers",
+        lambda project_path: [
+            get_package_manager("poetry"),
+            get_package_manager("uv"),
+            get_package_manager("pip"),
+        ],
+    )
+
+    managers = _select_managers_to_update(str(tmp_path))
+    assert [pm.name for pm in managers] == ["uv"]
+
+
+def test_select_managers_uv_only_without_poetry_lock(tmp_path: Path, monkeypatch) -> None:
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='demo'\n")
+    (tmp_path / "uv.lock").write_text("")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "goal.dependency_update.get_available_package_managers",
+        lambda project_path: [
+            get_package_manager("poetry"),
+            get_package_manager("uv"),
+            get_package_manager("pip"),
+        ],
+    )
+
+    managers = _select_managers_to_update(str(tmp_path))
+    assert [pm.name for pm in managers] == ["uv"]
+
+
 def test_select_managers_prefers_lockfile_manager(tmp_path: Path, monkeypatch) -> None:
     (tmp_path / "pyproject.toml").write_text("[project]\nname='demo'\n")
     (tmp_path / "uv.lock").write_text("")
@@ -107,6 +146,73 @@ def test_has_cli_flag_detects_combined_short_options() -> None:
     assert _has_cli_flag(["-a", "-u"], "a", "--all") is True
     assert _has_cli_flag(["--all"], "a", "--all") is True
     assert _has_cli_flag(["push"], "a", "--all") is False
+
+
+def test_upgrade_deps_runs_before_bootstrap(monkeypatch) -> None:
+    """Dependency updates must run before uv sync, which can remove goal from the venv."""
+    from goal.push import core as push_core
+
+    call_order: list[str] = []
+
+    monkeypatch.setattr(
+        push_core,
+        "_detect_project_types",
+        lambda: (call_order.append("detect") or ["python"]),
+    )
+    monkeypatch.setattr(
+        push_core,
+        "_bootstrap_projects",
+        lambda project_types, dry_run, yes: call_order.append("bootstrap"),
+    )
+    monkeypatch.setattr(
+        push_core,
+        "refresh_test_dependencies",
+        lambda *args, **kwargs: call_order.append("refresh"),
+    )
+
+    import goal.dependency_update as dependency_update
+
+    monkeypatch.setattr(
+        dependency_update,
+        "update_project_dependencies",
+        lambda **kwargs: (call_order.append("upgrade") or []),
+    )
+
+    ctx_obj = {
+        "yes": True,
+        "upgrade_deps": True,
+        "no_publish": True,
+        "markdown": False,
+        "message": None,
+        "user_config": {},
+    }
+
+    with (
+        patch("goal.push.core._validate_toml_or_exit"),
+        patch("goal.push.core._initialize_context"),
+        patch("goal.push.core.handle_todo_stage", return_value=True),
+        patch("goal.push.core.get_staged_files", return_value=[]),
+        patch("goal.push.core._handle_no_files", return_value=True),
+    ):
+        push_core.execute_push_workflow(
+            ctx_obj,
+            bump="patch",
+            no_tag=True,
+            no_changelog=True,
+            no_version_sync=True,
+            message=None,
+            dry_run=True,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket=None,
+            abstraction=None,
+            todo=False,
+            no_publish=True,
+        )
+
+    assert call_order[:3] == ["detect", "upgrade", "bootstrap"]
+    assert call_order[-1] == "refresh"
 
 
 def test_au_sets_upgrade_deps_in_context() -> None:

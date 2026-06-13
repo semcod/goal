@@ -131,6 +131,32 @@ def _update_cargo_version(
                 updated.append(filename)
 
 
+def _update_setup_py_version(new_version: str, user_config, updated: List[str]) -> None:
+    """Update the distribution version in setup.py."""
+    path = Path("setup.py")
+    if not path.exists():
+        return
+
+    try:
+        content = path.read_text()
+        new_content = re.sub(
+            r"(version\s*=\s*['\"])[^'\"]+(['\"])",
+            rf"\g<1>{new_version}\g<2>",
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+        if new_content != content:
+            path.write_text(new_content)
+            updated.append("setup.py")
+
+        if user_config and update_project_metadata(path, user_config):
+            if "setup.py" not in updated:
+                updated.append("setup.py")
+    except Exception:
+        pass
+
+
 def _update_csproj_versions(new_version: str, updated: List[str]) -> None:
     """Update all .csproj files."""
     for csproj in Path(".").glob("*.csproj"):
@@ -275,6 +301,7 @@ def sync_all_versions(new_version: str, user_config=None) -> List[str]:
     _update_json_version_file("package.json", new_version, user_config, updated)
     _update_json_version_file("composer.json", new_version, user_config, updated)
     _update_toml_version("pyproject.toml", new_version, user_config, updated)
+    _update_setup_py_version(new_version, user_config, updated)
     _update_cargo_version("Cargo.toml", new_version, user_config, updated)
     _sync_dependency_locks_after_manifest_updates(updated)
     _update_csproj_versions(new_version, updated)

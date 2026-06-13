@@ -1,5 +1,8 @@
 """Publishing functions - extracted from cli.py."""
 
+import glob
+import re
+import shlex
 import subprocess
 import time
 from pathlib import Path
@@ -143,7 +146,203 @@ def _ensure_publish_deps(python_bin: str) -> bool:
     return True
 
 
-def _prepare_python_publish(strategy: dict) -> tuple:
+def _read_pyproject_package_name() -> str:
+    """Return the distribution name from pyproject.toml, if available."""
+    pyproject = Path("pyproject.toml")
+    if not pyproject.exists():
+        return ""
+
+    try:
+        content = pyproject.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+    try:
+        import tomllib
+
+        data = tomllib.loads(content)
+        return data.get("project", {}).get("name", "") or ""
+    except Exception:
+        match = re.search(r'^name\s*=\s*"([^"]+)"', content, re.MULTILINE)
+        return match.group(1) if match else ""
+
+
+def _read_setup_py_package_name() -> str:
+    """Return the distribution name from setup.py, if available."""
+    setup_py = Path("setup.py")
+    if not setup_py.exists():
+        return ""
+
+    try:
+        content = setup_py.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+    match = re.search(r"name\s*=\s*['\"]([^'\"]+)['\"]", content)
+    return match.group(1) if match else ""
+
+
+def _read_python_package_name() -> str:
+    """Return the Python distribution name from supported metadata files."""
+    return _read_pyproject_package_name() or _read_setup_py_package_name()
+
+
+def _normalized_name_candidates(package_name: str) -> list[str]:
+    if not package_name:
+        return []
+    candidates = {
+        package_name,
+        package_name.replace("-", "_"),
+        package_name.replace("_", "-"),
+    }
+    return sorted(candidates)
+
+
+def _python_artifacts_for_version(version: str, package_name: str = "") -> list[Path]:
+    """Return built Python artifacts that exactly match the requested version."""
+    dist = Path("dist")
+    if not dist.exists():
+        return []
+
+    suffixes = (".whl", ".tar.gz", ".zip")
+    if package_name:
+        patterns = [
+            f"{candidate}-{version}*"
+            for candidate in _normalized_name_candidates(package_name)
+        ]
+    else:
+        patterns = [f"*-{version}*"]
+
+    artifacts: list[Path] = []
+    for pattern in patterns:
+        for path in dist.glob(pattern):
+            if path.is_file() and path.name.endswith(suffixes):
+                artifacts.append(path)
+
+    return sorted(set(artifacts))
+
+
+def _format_artifact_args(artifacts: list[Path]) -> str:
+    return " ".join(shlex.quote(str(path)) for path in artifacts)
+
+
+def _resolve_python_publish_cmd(publish_cmd: str, version: str) -> str:
+    """Use exact built artifacts for the requested version.
+
+    This avoids uploading stale files from ``dist/*`` and fixes stale project-name
+    globs such as ``dist/oldname-{version}*`` when the current metadata produces
+    a different distribution name.
+    """
+    publish_cmd = publish_cmd.replace("{version}", version)
+    match = re.search(r"dist/[^\s'\"]+", publish_cmd)
+    if not match:
+        return publish_cmd
+
+    pattern = match.group(0)
+    project_name = _read_python_package_name()
+    artifacts = _python_artifacts_for_version(version, project_name)
+    if not artifacts:
+        artifacts = _python_artifacts_for_version(version)
+    if not artifacts:
+        return publish_cmd
+
+    corrected = _format_artifact_args(artifacts)
+    if sorted(glob.glob(pattern)) == [str(path) for path in artifacts]:
+        return publish_cmd
+
+    click.echo(
+        click.style(
+            f"  Corrected publish pattern: {pattern} -> {corrected}",
+            fg="yellow",
+        )
+    )
+    return publish_cmd.replace(pattern, corrected)
+
+
+def _run_python_build(build_cmd: str, python_bin: str) -> bool:
+    if not build_cmd:
+        return True
+
+    build_cmd = build_cmd.replace("python ", f"{python_bin} ")
+    click.echo(click.style(f"  Build command: {build_cmd}", fg="cyan"))
+    build_result = run_command_tee(build_cmd)
+    if build_result.returncode == 0:
+        return True
+
+    click.echo(
+        click.style(
+            f"  Build failed with exit code {build_result.returncode}", fg="red"
+        ),
+        err=True,
+    )
+    if build_result.stderr:
+        click.echo(
+            click.style(f"  stderr: {build_result.stderr}", fg="red"), err=True
+        )
+    if build_result.stdout:
+        click.echo(
+            click.style(f"  stdout: {build_result.stdout}", fg="yellow"),
+            err=True,
+        )
+    return False
+
+
+def _available_dist_artifacts() -> str:
+    artifacts = sorted(path.name for path in Path("dist").glob("*") if path.is_file())
+    return ", ".join(artifacts) if artifacts else "(none)"
+
+
+def _ensure_python_artifacts_for_version(
+    version: str, build_cmd: str, python_bin: str
+) -> bool:
+    package_name = _read_python_package_name()
+    if _python_artifacts_for_version(version, package_name) or _python_artifacts_for_version(version):
+        return True
+
+    click.echo(
+        click.style(
+            f"  No Python dist artifacts found for version {version}. "
+            "Re-syncing version files and rebuilding...",
+            fg="yellow",
+        )
+    )
+
+    try:
+        from goal.cli.version_sync import sync_all_versions
+
+        updated = sync_all_versions(version)
+        if updated:
+            click.echo(
+                click.style(
+                    f"  Re-synced version in: {', '.join(updated)}",
+                    fg="cyan",
+                )
+            )
+    except Exception as exc:
+        click.echo(
+            click.style(f"  Version re-sync failed: {exc}", fg="red"),
+            err=True,
+        )
+        return False
+
+    if not _run_python_build(build_cmd, python_bin):
+        return False
+
+    if _python_artifacts_for_version(version, package_name) or _python_artifacts_for_version(version):
+        return True
+
+    click.echo(
+        click.style(
+            f"  Build did not produce artifacts for version {version}. "
+            f"Available dist artifacts: {_available_dist_artifacts()}",
+            fg="red",
+        ),
+        err=True,
+    )
+    return False
+
+
+def _prepare_python_publish(strategy: dict, version: str) -> tuple:
     """Build the Python project and return (publish_cmd, ok). Returns ('', False) on failure."""
     python_bin = _get_python_bin()
     click.echo(click.style(f"  Using Python: {python_bin}", fg="cyan"))
@@ -151,27 +350,11 @@ def _prepare_python_publish(strategy: dict) -> tuple:
         return "", False
 
     build_cmd = strategy.get("build", "") or "python -m build"
-    if build_cmd:
-        build_cmd = build_cmd.replace("python ", f"{python_bin} ")
-        click.echo(click.style(f"  Build command: {build_cmd}", fg="cyan"))
-        build_result = run_command_tee(build_cmd)
-        if build_result.returncode != 0:
-            click.echo(
-                click.style(
-                    f"  Build failed with exit code {build_result.returncode}", fg="red"
-                ),
-                err=True,
-            )
-            if build_result.stderr:
-                click.echo(
-                    click.style(f"  stderr: {build_result.stderr}", fg="red"), err=True
-                )
-            if build_result.stdout:
-                click.echo(
-                    click.style(f"  stdout: {build_result.stdout}", fg="yellow"),
-                    err=True,
-                )
-            return "", False
+    if not _run_python_build(build_cmd, python_bin):
+        return "", False
+
+    if not _ensure_python_artifacts_for_version(version, build_cmd, python_bin):
+        return "", False
 
     return python_bin, True
 
@@ -297,14 +480,16 @@ def publish_project(
             continue
 
         if ptype == "python":
-            python_bin, ok = _prepare_python_publish(strategy)
+            python_bin, ok = _prepare_python_publish(strategy, version)
             if not ok:
                 success = False
                 continue
             publish_cmd = publish_cmd.replace("python ", f"{python_bin} ")
             click.echo(click.style(f"  Command: {publish_cmd}", fg="cyan"))
 
-        if "{version}" in publish_cmd:
+        if ptype == "python":
+            publish_cmd = _resolve_python_publish_cmd(publish_cmd, version)
+        elif "{version}" in publish_cmd:
             publish_cmd = publish_cmd.replace("{version}", version)
 
         if not _run_publish_command(ptype, publish_cmd):

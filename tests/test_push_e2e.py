@@ -125,9 +125,8 @@ class TestWorkflowOrder:
         with (
             patch("goal.push.core.check_pyproject_toml", return_value=None),
             patch("goal.push.core._initialize_context"),
-            patch(
-                "goal.push.core._detect_and_bootstrap_projects", return_value=["python"]
-            ),
+            patch("goal.push.core._detect_project_types", return_value=["python"]),
+            patch("goal.push.core._bootstrap_projects"),
             patch("goal.push.core.run_git"),
             patch("goal.push.core.get_staged_files", return_value=["test.txt"]),
             patch("goal.push.core._validate_staged_files"),
@@ -167,6 +166,63 @@ class TestWorkflowOrder:
         assert call_order == ["commit", "publish", "tag", "push"], (
             f"Expected [commit, publish, tag, push] but got {call_order}"
         )
+
+    def test_auto_publish_failure_aborts_before_tag_and_push(self):
+        """--all must not tag or push a release when publishing failed."""
+        from goal.push.core import execute_push_workflow
+
+        ctx_obj = {
+            "yes": True,
+            "markdown": False,
+            "config": {},
+            "user_config": {},
+        }
+
+        with (
+            patch("goal.push.core.check_pyproject_toml", return_value=None),
+            patch("goal.push.core._initialize_context"),
+            patch("goal.push.core._detect_project_types", return_value=["python"]),
+            patch("goal.push.core._bootstrap_projects"),
+            patch("goal.push.core.run_git"),
+            patch("goal.push.core.get_staged_files", return_value=["test.txt"]),
+            patch("goal.push.core._validate_staged_files"),
+            patch("goal.push.core.get_diff_content", return_value="diff"),
+            patch("goal.push.core.get_diff_stats", return_value={"test.txt": (1, 0)}),
+            patch(
+                "goal.push.core.get_commit_message",
+                return_value=("feat: test", None, {}),
+            ),
+            patch("goal.push.core.get_version_info", return_value=("4.0.0", "4.0.1")),
+            patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
+            patch("goal.push.core._handle_commit_phase"),
+            patch("goal.push.core.handle_publish", return_value=False),
+            patch("goal.push.core.create_tag") as mock_create_tag,
+            patch("goal.push.core.push_to_remote") as mock_push,
+            patch("goal.push.core.handle_todo_stage"),
+            patch("goal.push.core.output_final_summary") as mock_summary,
+        ):
+            with pytest.raises(SystemExit) as exc:
+                execute_push_workflow(
+                    ctx_obj=ctx_obj,
+                    bump="patch",
+                    no_tag=False,
+                    no_changelog=False,
+                    no_version_sync=False,
+                    no_publish=False,
+                    message=None,
+                    dry_run=False,
+                    yes=True,
+                    markdown=False,
+                    split=False,
+                    ticket=None,
+                    abstraction=None,
+                    todo=False,
+                )
+
+        assert exc.value.code == 1
+        mock_create_tag.assert_not_called()
+        mock_push.assert_not_called()
+        assert mock_summary.call_args.kwargs["publish_required"] is True
 
 
 class TestPushWorkflowImports:
@@ -418,9 +474,8 @@ class TestPushWorkflowE2E:
         with (
             patch("goal.push.core.check_pyproject_toml", return_value=None),
             patch("goal.push.core._initialize_context"),
-            patch(
-                "goal.push.core._detect_and_bootstrap_projects", return_value=["python"]
-            ),
+            patch("goal.push.core._detect_project_types", return_value=["python"]),
+            patch("goal.push.core._bootstrap_projects"),
             patch("goal.push.core.run_git"),
             patch("goal.push.core.get_staged_files", return_value=["test.txt"]),
             patch("goal.push.core._validate_staged_files"),

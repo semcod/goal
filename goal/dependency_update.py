@@ -84,6 +84,7 @@ def _select_managers_to_update(project_path: str) -> List[PackageManager]:
     }
     selected: List[PackageManager] = []
     seen_names: set[str] = set()
+    seen_languages: set[str] = set()
 
     for lockfile, manager_name in _LOCKFILE_MANAGERS:
         if not (project_root / lockfile).exists():
@@ -91,19 +92,34 @@ def _select_managers_to_update(project_path: str) -> List[PackageManager]:
         pm = available.get(manager_name) or get_package_manager(manager_name)
         if not pm or pm.name in seen_names:
             continue
+        if pm.language in seen_languages:
+            continue
         if get_update_all_command(pm, project_root) is None:
             continue
         selected.append(pm)
         seen_names.add(pm.name)
+        seen_languages.add(pm.language)
 
     if selected:
         return selected
+
+    # uv.lock without poetry.lock — do not fall back to poetry/pip.
+    if (project_root / "uv.lock").exists():
+        uv_pm = available.get("uv") or get_package_manager("uv")
+        if uv_pm and get_update_all_command(uv_pm, project_root):
+            return [uv_pm]
 
     by_language: dict[str, PackageManager] = {}
     for pm in sorted(available.values(), key=lambda item: item.priority, reverse=True):
         if pm.language in by_language:
             continue
         if get_update_all_command(pm, project_root) is None:
+            continue
+        lockfile = next(
+            (lf for lf, name in _LOCKFILE_MANAGERS if name == pm.name),
+            None,
+        )
+        if lockfile and not (project_root / lockfile).exists():
             continue
         by_language[pm.language] = pm
 

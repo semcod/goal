@@ -7,7 +7,11 @@ from typing import Dict, List, Any, Optional
 import click
 
 from goal.git_ops import run_git, get_staged_files, get_diff_content, get_diff_stats
-from goal.project_bootstrap import detect_project_types_deep, bootstrap_project
+from goal.project_bootstrap import (
+    detect_project_types_deep,
+    bootstrap_project,
+    refresh_test_dependencies,
+)
 from goal.toml_validation import check_pyproject_toml
 from goal.push.stages import (
     get_commit_message,
@@ -193,6 +197,7 @@ def output_final_summary(
     test_exit_code: int,
     publish_success: bool,
     no_tag: bool,
+    publish_required: bool = False,
 ) -> None:
     """Output final summary in YAML or markdown format."""
     import yaml
@@ -217,10 +222,13 @@ def output_final_summary(
             if duration >= 0.5:
                 needs_improvement.append(formatted_test)
 
+        workflow_success = test_exit_code == 0 and (
+            publish_success or not publish_required
+        )
         yaml_report = {
             "goal_summary": {
                 "timestamp": datetime.now().isoformat(),
-                "status": "SUCCESS" if test_exit_code == 0 else "FAILED",
+                "status": "SUCCESS" if workflow_success else "FAILED",
                 "version_update": {
                     "from": current_version,
                     "to": new_version
@@ -239,6 +247,13 @@ def output_final_summary(
                 },
                 "planfile_updates": {
                     "tickets_added": added_tickets
+                },
+                "publish": {
+                    "status": "passed"
+                    if publish_success
+                    else "failed"
+                    if publish_required
+                    else "skipped"
                 }
             }
         }
@@ -252,7 +267,10 @@ def output_final_summary(
 
     from goal.formatter import format_push_result
 
-    success_emoji = "🎉" if test_exit_code == 0 and publish_success else "✅"
+    workflow_success = test_exit_code == 0 and (
+        publish_success or not publish_required
+    )
+    success_emoji = "🎉" if workflow_success else "⚠"
     click.echo(
         click.style(
             f"\n{success_emoji} Process completed successfully!", fg="green", bold=True
@@ -271,8 +289,10 @@ def output_final_summary(
     ]
     if publish_success:
         actions.append(f"Published version {new_version}")
+    elif publish_required:
+        actions.append("Publish failed")
     else:
-        actions.append("Publish failed or skipped")
+        actions.append("Publish skipped")
 
     md_output = format_push_result(
         project_types=project_types,
@@ -447,8 +467,10 @@ def execute_push_workflow(
     yes = ctx_obj["yes"]
     no_publish = no_publish or ctx_obj.get("no_publish", False)
 
-    project_types = _detect_and_bootstrap_projects(ctx_obj, dry_run, yes)
+    project_types = _detect_project_types()
 
+    # Run dependency updates before bootstrap: uv sync removes packages (like goal)
+    # that are not listed in the project lockfile.
     if ctx_obj.get("upgrade_deps"):
         from goal.dependency_update import update_project_dependencies
 
@@ -465,6 +487,11 @@ def execute_push_workflow(
                 )
             )
             sys.exit(1)
+
+    _bootstrap_projects(project_types, dry_run, yes)
+
+    if ctx_obj.get("upgrade_deps"):
+        refresh_test_dependencies(project_types, yes=yes, dry_run=dry_run)
 
     # Handle TODO update via prefact
     ctx_obj["todo"] = todo
@@ -563,13 +590,39 @@ def execute_push_workflow(
         no_changelog,
     )
 
+    publish_config = ctx_obj.get("config")
+    if hasattr(publish_config, "reload"):
+        publish_config.reload()
+
     publish_success = handle_publish(
         project_types,
         new_version,
         ctx_obj["yes"],
         no_publish=no_publish,
-        config=ctx_obj.get("config"),
+        config=publish_config,
     )
+
+    publish_required = ctx_obj["yes"] and not no_publish
+    if publish_required and not publish_success:
+        elapsed = time.time() - start_time
+        ctx_obj["_elapsed_time"] = elapsed
+        output_final_summary(
+            ctx_obj,
+            markdown,
+            project_types,
+            files,
+            stats,
+            current_version,
+            new_version,
+            commit_msg,
+            commit_body,
+            test_exit_code,
+            publish_success,
+            no_tag,
+            publish_required=publish_required,
+        )
+        click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
+        sys.exit(1)
 
     tag_name = create_tag(new_version, no_tag)
 
@@ -594,6 +647,7 @@ def execute_push_workflow(
         test_exit_code,
         publish_success,
         no_tag,
+        publish_required=publish_required,
     )
 
     click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
@@ -615,26 +669,35 @@ def _initialize_context(
     ctx_obj["markdown"] = markdown or ctx_obj.get("markdown", False)
 
 
+def _detect_project_types() -> List[str]:
+    """Detect project types without bootstrapping environments."""
+    from goal.cli.version import detect_project_types
+
+    project_types = detect_project_types()
+    if project_types:
+        click.echo(
+            f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}"
+        )
+    return project_types
+
+
+def _bootstrap_projects(project_types: List[str], dry_run: bool, yes: bool) -> None:
+    """Bootstrap project environments (venv, deps, tests)."""
+    if dry_run or not project_types:
+        return
+
+    deep_detected = detect_project_types_deep()
+    for ptype, dirs in deep_detected.items():
+        for pdir in dirs:
+            bootstrap_project(pdir, ptype, yes=yes)
+
+
 def _detect_and_bootstrap_projects(
     ctx_obj: Dict[str, Any], dry_run: bool, yes: bool
 ) -> List[str]:
     """Detect project types and bootstrap environments."""
-    # Detect project types (lazy import to avoid circular dependency)
-    from goal.cli.version import detect_project_types
-
-    project_types = detect_project_types()
-    if project_types and not dry_run:
-        click.echo(
-            f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}"
-        )
-
-    # Bootstrap project environments
-    if not dry_run and project_types:
-        deep_detected = detect_project_types_deep()
-        for ptype, dirs in deep_detected.items():
-            for pdir in dirs:
-                bootstrap_project(pdir, ptype, yes=yes)
-
+    project_types = _detect_project_types()
+    _bootstrap_projects(project_types, dry_run, yes)
     return project_types
 
 

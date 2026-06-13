@@ -64,6 +64,21 @@ def _resolve_project_python(project_root: Optional[Path], fallback_python: str) 
         return fallback_python
 
 
+def _rewrite_bash_pytest_for_uv(test_cmd_str: str, has_uv: bool) -> Optional[str]:
+    """Rewrite bash-wrapped venv pytest commands to uv run for uv-managed projects."""
+    if not has_uv or "-m pytest" not in test_cmd_str:
+        return None
+
+    import re
+
+    match = re.search(r"-m\s+pytest(?:\s+(.+?))?(?:'|\"|$)", test_cmd_str)
+    if not match:
+        return None
+
+    args = (match.group(1) or "").strip().strip("'\"")
+    return f"uv run pytest {args}".strip()
+
+
 def _coerce_python_strategy_to_project_pytest(
     test_cmd_str: str, python_bin: str
 ) -> Optional[List[str]]:
@@ -273,6 +288,9 @@ def _build_python_test_command(
                 if coerced_cmd[0] == python_bin and coerced_cmd[1:3] == ["-m", "pytest"]:
                     coerced_cmd = ["uv", "run", "pytest"] + coerced_cmd[3:]
             return coerced_cmd, use_subprocess, python_bin
+        uv_cmd = _rewrite_bash_pytest_for_uv(test_cmd_str, has_uv)
+        if uv_cmd:
+            return uv_cmd.split(), False, python_bin
         return test_cmd_str.split(), False, python_bin
 
     # Default command

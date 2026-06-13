@@ -120,6 +120,14 @@ def test_run_tests_uses_configured_python_strategy_and_skips_subdir_scan():
     assert check_cmd[0] == run_cmd[0]
 
 
+def test_rewrite_bash_pytest_for_uv_converts_goal_yaml_style_command():
+    from goal.cli.tests import _rewrite_bash_pytest_for_uv
+
+    cmd = "bash -lc './.venv/bin/python -m pytest tests/ -v'"
+    assert _rewrite_bash_pytest_for_uv(cmd, has_uv=True) == "uv run pytest tests/ -v"
+    assert _rewrite_bash_pytest_for_uv(cmd, has_uv=False) is None
+
+
 def test_get_test_execution_details_and_planfile_update(tmp_path, monkeypatch):
     import yaml
     from goal.cli.tests import get_test_execution_details
