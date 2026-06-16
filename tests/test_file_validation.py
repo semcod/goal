@@ -181,6 +181,17 @@ def test_false_positive_prevention():
         os.unlink(env_file)
 
 
+def test_symlink_to_directory_is_skipped(tmp_path) -> None:
+    target_dir = tmp_path / "urisysedge"
+    target_dir.mkdir()
+    (target_dir / "runtime.py").write_text("def run():\n    return 1\n")
+    link = tmp_path / "packages" / "urisysedge"
+    link.parent.mkdir()
+    link.symlink_to(target_dir)
+
+    validate_files([str(link)], detect_tokens=True, auto_handle_large=False)
+
+
 def test_config_integration():
     """Test integration with GoalConfig."""
     print("\nTesting config integration...")

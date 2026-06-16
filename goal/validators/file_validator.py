@@ -73,7 +73,7 @@ def _check_file_for_tokens(file_path: str, token_patterns: List[str]) -> None:
             content = f.read()
         for token_type, line_num in detect_tokens_in_content(content, token_patterns):
             raise TokenDetectedError(file_path, token_type, line_num)
-    except (UnicodeDecodeError, PermissionError):
+    except (UnicodeDecodeError, PermissionError, IsADirectoryError, OSError):
         pass
 
 
@@ -134,6 +134,8 @@ def validate_files(
         if _is_excluded(file_path, exclude_patterns):
             continue
         if not os.path.exists(file_path):
+            continue
+        if not os.path.isfile(file_path):
             continue
 
         size_mb = get_file_size_mb(file_path)

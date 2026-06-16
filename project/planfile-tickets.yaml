@@ -6240,5 +6240,21 @@ tickets:
   files:
   - tests/test_cli_options.py
   dedupe_key: test-optimization:tests.test_cli_options:test_push_help_includes_markdown_ascii_split_ticket
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_project_doctor.TestDoctorCommand.test_doctor_help'
+  description: 'Test `tests.test_project_doctor.TestDoctorCommand.test_doctor_help`
+    took 0.73s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_project_doctor.py
+  dedupe_key: test-optimization:tests.test_project_doctor.TestDoctorCommand:test_doctor_help
 applied: []
 skipped: []
