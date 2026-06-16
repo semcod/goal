@@ -121,6 +121,10 @@ def test_false_positive_prevention():
         # Long lowercase parameter names should NOT trigger
         ("param_test.txt", "enable_image_optimization=enable_image_optimization"),
         ("param_test2.txt", "some_long_parameter_name=another_long_value"),
+        (
+            "env_session.txt",
+            "URISYS_NIGHTLY_SESSIONS=urisys-node-docker-gui bash scripts/run-lab-nightly.sh",
+        ),
         # Regular assignment to lowercase var should NOT trigger
         ("var_test.txt", "my_variable=some_value_here"),
         # Documentation examples with "Token" should NOT trigger (has spaces)

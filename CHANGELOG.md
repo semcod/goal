@@ -145,6 +145,30 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.248] - 2026-06-16
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_file_validation.py
+- Update tests/test_token_validator_patterns.py
+
+### Other
+- Update .gitignore
+- Update nlp2uri.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- ... and 9 more files
+
 ## [2.1.247] - 2026-06-14
 
 ### Docs

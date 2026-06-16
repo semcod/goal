@@ -1,12 +1,12 @@
-# redup/duplication | 32 groups | 144f 24888L | 2026-06-08
+# redup/duplication | 32 groups | 145f 25503L | 2026-06-13
 
 SUMMARY:
-  files_scanned: 144
-  total_lines:   24888
+  files_scanned: 145
+  total_lines:   25503
   dup_groups:    32
   dup_fragments: 82
   saved_lines:   384
-  scan_ms:       4737
+  scan_ms:       2824
 
 HOTSPOTS[7] (files with most duplication):
   goal/project_bootstrap.py  dup=148L  groups=8  frags=8  (0.6%)
@@ -20,17 +20,17 @@ HOTSPOTS[7] (files with most duplication):
 DUPLICATES[32] (ranked by impact):
   [c63c6249e55cb28f] ! EXAC  _ensure_python_test_dependency  L=40 N=2 saved=40 sim=1.00
       goal/bootstrap/installer.py:164-203  (_ensure_python_test_dependency)
-      goal/project_bootstrap.py:365-404  (_ensure_python_test_dependency)
+      goal/project_bootstrap.py:420-459  (_ensure_python_test_dependency)
   [fa0b74b14de61573]   EXAC  _install_python_deps_broker  L=22 N=2 saved=22 sim=1.00
       goal/bootstrap/installer.py:140-161  (_install_python_deps_broker)
-      goal/project_bootstrap.py:550-571  (_install_python_deps_broker)
+      goal/project_bootstrap.py:605-626  (_install_python_deps_broker)
   [92a676278db9e76e]   STRU  uninstall_hooks  L=11 N=3 saved=22 sim=1.00
       goal/hooks/manager.py:289-299  (uninstall_hooks)
       goal/postcommit/manager.py:201-211  (run_post_commit_actions)
       goal/validation/manager.py:197-207  (run_custom_validations)
   [632e6e2ec1a0e267]   STRU  ensure_project_environment  L=20 N=2 saved=20 sim=1.00
       goal/bootstrap/installer.py:372-391  (ensure_project_environment)
-      goal/project_bootstrap.py:631-650  (ensure_project_environment)
+      goal/project_bootstrap.py:686-705  (ensure_project_environment)
   [0269aa7743a3214a]   STRU  authors_list  L=4 N=6 saved=20 sim=1.00
       goal/cli/authors_cmd.py:40-43  (authors_list)
       goal/cli/authors_cmd.py:77-80  (authors_import)
@@ -49,7 +49,7 @@ DUPLICATES[32] (ranked by impact):
       goal/project_bootstrap.py:288-304  (_find_python_bin)
   [ee9bc07d711dabc5]   EXAC  _should_skip_install  L=17 N=2 saved=17 sim=1.00
       goal/bootstrap/installer.py:22-38  (_should_skip_install)
-      goal/project_bootstrap.py:461-477  (_should_skip_install)
+      goal/project_bootstrap.py:516-532  (_should_skip_install)
   [90e6c0a8cb78d015]   STRU  authors  L=3 N=6 saved=15 sim=1.00
       goal/cli/authors_cmd.py:34-36  (authors)
       goal/cli/config_cmd.py:11-13  (config)
@@ -127,8 +127,8 @@ DUPLICATES[32] (ranked by impact):
       goal/postcommit/actions.py:35-37  (validate_config)
       goal/validation/rules.py:34-36  (validate_config)
   [41defae02867c5b3]   STRU  _sync_uv_lock  L=3 N=2 saved=3 sim=1.00
-      goal/cli/version_sync.py:228-230  (_sync_uv_lock)
-      goal/cli/version_sync.py:233-235  (_sync_dependency_locks_after_manifest_updates)
+      goal/cli/version_sync.py:254-256  (_sync_uv_lock)
+      goal/cli/version_sync.py:259-261  (_sync_dependency_locks_after_manifest_updates)
   [5ea2c6da8fc2aeed]   STRU  __init__  L=3 N=2 saved=3 sim=1.00
       goal/recovery/exceptions.py:17-19  (__init__)
       goal/recovery/exceptions.py:55-57  (__init__)

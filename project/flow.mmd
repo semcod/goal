@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.03s
+%% generated in 0.02s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
@@ -11,16 +11,16 @@ flowchart TD
         goal__cli_helpers__split_paths_by_type["split_paths_by_type"]
         goal__cli_helpers__stage_paths["stage_paths"]
         goal__cli_helpers__confirm["confirm"]
-        goal__cli__version_sync___update_version_file["_update_version_file"]
-        goal__cli__version_sync___update_json_version_file["_update_json_version_file"]
-        goal__cli__version_sync___update_toml_version["_update_toml_version"]
-        goal__cli__version_sync___update_cargo_version["_update_cargo_version"]
-        goal__cli__version_sync___update_csproj_versions["_update_csproj_versions"]
-        goal__cli__version_sync___update_pom_xml["_update_pom_xml"]
-        goal__cli__version_sync___update_readme_metadata["_update_readme_metadata"]
-        goal__cli__version_sync___warn_lock_refresh["_warn_lock_refresh"]
-        goal__cli__version_sync___snapshot_paths["_snapshot_paths"]
-        ...["+147 more"]
+        goal__cli__recover_cmd__recover["recover"]
+        goal__cli__recover_cmd___get_error_output["_get_error_output"]
+        goal__cli__license_cmd__license["license"]
+        goal__cli__license_cmd__license_create["license_create"]
+        goal__cli__license_cmd__license_update["license_update"]
+        goal__cli__license_cmd__license_validate["license_validate"]
+        goal__cli__license_cmd__license_info["license_info"]
+        goal__cli__license_cmd__license_check["license_check"]
+        goal__cli__license_cmd__license_list["license_list"]
+        ...["+160 more"]
     end
 
     subgraph Core
@@ -39,7 +39,7 @@ flowchart TD
         goal__commit_generator__is_detailed_output_requested["is_detailed_output_requested"]
         goal__commit_generator__display_commit_message["display_commit_message"]
         goal__commit_generator__display_detailed_message["display_detailed_message"]
-        ...["+445 more"]
+        ...["+446 more"]
     end
 
     subgraph Exporters

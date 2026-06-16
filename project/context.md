@@ -5,11 +5,11 @@
 
 - **Project**: /home/tom/github/semcod/goal
 - **Primary Language**: python
-- **Languages**: python: 150, yaml: 13, shell: 6, toml: 4, csharp: 2
+- **Languages**: python: 151, yaml: 13, shell: 6, toml: 4, csharp: 2
 - **Analysis Mode**: static
-- **Total Functions**: 961
-- **Total Classes**: 79
-- **Modules**: 186
+- **Total Functions**: 983
+- **Total Classes**: 80
+- **Modules**: 187
 - **Entry Points**: 611
 
 ## Architecture by Module
@@ -18,17 +18,17 @@
 - **Functions**: 28
 - **File**: `git_ops.py`
 
+### goal.project_bootstrap
+- **Functions**: 28
+- **File**: `project_bootstrap.py`
+
 ### goal.generator.analyzer
 - **Functions**: 27
 - **Classes**: 2
 - **File**: `analyzer.py`
 
-### goal.project_bootstrap
-- **Functions**: 27
-- **File**: `project_bootstrap.py`
-
 ### goal.config.manager
-- **Functions**: 25
+- **Functions**: 26
 - **Classes**: 1
 - **File**: `manager.py`
 
@@ -51,15 +51,19 @@
 - **Functions**: 23
 - **File**: `version_utils.py`
 
+### goal.push.core
+- **Functions**: 20
+- **Classes**: 1
+- **File**: `core.py`
+
 ### goal.validation.rules
 - **Functions**: 19
 - **Classes**: 6
 - **File**: `rules.py`
 
-### goal.push.core
-- **Functions**: 18
-- **Classes**: 1
-- **File**: `core.py`
+### goal.cli.publish
+- **Functions**: 19
+- **File**: `publish.py`
 
 ### goal.summary.quality_filter
 - **Functions**: 18
@@ -71,18 +75,18 @@
 - **Classes**: 1
 - **File**: `python_diag_extended.py`
 
+### goal.package_managers
+- **Functions**: 18
+- **Classes**: 1
+- **File**: `package_managers.py`
+
+### goal.cli.tests
+- **Functions**: 18
+- **File**: `tests.py`
+
 ### goal.push.stages.push_remote
 - **Functions**: 17
 - **File**: `push_remote.py`
-
-### goal.cli.tests
-- **Functions**: 17
-- **File**: `tests.py`
-
-### goal.package_managers
-- **Functions**: 16
-- **Classes**: 1
-- **File**: `package_managers.py`
 
 ### goal.deep_analyzer_aggregate
 - **Functions**: 16
@@ -94,18 +98,13 @@
 - **Classes**: 5
 - **File**: `actions.py`
 
+### goal.cli.version_sync
+- **Functions**: 16
+- **File**: `version_sync.py`
+
 ### goal.version_validation
 - **Functions**: 15
 - **File**: `version_validation.py`
-
-### goal.cli.version_sync
-- **Functions**: 15
-- **File**: `version_sync.py`
-
-### goal.config.validation
-- **Functions**: 15
-- **Classes**: 2
-- **File**: `validation.py`
 
 ## Key Entry Points
 
@@ -322,8 +321,8 @@ commit [goal.cli.commit_cmd]
 
 ### goal.config.manager.GoalConfig
 > Manages goal.yaml configuration file.
-- **Methods**: 22
-- **Key Methods**: goal.config.manager.GoalConfig.__init__, goal.config.manager.GoalConfig._find_config, goal.config.manager.GoalConfig._find_git_root, goal.config.manager.GoalConfig.exists, goal.config.manager.GoalConfig.load, goal.config.manager.GoalConfig._get_default_config, goal.config.manager.GoalConfig._deep_copy, goal.config.manager.GoalConfig._merge_configs, goal.config.manager.GoalConfig._detect_project_name, goal.config.manager.GoalConfig._detect_project_types
+- **Methods**: 23
+- **Key Methods**: goal.config.manager.GoalConfig.__init__, goal.config.manager.GoalConfig._find_config, goal.config.manager.GoalConfig._find_git_root, goal.config.manager.GoalConfig.exists, goal.config.manager.GoalConfig.load, goal.config.manager.GoalConfig.reload, goal.config.manager.GoalConfig._get_default_config, goal.config.manager.GoalConfig._deep_copy, goal.config.manager.GoalConfig._merge_configs, goal.config.manager.GoalConfig._detect_project_name
 
 ### goal.generator.analyzer.ChangeAnalyzer
 > Analyze git changes to classify type, detect scope, and extract functions.
@@ -452,14 +451,6 @@ Returns:
 > Format validation results for display.
 - **Output to**: results.items, messages.append, messages.append, messages.append, messages.append
 
-### goal.package_managers.format_package_manager_command
-> Format a package manager command with the given parameters.
-
-Args:
-    pm: Package manager instance
-
-- **Output to**: getattr, ValueError, command_template.format, ValueError
-
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._format_entity_names
 
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._format_relations
@@ -515,14 +506,6 @@ Args:
 This is a convenience function that extracts validation 
 - **Output to**: goal.git_ops.get_staged_files, goal.validators.file_validator._get_deleted_staged_files, goal.validators.dot_folders.manage_dot_folders, goal.git_ops.get_staged_files, goal.validators.file_validator.validate_files
 
-### goal.push.core._validate_toml_or_exit
-> Abort the workflow when ``pyproject.toml`` has a syntax error (skipped on dry-run).
-- **Output to**: goal.toml_validation.check_pyproject_toml, click.echo, click.echo, sys.exit, click.style
-
-### goal.push.core._validate_staged_files
-> Validate staged files for security issues.
-- **Output to**: goal.validators.file_validator.validate_staged_files, click.echo, ctx_obj.get, click.echo, click.echo
-
 ### goal.push.stages.dry_run._format_markdown_dry_run
 > Return markdown-formatted dry-run output.
 - **Output to**: goal.formatter.format_push_result, detailed_result.get, goal.formatter.format_enhanced_summary, detailed_result.get, detailed_result.get
@@ -530,6 +513,20 @@ This is a convenience function that extracts validation
 ### goal.cli.license_cmd.license_validate
 > Validate the LICENSE file.
 - **Output to**: license.command, LicenseManager, manager.validate_license_file, click.echo, click.echo
+
+### goal.cli.config_validate_cmd.validate_cmd
+> Validate goal.yaml configuration file.
+
+Checks that the configuration file is valid, complete, and f
+- **Output to**: click.command, click.option, click.option, click.option, click.echo
+
+### goal.cli.commit_cmd.validate
+> Validate commit summary against quality gates.
+- **Output to**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats
+
+### goal.cli.postcommit_cmd.postcommit_validate
+> Validate post-commit action configuration.
+- **Output to**: postcommit.command, PostCommitManager, click.echo, click.echo, manager.validate_actions
 
 ## Behavioral Patterns
 
@@ -543,6 +540,7 @@ This is a convenience function that extracts validation
 Functions exposed as public API (no underscore prefix):
 
 - `goal.user_config.initialize_user_config` - 52 calls
+- `goal.push.core.execute_push_workflow` - 48 calls
 - `goal.cli.commit_cmd.validate` - 45 calls
 - `goal.cli.doctor_cmd.doctor` - 40 calls
 - `goal.recovery.large_file.LargeFileStrategy.recover` - 38 calls
@@ -550,17 +548,17 @@ Functions exposed as public API (no underscore prefix):
 - `goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary` - 36 calls
 - `examples.api-usage.01_basic_api.main` - 34 calls
 - `goal.cli.wizard_cmd.wizard` - 34 calls
-- `goal.push.core.output_final_summary` - 33 calls
-- `goal.push.core.execute_push_workflow` - 32 calls
+- `goal.push.core.output_final_summary` - 34 calls
 - `goal.push.stages.todo.handle_todo_stage` - 32 calls
 - `goal.user_config.show_user_config` - 31 calls
 - `examples.api-usage.04_version_validation.main` - 30 calls
 - `goal.push.stages.test.run_test_stage` - 27 calls
 - `goal.cli.commit_cmd.commit` - 27 calls
 - `goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin.generate_functional_body` - 27 calls
+- `goal.dependency_update.update_project_dependencies` - 27 calls
 - `examples.testing.04_debugging_diagnostics.test_performance_timing` - 26 calls
-- `goal.push.core.add_slow_test_tickets_to_planfile` - 26 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.calculate_quality_metrics` - 26 calls
+- `goal.push.core.add_slow_test_tickets_to_planfile` - 26 calls
 - `goal.user_config.prompt_for_license` - 25 calls
 - `goal.recovery.divergent.DivergentHistoryStrategy.recover` - 25 calls
 - `goal.push.stages.costs.update_cost_badges` - 25 calls
@@ -575,13 +573,12 @@ Functions exposed as public API (no underscore prefix):
 - `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
 - `examples.testing.04_debugging_diagnostics.create_debug_report` - 22 calls
 - `goal.recovery.auth.AuthErrorStrategy.recover` - 22 calls
-- `goal.push.core.show_workflow_preview` - 22 calls
 - `goal.push.stages.commit.handle_split_commits` - 22 calls
 - `goal.config.validation.validate_config_interactive` - 22 calls
+- `goal.push.core.show_workflow_preview` - 22 calls
+- `goal.cli.publish.publish_project` - 22 calls
 - `examples.testing.04_debugging_diagnostics.test_debug_output_capture` - 21 calls
 - `goal.formatter.format_push_result` - 21 calls
-- `goal.push.stages.commit.get_commit_message` - 21 calls
-- `goal.cli.license_cmd.license_create` - 21 calls
 
 ## System Interactions
 

@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.03s
+%% generated in 0.02s
     examples__api_usage["examples.api-usage<br/>11 funcs"]
     examples__custom_hooks["examples.custom-hooks<br/>14 funcs"]
     examples__template_generator["examples.template-generator<br/>2 funcs"]
@@ -8,21 +8,22 @@ flowchart TD
     examples__webhooks["examples.webhooks<br/>4 funcs"]
     goal__authors["goal.authors<br/>21 funcs"]
     goal__bootstrap["goal.bootstrap<br/>43 funcs"]
-    goal__cli["goal.cli<br/>158 funcs"]
+    goal__cli["goal.cli<br/>171 funcs"]
     goal__cli_helpers["goal.cli_helpers<br/>4 funcs"]
     goal__commit_generator["goal.commit_generator<br/>4 funcs"]
-    goal__config["goal.config<br/>40 funcs"]
+    goal__config["goal.config<br/>41 funcs"]
     goal__deep_analyzer["goal.deep_analyzer<br/>11 funcs"]
     goal__deep_analyzer_aggregate["goal.deep_analyzer_aggregate<br/>16 funcs"]
+    goal__dependency_update["goal.dependency_update<br/>3 funcs"]
     goal__doctor["goal.doctor<br/>47 funcs"]
     goal__formatter["goal.formatter<br/>23 funcs"]
     goal__generator["goal.generator<br/>58 funcs"]
     goal__git_ops["goal.git_ops<br/>28 funcs"]
     goal__hooks["goal.hooks<br/>16 funcs"]
     goal__license["goal.license<br/>19 funcs"]
-    goal__package_managers["goal.package_managers<br/>16 funcs"]
-    goal__project_bootstrap["goal.project_bootstrap<br/>27 funcs"]
-    goal__push["goal.push<br/>62 funcs"]
+    goal__package_managers["goal.package_managers<br/>18 funcs"]
+    goal__project_bootstrap["goal.project_bootstrap<br/>28 funcs"]
+    goal__push["goal.push<br/>64 funcs"]
     goal__recovery["goal.recovery<br/>54 funcs"]
     goal__smart_commit["goal.smart_commit<br/>36 funcs"]
     goal__summary["goal.summary<br/>71 funcs"]
@@ -38,7 +39,7 @@ flowchart TD
     goal__push ==>|32| goal__git_ops
     examples__validation ==>|20| integration__run_matrix
     goal__cli ==>|19| goal__git_ops
-    goal__cli ==>|16| goal__user_config
+    goal__cli ==>|17| goal__user_config
     goal__push ==>|14| goal__cli_helpers
     goal__cli ==>|13| goal__config
     examples__webhooks ==>|10| integration__run_matrix
@@ -48,6 +49,7 @@ flowchart TD
     goal__push ==>|8| goal__cli
     examples__api_usage ==>|7| goal__git_ops
     goal__cli ==>|7| goal__license
+    goal__dependency_update ==>|7| goal__package_managers
     goal__validators ==>|6| goal__user_config
     goal__summary ==>|6| goal__user_config
     examples__testing ==>|5| goal__project_bootstrap
@@ -57,20 +59,20 @@ flowchart TD
     examples__testing ==>|4| goal__git_ops
     goal__commit_generator ==>|4| integration__run_matrix
     goal__generator ==>|4| goal__user_config
-    goal__cli ==>|4| goal__version_validation
+    goal__cli ==>|4| goal__bootstrap
     goal__cli ==>|4| goal__package_managers
+    goal__cli ==>|4| goal__version_validation
     examples__api_usage -->|3| goal__version_validation
     examples__testing -->|3| goal__user_config
     goal__push -->|3| examples__custom_hooks
     goal__cli -->|3| goal__authors
-    goal__cli -->|3| goal__project_bootstrap
     goal__doctor -->|3| goal__user_config
     goal__deep_analyzer_aggregate -->|2| goal__user_config
     goal__cli_helpers -->|2| goal__git_ops
-    goal__push -->|2| goal__project_bootstrap
-    goal__cli -->|2| goal__bootstrap
     goal__validation -->|2| goal__git_ops
     goal__authors -->|2| goal__user_config
+    goal__dependency_update -->|2| goal__user_config
+    goal__push -->|2| goal__project_bootstrap
     examples__api_usage -->|1| goal__config
     examples__api_usage -->|1| goal__user_config
     examples__api_usage -->|1| goal__doctor
@@ -82,13 +84,16 @@ flowchart TD
     goal__hooks -->|1| goal__git_ops
     goal__hooks -->|1| goal__validators
     goal__recovery -->|1| goal__user_config
-    goal__push -->|1| goal__toml_validation
-    goal__push -->|1| goal__validators
     goal__cli -->|1| goal__doctor
     goal__cli -->|1| goal__formatter
-    goal__cli -->|1| goal__toml_validation
+    goal__cli -->|1| goal__project_bootstrap
     goal__cli -->|1| goal__push
     goal__config -->|1| goal__user_config
     goal__smart_commit -->|1| goal__user_config
     goal__authors -->|1| goal__config
     goal__project_bootstrap -->|1| goal__doctor
+    goal__push -->|1| goal__toml_validation
+    goal__push -->|1| goal__dependency_update
+    goal__push -->|1| goal__bootstrap
+    goal__push -->|1| goal__validators
+    goal__cli -->|1| goal__toml_validation

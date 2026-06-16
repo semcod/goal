@@ -292,36 +292,7 @@ DEFAULT_CONFIG = {
                 ".gui-server.pid",
                 ".gui-server.log",
             ],
-            "token_patterns": [
-                # GitHub tokens
-                r"ghp_[a-zA-Z0-9]{36}",
-                r"gho_[a-zA-Z0-9]{36}",
-                r"ghu_[a-zA-Z0-9]{36}",
-                r"ghs_[a-zA-Z0-9]{36}",
-                r"ghr_[a-zA-Z0-9]{36}",
-                # GitHub app tokens
-                r"ghs_[a-zA-Z0-9]{36}",
-                # Generic API keys
-                r"AKIA[0-9A-Z]{16}",  # AWS
-                r"sk-[a-zA-Z0-9]{48}",  # Stripe
-                r"xoxb-[0-9]{13}-[0-9]{13}-[a-zA-Z0-9]{24}",  # Slack bot
-                r"xoxp-[0-9]{13}-[0-9]{13}-[0-9]{13}-[a-zA-Z0-9]{24}",  # Slack user
-                r"glpat-[a-zA-Z0-9_-]{20}",  # GitLab
-                r"pk_live_[a-zA-Z0-9]{24}",  # Stripe publishable
-                r"pk_test_[a-zA-Z0-9]{24}",  # Stripe test
-                r"sk_live_[a-zA-Z0-9]{24}",  # Stripe secret
-                r"sk_test_[a-zA-Z0-9]{24}",  # Stripe test
-                # Generic patterns
-                r"Bearer\s+[a-zA-Z0-9_-]{20,}",  # Bearer tokens
-                r"Token\s+[a-zA-Z0-9_-]{20,}",  # Token auth
-                # Private keys
-                r"-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----",
-                r"-----BEGIN\s+EC\s+PRIVATE\s+KEY-----",
-                r"-----BEGIN\s+OPENSSH\s+PRIVATE\s+KEY-----",
-                r"-----BEGIN\s+DSA\s+PRIVATE\s+KEY-----",
-                # .env files (check for common patterns)
-                r"^[A-Z_]+=[a-zA-Z0-9_-]{20,}",  # ENV_VAR=long_value
-            ],
+            "token_patterns": [],
         },
         "recovery": {
             "enabled": True,
@@ -485,3 +456,9 @@ DEFAULT_CONFIG = {
         },
     },
 }
+
+from goal.validators.tokens import get_default_token_patterns
+
+DEFAULT_CONFIG["advanced"]["file_validation"]["token_patterns"] = (
+    get_default_token_patterns()
+)

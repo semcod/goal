@@ -26,7 +26,12 @@ from .exceptions import (
     TokenDetectedError as TokenDetectedError,
     DotFolderError as DotFolderError,
 )
-from .tokens import detect_tokens_in_content, get_default_token_patterns
+from .tokens import (
+    detect_tokens_in_content,
+    get_default_token_patterns,
+    migrate_token_patterns,
+    resolve_token_patterns,
+)
 from .gitignore import load_gitignore, save_gitignore
 from .dot_folders import check_dot_folders
 
@@ -41,6 +46,8 @@ __all__ = [
     "check_dot_folders",
     "detect_tokens_in_content",
     "get_default_token_patterns",
+    "migrate_token_patterns",
+    "resolve_token_patterns",
     "load_gitignore",
     "save_gitignore",
     "get_file_size_mb",

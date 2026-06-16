@@ -367,6 +367,19 @@ class GoalConfig:
             self._config["versioning"]["files"] = detected_files
             changed = True
 
+        # Migrate legacy token-detection patterns that caused false positives
+        from goal.validators.tokens import migrate_token_patterns
+
+        validation_config = self._config.get("advanced", {}).get("file_validation", {})
+        current_patterns = validation_config.get("token_patterns", [])
+        if current_patterns:
+            migrated_patterns, migrated = migrate_token_patterns(current_patterns)
+            if migrated:
+                self._config.setdefault("advanced", {}).setdefault(
+                    "file_validation", {}
+                )["token_patterns"] = migrated_patterns
+                changed = True
+
         return changed
 
     def validate(self) -> List[str]:

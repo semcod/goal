@@ -1,21 +1,23 @@
 # code2llm call graph | /home/tom/github/semcod/goal
-# generated in 0.30s
-# nodes: 425 | edges: 500 | modules: 83
-# CC̄=4.3
+# generated in 0.19s
+# nodes: 424 | edges: 500 | modules: 85
+# CC̄=4.4
 
 HUBS[20]:
   integration.run_matrix.print
     CC=0  in:255  out:0  total:255
-  goal.cli.wizard_cmd._setup_project_config
-    CC=9  in:1  out:55  total:56
   goal.user_config.initialize_user_config
     CC=11  in:4  out:52  total:56
+  goal.cli.wizard_cmd._setup_project_config
+    CC=9  in:1  out:55  total:56
+  goal.push.core.execute_push_workflow
+    CC=16  in:2  out:48  total:50
   goal.git_ops.run_git
     CC=1  in:46  out:2  total:48
+  goal.user_config.UserConfig.set
+    CC=1  in:46  out:1  total:47
   goal.cli.commit_cmd.validate
     CC=13  in:0  out:45  total:45
-  goal.user_config.UserConfig.set
-    CC=1  in:43  out:1  total:44
   goal.cli.doctor_cmd.doctor
     CC=12  in:0  out:40  total:40
   goal.cli.wizard_cmd._show_setup_summary
@@ -24,26 +26,24 @@ HUBS[20]:
     CC=12  in:1  out:39  total:40
   goal.cli.commit_cmd.fix_summary
     CC=12  in:0  out:38  total:38
-  goal.push.core.execute_push_workflow
-    CC=7  in:2  out:32  total:34
+  goal.push.core.output_final_summary
+    CC=25  in:2  out:34  total:36
   goal.cli.wizard_cmd._setup_git_repository
     CC=10  in:1  out:33  total:34
   examples.api-usage.01_basic_api.main
     CC=10  in:0  out:34  total:34
-  goal.push.core.output_final_summary
-    CC=19  in:1  out:33  total:34
   goal.push.stages.todo.handle_todo_stage
     CC=14  in:1  out:32  total:33
   goal.bootstrap.installer._install_python_deps_legacy
     CC=14  in:1  out:32  total:33
   goal.user_config.show_user_config
     CC=2  in:1  out:31  total:32
+  goal.project_bootstrap._ensure_pfix_installed
+    CC=6  in:1  out:30  total:31
+  goal.project_bootstrap._install_python_deps
+    CC=12  in:1  out:29  total:30
   examples.api-usage.04_version_validation.main
     CC=11  in:0  out:30  total:30
-  goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
-    CC=10  in:0  out:29  total:29
-  goal.push.stages.test.run_test_stage
-    CC=9  in:1  out:27  total:28
 
 MODULES:
   examples.api-usage.01_basic_api  [1 funcs]
@@ -126,17 +126,22 @@ MODULES:
     _find_python_bin  CC=5  out:6
     _read_openrouter_api_key  CC=11  out:12
     scaffold_test_file  CC=14  out:12
-  goal.bootstrap.costs_badge  [9 funcs]
+  goal.bootstrap.costs_badge  [10 funcs]
     _calculate_ai_costs  CC=4  out:8
     _commit_blob_lower  CC=3  out:3
     _fetch_commit_diff  CC=3  out:7
     _filter_ai_commits  CC=4  out:2
     _generate_costs_badge  CC=6  out:23
+    _install_costs_package  CC=3  out:13
     _load_costs_api  CC=2  out:9
     _parsed_diff_is_usable  CC=4  out:2
     _read_model_from_pyproject  CC=3  out:4
     _single_commit_ai_cost  CC=3  out:5
-  goal.bootstrap.detector  [1 funcs]
+  goal.bootstrap.detector  [5 funcs]
+    _match_marker  CC=2  out:4
+    _python_package_dir_exists  CC=5  out:4
+    _python_scaffold_import_name  CC=5  out:4
+    detect_project_types_deep  CC=11  out:11
     guess_package_name  CC=4  out:3
   goal.bootstrap.installer  [12 funcs]
     _ensure_costs_installed  CC=3  out:8
@@ -149,9 +154,10 @@ MODULES:
     _match_marker  CC=2  out:4
     _needs_install  CC=10  out:9
     _run_dep_install  CC=4  out:14
-  goal.bootstrap.pyproject_costs_setup  [6 funcs]
+  goal.bootstrap.pyproject_costs_setup  [7 funcs]
     _add_deps_to_section_match  CC=10  out:9
     _ensure_costs_config  CC=5  out:13
+    _ensure_env_template  CC=6  out:14
     _find_dep_list_end  CC=12  out:2
     _try_add_deps  CC=4  out:4
     _try_merge_hatch_default_deps  CC=6  out:6
@@ -163,13 +169,9 @@ MODULES:
     _find_unreleased_insert_pos  CC=3  out:6
     _insert_entry  CC=5  out:3
     update_changelog  CC=5  out:12
-  goal.cli  [6 funcs]
-    parse_args  CC=11  out:6
-    _configure_main_context  CC=3  out:4
+  goal.cli  [2 funcs]
     _format_import_warning_message  CC=1  out:0
-    _goal_update_command  CC=4  out:5
     _print_import_warning  CC=1  out:2
-    _show_goal_version_banner  CC=3  out:8
   goal.cli.authors_cmd  [5 funcs]
     authors_co_author  CC=1  out:5
     authors_current  CC=1  out:4
@@ -204,39 +206,27 @@ MODULES:
     license_info  CC=6  out:19
     license_list  CC=7  out:20
     license_update  CC=3  out:13
-  goal.cli.publish  [9 funcs]
-    _ensure_publish_deps  CC=5  out:20
-    _get_configured_project_types  CC=13  out:13
-    _get_project_strategy  CC=7  out:5
-    _get_python_bin  CC=3  out:4
-    _is_rate_limited  CC=4  out:0
-    _prepare_python_publish  CC=7  out:15
-    _run_publish_command  CC=11  out:23
+  goal.cli.publish  [2 funcs]
     makefile_has_target  CC=4  out:6
-    publish_project  CC=13  out:21
+    publish_project  CC=14  out:22
   goal.cli.publish_cmd  [2 funcs]
     _publish_impl  CC=8  out:16
     publish  CC=2  out:5
   goal.cli.recover_cmd  [2 funcs]
     _get_error_output  CC=5  out:4
     recover  CC=6  out:23
-  goal.cli.tests  [16 funcs]
-    _active_venv_python  CC=3  out:4
-    _build_python_test_command  CC=10  out:7
-    _coerce_python_strategy_to_project_pytest  CC=8  out:3
-    _display_test_error  CC=9  out:18
-    _get_project_strategy  CC=7  out:5
-    _has_package  CC=3  out:1
-    _resolve_project_python  CC=4  out:6
-    _resolve_root_python  CC=3  out:8
-    _run_nodejs_test  CC=2  out:2
-    _run_project_type_tests  CC=11  out:14
+  goal.cli.tests  [1 funcs]
+    get_test_execution_details  CC=6  out:15
   goal.cli.tests_discovery  [5 funcs]
     _find_project_root  CC=5  out:4
     _has_project_marker  CC=2  out:3
     _has_usable_test_script  CC=7  out:4
     find_nodejs_test_dirs  CC=6  out:8
     find_python_test_dirs  CC=9  out:16
+  goal.cli.tests_pytest_setup  [3 funcs]
+    _is_uv_project  CC=1  out:1
+    _try_uv_install  CC=4  out:2
+    ensure_pytest_for_project  CC=9  out:13
   goal.cli.utils_cmd  [8 funcs]
     bootstrap  CC=4  out:11
     check_versions  CC=2  out:12
@@ -246,17 +236,17 @@ MODULES:
     package_managers  CC=8  out:16
     status  CC=10  out:21
     version  CC=2  out:14
-  goal.cli.version_sync  [15 funcs]
+  goal.cli.version_sync  [10 funcs]
     _append_changed_paths  CC=5  out:6
     _snapshot_paths  CC=3  out:4
     _sync_dependency_lockfiles  CC=9  out:13
-    _sync_dependency_locks_after_manifest_updates  CC=1  out:1
-    _sync_uv_lock  CC=1  out:1
     _update_cargo_version  CC=6  out:8
-    _update_csproj_versions  CC=3  out:7
-    _update_init_py_versions  CC=7  out:9
     _update_json_version_file  CC=6  out:6
-    _update_pom_xml  CC=3  out:6
+    _update_readme_metadata  CC=7  out:6
+    _update_setup_py_version  CC=7  out:8
+    _update_toml_version  CC=13  out:16
+    _warn_lock_refresh  CC=1  out:2
+    sync_all_versions  CC=1  out:11
   goal.cli.version_utils  [22 funcs]
     _build_author_block  CC=5  out:6
     _update_author_section  CC=3  out:8
@@ -282,12 +272,9 @@ MODULES:
     display_commit_message  CC=1  out:2
     display_detailed_message  CC=1  out:2
     print_detailed_message  CC=2  out:3
-  goal.config.manager  [5 funcs]
-    set  CC=4  out:2
-    update_from_detection  CC=4  out:11
+  goal.config.manager  [2 funcs]
     ensure_config  CC=5  out:8
     init_config  CC=3  out:4
-    load_config  CC=1  out:2
   goal.config.validation  [2 funcs]
     validate_config_file  CC=11  out:25
     validate_config_interactive  CC=10  out:22
@@ -299,6 +286,10 @@ MODULES:
   goal.deep_analyzer_aggregate  [2 funcs]
     aggregate_changes  CC=3  out:16
     detect_relations  CC=6  out:8
+  goal.dependency_update  [3 funcs]
+    _run_update_command  CC=4  out:8
+    _select_managers_to_update  CC=21  out:22
+    update_project_dependencies  CC=12  out:27
   goal.doctor.core  [2 funcs]
     diagnose_and_report  CC=8  out:21
     diagnose_project  CC=2  out:4
@@ -326,7 +317,7 @@ MODULES:
   goal.generator.generator  [2 funcs]
     _classify_files  CC=11  out:7
     generate_smart_commit_message  CC=1  out:2
-  goal.git_ops  [28 funcs]
+  goal.git_ops  [27 funcs]
     _echo_cmd  CC=2  out:5
     _handle_clone  CC=3  out:7
     _handle_init_remote  CC=5  out:25
@@ -348,37 +339,39 @@ MODULES:
     check_compatibility  CC=14  out:8
     get_license_info  CC=4  out:4
     validate_spdx_id  CC=11  out:13
-  goal.package_managers  [13 funcs]
+  goal.package_managers  [15 funcs]
     _detect_package_manager  CC=2  out:2
     _has_any_matching_path  CC=2  out:2
     _has_language_extension  CC=2  out:3
     _path_matches  CC=2  out:4
+    _pip_update_all_command  CC=6  out:3
     detect_package_managers  CC=3  out:4
     detect_project_language  CC=3  out:3
     get_available_package_managers  CC=3  out:2
     get_package_manager_info  CC=1  out:1
     get_package_managers_by_language  CC=3  out:1
-    get_preferred_package_manager  CC=5  out:1
-  goal.project_bootstrap  [8 funcs]
+  goal.project_bootstrap  [26 funcs]
+    _ensure_bootstrap_tests  CC=3  out:2
     _ensure_costs_installed  CC=2  out:4
+    _ensure_generic_env  CC=14  out:21
+    _ensure_pfix_config  CC=4  out:9
+    _ensure_pfix_env  CC=7  out:15
+    _ensure_pfix_installed  CC=6  out:30
     _ensure_python_env  CC=6  out:22
+    _ensure_python_test_dependency  CC=5  out:15
     _find_openrouter_api_key  CC=6  out:5
     _find_python_bin  CC=5  out:6
-    _match_marker  CC=2  out:4
-    _read_openrouter_api_key  CC=11  out:13
-    bootstrap_project  CC=1  out:5
-    detect_project_types_deep  CC=11  out:11
-  goal.push.core  [15 funcs]
+  goal.push.core  [17 funcs]
     _apply_enhanced_quality_gates  CC=6  out:6
-    _detect_and_bootstrap_projects  CC=7  out:7
+    _bootstrap_projects  CC=5  out:3
+    _detect_and_bootstrap_projects  CC=1  out:2
+    _detect_project_types  CC=2  out:4
     _handle_commit_phase  CC=8  out:19
     _handle_no_changes  CC=4  out:6
     _handle_no_files  CC=3  out:1
     _initialize_context  CC=3  out:2
     _maybe_show_workflow_preview  CC=2  out:1
     _run_test_stage_or_exit  CC=3  out:4
-    _validate_staged_files  CC=6  out:18
-    _validate_toml_or_exit  CC=3  out:6
   goal.push.stages.changelog  [1 funcs]
     handle_changelog  CC=2  out:4
   goal.push.stages.commit  [8 funcs]

@@ -1,54 +1,54 @@
-# goal | 961 func | 129f | 29585L | python | 2026-06-08
+# goal | 983 func | 130f | 31548L | python | 2026-06-14
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.3  critical=86 (limit:10)  dup=0  cycles=0
+  CC̄=4.4  critical=90 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     execute_push_workflow = 28 (limit:10)
+  !!! high_fan_out     execute_push_workflow = 34 (limit:10)
+  !!! cc_exceeded      output_final_summary = 25 (limit:15)
   !!! high_fan_out     EnhancedSummaryGenerator.generate_enhanced_summary = 24 (limit:10)
   !!! high_fan_out     doctor = 22 (limit:10)
   !!! high_fan_out     _install_python_deps_legacy = 20 (limit:10)
   !!  cc_exceeded      add_slow_test_tickets_to_planfile = 22 (limit:15)
+  !!  cc_exceeded      _select_managers_to_update = 21 (limit:15)
   !!  high_fan_out     update_cost_badges = 19 (limit:10)
   !!  high_fan_out     _install_python_deps = 19 (limit:10)
   !!  high_fan_out     fix_summary = 18 (limit:10)
-  !!  high_fan_out     validate = 18 (limit:10)
-  !!  high_fan_out     CodeChangeAnalyzer._analyze_python_diff = 17 (limit:10)
 
-MODULES[187] (top by size):
-  M[goal/project_bootstrap.py] 1125L C:0 F:27 CC↑14 D:5 (python)
-  M[goal/push/core.py] 751L C:1 F:18 CC↑22 D:3 (python)
+MODULES[188] (top by size):
+  M[planfile.yaml] 1323L C:0 F:0 CC↑0 D:0 (yaml)
+  M[goal/project_bootstrap.py] 1181L C:0 F:28 CC↑14 D:4 (python)
+  M[goal/push/core.py] 831L C:1 F:20 CC↑25 D:3 (python)
   M[goal/git_ops.py] 672L C:0 F:28 CC↑11 D:19 (python)
-  M[goal/package_managers.py] 607L C:1 F:16 CC↑5 D:1 (python)
+  M[goal/package_managers.py] 644L C:1 F:18 CC↑6 D:2 (python)
   M[goal/summary/generator.py] 589L C:1 F:14 CC↑14 D:0 (python)
   M[goal/license/manager.py] 587L C:1 F:12 CC↑10 D:1 (python)
   M[goal/generator/analyzer.py] 563L C:2 F:27 CC↑14 D:0 (python)
   M[goal/config/validation.py] 528L C:2 F:15 CC↑14 D:2 (python)
+  M[goal/cli/publish.py] 504L C:0 F:19 CC↑14 D:2 (python)
+  M[goal/config/manager.py] 490L C:1 F:26 CC↑10 D:7 (python)
   M[goal/summary/validator.py] 489L C:1 F:24 CC↑10 D:0 (python)
   M[goal/config/constants.py] 487L C:0 F:0 CC↑0 D:0 (python)
-  M[goal/config/manager.py] 485L C:1 F:25 CC↑10 D:7 (python)
   M[goal/cli/version_utils.py] 485L C:0 F:23 CC↑8 D:7 (python)
-  M[goal/push/stages/push_remote.py] 467L C:0 F:17 CC↑11 D:1 (python)
-  M[goal/cli/tests.py] 463L C:0 F:17 CC↑13 D:1 (python)
-  M[goal/generator/generator.py] 432L C:1 F:24 CC↑12 D:2 (python)
-  LANGS: python:151/yaml:13/shell:6/toml:4/other:3/csharp:2/json:2/go:1/java:1/php:1/yml:1/xml:1/txt:1
+  M[goal/cli/tests.py] 481L C:0 F:18 CC↑13 D:1 (python)
+  LANGS: python:152/yaml:13/shell:6/toml:4/other:3/csharp:2/json:2/go:1/java:1/php:1/yml:1/xml:1/txt:1
 
 HOTSPOTS[10]:
-  ★ execute_push_workflow fan=28  // Execute the complete push workflow.
+  ★ execute_push_workflow fan=34  // Execute the complete push workflow.
   ★ EnhancedSummaryGenerator.generate_enhanced_summary fan=24  // Generate complete enhanced summary with business value focus.
   ★ doctor fan=22  // Diagnose and auto-fix common project configuration issues.
   ★ _install_python_deps_legacy fan=20  // Legacy dependency installation using config-based commands.
   ★ update_cost_badges fan=19  // Update AI cost badges in README using costs package.
 
-REFACTOR[13]:
-  [1] H/H Split god module goal/push/core.py (751L, 1 classes)
-  [2] H/H Split god module goal/config/validation.py (528L, 2 classes)
-  [3] H/H Split god module goal/generator/analyzer.py (563L, 2 classes)
-  [4] H/H Split god module goal/project_bootstrap.py (1125L, 0 classes)
-  [5] H/H Split god module goal/summary/generator.py (589L, 1 classes)
+REFACTOR[15]:
+  [1] H/L Split output_final_summary (CC=25)
+  [2] H/H Split god module goal/push/core.py (831L, 1 classes)
+  [3] H/H Split god module goal/cli/publish.py (504L, 0 classes)
+  [4] H/H Split god module goal/config/validation.py (528L, 2 classes)
+  [5] H/H Split god module goal/generator/analyzer.py (563L, 2 classes)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-06-08 CC̄=4.3 crit=86 29585L // Automated analysis
+  2026-06-14 CC̄=4.4 crit=90 31548L // Automated analysis

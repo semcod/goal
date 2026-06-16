@@ -220,6 +220,44 @@ def detect_tokens_in_content(
     return detected
 
 
+# Legacy patterns that matched any long ENV_VAR=value assignment and caused
+# false positives (e.g. URISYS_NIGHTLY_SESSIONS=urisys-node-docker-gui).
+_LEGACY_TOKEN_PATTERNS: Set[str] = {
+    r"^[A-Z_]+=[a-zA-Z0-9_-]{20,}",
+    r"CS:^[A-Z][A-Z0-9_]{5,}=[a-zA-Z0-9_-]{20,}",
+    r"CS:^[A-Z][A-Z0-9_]+=[a-zA-Z0-9_-]{20,}",
+    r"Bearer\s+[a-zA-Z0-9_-]{20,}",
+    r"Token\s+[a-zA-Z0-9_-]{20,}",
+}
+
+
+def resolve_token_patterns(patterns: Optional[List[str]]) -> List[str]:
+    """Normalize token patterns from goal.yaml.
+
+    Drops legacy loose env/Bearer patterns, merges in current defaults for any
+    missing built-in rules, and falls back to defaults when config is empty.
+    """
+    defaults = get_default_token_patterns()
+    if not patterns:
+        return defaults
+
+    filtered = [p for p in patterns if p not in _LEGACY_TOKEN_PATTERNS]
+    if not filtered:
+        return defaults
+
+    merged = list(filtered)
+    for pattern in defaults:
+        if pattern not in merged:
+            merged.append(pattern)
+    return merged
+
+
+def migrate_token_patterns(patterns: List[str]) -> Tuple[List[str], bool]:
+    """Return sanitized token patterns and whether the list changed."""
+    resolved = resolve_token_patterns(patterns)
+    return resolved, resolved != patterns
+
+
 def get_default_token_patterns() -> List[str]:
     """Return default regex patterns for token detection."""
     return [

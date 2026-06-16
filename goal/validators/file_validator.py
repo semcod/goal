@@ -20,7 +20,10 @@ from goal.validators.exceptions import (
     TokenDetectedError,
     DotFolderError,
 )
-from goal.validators.tokens import detect_tokens_in_content, get_default_token_patterns
+from goal.validators.tokens import (
+    detect_tokens_in_content,
+    resolve_token_patterns,
+)
 from goal.validators.gitignore import load_gitignore, save_gitignore
 from goal.validators.dot_folders import manage_dot_folders
 
@@ -125,9 +128,7 @@ def validate_files(
 
     large_files_found = []
 
-    # Default token patterns if not provided
-    if token_patterns is None:
-        token_patterns = get_default_token_patterns()
+    token_patterns = resolve_token_patterns(token_patterns)
 
     for file_path in files:
         if _is_excluded(file_path, exclude_patterns):
@@ -261,7 +262,9 @@ def validate_staged_files(config) -> None:
         max_size_mb = validation_config.get("max_file_size_mb", 10.0)
         block_large_files = validation_config.get("block_large_files", True)
         detect_tokens = validation_config.get("detect_api_tokens", True)
-        token_patterns = validation_config.get("token_patterns", [])
+        token_patterns = resolve_token_patterns(
+            validation_config.get("token_patterns")
+        )
         auto_handle_large = validation_config.get("auto_handle_large_files", True)
 
     # Run validation with auto-handling
