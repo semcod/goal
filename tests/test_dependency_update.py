@@ -237,3 +237,49 @@ def test_au_sets_upgrade_deps_in_context() -> None:
     assert result.exit_code == 0, result.output
     assert captured["upgrade_deps"] is True
     assert captured["yes"] is True
+
+
+def test_au_sets_markdown_in_context() -> None:
+    import goal.cli.push_cmd as push_cmd
+
+    runner = CliRunner()
+    captured = {}
+
+    def fake_execute(ctx_obj, **kwargs):
+        captured["markdown_ctx"] = ctx_obj.get("markdown")
+        captured["markdown_kw"] = kwargs.get("markdown")
+
+    with (
+        patch("goal.cli._show_goal_version_banner"),
+        patch("goal.cli._warn_goal_binary_mismatch"),
+        patch.object(push_cmd, "execute_push_workflow", side_effect=fake_execute),
+        patch("goal.push.core.execute_push_workflow", side_effect=fake_execute),
+    ):
+        result = runner.invoke(main, ["-au"])
+
+    assert result.exit_code == 0, result.output
+    assert captured["markdown_ctx"] is True
+    assert captured["markdown_kw"] is True
+
+
+def test_all_with_ascii_keeps_ascii_output() -> None:
+    import goal.cli.push_cmd as push_cmd
+
+    runner = CliRunner()
+    captured = {}
+
+    def fake_execute(ctx_obj, **kwargs):
+        captured["markdown_ctx"] = ctx_obj.get("markdown")
+        captured["markdown_kw"] = kwargs.get("markdown")
+
+    with (
+        patch("goal.cli._show_goal_version_banner"),
+        patch("goal.cli._warn_goal_binary_mismatch"),
+        patch.object(push_cmd, "execute_push_workflow", side_effect=fake_execute),
+        patch("goal.push.core.execute_push_workflow", side_effect=fake_execute),
+    ):
+        result = runner.invoke(main, ["-a", "--ascii", "push"])
+
+    assert result.exit_code == 0, result.output
+    assert captured["markdown_ctx"] is False
+    assert captured["markdown_kw"] is False

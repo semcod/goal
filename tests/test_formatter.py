@@ -4,6 +4,7 @@ from goal.formatter import (
     MarkdownFormatter,
     format_status_output,
     format_push_result,
+    format_goal_all_summary,
     _build_functional_overview,
     _determine_next_steps,
 )
@@ -222,3 +223,34 @@ def test_format_push_result_with_error():
     )
     assert "Error" in result
     assert "Something went wrong" in result
+
+
+def test_format_goal_all_summary_markdown():
+    result = format_goal_all_summary(
+        project_types=["python"],
+        files=["goal/push/core.py"],
+        stats={"goal/push/core.py": (12, 3)},
+        current_version="2.1.250",
+        new_version="2.1.251",
+        commit_msg="fix(goal): markdown stdio",
+        commit_body=None,
+        test_exit_code=0,
+        test_details={
+            "wall_time": 6.1,
+            "total_test_time": 5.0,
+            "startup_overhead": 1.1,
+            "slow_tests": [],
+        },
+        publish_success=True,
+        publish_required=True,
+        publish_skip_reason=None,
+        workflow_success=True,
+        added_tickets=[],
+    )
+    assert "# Goal Result" in result
+    assert "SUCCESS" in result
+    assert "2.1.250" in result
+    assert "2.1.251" in result
+    assert "Test Execution" in result
+    assert "Publish" in result
+    assert "passed" in result

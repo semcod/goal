@@ -8,6 +8,11 @@ import click
 from goal.cli import confirm
 from goal.cli.tests import run_tests
 from goal.formatter import format_push_result
+from goal.io.stdio import (
+    echo_auto,
+    echo_status_error,
+    echo_status_ok,
+)
 
 
 def run_test_stage(
@@ -25,6 +30,7 @@ def run_test_stage(
     """Run tests with interactive or auto mode."""
     test_result = None
     test_exit_code = 0
+    use_markdown = markdown or ctx_obj.get("markdown")
 
     if not yes:
         if confirm("Run tests?"):
@@ -33,7 +39,7 @@ def run_test_stage(
             if not test_success:
                 test_exit_code = 1
                 if not confirm("Tests failed. Continue anyway?", default=False):
-                    if markdown or ctx_obj.get("markdown"):
+                    if use_markdown:
                         md_output = format_push_result(
                             project_types=project_types,
                             files=files,
@@ -59,27 +65,25 @@ def run_test_stage(
                 click.style("  🤖 AUTO: Skipping tests (user chose N)", fg="cyan")
             )
     else:
-        click.echo(click.style("\n🤖 AUTO: Running tests (--all mode)", fg="cyan"))
+        echo_auto("Running tests (--all mode)")
         try:
-            test_success = run_tests(project_types, config=ctx_obj.get("config"))
+            test_success = run_tests(
+                project_types,
+                config=ctx_obj.get("config"),
+                markdown=use_markdown,
+            )
             if not test_success:
                 test_exit_code = 1
                 test_result = "Tests failed"
-                click.echo(click.style("⚠️  Tests failed.", fg="red", bold=True))
+                echo_status_error("Tests failed.")
             else:
                 test_exit_code = 0
                 test_result = "Tests passed"
-                click.echo(
-                    click.style(
-                        "✓ All tests passed successfully", fg="green", bold=True
-                    )
-                )
+                echo_status_ok("All tests passed successfully")
         except Exception as e:
             test_exit_code = 1
             test_result = f"Test execution error: {str(e)}"
-            click.echo(
-                click.style(f"⚠️  Error running tests: {str(e)}", fg="red", bold=True)
-            )
+            echo_status_error(f"Error running tests: {str(e)}")
 
     from goal.cli.tests import get_test_execution_details
     ctx_obj["test_details"] = get_test_execution_details()

@@ -236,6 +236,94 @@ def format_push_result(
     return formatter.render()
 
 
+def format_goal_all_summary(
+    *,
+    project_types: List[str],
+    files: List[str],
+    stats: Dict[str, tuple],
+    current_version: str,
+    new_version: str,
+    commit_msg: str,
+    commit_body: Optional[str],
+    test_exit_code: int,
+    test_details: Dict[str, Any],
+    publish_success: bool,
+    publish_required: bool,
+    publish_skip_reason: Optional[str],
+    workflow_success: bool,
+    added_tickets: List[str],
+) -> str:
+    """Format the full --all workflow result as colored markdown."""
+    formatter = MarkdownFormatter()
+    formatter.add_metadata(
+        command="goal --all",
+        project_types=project_types,
+        version_bump=f"{current_version} -> {new_version}",
+        file_count=len(files),
+        timestamp=datetime.now().isoformat(),
+    )
+    formatter.add_header("Goal Result", 1)
+
+    status = "SUCCESS" if workflow_success else "FAILED"
+    formatter.add_section("Status", f"**{status}**")
+    formatter.add_section(
+        "Version",
+        f"`{current_version}` → `{new_version}`",
+    )
+    formatter.add_section("Commit", f"`{commit_msg}`")
+    if commit_body:
+        formatter.add_section("Commit Body", commit_body, code_block=True, language="text")
+
+    total_adds = sum(s[0] for s in stats.values())
+    total_dels = sum(s[1] for s in stats.values())
+    formatter.add_section(
+        "Changes",
+        f"**Files changed:** {len(files)} (+{total_adds}/-{total_dels} lines)",
+    )
+
+    test_status = "passed" if test_exit_code == 0 else "failed"
+    slowest = []
+    needs_improvement = []
+    for test in test_details.get("slow_tests", []):
+        duration = test.get("duration", 0.0)
+        formatted_test = f"{test.get('classname')}.{test.get('name')} ({duration:.2f}s)"
+        if len(slowest) < 5:
+            slowest.append(formatted_test)
+        if duration >= 0.5:
+            needs_improvement.append(formatted_test)
+
+    test_lines = [
+        f"- **Status:** {test_status}",
+        f"- **Wall time:** {test_details.get('wall_time', 0.0):.2f}s",
+        f"- **Test time:** {test_details.get('total_test_time', 0.0):.2f}s",
+        f"- **Startup overhead:** {test_details.get('startup_overhead', 0.0):.2f}s",
+    ]
+    if slowest:
+        test_lines.append("- **Slowest tests:**")
+        test_lines.extend(f"  - `{item}`" for item in slowest)
+    if needs_improvement:
+        test_lines.append("- **Needs improvement:**")
+        test_lines.extend(f"  - `{item}`" for item in needs_improvement)
+    formatter.add_section("Test Execution", "\n".join(test_lines))
+
+    if publish_success:
+        publish_text = f"**Status:** passed\n\nPublished `{new_version}`"
+    elif publish_skip_reason:
+        publish_text = (
+            f"**Status:** skipped\n\n**Reason:** `{publish_skip_reason}`"
+        )
+    elif publish_required:
+        publish_text = "**Status:** failed"
+    else:
+        publish_text = "**Status:** skipped"
+    formatter.add_section("Publish", publish_text)
+
+    if added_tickets:
+        formatter.add_list("Planfile Tickets Added", added_tickets)
+
+    return formatter.render()
+
+
 def _format_complexity_metric(metrics: Dict[str, Any]) -> Optional[str]:
     """Format complexity change as a single metric line, or None."""
     old_cc = metrics.get("old_complexity", 1)

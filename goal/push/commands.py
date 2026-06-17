@@ -24,7 +24,7 @@ from goal.push.core import execute_push_workflow
     "--dry-run", is_flag=True, help="Show what would be done without executing"
 )
 @click.option("--yes", "-y", is_flag=True, help="Auto-confirm all prompts")
-@click.option("--markdown/--ascii", default=False, help="Output format")
+@click.option("--markdown/--ascii", "output_markdown", default=None, help="Output format")
 @click.option("--split", is_flag=True, help="Split commits by file type")
 @click.option("--ticket", default=None, help="Ticket ID for commit prefix")
 @click.option(
@@ -43,7 +43,7 @@ def push(
     message,
     dry_run,
     yes,
-    markdown,
+    output_markdown,
     split,
     ticket,
     abstraction,
@@ -52,6 +52,10 @@ def push(
     """Add, commit, tag, and push changes to remote."""
     no_publish = no_publish or ctx.obj.get("no_publish", False)
     force_publish = force_publish or ctx.obj.get("force_publish", False)
+    if output_markdown is None:
+        markdown = ctx.obj.get("markdown", False)
+    else:
+        markdown = output_markdown
     execute_push_workflow(
         ctx_obj=ctx.obj,
         bump=bump,

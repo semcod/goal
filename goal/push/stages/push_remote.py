@@ -24,8 +24,14 @@ if HAS_CLICKMD:
 
 
 def _print_push_header(branch: str, yes: bool) -> None:
+    from goal.io.stdio import echo_auto, echo_via_markdown, use_markdown_stdio
+
     if not yes:
-        if HAS_CLICKMD:
+        if use_markdown_stdio():
+            echo_via_markdown("\n### 📤 Pushing to Remote Repository")
+            echo_via_markdown(f"**Branch:** `{branch}`")
+            echo_via_markdown("**Remote:** `origin`")
+        elif HAS_CLICKMD:
             echo_md("\n### 📤 Pushing to Remote Repository")
             echo_md(f"**Branch:** `{branch}`")
             echo_md("**Remote:** `origin`")
@@ -36,7 +42,7 @@ def _print_push_header(branch: str, yes: bool) -> None:
             click.echo(f"Branch: {branch}")
             click.echo("Remote: origin")
     else:
-        click.echo(click.style("🤖 AUTO: Pushing to remote (--all mode)", fg="cyan"))
+        echo_auto("Pushing to remote (--all mode)")
 
 
 def _push_tag_if_needed(tag_name: Optional[str], no_tag: bool) -> None:

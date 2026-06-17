@@ -340,22 +340,32 @@ def _ensure_root_pytest_or_mark_failed(
 
 
 def _run_root_test(
-    test_cmd: List[str], test_cmd_str: str, use_subprocess: bool
+    test_cmd: List[str], test_cmd_str: str, use_subprocess: bool, *, markdown: bool = False
 ) -> bool:
     """Run root project tests."""
     import time
+
+    from goal.io.stdio import echo_command_block, echo_output_block, use_markdown_stdio
+
     # Ensure --junitxml is added to capture test durations
     if use_subprocess and "pytest" in test_cmd_str and "PYTEST_CURRENT_TEST" not in os.environ:
         if "--junitxml=.goal_test_report.xml" not in test_cmd:
             test_cmd = test_cmd + ["--junitxml=.goal_test_report.xml"]
 
+    if markdown and use_markdown_stdio():
+        echo_command_block(" ".join(test_cmd), language="bash")
+
     start_time = time.time()
     if use_subprocess:
+        capture = markdown and use_markdown_stdio()
         result = subprocess.run(
             test_cmd,
-            capture_output=False,
+            capture_output=capture,
             text=True,
         )
+        if capture:
+            combined = (result.stdout or "") + (result.stderr or "")
+            echo_output_block(combined, language="pytest")
     else:
         result = run_command(test_cmd_str, capture=False)
     elapsed = time.time() - start_time
@@ -366,7 +376,7 @@ def _run_root_test(
     return result.returncode == 0
 
 
-def _run_project_type_tests(ptype: str, config: object) -> bool:
+def _run_project_type_tests(ptype: str, config: object, *, markdown: bool = False) -> bool:
     """Run tests for a single detected project type."""
     project_config = PROJECT_TYPES.get(ptype, {})
     strategy = _get_project_strategy(config, ptype)
@@ -393,19 +403,21 @@ def _run_project_type_tests(ptype: str, config: object) -> bool:
         test_cmd = test_cmd_str.split()
         use_subprocess = False
 
-    ok = _run_root_test(test_cmd, test_cmd_str, use_subprocess)
+    ok = _run_root_test(test_cmd, test_cmd_str, use_subprocess, markdown=markdown)
     if run_subdir_scan and not _run_tests_in_subdirs(ptype, test_cmd):
         ok = False
     return ok
 
 
-def run_tests(project_types: List[str], config: object = None) -> bool:
+def run_tests(
+    project_types: List[str], config: object = None, *, markdown: bool = False
+) -> bool:
     """Run tests for detected project types."""
     success = True
 
     for ptype in project_types:
         try:
-            if not _run_project_type_tests(ptype, config):
+            if not _run_project_type_tests(ptype, config, markdown=markdown):
                 success = False
         except Exception:
             success = False

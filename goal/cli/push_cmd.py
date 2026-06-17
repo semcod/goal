@@ -27,7 +27,7 @@ from goal.push.core import execute_push_workflow
 @click.option(
     "--dry-run", is_flag=True, help="Show what would be done without executing"
 )
-@click.option("--markdown/--ascii", default=False, help="Output format")
+@click.option("--markdown/--ascii", "output_markdown", default=None, help="Output format")
 @click.option("--split", is_flag=True, help="Split commits by file type")
 @click.option("--ticket", default=None, help="Ticket ID for commit prefix")
 @click.option(
@@ -51,7 +51,7 @@ def push(
     force_publish,
     message,
     dry_run,
-    markdown,
+    output_markdown,
     split,
     ticket,
     abstraction,
@@ -64,6 +64,10 @@ def push(
     yes = ctx.obj.get("yes", False)
     no_publish = no_publish or ctx.obj.get("no_publish", False)
     force_publish = force_publish or ctx.obj.get("force_publish", False)
+    if output_markdown is None:
+        markdown = ctx.obj.get("markdown", False)
+    else:
+        markdown = output_markdown
     # Store model and api_key in ctx.obj for downstream use
     ctx.obj["cost_model"] = model
     ctx.obj["cost_api_key"] = api_key

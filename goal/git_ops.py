@@ -49,22 +49,28 @@ def run_command(command: str, capture: bool = True) -> subprocess.CompletedProce
 
 def _echo_cmd(args: List[str]) -> None:
     """Display a git command that is about to run, for transparency."""
+    from goal.io.stdio import echo_command_block, use_markdown_stdio
+
     cmd_str = " ".join(args)
-    if HAS_CLICKMD:
-        echo_md(f"```bash\n{' '.join(args)}\n```")
+    if use_markdown_stdio():
+        echo_command_block(cmd_str, language="bash")
+    elif HAS_CLICKMD:
+        echo_md(f"```bash\n{cmd_str}\n```")
     else:
         click.echo(click.style(f"  → {cmd_str}", fg="bright_black"))
 
 
 def _run_git_verbose(*args, capture=True) -> subprocess.CompletedProcess:
     """Run a git command, display it first, and return the result."""
+    from goal.io.stdio import echo_via_markdown, use_markdown_stdio
+
     _echo_cmd(["git"] + list(args))
 
     # Show operation type with colors
     if args[0] in ["add", "commit", "push", "pull", "fetch"]:
         operation = args[0].upper()
-        if HAS_CLICKMD:
-            echo_md(f"\n### 🔄 Git {operation}")
+        if use_markdown_stdio() or HAS_CLICKMD:
+            echo_via_markdown(f"\n### 🔄 Git {operation}")
         else:
             click.echo(click.style(f"\n🔄 Git {operation}", fg="blue", bold=True))
 
@@ -73,15 +79,15 @@ def _run_git_verbose(*args, capture=True) -> subprocess.CompletedProcess:
     # Show result summary for important operations
     if not capture and args[0] in ["push", "pull", "commit"]:
         if result.returncode == 0:
-            if HAS_CLICKMD:
-                echo_md(f"✅ **Success**: {operation} completed")
+            if use_markdown_stdio() or HAS_CLICKMD:
+                echo_via_markdown(f"✅ **Success**: {operation} completed")
             else:
                 click.echo(
                     click.style(f"✅ Success: {operation} completed", fg="green")
                 )
         else:
-            if HAS_CLICKMD:
-                echo_md(f"❌ **Error**: {operation} failed")
+            if use_markdown_stdio() or HAS_CLICKMD:
+                echo_via_markdown(f"❌ **Error**: {operation} failed")
             else:
                 click.echo(click.style(f"❌ Error: {operation} failed", fg="red"))
 
@@ -92,6 +98,8 @@ def run_git_with_status(
     *args, capture=True, show_output=False
 ) -> subprocess.CompletedProcess:
     """Run git command with enhanced status display."""
+    from goal.io.stdio import echo_output_block, echo_via_markdown, use_markdown_stdio
+
     # Show the command
     _echo_cmd(["git"] + list(args))
 
@@ -100,14 +108,14 @@ def run_git_with_status(
 
     # Show detailed status
     if show_output or result.returncode != 0:
-        if HAS_CLICKMD:
-            echo_md("\n**Output:**")
-            echo_md("```")
+        if use_markdown_stdio() or HAS_CLICKMD:
+            echo_via_markdown("\n**Output:**")
+            combined = ""
             if result.stdout:
-                click.echo(result.stdout)
+                combined += result.stdout
             if result.stderr:
-                click.echo(result.stderr, err=True)
-            echo_md("```")
+                combined += result.stderr
+            echo_output_block(combined, language="text")
         else:
             if result.stdout:
                 click.echo(click.style("Output:", fg="cyan"))
@@ -118,13 +126,13 @@ def run_git_with_status(
 
     # Show exit status
     if result.returncode == 0:
-        if HAS_CLICKMD:
-            echo_md(f"✅ **Exit code**: {result.returncode}")
+        if use_markdown_stdio() or HAS_CLICKMD:
+            echo_via_markdown(f"✅ **Exit code**: {result.returncode}")
         else:
             click.echo(click.style(f"✅ Exit code: {result.returncode}", fg="green"))
     else:
-        if HAS_CLICKMD:
-            echo_md(f"❌ **Exit code**: {result.returncode}")
+        if use_markdown_stdio() or HAS_CLICKMD:
+            echo_via_markdown(f"❌ **Exit code**: {result.returncode}")
         else:
             click.echo(click.style(f"❌ Exit code: {result.returncode}", fg="red"))
 
@@ -132,6 +140,11 @@ def run_git_with_status(
 
 
 def run_command_tee(command: str) -> subprocess.CompletedProcess:
+    from goal.io.stdio import echo_command_block, echo_output_block, use_markdown_stdio
+
+    if use_markdown_stdio():
+        echo_command_block(command)
+
     proc = subprocess.Popen(
         command,
         shell=True,
@@ -145,12 +158,17 @@ def run_command_tee(command: str) -> subprocess.CompletedProcess:
     if proc.stdout is not None:
         for chunk in proc.stdout:
             output.append(chunk)
-            click.echo(chunk, nl=False)
-            sys.stdout.flush()
+            if not use_markdown_stdio():
+                click.echo(chunk, nl=False)
+                sys.stdout.flush()
 
     returncode = proc.wait()
+    combined = "".join(output)
+    if use_markdown_stdio():
+        echo_output_block(combined, language="text")
+
     return subprocess.CompletedProcess(
-        args=command, returncode=returncode, stdout="".join(output), stderr=""
+        args=command, returncode=returncode, stdout=combined, stderr=""
     )
 
 

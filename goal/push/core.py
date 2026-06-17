@@ -204,12 +204,43 @@ def output_final_summary(
     import yaml
     from datetime import datetime
 
+    from goal.io.stdio import echo_via_markdown, use_markdown_stdio
+
     test_details = ctx_obj.get("test_details", {})
     added_tickets = []
     if test_details:
         added_tickets = add_slow_test_tickets_to_planfile(test_details)
 
-    is_all_mode = ctx_obj.get("yes") or markdown or ctx_obj.get("markdown")
+    use_markdown = markdown or ctx_obj.get("markdown")
+    is_all_mode = ctx_obj.get("yes") or use_markdown
+
+    workflow_success = test_exit_code == 0 and (
+        publish_success or not publish_required
+    )
+
+    if use_markdown and is_all_mode:
+        from goal.formatter import format_goal_all_summary
+
+        md_output = format_goal_all_summary(
+            project_types=project_types,
+            files=files,
+            stats=stats,
+            current_version=current_version,
+            new_version=new_version,
+            commit_msg=commit_msg,
+            commit_body=commit_body,
+            test_exit_code=test_exit_code,
+            test_details=test_details,
+            publish_success=publish_success,
+            publish_required=publish_required,
+            publish_skip_reason=publish_skip_reason,
+            workflow_success=workflow_success,
+            added_tickets=added_tickets,
+        )
+        echo_via_markdown("\n" + md_output)
+        if not use_markdown_stdio():
+            click.echo("")
+        return
 
     if is_all_mode:
         # Build YAML report
@@ -691,12 +722,16 @@ def _initialize_context(
     markdown: bool,
 ) -> None:
     """Initialize context with common values."""
+    from goal.io.stdio import set_stdio_markdown
+
     # Use yes from context (includes -a from main command) or local --yes flag
     yes = ctx_obj.get("yes", False) or yes
     ctx_obj["yes"] = yes
     ctx_obj["bump"] = bump
     ctx_obj["message"] = message
-    ctx_obj["markdown"] = markdown or ctx_obj.get("markdown", False)
+    effective_markdown = markdown or ctx_obj.get("markdown", False)
+    ctx_obj["markdown"] = effective_markdown
+    set_stdio_markdown(effective_markdown)
 
 
 def _detect_project_types() -> List[str]:

@@ -216,6 +216,21 @@ def _show_goal_version_banner() -> None:
         click.echo(click.style(f"Goal v{__version__} ✓", fg="cyan", bold=True))
 
 
+def _explicit_ascii_flag(argv: list[str] | None = None) -> bool:
+    """Return True when the user explicitly requested ASCII output."""
+    args = argv if argv is not None else sys.argv
+    return "--ascii" in args
+
+
+def _resolve_output_markdown(output_markdown: bool | None, all_flags: bool) -> bool:
+    """Resolve markdown vs ASCII output for the current invocation."""
+    if output_markdown is True:
+        return True
+    if output_markdown is False:
+        return False
+    return bool(all_flags)
+
+
 def _configure_main_context(
     ctx,
     bump,
@@ -237,7 +252,7 @@ def _configure_main_context(
     ctx.obj["upgrade_deps"] = upgrade_deps
     ctx.obj["no_publish"] = no_publish
     ctx.obj["todo"] = todo
-    ctx.obj["markdown"] = markdown
+    ctx.obj["markdown"] = _resolve_output_markdown(markdown, all_flags)
     ctx.obj["dry_run"] = dry_run
     ctx.obj["abstraction"] = abstraction
     ctx.obj["config"] = load_config(config_path) if config_path else ensure_config()
@@ -348,7 +363,7 @@ class GoalGroup(click.Group):
 @click.option(
     "--todo", "-t", is_flag=True, help="Create TODO.md file with detected issues"
 )
-@click.option("--markdown/--ascii", default=False, help="Output format")
+@click.option("--markdown/--ascii", "output_markdown", default=None, help="Output format")
 @click.option(
     "--dry-run", is_flag=True, help="Show what would be done without executing"
 )
@@ -370,7 +385,7 @@ def main(
     upgrade_deps,
     no_publish,
     todo,
-    markdown,
+    output_markdown,
     dry_run,
     config_path,
     abstraction,
@@ -395,7 +410,7 @@ def main(
         upgrade_deps,
         no_publish,
         todo,
-        markdown,
+        output_markdown,
         dry_run,
         config_path,
         abstraction,
