@@ -18,6 +18,11 @@ from goal.push.core import execute_push_workflow
     "--no-version-sync", is_flag=True, help="Skip syncing version to all files"
 )
 @click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
+@click.option(
+    "--force-publish",
+    is_flag=True,
+    help="Publish even when no package source files changed",
+)
 @click.option("--message", "-m", default=None, help="Custom commit message")
 @click.option(
     "--dry-run", is_flag=True, help="Show what would be done without executing"
@@ -43,6 +48,7 @@ def push(
     no_changelog,
     no_version_sync,
     no_publish,
+    force_publish,
     message,
     dry_run,
     markdown,
@@ -57,6 +63,7 @@ def push(
     # Use yes from ctx.obj (set by -a/--all or -y/--yes global flags)
     yes = ctx.obj.get("yes", False)
     no_publish = no_publish or ctx.obj.get("no_publish", False)
+    force_publish = force_publish or ctx.obj.get("force_publish", False)
     # Store model and api_key in ctx.obj for downstream use
     ctx.obj["cost_model"] = model
     ctx.obj["cost_api_key"] = api_key
@@ -67,6 +74,7 @@ def push(
         no_changelog=no_changelog,
         no_version_sync=no_version_sync,
         no_publish=no_publish,
+        force_publish=force_publish,
         message=message,
         dry_run=dry_run,
         yes=yes,

@@ -198,6 +198,7 @@ def output_final_summary(
     publish_success: bool,
     no_tag: bool,
     publish_required: bool = False,
+    publish_skip_reason: Optional[str] = None,
 ) -> None:
     """Output final summary in YAML or markdown format."""
     import yaml
@@ -248,13 +249,9 @@ def output_final_summary(
                 "planfile_updates": {
                     "tickets_added": added_tickets
                 },
-                "publish": {
-                    "status": "passed"
-                    if publish_success
-                    else "failed"
-                    if publish_required
-                    else "skipped"
-                }
+                "publish": _build_publish_summary(
+                    publish_success, publish_required, publish_skip_reason
+                )
             }
         }
 
@@ -291,6 +288,8 @@ def output_final_summary(
         actions.append(f"Published version {new_version}")
     elif publish_required:
         actions.append("Publish failed")
+    elif publish_skip_reason:
+        actions.append(f"Publish skipped ({publish_skip_reason})")
     else:
         actions.append("Publish skipped")
 
@@ -455,6 +454,7 @@ def execute_push_workflow(
     model: Optional[str] = None,
     api_key: Optional[str] = None,
     no_publish: bool = False,
+    force_publish: bool = False,
 ) -> None:
     """Execute the complete push workflow."""
 
@@ -466,6 +466,7 @@ def execute_push_workflow(
 
     yes = ctx_obj["yes"]
     no_publish = no_publish or ctx_obj.get("no_publish", False)
+    force_publish = force_publish or ctx_obj.get("force_publish", False)
 
     project_types = _detect_project_types()
 
@@ -594,15 +595,24 @@ def execute_push_workflow(
     if hasattr(publish_config, "reload"):
         publish_config.reload()
 
-    publish_success = handle_publish(
+    publish_success, publish_change_report = handle_publish(
         project_types,
         new_version,
         ctx_obj["yes"],
         no_publish=no_publish,
         config=publish_config,
+        staged_files=files,
+        force_publish=force_publish,
     )
 
-    publish_required = ctx_obj["yes"] and not no_publish
+    publish_skip_reason = (
+        publish_change_report.skip_reason if publish_change_report else None
+    )
+    publish_required = (
+        ctx_obj["yes"]
+        and not no_publish
+        and not publish_skip_reason
+    )
     if publish_required and not publish_success:
         elapsed = time.time() - start_time
         ctx_obj["_elapsed_time"] = elapsed
@@ -620,6 +630,7 @@ def execute_push_workflow(
             publish_success,
             no_tag,
             publish_required=publish_required,
+            publish_skip_reason=publish_skip_reason,
         )
         click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
         sys.exit(1)
@@ -648,9 +659,28 @@ def execute_push_workflow(
         publish_success,
         no_tag,
         publish_required=publish_required,
+        publish_skip_reason=publish_skip_reason,
     )
 
     click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
+
+
+def _build_publish_summary(
+    publish_success: bool,
+    publish_required: bool,
+    publish_skip_reason: Optional[str],
+) -> Dict[str, Any]:
+    """Build the publish section for the YAML goal summary."""
+    if publish_success:
+        return {"status": "passed"}
+    if publish_skip_reason:
+        return {
+            "status": "skipped",
+            "reason": publish_skip_reason,
+        }
+    if publish_required:
+        return {"status": "failed"}
+    return {"status": "skipped"}
 
 
 def _initialize_context(

@@ -139,7 +139,10 @@ class TestWorkflowOrder:
             patch("goal.push.core.get_version_info", return_value=("0.1.0", "0.1.1")),
             patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
             patch("goal.push.core._handle_commit_phase", side_effect=track("commit")),
-            patch("goal.push.core.handle_publish", side_effect=track("publish", True)),
+            patch(
+                "goal.push.core.handle_publish",
+                side_effect=track("publish", (True, None)),
+            ),
             patch("goal.push.core.create_tag", side_effect=track("tag", "v0.1.1")),
             patch("goal.git_ops.get_remote_branch", return_value="main"),
             patch("goal.push.core.push_to_remote", side_effect=track("push")),
@@ -166,6 +169,65 @@ class TestWorkflowOrder:
         assert call_order == ["commit", "publish", "tag", "push"], (
             f"Expected [commit, publish, tag, push] but got {call_order}"
         )
+
+    def test_metadata_only_changes_skip_publish_but_still_tag_and_push(self):
+        """Docs/metadata-only commits should not upload packages to registries."""
+        from goal.push.core import execute_push_workflow
+
+        ctx_obj = {
+            "yes": True,
+            "markdown": False,
+            "config": {},
+            "user_config": {},
+        }
+
+        with (
+            patch("goal.push.core.check_pyproject_toml", return_value=None),
+            patch("goal.push.core._initialize_context"),
+            patch("goal.push.core._detect_project_types", return_value=["python"]),
+            patch("goal.push.core._bootstrap_projects"),
+            patch("goal.push.core.run_git"),
+            patch(
+                "goal.push.core.get_staged_files",
+                return_value=["README.md", "CHANGELOG.md"],
+            ),
+            patch("goal.push.core._validate_staged_files"),
+            patch("goal.push.core.get_diff_content", return_value="diff"),
+            patch("goal.push.core.get_diff_stats", return_value={"README.md": (1, 0)}),
+            patch(
+                "goal.push.core.get_commit_message",
+                return_value=("docs: update readme", None, {}),
+            ),
+            patch("goal.push.core.get_version_info", return_value=("0.1.42", "0.1.43")),
+            patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
+            patch("goal.push.core._handle_commit_phase"),
+            patch("goal.push.stages.publish.publish_project") as mock_publish_project,
+            patch("goal.push.core.create_tag", return_value="v0.1.43") as mock_create_tag,
+            patch("goal.git_ops.get_remote_branch", return_value="main"),
+            patch("goal.push.core.push_to_remote") as mock_push,
+            patch("goal.push.core.handle_todo_stage"),
+            patch("goal.push.core.output_final_summary"),
+        ):
+            execute_push_workflow(
+                ctx_obj=ctx_obj,
+                bump="patch",
+                no_tag=False,
+                no_changelog=False,
+                no_version_sync=False,
+                no_publish=False,
+                message=None,
+                dry_run=False,
+                yes=True,
+                markdown=False,
+                split=False,
+                ticket=None,
+                abstraction=None,
+                todo=False,
+            )
+
+        mock_publish_project.assert_not_called()
+        mock_create_tag.assert_called_once()
+        mock_push.assert_called_once()
 
     def test_auto_publish_failure_aborts_before_tag_and_push(self):
         """--all must not tag or push a release when publishing failed."""
@@ -195,7 +257,7 @@ class TestWorkflowOrder:
             patch("goal.push.core.get_version_info", return_value=("4.0.0", "4.0.1")),
             patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
             patch("goal.push.core._handle_commit_phase"),
-            patch("goal.push.core.handle_publish", return_value=False),
+            patch("goal.push.core.handle_publish", return_value=(False, None)),
             patch("goal.push.core.create_tag") as mock_create_tag,
             patch("goal.push.core.push_to_remote") as mock_push,
             patch("goal.push.core.handle_todo_stage"),
@@ -430,21 +492,8 @@ class TestPushWorkflowE2E:
     def test_push_stages_handle_empty_inputs(self):
         """Test that push stages handle empty inputs gracefully."""
         from goal.push.stages.tag import create_tag
-        from goal.push.stages.publish import handle_publish
 
-        # These should not raise import errors
         assert create_tag is not None
-        assert handle_publish is not None
-
-    def test_handle_publish_skips_when_no_publish_flag_is_set(self):
-        """Test that the publish stage respects --no-publish."""
-        from goal.push.stages.publish import handle_publish
-
-        with patch("goal.push.stages.publish.publish_project") as mock_publish_project:
-            result = handle_publish(["python"], "1.2.3", yes=True, no_publish=True)
-
-        assert result is False
-        mock_publish_project.assert_not_called()
 
     def test_push_command_forwards_no_publish_flag(self):
         """Test that the CLI push command forwards --no-publish to the workflow."""

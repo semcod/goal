@@ -14,6 +14,11 @@ from goal.push.core import execute_push_workflow
     "--no-version-sync", is_flag=True, help="Skip syncing version to all files"
 )
 @click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
+@click.option(
+    "--force-publish",
+    is_flag=True,
+    help="Publish even when no package source files changed",
+)
 @click.option("--message", "-m", default=None, help="Custom commit message")
 @click.option(
     "--dry-run", is_flag=True, help="Show what would be done without executing"
@@ -34,6 +39,7 @@ def push(
     no_changelog,
     no_version_sync,
     no_publish,
+    force_publish,
     message,
     dry_run,
     yes,
@@ -45,6 +51,7 @@ def push(
 ):
     """Add, commit, tag, and push changes to remote."""
     no_publish = no_publish or ctx.obj.get("no_publish", False)
+    force_publish = force_publish or ctx.obj.get("force_publish", False)
     execute_push_workflow(
         ctx_obj=ctx.obj,
         bump=bump,
@@ -52,6 +59,7 @@ def push(
         no_changelog=no_changelog,
         no_version_sync=no_version_sync,
         no_publish=no_publish,
+        force_publish=force_publish,
         message=message,
         dry_run=dry_run,
         yes=yes,
