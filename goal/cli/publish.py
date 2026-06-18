@@ -93,13 +93,21 @@ def _get_configured_project_types(config: Any) -> List[str]:
 
 def _get_python_bin() -> str:
     """Get the Python binary to use for publishing."""
+    import os
+    import sys
+
+    # Prefer the active virtualenv (e.g. source ../urisys/.venv/bin/activate)
+    active_venv = os.environ.get("VIRTUAL_ENV", "").strip()
+    if active_venv:
+        active_python = Path(active_venv) / "bin" / "python"
+        if active_python.exists():
+            return str(active_python.resolve())
+
     # Check for venv in current directory (priority order: .venv, venv, env)
     for venv_name in [".venv", "venv", "env"]:
         venv_python = Path(".") / venv_name / "bin" / "python"
         if venv_python.exists():
             return str(venv_python.resolve())
-    # Fall back to sys.executable
-    import sys
 
     return sys.executable
 
@@ -368,6 +376,30 @@ def _prepare_python_publish(strategy: dict, version: str) -> tuple:
 _RETRY_DELAYS = [60, 120, 300]
 
 
+def _read_nodejs_package_name() -> str:
+    """Return the npm package name from package.json."""
+    try:
+        import json
+        with open("package.json") as f:
+            return (json.load(f).get("name") or "").strip()
+    except Exception:
+        return ""
+
+
+def _nodejs_artifacts_for_version(version: str) -> list[Path]:
+    """Return npm pack artifacts matching the requested version."""
+    dist = Path("dist")
+    if not dist.exists():
+        return []
+    patterns = [f"*-{version}.tgz"]
+    artifacts: list[Path] = []
+    for pattern in patterns:
+        for path in dist.glob(pattern):
+            if path.is_file():
+                artifacts.append(path)
+    return sorted(set(artifacts))
+
+
 def _is_rate_limited(result) -> bool:
     """Check if a publish result indicates PyPI rate limiting (HTTP 429)."""
     combined = f"{result.stdout or ''}\n{result.stderr or ''}"
@@ -388,11 +420,17 @@ def _run_publish_command(
     waiting through PyPI retry backoff.
     """
     click.echo(f"  Publishing {ptype}: {publish_cmd}")
-    gh_config = get_github_release_config(config) if ptype == "python" else None
-    package_name = _read_python_package_name() if ptype == "python" else ""
+    gh_config = get_github_release_config(config) if ptype in ("python", "nodejs") else None
+    package_name = (
+        _read_python_package_name()
+        if ptype == "python"
+        else _read_nodejs_package_name() if ptype == "nodejs" else ""
+    )
     artifacts = (
         _python_artifacts_for_version(version or "", package_name)
         if ptype == "python" and version
+        else _nodejs_artifacts_for_version(version or "")
+        if ptype == "nodejs" and version
         else []
     )
 
@@ -416,13 +454,13 @@ def _run_publish_command(
                 return True  # Not a failure
 
             blocked = is_pypi_blocked(result)
-            if (
-                blocked
-                and gh_config is not None
-                and gh_config.skip_pypi_retries_on_block
-                and version
-                and github_fallback_actionable(gh_config)
-            ):
+            if blocked and gh_config is not None and gh_config.skip_pypi_retries_on_block and version:
+                click.echo(
+                    click.style(
+                        "  ⚠ PyPI blocked — deploying to GitHub Releases (parallel channel, no retry)",
+                        fg="yellow",
+                    )
+                )
                 if try_github_fallback(
                     result,
                     version=version,
@@ -431,7 +469,23 @@ def _run_publish_command(
                     artifacts=artifacts or None,
                 ):
                     return True
+                click.echo(
+                    click.style(
+                        "  ✗ GitHub fallback failed (check gh CLI and token). Skipping PyPI retry.",
+                        fg="red",
+                    )
+                )
                 return False
+
+            if blocked and version:
+                if try_github_fallback(
+                    result,
+                    version=version,
+                    package_name=package_name,
+                    config=config,
+                    artifacts=artifacts or None,
+                ):
+                    return True
 
             if _is_rate_limited(result) and attempt < len(_RETRY_DELAYS):
                 delay = _RETRY_DELAYS[attempt]
@@ -444,15 +498,6 @@ def _run_publish_command(
                 )
                 time.sleep(delay)
                 continue
-
-            if blocked and version and try_github_fallback(
-                result,
-                version=version,
-                package_name=package_name,
-                config=config,
-                artifacts=artifacts or None,
-            ):
-                return True
 
             click.echo(
                 click.style(
