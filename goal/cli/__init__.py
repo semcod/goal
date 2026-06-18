@@ -241,6 +241,7 @@ def _configure_main_context(
     recursive,
     interactive,
     no_publish,
+    force_publish,
     todo,
     markdown,
     dry_run,
@@ -255,6 +256,7 @@ def _configure_main_context(
     ctx.obj["recursive"] = recursive
     ctx.obj["interactive"] = interactive
     ctx.obj["no_publish"] = no_publish
+    ctx.obj["force_publish"] = force_publish
     ctx.obj["todo"] = todo
     ctx.obj["markdown"] = _resolve_output_markdown(markdown, all_flags)
     ctx.obj["dry_run"] = dry_run
@@ -379,6 +381,11 @@ class GoalGroup(click.Group):
 )
 @click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
 @click.option(
+    "--force-publish",
+    is_flag=True,
+    help="Publish even when no package source changes are detected (e.g. source already committed)",
+)
+@click.option(
     "--todo", "-t", is_flag=True, help="Create TODO.md file with detected issues"
 )
 @click.option("--markdown/--ascii", "output_markdown", default=None, help="Output format")
@@ -404,6 +411,7 @@ def main(
     recursive,
     interactive,
     no_publish,
+    force_publish,
     todo,
     output_markdown,
     dry_run,
@@ -431,6 +439,7 @@ def main(
         recursive,
         interactive,
         no_publish,
+        force_publish,
         todo,
         output_markdown,
         dry_run,
