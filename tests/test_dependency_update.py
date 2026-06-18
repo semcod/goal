@@ -8,6 +8,7 @@ from click.testing import CliRunner
 
 from goal.cli import main
 from goal.dependency_update import (
+    DependencyUpdateResult,
     _select_managers_to_update,
     discover_dependency_project_roots,
     update_project_dependencies,
@@ -152,6 +153,9 @@ def test_has_cli_flag_detects_combined_short_options() -> None:
     assert _has_cli_flag(["-aur"], "r", "--recursive") is True
     assert _has_cli_flag(["-ar"], "a", "--all") is True
     assert _has_cli_flag(["-ar"], "r", "--recursive") is True
+    assert _has_cli_flag(["-aiu"], "i", "--interactive") is True
+    assert _has_cli_flag(["-aiu"], "a", "--all") is True
+    assert _has_cli_flag(["-aiu"], "u", "--upgrade-deps") is True
     assert _has_cli_flag(["-a", "-u"], "a", "--all") is True
     assert _has_cli_flag(["--all"], "a", "--all") is True
     assert _has_cli_flag(["push"], "a", "--all") is False
@@ -226,6 +230,108 @@ def test_aur_sets_recursive_and_upgrade_deps_in_context() -> None:
     assert captured["upgrade_deps"] is True
     assert captured["recursive"] is True
     assert captured["yes"] is True
+
+
+def test_interactive_skips_declined_projects(tmp_path: Path, monkeypatch) -> None:
+    for name in ("alpha", "beta"):
+        pkg = tmp_path / name
+        pkg.mkdir()
+        (pkg / "pyproject.toml").write_text(f"[project]\nname='{name}'\n")
+        (pkg / "uv.lock").write_text("")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "goal.dependency_update.get_available_package_managers",
+        lambda project_path: [get_package_manager("uv")],
+    )
+
+    calls: list[str] = []
+
+    def fake_run(command, cwd):
+        calls.append(cwd)
+        return DependencyUpdateResult(
+            manager="uv",
+            command=command,
+            success=True,
+            duration_s=0.1,
+        )
+
+    monkeypatch.setattr("goal.dependency_update._run_update_command", fake_run)
+
+    answers = iter([True, False])
+    monkeypatch.setattr(
+        "goal.dependency_update.click.confirm",
+        lambda *args, **kwargs: next(answers),
+    )
+
+    results = update_project_dependencies(yes=False, interactive=True)
+    assert len(results) == 1
+    assert len(calls) == 1
+    assert calls[0].endswith("/alpha")
+
+
+def test_auto_mode_processes_all_projects_without_prompts(
+    tmp_path: Path, monkeypatch
+) -> None:
+    for name in ("alpha", "beta"):
+        pkg = tmp_path / name
+        pkg.mkdir()
+        (pkg / "pyproject.toml").write_text(f"[project]\nname='{name}'\n")
+        (pkg / "uv.lock").write_text("")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "goal.dependency_update.get_available_package_managers",
+        lambda project_path: [get_package_manager("uv")],
+    )
+
+    calls: list[str] = []
+
+    def fake_run(command, cwd):
+        calls.append(Path(cwd).name)
+        return DependencyUpdateResult(
+            manager="uv",
+            command=command,
+            success=True,
+            duration_s=0.1,
+        )
+
+    monkeypatch.setattr("goal.dependency_update._run_update_command", fake_run)
+    monkeypatch.setattr(
+        "goal.dependency_update.click.confirm",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("should not prompt in auto mode")
+        ),
+    )
+
+    results = update_project_dependencies(yes=True, interactive=False)
+    assert len(results) == 2
+    assert calls == ["alpha", "beta"]
+
+
+def test_aiu_sets_interactive_in_context() -> None:
+    import goal.cli.push_cmd as push_cmd
+
+    runner = CliRunner()
+    captured = {}
+
+    def fake_execute(ctx_obj, **kwargs):
+        captured["interactive"] = ctx_obj.get("interactive")
+        captured["yes"] = ctx_obj.get("yes")
+        captured["upgrade_deps"] = ctx_obj.get("upgrade_deps")
+
+    with (
+        patch("goal.cli._show_goal_version_banner"),
+        patch("goal.cli._warn_goal_binary_mismatch"),
+        patch.object(push_cmd, "execute_push_workflow", side_effect=fake_execute),
+        patch("goal.push.core.execute_push_workflow", side_effect=fake_execute),
+    ):
+        result = runner.invoke(main, ["-aiu"])
+
+    assert result.exit_code == 0, result.output
+    assert captured["interactive"] is True
+    assert captured["yes"] is True
+    assert captured["upgrade_deps"] is True
 
 
 def test_ar_sets_recursive_in_context() -> None:

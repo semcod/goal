@@ -64,6 +64,7 @@ def push(
     yes = ctx.obj.get("yes", False)
     no_publish = no_publish or ctx.obj.get("no_publish", False)
     force_publish = force_publish or ctx.obj.get("force_publish", False)
+    dry_run = dry_run or ctx.obj.get("dry_run", False)
     if output_markdown is None:
         markdown = ctx.obj.get("markdown", False)
     else:

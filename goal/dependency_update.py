@@ -204,10 +204,18 @@ def discover_dependency_project_roots(
     return updatable
 
 
+def _format_project_label(project_root: Path) -> str:
+    """Return a stable, human-friendly path label for prompts."""
+    try:
+        return str(project_root.resolve().relative_to(Path.cwd().resolve()))
+    except ValueError:
+        return str(project_root.resolve())
+
+
 def _update_dependencies_in_root(
     project_root: Path,
     *,
-    yes: bool,
+    auto: bool,
     dry_run: bool,
 ) -> List[DependencyUpdateResult]:
     managers = _select_managers_to_update(str(project_root))
@@ -233,7 +241,7 @@ def _update_dependencies_in_root(
             click.echo(f"  Would run ({pm.name}): {command}")
         return []
 
-    if not yes:
+    if not auto:
         click.echo("Detected package managers:")
         for pm, command in planned:
             click.echo(f"  - {pm.name}: {command}")
@@ -274,6 +282,7 @@ def update_project_dependencies(
     yes: bool = False,
     dry_run: bool = False,
     recursive: bool = False,
+    interactive: bool = False,
 ) -> List[DependencyUpdateResult]:
     """Update all detected project dependencies to their latest versions."""
     project_roots = discover_dependency_project_roots(
@@ -300,12 +309,31 @@ def update_project_dependencies(
             )
         )
 
+    auto = yes and not interactive
+    if len(project_roots) > 1 and not auto and not interactive:
+        if not click.confirm(
+            f"Update dependencies in all {len(project_roots)} projects?",
+            default=False,
+        ):
+            click.echo(click.style("Skipped dependency updates.", fg="yellow"))
+            return []
+
     results: List[DependencyUpdateResult] = []
     for project_root in project_roots:
+        project_auto = auto
+        if interactive:
+            label = _format_project_label(project_root)
+            if not click.confirm(f"Process project {label}?", default=True):
+                click.echo(
+                    click.style(f"  ⏭️  Skipped {project_root.name}", fg="yellow")
+                )
+                continue
+            project_auto = True
+
         results.extend(
             _update_dependencies_in_root(
                 project_root,
-                yes=yes,
+                auto=project_auto,
                 dry_run=dry_run,
             )
         )

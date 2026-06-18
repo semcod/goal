@@ -239,6 +239,7 @@ def _configure_main_context(
     all_flags,
     upgrade_deps,
     recursive,
+    interactive,
     no_publish,
     todo,
     markdown,
@@ -252,6 +253,7 @@ def _configure_main_context(
     ctx.obj["yes"] = yes or all_flags
     ctx.obj["upgrade_deps"] = upgrade_deps
     ctx.obj["recursive"] = recursive
+    ctx.obj["interactive"] = interactive
     ctx.obj["no_publish"] = no_publish
     ctx.obj["todo"] = todo
     ctx.obj["markdown"] = _resolve_output_markdown(markdown, all_flags)
@@ -368,6 +370,13 @@ class GoalGroup(click.Group):
     is_flag=True,
     help="Update dependencies in subfolders (monorepo support)",
 )
+@click.option(
+    "--interactive",
+    "-i",
+    "interactive",
+    is_flag=True,
+    help="Ask before processing each subproject (without -i, -a/--all runs automatically)",
+)
 @click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
 @click.option(
     "--todo", "-t", is_flag=True, help="Create TODO.md file with detected issues"
@@ -393,6 +402,7 @@ def main(
     all_flags,
     upgrade_deps,
     recursive,
+    interactive,
     no_publish,
     todo,
     output_markdown,
@@ -419,6 +429,7 @@ def main(
         all_flags,
         upgrade_deps,
         recursive,
+        interactive,
         no_publish,
         todo,
         output_markdown,
