@@ -509,6 +509,7 @@ def execute_push_workflow(
         update_results = update_project_dependencies(
             yes=ctx_obj["yes"],
             dry_run=dry_run,
+            recursive=ctx_obj.get("recursive", False),
         )
         if update_results and not all(result.success for result in update_results):
             click.echo(

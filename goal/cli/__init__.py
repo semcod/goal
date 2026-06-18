@@ -238,6 +238,7 @@ def _configure_main_context(
     yes,
     all_flags,
     upgrade_deps,
+    recursive,
     no_publish,
     todo,
     markdown,
@@ -250,6 +251,7 @@ def _configure_main_context(
     ctx.obj["version"] = target_version
     ctx.obj["yes"] = yes or all_flags
     ctx.obj["upgrade_deps"] = upgrade_deps
+    ctx.obj["recursive"] = recursive
     ctx.obj["no_publish"] = no_publish
     ctx.obj["todo"] = todo
     ctx.obj["markdown"] = _resolve_output_markdown(markdown, all_flags)
@@ -359,6 +361,13 @@ class GoalGroup(click.Group):
     is_flag=True,
     help="Update project dependencies to latest available versions",
 )
+@click.option(
+    "--recursive",
+    "-r",
+    "recursive",
+    is_flag=True,
+    help="Update dependencies in subfolders (monorepo support)",
+)
 @click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
 @click.option(
     "--todo", "-t", is_flag=True, help="Create TODO.md file with detected issues"
@@ -383,6 +392,7 @@ def main(
     yes,
     all_flags,
     upgrade_deps,
+    recursive,
     no_publish,
     todo,
     output_markdown,
@@ -408,6 +418,7 @@ def main(
         yes,
         all_flags,
         upgrade_deps,
+        recursive,
         no_publish,
         todo,
         output_markdown,

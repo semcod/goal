@@ -124,8 +124,39 @@ def test_rewrite_bash_pytest_for_uv_converts_goal_yaml_style_command():
     from goal.cli.tests import _rewrite_bash_pytest_for_uv
 
     cmd = "bash -lc './.venv/bin/python -m pytest tests/ -v'"
-    assert _rewrite_bash_pytest_for_uv(cmd, has_uv=True) == "uv run pytest tests/ -v"
-    assert _rewrite_bash_pytest_for_uv(cmd, has_uv=False) is None
+    with patch("goal.cli.tests._pytest_importable", return_value=False):
+        assert (
+            _rewrite_bash_pytest_for_uv(cmd, has_uv=True, python_bin="/usr/bin/python3")
+            == "uv run pytest tests/ -v"
+        )
+    with patch("goal.cli.tests._pytest_importable", return_value=True):
+        assert (
+            _rewrite_bash_pytest_for_uv(
+                cmd, has_uv=True, python_bin="/tmp/venv/bin/python"
+            )
+            is None
+        )
+    assert (
+        _rewrite_bash_pytest_for_uv(cmd, has_uv=False, python_bin="/usr/bin/python3")
+        is None
+    )
+
+
+def test_build_python_test_command_prefers_venv_pytest_when_importable(monkeypatch):
+    monkeypatch.setenv("VIRTUAL_ENV", "/tmp/venv-active")
+
+    with (
+        patch("goal.cli.tests.Path.exists", return_value=True),
+        patch("goal.cli.tests._pytest_importable", return_value=True),
+        patch("shutil.which", return_value="/usr/bin/uv"),
+    ):
+        cmd, use_subprocess, python_bin = cli_tests._build_python_test_command(
+            "pytest tests/ -v", "pytest tests/ -v"
+        )
+
+    assert cmd[:3] == ["/tmp/venv-active/bin/python", "-m", "pytest"]
+    assert use_subprocess is True
+    assert python_bin == "/tmp/venv-active/bin/python"
 
 
 def test_get_test_execution_details_and_planfile_update(tmp_path, monkeypatch):

@@ -7,7 +7,11 @@ import pytest
 from click.testing import CliRunner
 
 from goal.cli import main
-from goal.dependency_update import _select_managers_to_update, update_project_dependencies
+from goal.dependency_update import (
+    _select_managers_to_update,
+    discover_dependency_project_roots,
+    update_project_dependencies,
+)
 from goal.package_managers import get_package_manager, get_update_all_command
 
 
@@ -143,9 +147,108 @@ def test_has_cli_flag_detects_combined_short_options() -> None:
 
     assert _has_cli_flag(["-au"], "a", "--all") is True
     assert _has_cli_flag(["-au"], "u", "--upgrade-deps") is True
+    assert _has_cli_flag(["-aur"], "a", "--all") is True
+    assert _has_cli_flag(["-aur"], "u", "--upgrade-deps") is True
+    assert _has_cli_flag(["-aur"], "r", "--recursive") is True
+    assert _has_cli_flag(["-ar"], "a", "--all") is True
+    assert _has_cli_flag(["-ar"], "r", "--recursive") is True
     assert _has_cli_flag(["-a", "-u"], "a", "--all") is True
     assert _has_cli_flag(["--all"], "a", "--all") is True
     assert _has_cli_flag(["push"], "a", "--all") is False
+
+
+def test_discover_dependency_project_roots_finds_subprojects(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root_pkg = tmp_path / "packages" / "backend"
+    root_pkg.mkdir(parents=True)
+    (root_pkg / "pyproject.toml").write_text("[project]\nname='backend'\n")
+    (root_pkg / "uv.lock").write_text("")
+
+    other_pkg = tmp_path / "packages" / "frontend"
+    other_pkg.mkdir(parents=True)
+    (other_pkg / "pyproject.toml").write_text("[project]\nname='frontend'\n")
+    (other_pkg / "uv.lock").write_text("")
+
+    monkeypatch.setattr(
+        "goal.dependency_update.get_available_package_managers",
+        lambda project_path: [get_package_manager("uv")],
+    )
+
+    roots = discover_dependency_project_roots(str(tmp_path), recursive=False)
+    assert {path.name for path in roots} == {"backend", "frontend"}
+
+
+def test_discover_dependency_project_roots_respects_recursive_flag(
+    tmp_path: Path, monkeypatch
+) -> None:
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='root'\n")
+    (tmp_path / "uv.lock").write_text("")
+
+    sub_pkg = tmp_path / "packages" / "worker"
+    sub_pkg.mkdir(parents=True)
+    (sub_pkg / "pyproject.toml").write_text("[project]\nname='worker'\n")
+    (sub_pkg / "uv.lock").write_text("")
+
+    monkeypatch.setattr(
+        "goal.dependency_update.get_available_package_managers",
+        lambda project_path: [get_package_manager("uv")],
+    )
+
+    roots = discover_dependency_project_roots(str(tmp_path), recursive=False)
+    assert [path.name for path in roots] == [tmp_path.name]
+
+    roots_recursive = discover_dependency_project_roots(str(tmp_path), recursive=True)
+    assert {path.name for path in roots_recursive} == {tmp_path.name, "worker"}
+
+
+def test_aur_sets_recursive_and_upgrade_deps_in_context() -> None:
+    import goal.cli.push_cmd as push_cmd
+
+    runner = CliRunner()
+    captured = {}
+
+    def fake_execute(ctx_obj, **kwargs):
+        captured["upgrade_deps"] = ctx_obj.get("upgrade_deps")
+        captured["recursive"] = ctx_obj.get("recursive")
+        captured["yes"] = ctx_obj.get("yes")
+
+    with (
+        patch("goal.cli._show_goal_version_banner"),
+        patch("goal.cli._warn_goal_binary_mismatch"),
+        patch.object(push_cmd, "execute_push_workflow", side_effect=fake_execute) as mock_execute,
+        patch("goal.push.core.execute_push_workflow", side_effect=fake_execute),
+    ):
+        result = runner.invoke(main, ["-aur"])
+
+    assert mock_execute.called, "execute_push_workflow mock was not invoked"
+    assert result.exit_code == 0, result.output
+    assert captured["upgrade_deps"] is True
+    assert captured["recursive"] is True
+    assert captured["yes"] is True
+
+
+def test_ar_sets_recursive_in_context() -> None:
+    import goal.cli.push_cmd as push_cmd
+
+    runner = CliRunner()
+    captured = {}
+
+    def fake_execute(ctx_obj, **kwargs):
+        captured["recursive"] = ctx_obj.get("recursive")
+        captured["yes"] = ctx_obj.get("yes")
+
+    with (
+        patch("goal.cli._show_goal_version_banner"),
+        patch("goal.cli._warn_goal_binary_mismatch"),
+        patch.object(push_cmd, "execute_push_workflow", side_effect=fake_execute),
+        patch("goal.push.core.execute_push_workflow", side_effect=fake_execute),
+    ):
+        result = runner.invoke(main, ["-ar"])
+
+    assert result.exit_code == 0, result.output
+    assert captured["recursive"] is True
+    assert captured["yes"] is True
 
 
 def test_upgrade_deps_runs_before_bootstrap(monkeypatch) -> None:

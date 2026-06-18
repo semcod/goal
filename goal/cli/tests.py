@@ -64,9 +64,30 @@ def _resolve_project_python(project_root: Optional[Path], fallback_python: str) 
         return fallback_python
 
 
-def _rewrite_bash_pytest_for_uv(test_cmd_str: str, has_uv: bool) -> Optional[str]:
+def _pytest_importable(python_bin: str, project_root: Optional[Path] = None) -> bool:
+    """Return True when pytest imports successfully in the given interpreter."""
+    cwd = project_root or Path.cwd()
+    result = subprocess.run(
+        [python_bin, "-c", "import pytest"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def _prefer_uv_run(python_bin: str, has_uv: bool) -> bool:
+    """Use uv run only when the resolved interpreter cannot execute pytest."""
+    if not has_uv:
+        return False
+    return not _pytest_importable(python_bin)
+
+
+def _rewrite_bash_pytest_for_uv(
+    test_cmd_str: str, has_uv: bool, python_bin: str
+) -> Optional[str]:
     """Rewrite bash-wrapped venv pytest commands to uv run for uv-managed projects."""
-    if not has_uv or "-m pytest" not in test_cmd_str:
+    if not _prefer_uv_run(python_bin, has_uv) or "-m pytest" not in test_cmd_str:
         return None
 
     import re
@@ -278,23 +299,24 @@ def _build_python_test_command(
     python_bin = _resolve_root_python()
     use_subprocess = True
     has_uv = bool(shutil.which("uv")) and "PYTEST_CURRENT_TEST" not in os.environ
+    use_uv_run = _prefer_uv_run(python_bin, has_uv)
 
     if strategy_test_cmd:
         coerced_cmd = _coerce_python_strategy_to_project_pytest(
             test_cmd_str, python_bin
         )
         if coerced_cmd is not None:
-            if has_uv:
+            if use_uv_run:
                 if coerced_cmd[0] == python_bin and coerced_cmd[1:3] == ["-m", "pytest"]:
                     coerced_cmd = ["uv", "run", "pytest"] + coerced_cmd[3:]
             return coerced_cmd, use_subprocess, python_bin
-        uv_cmd = _rewrite_bash_pytest_for_uv(test_cmd_str, has_uv)
+        uv_cmd = _rewrite_bash_pytest_for_uv(test_cmd_str, has_uv, python_bin)
         if uv_cmd:
             return uv_cmd.split(), False, python_bin
         return test_cmd_str.split(), False, python_bin
 
     # Default command
-    if has_uv:
+    if use_uv_run:
         cmd = ["uv", "run", "pytest"]
     else:
         cmd = [python_bin, "-m", "pytest"]
@@ -324,12 +346,14 @@ def _ensure_root_pytest_or_mark_failed(
     uv_lock = Path.cwd() / "uv.lock"
     pyproject_toml = Path.cwd() / "pyproject.toml"
     is_uv_project = has_uv and (uv_lock.exists() or pyproject_toml.exists())
-    
-    if not is_uv_project:
+
+    if _pytest_importable(python_bin):
+        return True
+
+    if is_uv_project:
         if _ensure_pytest_for_project(Path.cwd(), python_bin):
             return True
-    else:
-        # For uv projects, skip the pip check - uv run pytest handles dependencies
+    elif _ensure_pytest_for_project(Path.cwd(), python_bin):
         return True
     click.echo(
         click.style("\n  ❌ Root python environment is missing pytest.", fg="red")

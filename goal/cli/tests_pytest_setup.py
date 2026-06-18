@@ -32,7 +32,6 @@ def _try_uv_install(project_root: Path) -> bool:
     uv_attempts = [
         ["uv", "sync", "--extra", "dev"],
         ["uv", "sync", "--group", "dev"],
-        ["uv", "sync", "--all-extras"],
         ["uv", "sync"],
     ]
 

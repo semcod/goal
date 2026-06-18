@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import time
 from dataclasses import dataclass
@@ -33,6 +34,39 @@ _LOCKFILE_MANAGERS = (
     ("mix.lock", "mix"),
     ("pubspec.lock", "pub"),
     ("Package.resolved", "swift"),
+)
+
+_SKIP_DIRS = frozenset(
+    {
+        ".git",
+        ".idea",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".tox",
+        ".urisys",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "node_modules",
+        "site-packages",
+        "venv",
+    }
+)
+
+_PROJECT_MARKERS = tuple({lockfile for lockfile, _ in _LOCKFILE_MANAGERS}) + (
+    "pyproject.toml",
+    "requirements.txt",
+    "requirements-dev.txt",
+    "package.json",
+    "Cargo.toml",
+    "go.mod",
+    "Gemfile",
+    "composer.json",
+    "mix.exs",
+    "pubspec.yaml",
+    "Package.swift",
 )
 
 
@@ -126,23 +160,58 @@ def _select_managers_to_update(project_path: str) -> List[PackageManager]:
     return list(by_language.values())
 
 
-def update_project_dependencies(
+def _path_has_skipped_dir(path: Path) -> bool:
+    return bool(set(path.parts) & _SKIP_DIRS)
+
+
+def _iter_project_marker_files(project_root: Path):
+    """Yield manifest/lockfile paths while pruning ignored directories."""
+    for dirpath, dirnames, filenames in os.walk(project_root):
+        dirnames[:] = sorted(
+            dirname for dirname in dirnames if dirname not in _SKIP_DIRS
+        )
+        current = Path(dirpath)
+        for filename in filenames:
+            if filename in _PROJECT_MARKERS:
+                yield current / filename
+
+
+def discover_dependency_project_roots(
     project_path: str = ".",
     *,
-    yes: bool = False,
-    dry_run: bool = False,
-) -> List[DependencyUpdateResult]:
-    """Update all detected project dependencies to their latest versions."""
+    recursive: bool = False,
+) -> List[Path]:
+    """Return project roots that have updatable dependency managers."""
     project_root = Path(project_path).resolve()
-    managers = _select_managers_to_update(str(project_root))
+    candidate_roots: dict[str, Path] = {}
 
+    def add_candidate(directory: Path) -> None:
+        candidate_roots.setdefault(str(directory.resolve()), directory.resolve())
+
+    add_candidate(project_root)
+
+    root_has_managers = bool(_select_managers_to_update(str(project_root)))
+    if recursive or not root_has_managers:
+        for found in _iter_project_marker_files(project_root):
+            if _path_has_skipped_dir(found):
+                continue
+            add_candidate(found.parent)
+
+    updatable: List[Path] = []
+    for path in sorted(candidate_roots.values(), key=lambda item: str(item)):
+        if _select_managers_to_update(str(path)):
+            updatable.append(path)
+    return updatable
+
+
+def _update_dependencies_in_root(
+    project_root: Path,
+    *,
+    yes: bool,
+    dry_run: bool,
+) -> List[DependencyUpdateResult]:
+    managers = _select_managers_to_update(str(project_root))
     if not managers:
-        click.echo(
-            click.style(
-                "No supported package manager found for dependency updates.",
-                fg="yellow",
-            )
-        )
         return []
 
     click.echo(
@@ -196,4 +265,48 @@ def update_project_dependencies(
             if result.error:
                 click.echo(click.style(f"    {result.error}", fg="red"))
 
+    return results
+
+
+def update_project_dependencies(
+    project_path: str = ".",
+    *,
+    yes: bool = False,
+    dry_run: bool = False,
+    recursive: bool = False,
+) -> List[DependencyUpdateResult]:
+    """Update all detected project dependencies to their latest versions."""
+    project_roots = discover_dependency_project_roots(
+        project_path,
+        recursive=recursive,
+    )
+
+    if not project_roots:
+        click.echo(
+            click.style(
+                "No supported package manager found for dependency updates.",
+                fg="yellow",
+            )
+        )
+        return []
+
+    if len(project_roots) > 1:
+        names = ", ".join(path.name for path in project_roots[:5])
+        suffix = "..." if len(project_roots) > 5 else ""
+        click.echo(
+            click.style(
+                f"  📁 Found {len(project_roots)} subproject(s) with dependencies: {names}{suffix}",
+                fg="cyan",
+            )
+        )
+
+    results: List[DependencyUpdateResult] = []
+    for project_root in project_roots:
+        results.extend(
+            _update_dependencies_in_root(
+                project_root,
+                yes=yes,
+                dry_run=dry_run,
+            )
+        )
     return results
