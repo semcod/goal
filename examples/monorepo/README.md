@@ -198,9 +198,40 @@ goal status
 # Release all
 goal --all
 
+# Upgrade dependencies in all subprojects (auto-discovers manifests)
+goal -au
+
+# Upgrade dependencies interactively (ask per subproject)
+goal -aiu
+
 # Sync versions to all packages
 goal version --sync
 ```
+
+### Dependency Updates in Monorepos
+
+When the repository root has no `pyproject.toml` or lockfile, Goal scans
+subfolders for manifests and runs the appropriate updater (`uv sync --upgrade`,
+`pip install --upgrade`, `npm update`, etc.) in each detected project.
+
+```bash
+cd /monorepo
+
+# CI / nightly: upgrade everything automatically
+goal -au
+
+# Developer: pick which packages to upgrade
+goal -aiu
+
+# Root also has a manifest — include subfolders explicitly
+goal -aur
+
+# Preview planned upgrade commands
+goal -au --dry-run
+```
+
+Ignored directories during the scan include `.git`, `.venv`, `node_modules`,
+`__pycache__`, `.pytest_cache`, and similar build/cache folders.
 
 ### Package Commands
 

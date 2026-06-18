@@ -1,12 +1,12 @@
-# redup/duplication | 32 groups | 145f 25503L | 2026-06-13
+# redup/duplication | 32 groups | 150f 26785L | 2026-06-18
 
 SUMMARY:
-  files_scanned: 145
-  total_lines:   25503
+  files_scanned: 150
+  total_lines:   26785
   dup_groups:    32
   dup_fragments: 82
   saved_lines:   384
-  scan_ms:       2824
+  scan_ms:       2850
 
 HOTSPOTS[7] (files with most duplication):
   goal/project_bootstrap.py  dup=148L  groups=8  frags=8  (0.6%)

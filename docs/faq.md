@@ -137,7 +137,7 @@ A: Whenever you have changes to commit and push. For releases, use `goal --all`.
 A: Yes, but consider `goal push --bump patch -m "fix: critical bug"`
 
 ### Q: Can I use Goal in a monorepo?
-A: Yes, configure multiple strategies and version files for each package.
+A: Yes. Goal discovers dependency manifests (`pyproject.toml`, `uv.lock`, `package.json`, etc.) in subfolders. Use `goal -au` for automatic upgrades across all packages, `goal -aur` to force a recursive scan from root, or `goal -aiu` to pick subprojects interactively. Configure version sync in `goal.yaml` for coordinated releases — see [examples/monorepo](../examples/monorepo/README.md).
 
 ### Q: How can I contribute to Goal?
 A: Check the [contributing guide](https://github.com/wronai/goal/blob/main/CONTRIBUTING.md) on GitHub.

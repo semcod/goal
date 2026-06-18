@@ -9,10 +9,18 @@ These options can be used with any Goal command:
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--config PATH` | `-c PATH` | Path to goal.yaml config file |
+| `--yes` | `-y` | Skip all prompts (run automatically) |
+| `--all` | `-a` | Automate all stages including tests, commit, push, and publish |
+| `--upgrade-deps` | `-u` | Update project dependencies to latest available versions |
+| `--recursive` | `-r` | Scan subfolders for dependency manifests (monorepo support) |
+| `--interactive` | `-i` | Ask before processing each subproject during dependency updates |
+| `--dry-run` | | Show what would be done without doing it |
 | `--markdown` | | Use markdown output format (default) |
 | `--ascii` | | Use ASCII output format |
 | `--help` | `-h` | Show help message |
 | `--version` | | Show version and exit |
+
+Short flags can be combined, e.g. `-au`, `-aur`, `-aiu`.
 
 ### `goal` (default)
 
@@ -26,6 +34,9 @@ goal [OPTIONS]
 - `--bump, -b {patch,minor,major}`: Version bump type (default: patch)
 - `--yes, -y`: Skip all prompts (run automatically)
 - `--all, -a`: Automate all stages including tests, commit, push, and publish
+- `--upgrade-deps, -u`: Update project dependencies to latest available versions
+- `--recursive, -r`: Scan subfolders for dependency manifests (monorepo support)
+- `--interactive, -i`: Ask before processing each subproject during dependency updates
 - `--dry-run`: Show what would be done without doing it
 
 **Examples:**
@@ -34,6 +45,9 @@ goal                          # Interactive workflow
 goal --bump minor            # Interactive with minor bump
 goal --yes                   # Automatic workflow
 goal --all                   # Full automation
+goal -au                     # Full automation + upgrade dependencies
+goal -aur                    # Monorepo: recursive dependency upgrades
+goal -aiu                    # Monorepo: ask per subproject before upgrading
 goal --dry-run               # Preview changes
 ```
 

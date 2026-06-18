@@ -5,22 +5,22 @@
 
 - **Project**: /home/tom/github/semcod/goal
 - **Primary Language**: python
-- **Languages**: python: 151, yaml: 13, shell: 6, toml: 4, csharp: 2
+- **Languages**: python: 156, yaml: 14, shell: 6, toml: 4, csharp: 2
 - **Analysis Mode**: static
-- **Total Functions**: 983
-- **Total Classes**: 80
-- **Modules**: 187
-- **Entry Points**: 611
+- **Total Functions**: 1030
+- **Total Classes**: 82
+- **Modules**: 193
+- **Entry Points**: 613
 
 ## Architecture by Module
-
-### goal.git_ops
-- **Functions**: 28
-- **File**: `git_ops.py`
 
 ### goal.project_bootstrap
 - **Functions**: 28
 - **File**: `project_bootstrap.py`
+
+### goal.git_ops
+- **Functions**: 28
+- **File**: `git_ops.py`
 
 ### goal.generator.analyzer
 - **Functions**: 27
@@ -28,7 +28,7 @@
 - **File**: `analyzer.py`
 
 ### goal.config.manager
-- **Functions**: 26
+- **Functions**: 27
 - **Classes**: 1
 - **File**: `manager.py`
 
@@ -43,7 +43,7 @@
 - **File**: `validator.py`
 
 ### goal.formatter
-- **Functions**: 23
+- **Functions**: 24
 - **Classes**: 1
 - **File**: `formatter.py`
 
@@ -52,9 +52,13 @@
 - **File**: `version_utils.py`
 
 ### goal.push.core
-- **Functions**: 20
+- **Functions**: 21
 - **Classes**: 1
 - **File**: `core.py`
+
+### goal.cli.tests
+- **Functions**: 20
+- **File**: `tests.py`
 
 ### goal.validation.rules
 - **Functions**: 19
@@ -64,6 +68,11 @@
 ### goal.cli.publish
 - **Functions**: 19
 - **File**: `publish.py`
+
+### goal.package_managers
+- **Functions**: 18
+- **Classes**: 1
+- **File**: `package_managers.py`
 
 ### goal.summary.quality_filter
 - **Functions**: 18
@@ -75,15 +84,6 @@
 - **Classes**: 1
 - **File**: `python_diag_extended.py`
 
-### goal.package_managers
-- **Functions**: 18
-- **Classes**: 1
-- **File**: `package_managers.py`
-
-### goal.cli.tests
-- **Functions**: 18
-- **File**: `tests.py`
-
 ### goal.push.stages.push_remote
 - **Functions**: 17
 - **File**: `push_remote.py`
@@ -93,14 +93,14 @@
 - **Classes**: 1
 - **File**: `deep_analyzer_aggregate.py`
 
+### goal.cli.version_sync
+- **Functions**: 16
+- **File**: `version_sync.py`
+
 ### goal.postcommit.actions
 - **Functions**: 16
 - **Classes**: 5
 - **File**: `actions.py`
-
-### goal.cli.version_sync
-- **Functions**: 16
-- **File**: `version_sync.py`
 
 ### goal.version_validation
 - **Functions**: 15
@@ -112,7 +112,7 @@ Main execution flows into the system:
 
 ### goal.cli.commit_cmd.validate
 > Validate commit summary against quality gates.
-- **Calls**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats, ctx.obj.get, CommitMessageGenerator, generator.generate_detailed_message
+- **Calls**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.generator.generator.CommitMessageGenerator.get_diff_stats, ctx.obj.get, CommitMessageGenerator, generator.generate_detailed_message
 
 ### goal.cli.doctor_cmd.doctor
 > Diagnose and auto-fix common project configuration issues.
@@ -124,7 +124,7 @@ Main execution flows into the system:
 
 ### goal.cli.commit_cmd.fix_summary
 > Auto-fix commit summary quality issues.
-- **Calls**: main.command, click.option, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats, ctx.obj.get, CommitMessageGenerator
+- **Calls**: main.command, click.option, click.option, click.option, goal.git_ops.get_staged_files, goal.generator.generator.CommitMessageGenerator.get_diff_stats, ctx.obj.get, CommitMessageGenerator
 
 ### goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary
 > Generate complete enhanced summary with business value focus.
@@ -168,6 +168,10 @@ Użyteczne do wykrywania spowolnienia spowodowanego duplikatami.
 > Calculate quality metrics for the changes.
 - **Calls**: analysis.get, len, analysis.get, aggregated.get, min, min, min, min
 
+### goal.config.validation.ConfigValidator._validate_publishing_section
+> Validate publishing configuration.
+- **Calls**: self.config.get, publishing.get, publishing.get, publishing.get, publishing.get, self.errors.append, self.errors.append, isinstance
+
 ### goal.recovery.divergent.DivergentHistoryStrategy.recover
 > Attempt to recover from divergent history.
 - **Calls**: click.echo, self.run_git_with_output, click.echo, click.style, click.echo, self.run_git, click.echo, self.run_git_with_output
@@ -190,7 +194,7 @@ Użyteczne do wykrywania spowolnienia spowodowanego duplikatami.
 
 ### examples.api-usage.03_commit_generation.main
 > Demonstrate commit message generation.
-- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.git_ops.get_staged_files, goal.git_ops.get_diff_content, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print
+- **Calls**: integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print, goal.git_ops.get_staged_files, goal.generator.generator.CommitMessageGenerator.get_diff_content, integration.run_matrix.print, integration.run_matrix.print, integration.run_matrix.print
 
 ### examples.testing.03_advanced_mocking.test_spies_and_call_counting
 > Szpiegowanie funkcji i liczenie wywołań.
@@ -231,15 +235,9 @@ git push failures including:
 > Attempt to recover from authentication error.
 - **Calls**: click.echo, click.echo, click.echo, click.echo, click.echo, click.echo, click.echo, click.style
 
-### goal.config.validation.ConfigValidator._validate_versioning_section
-> Validate versioning configuration.
-- **Calls**: self.config.get, versioning.get, versioning.get, versioning.get, versioning.get, versioning.get, self.errors.append, self.errors.append
-
-### examples.testing.04_debugging_diagnostics.test_debug_output_capture
-> Przechwytywanie i analiza outputu debugowego.
-
-Użyteczne do wykrywania duplikatów w logach.
-- **Calls**: tempfile.TemporaryDirectory, Path, None.write_text, subprocess.run, integration.run_matrix.print, integration.run_matrix.print, captured_output.append, patch
+### goal.cli.push_cmd.push
+> Add, commit, tag, and push changes to remote.
+- **Calls**: main.command, click.option, click.option, click.option, click.option, click.option, click.option, click.option
 
 ## Process Flows
 
@@ -251,8 +249,6 @@ validate [goal.cli.commit_cmd]
   └─ →> get_staged_files
       └─> run_git
   └─ →> get_diff_stats
-      └─> run_git
-      └─> run_git
 ```
 
 ### Flow 2: doctor
@@ -314,15 +310,15 @@ commit [goal.cli.commit_cmd]
 - **Methods**: 24
 - **Key Methods**: goal.summary.validator.QualityValidator.__init__, goal.summary.validator.QualityValidator.validate, goal.summary.validator.QualityValidator._extract_intent, goal.summary.validator.QualityValidator._validate_title, goal.summary.validator.QualityValidator._validate_intent, goal.summary.validator.QualityValidator._validate_metrics, goal.summary.validator.QualityValidator._validate_relations, goal.summary.validator.QualityValidator._validate_files, goal.summary.validator.QualityValidator._validate_capabilities, goal.summary.validator.QualityValidator._validate_body
 
+### goal.config.manager.GoalConfig
+> Manages goal.yaml configuration file.
+- **Methods**: 24
+- **Key Methods**: goal.config.manager.GoalConfig.__init__, goal.config.manager.GoalConfig._find_config, goal.config.manager.GoalConfig._find_git_root, goal.config.manager.GoalConfig.exists, goal.config.manager.GoalConfig.load, goal.config.manager.GoalConfig.reload, goal.config.manager.GoalConfig._get_default_config, goal.config.manager.GoalConfig._deep_copy, goal.config.manager.GoalConfig._merge_configs, goal.config.manager.GoalConfig._detect_project_name
+
 ### goal.generator.generator.CommitMessageGenerator
 > Generate conventional commit messages using diff analysis and lightweight classification.
 - **Methods**: 23
 - **Key Methods**: goal.generator.generator.CommitMessageGenerator.__init__, goal.generator.generator.CommitMessageGenerator.get_diff_stats, goal.generator.generator.CommitMessageGenerator.get_name_status, goal.generator.generator.CommitMessageGenerator.get_numstat_map, goal.generator.generator.CommitMessageGenerator.get_changed_files, goal.generator.generator.CommitMessageGenerator.get_diff_content, goal.generator.generator.CommitMessageGenerator.classify_change_type, goal.generator.generator.CommitMessageGenerator.detect_scope, goal.generator.generator.CommitMessageGenerator.extract_functions_changed, goal.generator.generator.CommitMessageGenerator._short_action_summary
-
-### goal.config.manager.GoalConfig
-> Manages goal.yaml configuration file.
-- **Methods**: 23
-- **Key Methods**: goal.config.manager.GoalConfig.__init__, goal.config.manager.GoalConfig._find_config, goal.config.manager.GoalConfig._find_git_root, goal.config.manager.GoalConfig.exists, goal.config.manager.GoalConfig.load, goal.config.manager.GoalConfig.reload, goal.config.manager.GoalConfig._get_default_config, goal.config.manager.GoalConfig._deep_copy, goal.config.manager.GoalConfig._merge_configs, goal.config.manager.GoalConfig._detect_project_name
 
 ### goal.generator.analyzer.ChangeAnalyzer
 > Analyze git changes to classify type, detect scope, and extract functions.
@@ -387,11 +383,6 @@ top of :class:`PythonDiagnostics
 - **Key Methods**: goal.recovery.large_file.LargeFileStrategy.__init__, goal.recovery.large_file.LargeFileStrategy.can_handle, goal.recovery.large_file.LargeFileStrategy.recover, goal.recovery.large_file.LargeFileStrategy._files_in_history, goal.recovery.large_file.LargeFileStrategy._remove_from_history, goal.recovery.large_file.LargeFileStrategy._extract_file_paths, goal.recovery.large_file.LargeFileStrategy._find_large_files, goal.recovery.large_file.LargeFileStrategy._get_file_size_mb, goal.recovery.large_file.LargeFileStrategy._remove_large_files, goal.recovery.large_file.LargeFileStrategy._move_to_lfs
 - **Inherits**: RecoveryStrategy
 
-### goal.config.validation.ConfigValidator
-> Validates Goal configuration files.
-- **Methods**: 11
-- **Key Methods**: goal.config.validation.ConfigValidator.__init__, goal.config.validation.ConfigValidator.validate, goal.config.validation.ConfigValidator._validate_required_sections, goal.config.validation.ConfigValidator._validate_project_section, goal.config.validation.ConfigValidator._validate_git_section, goal.config.validation.ConfigValidator._validate_versioning_section, goal.config.validation.ConfigValidator._validate_publishing_section, goal.config.validation.ConfigValidator._check_bool, goal.config.validation.ConfigValidator._check_numeric, goal.config.validation.ConfigValidator._validate_advanced_section
-
 ### goal.smart_commit.abstraction.CodeAbstraction
 > Extracts meaningful abstractions from code changes.
 - **Methods**: 11
@@ -400,6 +391,11 @@ top of :class:`PythonDiagnostics
 ### goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin
 - **Methods**: 11
 - **Key Methods**: goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin.generate_message, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin._is_docs_only_change, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin._generate_docs_message, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin._generate_high_abstraction_message, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin._generate_medium_abstraction_message, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin._generate_low_abstraction_message, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin._filter_meaningful_entities, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin._infer_message_from_files, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin.generate_functional_body, goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin.generate_changelog_entry
+
+### goal.config.validation.ConfigValidator
+> Validates Goal configuration files.
+- **Methods**: 11
+- **Key Methods**: goal.config.validation.ConfigValidator.__init__, goal.config.validation.ConfigValidator.validate, goal.config.validation.ConfigValidator._validate_required_sections, goal.config.validation.ConfigValidator._validate_project_section, goal.config.validation.ConfigValidator._validate_git_section, goal.config.validation.ConfigValidator._validate_versioning_section, goal.config.validation.ConfigValidator._validate_publishing_section, goal.config.validation.ConfigValidator._check_bool, goal.config.validation.ConfigValidator._check_numeric, goal.config.validation.ConfigValidator._validate_advanced_section
 
 ### goal.authors.manager.AuthorsManager
 > Manages project authors and team members.
@@ -414,6 +410,12 @@ top of :class:`PythonDiagnostics
 ## Data Transformation Functions
 
 Key functions that process and transform data:
+
+### goal.project_bootstrap._validate_pfix_env
+> Validate that OPENROUTER_API_KEY is configured in .env.
+
+Shows error message if key is missing or em
+- **Output to**: goal.project_bootstrap._find_openrouter_api_key, click.echo, click.echo, click.echo, click.echo
 
 ### goal.toml_validation.validate_toml_file
 > Validate a TOML file and return helpful error message if invalid.
@@ -451,6 +453,14 @@ Returns:
 > Format validation results for display.
 - **Output to**: results.items, messages.append, messages.append, messages.append, messages.append
 
+### goal.package_managers.format_package_manager_command
+> Format a package manager command with the given parameters.
+
+Args:
+    pm: Package manager instance
+
+- **Output to**: getattr, ValueError, command_template.format, ValueError
+
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._format_entity_names
 
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._format_relations
@@ -461,50 +471,8 @@ Returns:
 ### goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._format_areas
 - **Output to**: None.join
 
-### goal.formatter.format_push_result
-> Format push command result as markdown.
-- **Output to**: MarkdownFormatter, formatter.add_metadata, formatter.add_header, goal.formatter._build_functional_overview, formatter.add_section
-
-### goal.formatter._format_complexity_metric
-> Format complexity change as a single metric line, or None.
-- **Output to**: metrics.get, metrics.get, abs
-
-### goal.formatter._format_metrics_section
-> Build the Impact Metrics section content.
-- **Output to**: goal.formatter._format_complexity_metric, lines.append, None.join, lines.append, metrics.get
-
-### goal.formatter._format_relations_section
-> Build the Relations section content, or None if empty.
-- **Output to**: relations.get, relations.get
-
-### goal.formatter.format_enhanced_summary
-> Format enhanced business-value summary as markdown.
-- **Output to**: MarkdownFormatter, formatter.add_metadata, formatter.add_header, formatter.add_section, goal.formatter._add_optional_sections
-
-### goal.formatter.format_status_output
-> Format status command output as markdown.
-- **Output to**: MarkdownFormatter, formatter.add_header, None.strip, formatter.add_section, formatter.add_list
-
-### goal.git_ops.validate_repo_url
-> Validate that a URL looks like a git repository (HTTP/HTTPS/SSH/file).
-- **Output to**: url.strip, re.match, re.match, re.match
-
 ### goal.bootstrap.costs_badge._parsed_diff_is_usable
 - **Output to**: isinstance, parsed_diff.startswith
-
-### goal.validators.file_validator.validate_files
-> Validate files before commit.
-
-Args:
-    files: List of file paths to validate
-    max_size_mb: Maxi
-- **Output to**: goal.validators.tokens.get_default_token_patterns, goal.validators.file_validator._is_excluded, goal.validators.file_validator.get_file_size_mb, goal.validators.file_validator.handle_large_files, os.path.exists
-
-### goal.validators.file_validator.validate_staged_files
-> Validate staged files using configuration.
-
-This is a convenience function that extracts validation 
-- **Output to**: goal.git_ops.get_staged_files, goal.validators.file_validator._get_deleted_staged_files, goal.validators.dot_folders.manage_dot_folders, goal.git_ops.get_staged_files, goal.validators.file_validator.validate_files
 
 ### goal.push.stages.dry_run._format_markdown_dry_run
 > Return markdown-formatted dry-run output.
@@ -522,11 +490,40 @@ Checks that the configuration file is valid, complete, and f
 
 ### goal.cli.commit_cmd.validate
 > Validate commit summary against quality gates.
-- **Output to**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.git_ops.get_diff_stats
+- **Output to**: main.command, click.option, click.option, goal.git_ops.get_staged_files, goal.generator.generator.CommitMessageGenerator.get_diff_stats
 
 ### goal.cli.postcommit_cmd.postcommit_validate
 > Validate post-commit action configuration.
 - **Output to**: postcommit.command, PostCommitManager, click.echo, click.echo, manager.validate_actions
+
+### goal.cli.validation_cmd.validation_validate
+> Validate rule configurations.
+- **Output to**: validation.command, ValidationRuleManager, click.echo, click.echo, manager.validate_config
+
+### goal.cli.config_cmd.config_validate
+> Validate goal.yaml configuration.
+
+Checks that the configuration file is valid, complete, and follow
+- **Output to**: config.command, click.option, click.option, click.echo, click.style
+
+### goal.postcommit.manager.PostCommitManager.validate_actions
+> Validate all configured actions.
+
+Returns:
+    True if all actions are valid
+- **Output to**: self.get_config, action_config.get, action_class, click.echo, action.validate_config
+
+### goal.postcommit.actions.PostCommitAction.validate_config
+> Validate action configuration.
+
+### goal.postcommit.actions.NotificationAction.validate_config
+> Notifications have no required config — always valid.
+
+### goal.postcommit.actions.WebhookAction.validate_config
+> Require a ``url`` key in the action config.
+
+### goal.postcommit.actions.ScriptAction.validate_config
+> Require a ``command`` key in the action config.
 
 ## Behavioral Patterns
 
@@ -540,22 +537,22 @@ Checks that the configuration file is valid, complete, and f
 Functions exposed as public API (no underscore prefix):
 
 - `goal.user_config.initialize_user_config` - 52 calls
-- `goal.push.core.execute_push_workflow` - 48 calls
+- `goal.push.core.execute_push_workflow` - 52 calls
 - `goal.cli.commit_cmd.validate` - 45 calls
 - `goal.cli.doctor_cmd.doctor` - 40 calls
+- `goal.push.core.output_final_summary` - 40 calls
 - `goal.recovery.large_file.LargeFileStrategy.recover` - 38 calls
 - `goal.cli.commit_cmd.fix_summary` - 38 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.generate_enhanced_summary` - 36 calls
+- `goal.formatter.format_goal_all_summary` - 35 calls
 - `examples.api-usage.01_basic_api.main` - 34 calls
 - `goal.cli.wizard_cmd.wizard` - 34 calls
-- `goal.push.core.output_final_summary` - 34 calls
 - `goal.push.stages.todo.handle_todo_stage` - 32 calls
 - `goal.user_config.show_user_config` - 31 calls
+- `goal.publish.github_fallback.publish_github_release` - 31 calls
 - `examples.api-usage.04_version_validation.main` - 30 calls
-- `goal.push.stages.test.run_test_stage` - 27 calls
 - `goal.cli.commit_cmd.commit` - 27 calls
 - `goal.smart_commit.generator_generate.SmartCommitGeneratorGenerateMixin.generate_functional_body` - 27 calls
-- `goal.dependency_update.update_project_dependencies` - 27 calls
 - `examples.testing.04_debugging_diagnostics.test_performance_timing` - 26 calls
 - `goal.summary.generator.EnhancedSummaryGenerator.calculate_quality_metrics` - 26 calls
 - `goal.push.core.add_slow_test_tickets_to_planfile` - 26 calls
@@ -563,22 +560,22 @@ Functions exposed as public API (no underscore prefix):
 - `goal.recovery.divergent.DivergentHistoryStrategy.recover` - 25 calls
 - `goal.push.stages.costs.update_cost_badges` - 25 calls
 - `goal.config.validation.validate_config_file` - 25 calls
+- `goal.push.stages.publish.handle_publish` - 24 calls
 - `examples.custom-hooks.pre-commit.main` - 23 calls
 - `examples.api-usage.03_commit_generation.main` - 23 calls
 - `examples.template-generator.generate.generate_project` - 23 calls
 - `examples.testing.03_advanced_mocking.test_spies_and_call_counting` - 23 calls
-- `goal.git_ops.ensure_remote` - 23 calls
 - `goal.recovery.manager.RecoveryManager.recover_from_push_failure` - 23 calls
 - `goal.cli.recover_cmd.recover` - 23 calls
 - `goal.doctor.nodejs.diagnose_nodejs` - 23 calls
+- `goal.git_ops.ensure_remote` - 23 calls
+- `goal.push.stages.test.run_test_stage` - 23 calls
+- `goal.publish.github_fallback.get_github_release_config` - 23 calls
 - `examples.testing.04_debugging_diagnostics.create_debug_report` - 22 calls
 - `goal.recovery.auth.AuthErrorStrategy.recover` - 22 calls
 - `goal.push.stages.commit.handle_split_commits` - 22 calls
-- `goal.config.validation.validate_config_interactive` - 22 calls
 - `goal.push.core.show_workflow_preview` - 22 calls
 - `goal.cli.publish.publish_project` - 22 calls
-- `examples.testing.04_debugging_diagnostics.test_debug_output_capture` - 21 calls
-- `goal.formatter.format_push_result` - 21 calls
 
 ## System Interactions
 

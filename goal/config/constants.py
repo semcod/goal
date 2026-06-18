@@ -208,6 +208,22 @@ DEFAULT_CONFIG = {
             "format": "{prefix}{version}",
         },
     },
+    "publishing": {
+        "enabled": True,
+        "registries": ["pypi"],
+        "dry_run": False,
+        "fallback": {
+            "github_release": {
+                "enabled": True,
+                "owner": "",
+                "repo": "",
+                "repo_map": {},
+                "token_env": "GITHUB_TOKEN",
+                "skip_pypi_retries_on_block": True,
+                "asset_glob": "dist/*",
+            },
+        },
+    },
     "strategies": {
         "python": {
             "test": "pytest tests/ -v",

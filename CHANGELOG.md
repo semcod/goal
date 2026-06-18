@@ -1,3 +1,14 @@
+## [2.1.253] - 2026-06-18
+
+### Added
+- **Monorepo dependency updates**: `goal -u` discovers and upgrades dependencies in subfolders when the root has no package manifest
+- **`--recursive, -r`**: Force scanning subfolders for dependency manifests (e.g. `goal -aur`)
+- **`--interactive, -i`**: Ask before processing each subproject during dependency updates (e.g. `goal -aiu`)
+- Combined short flags for dependency workflow: `-au`, `-aur`, `-aiu`, `-air`, etc.
+
+### Fixed
+- Global `--dry-run` is now respected during dependency upgrade stage (`goal -au --dry-run`)
+
 ## [2.1.241] - 2026-06-03
 
 ## [0.1.10] - 2026-06-08
@@ -144,6 +155,34 @@
 
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
+
+## [2.1.254] - 2026-06-18
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/commands.md
+- Update docs/faq.md
+- Update docs/usage.md
+- Update examples/monorepo/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_github_fallback.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- ... and 7 more files
 
 ## [2.1.253] - 2026-06-18
 

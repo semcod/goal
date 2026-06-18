@@ -429,6 +429,10 @@ class GoalConfig:
         registries = self.get("registries", {})
         return registries.get(registry_name, {})
 
+    def get_publish_fallback(self) -> Dict[str, Any]:
+        """Get publishing fallback configuration (e.g. GitHub Releases)."""
+        return self.get("publishing", {}).get("fallback", {}) or {}
+
     def should_auto_update(self) -> bool:
         """Check if config should be auto-updated."""
         return self.get("advanced.auto_update_config", True)

@@ -271,6 +271,29 @@ class ConfigValidator:
         if dry_run is not None and not isinstance(dry_run, bool):
             self.errors.append("publishing.dry_run must be a boolean")
 
+        fallback = publishing.get("fallback", {})
+        if fallback:
+            if not isinstance(fallback, dict):
+                self.errors.append("publishing.fallback must be a mapping")
+            else:
+                gh = fallback.get("github_release", {})
+                if gh and not isinstance(gh, dict):
+                    self.errors.append(
+                        "publishing.fallback.github_release must be a mapping"
+                    )
+                elif isinstance(gh, dict):
+                    for key in ("enabled", "skip_pypi_retries_on_block"):
+                        val = gh.get(key)
+                        if val is not None and not isinstance(val, bool):
+                            self.errors.append(
+                                f"publishing.fallback.github_release.{key} must be a boolean"
+                            )
+                    repo_map = gh.get("repo_map")
+                    if repo_map is not None and not isinstance(repo_map, dict):
+                        self.errors.append(
+                            "publishing.fallback.github_release.repo_map must be a mapping"
+                        )
+
     def _check_bool(self, section: Dict, key: str, label: str = "") -> None:
         """Append an error if *key* exists in *section* but is not a bool."""
         val = section.get(key)
@@ -375,7 +398,12 @@ class ConfigValidator:
 
         # Publishing keys
         if "publishing" in self.config:
-            valid_pub_keys = {"enabled", "registries", "dry_run"}
+            valid_pub_keys = {
+                "enabled",
+                "registries",
+                "dry_run",
+                "fallback",
+            }
             check_keys(self.config["publishing"], valid_pub_keys, "publishing")
 
 

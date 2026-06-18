@@ -61,6 +61,39 @@ goal push --no-changelog
 goal push --no-version-sync
 ```
 
+### Dependency Updates
+
+Upgrade dependencies as part of the push workflow:
+
+```bash
+# Single project
+goal -u
+
+# Full automation + dependency upgrades
+goal -au
+
+# Monorepo: auto-discovers subprojects when root has no manifest
+goal -au
+
+# Monorepo: explicit recursive scan
+goal -aur
+
+# Monorepo: ask before each subproject
+goal -aiu
+
+# Preview only
+goal -au --dry-run
+```
+
+| Flags | Behavior |
+|-------|----------|
+| `-u` | Upgrade dependencies before tests/commit |
+| `-r` | Also scan subfolders (useful when root has its own manifest) |
+| `-i` | Ask `Process project <path>?` before each subproject |
+| `-a` without `-i` | Upgrade all detected projects automatically |
+| `-a` with `-i` | Full workflow is automatic, but dependency upgrades are per-project prompts |
+
+```bash
 # Custom commit message
 goal push -m "feat: add OAuth2 authentication"
 

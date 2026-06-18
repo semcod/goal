@@ -14,6 +14,12 @@ import yaml
 from goal.git_ops import run_command_tee
 from goal.cli.version import PROJECT_TYPES
 from goal.toml_validation import validate_project_toml_files
+from goal.publish.github_fallback import (
+    get_github_release_config,
+    github_fallback_actionable,
+    is_pypi_blocked,
+    try_github_fallback,
+)
 
 
 def makefile_has_target(target: str) -> bool:
@@ -368,13 +374,28 @@ def _is_rate_limited(result) -> bool:
     return "429" in combined and "Too Many Requests" in combined
 
 
-def _run_publish_command(ptype: str, publish_cmd: str) -> bool:
+def _run_publish_command(
+    ptype: str,
+    publish_cmd: str,
+    *,
+    version: str | None = None,
+    config: Any = None,
+) -> bool:
     """Execute the publish command and handle output. Returns True on success.
 
-    Retries automatically when PyPI returns HTTP 429 (Too Many Requests),
-    waiting between attempts with increasing backoff.
+    When PyPI returns a blocking error (429, 403, permission), and GitHub fallback
+    is enabled in goal.yaml, deploys to GitHub Releases immediately without
+    waiting through PyPI retry backoff.
     """
     click.echo(f"  Publishing {ptype}: {publish_cmd}")
+    gh_config = get_github_release_config(config) if ptype == "python" else None
+    package_name = _read_python_package_name() if ptype == "python" else ""
+    artifacts = (
+        _python_artifacts_for_version(version or "", package_name)
+        if ptype == "python" and version
+        else []
+    )
+
     attempts = 1 + len(_RETRY_DELAYS)  # first try + retries
     for attempt in range(attempts):
         try:
@@ -393,6 +414,25 @@ def _run_publish_command(ptype: str, publish_cmd: str) -> bool:
                     )
                 )
                 return True  # Not a failure
+
+            blocked = is_pypi_blocked(result)
+            if (
+                blocked
+                and gh_config is not None
+                and gh_config.skip_pypi_retries_on_block
+                and version
+                and github_fallback_actionable(gh_config)
+            ):
+                if try_github_fallback(
+                    result,
+                    version=version,
+                    package_name=package_name,
+                    config=config,
+                    artifacts=artifacts or None,
+                ):
+                    return True
+                return False
+
             if _is_rate_limited(result) and attempt < len(_RETRY_DELAYS):
                 delay = _RETRY_DELAYS[attempt]
                 click.echo(
@@ -404,6 +444,16 @@ def _run_publish_command(ptype: str, publish_cmd: str) -> bool:
                 )
                 time.sleep(delay)
                 continue
+
+            if blocked and version and try_github_fallback(
+                result,
+                version=version,
+                package_name=package_name,
+                config=config,
+                artifacts=artifacts or None,
+            ):
+                return True
+
             click.echo(
                 click.style(
                     f"  Publish failed with exit code {result.returncode}", fg="red"
@@ -429,6 +479,23 @@ def _run_publish_command(ptype: str, publish_cmd: str) -> bool:
         ),
         err=True,
     )
+    if version:
+        exhausted = type(
+            "Result",
+            (),
+            {
+                "stdout": "",
+                "stderr": "HTTPError: 429 Too Many Requests\nToo Many Requests",
+            },
+        )()
+        if try_github_fallback(
+            exhausted,
+            version=version,
+            package_name=package_name,
+            config=config,
+            artifacts=artifacts or None,
+        ):
+            return True
     return False
 
 
@@ -492,7 +559,9 @@ def publish_project(
         elif "{version}" in publish_cmd:
             publish_cmd = publish_cmd.replace("{version}", version)
 
-        if not _run_publish_command(ptype, publish_cmd):
+        if not _run_publish_command(
+            ptype, publish_cmd, version=version, config=config
+        ):
             success = False
 
     return success

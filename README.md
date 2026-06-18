@@ -5,7 +5,7 @@
 
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.253-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.254-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -23,11 +23,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.253-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$9.71-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-95.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.254-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.44-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-96.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
 
-- 🤖 **LLM usage:** $9.7140 (286 commits)
-- 👤 **Human dev:** ~$9543 (95.4h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $6.4368 (288 commits)
+- 👤 **Human dev:** ~$9689 (96.9h @ $100/h, 30min dedup)
 
 Generated on 2026-06-18 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
 
@@ -193,6 +193,8 @@ goal push
 # Also works with automation modes:
 goal -a          # Full automation with validation
 goal -au         # Full automation + update dependencies to latest
+goal -aiu        # Full automation, but ask per subproject before upgrading deps
+goal -aur        # Full automation + recursive dependency scan in subfolders
 goal --all       # All stages with validation
 goal --yes       # Auto-confirm with validation
 
@@ -817,6 +819,8 @@ Main command for the complete workflow.
 - `--yes, -y`: Skip all prompts (run automatically)
 - `--all, -a`: Automate all stages including tests, commit, push, and publish
 - `--upgrade-deps, -u`: Update project dependencies to latest available versions
+- `--recursive, -r`: Scan subfolders for dependency manifests (monorepo support)
+- `--interactive, -i`: Ask before processing each subproject during dependency updates
 - `--todo/--no-todo, -t`: Add unfixed issues to TODO.md during doctor phase (default: no)
 - `--markdown/--ascii`: Output format (default: markdown)
 - `--split`: Create separate commits per change type (docs/code/ci/examples)
@@ -1031,9 +1035,50 @@ goal -a
 goal -au
 goal -a -u
 
+# Monorepo: auto-discovers subprojects when root has no manifest
+goal -au
+
+# Monorepo: explicit recursive scan (root + all subfolders)
+goal -aur
+
+# Monorepo: choose which subprojects to upgrade
+goal -aiu
+
 # With specific version bump
 goal --all --bump minor
 ```
+
+### Dependency Updates (Monorepo)
+
+Goal can update dependencies across multiple packages in one run. It detects
+`pyproject.toml`, `uv.lock`, `package.json`, `requirements.txt`, and other
+manifests in subfolders.
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| Auto (CI) | `goal -au` | Upgrade all detected projects without prompts |
+| Recursive | `goal -aur` | Same as `-au`, but also scans when root has a manifest |
+| Interactive | `goal -aiu` | Ask `Process project <path>?` before each subproject |
+| Manual | `goal -u` | Single project: one prompt; many projects: one bulk confirm |
+
+Short flags can be combined: `-au`, `-aur`, `-aiu`, `-air`, etc.
+
+```bash
+# Root has no pyproject.toml — auto-discovers packages/frontend, packages/backend, ...
+cd my-monorepo
+goal -au
+
+# Preview dependency upgrades only
+goal -au --dry-run
+
+# Pick subprojects interactively
+goal -aiu
+```
+
+**Rules:**
+- Without `-i`, `-a`/`--all` upgrades all detected projects automatically.
+- With `-i`, Goal asks before each subproject (even when `-a` is set).
+- Without `-a` and without `-i`, a single project gets one confirmation; multiple projects get one bulk confirm first.
 
 ### CI/CD Pipeline
 
