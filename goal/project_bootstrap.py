@@ -16,6 +16,7 @@ import click
 
 from goal.project_doctor import diagnose_and_report
 from goal.installers import PackageManagerBroker
+from goal.toml_validation import get_tomllib
 
 # Import from refactored bootstrap module for backward compatibility
 from goal.bootstrap.detector import detect_project_types_deep, guess_package_name
@@ -823,9 +824,101 @@ def _new_bootstrap_result(project_dir: Path, project_type: str) -> Dict:
     }
 
 
+def _pfix_auto_apply(project_dir: Path) -> bool:
+    """Return the project's ``[tool.pfix] auto_apply`` setting.
+
+    Defaults to ``True`` when pyproject.toml, the ``[tool.pfix]`` section, or the
+    key is absent, so existing projects keep their behaviour. An explicit
+    ``auto_apply = false`` lets a project opt out of automatic fixing/applying
+    even in ``--all``/``--yes`` mode.
+    """
+    pyproject = Path(project_dir) / "pyproject.toml"
+    if not pyproject.exists():
+        return True
+    tomllib = get_tomllib()
+    if tomllib is None:
+        return True
+    try:
+        content = pyproject.read_text(encoding="utf-8")
+        data = tomllib.loads(content) if hasattr(tomllib, "loads") else None
+        if data is None:
+            with open(pyproject, "rb") as f:
+                data = tomllib.load(f)
+    except Exception:  # noqa: BLE001 - never let config parsing break the run
+        return True
+    pfix = (data.get("tool") or {}).get("pfix") or {}
+    return bool(pfix.get("auto_apply", True))
+
+
+def _coerce_bool(value) -> Optional[bool]:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in {"1", "true", "yes", "on"}:
+            return True
+        if v in {"0", "false", "no", "off"}:
+            return False
+    return None
+
+
+def _goal_yaml_auto_apply(project_dir: Path) -> Optional[bool]:
+    """Read an auto-apply toggle from goal.yaml (works for any project type).
+
+    Looks for top-level ``auto_apply`` / ``auto_fix`` or the same keys under
+    ``advanced:``. Returns None when not set or unreadable.
+    """
+    config = Path(project_dir) / "goal.yaml"
+    if not config.exists():
+        return None
+    try:
+        import yaml  # lazy: goal already depends on pyyaml
+
+        data = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
+    except Exception:  # noqa: BLE001 - config issues must not break the run
+        return None
+    if not isinstance(data, dict):
+        return None
+    for key in ("auto_apply", "auto_fix"):
+        if key in data:
+            return _coerce_bool(data[key])
+    advanced = data.get("advanced")
+    if isinstance(advanced, dict):
+        for key in ("auto_apply", "auto_fix"):
+            if key in advanced:
+                return _coerce_bool(advanced[key])
+    return None
+
+
+def _auto_fix_enabled(project_dir: Path) -> bool:
+    """Whether automatic fixing/applying is allowed for this project.
+
+    Priority: ``GOAL_AUTO_FIX`` env var, then ``goal.yaml`` (project-type
+    agnostic), then ``[tool.pfix] auto_apply`` in pyproject.toml. Defaults to
+    True so existing projects are unaffected.
+    """
+    env = _coerce_bool(os.environ.get("GOAL_AUTO_FIX", ""))
+    if env is not None:
+        return env
+    yaml_setting = _goal_yaml_auto_apply(project_dir)
+    if yaml_setting is not None:
+        return yaml_setting
+    return _pfix_auto_apply(project_dir)
+
+
 def _run_bootstrap_diagnostics(project_dir: Path, project_type: str, yes: bool):
-    click.echo(click.style(f"  DEBUG: auto_fix={yes}", fg="magenta"))
-    return diagnose_and_report(project_dir, project_type, auto_fix=yes)
+    # Respect project settings even in --all/--yes mode: GOAL_AUTO_FIX env,
+    # goal.yaml auto_apply/auto_fix, or [tool.pfix] auto_apply can opt out.
+    auto_fix = yes and _auto_fix_enabled(project_dir)
+    if yes and not auto_fix:
+        click.echo(
+            click.style(
+                "  [tool.pfix] auto_apply = false -> skipping auto-fix (report only)",
+                fg="yellow",
+            )
+        )
+    click.echo(click.style(f"  DEBUG: auto_fix={auto_fix}", fg="magenta"))
+    return diagnose_and_report(project_dir, project_type, auto_fix=auto_fix)
 
 
 def _ensure_bootstrap_tests(

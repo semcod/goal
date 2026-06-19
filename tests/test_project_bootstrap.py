@@ -729,3 +729,77 @@ class TestProjectBootstrapConfig:
         assert isinstance(cfg["marker_files"], list)
         assert isinstance(cfg["test_dirs"], list)
         assert isinstance(cfg["dep_install_commands"], list)
+
+
+def _write_pyproject(tmp_path, body: str):
+    (tmp_path / "pyproject.toml").write_text(body, encoding="utf-8")
+    return tmp_path
+
+
+def test_pfix_auto_apply_defaults_true(tmp_path):
+    from goal.project_bootstrap import _pfix_auto_apply
+
+    # no pyproject at all
+    assert _pfix_auto_apply(tmp_path) is True
+    # pyproject without [tool.pfix]
+    _write_pyproject(tmp_path, "[project]\nname = 'x'\n")
+    assert _pfix_auto_apply(tmp_path) is True
+    # [tool.pfix] without auto_apply key
+    _write_pyproject(tmp_path, "[tool.pfix]\nmodel = 'm'\n")
+    assert _pfix_auto_apply(tmp_path) is True
+
+
+def test_pfix_auto_apply_false_is_respected(tmp_path):
+    from goal.project_bootstrap import _pfix_auto_apply
+
+    _write_pyproject(tmp_path, "[tool.pfix]\nauto_apply = false\n")
+    assert _pfix_auto_apply(tmp_path) is False
+    _write_pyproject(tmp_path, "[tool.pfix]\nauto_apply = true\n")
+    assert _pfix_auto_apply(tmp_path) is True
+
+
+def test_run_bootstrap_diagnostics_gated_by_auto_apply(tmp_path, monkeypatch):
+    import goal.project_bootstrap as pb
+
+    captured = {}
+
+    def fake_diag(project_dir, project_type, auto_fix):
+        captured["auto_fix"] = auto_fix
+        return {"ok": True}
+
+    monkeypatch.setattr(pb, "diagnose_and_report", fake_diag)
+
+    # auto_apply = false -> even with yes=True, auto_fix must be False
+    _write_pyproject(tmp_path, "[tool.pfix]\nauto_apply = false\n")
+    pb._run_bootstrap_diagnostics(tmp_path, "python", yes=True)
+    assert captured["auto_fix"] is False
+
+    # auto_apply = true -> yes=True propagates as auto_fix=True
+    _write_pyproject(tmp_path, "[tool.pfix]\nauto_apply = true\n")
+    pb._run_bootstrap_diagnostics(tmp_path, "python", yes=True)
+    assert captured["auto_fix"] is True
+
+    # yes=False is always False regardless of setting
+    pb._run_bootstrap_diagnostics(tmp_path, "python", yes=False)
+    assert captured["auto_fix"] is False
+
+
+def test_auto_fix_enabled_reads_goal_yaml(tmp_path):
+    from goal.project_bootstrap import _auto_fix_enabled
+
+    (tmp_path / "goal.yaml").write_text("auto_apply: false\n", encoding="utf-8")
+    assert _auto_fix_enabled(tmp_path) is False
+    (tmp_path / "goal.yaml").write_text("advanced:\n  auto_apply: false\n", encoding="utf-8")
+    assert _auto_fix_enabled(tmp_path) is False
+    (tmp_path / "goal.yaml").write_text("version: '1.0'\n", encoding="utf-8")
+    assert _auto_fix_enabled(tmp_path) is True  # unset -> default True
+
+
+def test_auto_fix_enabled_env_override(tmp_path, monkeypatch):
+    from goal.project_bootstrap import _auto_fix_enabled
+
+    (tmp_path / "goal.yaml").write_text("auto_apply: true\n", encoding="utf-8")
+    monkeypatch.setenv("GOAL_AUTO_FIX", "false")
+    assert _auto_fix_enabled(tmp_path) is False
+    monkeypatch.setenv("GOAL_AUTO_FIX", "true")
+    assert _auto_fix_enabled(tmp_path) is True
