@@ -65,6 +65,43 @@ def test_sync_updates_init_py(tmp_path):
         os.chdir(old_cwd)
 
 
+def test_sync_skips_example_and_fixture_init(tmp_path):
+    """sync_all_versions must not bump example/fixture/vendored __init__.py."""
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+
+        proj = tmp_path / "mypkg"
+        proj.mkdir()
+        (proj / "__init__.py").write_text('__version__ = "0.1.0"\n')
+
+        skipped = []
+        for rel in ("examples/demo/src", "samples/x", "fixtures/y", "templates/z"):
+            d = tmp_path / rel
+            d.mkdir(parents=True)
+            f = d / "__init__.py"
+            f.write_text('__version__ = "0.1.0"\n')
+            skipped.append(f)
+
+        (tmp_path / "VERSION").write_text("0.1.0\n")
+
+        func = sync_all_versions
+        while hasattr(func, "__wrapped__"):
+            func = func.__wrapped__
+        updated = func("0.2.0")
+
+        assert "mypkg/__init__.py" in updated or str(proj / "__init__.py") in updated
+        assert '__version__ = "0.2.0"' in (proj / "__init__.py").read_text()
+        for f in skipped:
+            assert '__version__ = "0.1.0"' in f.read_text(), f"{f} was bumped"
+        assert not any(
+            any(bad in u for bad in ("examples", "samples", "fixtures", "templates"))
+            for u in updated
+        )
+    finally:
+        os.chdir(old_cwd)
+
+
 def test_python_publish_command_skips_existing():
     cmd = PROJECT_TYPES["python"]["publish_command"]
     assert "python -m twine upload" in cmd

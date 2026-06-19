@@ -262,15 +262,35 @@ def _sync_dependency_locks_after_manifest_updates(updated: List[str]) -> None:
 
 
 def _update_init_py_versions(new_version: str, updated: List[str]) -> None:
-    """Update __version__ in __init__.py files."""
+    """Update __version__ in __init__.py files.
+
+    Skips vendored/build trees and non-project trees (examples, samples,
+    fixtures, templates) so bumping the project never rewrites a dependency's or
+    a fixture's __version__.
+    """
     skip_dirs = (
         "venv",
         ".venv",
         ".venv_test",
+        "env",
+        ".env",
         "site-packages",
         "build",
         "dist",
         "node_modules",
+        ".tox",
+        ".nox",
+        "__pycache__",
+        "examples",
+        "example",
+        "samples",
+        "sample",
+        "templates",
+        "fixtures",
+        "testdata",
+        "__fixtures__",
+        "vendor",
+        "third_party",
     )
 
     for init_file in Path(".").rglob("__init__.py"):
