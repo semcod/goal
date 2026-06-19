@@ -382,6 +382,7 @@ class GoalGroup(click.Group):
 @click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
 @click.option(
     "--force-publish",
+    "-f",
     is_flag=True,
     help="Publish even when no package source changes are detected (e.g. source already committed)",
 )

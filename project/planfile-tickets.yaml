@@ -1,12 +1,12 @@
 source: code2llm
-# generated in 0.19s
+# generated in 0.20s
 schema: code2llm.planfile_tickets.v1
 project_root: /home/tom/github/semcod/goal
 tickets:
 - signal: code2llm_cc
-  title: 'Reduce cyclomatic complexity: goal.cli.publish._run_publish_command (CC=30)'
-  description: 'code2llm reports `goal.cli.publish._run_publish_command` at `goal/cli/publish.py:377`
-    with cyclomatic complexity 30 (limit 15).
+  title: 'Reduce cyclomatic complexity: goal.cli.publish._run_publish_command (CC=33)'
+  description: 'code2llm reports `goal.cli.publish._run_publish_command` at `goal/cli/publish.py:409`
+    with cyclomatic complexity 33 (limit 15).
 
 
     Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
@@ -75,7 +75,7 @@ tickets:
   dedupe_key: 'code2llm:smell:god_function:goal/formatter.py:177:God Function: format_push_result'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: _'
-  description: 'code2llm reports `Shotgun Surgery: _` in `goal/validators/file_validator.py:160`.
+  description: 'code2llm reports `Shotgun Surgery: _` in `goal/publish/github_fallback.py:96`.
 
 
     Mutation of variable ''_'' spans 9 functions. Changing this logic requires work
@@ -90,15 +90,15 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/validators/file_validator.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/validators/file_validator.py:160:Shotgun
+  - goal/publish/github_fallback.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/publish/github_fallback.py:96:Shotgun
     Surgery: _'
 - signal: code2llm_smell_shotgun_surgery
-  title: 'Address code smell: Shotgun Surgery: artifacts'
-  description: 'code2llm reports `Shotgun Surgery: artifacts` in `goal/publish/github_fallback.py:167`.
+  title: 'Address code smell: Shotgun Surgery: args'
+  description: 'code2llm reports `Shotgun Surgery: args` in `goal/git_ops.py:277`.
 
 
-    Mutation of variable ''artifacts'' spans 5 functions. Changing this logic requires
+    Mutation of variable ''args'' spans 6 functions. Changing this logic requires
     work in many places.
 
 
@@ -110,9 +110,29 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/publish/github_fallback.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/publish/github_fallback.py:167:Shotgun
-    Surgery: artifacts'
+  - goal/git_ops.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/git_ops.py:277:Shotgun Surgery:
+    args'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: artifacts'
+  description: 'code2llm reports `Shotgun Surgery: artifacts` in `goal/cli/publish.py:409`.
+
+
+    Mutation of variable ''artifacts'' spans 6 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - goal/cli/publish.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/publish.py:409:Shotgun Surgery:
+    artifacts'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: author'
   description: 'code2llm reports `Shotgun Surgery: author` in `examples/custom-hooks/post-commit.py:15`.
@@ -175,7 +195,7 @@ tickets:
     Surgery: available'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: branch'
-  description: 'code2llm reports `Shotgun Surgery: branch` in `goal/git_ops.py:250`.
+  description: 'code2llm reports `Shotgun Surgery: branch` in `goal/push/core.py:470`.
 
 
     Mutation of variable ''branch'' spans 7 functions. Changing this logic requires
@@ -190,12 +210,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/git_ops.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/git_ops.py:250:Shotgun Surgery:
+  - goal/push/core.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/core.py:470:Shotgun Surgery:
     branch'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: candidate'
-  description: 'code2llm reports `Shotgun Surgery: candidate` in `goal/project_bootstrap.py:334`.
+  description: 'code2llm reports `Shotgun Surgery: candidate` in `goal/project_bootstrap.py:335`.
 
 
     Mutation of variable ''candidate'' spans 7 functions. Changing this logic requires
@@ -211,11 +231,11 @@ tickets:
   - shotgun-surgery
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:334:Shotgun
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:335:Shotgun
     Surgery: candidate'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: cfg'
-  description: 'code2llm reports `Shotgun Surgery: cfg` in `goal/cli/config_cmd.py:78`.
+  description: 'code2llm reports `Shotgun Surgery: cfg` in `goal/project_bootstrap.py:366`.
 
 
     Mutation of variable ''cfg'' spans 13 functions. Changing this logic requires
@@ -230,12 +250,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/config_cmd.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/config_cmd.py:78:Shotgun Surgery:
-    cfg'
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:366:Shotgun
+    Surgery: cfg'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: cmd'
-  description: 'code2llm reports `Shotgun Surgery: cmd` in `goal/bootstrap/installer.py:65`.
+  description: 'code2llm reports `Shotgun Surgery: cmd` in `goal/cli/version_sync.py:226`.
 
 
     Mutation of variable ''cmd'' spans 20 functions. Changing this logic requires
@@ -250,15 +270,55 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/bootstrap/installer.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/installer.py:65:Shotgun
+  - goal/cli/version_sync.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/version_sync.py:226:Shotgun
     Surgery: cmd'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: combined'
+  description: 'code2llm reports `Shotgun Surgery: combined` in `goal/cli/tests.py:366`.
+
+
+    Mutation of variable ''combined'' spans 9 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - goal/cli/tests.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/tests.py:366:Shotgun Surgery:
+    combined'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: commit_msg'
+  description: 'code2llm reports `Shotgun Surgery: commit_msg` in `goal/push/core.py:470`.
+
+
+    Mutation of variable ''commit_msg'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - goal/push/core.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/core.py:470:Shotgun Surgery:
+    commit_msg'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: config'
   description: 'code2llm reports `Shotgun Surgery: config` in `goal/user_config.py:275`.
 
 
-    Mutation of variable ''config'' spans 23 functions. Changing this logic requires
+    Mutation of variable ''config'' spans 24 functions. Changing this logic requires
     work in many places.
 
 
@@ -275,7 +335,7 @@ tickets:
     config'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: config_dict'
-  description: 'code2llm reports `Shotgun Surgery: config_dict` in `goal/push/core.py:833`.
+  description: 'code2llm reports `Shotgun Surgery: config_dict` in `goal/cli/commit_cmd.py:101`.
 
 
     Mutation of variable ''config_dict'' spans 8 functions. Changing this logic requires
@@ -290,12 +350,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/push/core.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/core.py:833:Shotgun Surgery:
+  - goal/cli/commit_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/commit_cmd.py:101:Shotgun Surgery:
     config_dict'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: config_obj'
-  description: 'code2llm reports `Shotgun Surgery: config_obj` in `goal/push/stages/commit.py:94`.
+  description: 'code2llm reports `Shotgun Surgery: config_obj` in `goal/cli/commit_cmd.py:101`.
 
 
     Mutation of variable ''config_obj'' spans 5 functions. Changing this logic requires
@@ -310,12 +370,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/push/stages/commit.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/stages/commit.py:94:Shotgun
-    Surgery: config_obj'
+  - goal/cli/commit_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/commit_cmd.py:101:Shotgun Surgery:
+    config_obj'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: content'
-  description: 'code2llm reports `Shotgun Surgery: content` in `goal/cli/version_sync.py:160`.
+  description: 'code2llm reports `Shotgun Surgery: content` in `goal/version_validation.py:108`.
 
 
     Mutation of variable ''content'' spans 52 functions. Changing this logic requires
@@ -330,12 +390,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/version_sync.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/version_sync.py:160:Shotgun
+  - goal/version_validation.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/version_validation.py:108:Shotgun
     Surgery: content'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: ctx_obj'
-  description: 'code2llm reports `Shotgun Surgery: ctx_obj` in `examples/api-usage/05_programmatic_workflow.py:23`.
+  description: 'code2llm reports `Shotgun Surgery: ctx_obj` in `goal/push/core.py:719`.
 
 
     Mutation of variable ''ctx_obj'' spans 5 functions. Changing this logic requires
@@ -350,12 +410,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - examples/api-usage/05_programmatic_workflow.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:examples/api-usage/05_programmatic_workflow.py:23:Shotgun
-    Surgery: ctx_obj'
+  - goal/push/core.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/core.py:719:Shotgun Surgery:
+    ctx_obj'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: current'
-  description: 'code2llm reports `Shotgun Surgery: current` in `goal/cli/tests_discovery.py:41`.
+  description: 'code2llm reports `Shotgun Surgery: current` in `goal/cli/authors_cmd.py:109`.
 
 
     Mutation of variable ''current'' spans 12 functions. Changing this logic requires
@@ -370,8 +430,8 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/tests_discovery.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/tests_discovery.py:41:Shotgun
+  - goal/cli/authors_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/authors_cmd.py:109:Shotgun
     Surgery: current'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: current_version'
@@ -394,31 +454,11 @@ tickets:
   dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/core.py:470:Shotgun Surgery:
     current_version'
 - signal: code2llm_smell_shotgun_surgery
-  title: 'Address code smell: Shotgun Surgery: d'
-  description: 'code2llm reports `Shotgun Surgery: d` in `goal/push/stages/dry_run.py:12`.
-
-
-    Mutation of variable ''d'' spans 6 functions. Changing this logic requires work
-    in many places.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: high
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - shotgun-surgery
-  files:
-  - goal/push/stages/dry_run.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/stages/dry_run.py:12:Shotgun
-    Surgery: d'
-- signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: data'
-  description: 'code2llm reports `Shotgun Surgery: data` in `goal/version_validation.py:26`.
+  description: 'code2llm reports `Shotgun Surgery: data` in `goal/version_validation.py:140`.
 
 
-    Mutation of variable ''data'' spans 21 functions. Changing this logic requires
+    Mutation of variable ''data'' spans 23 functions. Changing this logic requires
     work in many places.
 
 
@@ -431,31 +471,11 @@ tickets:
   - shotgun-surgery
   files:
   - goal/version_validation.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/version_validation.py:26:Shotgun
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/version_validation.py:140:Shotgun
     Surgery: data'
 - signal: code2llm_smell_shotgun_surgery
-  title: 'Address code smell: Shotgun Surgery: deleted'
-  description: 'code2llm reports `Shotgun Surgery: deleted` in `goal/validators/file_validator.py:220`.
-
-
-    Mutation of variable ''deleted'' spans 9 functions. Changing this logic requires
-    work in many places.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: high
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - shotgun-surgery
-  files:
-  - goal/validators/file_validator.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/validators/file_validator.py:220:Shotgun
-    Surgery: deleted'
-- signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: detected'
-  description: 'code2llm reports `Shotgun Surgery: detected` in `goal/project_bootstrap.py:877`.
+  description: 'code2llm reports `Shotgun Surgery: detected` in `goal/cli/utils_cmd.py:204`.
 
 
     Mutation of variable ''detected'' spans 10 functions. Changing this logic requires
@@ -470,32 +490,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:877:Shotgun
-    Surgery: detected'
-- signal: code2llm_smell_shotgun_surgery
-  title: 'Address code smell: Shotgun Surgery: diff'
-  description: 'code2llm reports `Shotgun Surgery: diff` in `examples/api-usage/02_git_operations.py:71`.
-
-
-    Mutation of variable ''diff'' spans 6 functions. Changing this logic requires
-    work in many places.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: high
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - shotgun-surgery
-  files:
-  - examples/api-usage/02_git_operations.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:examples/api-usage/02_git_operations.py:71:Shotgun
-    Surgery: diff'
+  - goal/cli/utils_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/utils_cmd.py:204:Shotgun Surgery:
+    detected'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: elapsed'
-  description: 'code2llm reports `Shotgun Surgery: elapsed` in `goal/cli/tests.py:173`.
+  description: 'code2llm reports `Shotgun Surgery: elapsed` in `goal/cli/tests.py:366`.
 
 
     Mutation of variable ''elapsed'' spans 5 functions. Changing this logic requires
@@ -511,11 +511,11 @@ tickets:
   - shotgun-surgery
   files:
   - goal/cli/tests.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/tests.py:173:Shotgun Surgery:
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/tests.py:366:Shotgun Surgery:
     elapsed'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: entry'
-  description: 'code2llm reports `Shotgun Surgery: entry` in `goal/changelog.py:97`.
+  description: 'code2llm reports `Shotgun Surgery: entry` in `goal/doctor/todo.py:36`.
 
 
     Mutation of variable ''entry'' spans 5 functions. Changing this logic requires
@@ -530,8 +530,8 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/changelog.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/changelog.py:97:Shotgun Surgery:
+  - goal/doctor/todo.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/doctor/todo.py:36:Shotgun Surgery:
     entry'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: error'
@@ -555,7 +555,7 @@ tickets:
     Surgery: error'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: fallback'
-  description: 'code2llm reports `Shotgun Surgery: fallback` in `goal/bootstrap/installer.py:65`.
+  description: 'code2llm reports `Shotgun Surgery: fallback` in `goal/publish/github_fallback.py:46`.
 
 
     Mutation of variable ''fallback'' spans 5 functions. Changing this logic requires
@@ -570,12 +570,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/bootstrap/installer.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/installer.py:65:Shotgun
+  - goal/publish/github_fallback.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/publish/github_fallback.py:46:Shotgun
     Surgery: fallback'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: files'
-  description: 'code2llm reports `Shotgun Surgery: files` in `goal/validators/file_validator.py:220`.
+  description: 'code2llm reports `Shotgun Surgery: files` in `goal/cli/commit_cmd.py:101`.
 
 
     Mutation of variable ''files'' spans 28 functions. Changing this logic requires
@@ -590,12 +590,32 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/validators/file_validator.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/validators/file_validator.py:220:Shotgun
-    Surgery: files'
+  - goal/cli/commit_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/commit_cmd.py:101:Shotgun Surgery:
+    files'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: fixed'
+  description: 'code2llm reports `Shotgun Surgery: fixed` in `goal/cli/commit_cmd.py:101`.
+
+
+    Mutation of variable ''fixed'' spans 9 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - goal/cli/commit_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/commit_cmd.py:101:Shotgun Surgery:
+    fixed'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: formatter'
-  description: 'code2llm reports `Shotgun Surgery: formatter` in `goal/formatter.py:495`.
+  description: 'code2llm reports `Shotgun Surgery: formatter` in `goal/formatter.py:446`.
 
 
     Mutation of variable ''formatter'' spans 6 functions. Changing this logic requires
@@ -611,11 +631,11 @@ tickets:
   - shotgun-surgery
   files:
   - goal/formatter.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/formatter.py:495:Shotgun Surgery:
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/formatter.py:446:Shotgun Surgery:
     formatter'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: generator'
-  description: 'code2llm reports `Shotgun Surgery: generator` in `goal/push/stages/dry_run.py:12`.
+  description: 'code2llm reports `Shotgun Surgery: generator` in `goal/cli/commit_cmd.py:101`.
 
 
     Mutation of variable ''generator'' spans 9 functions. Changing this logic requires
@@ -630,12 +650,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/push/stages/dry_run.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/stages/dry_run.py:12:Shotgun
-    Surgery: generator'
+  - goal/cli/commit_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/commit_cmd.py:101:Shotgun Surgery:
+    generator'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: has_uv'
-  description: 'code2llm reports `Shotgun Surgery: has_uv` in `goal/bootstrap/installer.py:65`.
+  description: 'code2llm reports `Shotgun Surgery: has_uv` in `goal/project_bootstrap.py:366`.
 
 
     Mutation of variable ''has_uv'' spans 6 functions. Changing this logic requires
@@ -650,12 +670,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/bootstrap/installer.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/installer.py:65:Shotgun
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:366:Shotgun
     Surgery: has_uv'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: install_result'
-  description: 'code2llm reports `Shotgun Surgery: install_result` in `goal/bootstrap/costs_badge.py:37`.
+  description: 'code2llm reports `Shotgun Surgery: install_result` in `goal/project_bootstrap.py:421`.
 
 
     Mutation of variable ''install_result'' spans 7 functions. Changing this logic
@@ -670,12 +690,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/bootstrap/costs_badge.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/costs_badge.py:37:Shotgun
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:421:Shotgun
     Surgery: install_result'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: is_valid'
-  description: 'code2llm reports `Shotgun Surgery: is_valid` in `goal/cli/license_cmd.py:79`.
+  description: 'code2llm reports `Shotgun Surgery: is_valid` in `goal/cli/license_cmd.py:28`.
 
 
     Mutation of variable ''is_valid'' spans 11 functions. Changing this logic requires
@@ -691,11 +711,11 @@ tickets:
   - shotgun-surgery
   files:
   - goal/cli/license_cmd.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/license_cmd.py:79:Shotgun Surgery:
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/license_cmd.py:28:Shotgun Surgery:
     is_valid'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: issues'
-  description: 'code2llm reports `Shotgun Surgery: issues` in `goal/cli/license_cmd.py:79`.
+  description: 'code2llm reports `Shotgun Surgery: issues` in `examples/custom-hooks/pre-commit.py:14`.
 
 
     Mutation of variable ''issues'' spans 13 functions. Changing this logic requires
@@ -710,12 +730,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/license_cmd.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/license_cmd.py:79:Shotgun Surgery:
-    issues'
+  - examples/custom-hooks/pre-commit.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:examples/custom-hooks/pre-commit.py:14:Shotgun
+    Surgery: issues'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: license_id'
-  description: 'code2llm reports `Shotgun Surgery: license_id` in `goal/license/manager.py:571`.
+  description: 'code2llm reports `Shotgun Surgery: license_id` in `goal/cli/version_utils.py:371`.
 
 
     Mutation of variable ''license_id'' spans 6 functions. Changing this logic requires
@@ -730,12 +750,32 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/license/manager.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/license/manager.py:571:Shotgun
+  - goal/cli/version_utils.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/version_utils.py:371:Shotgun
     Surgery: license_id'
 - signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: line'
+  description: 'code2llm reports `Shotgun Surgery: line` in `goal/validators/gitignore.py:7`.
+
+
+    Mutation of variable ''line'' spans 6 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - goal/validators/gitignore.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/validators/gitignore.py:7:Shotgun
+    Surgery: line'
+- signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: manager'
-  description: 'code2llm reports `Shotgun Surgery: manager` in `goal/license/manager.py:571`.
+  description: 'code2llm reports `Shotgun Surgery: manager` in `goal/hooks/manager.py:289`.
 
 
     Mutation of variable ''manager'' spans 35 functions. Changing this logic requires
@@ -750,12 +790,32 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/license/manager.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/license/manager.py:571:Shotgun
-    Surgery: manager'
+  - goal/hooks/manager.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/hooks/manager.py:289:Shotgun Surgery:
+    manager'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: match'
+  description: 'code2llm reports `Shotgun Surgery: match` in `goal/cli/publish.py:163`.
+
+
+    Mutation of variable ''match'' spans 17 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - goal/cli/publish.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/publish.py:163:Shotgun Surgery:
+    match'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: message'
-  description: 'code2llm reports `Shotgun Surgery: message` in `examples/webhooks/discord-webhook.py:87`.
+  description: 'code2llm reports `Shotgun Surgery: message` in `goal/cli.py:13`.
 
 
     Mutation of variable ''message'' spans 11 functions. Changing this logic requires
@@ -770,12 +830,11 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - examples/webhooks/discord-webhook.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:examples/webhooks/discord-webhook.py:87:Shotgun
-    Surgery: message'
+  - goal/cli.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli.py:13:Shotgun Surgery: message'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: msg'
-  description: 'code2llm reports `Shotgun Surgery: msg` in `goal/git_ops.py:448`.
+  description: 'code2llm reports `Shotgun Surgery: msg` in `goal/cli/license_cmd.py:28`.
 
 
     Mutation of variable ''msg'' spans 12 functions. Changing this logic requires
@@ -790,15 +849,15 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/git_ops.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/git_ops.py:448:Shotgun Surgery:
+  - goal/cli/license_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/license_cmd.py:28:Shotgun Surgery:
     msg'
 - signal: code2llm_smell_shotgun_surgery
-  title: 'Address code smell: Shotgun Surgery: name'
-  description: 'code2llm reports `Shotgun Surgery: name` in `goal/push/core.py:76`.
+  title: 'Address code smell: Shotgun Surgery: names'
+  description: 'code2llm reports `Shotgun Surgery: names` in `goal/dependency_update.py:279`.
 
 
-    Mutation of variable ''name'' spans 21 functions. Changing this logic requires
+    Mutation of variable ''names'' spans 5 functions. Changing this logic requires
     work in many places.
 
 
@@ -810,12 +869,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/push/core.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/core.py:76:Shotgun Surgery:
-    name'
+  - goal/dependency_update.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/dependency_update.py:279:Shotgun
+    Surgery: names'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: new_content'
-  description: 'code2llm reports `Shotgun Surgery: new_content` in `goal/cli/version_sync.py:175`.
+  description: 'code2llm reports `Shotgun Surgery: new_content` in `goal/bootstrap/pyproject_costs_setup.py:79`.
 
 
     Mutation of variable ''new_content'' spans 11 functions. Changing this logic requires
@@ -830,12 +889,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/version_sync.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/version_sync.py:175:Shotgun
+  - goal/bootstrap/pyproject_costs_setup.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/pyproject_costs_setup.py:79:Shotgun
     Surgery: new_content'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: package_name'
-  description: 'code2llm reports `Shotgun Surgery: package_name` in `goal/cli/publish.py:301`.
+  description: 'code2llm reports `Shotgun Surgery: package_name` in `goal/project_bootstrap.py:762`.
 
 
     Mutation of variable ''package_name'' spans 6 functions. Changing this logic requires
@@ -850,12 +909,32 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/publish.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/publish.py:301:Shotgun Surgery:
-    package_name'
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:762:Shotgun
+    Surgery: package_name'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: parts'
+  description: 'code2llm reports `Shotgun Surgery: parts` in `goal/publish/changes.py:176`.
+
+
+    Mutation of variable ''parts'' spans 19 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - goal/publish/changes.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/publish/changes.py:176:Shotgun
+    Surgery: parts'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: path'
-  description: 'code2llm reports `Shotgun Surgery: path` in `examples/custom-hooks/pre-commit.py:49`.
+  description: 'code2llm reports `Shotgun Surgery: path` in `examples/custom-hooks/pre-commit.py:14`.
 
 
     Mutation of variable ''path'' spans 9 functions. Changing this logic requires
@@ -871,11 +950,11 @@ tickets:
   - shotgun-surgery
   files:
   - examples/custom-hooks/pre-commit.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:examples/custom-hooks/pre-commit.py:49:Shotgun
+  dedupe_key: 'code2llm:smell:shotgun_surgery:examples/custom-hooks/pre-commit.py:14:Shotgun
     Surgery: path'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: project_dir'
-  description: 'code2llm reports `Shotgun Surgery: project_dir` in `goal/project_bootstrap.py:365`.
+  description: 'code2llm reports `Shotgun Surgery: project_dir` in `goal/project_bootstrap.py:366`.
 
 
     Mutation of variable ''project_dir'' spans 13 functions. Changing this logic requires
@@ -891,11 +970,11 @@ tickets:
   - shotgun-surgery
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:365:Shotgun
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:366:Shotgun
     Surgery: project_dir'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: project_root'
-  description: 'code2llm reports `Shotgun Surgery: project_root` in `goal/cli/tests.py:173`.
+  description: 'code2llm reports `Shotgun Surgery: project_root` in `goal/dependency_update.py:113`.
 
 
     Mutation of variable ''project_root'' spans 6 functions. Changing this logic requires
@@ -910,9 +989,9 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/tests.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/tests.py:173:Shotgun Surgery:
-    project_root'
+  - goal/dependency_update.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/dependency_update.py:113:Shotgun
+    Surgery: project_root'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: project_types'
   description: 'code2llm reports `Shotgun Surgery: project_types` in `goal/cli/publish_cmd.py:13`.
@@ -935,10 +1014,10 @@ tickets:
     project_types'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: pyproject'
-  description: 'code2llm reports `Shotgun Surgery: pyproject` in `goal/bootstrap/costs_badge.py:181`.
+  description: 'code2llm reports `Shotgun Surgery: pyproject` in `goal/cli/publish.py:163`.
 
 
-    Mutation of variable ''pyproject'' spans 7 functions. Changing this logic requires
+    Mutation of variable ''pyproject'' spans 8 functions. Changing this logic requires
     work in many places.
 
 
@@ -950,12 +1029,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/bootstrap/costs_badge.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/costs_badge.py:181:Shotgun
-    Surgery: pyproject'
+  - goal/cli/publish.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/publish.py:163:Shotgun Surgery:
+    pyproject'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: python_bin'
-  description: 'code2llm reports `Shotgun Surgery: python_bin` in `goal/bootstrap/installer.py:206`.
+  description: 'code2llm reports `Shotgun Surgery: python_bin` in `goal/cli/tests.py:403`.
 
 
     Mutation of variable ''python_bin'' spans 9 functions. Changing this logic requires
@@ -970,12 +1049,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/bootstrap/installer.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/installer.py:206:Shotgun
-    Surgery: python_bin'
+  - goal/cli/tests.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/tests.py:403:Shotgun Surgery:
+    python_bin'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: report'
-  description: 'code2llm reports `Shotgun Surgery: report` in `goal/doctor/core.py:35`.
+  description: 'code2llm reports `Shotgun Surgery: report` in `goal/cli/doctor_cmd.py:24`.
 
 
     Mutation of variable ''report'' spans 5 functions. Changing this logic requires
@@ -990,12 +1069,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/doctor/core.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/doctor/core.py:35:Shotgun Surgery:
+  - goal/cli/doctor_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/doctor_cmd.py:24:Shotgun Surgery:
     report'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: result'
-  description: 'code2llm reports `Shotgun Surgery: result` in `goal/bootstrap/costs_badge.py:37`.
+  description: 'code2llm reports `Shotgun Surgery: result` in `goal/cli/wizard_cmd.py:73`.
 
 
     Mutation of variable ''result'' spans 102 functions. Changing this logic requires
@@ -1010,9 +1089,9 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/bootstrap/costs_badge.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/costs_badge.py:37:Shotgun
-    Surgery: result'
+  - goal/cli/wizard_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/wizard_cmd.py:73:Shotgun Surgery:
+    result'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: results'
   description: 'code2llm reports `Shotgun Surgery: results` in `examples/testing/03_advanced_mocking.py:16`.
@@ -1034,11 +1113,11 @@ tickets:
   dedupe_key: 'code2llm:smell:shotgun_surgery:examples/testing/03_advanced_mocking.py:16:Shotgun
     Surgery: results'
 - signal: code2llm_smell_shotgun_surgery
-  title: 'Address code smell: Shotgun Surgery: size_mb'
-  description: 'code2llm reports `Shotgun Surgery: size_mb` in `goal/validators/file_validator.py:80`.
+  title: 'Address code smell: Shotgun Surgery: stats'
+  description: 'code2llm reports `Shotgun Surgery: stats` in `goal/cli/commit_cmd.py:101`.
 
 
-    Mutation of variable ''size_mb'' spans 5 functions. Changing this logic requires
+    Mutation of variable ''stats'' spans 11 functions. Changing this logic requires
     work in many places.
 
 
@@ -1050,9 +1129,9 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/validators/file_validator.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/validators/file_validator.py:80:Shotgun
-    Surgery: size_mb'
+  - goal/cli/commit_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/commit_cmd.py:101:Shotgun Surgery:
+    stats'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: status'
   description: 'code2llm reports `Shotgun Surgery: status` in `examples/testing/03_advanced_mocking.py:16`.
@@ -1074,11 +1153,11 @@ tickets:
   dedupe_key: 'code2llm:smell:shotgun_surgery:examples/testing/03_advanced_mocking.py:16:Shotgun
     Surgery: status'
 - signal: code2llm_smell_shotgun_surgery
-  title: 'Address code smell: Shotgun Surgery: stripped'
-  description: 'code2llm reports `Shotgun Surgery: stripped` in `goal/bootstrap/pyproject_costs_setup.py:114`.
+  title: 'Address code smell: Shotgun Surgery: strategy'
+  description: 'code2llm reports `Shotgun Surgery: strategy` in `goal/cli/tests.py:403`.
 
 
-    Mutation of variable ''stripped'' spans 5 functions. Changing this logic requires
+    Mutation of variable ''strategy'' spans 6 functions. Changing this logic requires
     work in many places.
 
 
@@ -1090,12 +1169,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/bootstrap/pyproject_costs_setup.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/bootstrap/pyproject_costs_setup.py:114:Shotgun
-    Surgery: stripped'
+  - goal/cli/tests.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/tests.py:403:Shotgun Surgery:
+    strategy'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: success'
-  description: 'code2llm reports `Shotgun Surgery: success` in `goal/git_ops.py:448`.
+  description: 'code2llm reports `Shotgun Surgery: success` in `goal/push/stages/push_remote.py:226`.
 
 
     Mutation of variable ''success'' spans 18 functions. Changing this logic requires
@@ -1110,12 +1189,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/git_ops.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/git_ops.py:448:Shotgun Surgery:
-    success'
+  - goal/push/stages/push_remote.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/stages/push_remote.py:226:Shotgun
+    Surgery: success'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: suffix'
-  description: 'code2llm reports `Shotgun Surgery: suffix` in `goal/push/stages/publish.py:61`.
+  description: 'code2llm reports `Shotgun Surgery: suffix` in `goal/dependency_update.py:279`.
 
 
     Mutation of variable ''suffix'' spans 6 functions. Changing this logic requires
@@ -1130,12 +1209,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/push/stages/publish.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/stages/publish.py:61:Shotgun
+  - goal/dependency_update.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/dependency_update.py:279:Shotgun
     Surgery: suffix'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: summary'
-  description: 'code2llm reports `Shotgun Surgery: summary` in `goal/formatter.py:177`.
+  description: 'code2llm reports `Shotgun Surgery: summary` in `goal/cli/commit_cmd.py:101`.
 
 
     Mutation of variable ''summary'' spans 5 functions. Changing this logic requires
@@ -1150,8 +1229,8 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/formatter.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/formatter.py:177:Shotgun Surgery:
+  - goal/cli/commit_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/commit_cmd.py:101:Shotgun Surgery:
     summary'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: template'
@@ -1175,7 +1254,7 @@ tickets:
     Surgery: template'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: total_adds'
-  description: 'code2llm reports `Shotgun Surgery: total_adds` in `goal/push/stages/dry_run.py:91`.
+  description: 'code2llm reports `Shotgun Surgery: total_adds` in `goal/formatter.py:79`.
 
 
     Mutation of variable ''total_adds'' spans 7 functions. Changing this logic requires
@@ -1190,12 +1269,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/push/stages/dry_run.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/stages/dry_run.py:91:Shotgun
-    Surgery: total_adds'
+  - goal/formatter.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/formatter.py:79:Shotgun Surgery:
+    total_adds'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: total_dels'
-  description: 'code2llm reports `Shotgun Surgery: total_dels` in `goal/push/stages/dry_run.py:91`.
+  description: 'code2llm reports `Shotgun Surgery: total_dels` in `goal/formatter.py:79`.
 
 
     Mutation of variable ''total_dels'' spans 7 functions. Changing this logic requires
@@ -1210,12 +1289,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/push/stages/dry_run.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/stages/dry_run.py:91:Shotgun
-    Surgery: total_dels'
+  - goal/formatter.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/formatter.py:79:Shotgun Surgery:
+    total_dels'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: updated'
-  description: 'code2llm reports `Shotgun Surgery: updated` in `goal/cli/publish.py:301`.
+  description: 'code2llm reports `Shotgun Surgery: updated` in `goal/cli/version_sync.py:191`.
 
 
     Mutation of variable ''updated'' spans 12 functions. Changing this logic requires
@@ -1230,12 +1309,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/publish.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/publish.py:301:Shotgun Surgery:
-    updated'
+  - goal/cli/version_sync.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/version_sync.py:191:Shotgun
+    Surgery: updated'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: url'
-  description: 'code2llm reports `Shotgun Surgery: url` in `goal/git_ops.py:448`.
+  description: 'code2llm reports `Shotgun Surgery: url` in `goal/version_validation.py:15`.
 
 
     Mutation of variable ''url'' spans 13 functions. Changing this logic requires
@@ -1250,12 +1329,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/git_ops.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/git_ops.py:448:Shotgun Surgery:
-    url'
+  - goal/version_validation.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/version_validation.py:15:Shotgun
+    Surgery: url'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: user_config'
-  description: 'code2llm reports `Shotgun Surgery: user_config` in `goal/push/core.py:833`.
+  description: 'code2llm reports `Shotgun Surgery: user_config` in `goal/cli/license_cmd.py:28`.
 
 
     Mutation of variable ''user_config'' spans 10 functions. Changing this logic requires
@@ -1270,12 +1349,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/push/core.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/push/core.py:833:Shotgun Surgery:
+  - goal/cli/license_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/license_cmd.py:28:Shotgun Surgery:
     user_config'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: validator'
-  description: 'code2llm reports `Shotgun Surgery: validator` in `goal/config/validation.py:469`.
+  description: 'code2llm reports `Shotgun Surgery: validator` in `goal/cli/commit_cmd.py:101`.
 
 
     Mutation of variable ''validator'' spans 7 functions. Changing this logic requires
@@ -1290,12 +1369,32 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/config/validation.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/config/validation.py:469:Shotgun
-    Surgery: validator'
+  - goal/cli/commit_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/commit_cmd.py:101:Shotgun Surgery:
+    validator'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: value'
+  description: 'code2llm reports `Shotgun Surgery: value` in `goal/cli/config_cmd.py:91`.
+
+
+    Mutation of variable ''value'' spans 9 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - goal/cli/config_cmd.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/config_cmd.py:91:Shotgun Surgery:
+    value'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: venv_python'
-  description: 'code2llm reports `Shotgun Surgery: venv_python` in `goal/cli/publish.py:94`.
+  description: 'code2llm reports `Shotgun Surgery: venv_python` in `goal/cli/__init__.py:46`.
 
 
     Mutation of variable ''venv_python'' spans 5 functions. Changing this logic requires
@@ -1310,12 +1409,12 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/cli/publish.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/publish.py:94:Shotgun Surgery:
+  - goal/cli/__init__.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/__init__.py:46:Shotgun Surgery:
     venv_python'
 - signal: code2llm_smell_shotgun_surgery
   title: 'Address code smell: Shotgun Surgery: version'
-  description: 'code2llm reports `Shotgun Surgery: version` in `goal/project_bootstrap.py:420`.
+  description: 'code2llm reports `Shotgun Surgery: version` in `goal/cli/version_utils.py:63`.
 
 
     Mutation of variable ''version'' spans 7 functions. Changing this logic requires
@@ -1330,9 +1429,27 @@ tickets:
   - code-smell
   - shotgun-surgery
   files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/project_bootstrap.py:420:Shotgun
+  - goal/cli/version_utils.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:goal/cli/version_utils.py:63:Shotgun
     Surgery: version'
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: goal.config.manager.GoalConfig._detect_version_files
+    (CC=17)'
+  description: 'code2llm reports `goal.config.manager.GoalConfig._detect_version_files`
+    at `goal/config/manager.py:244` with cyclomatic complexity 17 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - goal/config/manager.py
+  dedupe_key: code2llm:cc:goal/config/manager.py:goal.config.manager.GoalConfig._detect_version_files
 - signal: code2llm_cc
   title: 'Reduce cyclomatic complexity: goal.config.validation.ConfigValidator._validate_publishing_section
     (CC=19)'
@@ -1476,11 +1593,11 @@ tickets:
   - goal/push/stages/publish.py
   dedupe_key: code2llm:cc:goal/push/stages/publish.py:goal.push.stages.publish.handle_publish
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: _path, notes, added_lines'
-  description: 'code2llm reports `Data Clump: _path, notes, added_lines` in `goal/generator/analyzer.py:523`.
+  title: 'Address code smell: Data Clump: added_lines, notes, _path'
+  description: 'code2llm reports `Data Clump: added_lines, notes, _path` in `goal/generator/analyzer.py:523`.
 
 
-    Arguments (_path, notes, added_lines) are used together in multiple functions:
+    Arguments (added_lines, notes, _path) are used together in multiple functions:
     goal.generator.analyzer.ContentAnalyzer._notes_python, goal.generator.analyzer.ContentAnalyzer._notes_shell.
 
 
@@ -1494,13 +1611,13 @@ tickets:
   files:
   - goal/generator/analyzer.py
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:523:Data Clump:
-    _path, notes, added_lines'
+    added_lines, notes, _path'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: _path, notes, added_lines'
-  description: 'code2llm reports `Data Clump: _path, notes, added_lines` in `goal/generator/analyzer.py:557`.
+  title: 'Address code smell: Data Clump: added_lines, notes, _path'
+  description: 'code2llm reports `Data Clump: added_lines, notes, _path` in `goal/generator/analyzer.py:557`.
 
 
-    Arguments (_path, notes, added_lines) are used together in multiple functions:
+    Arguments (added_lines, notes, _path) are used together in multiple functions:
     goal.generator.analyzer.ContentAnalyzer._notes_python, goal.generator.analyzer.ContentAnalyzer._notes_shell.
 
 
@@ -1514,15 +1631,97 @@ tickets:
   files:
   - goal/generator/analyzer.py
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:557:Data Clump:
-    _path, notes, added_lines'
+    added_lines, notes, _path'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: author_email, author_name, content, license_id,
-    license_classifier'
-  description: 'code2llm reports `Data Clump: author_email, author_name, content,
-    license_id, license_classifier` in `goal/cli/version_utils.py:202`.
+  title: 'Address code smell: Data Clump: alias, name, self, role, email'
+  description: 'code2llm reports `Data Clump: alias, name, self, role, email` in `goal/authors/manager.py:38`.
 
 
-    Arguments (author_email, author_name, content, license_id, license_classifier)
+    Arguments (alias, name, self, role, email) are used together in multiple functions:
+    goal.authors.manager.AuthorsManager.add_author, goal.authors.manager.AuthorsManager.update_author.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/authors/manager.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/authors/manager.py:38:Data Clump: alias,
+    name, self, role, email'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: alias, name, self, role, email'
+  description: 'code2llm reports `Data Clump: alias, name, self, role, email` in `goal/authors/manager.py:122`.
+
+
+    Arguments (alias, name, self, role, email) are used together in multiple functions:
+    goal.authors.manager.AuthorsManager.add_author, goal.authors.manager.AuthorsManager.update_author.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/authors/manager.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/authors/manager.py:122:Data Clump: alias,
+    name, self, role, email'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: author_email, content, author_name, license_id'
+  description: 'code2llm reports `Data Clump: author_email, content, author_name,
+    license_id` in `goal/cli/version_utils.py:328`.
+
+
+    Arguments (author_email, content, author_name, license_id) are used together in
+    multiple functions: goal.cli.version_utils._update_package_json_metadata, goal.cli.version_utils._update_setup_py_metadata.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/cli/version_utils.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_utils.py:328:Data Clump:
+    author_email, content, author_name, license_id'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: author_email, content, author_name, license_id'
+  description: 'code2llm reports `Data Clump: author_email, content, author_name,
+    license_id` in `goal/cli/version_utils.py:347`.
+
+
+    Arguments (author_email, content, author_name, license_id) are used together in
+    multiple functions: goal.cli.version_utils._update_package_json_metadata, goal.cli.version_utils._update_setup_py_metadata.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/cli/version_utils.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_utils.py:347:Data Clump:
+    author_email, content, author_name, license_id'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: author_name, license_id, license_classifier,
+    content, author_email'
+  description: 'code2llm reports `Data Clump: author_name, license_id, license_classifier,
+    content, author_email` in `goal/cli/version_utils.py:202`.
+
+
+    Arguments (author_name, license_id, license_classifier, content, author_email)
     are used together in multiple functions: goal.cli.version_utils._update_pyproject_with_tomlkit,
     goal.cli.version_utils._update_pyproject_with_regex, goal.cli.version_utils._update_pyproject_metadata.
 
@@ -1537,15 +1736,15 @@ tickets:
   files:
   - goal/cli/version_utils.py
   dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_utils.py:202:Data Clump:
-    author_email, author_name, content, license_id, license_classifier'
+    author_name, license_id, license_classifier, content, author_email'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: author_email, author_name, content, license_id,
-    license_classifier'
-  description: 'code2llm reports `Data Clump: author_email, author_name, content,
-    license_id, license_classifier` in `goal/cli/version_utils.py:293`.
+  title: 'Address code smell: Data Clump: author_name, license_id, license_classifier,
+    content, author_email'
+  description: 'code2llm reports `Data Clump: author_name, license_id, license_classifier,
+    content, author_email` in `goal/cli/version_utils.py:293`.
 
 
-    Arguments (author_email, author_name, content, license_id, license_classifier)
+    Arguments (author_name, license_id, license_classifier, content, author_email)
     are used together in multiple functions: goal.cli.version_utils._update_pyproject_with_tomlkit,
     goal.cli.version_utils._update_pyproject_with_regex, goal.cli.version_utils._update_pyproject_metadata.
 
@@ -1560,15 +1759,15 @@ tickets:
   files:
   - goal/cli/version_utils.py
   dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_utils.py:293:Data Clump:
-    author_email, author_name, content, license_id, license_classifier'
+    author_name, license_id, license_classifier, content, author_email'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: author_email, author_name, content, license_id,
-    license_classifier'
-  description: 'code2llm reports `Data Clump: author_email, author_name, content,
-    license_id, license_classifier` in `goal/cli/version_utils.py:307`.
+  title: 'Address code smell: Data Clump: author_name, license_id, license_classifier,
+    content, author_email'
+  description: 'code2llm reports `Data Clump: author_name, license_id, license_classifier,
+    content, author_email` in `goal/cli/version_utils.py:307`.
 
 
-    Arguments (author_email, author_name, content, license_id, license_classifier)
+    Arguments (author_name, license_id, license_classifier, content, author_email)
     are used together in multiple functions: goal.cli.version_utils._update_pyproject_with_tomlkit,
     goal.cli.version_utils._update_pyproject_with_regex, goal.cli.version_utils._update_pyproject_metadata.
 
@@ -1583,15 +1782,14 @@ tickets:
   files:
   - goal/cli/version_utils.py
   dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_utils.py:307:Data Clump:
-    author_email, author_name, content, license_id, license_classifier'
+    author_name, license_id, license_classifier, content, author_email'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: author_email, license_id, author_name, content'
-  description: 'code2llm reports `Data Clump: author_email, license_id, author_name,
-    content` in `goal/cli/version_utils.py:328`.
+  title: 'Address code smell: Data Clump: cfg, project_dir, python_bin'
+  description: 'code2llm reports `Data Clump: cfg, project_dir, python_bin` in `goal/bootstrap/installer.py:65`.
 
 
-    Arguments (author_email, license_id, author_name, content) are used together in
-    multiple functions: goal.cli.version_utils._update_package_json_metadata, goal.cli.version_utils._update_setup_py_metadata.
+    Arguments (cfg, project_dir, python_bin) are used together in multiple functions:
+    goal.bootstrap.installer._install_python_deps_legacy, goal.project_bootstrap._install_python_deps.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -1602,17 +1800,16 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/cli/version_utils.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_utils.py:328:Data Clump:
-    author_email, license_id, author_name, content'
+  - goal/bootstrap/installer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:65:Data Clump:
+    cfg, project_dir, python_bin'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: author_email, license_id, author_name, content'
-  description: 'code2llm reports `Data Clump: author_email, license_id, author_name,
-    content` in `goal/cli/version_utils.py:347`.
+  title: 'Address code smell: Data Clump: cfg, project_dir, python_bin'
+  description: 'code2llm reports `Data Clump: cfg, project_dir, python_bin` in `goal/project_bootstrap.py:536`.
 
 
-    Arguments (author_email, license_id, author_name, content) are used together in
-    multiple functions: goal.cli.version_utils._update_package_json_metadata, goal.cli.version_utils._update_setup_py_metadata.
+    Arguments (cfg, project_dir, python_bin) are used together in multiple functions:
+    goal.bootstrap.installer._install_python_deps_legacy, goal.project_bootstrap._install_python_deps.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -1623,17 +1820,143 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/cli/version_utils.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_utils.py:347:Data Clump:
-    author_email, license_id, author_name, content'
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:536:Data Clump:
+    cfg, project_dir, python_bin'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: files, added, entities, self, categories,
-    title, deleted'
-  description: 'code2llm reports `Data Clump: files, added, entities, self, categories,
-    title, deleted` in `goal/summary/validator.py:311`.
+  title: 'Address code smell: Data Clump: cfg, project_dir, yes'
+  description: 'code2llm reports `Data Clump: cfg, project_dir, yes` in `goal/bootstrap/installer.py:206`.
 
 
-    Arguments (files, added, entities, self, categories, title, deleted) are used
+    Arguments (cfg, project_dir, yes) are used together in multiple functions: goal.bootstrap.installer._ensure_python_env,
+    goal.project_bootstrap._ensure_python_env.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/bootstrap/installer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:206:Data Clump:
+    cfg, project_dir, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: cfg, project_dir, yes'
+  description: 'code2llm reports `Data Clump: cfg, project_dir, yes` in `goal/project_bootstrap.py:463`.
+
+
+    Arguments (cfg, project_dir, yes) are used together in multiple functions: goal.bootstrap.installer._ensure_python_env,
+    goal.project_bootstrap._ensure_python_env.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:463:Data Clump:
+    cfg, project_dir, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: commit_msg, markdown, ctx_obj, new_version,
+    stats, commit_body, files, current_version'
+  description: 'code2llm reports `Data Clump: commit_msg, markdown, ctx_obj, new_version,
+    stats, commit_body, files, current_version` in `goal/push/core.py:38`.
+
+
+    Arguments (commit_msg, markdown, ctx_obj, new_version, stats, commit_body, files,
+    current_version) are used together in multiple functions: goal.push.core.show_workflow_preview,
+    goal.push.core._maybe_show_workflow_preview.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/push/core.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/push/core.py:38:Data Clump: commit_msg,
+    markdown, ctx_obj, new_version, stats, commit_body, files, current_version'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: commit_msg, markdown, ctx_obj, new_version,
+    stats, commit_body, files, current_version'
+  description: 'code2llm reports `Data Clump: commit_msg, markdown, ctx_obj, new_version,
+    stats, commit_body, files, current_version` in `goal/push/core.py:414`.
+
+
+    Arguments (commit_msg, markdown, ctx_obj, new_version, stats, commit_body, files,
+    current_version) are used together in multiple functions: goal.push.core.show_workflow_preview,
+    goal.push.core._maybe_show_workflow_preview.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/push/core.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/push/core.py:414:Data Clump: commit_msg,
+    markdown, ctx_obj, new_version, stats, commit_body, files, current_version'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx_obj, dry_run, yes'
+  description: 'code2llm reports `Data Clump: ctx_obj, dry_run, yes` in `goal/push/core.py:762`.
+
+
+    Arguments (ctx_obj, dry_run, yes) are used together in multiple functions: goal.push.core._detect_and_bootstrap_projects,
+    goal.push.stages.todo.handle_todo_stage.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/push/core.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/push/core.py:762:Data Clump: ctx_obj,
+    dry_run, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx_obj, dry_run, yes'
+  description: 'code2llm reports `Data Clump: ctx_obj, dry_run, yes` in `goal/push/stages/todo.py:9`.
+
+
+    Arguments (ctx_obj, dry_run, yes) are used together in multiple functions: goal.push.core._detect_and_bootstrap_projects,
+    goal.push.stages.todo.handle_todo_stage.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/push/stages/todo.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/push/stages/todo.py:9:Data Clump: ctx_obj,
+    dry_run, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: deleted, entities, self, title, files, categories,
+    added'
+  description: 'code2llm reports `Data Clump: deleted, entities, self, title, files,
+    categories, added` in `goal/summary/validator.py:311`.
+
+
+    Arguments (deleted, entities, self, title, files, categories, added) are used
     together in multiple functions: goal.summary.validator.QualityValidator._fix_banned_words_title,
     goal.summary.validator.QualityValidator._expand_short_title.
 
@@ -1648,15 +1971,15 @@ tickets:
   files:
   - goal/summary/validator.py
   dedupe_key: 'code2llm:smell:data_clump:goal/summary/validator.py:311:Data Clump:
-    files, added, entities, self, categories, title, deleted'
+    deleted, entities, self, title, files, categories, added'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: files, added, entities, self, categories,
-    title, deleted'
-  description: 'code2llm reports `Data Clump: files, added, entities, self, categories,
-    title, deleted` in `goal/summary/validator.py:358`.
+  title: 'Address code smell: Data Clump: deleted, entities, self, title, files, categories,
+    added'
+  description: 'code2llm reports `Data Clump: deleted, entities, self, title, files,
+    categories, added` in `goal/summary/validator.py:358`.
 
 
-    Arguments (files, added, entities, self, categories, title, deleted) are used
+    Arguments (deleted, entities, self, title, files, categories, added) are used
     together in multiple functions: goal.summary.validator.QualityValidator._fix_banned_words_title,
     goal.summary.validator.QualityValidator._expand_short_title.
 
@@ -1671,17 +1994,14 @@ tickets:
   files:
   - goal/summary/validator.py
   dedupe_key: 'code2llm:smell:data_clump:goal/summary/validator.py:358:Data Clump:
-    files, added, entities, self, categories, title, deleted'
+    deleted, entities, self, title, files, categories, added'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: files, commit_msg, current_version, markdown,
-    new_version, commit_body, ctx_obj, stats'
-  description: 'code2llm reports `Data Clump: files, commit_msg, current_version,
-    markdown, new_version, commit_body, ctx_obj, stats` in `goal/push/core.py:38`.
+  title: 'Address code smell: Data Clump: email, role, alias, name'
+  description: 'code2llm reports `Data Clump: email, role, alias, name` in `goal/cli/authors_cmd.py:51`.
 
 
-    Arguments (files, commit_msg, current_version, markdown, new_version, commit_body,
-    ctx_obj, stats) are used together in multiple functions: goal.push.core.show_workflow_preview,
-    goal.push.core._maybe_show_workflow_preview.
+    Arguments (email, role, alias, name) are used together in multiple functions:
+    goal.cli.authors_cmd.authors_add, goal.cli.authors_cmd.authors_update.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -1692,19 +2012,16 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/push/core.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/push/core.py:38:Data Clump: files, commit_msg,
-    current_version, markdown, new_version, commit_body, ctx_obj, stats'
+  - goal/cli/authors_cmd.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/cli/authors_cmd.py:51:Data Clump: email,
+    role, alias, name'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: files, commit_msg, current_version, markdown,
-    new_version, commit_body, ctx_obj, stats'
-  description: 'code2llm reports `Data Clump: files, commit_msg, current_version,
-    markdown, new_version, commit_body, ctx_obj, stats` in `goal/push/core.py:414`.
+  title: 'Address code smell: Data Clump: email, role, alias, name'
+  description: 'code2llm reports `Data Clump: email, role, alias, name` in `goal/cli/authors_cmd.py:70`.
 
 
-    Arguments (files, commit_msg, current_version, markdown, new_version, commit_body,
-    ctx_obj, stats) are used together in multiple functions: goal.push.core.show_workflow_preview,
-    goal.push.core._maybe_show_workflow_preview.
+    Arguments (email, role, alias, name) are used together in multiple functions:
+    goal.cli.authors_cmd.authors_add, goal.cli.authors_cmd.authors_update.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -1715,9 +2032,75 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/push/core.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/push/core.py:414:Data Clump: files,
-    commit_msg, current_version, markdown, new_version, commit_body, ctx_obj, stats'
+  - goal/cli/authors_cmd.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/cli/authors_cmd.py:70:Data Clump: email,
+    role, alias, name'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: filename, user_config, new_version, updated'
+  description: 'code2llm reports `Data Clump: filename, user_config, new_version,
+    updated` in `goal/cli/version_sync.py:47`.
+
+
+    Arguments (filename, user_config, new_version, updated) are used together in multiple
+    functions: goal.cli.version_sync._update_json_version_file, goal.cli.version_sync._update_toml_version,
+    goal.cli.version_sync._update_cargo_version.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/cli/version_sync.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_sync.py:47:Data Clump: filename,
+    user_config, new_version, updated'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: filename, user_config, new_version, updated'
+  description: 'code2llm reports `Data Clump: filename, user_config, new_version,
+    updated` in `goal/cli/version_sync.py:60`.
+
+
+    Arguments (filename, user_config, new_version, updated) are used together in multiple
+    functions: goal.cli.version_sync._update_json_version_file, goal.cli.version_sync._update_toml_version,
+    goal.cli.version_sync._update_cargo_version.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/cli/version_sync.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_sync.py:60:Data Clump: filename,
+    user_config, new_version, updated'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: filename, user_config, new_version, updated'
+  description: 'code2llm reports `Data Clump: filename, user_config, new_version,
+    updated` in `goal/cli/version_sync.py:112`.
+
+
+    Arguments (filename, user_config, new_version, updated) are used together in multiple
+    functions: goal.cli.version_sync._update_json_version_file, goal.cli.version_sync._update_toml_version,
+    goal.cli.version_sync._update_cargo_version.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/cli/version_sync.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_sync.py:112:Data Clump:
+    filename, user_config, new_version, updated'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: files, config, summary'
   description: 'code2llm reports `Data Clump: files, config, summary` in `goal/summary/__init__.py:15`.
@@ -1759,53 +2142,11 @@ tickets:
   dedupe_key: 'code2llm:smell:data_clump:goal/summary/__init__.py:25:Data Clump: files,
     config, summary'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: files, signals, self, scores, diff_content'
-  description: 'code2llm reports `Data Clump: files, signals, self, scores, diff_content`
-    in `goal/generator/analyzer.py:227`.
+  title: 'Address code smell: Data Clump: license_id, fullname, year'
+  description: 'code2llm reports `Data Clump: license_id, fullname, year` in `goal/cli/license_cmd.py:61`.
 
 
-    Arguments (files, signals, self, scores, diff_content) are used together in multiple
-    functions: goal.generator.analyzer.ChangeAnalyzer._score_by_signals, goal.generator.analyzer.ChangeAnalyzer._resolve_change_type.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/generator/analyzer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:227:Data Clump:
-    files, signals, self, scores, diff_content'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: files, signals, self, scores, diff_content'
-  description: 'code2llm reports `Data Clump: files, signals, self, scores, diff_content`
-    in `goal/generator/analyzer.py:287`.
-
-
-    Arguments (files, signals, self, scores, diff_content) are used together in multiple
-    functions: goal.generator.analyzer.ChangeAnalyzer._score_by_signals, goal.generator.analyzer.ChangeAnalyzer._resolve_change_type.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/generator/analyzer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:287:Data Clump:
-    files, signals, self, scores, diff_content'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: license_id, year, fullname'
-  description: 'code2llm reports `Data Clump: license_id, year, fullname` in `goal/cli/license_cmd.py:61`.
-
-
-    Arguments (license_id, year, fullname) are used together in multiple functions:
+    Arguments (license_id, fullname, year) are used together in multiple functions:
     goal.cli.license_cmd.license_update, goal.license.manager.update_license_file.
 
 
@@ -1819,13 +2160,13 @@ tickets:
   files:
   - goal/cli/license_cmd.py
   dedupe_key: 'code2llm:smell:data_clump:goal/cli/license_cmd.py:61:Data Clump: license_id,
-    year, fullname'
+    fullname, year'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: license_id, year, fullname'
-  description: 'code2llm reports `Data Clump: license_id, year, fullname` in `goal/license/manager.py:571`.
+  title: 'Address code smell: Data Clump: license_id, fullname, year'
+  description: 'code2llm reports `Data Clump: license_id, fullname, year` in `goal/license/manager.py:571`.
 
 
-    Arguments (license_id, year, fullname) are used together in multiple functions:
+    Arguments (license_id, fullname, year) are used together in multiple functions:
     goal.cli.license_cmd.license_update, goal.license.manager.update_license_file.
 
 
@@ -1839,14 +2180,14 @@ tickets:
   files:
   - goal/license/manager.py
   dedupe_key: 'code2llm:smell:data_clump:goal/license/manager.py:571:Data Clump: license_id,
-    year, fullname'
+    fullname, year'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: license_id, year, fullname, force'
-  description: 'code2llm reports `Data Clump: license_id, year, fullname, force` in
+  title: 'Address code smell: Data Clump: license_id, fullname, year, force'
+  description: 'code2llm reports `Data Clump: license_id, fullname, year, force` in
     `goal/cli/license_cmd.py:28`.
 
 
-    Arguments (license_id, year, fullname, force) are used together in multiple functions:
+    Arguments (license_id, fullname, year, force) are used together in multiple functions:
     goal.cli.license_cmd.license_create, goal.license.manager.create_license_file.
 
 
@@ -1860,14 +2201,14 @@ tickets:
   files:
   - goal/cli/license_cmd.py
   dedupe_key: 'code2llm:smell:data_clump:goal/cli/license_cmd.py:28:Data Clump: license_id,
-    year, fullname, force'
+    fullname, year, force'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: license_id, year, fullname, force'
-  description: 'code2llm reports `Data Clump: license_id, year, fullname, force` in
+  title: 'Address code smell: Data Clump: license_id, fullname, year, force'
+  description: 'code2llm reports `Data Clump: license_id, fullname, year, force` in
     `goal/license/manager.py:550`.
 
 
-    Arguments (license_id, year, fullname, force) are used together in multiple functions:
+    Arguments (license_id, fullname, year, force) are used together in multiple functions:
     goal.cli.license_cmd.license_create, goal.license.manager.create_license_file.
 
 
@@ -1881,94 +2222,14 @@ tickets:
   files:
   - goal/license/manager.py
   dedupe_key: 'code2llm:smell:data_clump:goal/license/manager.py:550:Data Clump: license_id,
-    year, fullname, force'
+    fullname, year, force'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: name, alias, email, self, role'
-  description: 'code2llm reports `Data Clump: name, alias, email, self, role` in `goal/authors/manager.py:38`.
-
-
-    Arguments (name, alias, email, self, role) are used together in multiple functions:
-    goal.authors.manager.AuthorsManager.add_author, goal.authors.manager.AuthorsManager.update_author.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/authors/manager.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/authors/manager.py:38:Data Clump: name,
-    alias, email, self, role'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: name, alias, email, self, role'
-  description: 'code2llm reports `Data Clump: name, alias, email, self, role` in `goal/authors/manager.py:122`.
-
-
-    Arguments (name, alias, email, self, role) are used together in multiple functions:
-    goal.authors.manager.AuthorsManager.add_author, goal.authors.manager.AuthorsManager.update_author.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/authors/manager.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/authors/manager.py:122:Data Clump: name,
-    alias, email, self, role'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: name, role, alias, email'
-  description: 'code2llm reports `Data Clump: name, role, alias, email` in `goal/cli/authors_cmd.py:51`.
-
-
-    Arguments (name, role, alias, email) are used together in multiple functions:
-    goal.cli.authors_cmd.authors_add, goal.cli.authors_cmd.authors_update.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/cli/authors_cmd.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/cli/authors_cmd.py:51:Data Clump: name,
-    role, alias, email'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: name, role, alias, email'
-  description: 'code2llm reports `Data Clump: name, role, alias, email` in `goal/cli/authors_cmd.py:70`.
-
-
-    Arguments (name, role, alias, email) are used together in multiple functions:
-    goal.cli.authors_cmd.authors_add, goal.cli.authors_cmd.authors_update.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/cli/authors_cmd.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/cli/authors_cmd.py:70:Data Clump: name,
-    role, alias, email'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: new_version, updated, user_config'
-  description: 'code2llm reports `Data Clump: new_version, updated, user_config` in
+  title: 'Address code smell: Data Clump: new_version, user_config, updated'
+  description: 'code2llm reports `Data Clump: new_version, user_config, updated` in
     `goal/cli/version_sync.py:134`.
 
 
-    Arguments (new_version, updated, user_config) are used together in multiple functions:
+    Arguments (new_version, user_config, updated) are used together in multiple functions:
     goal.cli.version_sync._update_setup_py_version, goal.cli.version_sync._update_readme_metadata.
 
 
@@ -1982,14 +2243,14 @@ tickets:
   files:
   - goal/cli/version_sync.py
   dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_sync.py:134:Data Clump:
-    new_version, updated, user_config'
+    new_version, user_config, updated'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: new_version, updated, user_config'
-  description: 'code2llm reports `Data Clump: new_version, updated, user_config` in
+  title: 'Address code smell: Data Clump: new_version, user_config, updated'
+  description: 'code2llm reports `Data Clump: new_version, user_config, updated` in
     `goal/cli/version_sync.py:191`.
 
 
-    Arguments (new_version, updated, user_config) are used together in multiple functions:
+    Arguments (new_version, user_config, updated) are used together in multiple functions:
     goal.cli.version_sync._update_setup_py_version, goal.cli.version_sync._update_readme_metadata.
 
 
@@ -2003,16 +2264,15 @@ tickets:
   files:
   - goal/cli/version_sync.py
   dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_sync.py:191:Data Clump:
-    new_version, updated, user_config'
+    new_version, user_config, updated'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: new_version, updated, user_config, filename'
-  description: 'code2llm reports `Data Clump: new_version, updated, user_config, filename`
-    in `goal/cli/version_sync.py:47`.
+  title: 'Address code smell: Data Clump: project_dir, test_dep, python_bin'
+  description: 'code2llm reports `Data Clump: project_dir, test_dep, python_bin` in
+    `goal/bootstrap/installer.py:164`.
 
 
-    Arguments (new_version, updated, user_config, filename) are used together in multiple
-    functions: goal.cli.version_sync._update_json_version_file, goal.cli.version_sync._update_toml_version,
-    goal.cli.version_sync._update_cargo_version.
+    Arguments (project_dir, test_dep, python_bin) are used together in multiple functions:
+    goal.bootstrap.installer._ensure_python_test_dependency, goal.project_bootstrap._ensure_python_test_dependency.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2023,18 +2283,17 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/cli/version_sync.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_sync.py:47:Data Clump: new_version,
-    updated, user_config, filename'
+  - goal/bootstrap/installer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:164:Data Clump:
+    project_dir, test_dep, python_bin'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: new_version, updated, user_config, filename'
-  description: 'code2llm reports `Data Clump: new_version, updated, user_config, filename`
-    in `goal/cli/version_sync.py:60`.
+  title: 'Address code smell: Data Clump: project_dir, test_dep, python_bin'
+  description: 'code2llm reports `Data Clump: project_dir, test_dep, python_bin` in
+    `goal/project_bootstrap.py:421`.
 
 
-    Arguments (new_version, updated, user_config, filename) are used together in multiple
-    functions: goal.cli.version_sync._update_json_version_file, goal.cli.version_sync._update_toml_version,
-    goal.cli.version_sync._update_cargo_version.
+    Arguments (project_dir, test_dep, python_bin) are used together in multiple functions:
+    goal.bootstrap.installer._ensure_python_test_dependency, goal.project_bootstrap._ensure_python_test_dependency.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2045,18 +2304,17 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/cli/version_sync.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_sync.py:60:Data Clump: new_version,
-    updated, user_config, filename'
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:421:Data Clump:
+    project_dir, test_dep, python_bin'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: new_version, updated, user_config, filename'
-  description: 'code2llm reports `Data Clump: new_version, updated, user_config, filename`
-    in `goal/cli/version_sync.py:112`.
+  title: 'Address code smell: Data Clump: project_type, cfg, project_dir, yes'
+  description: 'code2llm reports `Data Clump: project_type, cfg, project_dir, yes`
+    in `goal/bootstrap/installer.py:341`.
 
 
-    Arguments (new_version, updated, user_config, filename) are used together in multiple
-    functions: goal.cli.version_sync._update_json_version_file, goal.cli.version_sync._update_toml_version,
-    goal.cli.version_sync._update_cargo_version.
+    Arguments (project_type, cfg, project_dir, yes) are used together in multiple
+    functions: goal.bootstrap.installer._ensure_generic_env, goal.project_bootstrap._ensure_generic_env.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2067,16 +2325,37 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/cli/version_sync.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/cli/version_sync.py:112:Data Clump:
-    new_version, updated, user_config, filename'
+  - goal/bootstrap/installer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:341:Data Clump:
+    project_type, cfg, project_dir, yes'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, auto_fix, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, auto_fix, project_dir`
+  title: 'Address code smell: Data Clump: project_type, cfg, project_dir, yes'
+  description: 'code2llm reports `Data Clump: project_type, cfg, project_dir, yes`
+    in `goal/project_bootstrap.py:630`.
+
+
+    Arguments (project_type, cfg, project_dir, yes) are used together in multiple
+    functions: goal.bootstrap.installer._ensure_generic_env, goal.project_bootstrap._ensure_generic_env.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:630:Data Clump:
+    project_type, cfg, project_dir, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: project_type, project_dir, auto_fix'
+  description: 'code2llm reports `Data Clump: project_type, project_dir, auto_fix`
     in `goal/doctor/core.py:35`.
 
 
-    Arguments (project_type, auto_fix, project_dir) are used together in multiple
+    Arguments (project_type, project_dir, auto_fix) are used together in multiple
     functions: goal.doctor.core.diagnose_project, goal.doctor.core.diagnose_and_report.
 
 
@@ -2090,14 +2369,14 @@ tickets:
   files:
   - goal/doctor/core.py
   dedupe_key: 'code2llm:smell:data_clump:goal/doctor/core.py:35:Data Clump: project_type,
-    auto_fix, project_dir'
+    project_dir, auto_fix'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, auto_fix, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, auto_fix, project_dir`
+  title: 'Address code smell: Data Clump: project_type, project_dir, auto_fix'
+  description: 'code2llm reports `Data Clump: project_type, project_dir, auto_fix`
     in `goal/doctor/core.py:55`.
 
 
-    Arguments (project_type, auto_fix, project_dir) are used together in multiple
+    Arguments (project_type, project_dir, auto_fix) are used together in multiple
     functions: goal.doctor.core.diagnose_project, goal.doctor.core.diagnose_and_report.
 
 
@@ -2111,168 +2390,16 @@ tickets:
   files:
   - goal/doctor/core.py
   dedupe_key: 'code2llm:smell:data_clump:goal/doctor/core.py:55:Data Clump: project_type,
-    auto_fix, project_dir'
+    project_dir, auto_fix'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, yes, cfg, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, yes, cfg, project_dir`
-    in `goal/project_bootstrap.py:629`.
+  title: 'Address code smell: Data Clump: project_type, project_dir, yes'
+  description: 'code2llm reports `Data Clump: project_type, project_dir, yes` in `goal/bootstrap/installer.py:372`.
 
 
-    Arguments (project_type, yes, cfg, project_dir) are used together in multiple
-    functions: goal.project_bootstrap._ensure_generic_env, goal.bootstrap.installer._ensure_generic_env.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:629:Data Clump:
-    project_type, yes, cfg, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, yes, cfg, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, yes, cfg, project_dir`
-    in `goal/bootstrap/installer.py:341`.
-
-
-    Arguments (project_type, yes, cfg, project_dir) are used together in multiple
-    functions: goal.project_bootstrap._ensure_generic_env, goal.bootstrap.installer._ensure_generic_env.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/bootstrap/installer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:341:Data Clump:
-    project_type, yes, cfg, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, yes, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, yes, project_dir` in `goal/project_bootstrap.py:686`.
-
-
-    Arguments (project_type, yes, project_dir) are used together in multiple functions:
-    goal.project_bootstrap.ensure_project_environment, goal.project_bootstrap.scaffold_test,
-    goal.project_bootstrap._run_bootstrap_diagnostics, goal.project_bootstrap._ensure_bootstrap_tests,
-    goal.project_bootstrap.bootstrap_project, goal.bootstrap.installer.ensure_project_environment.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:686:Data Clump:
-    project_type, yes, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, yes, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, yes, project_dir` in `goal/project_bootstrap.py:761`.
-
-
-    Arguments (project_type, yes, project_dir) are used together in multiple functions:
-    goal.project_bootstrap.ensure_project_environment, goal.project_bootstrap.scaffold_test,
-    goal.project_bootstrap._run_bootstrap_diagnostics, goal.project_bootstrap._ensure_bootstrap_tests,
-    goal.project_bootstrap.bootstrap_project, goal.bootstrap.installer.ensure_project_environment.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:761:Data Clump:
-    project_type, yes, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, yes, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, yes, project_dir` in `goal/project_bootstrap.py:826`.
-
-
-    Arguments (project_type, yes, project_dir) are used together in multiple functions:
-    goal.project_bootstrap.ensure_project_environment, goal.project_bootstrap.scaffold_test,
-    goal.project_bootstrap._run_bootstrap_diagnostics, goal.project_bootstrap._ensure_bootstrap_tests,
-    goal.project_bootstrap.bootstrap_project, goal.bootstrap.installer.ensure_project_environment.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:826:Data Clump:
-    project_type, yes, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, yes, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, yes, project_dir` in `goal/project_bootstrap.py:831`.
-
-
-    Arguments (project_type, yes, project_dir) are used together in multiple functions:
-    goal.project_bootstrap.ensure_project_environment, goal.project_bootstrap.scaffold_test,
-    goal.project_bootstrap._run_bootstrap_diagnostics, goal.project_bootstrap._ensure_bootstrap_tests,
-    goal.project_bootstrap.bootstrap_project, goal.bootstrap.installer.ensure_project_environment.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:831:Data Clump:
-    project_type, yes, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, yes, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, yes, project_dir` in `goal/project_bootstrap.py:844`.
-
-
-    Arguments (project_type, yes, project_dir) are used together in multiple functions:
-    goal.project_bootstrap.ensure_project_environment, goal.project_bootstrap.scaffold_test,
-    goal.project_bootstrap._run_bootstrap_diagnostics, goal.project_bootstrap._ensure_bootstrap_tests,
-    goal.project_bootstrap.bootstrap_project, goal.bootstrap.installer.ensure_project_environment.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:844:Data Clump:
-    project_type, yes, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: project_type, yes, project_dir'
-  description: 'code2llm reports `Data Clump: project_type, yes, project_dir` in `goal/bootstrap/installer.py:372`.
-
-
-    Arguments (project_type, yes, project_dir) are used together in multiple functions:
-    goal.project_bootstrap.ensure_project_environment, goal.project_bootstrap.scaffold_test,
-    goal.project_bootstrap._run_bootstrap_diagnostics, goal.project_bootstrap._ensure_bootstrap_tests,
-    goal.project_bootstrap.bootstrap_project, goal.bootstrap.installer.ensure_project_environment.
+    Arguments (project_type, project_dir, yes) are used together in multiple functions:
+    goal.bootstrap.installer.ensure_project_environment, goal.project_bootstrap.ensure_project_environment,
+    goal.project_bootstrap.scaffold_test, goal.project_bootstrap._run_bootstrap_diagnostics,
+    goal.project_bootstrap._ensure_bootstrap_tests, goal.project_bootstrap.bootstrap_project.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2285,15 +2412,125 @@ tickets:
   files:
   - goal/bootstrap/installer.py
   dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:372:Data Clump:
-    project_type, yes, project_dir'
+    project_type, project_dir, yes'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: pyproject_version, setup_py, version_file,
+  title: 'Address code smell: Data Clump: project_type, project_dir, yes'
+  description: 'code2llm reports `Data Clump: project_type, project_dir, yes` in `goal/project_bootstrap.py:687`.
+
+
+    Arguments (project_type, project_dir, yes) are used together in multiple functions:
+    goal.bootstrap.installer.ensure_project_environment, goal.project_bootstrap.ensure_project_environment,
+    goal.project_bootstrap.scaffold_test, goal.project_bootstrap._run_bootstrap_diagnostics,
+    goal.project_bootstrap._ensure_bootstrap_tests, goal.project_bootstrap.bootstrap_project.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:687:Data Clump:
+    project_type, project_dir, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: project_type, project_dir, yes'
+  description: 'code2llm reports `Data Clump: project_type, project_dir, yes` in `goal/project_bootstrap.py:762`.
+
+
+    Arguments (project_type, project_dir, yes) are used together in multiple functions:
+    goal.bootstrap.installer.ensure_project_environment, goal.project_bootstrap.ensure_project_environment,
+    goal.project_bootstrap.scaffold_test, goal.project_bootstrap._run_bootstrap_diagnostics,
+    goal.project_bootstrap._ensure_bootstrap_tests, goal.project_bootstrap.bootstrap_project.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:762:Data Clump:
+    project_type, project_dir, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: project_type, project_dir, yes'
+  description: 'code2llm reports `Data Clump: project_type, project_dir, yes` in `goal/project_bootstrap.py:909`.
+
+
+    Arguments (project_type, project_dir, yes) are used together in multiple functions:
+    goal.bootstrap.installer.ensure_project_environment, goal.project_bootstrap.ensure_project_environment,
+    goal.project_bootstrap.scaffold_test, goal.project_bootstrap._run_bootstrap_diagnostics,
+    goal.project_bootstrap._ensure_bootstrap_tests, goal.project_bootstrap.bootstrap_project.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:909:Data Clump:
+    project_type, project_dir, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: project_type, project_dir, yes'
+  description: 'code2llm reports `Data Clump: project_type, project_dir, yes` in `goal/project_bootstrap.py:924`.
+
+
+    Arguments (project_type, project_dir, yes) are used together in multiple functions:
+    goal.bootstrap.installer.ensure_project_environment, goal.project_bootstrap.ensure_project_environment,
+    goal.project_bootstrap.scaffold_test, goal.project_bootstrap._run_bootstrap_diagnostics,
+    goal.project_bootstrap._ensure_bootstrap_tests, goal.project_bootstrap.bootstrap_project.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:924:Data Clump:
+    project_type, project_dir, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: project_type, project_dir, yes'
+  description: 'code2llm reports `Data Clump: project_type, project_dir, yes` in `goal/project_bootstrap.py:937`.
+
+
+    Arguments (project_type, project_dir, yes) are used together in multiple functions:
+    goal.bootstrap.installer.ensure_project_environment, goal.project_bootstrap.ensure_project_environment,
+    goal.project_bootstrap.scaffold_test, goal.project_bootstrap._run_bootstrap_diagnostics,
+    goal.project_bootstrap._ensure_bootstrap_tests, goal.project_bootstrap.bootstrap_project.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:937:Data Clump:
+    project_type, project_dir, yes'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: pyproject_version, version_file, setup_py,
     self, init_py'
-  description: 'code2llm reports `Data Clump: pyproject_version, setup_py, version_file,
+  description: 'code2llm reports `Data Clump: pyproject_version, version_file, setup_py,
     self, init_py` in `goal/doctor/python_diag_extended.py:119`.
 
 
-    Arguments (pyproject_version, setup_py, version_file, self, init_py) are used
+    Arguments (pyproject_version, version_file, setup_py, self, init_py) are used
     together in multiple functions: goal.doctor.python_diag_extended.PythonDiagnostics._collect_py011_inconsistencies,
     goal.doctor.python_diag_extended.PythonDiagnostics._sync_py011_files.
 
@@ -2308,15 +2545,15 @@ tickets:
   files:
   - goal/doctor/python_diag_extended.py
   dedupe_key: 'code2llm:smell:data_clump:goal/doctor/python_diag_extended.py:119:Data
-    Clump: pyproject_version, setup_py, version_file, self, init_py'
+    Clump: pyproject_version, version_file, setup_py, self, init_py'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: pyproject_version, setup_py, version_file,
+  title: 'Address code smell: Data Clump: pyproject_version, version_file, setup_py,
     self, init_py'
-  description: 'code2llm reports `Data Clump: pyproject_version, setup_py, version_file,
+  description: 'code2llm reports `Data Clump: pyproject_version, version_file, setup_py,
     self, init_py` in `goal/doctor/python_diag_extended.py:154`.
 
 
-    Arguments (pyproject_version, setup_py, version_file, self, init_py) are used
+    Arguments (pyproject_version, version_file, setup_py, self, init_py) are used
     together in multiple functions: goal.doctor.python_diag_extended.PythonDiagnostics._collect_py011_inconsistencies,
     goal.doctor.python_diag_extended.PythonDiagnostics._sync_py011_files.
 
@@ -2331,171 +2568,7 @@ tickets:
   files:
   - goal/doctor/python_diag_extended.py
   dedupe_key: 'code2llm:smell:data_clump:goal/doctor/python_diag_extended.py:154:Data
-    Clump: pyproject_version, setup_py, version_file, self, init_py'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: python_bin, cfg, project_dir'
-  description: 'code2llm reports `Data Clump: python_bin, cfg, project_dir` in `goal/project_bootstrap.py:535`.
-
-
-    Arguments (python_bin, cfg, project_dir) are used together in multiple functions:
-    goal.project_bootstrap._install_python_deps, goal.bootstrap.installer._install_python_deps_legacy.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:535:Data Clump:
-    python_bin, cfg, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: python_bin, cfg, project_dir'
-  description: 'code2llm reports `Data Clump: python_bin, cfg, project_dir` in `goal/bootstrap/installer.py:65`.
-
-
-    Arguments (python_bin, cfg, project_dir) are used together in multiple functions:
-    goal.project_bootstrap._install_python_deps, goal.bootstrap.installer._install_python_deps_legacy.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/bootstrap/installer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:65:Data Clump:
-    python_bin, cfg, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: python_bin, test_dep, project_dir'
-  description: 'code2llm reports `Data Clump: python_bin, test_dep, project_dir` in
-    `goal/project_bootstrap.py:420`.
-
-
-    Arguments (python_bin, test_dep, project_dir) are used together in multiple functions:
-    goal.project_bootstrap._ensure_python_test_dependency, goal.bootstrap.installer._ensure_python_test_dependency.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:420:Data Clump:
-    python_bin, test_dep, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: python_bin, test_dep, project_dir'
-  description: 'code2llm reports `Data Clump: python_bin, test_dep, project_dir` in
-    `goal/bootstrap/installer.py:164`.
-
-
-    Arguments (python_bin, test_dep, project_dir) are used together in multiple functions:
-    goal.project_bootstrap._ensure_python_test_dependency, goal.bootstrap.installer._ensure_python_test_dependency.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/bootstrap/installer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:164:Data Clump:
-    python_bin, test_dep, project_dir'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, added, areas'
-  description: 'code2llm reports `Data Clump: self, added, areas` in `goal/deep_analyzer_aggregate.py:62`.
-
-
-    Arguments (self, added, areas) are used together in multiple functions: goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._check_cli_value,
-    goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._check_area_values.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/deep_analyzer_aggregate.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/deep_analyzer_aggregate.py:62:Data Clump:
-    self, added, areas'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, added, areas'
-  description: 'code2llm reports `Data Clump: self, added, areas` in `goal/deep_analyzer_aggregate.py:74`.
-
-
-    Arguments (self, added, areas) are used together in multiple functions: goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._check_cli_value,
-    goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._check_area_values.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/deep_analyzer_aggregate.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/deep_analyzer_aggregate.py:74:Data Clump:
-    self, added, areas'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, analysis, staged_files'
-  description: 'code2llm reports `Data Clump: self, analysis, staged_files` in `goal/smart_commit/generator_core.py:32`.
-
-
-    Arguments (self, analysis, staged_files) are used together in multiple functions:
-    goal.smart_commit.generator_core.SmartCommitGeneratorCore._analyze_file_diffs,
-    goal.smart_commit.generator_core.SmartCommitGeneratorCore._merge_deep_analysis.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/smart_commit/generator_core.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/smart_commit/generator_core.py:32:Data
-    Clump: self, analysis, staged_files'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, analysis, staged_files'
-  description: 'code2llm reports `Data Clump: self, analysis, staged_files` in `goal/smart_commit/generator_core.py:63`.
-
-
-    Arguments (self, analysis, staged_files) are used together in multiple functions:
-    goal.smart_commit.generator_core.SmartCommitGeneratorCore._analyze_file_diffs,
-    goal.smart_commit.generator_core.SmartCommitGeneratorCore._merge_deep_analysis.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/smart_commit/generator_core.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/smart_commit/generator_core.py:63:Data
-    Clump: self, analysis, staged_files'
+    Clump: pyproject_version, version_file, setup_py, self, init_py'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, applied_fixes, fixed'
   description: 'code2llm reports `Data Clump: self, applied_fixes, fixed` in `goal/summary/validator.py:414`.
@@ -2537,32 +2610,12 @@ tickets:
   dedupe_key: 'code2llm:smell:data_clump:goal/summary/validator.py:429:Data Clump:
     self, applied_fixes, fixed'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, cached, path'
-  description: 'code2llm reports `Data Clump: self, cached, path` in `goal/generator/analyzer.py:490`.
+  title: 'Address code smell: Data Clump: self, areas, added'
+  description: 'code2llm reports `Data Clump: self, areas, added` in `goal/deep_analyzer_aggregate.py:62`.
 
 
-    Arguments (self, cached, path) are used together in multiple functions: goal.generator.analyzer.ContentAnalyzer.per_file_notes,
-    goal.generator.generator.CommitMessageGenerator._per_file_notes.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/generator/analyzer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:490:Data Clump:
-    self, cached, path'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, cached, path'
-  description: 'code2llm reports `Data Clump: self, cached, path` in `goal/generator/generator.py:108`.
-
-
-    Arguments (self, cached, path) are used together in multiple functions: goal.generator.analyzer.ContentAnalyzer.per_file_notes,
-    goal.generator.generator.CommitMessageGenerator._per_file_notes.
+    Arguments (self, areas, added) are used together in multiple functions: goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._check_cli_value,
+    goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._check_area_values.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2573,19 +2626,16 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/generator/generator.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/generator/generator.py:108:Data Clump:
-    self, cached, path'
+  - goal/deep_analyzer_aggregate.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/deep_analyzer_aggregate.py:62:Data Clump:
+    self, areas, added'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, details, message'
-  description: 'code2llm reports `Data Clump: self, details, message` in `goal/recovery/exceptions.py:7`.
+  title: 'Address code smell: Data Clump: self, areas, added'
+  description: 'code2llm reports `Data Clump: self, areas, added` in `goal/deep_analyzer_aggregate.py:74`.
 
 
-    Arguments (self, details, message) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
-    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
-    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
-    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
-    goal.recovery.exceptions.QuotaExceededError.__init__.
+    Arguments (self, areas, added) are used together in multiple functions: goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._check_cli_value,
+    goal.deep_analyzer_aggregate.CodeChangeAggregatorMixin._check_area_values.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2596,19 +2646,16 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/recovery/exceptions.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:7:Data Clump:
-    self, details, message'
+  - goal/deep_analyzer_aggregate.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/deep_analyzer_aggregate.py:74:Data Clump:
+    self, areas, added'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, details, message'
-  description: 'code2llm reports `Data Clump: self, details, message` in `goal/recovery/exceptions.py:17`.
+  title: 'Address code smell: Data Clump: self, config, repo_path'
+  description: 'code2llm reports `Data Clump: self, config, repo_path` in `goal/recovery/large_file.py:30`.
 
 
-    Arguments (self, details, message) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
-    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
-    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
-    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
-    goal.recovery.exceptions.QuotaExceededError.__init__.
+    Arguments (self, config, repo_path) are used together in multiple functions: goal.recovery.large_file.LargeFileStrategy.__init__,
+    goal.recovery.base.RecoveryStrategy.__init__, goal.recovery.manager.RecoveryManager.__init__.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2619,19 +2666,16 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/recovery/exceptions.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:17:Data Clump:
-    self, details, message'
+  - goal/recovery/large_file.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/large_file.py:30:Data Clump:
+    self, config, repo_path'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, details, message'
-  description: 'code2llm reports `Data Clump: self, details, message` in `goal/recovery/exceptions.py:35`.
+  title: 'Address code smell: Data Clump: self, config, repo_path'
+  description: 'code2llm reports `Data Clump: self, config, repo_path` in `goal/recovery/base.py:13`.
 
 
-    Arguments (self, details, message) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
-    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
-    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
-    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
-    goal.recovery.exceptions.QuotaExceededError.__init__.
+    Arguments (self, config, repo_path) are used together in multiple functions: goal.recovery.large_file.LargeFileStrategy.__init__,
+    goal.recovery.base.RecoveryStrategy.__init__, goal.recovery.manager.RecoveryManager.__init__.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2642,19 +2686,16 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/recovery/exceptions.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:35:Data Clump:
-    self, details, message'
+  - goal/recovery/base.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/base.py:13:Data Clump: self,
+    config, repo_path'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, details, message'
-  description: 'code2llm reports `Data Clump: self, details, message` in `goal/recovery/exceptions.py:45`.
+  title: 'Address code smell: Data Clump: self, config, repo_path'
+  description: 'code2llm reports `Data Clump: self, config, repo_path` in `goal/recovery/manager.py:24`.
 
 
-    Arguments (self, details, message) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
-    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
-    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
-    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
-    goal.recovery.exceptions.QuotaExceededError.__init__.
+    Arguments (self, config, repo_path) are used together in multiple functions: goal.recovery.large_file.LargeFileStrategy.__init__,
+    goal.recovery.base.RecoveryStrategy.__init__, goal.recovery.manager.RecoveryManager.__init__.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -2665,147 +2706,15 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/recovery/exceptions.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:45:Data Clump:
-    self, details, message'
+  - goal/recovery/manager.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/manager.py:24:Data Clump: self,
+    config, repo_path'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, details, message'
-  description: 'code2llm reports `Data Clump: self, details, message` in `goal/recovery/exceptions.py:55`.
+  title: 'Address code smell: Data Clump: self, diff_content, files'
+  description: 'code2llm reports `Data Clump: self, diff_content, files` in `goal/generator/analyzer.py:148`.
 
 
-    Arguments (self, details, message) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
-    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
-    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
-    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
-    goal.recovery.exceptions.QuotaExceededError.__init__.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/recovery/exceptions.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:55:Data Clump:
-    self, details, message'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, details, message'
-  description: 'code2llm reports `Data Clump: self, details, message` in `goal/recovery/exceptions.py:63`.
-
-
-    Arguments (self, details, message) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
-    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
-    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
-    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
-    goal.recovery.exceptions.QuotaExceededError.__init__.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/recovery/exceptions.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:63:Data Clump:
-    self, details, message'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, details, message'
-  description: 'code2llm reports `Data Clump: self, details, message` in `goal/recovery/exceptions.py:70`.
-
-
-    Arguments (self, details, message) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
-    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
-    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
-    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
-    goal.recovery.exceptions.QuotaExceededError.__init__.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/recovery/exceptions.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:70:Data Clump:
-    self, details, message'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, details, message'
-  description: 'code2llm reports `Data Clump: self, details, message` in `goal/recovery/exceptions.py:77`.
-
-
-    Arguments (self, details, message) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
-    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
-    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
-    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
-    goal.recovery.exceptions.QuotaExceededError.__init__.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/recovery/exceptions.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:77:Data Clump:
-    self, details, message'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, errors, warnings'
-  description: 'code2llm reports `Data Clump: self, errors, warnings` in `goal/summary/validator.py:265`.
-
-
-    Arguments (self, errors, warnings) are used together in multiple functions: goal.summary.validator.QualityValidator._calculate_score,
-    goal.config.validation.ConfigValidationError.__init__.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/summary/validator.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/summary/validator.py:265:Data Clump:
-    self, errors, warnings'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, errors, warnings'
-  description: 'code2llm reports `Data Clump: self, errors, warnings` in `goal/config/validation.py:17`.
-
-
-    Arguments (self, errors, warnings) are used together in multiple functions: goal.summary.validator.QualityValidator._calculate_score,
-    goal.config.validation.ConfigValidationError.__init__.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/config/validation.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/config/validation.py:17:Data Clump:
-    self, errors, warnings'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, diff_content'
-  description: 'code2llm reports `Data Clump: self, files, diff_content` in `goal/generator/analyzer.py:148`.
-
-
-    Arguments (self, files, diff_content) are used together in multiple functions:
+    Arguments (self, diff_content, files) are used together in multiple functions:
     goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file,
     goal.generator.analyzer.ContentAnalyzer.short_action_summary, goal.generator.generator.CommitMessageGenerator._short_action_summary,
     goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations.
@@ -2821,13 +2730,13 @@ tickets:
   files:
   - goal/generator/analyzer.py
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:148:Data Clump:
-    self, files, diff_content'
+    self, diff_content, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, diff_content'
-  description: 'code2llm reports `Data Clump: self, files, diff_content` in `goal/generator/analyzer.py:183`.
+  title: 'Address code smell: Data Clump: self, diff_content, files'
+  description: 'code2llm reports `Data Clump: self, diff_content, files` in `goal/generator/analyzer.py:183`.
 
 
-    Arguments (self, files, diff_content) are used together in multiple functions:
+    Arguments (self, diff_content, files) are used together in multiple functions:
     goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file,
     goal.generator.analyzer.ContentAnalyzer.short_action_summary, goal.generator.generator.CommitMessageGenerator._short_action_summary,
     goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations.
@@ -2843,13 +2752,13 @@ tickets:
   files:
   - goal/generator/analyzer.py
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:183:Data Clump:
-    self, files, diff_content'
+    self, diff_content, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, diff_content'
-  description: 'code2llm reports `Data Clump: self, files, diff_content` in `goal/generator/analyzer.py:412`.
+  title: 'Address code smell: Data Clump: self, diff_content, files'
+  description: 'code2llm reports `Data Clump: self, diff_content, files` in `goal/generator/analyzer.py:412`.
 
 
-    Arguments (self, files, diff_content) are used together in multiple functions:
+    Arguments (self, diff_content, files) are used together in multiple functions:
     goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file,
     goal.generator.analyzer.ContentAnalyzer.short_action_summary, goal.generator.generator.CommitMessageGenerator._short_action_summary,
     goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations.
@@ -2865,13 +2774,13 @@ tickets:
   files:
   - goal/generator/analyzer.py
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:412:Data Clump:
-    self, files, diff_content'
+    self, diff_content, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, diff_content'
-  description: 'code2llm reports `Data Clump: self, files, diff_content` in `goal/generator/generator.py:102`.
+  title: 'Address code smell: Data Clump: self, diff_content, files'
+  description: 'code2llm reports `Data Clump: self, diff_content, files` in `goal/generator/generator.py:102`.
 
 
-    Arguments (self, files, diff_content) are used together in multiple functions:
+    Arguments (self, diff_content, files) are used together in multiple functions:
     goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file,
     goal.generator.analyzer.ContentAnalyzer.short_action_summary, goal.generator.generator.CommitMessageGenerator._short_action_summary,
     goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations.
@@ -2887,13 +2796,13 @@ tickets:
   files:
   - goal/generator/generator.py
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/generator.py:102:Data Clump:
-    self, files, diff_content'
+    self, diff_content, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, diff_content'
-  description: 'code2llm reports `Data Clump: self, files, diff_content` in `goal/summary/generator.py:214`.
+  title: 'Address code smell: Data Clump: self, diff_content, files'
+  description: 'code2llm reports `Data Clump: self, diff_content, files` in `goal/summary/generator.py:214`.
 
 
-    Arguments (self, files, diff_content) are used together in multiple functions:
+    Arguments (self, diff_content, files) are used together in multiple functions:
     goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file,
     goal.generator.analyzer.ContentAnalyzer.short_action_summary, goal.generator.generator.CommitMessageGenerator._short_action_summary,
     goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations.
@@ -2909,13 +2818,13 @@ tickets:
   files:
   - goal/summary/generator.py
   dedupe_key: 'code2llm:smell:data_clump:goal/summary/generator.py:214:Data Clump:
-    self, files, diff_content'
+    self, diff_content, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, diff_content'
-  description: 'code2llm reports `Data Clump: self, files, diff_content` in `goal/summary/generator.py:238`.
+  title: 'Address code smell: Data Clump: self, diff_content, files'
+  description: 'code2llm reports `Data Clump: self, diff_content, files` in `goal/summary/generator.py:238`.
 
 
-    Arguments (self, files, diff_content) are used together in multiple functions:
+    Arguments (self, diff_content, files) are used together in multiple functions:
     goal.generator.analyzer.ChangeAnalyzer._detect_signals, goal.generator.analyzer.ChangeAnalyzer._has_new_goal_python_file,
     goal.generator.analyzer.ContentAnalyzer.short_action_summary, goal.generator.generator.CommitMessageGenerator._short_action_summary,
     goal.summary.generator.EnhancedSummaryGenerator.detect_capabilities, goal.summary.generator.EnhancedSummaryGenerator.detect_file_relations.
@@ -2931,55 +2840,13 @@ tickets:
   files:
   - goal/summary/generator.py
   dedupe_key: 'code2llm:smell:data_clump:goal/summary/generator.py:238:Data Clump:
-    self, files, diff_content'
+    self, diff_content, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, diff_content, stats'
-  description: 'code2llm reports `Data Clump: self, files, diff_content, stats` in
-    `goal/generator/analyzer.py:130`.
+  title: 'Address code smell: Data Clump: self, entities, files'
+  description: 'code2llm reports `Data Clump: self, entities, files` in `goal/summary/quality_filter.py:143`.
 
 
-    Arguments (self, files, diff_content, stats) are used together in multiple functions:
-    goal.generator.analyzer.ChangeAnalyzer.classify_change_type, goal.generator.generator.CommitMessageGenerator.classify_change_type.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/generator/analyzer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:130:Data Clump:
-    self, files, diff_content, stats'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, diff_content, stats'
-  description: 'code2llm reports `Data Clump: self, files, diff_content, stats` in
-    `goal/generator/generator.py:80`.
-
-
-    Arguments (self, files, diff_content, stats) are used together in multiple functions:
-    goal.generator.analyzer.ChangeAnalyzer.classify_change_type, goal.generator.generator.CommitMessageGenerator.classify_change_type.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/generator/generator.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/generator/generator.py:80:Data Clump:
-    self, files, diff_content, stats'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, entities'
-  description: 'code2llm reports `Data Clump: self, files, entities` in `goal/summary/quality_filter.py:143`.
-
-
-    Arguments (self, files, entities) are used together in multiple functions: goal.summary.quality_filter.SummaryQualityFilter.classify_intent,
+    Arguments (self, entities, files) are used together in multiple functions: goal.summary.quality_filter.SummaryQualityFilter.classify_intent,
     goal.smart_commit.abstraction.CodeAbstraction.detect_features.
 
 
@@ -2993,13 +2860,13 @@ tickets:
   files:
   - goal/summary/quality_filter.py
   dedupe_key: 'code2llm:smell:data_clump:goal/summary/quality_filter.py:143:Data Clump:
-    self, files, entities'
+    self, entities, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, files, entities'
-  description: 'code2llm reports `Data Clump: self, files, entities` in `goal/smart_commit/abstraction.py:205`.
+  title: 'Address code smell: Data Clump: self, entities, files'
+  description: 'code2llm reports `Data Clump: self, entities, files` in `goal/smart_commit/abstraction.py:205`.
 
 
-    Arguments (self, files, entities) are used together in multiple functions: goal.summary.quality_filter.SummaryQualityFilter.classify_intent,
+    Arguments (self, entities, files) are used together in multiple functions: goal.summary.quality_filter.SummaryQualityFilter.classify_intent,
     goal.smart_commit.abstraction.CodeAbstraction.detect_features.
 
 
@@ -3013,7 +2880,47 @@ tickets:
   files:
   - goal/smart_commit/abstraction.py
   dedupe_key: 'code2llm:smell:data_clump:goal/smart_commit/abstraction.py:205:Data
-    Clump: self, files, entities'
+    Clump: self, entities, files'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, errors, warnings'
+  description: 'code2llm reports `Data Clump: self, errors, warnings` in `goal/config/validation.py:17`.
+
+
+    Arguments (self, errors, warnings) are used together in multiple functions: goal.config.validation.ConfigValidationError.__init__,
+    goal.summary.validator.QualityValidator._calculate_score.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/config/validation.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/config/validation.py:17:Data Clump:
+    self, errors, warnings'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, errors, warnings'
+  description: 'code2llm reports `Data Clump: self, errors, warnings` in `goal/summary/validator.py:265`.
+
+
+    Arguments (self, errors, warnings) are used together in multiple functions: goal.config.validation.ConfigValidationError.__init__,
+    goal.summary.validator.QualityValidator._calculate_score.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/summary/validator.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/summary/validator.py:265:Data Clump:
+    self, errors, warnings'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, key, default'
   description: 'code2llm reports `Data Clump: self, key, default` in `goal/user_config.py:95`.
@@ -3056,7 +2963,7 @@ tickets:
     default'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, key, default'
-  description: 'code2llm reports `Data Clump: self, key, default` in `goal/config/manager.py:310`.
+  description: 'code2llm reports `Data Clump: self, key, default` in `goal/config/manager.py:353`.
 
 
     Arguments (self, key, default) are used together in multiple functions: goal.user_config.UserConfig.get,
@@ -3072,7 +2979,7 @@ tickets:
   - data-clump
   files:
   - goal/config/manager.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/config/manager.py:310:Data Clump: self,
+  dedupe_key: 'code2llm:smell:data_clump:goal/config/manager.py:353:Data Clump: self,
     key, default'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, key, value'
@@ -3096,7 +3003,7 @@ tickets:
     key, value'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, key, value'
-  description: 'code2llm reports `Data Clump: self, key, value` in `goal/config/manager.py:329`.
+  description: 'code2llm reports `Data Clump: self, key, value` in `goal/config/manager.py:372`.
 
 
     Arguments (self, key, value) are used together in multiple functions: goal.user_config.UserConfig.set,
@@ -3112,8 +3019,192 @@ tickets:
   - data-clump
   files:
   - goal/config/manager.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/config/manager.py:329:Data Clump: self,
+  dedupe_key: 'code2llm:smell:data_clump:goal/config/manager.py:372:Data Clump: self,
     key, value'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, message, details'
+  description: 'code2llm reports `Data Clump: self, message, details` in `goal/recovery/exceptions.py:7`.
+
+
+    Arguments (self, message, details) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
+    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
+    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
+    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
+    goal.recovery.exceptions.QuotaExceededError.__init__.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/recovery/exceptions.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:7:Data Clump:
+    self, message, details'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, message, details'
+  description: 'code2llm reports `Data Clump: self, message, details` in `goal/recovery/exceptions.py:17`.
+
+
+    Arguments (self, message, details) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
+    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
+    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
+    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
+    goal.recovery.exceptions.QuotaExceededError.__init__.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/recovery/exceptions.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:17:Data Clump:
+    self, message, details'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, message, details'
+  description: 'code2llm reports `Data Clump: self, message, details` in `goal/recovery/exceptions.py:35`.
+
+
+    Arguments (self, message, details) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
+    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
+    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
+    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
+    goal.recovery.exceptions.QuotaExceededError.__init__.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/recovery/exceptions.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:35:Data Clump:
+    self, message, details'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, message, details'
+  description: 'code2llm reports `Data Clump: self, message, details` in `goal/recovery/exceptions.py:45`.
+
+
+    Arguments (self, message, details) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
+    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
+    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
+    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
+    goal.recovery.exceptions.QuotaExceededError.__init__.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/recovery/exceptions.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:45:Data Clump:
+    self, message, details'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, message, details'
+  description: 'code2llm reports `Data Clump: self, message, details` in `goal/recovery/exceptions.py:55`.
+
+
+    Arguments (self, message, details) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
+    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
+    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
+    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
+    goal.recovery.exceptions.QuotaExceededError.__init__.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/recovery/exceptions.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:55:Data Clump:
+    self, message, details'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, message, details'
+  description: 'code2llm reports `Data Clump: self, message, details` in `goal/recovery/exceptions.py:63`.
+
+
+    Arguments (self, message, details) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
+    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
+    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
+    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
+    goal.recovery.exceptions.QuotaExceededError.__init__.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/recovery/exceptions.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:63:Data Clump:
+    self, message, details'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, message, details'
+  description: 'code2llm reports `Data Clump: self, message, details` in `goal/recovery/exceptions.py:70`.
+
+
+    Arguments (self, message, details) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
+    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
+    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
+    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
+    goal.recovery.exceptions.QuotaExceededError.__init__.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/recovery/exceptions.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:70:Data Clump:
+    self, message, details'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, message, details'
+  description: 'code2llm reports `Data Clump: self, message, details` in `goal/recovery/exceptions.py:77`.
+
+
+    Arguments (self, message, details) are used together in multiple functions: goal.recovery.exceptions.RecoveryError.__init__,
+    goal.recovery.exceptions.AuthError.__init__, goal.recovery.exceptions.DivergentHistoryError.__init__,
+    goal.recovery.exceptions.CorruptedObjectError.__init__, goal.recovery.exceptions.LFSIssueError.__init__,
+    goal.recovery.exceptions.RollbackError.__init__, goal.recovery.exceptions.NetworkError.__init__,
+    goal.recovery.exceptions.QuotaExceededError.__init__.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/recovery/exceptions.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/exceptions.py:77:Data Clump:
+    self, message, details'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, new_content, old_content'
   description: 'code2llm reports `Data Clump: self, new_content, old_content` in `goal/deep_analyzer.py:75`.
@@ -3177,6 +3268,46 @@ tickets:
   - goal/deep_analyzer.py
   dedupe_key: 'code2llm:smell:data_clump:goal/deep_analyzer.py:267:Data Clump: self,
     new_content, old_content'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, path, cached'
+  description: 'code2llm reports `Data Clump: self, path, cached` in `goal/generator/analyzer.py:490`.
+
+
+    Arguments (self, path, cached) are used together in multiple functions: goal.generator.analyzer.ContentAnalyzer.per_file_notes,
+    goal.generator.generator.CommitMessageGenerator._per_file_notes.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/generator/analyzer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:490:Data Clump:
+    self, path, cached'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: self, path, cached'
+  description: 'code2llm reports `Data Clump: self, path, cached` in `goal/generator/generator.py:108`.
+
+
+    Arguments (self, path, cached) are used together in multiple functions: goal.generator.analyzer.ContentAnalyzer.per_file_notes,
+    goal.generator.generator.CommitMessageGenerator._per_file_notes.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/generator/generator.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/generator/generator.py:108:Data Clump:
+    self, path, cached'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, paths, cached'
   description: 'code2llm reports `Data Clump: self, paths, cached` in `goal/generator/generator.py:48`.
@@ -3442,12 +3573,14 @@ tickets:
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/git_ops.py:146:Data Clump:
     self, paths, cached'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, repo_path, config'
-  description: 'code2llm reports `Data Clump: self, repo_path, config` in `goal/recovery/large_file.py:30`.
+  title: 'Address code smell: Data Clump: self, pyproject_name, setup_py, goal_yaml'
+  description: 'code2llm reports `Data Clump: self, pyproject_name, setup_py, goal_yaml`
+    in `goal/doctor/python_diag_extended.py:32`.
 
 
-    Arguments (self, repo_path, config) are used together in multiple functions: goal.recovery.large_file.LargeFileStrategy.__init__,
-    goal.recovery.base.RecoveryStrategy.__init__, goal.recovery.manager.RecoveryManager.__init__.
+    Arguments (self, pyproject_name, setup_py, goal_yaml) are used together in multiple
+    functions: goal.doctor.python_diag_extended.PythonDiagnostics._collect_py010_inconsistencies,
+    goal.doctor.python_diag_extended.PythonDiagnostics._sync_py010_files.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -3458,36 +3591,18 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/recovery/large_file.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/large_file.py:30:Data Clump:
-    self, repo_path, config'
+  - goal/doctor/python_diag_extended.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/doctor/python_diag_extended.py:32:Data
+    Clump: self, pyproject_name, setup_py, goal_yaml'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, repo_path, config'
-  description: 'code2llm reports `Data Clump: self, repo_path, config` in `goal/recovery/base.py:13`.
+  title: 'Address code smell: Data Clump: self, pyproject_name, setup_py, goal_yaml'
+  description: 'code2llm reports `Data Clump: self, pyproject_name, setup_py, goal_yaml`
+    in `goal/doctor/python_diag_extended.py:56`.
 
 
-    Arguments (self, repo_path, config) are used together in multiple functions: goal.recovery.large_file.LargeFileStrategy.__init__,
-    goal.recovery.base.RecoveryStrategy.__init__, goal.recovery.manager.RecoveryManager.__init__.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/recovery/base.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/base.py:13:Data Clump: self,
-    repo_path, config'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, repo_path, config'
-  description: 'code2llm reports `Data Clump: self, repo_path, config` in `goal/recovery/manager.py:24`.
-
-
-    Arguments (self, repo_path, config) are used together in multiple functions: goal.recovery.large_file.LargeFileStrategy.__init__,
-    goal.recovery.base.RecoveryStrategy.__init__, goal.recovery.manager.RecoveryManager.__init__.
+    Arguments (self, pyproject_name, setup_py, goal_yaml) are used together in multiple
+    functions: goal.doctor.python_diag_extended.PythonDiagnostics._collect_py010_inconsistencies,
+    goal.doctor.python_diag_extended.PythonDiagnostics._sync_py010_files.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -3498,9 +3613,9 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/recovery/manager.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/recovery/manager.py:24:Data Clump: self,
-    repo_path, config'
+  - goal/doctor/python_diag_extended.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/doctor/python_diag_extended.py:56:Data
+    Clump: self, pyproject_name, setup_py, goal_yaml'
 - signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, scores, diff_content'
   description: 'code2llm reports `Data Clump: self, scores, diff_content` in `goal/generator/analyzer.py:198`.
@@ -3542,48 +3657,6 @@ tickets:
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:248:Data Clump:
     self, scores, diff_content'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, scores, diff_content, signals'
-  description: 'code2llm reports `Data Clump: self, scores, diff_content, signals`
-    in `goal/generator/analyzer.py:240`.
-
-
-    Arguments (self, scores, diff_content, signals) are used together in multiple
-    functions: goal.generator.analyzer.ChangeAnalyzer._score_package_signals, goal.generator.analyzer.ChangeAnalyzer._score_new_functionality.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/generator/analyzer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:240:Data Clump:
-    self, scores, diff_content, signals'
-- signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, scores, diff_content, signals'
-  description: 'code2llm reports `Data Clump: self, scores, diff_content, signals`
-    in `goal/generator/analyzer.py:271`.
-
-
-    Arguments (self, scores, diff_content, signals) are used together in multiple
-    functions: goal.generator.analyzer.ChangeAnalyzer._score_package_signals, goal.generator.analyzer.ChangeAnalyzer._score_new_functionality.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - data-clump
-  files:
-  - goal/generator/analyzer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:271:Data Clump:
-    self, scores, diff_content, signals'
-- signal: code2llm_smell_data_clump
   title: 'Address code smell: Data Clump: self, scores, files'
   description: 'code2llm reports `Data Clump: self, scores, files` in `goal/generator/analyzer.py:189`.
 
@@ -3624,14 +3697,13 @@ tickets:
   dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:265:Data Clump:
     self, scores, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, setup_py, pyproject_name, goal_yaml'
-  description: 'code2llm reports `Data Clump: self, setup_py, pyproject_name, goal_yaml`
-    in `goal/doctor/python_diag_extended.py:32`.
+  title: 'Address code smell: Data Clump: self, signals, scores, diff_content'
+  description: 'code2llm reports `Data Clump: self, signals, scores, diff_content`
+    in `goal/generator/analyzer.py:240`.
 
 
-    Arguments (self, setup_py, pyproject_name, goal_yaml) are used together in multiple
-    functions: goal.doctor.python_diag_extended.PythonDiagnostics._collect_py010_inconsistencies,
-    goal.doctor.python_diag_extended.PythonDiagnostics._sync_py010_files.
+    Arguments (self, signals, scores, diff_content) are used together in multiple
+    functions: goal.generator.analyzer.ChangeAnalyzer._score_package_signals, goal.generator.analyzer.ChangeAnalyzer._score_new_functionality.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -3642,18 +3714,17 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/doctor/python_diag_extended.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/doctor/python_diag_extended.py:32:Data
-    Clump: self, setup_py, pyproject_name, goal_yaml'
+  - goal/generator/analyzer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:240:Data Clump:
+    self, signals, scores, diff_content'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: self, setup_py, pyproject_name, goal_yaml'
-  description: 'code2llm reports `Data Clump: self, setup_py, pyproject_name, goal_yaml`
-    in `goal/doctor/python_diag_extended.py:56`.
+  title: 'Address code smell: Data Clump: self, signals, scores, diff_content'
+  description: 'code2llm reports `Data Clump: self, signals, scores, diff_content`
+    in `goal/generator/analyzer.py:271`.
 
 
-    Arguments (self, setup_py, pyproject_name, goal_yaml) are used together in multiple
-    functions: goal.doctor.python_diag_extended.PythonDiagnostics._collect_py010_inconsistencies,
-    goal.doctor.python_diag_extended.PythonDiagnostics._sync_py010_files.
+    Arguments (self, signals, scores, diff_content) are used together in multiple
+    functions: goal.generator.analyzer.ChangeAnalyzer._score_package_signals, goal.generator.analyzer.ChangeAnalyzer._score_new_functionality.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -3664,16 +3735,17 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/doctor/python_diag_extended.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/doctor/python_diag_extended.py:56:Data
-    Clump: self, setup_py, pyproject_name, goal_yaml'
+  - goal/generator/analyzer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:271:Data Clump:
+    self, signals, scores, diff_content'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: yes, cfg, project_dir'
-  description: 'code2llm reports `Data Clump: yes, cfg, project_dir` in `goal/project_bootstrap.py:462`.
+  title: 'Address code smell: Data Clump: self, staged_files, analysis'
+  description: 'code2llm reports `Data Clump: self, staged_files, analysis` in `goal/smart_commit/generator_core.py:32`.
 
 
-    Arguments (yes, cfg, project_dir) are used together in multiple functions: goal.project_bootstrap._ensure_python_env,
-    goal.bootstrap.installer._ensure_python_env.
+    Arguments (self, staged_files, analysis) are used together in multiple functions:
+    goal.smart_commit.generator_core.SmartCommitGeneratorCore._analyze_file_diffs,
+    goal.smart_commit.generator_core.SmartCommitGeneratorCore._merge_deep_analysis.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -3684,16 +3756,17 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/project_bootstrap.py:462:Data Clump:
-    yes, cfg, project_dir'
+  - goal/smart_commit/generator_core.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/smart_commit/generator_core.py:32:Data
+    Clump: self, staged_files, analysis'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: yes, cfg, project_dir'
-  description: 'code2llm reports `Data Clump: yes, cfg, project_dir` in `goal/bootstrap/installer.py:206`.
+  title: 'Address code smell: Data Clump: self, staged_files, analysis'
+  description: 'code2llm reports `Data Clump: self, staged_files, analysis` in `goal/smart_commit/generator_core.py:63`.
 
 
-    Arguments (yes, cfg, project_dir) are used together in multiple functions: goal.project_bootstrap._ensure_python_env,
-    goal.bootstrap.installer._ensure_python_env.
+    Arguments (self, staged_files, analysis) are used together in multiple functions:
+    goal.smart_commit.generator_core.SmartCommitGeneratorCore._analyze_file_diffs,
+    goal.smart_commit.generator_core.SmartCommitGeneratorCore._merge_deep_analysis.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -3704,16 +3777,17 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/bootstrap/installer.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/bootstrap/installer.py:206:Data Clump:
-    yes, cfg, project_dir'
+  - goal/smart_commit/generator_core.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/smart_commit/generator_core.py:63:Data
+    Clump: self, staged_files, analysis'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: yes, dry_run, ctx_obj'
-  description: 'code2llm reports `Data Clump: yes, dry_run, ctx_obj` in `goal/push/stages/todo.py:9`.
+  title: 'Address code smell: Data Clump: self, stats, diff_content, files'
+  description: 'code2llm reports `Data Clump: self, stats, diff_content, files` in
+    `goal/generator/analyzer.py:130`.
 
 
-    Arguments (yes, dry_run, ctx_obj) are used together in multiple functions: goal.push.stages.todo.handle_todo_stage,
-    goal.push.core._detect_and_bootstrap_projects.
+    Arguments (self, stats, diff_content, files) are used together in multiple functions:
+    goal.generator.analyzer.ChangeAnalyzer.classify_change_type, goal.generator.generator.CommitMessageGenerator.classify_change_type.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -3724,16 +3798,17 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/push/stages/todo.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/push/stages/todo.py:9:Data Clump: yes,
-    dry_run, ctx_obj'
+  - goal/generator/analyzer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:130:Data Clump:
+    self, stats, diff_content, files'
 - signal: code2llm_smell_data_clump
-  title: 'Address code smell: Data Clump: yes, dry_run, ctx_obj'
-  description: 'code2llm reports `Data Clump: yes, dry_run, ctx_obj` in `goal/push/core.py:762`.
+  title: 'Address code smell: Data Clump: self, stats, diff_content, files'
+  description: 'code2llm reports `Data Clump: self, stats, diff_content, files` in
+    `goal/generator/generator.py:80`.
 
 
-    Arguments (yes, dry_run, ctx_obj) are used together in multiple functions: goal.push.stages.todo.handle_todo_stage,
-    goal.push.core._detect_and_bootstrap_projects.
+    Arguments (self, stats, diff_content, files) are used together in multiple functions:
+    goal.generator.analyzer.ChangeAnalyzer.classify_change_type, goal.generator.generator.CommitMessageGenerator.classify_change_type.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -3744,9 +3819,51 @@ tickets:
   - code-smell
   - data-clump
   files:
-  - goal/push/core.py
-  dedupe_key: 'code2llm:smell:data_clump:goal/push/core.py:762:Data Clump: yes, dry_run,
-    ctx_obj'
+  - goal/generator/generator.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/generator/generator.py:80:Data Clump:
+    self, stats, diff_content, files'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: signals, self, diff_content, files, scores'
+  description: 'code2llm reports `Data Clump: signals, self, diff_content, files,
+    scores` in `goal/generator/analyzer.py:227`.
+
+
+    Arguments (signals, self, diff_content, files, scores) are used together in multiple
+    functions: goal.generator.analyzer.ChangeAnalyzer._score_by_signals, goal.generator.analyzer.ChangeAnalyzer._resolve_change_type.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/generator/analyzer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:227:Data Clump:
+    signals, self, diff_content, files, scores'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: signals, self, diff_content, files, scores'
+  description: 'code2llm reports `Data Clump: signals, self, diff_content, files,
+    scores` in `goal/generator/analyzer.py:287`.
+
+
+    Arguments (signals, self, diff_content, files, scores) are used together in multiple
+    functions: goal.generator.analyzer.ChangeAnalyzer._score_by_signals, goal.generator.analyzer.ChangeAnalyzer._resolve_change_type.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - goal/generator/analyzer.py
+  dedupe_key: 'code2llm:smell:data_clump:goal/generator/analyzer.py:287:Data Clump:
+    signals, self, diff_content, files, scores'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: __init__'
   description: 'code2llm reports `God Function: __init__` in `goal/summary/validator.py:21`.
@@ -4053,7 +4170,7 @@ tickets:
   description: 'code2llm reports `God Function: _configure_main_context` in `goal/cli/__init__.py:234`.
 
 
-    Function ''_configure_main_context'' is oversized: CC=3, fan-out=5, mutations=13.
+    Function ''_configure_main_context'' is oversized: CC=3, fan-out=5, mutations=14.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -4126,7 +4243,7 @@ tickets:
     Function: _ensure_env_template'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _ensure_generic_env'
-  description: 'code2llm reports `God Function: _ensure_generic_env` in `goal/project_bootstrap.py:629`.
+  description: 'code2llm reports `God Function: _ensure_generic_env` in `goal/project_bootstrap.py:630`.
 
 
     Function ''_ensure_generic_env'' is oversized: CC=14, fan-out=10, mutations=6.
@@ -4141,11 +4258,11 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:629:God Function:
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:630:God Function:
     _ensure_generic_env'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _ensure_pfix_env'
-  description: 'code2llm reports `God Function: _ensure_pfix_env` in `goal/project_bootstrap.py:923`.
+  description: 'code2llm reports `God Function: _ensure_pfix_env` in `goal/project_bootstrap.py:1016`.
 
 
     Function ''_ensure_pfix_env'' is oversized: CC=7, fan-out=13, mutations=11.
@@ -4160,11 +4277,11 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:923:God Function:
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:1016:God Function:
     _ensure_pfix_env'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _ensure_pfix_installed'
-  description: 'code2llm reports `God Function: _ensure_pfix_installed` in `goal/project_bootstrap.py:1045`.
+  description: 'code2llm reports `God Function: _ensure_pfix_installed` in `goal/project_bootstrap.py:1138`.
 
 
     Function ''_ensure_pfix_installed'' is oversized: CC=6, fan-out=15, mutations=9.
@@ -4179,27 +4296,8 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:1045:God Function:
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:1138:God Function:
     _ensure_pfix_installed'
-- signal: code2llm_smell_god_function
-  title: 'Address code smell: God Function: _ensure_python_env'
-  description: 'code2llm reports `God Function: _ensure_python_env` in `goal/project_bootstrap.py:462`.
-
-
-    Function ''_ensure_python_env'' is oversized: CC=6, fan-out=13, mutations=5.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - god-function
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:462:God Function:
-    _ensure_python_env'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _ensure_python_env'
   description: 'code2llm reports `God Function: _ensure_python_env` in `goal/bootstrap/installer.py:206`.
@@ -4218,6 +4316,25 @@ tickets:
   files:
   - goal/bootstrap/installer.py
   dedupe_key: 'code2llm:smell:god_function:goal/bootstrap/installer.py:206:God Function:
+    _ensure_python_env'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: _ensure_python_env'
+  description: 'code2llm reports `God Function: _ensure_python_env` in `goal/project_bootstrap.py:463`.
+
+
+    Function ''_ensure_python_env'' is oversized: CC=6, fan-out=13, mutations=5.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:463:God Function:
     _ensure_python_env'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _expand_short_title'
@@ -4372,7 +4489,7 @@ tickets:
     _infer_domain'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _install_python_deps'
-  description: 'code2llm reports `God Function: _install_python_deps` in `goal/project_bootstrap.py:535`.
+  description: 'code2llm reports `God Function: _install_python_deps` in `goal/project_bootstrap.py:536`.
 
 
     Function ''_install_python_deps'' is oversized: CC=12, fan-out=19, mutations=10.
@@ -4387,7 +4504,7 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:535:God Function:
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:536:God Function:
     _install_python_deps'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _install_python_deps_legacy'
@@ -4409,11 +4526,11 @@ tickets:
   dedupe_key: 'code2llm:smell:god_function:goal/bootstrap/installer.py:65:God Function:
     _install_python_deps_legacy'
 - signal: code2llm_smell_god_function
-  title: 'Address code smell: God Function: _read_openrouter_api_key'
-  description: 'code2llm reports `God Function: _read_openrouter_api_key` in `goal/project_bootstrap.py:307`.
+  title: 'Address code smell: God Function: _pfix_auto_apply'
+  description: 'code2llm reports `God Function: _pfix_auto_apply` in `goal/project_bootstrap.py:827`.
 
 
-    Function ''_read_openrouter_api_key'' is oversized: CC=11, fan-out=10, mutations=11.
+    Function ''_pfix_auto_apply'' is oversized: CC=8, fan-out=12, mutations=6.
 
 
     Make the smallest refactor that removes the smell and run local tests.'
@@ -4425,8 +4542,8 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:307:God Function:
-    _read_openrouter_api_key'
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:827:God Function:
+    _pfix_auto_apply'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _read_openrouter_api_key'
   description: 'code2llm reports `God Function: _read_openrouter_api_key` in `goal/bootstrap/configurator.py:88`.
@@ -4447,8 +4564,27 @@ tickets:
   dedupe_key: 'code2llm:smell:god_function:goal/bootstrap/configurator.py:88:God Function:
     _read_openrouter_api_key'
 - signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: _read_openrouter_api_key'
+  description: 'code2llm reports `God Function: _read_openrouter_api_key` in `goal/project_bootstrap.py:308`.
+
+
+    Function ''_read_openrouter_api_key'' is oversized: CC=11, fan-out=10, mutations=11.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:308:God Function:
+    _read_openrouter_api_key'
+- signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _resolve_python_publish_cmd'
-  description: 'code2llm reports `God Function: _resolve_python_publish_cmd` in `goal/cli/publish.py:235`.
+  description: 'code2llm reports `God Function: _resolve_python_publish_cmd` in `goal/cli/publish.py:243`.
 
 
     Function ''_resolve_python_publish_cmd'' is oversized: CC=6, fan-out=11, mutations=7.
@@ -4463,10 +4599,10 @@ tickets:
   - god-function
   files:
   - goal/cli/publish.py
-  dedupe_key: 'code2llm:smell:god_function:goal/cli/publish.py:235:God Function: _resolve_python_publish_cmd'
+  dedupe_key: 'code2llm:smell:god_function:goal/cli/publish.py:243:God Function: _resolve_python_publish_cmd'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _resolve_scaffold_test_path'
-  description: 'code2llm reports `God Function: _resolve_scaffold_test_path` in `goal/project_bootstrap.py:744`.
+  description: 'code2llm reports `God Function: _resolve_scaffold_test_path` in `goal/project_bootstrap.py:745`.
 
 
     Function ''_resolve_scaffold_test_path'' is oversized: CC=4, fan-out=2, mutations=9.
@@ -4481,7 +4617,7 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:744:God Function:
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:745:God Function:
     _resolve_scaffold_test_path'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: _run_project_type_tests'
@@ -4862,7 +4998,7 @@ tickets:
     aggregate_changes'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: bootstrap_project'
-  description: 'code2llm reports `God Function: bootstrap_project` in `goal/project_bootstrap.py:844`.
+  description: 'code2llm reports `God Function: bootstrap_project` in `goal/project_bootstrap.py:937`.
 
 
     Function ''bootstrap_project'' is oversized: CC=1, fan-out=5, mutations=7.
@@ -4877,7 +5013,7 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:844:God Function:
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:937:God Function:
     bootstrap_project'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: bump_version'
@@ -5090,25 +5226,6 @@ tickets:
     create_license_file'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: detect_project_types_deep'
-  description: 'code2llm reports `God Function: detect_project_types_deep` in `goal/project_bootstrap.py:251`.
-
-
-    Function ''detect_project_types_deep'' is oversized: CC=11, fan-out=11, mutations=6.
-
-
-    Make the smallest refactor that removes the smell and run local tests.'
-  priority: normal
-  labels:
-  - llm-ready
-  - code2llm
-  - code-smell
-  - god-function
-  files:
-  - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:251:God Function:
-    detect_project_types_deep'
-- signal: code2llm_smell_god_function
-  title: 'Address code smell: God Function: detect_project_types_deep'
   description: 'code2llm reports `God Function: detect_project_types_deep` in `goal/bootstrap/detector.py:18`.
 
 
@@ -5125,6 +5242,25 @@ tickets:
   files:
   - goal/bootstrap/detector.py
   dedupe_key: 'code2llm:smell:god_function:goal/bootstrap/detector.py:18:God Function:
+    detect_project_types_deep'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: detect_project_types_deep'
+  description: 'code2llm reports `God Function: detect_project_types_deep` in `goal/project_bootstrap.py:252`.
+
+
+    Function ''detect_project_types_deep'' is oversized: CC=11, fan-out=11, mutations=6.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - goal/project_bootstrap.py
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:252:God Function:
     detect_project_types_deep'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: detect_scope'
@@ -5845,7 +5981,7 @@ tickets:
     map_entity_to_role'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: publish_project'
-  description: 'code2llm reports `God Function: publish_project` in `goal/cli/publish.py:502`.
+  description: 'code2llm reports `God Function: publish_project` in `goal/cli/publish.py:547`.
 
 
     Function ''publish_project'' is oversized: CC=14, fan-out=12, mutations=17.
@@ -5860,7 +5996,7 @@ tickets:
   - god-function
   files:
   - goal/cli/publish.py
-  dedupe_key: 'code2llm:smell:god_function:goal/cli/publish.py:502:God Function: publish_project'
+  dedupe_key: 'code2llm:smell:god_function:goal/cli/publish.py:547:God Function: publish_project'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: push'
   description: 'code2llm reports `God Function: push` in `goal/cli/push_cmd.py:44`.
@@ -5937,7 +6073,7 @@ tickets:
     recover'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: refresh_test_dependencies'
-  description: 'code2llm reports `God Function: refresh_test_dependencies` in `goal/project_bootstrap.py:365`.
+  description: 'code2llm reports `God Function: refresh_test_dependencies` in `goal/project_bootstrap.py:366`.
 
 
     Function ''refresh_test_dependencies'' is oversized: CC=10, fan-out=15, mutations=7.
@@ -5952,7 +6088,7 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:365:God Function:
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:366:God Function:
     refresh_test_dependencies'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: remove_author'
@@ -6050,7 +6186,7 @@ tickets:
     save_gitignore'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: scaffold_test'
-  description: 'code2llm reports `God Function: scaffold_test` in `goal/project_bootstrap.py:761`.
+  description: 'code2llm reports `God Function: scaffold_test` in `goal/project_bootstrap.py:762`.
 
 
     Function ''scaffold_test'' is oversized: CC=8, fan-out=13, mutations=5.
@@ -6065,7 +6201,7 @@ tickets:
   - god-function
   files:
   - goal/project_bootstrap.py
-  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:761:God Function:
+  dedupe_key: 'code2llm:smell:god_function:goal/project_bootstrap.py:762:God Function:
     scaffold_test'
 - signal: code2llm_smell_god_function
   title: 'Address code smell: God Function: scaffold_test_file'

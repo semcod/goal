@@ -1,12 +1,12 @@
-# goal | 1030 func | 133f | 32877L | python | 2026-06-18
+# goal | 1036 func | 133f | 33087L | python | 2026-06-20
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.5  critical=102 (limit:10)  dup=0  cycles=0
+  CC̄=4.5  critical=103 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     execute_push_workflow = 34 (limit:10)
-  !!! cc_exceeded      _run_publish_command = 30 (limit:15)
+  !!! cc_exceeded      _run_publish_command = 33 (limit:15)
   !!! cc_exceeded      output_final_summary = 29 (limit:15)
   !!! high_fan_out     EnhancedSummaryGenerator.generate_enhanced_summary = 24 (limit:10)
   !!! high_fan_out     doctor = 22 (limit:10)
@@ -14,22 +14,22 @@ ALERTS[20]:
   !!  cc_exceeded      add_slow_test_tickets_to_planfile = 22 (limit:15)
   !!  cc_exceeded      _select_managers_to_update = 21 (limit:15)
   !!  cc_exceeded      execute_push_workflow = 20 (limit:15)
-  !!  high_fan_out     _install_python_deps = 19 (limit:10)
+  !!  high_fan_out     output_final_summary = 19 (limit:10)
 
 MODULES[194] (top by size):
   M[planfile.yaml] 1323L C:0 F:0 CC↑0 D:0 (yaml)
-  M[goal/project_bootstrap.py] 1181L C:0 F:28 CC↑14 D:8 (python)
+  M[goal/project_bootstrap.py] 1274L C:0 F:32 CC↑14 D:4 (python)
   M[goal/push/core.py] 898L C:1 F:21 CC↑29 D:3 (python)
-  M[goal/git_ops.py] 690L C:0 F:28 CC↑14 D:16 (python)
+  M[goal/git_ops.py] 690L C:0 F:28 CC↑14 D:20 (python)
   M[goal/package_managers.py] 644L C:1 F:18 CC↑6 D:2 (python)
+  M[goal/cli/publish.py] 618L C:0 F:21 CC↑33 D:2 (python)
   M[goal/summary/generator.py] 589L C:1 F:14 CC↑14 D:0 (python)
   M[goal/license/manager.py] 587L C:1 F:12 CC↑10 D:1 (python)
-  M[goal/cli/publish.py] 573L C:0 F:19 CC↑30 D:2 (python)
   M[goal/generator/analyzer.py] 563L C:2 F:27 CC↑14 D:0 (python)
   M[goal/config/validation.py] 556L C:2 F:15 CC↑19 D:2 (python)
+  M[goal/config/manager.py] 550L C:1 F:27 CC↑17 D:7 (python)
   M[goal/formatter.py] 518L C:1 F:24 CC↑17 D:4 (python)
   M[goal/cli/tests.py] 517L C:0 F:20 CC↑13 D:1 (python)
-  M[goal/config/manager.py] 507L C:1 F:27 CC↑10 D:7 (python)
   M[goal/summary/validator.py] 489L C:1 F:24 CC↑10 D:0 (python)
   M[goal/cli/version_utils.py] 485L C:0 F:23 CC↑8 D:7 (python)
   LANGS: python:157/yaml:14/shell:6/toml:4/other:3/csharp:2/json:2/go:1/java:1/php:1/yml:1/xml:1/txt:1
@@ -39,18 +39,16 @@ HOTSPOTS[10]:
   ★ EnhancedSummaryGenerator.generate_enhanced_summary fan=24  // Generate complete enhanced summary with business value focus.
   ★ doctor fan=22  // Diagnose and auto-fix common project configuration issues.
   ★ _install_python_deps_legacy fan=20  // Legacy dependency installation using config-based commands.
-  ★ _install_python_deps fan=19  // Run the first matching dependency install command for a Python project.
-
-Optimiz
+  ★ output_final_summary fan=19  // Output final summary in YAML or markdown format.
 
 REFACTOR[15]:
   [1] H/L Split output_final_summary (CC=29)
-  [2] H/L Split _run_publish_command (CC=30)
-  [3] H/H Split god module goal/cli/publish.py (573L, 0 classes)
+  [2] H/L Split _run_publish_command (CC=33)
+  [3] H/H Split god module goal/cli/publish.py (618L, 0 classes)
   [4] H/H Split god module goal/push/core.py (898L, 1 classes)
   [5] H/H Split god module goal/config/validation.py (556L, 2 classes)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-06-18 CC̄=4.5 crit=102 32877L // Automated analysis
+  2026-06-20 CC̄=4.5 crit=103 33087L // Automated analysis

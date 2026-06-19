@@ -1,6 +1,6 @@
 # code2llm call graph | /home/tom/github/semcod/goal
-# generated in 0.19s
-# nodes: 421 | edges: 500 | modules: 83
+# generated in 0.20s
+# nodes: 412 | edges: 500 | modules: 82
 # CC̄=4.5
 
 HUBS[20]:
@@ -13,37 +13,37 @@ HUBS[20]:
   goal.push.core.execute_push_workflow
     CC=20  in:2  out:52  total:54
   goal.user_config.UserConfig.set
-    CC=1  in:48  out:1  total:49
+    CC=1  in:49  out:1  total:50
+  goal.git_ops.run_git
+    CC=1  in:46  out:2  total:48
   goal.cli.commit_cmd.validate
     CC=13  in:0  out:45  total:45
   goal.push.core.output_final_summary
     CC=29  in:2  out:40  total:42
-  goal.cli.wizard_cmd._show_setup_summary
-    CC=7  in:1  out:39  total:40
   goal.cli.wizard_cmd._setup_user_config
     CC=12  in:1  out:39  total:40
   goal.cli.doctor_cmd.doctor
     CC=12  in:0  out:40  total:40
+  goal.cli.wizard_cmd._show_setup_summary
+    CC=7  in:1  out:39  total:40
   goal.cli.commit_cmd.fix_summary
     CC=12  in:0  out:38  total:38
   goal.formatter.format_goal_all_summary
     CC=17  in:1  out:35  total:36
-  goal.cli.wizard_cmd._setup_git_repository
-    CC=10  in:1  out:33  total:34
   examples.api-usage.01_basic_api.main
     CC=10  in:0  out:34  total:34
+  goal.cli.wizard_cmd._setup_git_repository
+    CC=10  in:1  out:33  total:34
   goal.push.stages.todo.handle_todo_stage
     CC=14  in:1  out:32  total:33
   goal.bootstrap.installer._install_python_deps_legacy
     CC=14  in:1  out:32  total:33
-  goal.recovery.base.RecoveryStrategy.run_git
-    CC=2  in:27  out:5  total:32
   goal.user_config.show_user_config
     CC=2  in:1  out:31  total:32
-  goal.project_bootstrap._ensure_pfix_installed
-    CC=6  in:1  out:30  total:31
-  goal.project_bootstrap._install_python_deps
-    CC=12  in:1  out:29  total:30
+  examples.api-usage.04_version_validation.main
+    CC=11  in:0  out:30  total:30
+  goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
+    CC=10  in:0  out:29  total:29
 
 MODULES:
   examples.api-usage.01_basic_api  [1 funcs]
@@ -108,29 +108,20 @@ MODULES:
   examples.webhooks.slack-webhook  [2 funcs]
     main  CC=4  out:9
     send_slack_notification  CC=5  out:16
-  goal.authors.manager  [2 funcs]
-    __init__  CC=2  out:2
-    import_from_git  CC=6  out:14
-  goal.authors.utils  [8 funcs]
-    add_co_authors_to_message  CC=5  out:3
-    deduplicate_co_authors  CC=4  out:5
+  goal.authors.utils  [1 funcs]
     format_co_author_trailer  CC=1  out:0
-    format_commit_message_with_co_authors  CC=3  out:1
-    get_co_authors_from_command_line  CC=3  out:4
-    parse_co_authors  CC=2  out:7
-    remove_co_authors_from_message  CC=5  out:7
-    validate_author_format  CC=3  out:8
-  goal.bootstrap.configurator  [3 funcs]
+  goal.bootstrap.configurator  [5 funcs]
+    _find_git_root  CC=3  out:2
     _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
     _read_openrouter_api_key  CC=11  out:12
     scaffold_test_file  CC=14  out:12
-  goal.bootstrap.costs_badge  [10 funcs]
+  goal.bootstrap.costs_badge  [9 funcs]
     _calculate_ai_costs  CC=4  out:8
     _commit_blob_lower  CC=3  out:3
     _fetch_commit_diff  CC=3  out:7
     _filter_ai_commits  CC=4  out:2
     _generate_costs_badge  CC=6  out:23
-    _install_costs_package  CC=3  out:13
     _load_costs_api  CC=2  out:9
     _parsed_diff_is_usable  CC=4  out:2
     _read_model_from_pyproject  CC=3  out:4
@@ -152,10 +143,9 @@ MODULES:
     _match_marker  CC=2  out:4
     _needs_install  CC=10  out:9
     _run_dep_install  CC=4  out:14
-  goal.bootstrap.pyproject_costs_setup  [7 funcs]
+  goal.bootstrap.pyproject_costs_setup  [6 funcs]
     _add_deps_to_section_match  CC=10  out:9
     _ensure_costs_config  CC=5  out:13
-    _ensure_env_template  CC=6  out:14
     _find_dep_list_end  CC=12  out:2
     _try_add_deps  CC=4  out:4
     _try_merge_hatch_default_deps  CC=6  out:6
@@ -213,12 +203,27 @@ MODULES:
   goal.cli.recover_cmd  [2 funcs]
     _get_error_output  CC=5  out:4
     recover  CC=6  out:23
+  goal.cli.tests  [20 funcs]
+    _active_venv_python  CC=3  out:4
+    _build_python_test_command  CC=11  out:10
+    _coerce_python_strategy_to_project_pytest  CC=8  out:3
+    _display_test_error  CC=9  out:18
+    _ensure_root_pytest_or_mark_failed  CC=10  out:14
+    _get_project_strategy  CC=7  out:5
+    _has_package  CC=3  out:1
+    _prefer_uv_run  CC=2  out:1
+    _pytest_importable  CC=2  out:2
+    _resolve_project_python  CC=4  out:6
   goal.cli.tests_discovery  [5 funcs]
     _find_project_root  CC=5  out:4
     _has_project_marker  CC=2  out:3
     _has_usable_test_script  CC=7  out:4
     find_nodejs_test_dirs  CC=6  out:8
     find_python_test_dirs  CC=9  out:16
+  goal.cli.tests_pytest_setup  [3 funcs]
+    _is_uv_project  CC=1  out:1
+    _try_uv_install  CC=4  out:2
+    ensure_pytest_for_project  CC=9  out:13
   goal.cli.utils_cmd  [8 funcs]
     bootstrap  CC=4  out:11
     check_versions  CC=2  out:12
@@ -228,18 +233,9 @@ MODULES:
     package_managers  CC=8  out:16
     status  CC=10  out:21
     version  CC=2  out:14
-  goal.cli.version_sync  [15 funcs]
-    _append_changed_paths  CC=5  out:6
-    _snapshot_paths  CC=3  out:4
-    _sync_dependency_lockfiles  CC=9  out:13
-    _sync_dependency_locks_after_manifest_updates  CC=1  out:1
-    _sync_uv_lock  CC=1  out:1
-    _update_cargo_version  CC=6  out:8
-    _update_csproj_versions  CC=3  out:7
-    _update_json_version_file  CC=6  out:6
-    _update_pom_xml  CC=3  out:6
-    _update_readme_metadata  CC=7  out:6
-  goal.cli.version_utils  [22 funcs]
+  goal.cli.version_sync  [1 funcs]
+    sync_all_versions  CC=1  out:11
+  goal.cli.version_utils  [21 funcs]
     _build_author_block  CC=5  out:6
     _update_author_section  CC=3  out:8
     _update_license_section  CC=5  out:8
@@ -286,17 +282,6 @@ MODULES:
     _update_dependencies_in_root  CC=12  out:23
     discover_dependency_project_roots  CC=7  out:19
     update_project_dependencies  CC=13  out:20
-  goal.doctor.core  [2 funcs]
-    diagnose_and_report  CC=8  out:21
-    diagnose_project  CC=2  out:4
-  goal.doctor.logging  [1 funcs]
-    _log_issue  CC=3  out:8
-  goal.doctor.todo  [5 funcs]
-    _format_todo_entry  CC=3  out:2
-    _generate_ticket_id  CC=1  out:2
-    _read_existing_tickets  CC=4  out:8
-    add_issues_to_todo  CC=9  out:19
-    diagnose_and_report_with_todo  CC=6  out:2
   goal.formatter  [16 funcs]
     _add_optional_sections  CC=3  out:2
     _build_capabilities_content  CC=4  out:1
@@ -310,12 +295,10 @@ MODULES:
     _format_metrics_section  CC=5  out:9
   goal.generator.analyzer  [1 funcs]
     extract_functions_changed  CC=3  out:10
-  goal.generator.generator  [4 funcs]
+  goal.generator.generator  [2 funcs]
     _classify_files  CC=11  out:7
-    get_diff_content  CC=2  out:1
-    get_diff_stats  CC=2  out:1
     generate_smart_commit_message  CC=1  out:2
-  goal.git_ops  [27 funcs]
+  goal.git_ops  [28 funcs]
     _echo_cmd  CC=3  out:6
     _handle_clone  CC=3  out:7
     _handle_init_remote  CC=5  out:25
@@ -328,18 +311,20 @@ MODULES:
     apply_ticket_prefix  CC=6  out:5
   goal.hooks.manager  [1 funcs]
     run_validation  CC=4  out:4
-  goal.io.stdio  [5 funcs]
+  goal.io.stdio  [9 funcs]
+    echo_auto  CC=2  out:4
     echo_command_block  CC=2  out:4
+    echo_heading  CC=2  out:4
+    echo_info  CC=2  out:3
     echo_output_block  CC=3  out:5
+    echo_status_warn  CC=2  out:4
     echo_via_markdown  CC=2  out:3
     set_stdio_markdown  CC=1  out:1
     use_markdown_stdio  CC=2  out:0
-  goal.license.manager  [3 funcs]
+  goal.license.manager  [2 funcs]
     create_license_file  CC=10  out:21
     update_license_file  CC=7  out:13
-    validate_license_file  CC=8  out:11
-  goal.license.spdx  [4 funcs]
-    _load_spdx_data  CC=4  out:4
+  goal.license.spdx  [3 funcs]
     check_compatibility  CC=14  out:8
     get_license_info  CC=4  out:4
     validate_spdx_id  CC=11  out:13
@@ -354,17 +339,20 @@ MODULES:
     get_available_package_managers  CC=3  out:2
     get_package_manager_info  CC=1  out:1
     get_package_managers_by_language  CC=3  out:1
-  goal.project_bootstrap  [27 funcs]
-    _ensure_bootstrap_tests  CC=3  out:2
-    _ensure_costs_installed  CC=2  out:4
-    _ensure_generic_env  CC=14  out:21
-    _ensure_pfix_config  CC=4  out:9
-    _ensure_pfix_env  CC=7  out:15
-    _ensure_pfix_installed  CC=6  out:30
-    _ensure_python_env  CC=6  out:22
-    _ensure_python_test_dependency  CC=5  out:15
-    _find_git_root  CC=3  out:2
-    _find_openrouter_api_key  CC=6  out:5
+  goal.project_bootstrap  [1 funcs]
+    bootstrap_project  CC=1  out:5
+  goal.publish.changes  [8 funcs]
+    _basename  CC=1  out:1
+    _is_metadata_file  CC=7  out:6
+    _is_publishable_for_type  CC=12  out:12
+    _is_test_path  CC=6  out:7
+    _matches_any  CC=5  out:4
+    _normalize_path  CC=1  out:3
+    _suffix  CC=1  out:2
+    analyze_publishable_changes  CC=8  out:8
+  goal.publish.github_fallback  [2 funcs]
+    _publishing_section  CC=10  out:6
+    get_github_release_config  CC=15  out:23
   goal.push.core  [17 funcs]
     _apply_enhanced_quality_gates  CC=6  out:6
     _bootstrap_projects  CC=5  out:3
@@ -396,6 +384,20 @@ MODULES:
     _format_markdown_dry_run  CC=4  out:7
     _print_plain_dry_run  CC=4  out:13
     handle_dry_run  CC=5  out:6
+  goal.push.stages.publish  [2 funcs]
+    _format_skip_message  CC=9  out:19
+    handle_publish  CC=15  out:24
+  goal.push.stages.push_remote  [17 funcs]
+    _execute_recovery  CC=3  out:11
+    _handle_automatic_recovery  CC=4  out:13
+    _handle_force_push  CC=4  out:19
+    _handle_large_file_error  CC=6  out:16
+    _handle_large_files_in_history  CC=2  out:18
+    _handle_large_files_staged  CC=2  out:5
+    _handle_pull_merge  CC=3  out:12
+    _handle_push_failure  CC=5  out:16
+    _handle_recovery_choice  CC=5  out:8
+    _handle_view_diff  CC=6  out:18
   goal.push.stages.tag  [1 funcs]
     create_tag  CC=4  out:8
   goal.push.stages.test  [1 funcs]
@@ -407,16 +409,12 @@ MODULES:
     get_version_info  CC=2  out:3
     handle_version_sync  CC=3  out:10
     sync_all_versions_wrapper  CC=1  out:2
-  goal.recovery.base  [1 funcs]
-    run_git  CC=2  out:5
   goal.recovery.large_file  [5 funcs]
     _extract_file_paths  CC=8  out:9
     _move_to_lfs  CC=4  out:13
     _remove_large_files  CC=6  out:17
     _skip_large_files  CC=2  out:5
     _run_git_chunked  CC=4  out:4
-  goal.smart_commit.abstraction  [1 funcs]
-    _dedupe_entities  CC=3  out:3
   goal.summary.generator  [1 funcs]
     detect_capabilities  CC=5  out:7
   goal.summary.quality_filter  [3 funcs]
@@ -438,8 +436,6 @@ MODULES:
     initialize_user_config  CC=11  out:52
     prompt_for_license  CC=4  out:25
     show_user_config  CC=2  out:31
-  goal.validation.manager  [1 funcs]
-    get_validation_context  CC=2  out:6
   goal.validators.dot_folders  [6 funcs]
     _is_dot_path  CC=3  out:3
     _is_safe_path  CC=3  out:1
@@ -469,13 +465,12 @@ MODULES:
     get_default_token_patterns  CC=1  out:0
     migrate_token_patterns  CC=1  out:1
     resolve_token_patterns  CC=7  out:3
-  goal.version_validation  [7 funcs]
+  goal.version_validation  [6 funcs]
     _validate_single_type  CC=4  out:3
     check_readme_badges  CC=5  out:4
     extract_badge_versions  CC=4  out:10
     format_validation_results  CC=5  out:5
     get_pypi_version  CC=2  out:6
-    update_badge_versions  CC=3  out:5
     validate_project_versions  CC=2  out:1
   integration.run_matrix  [1 funcs]
     print  CC=0  out:0
@@ -516,7 +511,7 @@ EDGES:
   examples.api-usage.01_basic_api.main → goal.cli.version_utils.get_current_version
   examples.api-usage.03_commit_generation.main → integration.run_matrix.print
   examples.api-usage.03_commit_generation.main → goal.git_ops.get_staged_files
-  examples.api-usage.03_commit_generation.main → goal.generator.generator.CommitMessageGenerator.get_diff_content
+  examples.api-usage.03_commit_generation.main → goal.git_ops.get_diff_content
   examples.api-usage.02_git_operations._check_git_repository → integration.run_matrix.print
   examples.api-usage.02_git_operations._check_git_repository → goal.git_ops.is_git_repository
   examples.api-usage.02_git_operations._display_staged_files → integration.run_matrix.print
@@ -524,9 +519,9 @@ EDGES:
   examples.api-usage.02_git_operations._display_unstaged_files → integration.run_matrix.print
   examples.api-usage.02_git_operations._display_unstaged_files → goal.git_ops.get_unstaged_files
   examples.api-usage.02_git_operations._display_diff_stats → integration.run_matrix.print
-  examples.api-usage.02_git_operations._display_diff_stats → goal.generator.generator.CommitMessageGenerator.get_diff_stats
+  examples.api-usage.02_git_operations._display_diff_stats → goal.git_ops.get_diff_stats
   examples.api-usage.02_git_operations._display_diff_content → integration.run_matrix.print
-  examples.api-usage.02_git_operations._display_diff_content → goal.generator.generator.CommitMessageGenerator.get_diff_content
+  examples.api-usage.02_git_operations._display_diff_content → goal.git_ops.get_diff_content
   examples.api-usage.02_git_operations.main → integration.run_matrix.print
   examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_staged_files
   examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_unstaged_files

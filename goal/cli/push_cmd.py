@@ -20,6 +20,7 @@ from goal.push.core import execute_push_workflow
 @click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
 @click.option(
     "--force-publish",
+    "-f",
     is_flag=True,
     help="Publish even when no package source files changed",
 )
