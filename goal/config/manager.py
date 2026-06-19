@@ -1,5 +1,6 @@
 """Goal configuration manager - GoalConfig class and related functions."""
 
+import os
 import re
 import logging
 from pathlib import Path
@@ -241,29 +242,14 @@ class GoalConfig:
         return ""
 
     def _detect_version_files(self) -> List[str]:
-        """Detect version files in the project."""
-        version_files = []
+        """Detect version files in the project.
 
-        if Path("VERSION").exists():
-            version_files.append("VERSION")
-
-        if Path("pyproject.toml").exists():
-            version_files.append("pyproject.toml:version")
-
-        if Path("package.json").exists():
-            version_files.append("package.json:version")
-
-        if Path("Cargo.toml").exists():
-            version_files.append("Cargo.toml:version")
-
-        if Path("setup.py").exists():
-            version_files.append("setup.py:version")
-
-        # Check for __init__.py with __version__, skipping vendored / build
-        # directories. Without this the recursive glob can pick a dependency's
-        # version file (e.g. venv/.../site-packages/<dep>/__init__.py) and bump
-        # the dependency instead of the project. Sort shallow-first so the
-        # project's own package wins deterministically.
+        Walks the tree once, pruning vendored/build directories, and records the
+        *shallowest* manifest of each kind. This finds a monorepo's nested
+        package (e.g. ``adapters/python/pyproject.toml``) while never targeting a
+        dependency's version file under ``venv``/``site-packages`` — which would
+        otherwise bump the dependency and leave the project version stalled.
+        """
         skip_dirs = {
             "venv",
             ".venv",
@@ -278,21 +264,53 @@ class GoalConfig:
             ".tox",
             ".nox",
             "__pycache__",
+            # non-project trees: their manifests are fixtures, not the project's
+            "examples",
+            "example",
+            "samples",
+            "sample",
+            "templates",
+            "fixtures",
+            "testdata",
+            "__fixtures__",
+            "vendor",
+            "third_party",
         }
-        for init_file in sorted(
-            Path(".").rglob("__init__.py"), key=lambda p: (len(p.parts), str(p))
-        ):
-            if any(part in skip_dirs for part in init_file.parts) or ".egg-info" in str(
-                init_file
-            ):
-                continue
+        manifests = ("pyproject.toml", "package.json", "Cargo.toml", "setup.py")
+        shallowest: Dict[str, str] = {}
+        init_candidates: List[str] = []
+
+        for dirpath, dirnames, filenames in os.walk("."):
+            dirnames[:] = [
+                d
+                for d in dirnames
+                if d not in skip_dirs and not d.endswith(".egg-info")
+            ]
+            for filename in filenames:
+                rel = os.path.normpath(os.path.join(dirpath, filename))
+                if filename in manifests:
+                    prev = shallowest.get(filename)
+                    if prev is None or rel.count(os.sep) < prev.count(os.sep):
+                        shallowest[filename] = rel
+                elif filename == "__init__.py":
+                    init_candidates.append(rel)
+
+        version_files: List[str] = []
+        if Path("VERSION").exists():
+            version_files.append("VERSION")
+        for filename in manifests:
+            if filename in shallowest:
+                version_files.append(f"{shallowest[filename]}:version")
+
+        # First __init__.py (shallowest, then alphabetical) that declares
+        # __version__ — only project packages remain after pruning above.
+        for rel in sorted(init_candidates, key=lambda p: (p.count(os.sep), p)):
             try:
-                content = init_file.read_text()
-                if "__version__" in content:
-                    version_files.append(f"{init_file}:__version__")
+                if "__version__" in Path(rel).read_text():
+                    version_files.append(f"{rel}:__version__")
                     break
             except OSError as exc:
-                logger.debug("Unable to scan %s for __version__: %s", init_file, exc)
+                logger.debug("Unable to scan %s for __version__: %s", rel, exc)
 
         if not version_files:
             version_files.append("VERSION")
