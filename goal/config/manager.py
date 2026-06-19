@@ -259,8 +259,33 @@ class GoalConfig:
         if Path("setup.py").exists():
             version_files.append("setup.py:version")
 
-        # Check for __init__.py with __version__
-        for init_file in Path(".").rglob("__init__.py"):
+        # Check for __init__.py with __version__, skipping vendored / build
+        # directories. Without this the recursive glob can pick a dependency's
+        # version file (e.g. venv/.../site-packages/<dep>/__init__.py) and bump
+        # the dependency instead of the project. Sort shallow-first so the
+        # project's own package wins deterministically.
+        skip_dirs = {
+            "venv",
+            ".venv",
+            ".venv_test",
+            "env",
+            ".env",
+            "site-packages",
+            "node_modules",
+            "build",
+            "dist",
+            ".git",
+            ".tox",
+            ".nox",
+            "__pycache__",
+        }
+        for init_file in sorted(
+            Path(".").rglob("__init__.py"), key=lambda p: (len(p.parts), str(p))
+        ):
+            if any(part in skip_dirs for part in init_file.parts) or ".egg-info" in str(
+                init_file
+            ):
+                continue
             try:
                 content = init_file.read_text()
                 if "__version__" in content:
