@@ -170,8 +170,8 @@ class TestWorkflowOrder:
             f"Expected [commit, publish, tag, push] but got {call_order}"
         )
 
-    def test_metadata_only_changes_skip_publish_but_still_tag_and_push(self):
-        """Docs/metadata-only commits should not upload packages to registries."""
+    def test_metadata_only_changes_skip_publish_and_tag(self):
+        """Docs/metadata-only commits must not publish nor create an orphan release tag."""
         from goal.push.core import execute_push_workflow
 
         ctx_obj = {
@@ -226,7 +226,10 @@ class TestWorkflowOrder:
             )
 
         mock_publish_project.assert_not_called()
-        mock_create_tag.assert_called_once()
+        # No package source changes -> tag must be suppressed (no_tag forced True),
+        # so the release tag never maps to a missing registry upload.
+        mock_create_tag.assert_called_once_with("0.1.43", True)
+        # Commits are still pushed (just without a tag).
         mock_push.assert_called_once()
 
     def test_auto_publish_failure_aborts_before_tag_and_push(self):

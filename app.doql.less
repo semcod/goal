@@ -2,7 +2,7 @@
 
 app {
   name: goal;
-  version: 2.1.241;
+  version: 2.1.257;
 }
 
 dependencies {
@@ -16,6 +16,11 @@ interface[type="cli"] {
 }
 interface[type="cli"] page[name="goal"] {
   entry: goal.cli:main;
+}
+
+interface[type="web"] {
+  type: spa;
+  framework: static;
 }
 
 workflow[name="install"] {

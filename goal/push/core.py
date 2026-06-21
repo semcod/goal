@@ -98,8 +98,10 @@ def add_slow_test_tickets_to_planfile(test_details: Dict[str, Any]) -> List[str]
     added_titles = []
     slow_tests = test_details.get("slow_tests", [])
 
-    # Threshold of 0.5 seconds for a test to require improvement
-    THRESHOLD = 0.5
+    # Only flag genuinely slow tests. A 0.5s threshold floods the planfile with
+    # CLI/integration tests whose time is dominated by interpreter + subprocess
+    # startup, not the code under test. 1.0s keeps real outliers, drops the noise.
+    THRESHOLD = 1.0
 
     for test in slow_tests:
         duration = test.get("duration", 0.0)
@@ -305,6 +307,7 @@ def output_final_summary(
         )
     )
 
+    tagged = not no_tag and not publish_skip_reason
     actions = [
         "Detected project types",
         "Staged changes",
@@ -312,8 +315,8 @@ def output_final_summary(
         "Committed changes",
         f"Updated version to {new_version}",
         "Updated changelog",
-        f"Created tag v{new_version}" if not no_tag else "Skipped tag creation",
-        "Pushed to remote" if not no_tag else "Pushed to remote without tags",
+        f"Created tag v{new_version}" if tagged else "Skipped tag creation",
+        "Pushed to remote" if tagged else "Pushed to remote without tags",
     ]
     if publish_success:
         actions.append(f"Published version {new_version}")
@@ -668,7 +671,17 @@ def execute_push_workflow(
         click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
         sys.exit(1)
 
-    tag_name = create_tag(new_version, no_tag)
+    # Don't create an orphan release tag when publish was skipped because there
+    # were no package source changes — avoids tags that map to no registry release.
+    skip_tag_no_source = bool(publish_skip_reason)
+    if skip_tag_no_source and not no_tag:
+        click.echo(
+            click.style(
+                f"⏭ Skipping tag v{new_version} — no package source changes to release",
+                fg="yellow",
+            )
+        )
+    tag_name = create_tag(new_version, no_tag or skip_tag_no_source)
 
     from goal.git_ops import get_remote_branch
 

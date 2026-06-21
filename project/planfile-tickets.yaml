@@ -1,5 +1,4 @@
 source: code2llm
-# generated in 0.20s
 schema: code2llm.planfile_tickets.v1
 project_root: /home/tom/github/semcod/goal
 tickets:
@@ -6601,5 +6600,37 @@ tickets:
   - goal/cli/utils_cmd.py
   dedupe_key: 'code2llm:smell:god_function:goal/cli/utils_cmd.py:113:God Function:
     version'
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_project_doctor.TestDoctorCommand.test_doctor_finds_python_issues'
+  description: 'Test `tests.test_project_doctor.TestDoctorCommand.test_doctor_finds_python_issues`
+    took 0.53s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_project_doctor.py
+  dedupe_key: test-optimization:tests.test_project_doctor.TestDoctorCommand:test_doctor_finds_python_issues
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_project_bootstrap.TestBootstrapCommand.test_bootstrap_python_project'
+  description: 'Test `tests.test_project_bootstrap.TestBootstrapCommand.test_bootstrap_python_project`
+    took 0.51s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_project_bootstrap.py
+  dedupe_key: test-optimization:tests.test_project_bootstrap.TestBootstrapCommand:test_bootstrap_python_project
 applied: []
 skipped: []

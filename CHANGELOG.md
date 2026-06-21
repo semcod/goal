@@ -156,6 +156,24 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.258] - 2026-06-21
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+### Other
+- Update app.doql.less
+- Update project/logic.pl
+- Update project/map.toon.yaml
+- Update project/planfile-tickets.yaml
+- Update tree.txt
+
 ## [2.1.257] - 2026-06-20
 
 ### Docs
