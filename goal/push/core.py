@@ -550,6 +550,24 @@ def execute_push_workflow(
 
     _validate_staged_files(ctx_obj, dry_run, force)
 
+    # Decide early whether this run should bump+commit+release. When the project
+    # is a registry project but no staged file is package source (only docs,
+    # metadata, lockfiles, tests or generated caches), bumping the version and
+    # committing produces churn: the version races ahead of what is published.
+    # Skip the release machinery in that case. Note we only skip on
+    # "no_package_source_changes" — a non-registry repo (docs/web site) reports
+    # "no_registry_project_types" and must still commit normally. --force-publish
+    # overrides to release anyway.
+    from goal.publish.changes import analyze_publishable_changes
+
+    early_change_report = (
+        None if force_publish else analyze_publishable_changes(files, project_types)
+    )
+    skip_release = bool(
+        early_change_report
+        and early_change_report.reason == "no_package_source_changes"
+    )
+
     diff_content = get_diff_content()
     stats = get_diff_stats()
 
@@ -563,6 +581,11 @@ def execute_push_workflow(
     commit_msg = commit_title
 
     current_version, new_version = get_version_info()
+
+    # No package source changed: keep the current version (no bump). The commit,
+    # tag, publish and bump-file writes are all skipped further below.
+    if skip_release:
+        new_version = current_version
 
     commit_msg = _apply_enhanced_quality_gates(
         ctx_obj, commit_msg, detailed_result, files, stats, message, markdown
@@ -612,20 +635,29 @@ def execute_push_workflow(
         commit_body,
     )
 
-    _handle_commit_phase(
-        ctx_obj,
-        split,
-        message,
-        commit_title,
-        commit_body,
-        commit_msg,
-        files,
-        ticket,
-        new_version,
-        current_version,
-        no_version_sync,
-        no_changelog,
-    )
+    if skip_release:
+        click.echo(
+            click.style(
+                f"⏭ Skipping version bump and commit (staying on v{current_version}) "
+                "— no package source changes. Use --force-publish to release anyway.",
+                fg="yellow",
+            )
+        )
+    else:
+        _handle_commit_phase(
+            ctx_obj,
+            split,
+            message,
+            commit_title,
+            commit_body,
+            commit_msg,
+            files,
+            ticket,
+            new_version,
+            current_version,
+            no_version_sync,
+            no_changelog,
+        )
 
     publish_config = ctx_obj.get("config")
     if hasattr(publish_config, "reload"):

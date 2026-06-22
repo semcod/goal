@@ -128,10 +128,11 @@ class TestWorkflowOrder:
             patch("goal.push.core._detect_project_types", return_value=["python"]),
             patch("goal.push.core._bootstrap_projects"),
             patch("goal.push.core.run_git"),
-            patch("goal.push.core.get_staged_files", return_value=["test.txt"]),
+            # A package source file (.py) so the release path runs (bump+commit).
+            patch("goal.push.core.get_staged_files", return_value=["foo.py"]),
             patch("goal.push.core._validate_staged_files"),
             patch("goal.push.core.get_diff_content", return_value="diff"),
-            patch("goal.push.core.get_diff_stats", return_value={"test.txt": (1, 0)}),
+            patch("goal.push.core.get_diff_stats", return_value={"foo.py": (1, 0)}),
             patch(
                 "goal.push.core.get_commit_message",
                 return_value=("feat: test", None, {}),
@@ -170,8 +171,14 @@ class TestWorkflowOrder:
             f"Expected [commit, publish, tag, push] but got {call_order}"
         )
 
-    def test_metadata_only_changes_skip_publish_and_tag(self):
-        """Docs/metadata-only commits must not publish nor create an orphan release tag."""
+    def test_metadata_only_changes_skip_bump_commit_publish_and_tag(self):
+        """Docs/metadata-only runs must not bump, commit, publish, nor tag.
+
+        When the only staged files are docs/metadata (no package source), goal stays
+        on the current version: no version bump, no commit, no publish, no release
+        tag — avoiding version churn that races ahead of what is published. Use
+        --force-publish to release anyway.
+        """
         from goal.push.core import execute_push_workflow
 
         ctx_obj = {
@@ -200,9 +207,9 @@ class TestWorkflowOrder:
             ),
             patch("goal.push.core.get_version_info", return_value=("0.1.42", "0.1.43")),
             patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
-            patch("goal.push.core._handle_commit_phase"),
+            patch("goal.push.core._handle_commit_phase") as mock_commit_phase,
             patch("goal.push.stages.publish.publish_project") as mock_publish_project,
-            patch("goal.push.core.create_tag", return_value="v0.1.43") as mock_create_tag,
+            patch("goal.push.core.create_tag", return_value=None) as mock_create_tag,
             patch("goal.git_ops.get_remote_branch", return_value="main"),
             patch("goal.push.core.push_to_remote") as mock_push,
             patch("goal.push.core.handle_todo_stage"),
@@ -225,11 +232,13 @@ class TestWorkflowOrder:
                 todo=False,
             )
 
+        # No version bump and no commit when there is no package source change.
+        mock_commit_phase.assert_not_called()
         mock_publish_project.assert_not_called()
-        # No package source changes -> tag must be suppressed (no_tag forced True),
-        # so the release tag never maps to a missing registry upload.
-        mock_create_tag.assert_called_once_with("0.1.43", True)
-        # Commits are still pushed (just without a tag).
+        # Version stays on current (0.1.42, not the bumped 0.1.43) and the tag is
+        # suppressed, so no orphan release tag is created.
+        mock_create_tag.assert_called_once_with("0.1.42", True)
+        # Push still runs (it is a no-op when no new commit was created).
         mock_push.assert_called_once()
 
     def test_auto_publish_failure_aborts_before_tag_and_push(self):
