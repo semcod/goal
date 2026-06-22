@@ -1,9 +1,11 @@
 """Version management - version synchronization functions."""
 
+import json
+import os
 import re
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 try:
     import tomlkit
@@ -313,9 +315,101 @@ def _update_init_py_versions(new_version: str, updated: List[str]) -> None:
             pass
 
 
+# Sub-package version files (monorepo: adapters/, packages/, …). Dirs that hold
+# dependencies / build artifacts / caches are never descended into.
+_NESTED_SKIP_DIRS = {
+    ".git", ".hg", ".svn", ".venv", "venv", "env", ".env", "node_modules",
+    "build", "dist", "__pycache__", ".tox", ".nox", ".mypy_cache", ".pytest_cache",
+    ".ruff_cache", "site-packages", ".eggs", "vendor", "third_party", "target",
+    ".idea", ".gradle", "bower_components",
+}
+_NESTED_VERSION_FILES = ("VERSION", "package.json", "composer.json", "pyproject.toml", "Cargo.toml")
+
+
+def _read_version_of(path: Path) -> Optional[str]:
+    """Best-effort read of the version a version-file currently declares."""
+    try:
+        name = path.name
+        if name == "VERSION":
+            return path.read_text(encoding="utf-8").strip() or None
+        if name in ("package.json", "composer.json"):
+            return json.loads(path.read_text(encoding="utf-8")).get("version")
+        if name == "pyproject.toml":
+            text = path.read_text(encoding="utf-8")
+            if tomlkit is not None:
+                doc = tomlkit.parse(text)
+                project = doc.get("project")
+                if project is not None and "version" in project:
+                    return str(project["version"])
+            match = re.search(r'(?m)^version\s*=\s*["\']([^"\']+)["\']', text)
+            return match.group(1) if match else None
+        if name == "Cargo.toml":
+            match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', path.read_text(encoding="utf-8"))
+            return match.group(1) if match else None
+    except Exception:
+        return None
+    return None
+
+
+def _read_root_version() -> Optional[str]:
+    """The project's current (pre-bump) version, from whichever root file declares it."""
+    root_version = Path("VERSION")
+    if root_version.exists():
+        value = root_version.read_text(encoding="utf-8").strip()
+        if value:
+            return value
+    for candidate in ("package.json", "composer.json", "pyproject.toml", "Cargo.toml"):
+        path = Path(candidate)
+        if path.exists():
+            value = _read_version_of(path)
+            if value:
+                return value
+    return None
+
+
+def _sync_nested_versions(
+    old_version: Optional[str], new_version: str, user_config, updated: List[str]
+) -> None:
+    """Bump version files in sub-packages that are *in lockstep* with the root
+    (i.e. currently hold the same version the root had before this bump).
+
+    This keeps a single-version monorepo (e.g. a root ``VERSION`` plus
+    ``adapters/python/pyproject.toml`` / ``adapters/js/package.json``) consistent,
+    so a downstream ``version-check`` stays green — without touching example or
+    fixture sub-projects that intentionally carry their own version.
+    """
+    if not old_version or old_version == new_version:
+        return
+    json_files = {"package.json", "composer.json"}
+    for dirpath, dirnames, filenames in os.walk("."):
+        dirnames[:] = [
+            d for d in dirnames if d not in _NESTED_SKIP_DIRS and not d.endswith(".egg-info")
+        ]
+        if os.path.abspath(dirpath) == os.path.abspath("."):
+            continue  # root files are handled explicitly by sync_all_versions
+        for filename in filenames:
+            if filename not in _NESTED_VERSION_FILES:
+                continue
+            path = Path(dirpath) / filename
+            if _read_version_of(path) != old_version:
+                continue  # not part of the synchronized set — leave it alone
+            rel = os.path.relpath(str(path))
+            if filename == "VERSION":
+                path.write_text(f"{new_version}\n", encoding="utf-8")
+                updated.append(rel)
+            elif filename in json_files:
+                _update_json_version_file(rel, new_version, user_config, updated)
+            elif filename == "pyproject.toml":
+                _update_toml_version(rel, new_version, user_config, updated)
+            elif filename == "Cargo.toml":
+                _update_cargo_version(rel, new_version, user_config, updated)
+
+
 def sync_all_versions(new_version: str, user_config=None) -> List[str]:
     """Update version, author, and license in all detected project files."""
     updated: List[str] = []
+
+    old_version = _read_root_version()  # capture before overwriting the root VERSION
 
     _update_version_file(new_version, updated)
     _update_json_version_file("package.json", new_version, user_config, updated)
@@ -323,6 +417,7 @@ def sync_all_versions(new_version: str, user_config=None) -> List[str]:
     _update_toml_version("pyproject.toml", new_version, user_config, updated)
     _update_setup_py_version(new_version, user_config, updated)
     _update_cargo_version("Cargo.toml", new_version, user_config, updated)
+    _sync_nested_versions(old_version, new_version, user_config, updated)
     _sync_dependency_locks_after_manifest_updates(updated)
     _update_csproj_versions(new_version, updated)
     _update_pom_xml(new_version, updated)

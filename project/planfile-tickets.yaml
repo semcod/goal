@@ -6632,5 +6632,21 @@ tickets:
   files:
   - tests/test_project_bootstrap.py
   dedupe_key: test-optimization:tests.test_project_bootstrap.TestBootstrapCommand:test_bootstrap_python_project
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_project_bootstrap.TestBootstrapCommand.test_bootstrap_empty_dir'
+  description: 'Test `tests.test_project_bootstrap.TestBootstrapCommand.test_bootstrap_empty_dir`
+    took 1.69s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_project_bootstrap.py
+  dedupe_key: test-optimization:tests.test_project_bootstrap.TestBootstrapCommand:test_bootstrap_empty_dir
 applied: []
 skipped: []
