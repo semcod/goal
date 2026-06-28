@@ -66,7 +66,7 @@ clickmd = "^0.1.0"
 costs = "^0.1.21"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.0.0"
+pytest = ">=7,<10"
 build = "*"
 twine = "*"
 pfix = "^0.1.60"
