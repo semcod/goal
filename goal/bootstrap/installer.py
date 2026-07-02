@@ -51,7 +51,7 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
 
     click.echo(click.style("  Installing costs package...", fg="cyan"))
     install_result = subprocess.run(
-        [python_bin, "-m", "pip", "install", "costs"],
+        [python_bin, "-m", "pip", "install", "costs>=0.1.53"],
         capture_output=True,
         text=True,
         cwd=str(project_dir),

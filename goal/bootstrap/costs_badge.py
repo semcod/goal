@@ -53,7 +53,7 @@ def _install_costs_package(project_dir: Path, python_bin: str) -> bool:
 
     click.echo(click.style("  Installing costs package...", fg="cyan"))
     install_result = subprocess.run(
-        [python_bin, "-m", "pip", "install", "costs>=0.1.20"],
+        [python_bin, "-m", "pip", "install", "costs>=0.1.53"],
         capture_output=True,
         text=True,
         cwd=str(project_dir),
@@ -189,6 +189,36 @@ def _read_model_from_pyproject(project_dir: Path) -> str:
     return "openrouter/qwen/qwen3-coder-next"
 
 
+def _read_project_version(project_dir: Path, repo_root: Path | None = None) -> str:
+    """Read the project version from common project metadata files."""
+    candidates = []
+    if repo_root is not None:
+        candidates.append(repo_root)
+    candidates.append(project_dir)
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        candidate = candidate.resolve()
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+
+        pyproject = candidate / "pyproject.toml"
+        if pyproject.exists():
+            content = pyproject.read_text(encoding="utf-8")
+            match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', content)
+            if match:
+                return match.group(1)
+
+        version_file = candidate / "VERSION"
+        if version_file.exists():
+            version = version_file.read_text(encoding="utf-8").strip()
+            if version:
+                return version
+
+    return "unknown"
+
+
 def _generate_costs_badge(project_dir: Path) -> None:
     """Generate an AI cost badge in the project README."""
     click.echo(click.style("  Generating AI cost badge...", fg="cyan"))
@@ -213,7 +243,7 @@ def _generate_costs_badge(project_dir: Path) -> None:
                 "total_cost_formatted": f"${total_cost:.4f}",
                 "total_commits": total_commits,
                 "model": model,
-                "version": repo_stats.get("repo_name", "unknown"),
+                "version": _read_project_version(project_dir, repo_root),
                 "human_time": human_hours,
                 "human_cost": human_hours * 100,
             }

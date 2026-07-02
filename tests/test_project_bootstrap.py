@@ -490,6 +490,10 @@ class TestCostsBadgeGeneration:
         repo_root = tmp_path
         (repo_root / ".git").mkdir()
         (repo_root / "README.md").write_text("# Repo\n\n## AI Cost Tracking\n")
+        (repo_root / "pyproject.toml").write_text(
+            '[project]\nname = "goal"\nversion = "2.1.262"\n',
+            encoding="utf-8",
+        )
 
         subproject = repo_root / "my-api"
         subproject.mkdir()
@@ -567,6 +571,7 @@ class TestCostsBadgeGeneration:
         assert calls["parse_commits"][0] == str(repo_root)
         assert calls["commit_diff"][0] == str(repo_root)
         assert calls["readme_update"] == repo_root
+        assert calls["readme_results"]["summary"]["version"] == "2.1.262"
 
 
 # ---------------------------------------------------------------------------
