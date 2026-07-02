@@ -26,6 +26,7 @@ from goal.project_bootstrap import (
     _validate_pfix_env,
     _ensure_pfix_env,
 )
+from goal.bootstrap.costs_badge import _install_costs_package
 from goal.cli import main
 
 
@@ -486,6 +487,66 @@ class TestPfixInstallSource:
 
 
 class TestCostsBadgeGeneration:
+    def test_costs_install_upgrades_stale_version(self, tmp_path):
+        calls = []
+
+        def fake_run(command, **kwargs):
+            calls.append(command)
+            import_command = [
+                "/usr/bin/python",
+                "-c",
+                "import costs; print(costs.__version__)",
+            ]
+            if command[:3] == import_command:
+                return mock.MagicMock(returncode=0, stdout="0.1.51\n", stderr="")
+            return mock.MagicMock(returncode=0, stdout="", stderr="")
+
+        with mock.patch("goal.bootstrap.costs_badge.subprocess.run", side_effect=fake_run):
+            assert _install_costs_package(tmp_path, "/usr/bin/python") is True
+
+        assert calls == [
+            ["/usr/bin/python", "-c", "import costs; print(costs.__version__)"],
+            [
+                "/usr/bin/python",
+                "-m",
+                "pip",
+                "install",
+                "-U",
+                "costs>=0.1.53",
+            ],
+        ]
+
+    def test_costs_install_falls_back_to_uv_when_pip_unavailable(self, tmp_path):
+        calls = []
+
+        def fake_run(command, **kwargs):
+            calls.append(command)
+            import_command = [
+                "/venv/bin/python",
+                "-c",
+                "import costs; print(costs.__version__)",
+            ]
+            if command[:3] == import_command:
+                return mock.MagicMock(returncode=0, stdout="0.1.51\n", stderr="")
+            if command[:4] == ["/venv/bin/python", "-m", "pip", "install"]:
+                return mock.MagicMock(returncode=1, stdout="", stderr="No module named pip")
+            return mock.MagicMock(returncode=0, stdout="", stderr="")
+
+        with (
+            mock.patch("goal.bootstrap.costs_badge.shutil.which", return_value="/usr/bin/uv"),
+            mock.patch("goal.bootstrap.costs_badge.subprocess.run", side_effect=fake_run),
+        ):
+            assert _install_costs_package(tmp_path, "/venv/bin/python") is True
+
+        assert calls[-1] == [
+            "/usr/bin/uv",
+            "pip",
+            "install",
+            "--python",
+            "/venv/bin/python",
+            "costs>=0.1.53",
+        ]
+
     def test_uses_git_root_for_subproject_analysis(self, tmp_path):
         repo_root = tmp_path
         (repo_root / ".git").mkdir()

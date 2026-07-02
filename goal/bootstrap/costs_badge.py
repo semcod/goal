@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -33,9 +34,46 @@ _AI_INDICATORS = (
     "llm",
 )
 
+_MIN_COSTS_VERSION = "0.1.53"
+
+
+def _version_tuple(version: object) -> tuple[int, ...]:
+    """Convert a simple package version string into a comparable tuple."""
+    if not isinstance(version, str):
+        return ()
+    parts = re.findall(r"\d+", version)
+    return tuple(int(part) for part in parts[:3])
+
+
+def _costs_version_satisfies_minimum(version: object) -> bool:
+    current = _version_tuple(version)
+    minimum = _version_tuple(_MIN_COSTS_VERSION)
+    return bool(current) and current >= minimum
+
+
+def _install_costs_requirement(project_dir: Path, python_bin: str) -> bool:
+    requirement = f"costs>={_MIN_COSTS_VERSION}"
+    commands = [
+        [python_bin, "-m", "pip", "install", "-U", requirement],
+    ]
+    uv_bin = shutil.which("uv")
+    if uv_bin:
+        commands.append([uv_bin, "pip", "install", "--python", python_bin, requirement])
+
+    for command in commands:
+        install_result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            cwd=str(project_dir),
+        )
+        if install_result.returncode == 0:
+            return True
+    return False
+
 
 def _install_costs_package(project_dir: Path, python_bin: str) -> bool:
-    """Check if costs is installed; install it if not. Returns True on success."""
+    """Ensure a recent costs package is installed. Returns True on success."""
     result = subprocess.run(
         [python_bin, "-c", "import costs; print(costs.__version__)"],
         capture_output=True,
@@ -43,22 +81,25 @@ def _install_costs_package(project_dir: Path, python_bin: str) -> bool:
         cwd=str(project_dir),
     )
     if result.returncode == 0:
+        installed_version = result.stdout.strip()
+        if _costs_version_satisfies_minimum(installed_version):
+            click.echo(
+                click.style(
+                    f"  ✓ Costs package already installed ({installed_version})",
+                    fg="green",
+                )
+            )
+            return True
         click.echo(
             click.style(
-                f"  ✓ Costs package already installed ({result.stdout.strip()})",
-                fg="green",
+                f"  Upgrading costs package ({installed_version} < {_MIN_COSTS_VERSION})...",
+                fg="cyan",
             )
         )
-        return True
+    else:
+        click.echo(click.style("  Installing costs package...", fg="cyan"))
 
-    click.echo(click.style("  Installing costs package...", fg="cyan"))
-    install_result = subprocess.run(
-        [python_bin, "-m", "pip", "install", "costs>=0.1.53"],
-        capture_output=True,
-        text=True,
-        cwd=str(project_dir),
-    )
-    if install_result.returncode != 0:
+    if not _install_costs_requirement(project_dir, python_bin):
         click.echo(click.style("  ⚠ Could not install costs package", fg="yellow"))
         return False
     click.echo(click.style("  ✓ Costs package installed", fg="green"))

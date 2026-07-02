@@ -9,6 +9,11 @@ import click
 
 from goal.bootstrap.templates import PROJECT_TEMPLATES, ProjectTemplate
 from goal.bootstrap.configurator import _find_python_bin
+from goal.bootstrap.costs_badge import (
+    _MIN_COSTS_VERSION,
+    _costs_version_satisfies_minimum,
+    _install_costs_requirement,
+)
 from goal.installers import PackageManagerBroker
 
 
@@ -47,16 +52,19 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
         cwd=str(project_dir),
     )
     if result.returncode == 0:
-        return True
+        installed_version = result.stdout.strip()
+        if _costs_version_satisfies_minimum(installed_version):
+            return True
+        click.echo(
+            click.style(
+                f"  Upgrading costs package ({installed_version} < {_MIN_COSTS_VERSION})...",
+                fg="cyan",
+            )
+        )
+    else:
+        click.echo(click.style("  Installing costs package...", fg="cyan"))
 
-    click.echo(click.style("  Installing costs package...", fg="cyan"))
-    install_result = subprocess.run(
-        [python_bin, "-m", "pip", "install", "costs>=0.1.53"],
-        capture_output=True,
-        text=True,
-        cwd=str(project_dir),
-    )
-    if install_result.returncode == 0:
+    if _install_costs_requirement(project_dir, python_bin):
         click.echo(click.style("  ✓ costs installed", fg="green"))
         return True
     return False
