@@ -156,6 +156,11 @@
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
 
+## [2.1.265] - 2026-07-03
+
+### Docs
+- Update README.md
+
 ## [2.1.264] - 2026-07-02
 
 ### Docs
