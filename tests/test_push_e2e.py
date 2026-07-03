@@ -37,6 +37,7 @@ class TestPublishRetry:
         with (
             patch("goal.cli.publish.run_command_tee", side_effect=fake_run),
             patch("goal.cli.publish.time.sleep") as mock_sleep,
+            patch("goal.cli.publish.get_github_release_config", return_value=None),
         ):
             result = _run_publish_command("python", "twine upload dist/*")
 
@@ -58,6 +59,7 @@ class TestPublishRetry:
         with (
             patch("goal.cli.publish.run_command_tee", side_effect=fake_run),
             patch("goal.cli.publish.time.sleep") as mock_sleep,
+            patch("goal.cli.publish.get_github_release_config", return_value=None),
         ):
             result = _run_publish_command("python", "twine upload dist/*")
 
@@ -78,6 +80,7 @@ class TestPublishRetry:
         with (
             patch("goal.cli.publish.run_command_tee", side_effect=fake_run),
             patch("goal.cli.publish.time.sleep") as mock_sleep,
+            patch("goal.cli.publish.get_github_release_config", return_value=None),
         ):
             result = _run_publish_command("python", "twine upload dist/*")
 

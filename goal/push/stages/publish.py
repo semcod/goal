@@ -80,9 +80,19 @@ def handle_publish(
     if staged_files is not None and not force_publish:
         change_report = analyze_publishable_changes(staged_files, project_types)
         if not change_report.has_changes:
-            echo_heading("Skipping publish — no package source changes", level=2)
-            echo_info(_format_skip_message(change_report))
-            return False, change_report
+            # Staged files miss already-committed source (agent commits, then
+            # goal -a runs on a clean tree) — same check as push/core.
+            from goal.publish.changes import committed_unreleased_source_files
+
+            pending = committed_unreleased_source_files(project_types)
+            if not pending:
+                echo_heading("Skipping publish — no package source changes", level=2)
+                echo_info(_format_skip_message(change_report))
+                return False, change_report
+            echo_info(
+                f"Publishing committed-but-unreleased source ({len(pending)} file(s) "
+                f"since the last release tag)"
+            )
 
     if not yes:
         if not confirm(f"Publish version {new_version}?"):
