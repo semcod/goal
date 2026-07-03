@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from unittest import mock
 from click.testing import CliRunner
 
@@ -8,7 +9,7 @@ from goal.cli import main
 
 def run_cli(*args):
     return subprocess.run(
-        ["python3", "-m", "goal", *args], capture_output=True, text=True
+        [sys.executable, "-m", "goal", *args], capture_output=True, text=True
     )
 
 
