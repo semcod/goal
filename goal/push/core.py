@@ -567,6 +567,25 @@ def execute_push_workflow(
         early_change_report
         and early_change_report.reason == "no_package_source_changes"
     )
+    if skip_release:
+        # Staged files alone miss source changes that are already committed
+        # (agents commit, then a later `goal -a` sees a clean tree and skips
+        # while the registry stays behind HEAD). Release when the last v* tag
+        # is missing committed package source.
+        from goal.publish.changes import committed_unreleased_source_files
+
+        pending_committed = committed_unreleased_source_files(project_types)
+        if pending_committed:
+            preview = ", ".join(pending_committed[:3])
+            more = f" (+{len(pending_committed) - 3} more)" if len(pending_committed) > 3 else ""
+            click.echo(
+                click.style(
+                    f"📦 {len(pending_committed)} package source file(s) committed since the "
+                    f"last release tag — releasing: {preview}{more}",
+                    fg="yellow",
+                )
+            )
+            skip_release = False
 
     diff_content = get_diff_content()
     stats = get_diff_stats()

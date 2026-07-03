@@ -198,6 +198,10 @@ class TestWorkflowOrder:
                 "goal.push.core.get_staged_files",
                 return_value=["README.md", "CHANGELOG.md"],
             ),
+            patch(
+                "goal.publish.changes.committed_unreleased_source_files",
+                return_value=[],
+            ),
             patch("goal.push.core._validate_staged_files"),
             patch("goal.push.core.get_diff_content", return_value="diff"),
             patch("goal.push.core.get_diff_stats", return_value={"README.md": (1, 0)}),
