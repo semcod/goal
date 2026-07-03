@@ -40,6 +40,23 @@ _DEPENDENCY_LOCK_REFRESHERS = (
 )
 
 
+def _warn_version_sync(filename: str, exc: Exception) -> None:
+    """Version-file update failed — say so instead of silently desyncing.
+
+    A swallowed write error here leaves e.g. VERSION bumped but pyproject.toml
+    stale, so the next build produces artifacts for the old version and the
+    publish step fails with a confusing "no artifacts for X" message.
+    """
+    import click
+
+    click.echo(
+        click.style(
+            f"  Warning: could not update version in {filename}: {exc}",
+            fg="yellow",
+        )
+    )
+
+
 def _update_version_file(new_version: str, updated: List[str]) -> None:
     """Update VERSION file."""
     Path("VERSION").write_text(f"{new_version}\n")
@@ -77,20 +94,8 @@ def _update_toml_version(
                     doc["project"]["version"] = new_version
                     path.write_text(tomlkit.dumps(doc))
                     updated.append(filename)
-        else:
-            # Fallback to regex if tomlkit not available
-            new_content = re.sub(
-                r'^(version\s*=\s*["\'])\d+\.\d+\.\d+(["\'])',
-                rf"\g<1>{new_version}\g<2>",
-                content,
-                count=1,
-                flags=re.MULTILINE,
-            )
-            if new_content != content:
-                path.write_text(new_content)
-                updated.append(filename)
     except Exception:
-        # Fallback to regex on any error
+        # tomlkit parse/dump hiccup — retry with a plain regex substitution
         try:
             content = path.read_text()
             new_content = re.sub(
@@ -103,8 +108,24 @@ def _update_toml_version(
             if new_content != content:
                 path.write_text(new_content)
                 updated.append(filename)
-        except Exception:
-            pass
+        except Exception as exc:
+            _warn_version_sync(filename, exc)
+    else:
+        if tomlkit is None:
+            # Fallback to regex if tomlkit not available
+            try:
+                new_content = re.sub(
+                    r'^(version\s*=\s*["\'])\d+\.\d+\.\d+(["\'])',
+                    rf"\g<1>{new_version}\g<2>",
+                    content,
+                    count=1,
+                    flags=re.MULTILINE,
+                )
+                if new_content != content:
+                    path.write_text(new_content)
+                    updated.append(filename)
+            except Exception as exc:
+                _warn_version_sync(filename, exc)
 
     if user_config and update_project_metadata(path, user_config):
         if filename not in updated:
@@ -155,8 +176,8 @@ def _update_setup_py_version(new_version: str, user_config, updated: List[str]) 
         if user_config and update_project_metadata(path, user_config):
             if "setup.py" not in updated:
                 updated.append("setup.py")
-    except Exception:
-        pass
+    except Exception as exc:
+        _warn_version_sync("setup.py", exc)
 
 
 def _update_csproj_versions(new_version: str, updated: List[str]) -> None:
@@ -311,8 +332,8 @@ def _update_init_py_versions(new_version: str, updated: List[str]) -> None:
             if new_content != content:
                 init_file.write_text(new_content)
                 updated.append(str(init_file))
-        except Exception:
-            pass
+        except Exception as exc:
+            _warn_version_sync(str(init_file), exc)
 
 
 # Sub-package version files (monorepo: adapters/, packages/, …). Dirs that hold

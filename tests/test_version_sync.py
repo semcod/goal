@@ -311,3 +311,33 @@ def test_sync_bumps_nested_lockstep_and_skips_others(tmp_path):
         assert not any("examples" in u or "node_modules" in u for u in updated)
     finally:
         os.chdir(old_cwd)
+
+
+def test_sync_warns_on_unwritable_pyproject(tmp_path, capsys):
+    """A write failure must be reported, not swallowed (tillm read-only pyproject incident).
+
+    Silently skipping pyproject.toml leaves VERSION bumped but the build
+    metadata stale, so the publish step later fails with a confusing
+    "no artifacts for version X" error.
+    """
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        (tmp_path / "VERSION").write_text("0.1.0\n")
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text('[project]\nname = "x"\nversion = "0.1.0"\n')
+        pyproject.chmod(0o444)
+
+        func = sync_all_versions
+        while hasattr(func, "__wrapped__"):
+            func = func.__wrapped__
+        updated = func("0.2.0")
+
+        assert "VERSION" in updated
+        assert "pyproject.toml" not in updated
+        assert 'version = "0.1.0"' in pyproject.read_text()
+        out = capsys.readouterr().out
+        assert "could not update version in pyproject.toml" in out
+    finally:
+        (tmp_path / "pyproject.toml").chmod(0o644)
+        os.chdir(old_cwd)
