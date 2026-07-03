@@ -93,6 +93,15 @@ def handle_publish(
                 f"Publishing committed-but-unreleased source ({len(pending)} file(s) "
                 f"since the last release tag)"
             )
+            # Rebuild the report as a real release: downstream stages key off
+            # skip_reason (the tag stage skipped v0.1.39/v0.1.106/... while the
+            # registry got published, leaving release tags behind HEAD).
+            change_report = PublishChangeReport(
+                has_changes=True,
+                project_types=change_report.project_types,
+                publishable_files=list(pending),
+                non_publishable_files=list(change_report.non_publishable_files),
+            )
 
     if not yes:
         if not confirm(f"Publish version {new_version}?"):
