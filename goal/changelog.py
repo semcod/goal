@@ -68,6 +68,17 @@ def _insert_entry(existing_content: str, entry: str) -> str:
     if pos is not None:
         return f"{existing_content[:pos]}\n{entry}{existing_content[pos:]}"
 
+    # An `## [Unreleased]` section already exists somewhere in the file (just
+    # with no following heading to anchor an insert position against, e.g. a
+    # hand-authored changelog that hasn't had its first release cut yet) —
+    # never fall through to the "no Unreleased section" branches below, or
+    # they'd insert a *second* `## [Unreleased]` header above the existing
+    # one instead of adding this entry to it.
+    if "## [Unreleased]" in existing_content:
+        marker = "## [Unreleased]"
+        insert_at = existing_content.index(marker) + len(marker)
+        return f"{existing_content[:insert_at]}\n\n{entry}{existing_content[insert_at:]}"
+
     if existing_content.startswith("# "):
         first_nl = existing_content.find("\n")
         if first_nl > 0:
@@ -80,7 +91,12 @@ def _insert_entry(existing_content: str, entry: str) -> str:
 def _find_unreleased_insert_pos(content: str) -> int | None:
     """Find the position after ## [Unreleased] where a new entry should go.
 
-    Returns the character offset, or None if no Unreleased section found.
+    Returns the character offset, or None if no Unreleased section found at
+    all. If `## [Unreleased]` is present but is the last section (no
+    following `## ` heading yet — e.g. nothing has been released from it),
+    callers must not treat that the same as "no section exists"; this
+    function only handles the "found a following heading" case, so callers
+    should re-check for the bare marker themselves (see `_insert_entry`).
     """
     marker = "## [Unreleased]"
     if marker not in content:

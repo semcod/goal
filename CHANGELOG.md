@@ -1,6 +1,19 @@
 ## [Unreleased]
 
 ### Fixed
+- `changelog.py`'s `_find_unreleased_insert_pos()` returned `None` both when no
+  `## [Unreleased]` section existed *and* when one existed but had no version heading
+  below it yet (e.g. a hand-authored CHANGELOG.md before its first `goal` publish).
+  `_insert_entry()` treated both as "no section exists" and inserted a brand-new
+  `## [Unreleased]` header at the top of the file, pushing the real one (with its
+  content) down intact — creating a permanent duplicate `## [Unreleased]` header
+  frozen partway through the file's history on every affected package's first publish
+  (confirmed in `pfix/CHANGELOG.md`). Fixed by checking for the bare marker before
+  falling through to the "create new section" branches, and inserting the entry right
+  after the existing (headingless) `## [Unreleased]` instead.
+  Verified: reproduced the exact pre-bug pfix CHANGELOG.md structure and confirmed the
+  duplicate no longer occurs; added `test_update_changelog_unreleased_section_with_no_prior_release`
+  covering this case. Full test suite (393 tests) passes.
 - `_resolve_root_python()` (used to run `goal test`/`goal push`/`goal -a`) checked the
   globally activated `VIRTUAL_ENV` before the current project's own `.venv`/`venv`/`env`.
   A virtualenv left active from a different, unrelated project (e.g. after `cd`-ing away
@@ -17,6 +30,15 @@
   `setuptools`, not Poetry) — its name/version/dependencies/scripts had drifted out of
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
+
+## [2.1.268] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_changelog.py
 
 ## [2.1.267] - 2026-07-05
 
