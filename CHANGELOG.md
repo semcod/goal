@@ -1,6 +1,29 @@
 ## [Unreleased]
 
 ### Fixed
+- `_ensure_python_test_dependency()` (duplicated in `goal/project_bootstrap.py`
+  and `goal/bootstrap/installer.py`) verified the Python test runner was
+  ready by checking only `import pytest` succeeds. That's not sufficient:
+  a project's own `pyproject.toml` `addopts` (e.g. `-n auto` for parallel
+  runs) can require a plugin (`pytest-xdist`) declared under
+  `[project.optional-dependencies] dev` rather than as a hard dependency.
+  A bare `uv sync` (no `--extra dev`) or `pip install pytest` leaves
+  `pytest` importable but every actual test run failing immediately with
+  argparse's "unrecognized arguments: -n" before a single test collects —
+  reported here as a false "test dependency ready", so `goal -a -y` moved
+  on to running tests and then failed with a confusing, unrelated-looking
+  error (2026-07-06 incident: this silently broke `goal -a -y` for
+  `code2llm` after a plain `uv sync` stripped `pytest-xdist`, which
+  `pyproject.toml`'s own `addopts = "-n auto"` required). Fixed by adding
+  `_pytest_addopts_satisfied()` — a `pytest --collect-only` smoke test — as
+  a second readiness gate; on failure, escalates from a bare
+  `pip install pytest` to a full `pip install -e .[dev]` before
+  re-verifying. Verified: 9 new tests across
+  `tests/test_project_bootstrap.py::TestPythonTestDependency` (5, one
+  updated) and the new
+  `tests/test_bootstrap_installer_python_test_dependency.py` (4, covering
+  the previously-untested `bootstrap/installer.py` duplicate). Full suite
+  (405 tests) passes.
 - `run_tests()` (`goal/cli/tests.py`) caught any exception raised while
   running a project type's tests with a bare `except Exception:
   success = False` — no message, no project type, no traceback. If the
@@ -48,6 +71,20 @@
   `setuptools`, not Poetry) — its name/version/dependencies/scripts had drifted out of
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
+
+## [2.1.270] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_bootstrap_installer_python_test_dependency.py
+- Update tests/test_project_bootstrap.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
 
 ## [2.1.269] - 2026-07-05
 

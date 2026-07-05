@@ -391,8 +391,9 @@ class TestPythonTestDependency:
     def test_installs_missing_pytest(self, tmp_path):
         with mock.patch("subprocess.run") as mock_run:
             mock_run.side_effect = [
-                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),
-                mock.MagicMock(returncode=0, stdout="", stderr=""),
+                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),  # import fails
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # pip install pytest
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # addopts check after install
             ]
 
             assert (
@@ -412,6 +413,105 @@ class TestPythonTestDependency:
             "install",
             "pytest",
         ]
+        assert mock_run.call_args_list[2].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pytest",
+            "--collect-only",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+        ]
+        assert mock_run.call_count == 3
+
+    def test_pytest_importable_but_addopts_broken_triggers_dev_extras_reinstall(
+        self, tmp_path
+    ):
+        """2026-07-06 regression: `import pytest` succeeding is not enough --
+        pyproject.toml's own `addopts` (e.g. `-n auto`) can need a plugin
+        that lives under [project.optional-dependencies] dev, which a bare
+        `uv sync`/`pip install pytest` never installs. Must escalate to a
+        full editable+dev reinstall, then re-verify before reporting ready.
+        """
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=0, stdout="9.0.0", stderr=""),  # import pytest OK
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: broken
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # pip install pytest (no-op fix)
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: still broken
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # dev-extras reinstall
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # addopts check: fixed
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/python3", "pytest")
+                is True
+            )
+
+        assert mock_run.call_args_list[4].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pip",
+            "install",
+            "-e",
+            ".[dev]",
+        ]
+        assert mock_run.call_count == 6
+
+    def test_addopts_still_broken_after_dev_extras_reinstall_reports_failure(
+        self, tmp_path
+    ):
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=0, stdout="9.0.0", stderr=""),  # import pytest OK
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: broken
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # pip install pytest (no-op fix)
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: still broken
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # dev-extras reinstall
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: still broken even after dev extras
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/python3", "pytest")
+                is False
+            )
+
+    def test_already_installed_pytest_with_working_addopts_is_fast_path(self, tmp_path):
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=0, stdout="9.0.0", stderr=""),  # import pytest OK
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # addopts smoke test OK
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/python3", "pytest")
+                is True
+            )
+        assert mock_run.call_count == 2
+
+    def test_non_pytest_test_dep_skips_addopts_check(self, tmp_path):
+        """jest/rspec/etc. aren't Python pytest plugins -- the addopts smoke
+        test only makes sense for test_dep == 'pytest'."""
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=0, stdout="1.0.0", stderr=""),
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/node", "jest")
+                is True
+            )
+        assert mock_run.call_count == 1
 
 
 # ---------------------------------------------------------------------------

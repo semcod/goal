@@ -418,6 +418,28 @@ def refresh_test_dependencies(
         _ensure_python_test_dependency(project_dir, python_bin, test_dep)
 
 
+def _pytest_addopts_satisfied(project_dir: Path, python_bin: str) -> bool:
+    """Check pytest can actually collect, not just import.
+
+    `import pytest` succeeding doesn't mean pytest can run: pyproject.toml's
+    own `addopts` (e.g. `-n auto`) can require a plugin (pytest-xdist) that
+    lives under `[project.optional-dependencies] dev` rather than being a
+    hard dependency. A bare uv/pip sync that skips extras leaves `pytest`
+    importable but every actual test run failing with argparse's
+    "unrecognized arguments" before a single test collects -- reported here
+    as a false "test dependency ready" (2026-07-06: code2llm's `-n auto`
+    addopts silently broke `goal -a -y` this way after a plain `uv sync`).
+    """
+    probe = subprocess.run(
+        [python_bin, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
+        capture_output=True,
+        text=True,
+        cwd=str(project_dir),
+        timeout=60,
+    )
+    return "unrecognized arguments" not in probe.stderr
+
+
 def _ensure_python_test_dependency(
     project_dir: Path, python_bin: str, test_dep: Optional[str]
 ) -> bool:
@@ -425,13 +447,16 @@ def _ensure_python_test_dependency(
     if not test_dep:
         return True
 
+    def addopts_ok() -> bool:
+        return test_dep != "pytest" or _pytest_addopts_satisfied(project_dir, python_bin)
+
     check_result = subprocess.run(
         [python_bin, "-c", f"import {test_dep}; print({test_dep}.__version__)"],
         capture_output=True,
         text=True,
         cwd=str(project_dir),
     )
-    if check_result.returncode == 0:
+    if check_result.returncode == 0 and addopts_ok():
         version = check_result.stdout.strip()
         if version:
             click.echo(
@@ -448,6 +473,27 @@ def _ensure_python_test_dependency(
         text=True,
         cwd=str(project_dir),
     )
+    if install_result.returncode == 0 and not addopts_ok():
+        # pytest itself is fine, but the project's own addopts still can't
+        # run -- a required plugin lives in a dev/optional extras group
+        # that the bare install above doesn't pull in. Pull the full group.
+        install_result = subprocess.run(
+            [python_bin, "-m", "pip", "install", "-e", ".[dev]"],
+            capture_output=True,
+            text=True,
+            cwd=str(project_dir),
+        )
+        if install_result.returncode == 0 and not addopts_ok():
+            click.echo(
+                click.style(
+                    f"  ⚠ {test_dep} installed but the project's own pytest addopts "
+                    "still fail to run (check for a missing plugin under "
+                    "[project.optional-dependencies] in pyproject.toml)",
+                    fg="yellow",
+                )
+            )
+            return False
+
     if install_result.returncode != 0:
         click.echo(
             click.style(

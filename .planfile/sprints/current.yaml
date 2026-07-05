@@ -738,21 +738,41 @@ sprint:
       description: goal/recovery/manager.py auto-stash guard (commit in repo, tests/test_recovery_preserves_work.py)
         is unpublished; PyPI 2.1.264 still destroys uncommitted work on recovery reset
         --hard. Bump + publish.
+      execution:
+        attempt: 0
+        finished_at: '2026-07-05T22:18:16.834419Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T22:18:16.834951+00:00'
       id: STARTER-016
       labels:
       - release
       name: 'Release: publish reset-hard auto-stash fix'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-07-03T20:23:31.133362Z'
         tool: claude-session
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-03T20:23:31.147020Z'
+      updated_at: '2026-07-05T22:18:16.834915+00:00'
     STARTER-017:
       blocked_by: []
       blocks: []
