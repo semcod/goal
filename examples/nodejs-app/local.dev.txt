@@ -1,0 +1,8 @@
+# local.dev.txt — locally developed dependencies of this project (generated 2026-07-04)
+# by ~/github/local.dev.sh — DO NOT EDIT; see ~/github/local.dev.md
+# project: example-nodejs-app 1.0.0 (js) at /home/tom/github/semcod/goal/examples/nodejs-app
+# deps declared: 6 | with local source: 0
+
+## LOCAL DEPS: none — all dependencies are external
+
+## EXTERNAL DEPS (no local source, 6): @babel/core, @babel/preset-env, eslint, express, jest, prettier

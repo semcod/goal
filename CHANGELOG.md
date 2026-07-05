@@ -1,3 +1,46 @@
+## [Unreleased]
+
+### Fixed
+- `_resolve_root_python()` (used to run `goal test`/`goal push`/`goal -a`) checked the
+  globally activated `VIRTUAL_ENV` before the current project's own `.venv`/`venv`/`env`.
+  A virtualenv left active from a different, unrelated project (e.g. after `cd`-ing away
+  from it without deactivating) silently made `goal` run the current project's test suite
+  with the wrong interpreter — missing dependencies, false failures, or (worse) tests
+  quietly passing against the wrong codebase. Now the project's own local venv always
+  wins; `VIRTUAL_ENV` and `sys.executable` remain as fallbacks when no local venv exists.
+  Verified against a real repo with a hostile `VIRTUAL_ENV` pointing at an unrelated
+  project's venv — `_resolve_root_python()` now correctly resolves the current project's
+  own interpreter. `_active_venv_python()`, now unused, was removed.
+
+### Chores
+- Removed a stale, unused `[tool.poetry]` section from `pyproject.toml` (build backend is
+  `setuptools`, not Poetry) — its name/version/dependencies/scripts had drifted out of
+  sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
+  and could mislead anyone editing dependencies there, believing it had any effect.
+
+## [2.1.267] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_push_e2e.py
+
+### Other
+- Update .planfile/config.yaml
+- Update .planfile/config.yaml.fast.json
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+- Update VERSION
+- Update examples/go-project/local.dev.txt
+- Update examples/my-new-project/local.dev.txt
+- Update examples/nodejs-app/local.dev.txt
+- Update examples/python-package/local.dev.txt
+- Update examples/rust-crate/local.dev.txt
+- ... and 2 more files
+
 ## [2.1.253] - 2026-06-18
 
 ### Added

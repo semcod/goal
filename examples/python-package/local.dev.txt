@@ -1,0 +1,8 @@
+# local.dev.txt — locally developed dependencies of this project (generated 2026-07-04)
+# by ~/github/local.dev.sh — DO NOT EDIT; see ~/github/local.dev.md
+# project: example-python-package 0.1.0 (python) at /home/tom/github/semcod/goal/examples/python-package
+# deps declared: 7 | with local source: 0
+
+## LOCAL DEPS: none — all dependencies are external
+
+## EXTERNAL DEPS (no local source, 7): black, build, click, flake8, pytest, pytest-cov, twine

@@ -725,7 +725,6 @@ class TestPushWorkflowE2E:
 
         with (
             patch("goal.cli.tests._find_python_test_dirs", return_value=[]),
-            patch("goal.cli.tests._active_venv_python", return_value=None),
             patch(
                 "goal.cli.tests._find_python_bin",
                 return_value="/tmp/project/.venv/bin/python",

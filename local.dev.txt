@@ -1,0 +1,12 @@
+# local.dev.txt — locally developed dependencies of this project (generated 2026-07-04)
+# by ~/github/local.dev.sh — DO NOT EDIT; see ~/github/local.dev.md
+# project: goal 2.1.266 (python) at /home/tom/github/semcod/goal
+# deps declared: 12 | with local source: 4
+
+## LOCAL DEPS  (dep | required | local source (version) | installed | status)
+clickmd | >=0.1.0 | /home/tom/github/semcod/clickmd (1.1.15) | 1.1.14 non-editable | STALE-INSTALL (local 1.1.15) -> fix: pip install -e /home/tom/github/semcod/clickmd  [pyproject.toml]
+costs | >=0.1.53 | /home/tom/github/semcod/costs (0.1.53) | 0.1.53 non-editable | NON-EDITABLE -> fix: pip install -e /home/tom/github/semcod/costs  [pyproject.toml]
+nfo | >=0.2.22 | /home/tom/github/semcod/nfo (0.2.22) | 0.2.20 non-editable | STALE-INSTALL (local 0.2.22) -> fix: pip install -e /home/tom/github/semcod/nfo  [pyproject.toml[nfo]]
+pfix | >=0.1.60 | /home/tom/github/semcod/pfix (0.1.76) | 0.1.73 non-editable | STALE-INSTALL (local 0.1.76) -> fix: pip install -e /home/tom/github/semcod/pfix  [pyproject.toml[dev]]
+
+## EXTERNAL DEPS (no local source, 8): PyYAML, build, click, pytest, tomlkit, tox, twine, typer

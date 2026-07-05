@@ -40,17 +40,6 @@ def _get_project_strategy(config: object, project_type: str) -> dict:
     return {}
 
 
-def _active_venv_python() -> Optional[str]:
-    """Return active virtualenv Python path when VIRTUAL_ENV is set."""
-    venv = os.environ.get("VIRTUAL_ENV")
-    if not venv:
-        return None
-    candidate = Path(venv) / "bin" / "python"
-    if candidate.exists():
-        return str(candidate)
-    return None
-
-
 def _resolve_project_python(project_root: Optional[Path], fallback_python: str) -> str:
     """Resolve Python interpreter for a subproject, preferring its own virtualenv."""
     if not project_root:
@@ -281,10 +270,15 @@ def _run_tests_in_subdirs(project_type: str, base_cmd: List[str]) -> bool:
 
 
 def _resolve_root_python() -> str:
-    """Resolve python executable for root test run."""
-    active_python = _active_venv_python()
-    if active_python:
-        return active_python
+    """Resolve python executable for root test run.
+
+    Prefers this project's own virtualenv (.venv/venv/env under the current
+    directory) over a globally activated VIRTUAL_ENV, which may belong to a
+    different, unrelated project when the caller's shell has one activated
+    (e.g. from working in another repo earlier in the session). Falling back
+    to VIRTUAL_ENV, then sys.executable, is already handled by
+    _find_python_bin when no local venv exists.
+    """
     detected_python = Path(_find_python_bin(Path.cwd()))
     if not detected_python.is_absolute():
         detected_python = (Path.cwd() / detected_python).resolve()

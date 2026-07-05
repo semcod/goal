@@ -468,56 +468,53 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-11T11:02:45.200039+00:00'
-      description: "BLOCKED: Strict gate implemented (=== Universal Quality Gates\
-        \ (strict) ===\n1. Running project tests...\n........................................................................\
-        \ [ 23%]\n......................................................s.................\
-        \ [ 47%]\n........................................................................\
-        \ [ 71%]\n........................................................................\
-        \ [ 95%]\n...s...........                                                \
-        \          [100%]\n=============================== warnings summary ===============================\n\
-        ../../../.local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:247\n\
-        \  /home/tom/.local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:247:\
-        \ PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\"\
-        \ is unset.\n  The event loop scope for asynchronous fixtures will default\
-        \ to the fixture caching scope. Future versions of pytest-asyncio will default\
-        \ the loop scope for asynchronous fixtures to function scope. Set the default\
-        \ fixture loop scope explicitly in order to avoid unexpected behavior in the\
-        \ future. Valid fixture loop scopes are: \"function\", \"class\", \"module\"\
-        , \"package\", \"session\"\n  \n    warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))\n\
-        \n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n\
-        301 passed, 2 skipped, 1 warning in 55.72s\n✅ tests passed\n2. Running TestQL\
-        \ scenarios (optional)...\nℹ️ no testql scenarios\n3. Running WUP status (optional)...\n\
-        \U0001F4CA WUP Status  goal  updated 13:05:59\n✅ wup status ok\n4. Running\
-        \ Regix gates (required when configured)...\n✗ 6 hard-gate violation(s):\n\
-        \  mi: 19.69243531068088 (threshold: ≥ 20.0)\n  cc: 24 (threshold: ≤ 15.0)\n\
-        \  mi: 15.62975100410891 (threshold: ≥ 20.0)\n  mi: 11.29424393106357 (threshold:\
-        \ ≥ 20.0)\n  mi: 7.607491894136811 (threshold: ≥ 20.0)\n  mi: 15.58098339430818\
-        \ (threshold: ≥ 20.0)\n⚠ 61 target-gate miss(es):\n  cc: 14 (target: ≤ 10.0)\n\
-        \  cc: 11 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 14 (target: ≤\
-        \ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 12 (target:\
-        \ ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 13\
-        \ (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n\
-        \  cc: 14 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 11 (target: ≤\
-        \ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 13 (target:\
-        \ ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 13\
-        \ (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  mi: 23.49067366831615 (target:\
-        \ ≥ 30.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  mi: 21.29672703728157\
-        \ (target: ≥ 30.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n\
-        \  cc: 12 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target: ≤\
-        \ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  mi: 29.16972721964641 (target: ≥ 30.0)\n\
-        \  cc: 11 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 14 (target: ≤\
-        \ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target:\
-        \ ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 11\
-        \ (target: ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n\
-        \  cc: 11 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target: ≤\
-        \ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target:\
-        \ ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 14\
-        \ (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n\
-        \  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 12 (target: ≤\
-        \ 10.0)\n  mi: 27.403146949442945 (target: ≥ 30.0)\n  cc: 11 (target: ≤ 10.0)\n\
-        \  cc: 12 (target: ≤ 10.0) + scripts/koru_verify_ci.sh), but regix hard gates\
-        \ currently fail (6 violations). Cannot mark done until baseline is improved\
-        \ or thresholds adjusted."
+      description: "BLOCKED: Strict gate implemented (=== Universal Quality Gates
+        (strict) ===\n1. Running project tests...\n........................................................................
+        [ 23%]\n......................................................s.................
+        [ 47%]\n........................................................................
+        [ 71%]\n........................................................................
+        [ 95%]\n...s...........                                                          [100%]\n===============================
+        warnings summary ===============================\n../../../.local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:247\n
+        \ /home/tom/.local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:247:
+        PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\"
+        is unset.\n  The event loop scope for asynchronous fixtures will default to
+        the fixture caching scope. Future versions of pytest-asyncio will default
+        the loop scope for asynchronous fixtures to function scope. Set the default
+        fixture loop scope explicitly in order to avoid unexpected behavior in the
+        future. Valid fixture loop scopes are: \"function\", \"class\", \"module\",
+        \"package\", \"session\"\n  \n    warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))\n\n--
+        Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n301
+        passed, 2 skipped, 1 warning in 55.72s\n✅ tests passed\n2. Running TestQL
+        scenarios (optional)...\nℹ️ no testql scenarios\n3. Running WUP status (optional)...\n\U0001F4CA
+        WUP Status  goal  updated 13:05:59\n✅ wup status ok\n4. Running Regix gates
+        (required when configured)...\n✗ 6 hard-gate violation(s):\n  mi: 19.69243531068088
+        (threshold: ≥ 20.0)\n  cc: 24 (threshold: ≤ 15.0)\n  mi: 15.62975100410891
+        (threshold: ≥ 20.0)\n  mi: 11.29424393106357 (threshold: ≥ 20.0)\n  mi: 7.607491894136811
+        (threshold: ≥ 20.0)\n  mi: 15.58098339430818 (threshold: ≥ 20.0)\n⚠ 61 target-gate
+        miss(es):\n  cc: 14 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 11
+        (target: ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc:
+        13 (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n
+        \ cc: 13 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 12 (target: ≤
+        10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 11 (target:
+        ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 14 (target:
+        ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 12 (target:
+        ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  mi: 23.49067366831615
+        (target: ≥ 30.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  mi:
+        21.29672703728157 (target: ≥ 30.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 14 (target:
+        ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target:
+        ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  mi: 29.16972721964641 (target: ≥ 30.0)\n
+        \ cc: 11 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 14 (target: ≤
+        10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target:
+        ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 11 (target:
+        ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 11 (target:
+        ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 11 (target:
+        ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  cc: 13 (target:
+        ≤ 10.0)\n  cc: 13 (target: ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 11 (target:
+        ≤ 10.0)\n  cc: 14 (target: ≤ 10.0)\n  cc: 11 (target: ≤ 10.0)\n  cc: 12 (target:
+        ≤ 10.0)\n  cc: 12 (target: ≤ 10.0)\n  mi: 27.403146949442945 (target: ≥ 30.0)\n
+        \ cc: 11 (target: ≤ 10.0)\n  cc: 12 (target: ≤ 10.0) + scripts/koru_verify_ci.sh),
+        but regix hard gates currently fail (6 violations). Cannot mark done until
+        baseline is improved or thresholds adjusted."
       execution:
         attempt: 0
         max_attempts: 1
@@ -651,3 +648,74 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-11T12:35:08.407093'
+    STARTER-014:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T20:23:30.181141Z'
+      description: '2026-07-03: goal printed ''Running tests in 5 subproject(s)''
+        then ''Tests failed. Aborting'' with every visible subproject log green —
+        no culprit named. Print ''failed in: PATH (exit N)'' plus the failing runner''s
+        tail. Cost: an hour of manual bisection per incident.'
+      files: []
+      history: []
+      id: STARTER-014
+      labels:
+      - ux
+      name: Name the failing subproject in test aggregation
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-07-03T20:23:30.167085Z'
+        tool: claude-session
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T20:23:30.181146Z'
+    STARTER-015:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T20:23:30.678052Z'
+      description: 'goal commits a snapshot of a tree that concurrent agents/loops
+        may be editing mid-run (2026-07-03: commit a498ff9 in semcod/koru landed with
+        19 red tests authored mid-flight by another process). Compare git status hash
+        before/after the test phase; on drift warn and re-run or skip commit.'
+      files: []
+      history: []
+      id: STARTER-015
+      labels:
+      - safety
+      name: Tree-stability check around test/commit phases
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T20:23:30.672019Z'
+        tool: claude-session
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T20:23:30.678058Z'
+    STARTER-016:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T20:23:31.147015Z'
+      description: goal/recovery/manager.py auto-stash guard (commit in repo, tests/test_recovery_preserves_work.py)
+        is unpublished; PyPI 2.1.264 still destroys uncommitted work on recovery reset
+        --hard. Bump + publish.
+      files: []
+      history: []
+      id: STARTER-016
+      labels:
+      - release
+      name: 'Release: publish reset-hard auto-stash fix'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-07-03T20:23:31.133362Z'
+        tool: claude-session
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T20:23:31.147020Z'

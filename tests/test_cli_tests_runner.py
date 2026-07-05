@@ -67,7 +67,10 @@ def test_ensure_pytest_for_project_tries_multiple_install_strategies():
     assert calls[3] == ["/usr/bin/python3", "-c", "import pytest"]
 
 
-def test_active_venv_python_is_preferred_for_root_run(monkeypatch):
+def test_local_venv_preferred_over_stale_active_venv_for_root_run(monkeypatch):
+    """A VIRTUAL_ENV left active from an unrelated project must not override
+    the current project's own venv, or `goal test`/`goal push` silently runs
+    the wrong project's tests with the wrong interpreter."""
     monkeypatch.setenv("VIRTUAL_ENV", "/tmp/venv-active")
 
     with (
@@ -83,10 +86,10 @@ def test_active_venv_python_is_preferred_for_root_run(monkeypatch):
 
         assert cli_tests.run_tests(["python"]) is True
 
-    mock_find_python_bin.assert_not_called()
+    mock_find_python_bin.assert_called_once()
     commands = [call.args[0] for call in mock_run.call_args_list]
-    assert ["/tmp/venv-active/bin/python", "-c", "import pytest"] in commands
-    assert ["/tmp/venv-active/bin/python", "-m", "pytest"] in commands
+    assert ["/tmp/other/.venv/bin/python", "-c", "import pytest"] in commands
+    assert ["/tmp/other/.venv/bin/python", "-m", "pytest"] in commands
 
 
 def test_run_tests_uses_configured_python_strategy_and_skips_subdir_scan():
@@ -143,10 +146,13 @@ def test_rewrite_bash_pytest_for_uv_converts_goal_yaml_style_command():
 
 
 def test_build_python_test_command_prefers_venv_pytest_when_importable(monkeypatch):
-    monkeypatch.setenv("VIRTUAL_ENV", "/tmp/venv-active")
+    monkeypatch.delenv("VIRTUAL_ENV", raising=False)
 
     with (
-        patch("goal.cli.tests.Path.exists", return_value=True),
+        patch(
+            "goal.cli.tests._find_python_bin",
+            return_value="/tmp/project/.venv/bin/python",
+        ),
         patch("goal.cli.tests._pytest_importable", return_value=True),
         patch("shutil.which", return_value="/usr/bin/uv"),
     ):
@@ -154,9 +160,9 @@ def test_build_python_test_command_prefers_venv_pytest_when_importable(monkeypat
             "pytest tests/ -v", "pytest tests/ -v"
         )
 
-    assert cmd[:3] == ["/tmp/venv-active/bin/python", "-m", "pytest"]
+    assert cmd[:3] == ["/tmp/project/.venv/bin/python", "-m", "pytest"]
     assert use_subprocess is True
-    assert python_bin == "/tmp/venv-active/bin/python"
+    assert python_bin == "/tmp/project/.venv/bin/python"
 
 
 def test_get_test_execution_details_and_planfile_update(tmp_path, monkeypatch):
