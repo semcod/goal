@@ -116,18 +116,44 @@ def _coerce_python_strategy_to_project_pytest(
     return None
 
 
+_FAILURE_TAIL_LINES = 15
+
+
+def _tail(text: Optional[str], n: int = _FAILURE_TAIL_LINES) -> str:
+    """Return the last ``n`` lines of ``text`` (the runner's tail).
+
+    Test runners (pytest, jest, ...) emit collection output and progress dots
+    first and the actual failure summary last, so the tail is what points at
+    the real error — the head is usually all green.
+    """
+    if not text:
+        return ""
+    return "\n".join(text.rstrip().split("\n")[-n:])
+
+
 def _display_test_error(
     result: subprocess.CompletedProcess, test_dir: str, project_type: str
 ) -> None:
-    """Display test failure output."""
-    click.echo(click.style(f"\n  ❌ Tests failed in {test_dir}/", fg="red"))
-    if result.stdout:
-        click.echo(click.style("  stdout:", fg="yellow"))
-        for line in result.stdout.strip().split("\n")[:10]:
+    """Display a subproject test failure.
+
+    Names the failing path and exit code up front, then prints the runner's
+    tail (stdout/stderr) so the culprit is obvious without manual bisection.
+    """
+    exit_code = getattr(result, "returncode", None)
+    exit_suffix = f" (exit {exit_code})" if exit_code is not None else ""
+    click.echo(
+        click.style(f"\n  ❌ failed in: {test_dir}{exit_suffix}", fg="red", bold=True)
+    )
+
+    stdout_tail = _tail(result.stdout)
+    if stdout_tail:
+        click.echo(click.style("  stdout (tail):", fg="yellow"))
+        for line in stdout_tail.split("\n"):
             click.echo(f"    {line}")
-    if result.stderr:
-        click.echo(click.style("  stderr:", fg="yellow"))
-        for line in result.stderr.strip().split("\n")[:10]:
+    stderr_tail = _tail(result.stderr)
+    if stderr_tail:
+        click.echo(click.style("  stderr (tail):", fg="yellow"))
+        for line in stderr_tail.split("\n"):
             click.echo(f"    {line}")
     if project_type == "nodejs":
         if not (Path(test_dir) / "node_modules").exists():
@@ -437,8 +463,16 @@ def run_tests(
         try:
             if not _run_project_type_tests(ptype, config, markdown=markdown):
                 success = False
-        except Exception:
+        except Exception as e:
             success = False
+            click.echo(
+                click.style(
+                    f"\n  ❌ failed in: {ptype} (exception before any test ran: "
+                    f"{type(e).__name__}: {e})",
+                    fg="red",
+                    bold=True,
+                )
+            )
 
     return success
 

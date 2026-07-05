@@ -220,3 +220,7 @@ __marimo__/
 
 # koru runtime artefacts (generated)
 .planfile/.koru/
+.koru/
+.cursor/
+.nlp2dsl/
+deps.json

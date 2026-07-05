@@ -657,21 +657,55 @@ sprint:
         then ''Tests failed. Aborting'' with every visible subproject log green —
         no culprit named. Print ''failed in: PATH (exit N)'' plus the failing runner''s
         tail. Cost: an hour of manual bisection per incident.'
+      execution:
+        attempt: 0
+        finished_at: '2026-07-05T21:46:00.898653Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T21:43:56.262294+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T21:46:00.282691+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T21:46:00.905319+00:00'
       id: STARTER-014
       labels:
       - ux
       name: Name the failing subproject in test aggregation
+      outputs:
+        artifacts: []
+        notes:
+        - 'Fixed run_tests()''s bare except Exception: success=False silently swallowing
+          pre-subprocess exceptions with zero diagnostic (goal/cli/tests.py). Now
+          prints failed-in message naming project type and exception. 2 new tests,
+          full suite (397) passes.'
       priority: high
       source:
         context: {}
         timestamp: '2026-07-03T20:23:30.167085Z'
         tool: claude-session
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-03T20:23:30.181146Z'
+      updated_at: '2026-07-05T21:46:00.905277+00:00'
     STARTER-015:
       acceptance_criteria: []
       blocked_by: []
@@ -719,3 +753,376 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-07-03T20:23:31.147020Z'
+    STARTER-017:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T21:31:50.225704+00:00'
+      description: '[OPERATOR] Kalibracja czatu OS injectora (auto)
+
+
+        brak kalibracji chatu dla auto — task koru:ide-os:calibrate IDE=auto
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=auto`'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: operator
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Kalibracja czatu OS injectora (auto)
+
+
+          brak kalibracji chatu dla auto — task koru:ide-os:calibrate IDE=auto
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=auto`'
+        source: koru task
+        timestamp: '2026-07-05T21:31:50.225704+00:00'
+      id: STARTER-017
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Kalibracja czatu OS injectora (auto)
+
+
+          brak kalibracji chatu dla auto — task koru:ide-os:calibrate IDE=auto
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=auto`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:os_calibrate
+      name: '[OPERATOR] Kalibracja czatu OS injectora (auto) brak kalibracji chatu
+        dla auto — task koru:ide-os:calibrate IDE=auto ...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-kalibracja-czatu-os-injectora-auto-brak-kalibracji-chatu-dla-auto-task-koru-ide-os-calibrate-ide-auto-...
+          detail: brak kalibracji chatu dla auto — task koru:ide-os:calibrate IDE=auto
+          input: '[OPERATOR] Kalibracja czatu OS injectora (auto)
+
+
+            brak kalibracji chatu dla auto — task koru:ide-os:calibrate IDE=auto
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=auto`'
+          step_id: os_calibrate
+          task_command: task koru:ide-os:calibrate IDE=auto
+        timestamp: '2026-07-05T21:31:50.225704+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T21:31:50.225704+00:00'
+    STARTER-018:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T21:31:55.464428+00:00'
+      description: '`project/analysis.toon.yaml` flags `core` in LAYERS as a large/hot
+        module (898 lines, 1 classes, 21 methods, CC=29). Extract cohesive submodules
+        around stable responsibilities and add focused regression tests before broad
+        edits.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `core` in LAYERS as a large/hot
+          module (898 lines, 1 classes, 21 methods, CC=29). Extract cohesive submodules
+          around stable responsibilities and add focused regression tests before broad
+          edits.'
+        source: koru task
+        timestamp: '2026-07-05T21:31:55.464428+00:00'
+      id: STARTER-018
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `core` in LAYERS as a large/hot
+          module (898 lines, 1 classes, 21 methods, CC=29). Extract cohesive submodules
+          around stable responsibilities and add focused regression tests before broad
+          edits.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - architecture
+      - large-module
+      - refactor
+      - scan
+      name: 'Split large module: core'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:code2llm_layer_hotspot:project/analysis.toon.yaml
+          evidence:
+            artifact:
+              mtime_ns: 1781910495055356957
+              path: project/analysis.toon.yaml
+              sha256: 19085ff4558ba74635d46c400206771373ef985b638b6a884222b767ec5ff1c9
+              size_bytes: 26474
+            kind: code2llm_analysis
+            regenerate_command: code2llm /home/tom/github/semcod/goal -f all -o /home/tom/github/semcod/goal/project
+              --no-chunk --exclude '*.md' --planfile-apply --planfile-source koru-project-discovery
+              --planfile-sprint current --planfile-project /home/tom/github/semcod/goal
+              --planfile-limit 20
+            schema: koru.ticket_evidence.v1
+            staleness_check: Regenerate the artifact and compare artifact.sha256 before
+              assuming this ticket still reflects the current code.
+          input: '`project/analysis.toon.yaml` flags `core` in LAYERS as a large/hot
+            module (898 lines, 1 classes, 21 methods, CC=29). Extract cohesive submodules
+            around stable responsibilities and add focused regression tests before
+            broad edits.'
+          signal: code2llm_layer_hotspot
+        timestamp: '2026-07-05T21:31:55.464428+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T21:31:55.464428+00:00'
+    STARTER-019:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T21:31:56.007268+00:00'
+      description: '`project/analysis.toon.yaml` reports `_detect_version_files` with
+        CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_detect_version_files` with
+          CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-07-05T21:31:56.007268+00:00'
+      id: STARTER-019
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_detect_version_files` with
+          CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _detect_version_files (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: koru-scan:code2llm_cc:project/analysis.toon.yaml
+          evidence:
+            artifact:
+              mtime_ns: 1781910495055356957
+              path: project/analysis.toon.yaml
+              sha256: 19085ff4558ba74635d46c400206771373ef985b638b6a884222b767ec5ff1c9
+              size_bytes: 26474
+            kind: code2llm_analysis
+            regenerate_command: code2llm /home/tom/github/semcod/goal -f all -o /home/tom/github/semcod/goal/project
+              --no-chunk --exclude '*.md' --planfile-apply --planfile-source koru-project-discovery
+              --planfile-sprint current --planfile-project /home/tom/github/semcod/goal
+              --planfile-limit 20
+            schema: koru.ticket_evidence.v1
+            staleness_check: Regenerate the artifact and compare artifact.sha256 before
+              assuming this ticket still reflects the current code.
+          input: '`project/analysis.toon.yaml` reports `_detect_version_files` with
+            CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-07-05T21:31:56.007268+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T21:31:56.007268+00:00'
+    STARTER-020:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T21:31:58.160525+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 11 high-CC
+        methods** (CC>15). Execute this refactor step; re-run the source.context.evidence.regenerate_command
+        to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 11 high-CC
+          methods** (CC>15). Execute this refactor step; re-run the source.context.evidence.regenerate_command
+          to verify.'
+        source: koru task
+        timestamp: '2026-07-05T21:31:58.160525+00:00'
+      id: STARTER-020
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 11 high-CC
+          methods** (CC>15). Execute this refactor step; re-run the source.context.evidence.regenerate_command
+          to verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 11 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: semcod:code2llm:refactor:project/analysis.toon.yaml
+          evidence:
+            artifact:
+              mtime_ns: 1781910495055356957
+              path: project/analysis.toon.yaml
+              sha256: 19085ff4558ba74635d46c400206771373ef985b638b6a884222b767ec5ff1c9
+              size_bytes: 26474
+            kind: code2llm_analysis
+            regenerate_command: code2llm /home/tom/github/semcod/goal -f all -o /home/tom/github/semcod/goal/project
+              --no-chunk --exclude '*.md' --planfile-apply --planfile-source koru-project-discovery
+              --planfile-sprint current --planfile-project /home/tom/github/semcod/goal
+              --planfile-limit 20
+            schema: koru.ticket_evidence.v1
+            staleness_check: Regenerate the artifact and compare artifact.sha256 before
+              assuming this ticket still reflects the current code.
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 11 high-CC
+            methods** (CC>15). Execute this refactor step; re-run the source.context.evidence.regenerate_command
+            to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-07-05T21:31:58.160525+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T21:31:58.160525+00:00'
+    STARTER-021:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T21:31:58.307017+00:00'
+      description: '`project/validation.toon.yaml` reports 0 error(s) and 181 warning(s).
+        Fix the highest-impact validation failures first, then re-run `vallm validate`
+        / the project validation task and refresh the report.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/validation.toon.yaml
+      history:
+      - action: created
+        message: '`project/validation.toon.yaml` reports 0 error(s) and 181 warning(s).
+          Fix the highest-impact validation failures first, then re-run `vallm validate`
+          / the project validation task and refresh the report.'
+        source: koru task
+        timestamp: '2026-07-05T21:31:58.307017+00:00'
+      id: STARTER-021
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/validation.toon.yaml` reports 0 error(s) and 181 warning(s).
+          Fix the highest-impact validation failures first, then re-run `vallm validate`
+          / the project validation task and refresh the report.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - vallm
+      - validation
+      - scan
+      name: Repair VALLM validation findings
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: koru-scan:vallm_validation:project/validation.toon.yaml
+          input: '`project/validation.toon.yaml` reports 0 error(s) and 181 warning(s).
+            Fix the highest-impact validation failures first, then re-run `vallm validate`
+            / the project validation task and refresh the report.'
+          signal: vallm_validation
+        timestamp: '2026-07-05T21:31:58.307017+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T21:31:58.307017+00:00'

@@ -1,6 +1,24 @@
 ## [Unreleased]
 
 ### Fixed
+- `run_tests()` (`goal/cli/tests.py`) caught any exception raised while
+  running a project type's tests with a bare `except Exception:
+  success = False` — no message, no project type, no traceback. If the
+  failure happened *before* any subprocess test ran (a bug in strategy/config
+  resolution, a missing key, a bad path) rather than in an actual test run,
+  every individual subproject's output stayed green (nothing ran to fail),
+  yet the top-level `goal -a` pipeline still printed "Aborting workflow
+  because tests failed." with zero indication of why (2026-07-03 incident:
+  "goal printed 'Running tests in 5 subproject(s)' then 'Tests failed.
+  Aborting' with every visible subproject log green — no culprit named," an
+  hour of manual bisection that found nothing because the real failure was
+  in aggregation, not in any subproject). Fixed by naming the failing
+  project type and the exception (type + message) at the point it's caught,
+  matching the detail `_display_test_error()` already gives for genuine
+  subprocess test failures. Verified: 2 new tests
+  (`test_run_tests_names_project_type_on_unexpected_exception`,
+  `test_run_tests_still_succeeds_when_no_exception`) in
+  `tests/test_cli_tests_runner.py`; full suite (397 tests) passes.
 - `changelog.py`'s `_find_unreleased_insert_pos()` returned `None` both when no
   `## [Unreleased]` section existed *and* when one existed but had no version heading
   below it yet (e.g. a hand-authored CHANGELOG.md before its first `goal` publish).
@@ -30,6 +48,21 @@
   `setuptools`, not Poetry) — its name/version/dependencies/scripts had drifted out of
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
+
+## [2.1.269] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+
+### Other
+- Update .gitignore
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
 
 ## [2.1.268] - 2026-07-05
 
