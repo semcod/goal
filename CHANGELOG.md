@@ -15,7 +15,8 @@
   editable install builds a Poetry project's core deps but not its dependency
   *groups* (e.g. `[tool.poetry.group.dev]` → `pytest-asyncio`), so async tests
   failed en masse with "async def functions are not natively supported". Now
-  bootstrap uses `install_smart()` (lockfile-aware: `poetry.lock` → poetry),
+  bootstrap uses `install_smart()` (lockfile-aware: `poetry.lock` → poetry) at
+  both broker call sites (`bootstrap/installer.py` and `project_bootstrap.py`),
   `PoetryManager.install_editable` uses a plain `poetry install` (installs the
   non-optional dev group) instead of the broken `--extras dev` (a group is not a
   PEP621 extra), and `isolated_env` sets `POETRY_VIRTUALENVS_CREATE=false` so
