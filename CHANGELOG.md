@@ -1,6 +1,15 @@
 ## [Unreleased]
 
 ### Fixed
+- **A PyPI wheel of goal silently reverted local source changes.** `pip install
+  goal` drops a real `site-packages/goal/` that shadows an editable/dev
+  install's `.pth` finder, so the `goal` command stopped running the checkout
+  (dev fixes appeared to have no effect). Now: the version banner detects a
+  source checkout (`goal.__file__` outside site-packages) and prints
+  `Goal vX (dev — source at …)` instead of nudging `pip install -U goal`;
+  a new `_warn_wheel_shadows_editable` warns when a wheel install coexists with
+  an editable one and points at `pip install -e <goal source>`; and
+  `project.sh` installs goal with `pip install -e .` instead of the PyPI wheel.
 - **A stray `uv.lock` shadowed a Poetry project's `poetry.lock`.** `detect_lockfile`
   returned the first lockfile in registry order (`uv.lock` before `poetry.lock`),
   so a leftover empty `uv.lock` in a Poetry project made bootstrap run

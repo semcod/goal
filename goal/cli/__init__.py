@@ -57,6 +57,67 @@ def _goal_update_command() -> str:
     return "pip install -U goal"
 
 
+def _goal_package_path() -> str:
+    """Absolute path to the imported goal package, or '' if unavailable."""
+    try:
+        return os.path.abspath(getattr(goal, "__file__", "") or "")
+    except Exception:
+        return ""
+
+
+def _is_dev_install() -> bool:
+    """True when goal is imported from a source checkout (editable/dev install).
+
+    A wheel install lives under ``site-packages``/``dist-packages``; an editable
+    or source-tree run resolves ``goal.__file__`` to the checkout instead.
+    """
+    path = _goal_package_path()
+    if not path:
+        return False
+    return "site-packages" not in path and "dist-packages" not in path
+
+
+def _editable_goal_markers(site_dir: str) -> list:
+    """Return pip/uv editable-install marker files for goal in ``site_dir``."""
+    from glob import glob
+
+    return (
+        glob(os.path.join(site_dir, "__editable__.goal-*.pth"))
+        + glob(os.path.join(site_dir, "__editable___goal_*_finder.py"))
+        + glob(os.path.join(site_dir, "goal.pth"))
+    )
+
+
+def _warn_wheel_shadows_editable() -> None:
+    """Warn when a wheel install of goal shadows an editable (dev) install.
+
+    ``pip install goal`` drops a real ``site-packages/goal/`` package that wins
+    over an editable ``.pth`` finder, so local source changes silently stop
+    taking effect. Detect that and point at the fix.
+    """
+    path = _goal_package_path()
+    marker = os.sep + "site-packages" + os.sep
+    if marker not in path:
+        return  # running from source (or an unusual layout) — nothing to warn
+    site_dir = path[: path.index(marker) + len(marker) - 1]
+    if not _editable_goal_markers(site_dir):
+        return
+    click.echo(
+        click.style(
+            f"⚠ goal is running from a wheel in {site_dir} but an editable/dev "
+            "install also exists — the wheel is shadowing your source changes.",
+            fg="yellow",
+        )
+    )
+    click.echo(
+        click.style(
+            "  Restore dev mode: pip install -e <goal source> "
+            "(e.g. pip install -e ./goal)",
+            fg="cyan",
+        )
+    )
+
+
 def _warn_goal_binary_mismatch() -> None:
     """Warn when a global goal package is used while a virtualenv is active."""
     venv = os.environ.get("VIRTUAL_ENV")
@@ -201,6 +262,15 @@ def _auto_update_goal(current_version: str, latest_version: str) -> bool:
 def _show_goal_version_banner() -> None:
     from goal import __version__
     from goal.version_validation import get_pypi_version
+
+    # In a source checkout, never nudge `pip install -U goal` — that would
+    # replace the dev version with a PyPI wheel and silently revert local work.
+    if _is_dev_install():
+        src = os.path.dirname(os.path.dirname(_goal_package_path()))
+        click.echo(
+            click.style(f"Goal v{__version__} (dev — source at {src})", fg="cyan", bold=True)
+        )
+        return
 
     latest = get_pypi_version("goal")
     if latest and latest != __version__:
@@ -458,6 +528,7 @@ def main(
     is_help_request = "--help" in sys.argv or "-h" in sys.argv or ctx.resilient_parsing
     if not is_help_request:
         _warn_goal_binary_mismatch()
+        _warn_wheel_shadows_editable()
         _show_goal_version_banner()
     _setup_nfo_logging(nfo_format, nfo_sink)
 
