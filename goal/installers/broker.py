@@ -112,13 +112,32 @@ class PackageManagerBroker:
         if not result.success and result.error:
             click.echo(f"   Error: {result.error}", err=True)
 
+    def _is_poetry_project(self, project: Path) -> bool:
+        """True when pyproject.toml declares Poetry (table or build backend)."""
+        pyproject = project / "pyproject.toml"
+        if not pyproject.exists():
+            return False
+        try:
+            text = pyproject.read_text(encoding="utf-8")
+        except OSError:
+            return False
+        return "[tool.poetry]" in text or "poetry.core.masonry.api" in text
+
     def detect_lockfile(self) -> Optional[str]:
-        """Detect which lockfile exists in project directory."""
+        """Detect which lockfile to use in the project directory.
+
+        When several lockfiles coexist (e.g. a stray empty ``uv.lock`` left in a
+        Poetry project), prefer the one matching the project's build backend so
+        a spurious ``uv.lock`` can't shadow the authoritative ``poetry.lock`` and
+        wipe the venv with an empty ``uv sync``.
+        """
         project = Path(self.project_dir)
-        for lockfile, manager in _LOCKFILE_MANAGERS.items():
-            if (project / lockfile).exists():
-                return lockfile
-        return None
+        present = [lf for lf in _LOCKFILE_MANAGERS if (project / lf).exists()]
+        if not present:
+            return None
+        if "poetry.lock" in present and self._is_poetry_project(project):
+            return "poetry.lock"
+        return present[0]
 
     def install_smart(
         self,

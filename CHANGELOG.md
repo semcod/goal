@@ -1,6 +1,14 @@
 ## [Unreleased]
 
 ### Fixed
+- **A stray `uv.lock` shadowed a Poetry project's `poetry.lock`.** `detect_lockfile`
+  returned the first lockfile in registry order (`uv.lock` before `poetry.lock`),
+  so a leftover empty `uv.lock` in a Poetry project made bootstrap run
+  `uv sync`, which reset the `.venv` to the empty lock and wiped its
+  dependencies (tests then failed with collection errors). `detect_lockfile` now
+  prefers `poetry.lock` when the project declares Poetry (`[tool.poetry]` or the
+  poetry build backend), so the authoritative lockfile wins regardless of a
+  spurious `uv.lock`.
 - **Poetry projects didn't get their dev/test dependencies installed.** Bootstrap
   called the package-manager broker's non-lockfile-aware `install()`, which
   always picks uv (highest priority) even when a `poetry.lock` is present. uv's
