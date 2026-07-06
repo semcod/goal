@@ -81,6 +81,43 @@ goal push --no-tag                           # No git tag
 goal push --dry-run                          # Preview
 ```
 
+### `goal all`
+
+Run the full `goal -a` workflow in **every git repository with uncommitted
+changes** under the given paths. Use it from a folder that contains many
+independent repositories (a "monorepo of repos"). Clean repositories and
+non-git directories are skipped.
+
+```bash
+goal all [PATHS...]
+```
+
+**Arguments:**
+- `PATHS...`: Directories or globs to sweep (default: `*` — all entries in the
+  current directory).
+
+**Behavior:**
+- Lists the matched dirty projects and asks a **single** batch confirmation
+  before running (skipped with `-y`/`--yes`, or with `--dry-run`).
+- Runs `goal -a` in each project as an isolated subprocess.
+- Continues past per-project failures; prints a succeeded/failed summary and
+  exits non-zero if any project failed.
+
+**Equivalent forms:**
+- `goal -a ./*` — combining `-a`/`--all` with path arguments routes to `goal all`.
+- `goal auto all`, `goal auto ./*`, `goal auto` — `auto` is a word-form of the
+  `-a` flag (so `goal auto all` == `goal -a all`, `goal auto` == `goal -a`).
+
+**Examples:**
+```bash
+goal all ./*                                 # Sweep every dirty sub-repo
+goal -a ./*                                  # Same, shorthand
+goal auto all                                # Same; defaults to * (all sub-folders)
+goal all ./* --dry-run                       # Preview, no commits/pushes
+goal all ./* -y                              # Skip the batch confirmation
+goal all packages/*                          # Only repos under packages/
+```
+
 ### `goal init`
 
 Initialize Goal in current repository.
