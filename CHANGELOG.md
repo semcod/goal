@@ -1,5 +1,15 @@
 ## [Unreleased]
 
+### Changed
+- **`no_package_source_changes` now commits & pushes docs/metadata instead of
+  leaving them uncommitted.** For registry projects where only docs/metadata
+  changed (README badge, `local.dev.txt`, lockfiles — often goal's own
+  generated output), goal skipped the version bump, commit, tag, and publish to
+  avoid version churn — but that left those staged changes uncommitted forever
+  and pushed nothing. Now goal still makes a plain commit and pushes it (no
+  bump, changelog, tag, or publish), so the working tree stays clean and the
+  changes reach the remote. `--force-publish` still forces a full release.
+
 ### Added
 - **Push auto-recovery in non-interactive mode.** When `goal -a` (e.g. inside a
   `goal all` sweep) fails to push because the remote moved under it (rejected /

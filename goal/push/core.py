@@ -657,10 +657,17 @@ def execute_push_workflow(
     if skip_release:
         click.echo(
             click.style(
-                f"⏭ Skipping version bump and commit (staying on v{current_version}) "
+                f"⏭ Skipping version bump and publish (staying on v{current_version}) "
                 "— no package source changes. Use --force-publish to release anyway.",
                 fg="yellow",
             )
+        )
+        # Still commit + push the docs/metadata changes (README badge,
+        # local.dev.txt, lockfiles — often goal's own generated output) so the
+        # working tree doesn't accumulate them uncommitted forever. This is a
+        # plain commit with NO version bump, changelog, tag, or publish.
+        _commit_without_release(
+            ctx_obj, commit_title, commit_body, commit_msg, message
         )
     else:
         _handle_commit_phase(
@@ -892,6 +899,33 @@ def _validate_staged_files(ctx_obj: Dict[str, Any], dry_run: bool, force: bool) 
                 "⚠️  Security validation bypassed with --force", fg="yellow", bold=True
             )
         )
+
+
+def _commit_without_release(
+    ctx_obj: Dict[str, Any],
+    commit_title: str,
+    commit_body: Optional[str],
+    commit_msg: str,
+    message: Optional[str],
+) -> None:
+    """Commit already-staged docs/metadata changes with no bump/tag/publish.
+
+    Used in ``skip_release`` mode so the working tree doesn't keep accumulating
+    goal's own generated docs/metadata (badges, lockfiles) as uncommitted noise.
+    """
+    from goal.cli import confirm
+
+    if not ctx_obj["yes"]:
+        if not confirm("Commit docs/metadata changes (no release)?"):
+            click.echo(click.style("  Skipping commit (user chose N).", fg="yellow"))
+            return
+    else:
+        click.echo(
+            click.style(
+                "🤖 AUTO: Committing docs/metadata, no release (--all mode)", fg="cyan"
+            )
+        )
+    handle_single_commit(commit_title, commit_body, commit_msg, message, ctx_obj["yes"])
 
 
 def _handle_commit_phase(
