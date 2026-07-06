@@ -12,13 +12,20 @@ class PoetryManager(AbstractPackageManager):
     binary = "poetry"
 
     def install_editable(self, extras: list[str]) -> InstallResult:
-        """Install package using poetry."""
-        # Poetry handles extras via install command
-        if extras:
-            extras_str = ",".join(extras)
-            cmd = ["poetry", "install", "--extras", extras_str]
-        else:
-            cmd = ["poetry", "install"]
+        """Install package and its dependency groups using poetry.
+
+        ``goal`` passes dependency *groups* (e.g. ``["dev"]``) — in Poetry those
+        are installed via ``--with``, NOT ``--extras`` (which are PEP621-style
+        optional extras and fail when handed a group name like ``dev``). A plain
+        ``poetry install`` already pulls the non-optional groups (dev included),
+        so it's the safe default; requested groups are added with ``--with``.
+        """
+        cmd = ["poetry", "install"]
+        # "dev" is installed by a plain `poetry install`; only pass --with for
+        # any additional groups to avoid "Group(s) not found" on missing groups.
+        extra_groups = [g for g in (extras or []) if g != "dev"]
+        if extra_groups:
+            cmd += ["--with", ",".join(extra_groups)]
         return self._run(cmd)
 
     def install_requirements(self, req_file: str) -> InstallResult:

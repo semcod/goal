@@ -39,6 +39,9 @@ def isolated_env(project_dir: Optional[str] = None) -> dict:
         env["VIRTUAL_ENV"] = venv
         bin_dir = os.path.join(venv, "bin")
         env["PATH"] = bin_dir + os.pathsep + env.get("PATH", "")
+        # Make Poetry install into this .venv instead of creating its own
+        # cache-managed environment (which would leave .venv without the deps).
+        env["POETRY_VIRTUALENVS_CREATE"] = "false"
     else:
         env.pop("VIRTUAL_ENV", None)
 

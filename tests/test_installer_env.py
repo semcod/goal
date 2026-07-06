@@ -18,6 +18,15 @@ def test_points_virtualenv_at_project_venv(tmp_path, monkeypatch):
     assert env["PATH"].startswith(str(project / ".venv" / "bin") + os.pathsep)
 
 
+def test_forces_poetry_into_project_venv(tmp_path):
+    """Poetry is told not to create its own env so installs land in .venv."""
+    (tmp_path / ".venv").mkdir()
+
+    env = isolated_env(str(tmp_path))
+
+    assert env["POETRY_VIRTUALENVS_CREATE"] == "false"
+
+
 def test_drops_conda_prefix(tmp_path, monkeypatch):
     """CONDA_PREFIX is always removed so conda base envs don't interfere."""
     (tmp_path / ".venv").mkdir()

@@ -1,6 +1,19 @@
 ## [Unreleased]
 
 ### Fixed
+- **Poetry projects didn't get their dev/test dependencies installed.** Bootstrap
+  called the package-manager broker's non-lockfile-aware `install()`, which
+  always picks uv (highest priority) even when a `poetry.lock` is present. uv's
+  editable install builds a Poetry project's core deps but not its dependency
+  *groups* (e.g. `[tool.poetry.group.dev]` → `pytest-asyncio`), so async tests
+  failed en masse with "async def functions are not natively supported". Now
+  bootstrap uses `install_smart()` (lockfile-aware: `poetry.lock` → poetry),
+  `PoetryManager.install_editable` uses a plain `poetry install` (installs the
+  non-optional dev group) instead of the broken `--extras dev` (a group is not a
+  PEP621 extra), and `isolated_env` sets `POETRY_VIRTUALENVS_CREATE=false` so
+  Poetry installs into the project's `.venv` rather than a cache-managed env.
+  Verified on a fixture Poetry project: goal selects poetry and its dev-group
+  dependency lands in the project `.venv`.
 - **Bootstrap installed project dependencies into the wrong virtualenv.** When
   `goal` was invoked from an activated venv (e.g. a monorepo-wide `venv/` shared
   across sibling repos), `uv pip install`/`pip install` honored the ambient
