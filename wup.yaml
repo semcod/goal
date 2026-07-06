@@ -88,3 +88,30 @@ web:
   endpoint_env: WUPBRO_ENDPOINT
   timeout_s: 2.0
   api_key: ''
+
+# BEGIN WUP MONITORING MANIFEST (auto-generated — do not edit; run: wup sync-testql --write)
+monitoring:
+  generated_at: '2026-07-06T08:04:25Z'
+  generated_by: wup sync-testql --write (or wup watch startup)
+  how_to_refresh: wup sync-testql . --write
+  probe_interval_s: 60
+  health_scenario: ''
+  base_url: (set testql.base_url or WUP_BASE_URL)
+  endpoint_discovery: true
+  scenario_dir: testql-scenarios
+  service_map_globs: []
+  docker_compose_files: []
+  semcod_tools:
+    enabled: false
+    tools: {}
+  wup_services: {}
+  docker_not_mapped_to_wup: []
+  troubleshooting:
+    probe_failed_check:
+    - Czy kontener z sekcji docker jest uruchomiony (docker ps)?
+    - Czy host_ports mapuje na URL w live_probes (np. 8100 vs 8202)?
+    - Czy błąd dotyczy proxy frontendu (/firmware na :8100) vs bezpośredniego :8202?
+    - 'Czy endpoint jest w live_probes — jeśli nie, uruchom: wup sync-testql . --write'
+    config_vs_runtime: Pole live_probes to faktyczne żądania HTTP WUP. Jeśli endpointu
+      tu nie ma, WUP go nie sprawdza — to błąd konfiguracji, nie aplikacji.
+# END WUP MONITORING MANIFEST

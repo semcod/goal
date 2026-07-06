@@ -72,6 +72,17 @@
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
 
+## [2.1.271] - 2026-07-06
+
+### Docs
+- Update README.md
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+- Update project/planfile-tickets.yaml
+- Update wup.yaml
+
 ## [2.1.270] - 2026-07-06
 
 ### Docs

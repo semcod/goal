@@ -141,6 +141,7 @@ def load_command_modules() -> None:
 
     for module_name in (
         ".push_cmd",
+        ".all_cmd",
         ".publish_cmd",
         ".utils_cmd",
         ".doctor_cmd",
@@ -323,25 +324,39 @@ class GoalGroup(click.Group):
             "--nfo-format",
             "--nfo-sink",
         }
-        has_subcommand = False
+        # Split the argv into option tokens (with their values) and bare
+        # positional tokens so we can tell "goal -a" from "goal -a ./foo ./bar".
+        opts: List[str] = []
+        positionals: List[str] = []
         skip_next = False
         for a in args:
             if skip_next:
+                opts.append(a)
                 skip_next = False
                 continue
             if a in _VALUE_OPTIONS:
+                opts.append(a)
                 skip_next = True
                 continue
             if a.startswith("-"):
+                opts.append(a)
                 continue
-            if a in known_cmds:
-                has_subcommand = True
-                break
+            positionals.append(a)
+
+        has_subcommand = any(p in known_cmds for p in positionals)
 
         if has_all_flag and not has_subcommand:
-            push_cmd = click.Group.get_command(self, ctx, "push")
-            if push_cmd is not None:
-                args = args + ["push"]
+            if positionals:
+                # `goal -a ./*` (or explicit dirs) → sweep those paths across
+                # every dirty sub-repo via the `all` command.
+                all_cmd = click.Group.get_command(self, ctx, "all")
+                if all_cmd is not None:
+                    args = opts + ["all"] + positionals
+            else:
+                # Bare `goal -a` → default to the single-repo push workflow.
+                push_cmd = click.Group.get_command(self, ctx, "push")
+                if push_cmd is not None:
+                    args = args + ["push"]
 
         return super().parse_args(ctx, args)
 

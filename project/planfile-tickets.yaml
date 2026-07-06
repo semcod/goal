@@ -6664,5 +6664,37 @@ tickets:
   files:
   - tests/test_project_doctor.py
   dedupe_key: test-optimization:tests.test_project_doctor.TestDoctorCommand:test_doctor_empty_dir
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_project_doctor.TestDoctorCommand.test_doctor_no_fix'
+  description: 'Test `tests.test_project_doctor.TestDoctorCommand.test_doctor_no_fix`
+    took 3.30s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_project_doctor.py
+  dedupe_key: test-optimization:tests.test_project_doctor.TestDoctorCommand:test_doctor_no_fix
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_clone_repo.TestCloneRepository.test_clone_failure_bad_remote'
+  description: 'Test `tests.test_clone_repo.TestCloneRepository.test_clone_failure_bad_remote`
+    took 1.80s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_clone_repo.py
+  dedupe_key: test-optimization:tests.test_clone_repo.TestCloneRepository:test_clone_failure_bad_remote
 applied: []
 skipped: []
