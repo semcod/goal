@@ -198,6 +198,12 @@ goal status
 # Release all
 goal --all
 
+# Sweep: run `goal -a` in every sub-repo that has uncommitted changes
+goal all ./*          # lists dirty sub-repos, asks once, runs goal -a in each
+goal -a ./*           # identical shorthand
+goal auto all         # word-form of -a; defaults to * (all sub-folders)
+goal all ./* --dry-run   # preview first (no commits/pushes)
+
 # Upgrade dependencies in all subprojects (auto-discovers manifests)
 goal -au
 

@@ -16,6 +16,7 @@ import click
 
 from goal.project_doctor import diagnose_and_report
 from goal.installers import PackageManagerBroker
+from goal.installers.env import isolated_env
 from goal.toml_validation import get_tomllib
 
 # Import from refactored bootstrap module for backward compatibility
@@ -385,11 +386,13 @@ def refresh_test_dependencies(
         )
 
         if has_uv:
+            proj_env = isolated_env(str(project_dir))
             check = subprocess.run(
                 ["uv", "run", "python", "-c", f"import {test_dep}"],
                 capture_output=True,
                 text=True,
                 cwd=str(project_dir),
+                env=proj_env,
             )
             if check.returncode == 0:
                 continue
@@ -404,6 +407,7 @@ def refresh_test_dependencies(
                 capture_output=True,
                 text=True,
                 cwd=str(project_dir),
+                env=proj_env,
             )
             if install.returncode != 0:
                 click.echo(

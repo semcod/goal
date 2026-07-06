@@ -169,10 +169,33 @@ goal --config staging.yaml push
 goal -c .goal/production.yaml --all
 ```
 
+## Monorepo Sweep — `goal all`
+
+When a folder holds many independent git repositories, `goal all` runs the full
+`goal -a` workflow in every sub-repo that has **uncommitted changes**. Clean
+repos and non-git folders are skipped.
+
+```bash
+# From the parent folder holding all your repos:
+goal all ./*          # sweep every dirty sub-repo (lists them, asks once)
+goal -a ./*           # identical shorthand: -a + paths ⇒ sweep
+goal auto all         # `auto` is a word-form of -a; defaults to * (all sub-folders)
+
+# Preview first, then run for real:
+goal all ./* --dry-run
+goal all ./* -y       # skip the batch confirmation
+```
+
+It prints the matched dirty projects, asks one confirmation (skipped with `-y`
+or `--dry-run`), runs `goal -a` in each project, continues past failures, and
+prints a succeeded/failed summary at the end. See
+[Command Reference → `goal all`](commands.md#goal-all).
+
 ## Tips
 
 1. **First time**: Run `goal init` to set up your project
 2. **Daily use**: Just run `goal` for interactive workflow
 3. **CI/CD**: Use `goal --all` for full automation
-4. **Preview**: Use `--dry-run` to check before committing
-5. **Customize**: Edit `goal.yaml` to fit your workflow
+4. **Monorepo of repos**: Use `goal all ./*` to sweep every dirty sub-repo
+5. **Preview**: Use `--dry-run` to check before committing
+6. **Customize**: Edit `goal.yaml` to fit your workflow

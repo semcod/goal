@@ -15,6 +15,7 @@ from goal.bootstrap.costs_badge import (
     _install_costs_requirement,
 )
 from goal.installers import PackageManagerBroker
+from goal.installers.env import isolated_env
 
 
 def _match_marker(base: Path, pattern: str) -> bool:
@@ -104,7 +105,12 @@ def _install_python_deps_legacy(
 
         click.echo(click.style(f"  Installing deps: {cmd}", fg="cyan"))
         result = subprocess.run(
-            cmd, shell=True, cwd=str(project_dir), capture_output=True, text=True
+            cmd,
+            shell=True,
+            cwd=str(project_dir),
+            capture_output=True,
+            text=True,
+            env=isolated_env(str(project_dir)),
         )
 
         if result.returncode != 0:
@@ -118,6 +124,7 @@ def _install_python_deps_legacy(
                     cwd=str(project_dir),
                     capture_output=True,
                     text=True,
+                    env=isolated_env(str(project_dir)),
                 )
 
             if result.returncode != 0:

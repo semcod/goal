@@ -1,5 +1,22 @@
 ## [Unreleased]
 
+### Fixed
+- **Bootstrap installed project dependencies into the wrong virtualenv.** When
+  `goal` was invoked from an activated venv (e.g. a monorepo-wide `venv/` shared
+  across sibling repos), `uv pip install`/`pip install` honored the ambient
+  `VIRTUAL_ENV` and installed a project's deps into that *outer* venv instead of
+  the project's own `.venv`. The outer venv accumulated editable installs of
+  every bootstrapped project while each project's `.venv` stayed incomplete —
+  then `goal` ran the project's tests with `.venv/bin/python` and they failed
+  with confusing `ModuleNotFoundError`s (e.g. `pyserial`, `yaml`, `httpx`
+  missing). Added `goal/installers/env.py::isolated_env`, which scopes
+  `VIRTUAL_ENV` to the project's `.venv` (and drops `CONDA_PREFIX`), and applied
+  it to every package-manager subprocess in `installers/managers/base.py`,
+  `bootstrap/installer.py`, and `project_bootstrap.py`. Installs now land in the
+  project's own `.venv` regardless of the active shell venv. Verified with a new
+  regression suite (`tests/test_installer_env.py`) and an end-to-end check that
+  an install runs into the project `.venv` while an outer venv stays clean.
+
 ### Added
 - `goal all [PATHS...]` — a monorepo sweep that runs the full `goal -a`
   workflow in every git repository with uncommitted changes under the given
@@ -87,6 +104,22 @@
   `setuptools`, not Poetry) — its name/version/dependencies/scripts had drifted out of
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
+
+## [2.1.275] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/examples.md
+- Update docs/usage.md
+- Update examples/monorepo/README.md
+
+### Test
+- Update tests/test_installer_env.py
+
+### Other
+- Update VERSION
 
 ## [2.1.273] - 2026-07-06
 
