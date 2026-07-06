@@ -1,5 +1,21 @@
 ## [Unreleased]
 
+### Added
+- `goal all [PATHS...]` — a monorepo sweep that runs the full `goal -a`
+  workflow in every git repository with uncommitted changes under the given
+  paths (directories or globs; defaults to `*`, i.e. every sub-directory of the
+  current folder). Clean repos and non-git directories are skipped. It prints
+  the list of matched dirty projects and asks for a single batch confirmation
+  before running (skipped only with an explicit `-y`/`--yes`, or `--dry-run`),
+  then runs `goal -a` in each as an isolated subprocess, continuing past
+  per-project failures and printing a succeeded/failed summary at the end.
+- `goal -a ./*` shorthand — when `-a`/`--all` is combined with one or more
+  path/glob arguments, `GoalGroup` routes the invocation to the new `all`
+  command, so `goal -a ./*` is equivalent to `goal all ./*`.
+- `auto` word-form of the `-a`/`--all` flag: a leading `auto` token makes
+  `goal auto ...` behave exactly like `goal -a ...` — `goal auto` → single-repo
+  push, `goal auto ./*` → sweep, `goal auto all` → the `all` command.
+
 ### Fixed
 - `_ensure_python_test_dependency()` (duplicated in `goal/project_bootstrap.py`
   and `goal/bootstrap/installer.py`) verified the Python test runner was
@@ -71,6 +87,15 @@
   `setuptools`, not Poetry) — its name/version/dependencies/scripts had drifted out of
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
+
+## [2.1.273] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Other
+- Update VERSION
 
 ## [2.1.271] - 2026-07-06
 

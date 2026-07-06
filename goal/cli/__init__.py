@@ -343,6 +343,16 @@ class GoalGroup(click.Group):
                 continue
             positionals.append(a)
 
+        # `auto` is a word-form of the -a/--all flag, so `goal auto ...` behaves
+        # exactly like `goal -a ...` (auto → push, auto ./* → sweep, auto all →
+        # the `all` command). Only a *leading* positional token counts.
+        auto_used = bool(positionals) and positionals[0] == "auto"
+        if auto_used:
+            positionals = positionals[1:]
+            has_all_flag = True
+            if "-a" not in opts and "--all" not in opts:
+                opts = ["-a"] + opts
+
         has_subcommand = any(p in known_cmds for p in positionals)
 
         if has_all_flag and not has_subcommand:
@@ -352,11 +362,17 @@ class GoalGroup(click.Group):
                 all_cmd = click.Group.get_command(self, ctx, "all")
                 if all_cmd is not None:
                     args = opts + ["all"] + positionals
+                elif auto_used:
+                    args = opts + positionals
             else:
                 # Bare `goal -a` → default to the single-repo push workflow.
                 push_cmd = click.Group.get_command(self, ctx, "push")
                 if push_cmd is not None:
-                    args = args + ["push"]
+                    args = (opts + ["push"]) if auto_used else (args + ["push"])
+        elif auto_used:
+            # `goal auto all [...]` → the -a we injected into `opts` must reach
+            # Click, so rebuild argv from the split tokens.
+            args = opts + positionals
 
         return super().parse_args(ctx, args)
 
