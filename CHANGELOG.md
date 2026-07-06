@@ -1,5 +1,14 @@
 ## [Unreleased]
 
+### Added
+- **Push auto-recovery in non-interactive mode.** When `goal -a` (e.g. inside a
+  `goal all` sweep) fails to push because the remote moved under it (rejected /
+  non-fast-forward), it now runs `git pull --rebase` and retries the push once
+  instead of failing the whole project; a rebase conflict aborts cleanly and
+  falls through to normal recovery. (PyPI 429 rate-limit handling on publish
+  already existed: retry backoff `[60, 120, 300]s` plus a GitHub Releases
+  fallback.)
+
 ### Fixed
 - **A PyPI wheel of goal silently reverted local source changes.** `pip install
   goal` drops a real `site-packages/goal/` that shadows an editable/dev
