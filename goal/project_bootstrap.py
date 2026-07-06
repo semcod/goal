@@ -670,7 +670,8 @@ def _install_python_deps_broker(
     """
     broker = PackageManagerBroker(str(project_dir))
     try:
-        result = broker.install(extras=extras, auto_install_uv=True)
+        # Lockfile-aware selection (poetry.lock → poetry, etc.); see broker.
+        result = broker.install_smart(extras=extras, auto_install_uv=True)
         return result.success
     except RuntimeError as e:
         click.echo(click.style(f"  ⚠  {e}", fg="yellow"))
