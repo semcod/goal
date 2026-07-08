@@ -224,3 +224,9 @@ __marimo__/
 .cursor/
 .nlp2dsl/
 deps.json
+.aider/
+.github/
+.planfile/
+.taskill/
+.venv_test/
+.wup/
