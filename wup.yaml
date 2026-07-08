@@ -91,7 +91,7 @@ web:
 
 # BEGIN WUP MONITORING MANIFEST (auto-generated — do not edit; run: wup sync-testql --write)
 monitoring:
-  generated_at: '2026-07-06T08:04:25Z'
+  generated_at: '2026-07-08T07:26:08Z'
   generated_by: wup sync-testql --write (or wup watch startup)
   how_to_refresh: wup sync-testql . --write
   probe_interval_s: 60
