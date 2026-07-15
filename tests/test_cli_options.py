@@ -170,6 +170,7 @@ def test_auto_update_goal_reports_diagnosis_after_persistent_crash(monkeypatch, 
     monkeypatch.setattr(
         goal_cli, "_diagnose_broken_python_env", lambda: "broken venv: mismatched pyvenv.cfg"
     )
+    monkeypatch.setattr(goal_cli, "_repair_broken_python_env", lambda: False)
 
     ok = goal_cli._auto_update_goal("1.0.0", "2.0.0")
 
@@ -177,6 +178,45 @@ def test_auto_update_goal_reports_diagnosis_after_persistent_crash(monkeypatch, 
     assert ok is False
     assert "signal 11" in out or "sygna" in out
     assert "broken venv: mismatched pyvenv.cfg" in out
+    assert "rm -rf" in out
+
+
+def test_auto_update_goal_repairs_env_and_retries_successfully(monkeypatch, capsys) -> None:
+    calls = []
+
+    def fake_run(cmd):
+        calls.append(cmd)
+        if len(calls) <= 2:
+            return _completed(-11)  # crash, then crash again with --no-cache-dir
+        return _completed(0)  # succeeds once the venv is repaired
+
+    monkeypatch.setattr(goal_cli, "_run_pip_update", fake_run)
+    monkeypatch.setattr(
+        goal_cli, "_diagnose_broken_python_env", lambda: "broken venv: mismatched pyvenv.cfg"
+    )
+    monkeypatch.setattr(goal_cli, "_repair_broken_python_env", lambda: True)
+
+    ok = goal_cli._auto_update_goal("1.0.0", "2.0.0")
+
+    out = capsys.readouterr().out
+    assert ok is True
+    assert len(calls) == 3
+    assert "Naprawiono" in out
+    assert "Successfully updated" in out
+
+
+def test_auto_update_goal_reports_failure_if_repair_does_not_fix_install(
+    monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr(goal_cli, "_run_pip_update", lambda cmd: _completed(-11, stderr="boom"))
+    monkeypatch.setattr(
+        goal_cli, "_diagnose_broken_python_env", lambda: "broken venv: mismatched pyvenv.cfg"
+    )
+    monkeypatch.setattr(goal_cli, "_repair_broken_python_env", lambda: True)
+
+    ok = goal_cli._auto_update_goal("1.0.0", "2.0.0")
+
+    assert ok is False
 
 
 def test_auto_update_goal_reports_stderr_for_normal_failure(monkeypatch, capsys) -> None:
@@ -226,6 +266,9 @@ def test_maybe_self_update_runs_without_prompt_when_yes(monkeypatch) -> None:
 
 
 def test_diagnose_broken_python_env_detects_version_mismatch(monkeypatch, tmp_path) -> None:
+    # goal_cli._diagnose_broken_python_env is goal.pyenv_health.diagnose (see
+    # tests/test_pyenv_health.py for the module's own thorough coverage);
+    # this only checks the CLI-level delegation still wires through sys.prefix.
     venv_dir = tmp_path / "venv"
     (venv_dir / "bin").mkdir(parents=True)
     (venv_dir / "bin" / "python3").write_text("")
@@ -233,6 +276,7 @@ def test_diagnose_broken_python_env_detects_version_mismatch(monkeypatch, tmp_pa
 
     monkeypatch.setattr(goal_cli.sys, "prefix", str(venv_dir))
     monkeypatch.setattr(goal_cli.sys, "base_prefix", "/usr")
+    monkeypatch.setattr("goal.pyenv_health._probe_version", lambda python_bin: "3.13.7")
 
     diagnosis = goal_cli._diagnose_broken_python_env()
 

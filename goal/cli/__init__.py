@@ -24,6 +24,8 @@ from goal.git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
 from goal.config import GoalConfig, ensure_config, init_config, load_config
 from goal.user_config import get_user_config, initialize_user_config, show_user_config
 from goal.cli_helpers import split_paths_by_type, stage_paths, confirm, strip_ansi
+from goal.pyenv_health import diagnose as _diagnose_broken_python_env
+from goal.pyenv_health import repair as _repair_broken_python_env
 
 
 DOCS_URL = "https://github.com/wronai/goal#readme"
@@ -221,57 +223,6 @@ def load_command_modules() -> None:
     _COMMAND_MODULES_LOADED = True
 
 
-def _diagnose_broken_python_env() -> Optional[str]:
-    """Probe for a known cause of pip crashing: a venv whose pyvenv.cfg
-
-    disagrees with what its own ``python`` binary actually resolves to.
-
-    pip (2025.x+) eagerly imports ``ctypes`` during ``install`` (via a
-    vendored rich fallback module). If the running venv's ``pyvenv.cfg``
-    declares a different ``home``/``version`` than the interpreter binary
-    its own bin/python symlink actually resolves to, the stdlib's compiled
-    ``_ctypes`` extension gets loaded from the *declared* base prefix into a
-    process built from a *different* CPython build — a hard ABI mismatch
-    that reliably segfaults on the very first ``import ctypes``. Returns a
-    human-readable explanation when this exact mismatch is detected, else
-    None.
-    """
-    prefix = sys.prefix
-    cfg_path = os.path.join(prefix, "pyvenv.cfg")
-    if sys.prefix == sys.base_prefix or not os.path.exists(cfg_path):
-        return None  # not running inside a venv
-
-    try:
-        cfg = {}
-        with open(cfg_path, encoding="utf-8") as fh:
-            for line in fh:
-                if "=" in line:
-                    k, _, v = line.partition("=")
-                    cfg[k.strip()] = v.strip()
-    except OSError:
-        return None
-
-    declared_version = cfg.get("version", "")
-    actual_version = "%d.%d.%d" % sys.version_info[:3]
-    declared_parts = declared_version.split(".")
-    actual_parts = actual_version.split(".")[: len(declared_parts)]
-    if declared_version and declared_parts != actual_parts:
-        python_bin = os.path.join(prefix, "bin", "python3")
-        real_target = os.path.realpath(python_bin) if os.path.exists(python_bin) else "?"
-        return (
-            f"Wykryto niespójne środowisko venv: {cfg_path} deklaruje Python "
-            f"{declared_version} (home={cfg.get('home', '?')}), ale faktycznie "
-            f"uruchomiony interpreter to {actual_version} "
-            f"({real_target}). Skompilowane moduły stdlib (np. ctypes) ładują się "
-            "wtedy z niepasującej wersji i segfaultują przy pierwszym imporcie.\n"
-            f"  Napraw: usuń i odtwórz venv, np.\n"
-            f"    rm -rf {shlex.quote(prefix)} && "
-            f"{shlex.quote(sys.executable)} -m venv {shlex.quote(prefix)} && "
-            f"{shlex.quote(os.path.join(prefix, 'bin', 'pip'))} install -r requirements.txt"
-        )
-    return None
-
-
 def _run_pip_update(cmd: List[str]) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, check=False)
 
@@ -279,12 +230,12 @@ def _run_pip_update(cmd: List[str]) -> subprocess.CompletedProcess:
 def _auto_update_goal(current_version: str, latest_version: str) -> bool:
     """Attempt to auto-update goal to the latest version.
 
-    Retries once with ``--no-cache-dir`` if the first attempt fails, and if
-    pip is killed by a signal (e.g. segfault, returncode < 0 — not just a
-    normal nonzero exit), runs a diagnostic probe for the most common cause
-    (a venv whose declared Python version doesn't match its actual
-    interpreter — see `_diagnose_broken_python_env`) instead of just
-    printing an empty/unhelpful stderr.
+    Retries once with ``--no-cache-dir`` if the first attempt fails. If pip
+    is killed by a signal (e.g. segfault, returncode < 0 — not just a normal
+    nonzero exit), diagnoses the most common cause — a venv whose declared
+    Python version doesn't match its actual interpreter, which crashes any
+    ``import ctypes`` (see ``goal.pyenv_health``) — and, when found, repairs
+    it in place and retries once more before giving up.
 
     Returns True if update was successful, False otherwise.
     """
@@ -326,27 +277,54 @@ def _auto_update_goal(current_version: str, latest_version: str) -> bool:
             )
 
     crashed = result.returncode < 0
-    if crashed:
+    if not crashed:
+        click.echo(click.style(f"❌ Update failed: {result.stderr}", fg="red"))
+        return False
+
+    click.echo(
+        click.style(
+            f"❌ pip padł z sygnałem {-result.returncode} zamiast zwrócić błąd "
+            "— to nie jest problem w pakiecie goal, tylko w tym środowisku Pythona.",
+            fg="red",
+        )
+    )
+    diagnosis = _diagnose_broken_python_env()
+    if not diagnosis:
         click.echo(
             click.style(
-                f"❌ pip padł z sygnałem {-result.returncode} zamiast zwrócić błąd "
-                "— to nie jest problem w pakiecie goal, tylko w tym środowisku Pythona.",
-                fg="red",
+                "  Nie udało się zdiagnozować przyczyny automatycznie — spróbuj "
+                f"ręcznie: {' '.join(shlex.quote(c) for c in base_cmd)}",
+                fg="yellow",
             )
         )
-        diagnosis = _diagnose_broken_python_env()
-        if diagnosis:
-            click.echo(click.style(diagnosis, fg="yellow"))
-        else:
-            click.echo(
-                click.style(
-                    "  Nie udało się zdiagnozować przyczyny automatycznie — spróbuj "
-                    f"ręcznie: {' '.join(shlex.quote(c) for c in base_cmd)}",
-                    fg="yellow",
-                )
+        return False
+
+    click.echo(click.style(diagnosis, fg="yellow"))
+    click.echo(click.style("  Próbuję naprawić automatycznie...", fg="cyan"))
+    if not _repair_broken_python_env():
+        click.echo(
+            click.style(
+                "  Nie udało się naprawić automatycznie. Ostatnia deska ratunku: "
+                f"usuń i odtwórz venv:\n    rm -rf {shlex.quote(sys.prefix)} && "
+                f"{shlex.quote(sys.executable)} -m venv {shlex.quote(sys.prefix)}",
+                fg="yellow",
             )
-    else:
-        click.echo(click.style(f"❌ Update failed: {result.stderr}", fg="red"))
+        )
+        return False
+
+    click.echo(
+        click.style("  ✓ Naprawiono pyvenv.cfg, ponawiam instalację...", fg="green")
+    )
+    result = _run_pip_update(base_cmd)
+    if result.returncode == 0:
+        click.echo(
+            click.style(
+                f"✅ Successfully updated to v{latest_version}", fg="green", bold=True
+            )
+        )
+        return True
+
+    click.echo(click.style(f"❌ Update failed even after repair: {result.stderr}", fg="red"))
     return False
 
 

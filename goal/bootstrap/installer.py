@@ -16,6 +16,8 @@ from goal.bootstrap.costs_badge import (
 )
 from goal.installers import PackageManagerBroker
 from goal.installers.env import isolated_env
+from goal.pyenv_health import diagnose as _diagnose_python_env
+from goal.pyenv_health import repair as _repair_python_env
 
 
 def _match_marker(base: Path, pattern: str) -> bool:
@@ -267,6 +269,40 @@ def _ensure_python_test_dependency(
     return True
 
 
+def _ensure_venv_pyvenv_cfg_is_healthy(venv_path: Path) -> None:
+    """Proactively catch/fix a venv whose pyvenv.cfg disagrees with its own
+    interpreter -- before any pip install is attempted against it.
+
+    This is the exact failure mode behind pip (and anything else importing
+    ctypes) segfaulting for no apparent reason inside a seemingly-fine venv:
+    the declared base Python build doesn't match the interpreter the venv's
+    own bin/python actually resolves to, so compiled stdlib extensions load
+    from the wrong build. Left undetected, every dependency install below
+    (costs, the package manager broker, the test runner) fails the same way
+    and each looks like an unrelated, unexplained error.
+    """
+    diagnosis = _diagnose_python_env(str(venv_path))
+    if not diagnosis:
+        return
+    click.echo(click.style(f"\n⚠  {diagnosis}", fg="yellow"))
+    click.echo(click.style("  Próbuję naprawić automatycznie...", fg="cyan"))
+    if _repair_python_env(str(venv_path)):
+        click.echo(
+            click.style(
+                "  ✓ Naprawiono pyvenv.cfg (dopasowano do rzeczywistego interpretera)",
+                fg="green",
+            )
+        )
+    else:
+        click.echo(
+            click.style(
+                "  ⚠  Nie udało się naprawić automatycznie. Ostatnia deska ratunku: "
+                f"usuń i odtwórz venv:\n    rm -rf {venv_path} && python3 -m venv {venv_path}",
+                fg="yellow",
+            )
+        )
+
+
 def _ensure_python_env(project_dir: Path, cfg: ProjectTemplate, yes: bool) -> bool:
     """Set up Python project environment: venv, pip, costs, deps, test deps."""
     venv_path = project_dir / ".venv"
@@ -300,6 +336,7 @@ def _ensure_python_env(project_dir: Path, cfg: ProjectTemplate, yes: bool) -> bo
         click.echo(click.style("  ✓ Created .venv", fg="green"))
 
     python_bin = _find_python_bin(project_dir)
+    _ensure_venv_pyvenv_cfg_is_healthy(venv_path)
 
     # Upgrade pip
     subprocess.run(
