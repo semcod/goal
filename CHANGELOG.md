@@ -155,6 +155,14 @@
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
 
+## [2.1.282] - 2026-07-15
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_options.py
+
 ## [2.1.275] - 2026-07-06
 
 ### Docs
