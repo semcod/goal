@@ -87,6 +87,7 @@ def test_version_banner_includes_ready_to_run_update_command(
 
     with (
         mock.patch("goal.cli.os.path.exists", return_value=True),
+        mock.patch("goal.cli._is_dev_install", return_value=False),
         mock.patch("goal.version_validation.get_pypi_version", return_value="9999.0.0"),
     ):
         goal_cli._show_goal_version_banner()
