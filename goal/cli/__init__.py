@@ -6,7 +6,7 @@ import shlex
 import subprocess
 import sys
 from importlib import import_module
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import click
 import goal
@@ -221,8 +221,70 @@ def load_command_modules() -> None:
     _COMMAND_MODULES_LOADED = True
 
 
+def _diagnose_broken_python_env() -> Optional[str]:
+    """Probe for a known cause of pip crashing: a venv whose pyvenv.cfg
+
+    disagrees with what its own ``python`` binary actually resolves to.
+
+    pip (2025.x+) eagerly imports ``ctypes`` during ``install`` (via a
+    vendored rich fallback module). If the running venv's ``pyvenv.cfg``
+    declares a different ``home``/``version`` than the interpreter binary
+    its own bin/python symlink actually resolves to, the stdlib's compiled
+    ``_ctypes`` extension gets loaded from the *declared* base prefix into a
+    process built from a *different* CPython build — a hard ABI mismatch
+    that reliably segfaults on the very first ``import ctypes``. Returns a
+    human-readable explanation when this exact mismatch is detected, else
+    None.
+    """
+    prefix = sys.prefix
+    cfg_path = os.path.join(prefix, "pyvenv.cfg")
+    if sys.prefix == sys.base_prefix or not os.path.exists(cfg_path):
+        return None  # not running inside a venv
+
+    try:
+        cfg = {}
+        with open(cfg_path, encoding="utf-8") as fh:
+            for line in fh:
+                if "=" in line:
+                    k, _, v = line.partition("=")
+                    cfg[k.strip()] = v.strip()
+    except OSError:
+        return None
+
+    declared_version = cfg.get("version", "")
+    actual_version = "%d.%d.%d" % sys.version_info[:3]
+    declared_parts = declared_version.split(".")
+    actual_parts = actual_version.split(".")[: len(declared_parts)]
+    if declared_version and declared_parts != actual_parts:
+        python_bin = os.path.join(prefix, "bin", "python3")
+        real_target = os.path.realpath(python_bin) if os.path.exists(python_bin) else "?"
+        return (
+            f"Wykryto niespójne środowisko venv: {cfg_path} deklaruje Python "
+            f"{declared_version} (home={cfg.get('home', '?')}), ale faktycznie "
+            f"uruchomiony interpreter to {actual_version} "
+            f"({real_target}). Skompilowane moduły stdlib (np. ctypes) ładują się "
+            "wtedy z niepasującej wersji i segfaultują przy pierwszym imporcie.\n"
+            f"  Napraw: usuń i odtwórz venv, np.\n"
+            f"    rm -rf {shlex.quote(prefix)} && "
+            f"{shlex.quote(sys.executable)} -m venv {shlex.quote(prefix)} && "
+            f"{shlex.quote(os.path.join(prefix, 'bin', 'pip'))} install -r requirements.txt"
+        )
+    return None
+
+
+def _run_pip_update(cmd: List[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+
 def _auto_update_goal(current_version: str, latest_version: str) -> bool:
     """Attempt to auto-update goal to the latest version.
+
+    Retries once with ``--no-cache-dir`` if the first attempt fails, and if
+    pip is killed by a signal (e.g. segfault, returncode < 0 — not just a
+    normal nonzero exit), runs a diagnostic probe for the most common cause
+    (a venv whose declared Python version doesn't match its actual
+    interpreter — see `_diagnose_broken_python_env`) instead of just
+    printing an empty/unhelpful stderr.
 
     Returns True if update was successful, False otherwise.
     """
@@ -233,14 +295,16 @@ def _auto_update_goal(current_version: str, latest_version: str) -> bool:
         )
     )
 
-    try:
-        # Use the same Python interpreter to run pip install
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-U", "goal"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+    base_cmd = [sys.executable, "-m", "pip", "install", "-U", "goal"]
+    attempts = [base_cmd, base_cmd + ["--no-cache-dir"]]
+
+    result = None
+    for i, cmd in enumerate(attempts):
+        try:
+            result = _run_pip_update(cmd)
+        except Exception as e:
+            click.echo(click.style(f"❌ Update failed: {e}", fg="red"))
+            return False
 
         if result.returncode == 0:
             click.echo(
@@ -251,15 +315,44 @@ def _auto_update_goal(current_version: str, latest_version: str) -> bool:
                 )
             )
             return True
+
+        if i == 0 and result.returncode < 0:
+            click.echo(
+                click.style(
+                    f"  pip crashed (signal {-result.returncode}) — retrying with "
+                    "--no-cache-dir...",
+                    fg="yellow",
+                )
+            )
+
+    crashed = result.returncode < 0
+    if crashed:
+        click.echo(
+            click.style(
+                f"❌ pip padł z sygnałem {-result.returncode} zamiast zwrócić błąd "
+                "— to nie jest problem w pakiecie goal, tylko w tym środowisku Pythona.",
+                fg="red",
+            )
+        )
+        diagnosis = _diagnose_broken_python_env()
+        if diagnosis:
+            click.echo(click.style(diagnosis, fg="yellow"))
         else:
-            click.echo(click.style(f"❌ Update failed: {result.stderr}", fg="red"))
-            return False
-    except Exception as e:
-        click.echo(click.style(f"❌ Update failed: {e}", fg="red"))
-        return False
+            click.echo(
+                click.style(
+                    "  Nie udało się zdiagnozować przyczyny automatycznie — spróbuj "
+                    f"ręcznie: {' '.join(shlex.quote(c) for c in base_cmd)}",
+                    fg="yellow",
+                )
+            )
+    else:
+        click.echo(click.style(f"❌ Update failed: {result.stderr}", fg="red"))
+    return False
 
 
-def _show_goal_version_banner() -> None:
+def _show_goal_version_banner() -> Optional[str]:
+    """Print the version banner. Returns the latest PyPI version when this
+    install is outdated (and self-update is applicable), else None."""
     from goal import __version__
     from goal.version_validation import get_pypi_version
 
@@ -270,7 +363,7 @@ def _show_goal_version_banner() -> None:
         click.echo(
             click.style(f"Goal v{__version__} (dev — source at {src})", fg="cyan", bold=True)
         )
-        return
+        return None
 
     latest = get_pypi_version("goal")
     if latest and latest != __version__:
@@ -283,8 +376,35 @@ def _show_goal_version_banner() -> None:
             )
         )
         click.echo(click.style(f"  Update now: {update_cmd}", fg="cyan"))
+        return latest
     else:
         click.echo(click.style(f"Goal v{__version__} ✓", fg="cyan", bold=True))
+        return None
+
+
+def _maybe_self_update(latest_version: Optional[str], yes: bool) -> None:
+    """Offer (or, under -y, perform) the self-update `_show_goal_version_banner`
+    only ever suggested before. Skips entirely for non-interactive runs
+    without -y so scripted/CI invocations never block on a prompt or silently
+    start a network install mid-command.
+    """
+    if not latest_version:
+        return
+    if not yes and not sys.stdin.isatty():
+        return
+
+    from goal import __version__
+
+    if not yes:
+        if not click.confirm(
+            click.style(
+                f"  Zaktualizować goal do v{latest_version} teraz?", fg="cyan"
+            ),
+            default=False,
+        ):
+            return
+
+    _auto_update_goal(__version__, latest_version)
 
 
 def _explicit_ascii_flag(argv: list[str] | None = None) -> bool:
@@ -529,7 +649,8 @@ def main(
     if not is_help_request:
         _warn_goal_binary_mismatch()
         _warn_wheel_shadows_editable()
-        _show_goal_version_banner()
+        latest_version = _show_goal_version_banner()
+        _maybe_self_update(latest_version, yes or all_flags)
     _setup_nfo_logging(nfo_format, nfo_sink)
 
     _configure_main_context(
