@@ -24,6 +24,10 @@ class GitHubReleaseConfig:
     skip_pypi_retries_on_block: bool
     asset_glob: str
     repo_map: dict[str, str]
+    # When True, create a GitHub Release for every successful version tag
+    # (not only as PyPI-blocked fallback). Keeps github.com/.../releases in
+    # sync with git tags that goal already pushes.
+    create_on_tag: bool = False
 
 
 def _publishing_section(config: Any) -> dict[str, Any]:
@@ -70,6 +74,7 @@ def get_github_release_config(config: Any) -> GitHubReleaseConfig | None:
         skip_pypi_retries_on_block=bool(gh.get("skip_pypi_retries_on_block", True)),
         asset_glob=str(gh.get("asset_glob", "dist/*") or "dist/*"),
         repo_map={str(k): str(v) for k, v in repo_map.items()},
+        create_on_tag=bool(gh.get("create_on_tag", False)),
     )
 
 
@@ -306,6 +311,36 @@ def try_github_fallback(
         click.style(
             "  ⚠ PyPI upload blocked — deploying to GitHub Releases (parallel channel)",
             fg="yellow",
+        )
+    )
+    return publish_github_release(
+        version,
+        package_name=package_name,
+        gh_config=gh_config,
+        artifacts=artifacts,
+    )
+
+
+def try_github_release_on_tag(
+    *,
+    version: str,
+    package_name: str = "",
+    config: Any = None,
+    artifacts: list[Path] | None = None,
+) -> bool:
+    """Create a GitHub Release for *version* when ``create_on_tag`` is enabled.
+
+    Complements git tags (which goal always creates when releasing): tags can
+    exist without a GitHub Release object, so the Releases page stays stuck on
+    an old version unless something calls ``gh release create``.
+    """
+    gh_config = get_github_release_config(config)
+    if gh_config is None or not gh_config.create_on_tag:
+        return False
+    click.echo(
+        click.style(
+            "  ↻ create_on_tag: publishing GitHub Release for this tag",
+            fg="cyan",
         )
     )
     return publish_github_release(

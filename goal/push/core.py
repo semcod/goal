@@ -2,6 +2,7 @@
 
 import sys
 import time
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 import click
@@ -596,6 +597,33 @@ def execute_push_workflow(
 
     branch = get_remote_branch()
     push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+
+    # Optionally mirror the git tag as a GitHub Release (Releases page ≠ tags).
+    # Without this, tags advance while /releases/latest stays frozen until PyPI
+    # is blocked and the fallback path runs.
+    if tag_name and not (no_tag or skip_tag_no_source):
+        try:
+            from goal.publish.github_fallback import try_github_release_on_tag
+
+            package_name = ""
+            if isinstance(project_types, (list, tuple)) and project_types:
+                package_name = str(getattr(project_types[0], "name", "") or "")
+            if not package_name:
+                package_name = str(
+                    Path.cwd().name or ""
+                )
+            try_github_release_on_tag(
+                version=new_version,
+                package_name=package_name or "package",
+                config=publish_config,
+            )
+        except Exception as exc:  # pragma: no cover - non-fatal side channel
+            click.echo(
+                click.style(
+                    f"  ⚠ GitHub release-on-tag skipped: {exc}",
+                    fg="yellow",
+                )
+            )
 
     elapsed = time.time() - start_time
     ctx_obj["_elapsed_time"] = elapsed
