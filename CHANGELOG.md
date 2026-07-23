@@ -164,6 +164,17 @@
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
 
+## [2.1.284] - 2026-07-23
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_bootstrap_installer_python_test_dependency.py
+- Update tests/test_dependency_update.py
+- Update tests/test_installers_e2e.py
+
 ## [2.1.283] - 2026-07-15
 
 ### Docs
