@@ -20,6 +20,15 @@
   fallback.)
 
 ### Fixed
+- **Bootstrap uv zgłaszał fałszywe błędy instalacji `pfix` i `pytest`.**
+  Środowiska tworzone przez uv nie muszą zawierać modułu `pip`, a bootstrap
+  wywoływał `<venv>/python -m pip`; dodatkowo `uv sync --upgrade` pomijał
+  zadeklarowaną grupę/extra `dev` i usuwał narzędzia testowe. Instalacja
+  narzędzi używa teraz `uv pip install --python <venv>/bin/python`, synchronizacja
+  zachowuje PEP 621 `--extra dev` lub PEP 735 `--group dev`, a komunikat błędu
+  pokazuje właściwą przyczynę. Menedżer pakietów wykonuje też polecenia w
+  katalogu wybranego podprojektu zamiast przypadkowo korzystać z bieżącego
+  katalogu procesu.
 - **A PyPI wheel of goal silently reverted local source changes.** `pip install
   goal` drops a real `site-packages/goal/` that shadows an editable/dev
   install's `.pth` finder, so the `goal` command stopped running the checkout
@@ -3781,4 +3790,3 @@ test(tests): update pyproject.toml, test_cli_options.py
 
 - docs: update README
 - update pyproject.toml
-

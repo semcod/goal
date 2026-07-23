@@ -27,6 +27,7 @@ class AbstractPackageManager(ABC):
     name: str
     priority: int  # Lower is better (uv=10, pip=100)
     binary: str  # Binary name for availability check
+    project_dir: str = "."
 
     def is_available(self) -> bool:
         """Check if this package manager is installed."""
@@ -42,7 +43,9 @@ class AbstractPackageManager(ABC):
         """Install from a requirements file."""
         ...
 
-    def install_from_lockfile(self) -> Optional[InstallResult]:
+    def install_from_lockfile(
+        self, extras: Optional[list[str]] = None
+    ) -> Optional[InstallResult]:
         """
         Install from lockfile if supported (uv sync, poetry install, etc.).
         Return None if this manager doesn't use lockfiles.
@@ -57,7 +60,13 @@ class AbstractPackageManager(ABC):
         """
         t0 = time.monotonic()
         try:
-            subprocess.run(cmd, check=True, capture_output=True, env=isolated_env())
+            subprocess.run(
+                cmd,
+                check=True,
+                capture_output=True,
+                cwd=self.project_dir,
+                env=isolated_env(self.project_dir),
+            )
             return InstallResult(self.name, True, time.monotonic() - t0, " ".join(cmd))
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr.decode() if e.stderr else str(e)

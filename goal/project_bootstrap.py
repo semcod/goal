@@ -7,7 +7,6 @@ are properly initialized (venv, deps), and scaffolds sample tests when missing.
 import os
 import subprocess
 import shutil
-import json
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -17,15 +16,13 @@ import click
 from goal.project_doctor import diagnose_and_report
 from goal.installers import PackageManagerBroker
 from goal.installers.env import isolated_env
+from goal.package_managers import get_uv_sync_command
 from goal.toml_validation import get_tomllib
 
-# Import from refactored bootstrap module for backward compatibility
-from goal.bootstrap.detector import detect_project_types_deep, guess_package_name
-from goal.bootstrap.templates import PROJECT_BOOTSTRAP
-from goal.bootstrap.installer import (
-    ensure_project_environment,
-    _install_python_deps_broker,
-)
+# Import helpers from the refactored bootstrap modules.  The main bootstrap
+# functions and templates remain defined below for backward compatibility.
+from goal.bootstrap.detector import guess_package_name
+from goal.bootstrap.installer import _python_install_command
 from goal.bootstrap.configurator import scaffold_test_file as _scaffold_test_file_impl
 from goal.bootstrap.costs_badge import _generate_costs_badge, _install_costs_package
 from goal.bootstrap.pyproject_costs_setup import (
@@ -381,9 +378,7 @@ def refresh_test_dependencies(
 
     for project_dir in detect_project_types_deep().get("python", [Path.cwd()]):
         project_dir = Path(project_dir)
-        has_uv = bool(shutil.which("uv")) and (
-            (project_dir / "uv.lock").exists() or (project_dir / "pyproject.toml").exists()
-        )
+        has_uv = bool(shutil.which("uv")) and (project_dir / "uv.lock").exists()
 
         if has_uv:
             proj_env = isolated_env(str(project_dir))
@@ -398,12 +393,12 @@ def refresh_test_dependencies(
                 continue
             click.echo(
                 click.style(
-                    f"  Reinstalling {test_dep} after dependency upgrade (uv project)",
+                    "  Restoring declared dev dependencies after uv upgrade",
                     fg="cyan",
                 )
             )
             install = subprocess.run(
-                ["uv", "pip", "install", test_dep],
+                get_uv_sync_command(project_dir).split(),
                 capture_output=True,
                 text=True,
                 cwd=str(project_dir),
@@ -412,7 +407,7 @@ def refresh_test_dependencies(
             if install.returncode != 0:
                 click.echo(
                     click.style(
-                        f"  ⚠ Could not reinstall {test_dep} via uv pip",
+                        f"  ⚠ Could not restore {test_dep} via uv sync",
                         fg="yellow",
                     )
                 )
@@ -452,7 +447,9 @@ def _ensure_python_test_dependency(
         return True
 
     def addopts_ok() -> bool:
-        return test_dep != "pytest" or _pytest_addopts_satisfied(project_dir, python_bin)
+        return test_dep != "pytest" or _pytest_addopts_satisfied(
+            project_dir, python_bin
+        )
 
     check_result = subprocess.run(
         [python_bin, "-c", f"import {test_dep}; print({test_dep}.__version__)"],
@@ -472,20 +469,22 @@ def _ensure_python_test_dependency(
 
     click.echo(click.style(f"  Installing test dependency: {test_dep}", fg="cyan"))
     install_result = subprocess.run(
-        [python_bin, "-m", "pip", "install", test_dep],
+        _python_install_command(project_dir, python_bin, test_dep),
         capture_output=True,
         text=True,
         cwd=str(project_dir),
+        env=isolated_env(str(project_dir)),
     )
     if install_result.returncode == 0 and not addopts_ok():
         # pytest itself is fine, but the project's own addopts still can't
         # run -- a required plugin lives in a dev/optional extras group
         # that the bare install above doesn't pull in. Pull the full group.
         install_result = subprocess.run(
-            [python_bin, "-m", "pip", "install", "-e", ".[dev]"],
+            _python_install_command(project_dir, python_bin, "-e", ".[dev]"),
             capture_output=True,
             text=True,
             cwd=str(project_dir),
+            env=isolated_env(str(project_dir)),
         )
         if install_result.returncode == 0 and not addopts_ok():
             click.echo(
@@ -499,11 +498,14 @@ def _ensure_python_test_dependency(
             return False
 
     if install_result.returncode != 0:
+        error = (install_result.stderr or install_result.stdout or "").strip()
         click.echo(
             click.style(
                 f"  ⚠ Could not install test dependency: {test_dep}", fg="yellow"
             )
         )
+        if error:
+            click.echo(click.style(f"    {error.splitlines()[-1]}", fg="yellow"))
         return False
 
     click.echo(click.style(f"  ✓ Test dependency installed ({test_dep})", fg="green"))
@@ -1003,12 +1005,13 @@ def bootstrap_project(project_dir: Path, project_type: str, yes: bool = False) -
     # Step 1: Diagnose and auto-fix project configuration issues
     result["doctor_report"] = _run_bootstrap_diagnostics(project_dir, project_type, yes)
 
-    # Step 1b: Ensure pfix is installed for auto-fixing errors
-    _ensure_pfix_installed(project_dir, yes=yes)
-
     # Step 2: Ensure environment (venv, deps)
     # Note: For Python projects, this also installs the costs package
     result["env_ok"] = ensure_project_environment(project_dir, project_type, yes=yes)
+
+    # Step 2b: install tooling only after the target environment exists.  This
+    # prevents uv projects from falling back to the outer/global interpreter.
+    _ensure_pfix_installed(project_dir, yes=yes)
 
     # Step 3: Find or scaffold tests
     result["tests_found"], result["test_created"] = _ensure_bootstrap_tests(
@@ -1102,8 +1105,6 @@ PFIX_CREATE_BACKUPS=false     # false = disable .pfix_backups/ directory
     if existing_api_key:
         return True
 
-    created = False
-
     try:
         # Create .env from template if not exists
         if not env_file.exists():
@@ -1114,8 +1115,6 @@ PFIX_CREATE_BACKUPS=false     # false = disable .pfix_backups/ directory
                     fg="green",
                 )
             )
-            created = True
-
         # Also create .env.example (for git)
         if not env_example.exists():
             env_example.write_text(env_template, encoding="utf-8")
@@ -1214,14 +1213,12 @@ def _ensure_pfix_installed(project_dir: Path, yes: bool = False) -> bool:
                         "  Installing pfix from configured local path...", fg="cyan"
                     )
                 )
-                install_cmd = [
+                install_cmd = _python_install_command(
+                    project_dir,
                     python_bin,
-                    "-m",
-                    "pip",
-                    "install",
                     "-e",
                     str(local_pfix),
-                ]
+                )
             else:
                 click.echo(
                     click.style(
@@ -1230,16 +1227,27 @@ def _ensure_pfix_installed(project_dir: Path, yes: bool = False) -> bool:
                     )
                 )
                 click.echo(click.style("  Installing pfix from PyPI...", fg="cyan"))
-                install_cmd = [python_bin, "-m", "pip", "install", "pfix>=0.1.60"]
+                install_cmd = _python_install_command(
+                    project_dir, python_bin, "pfix>=0.1.60"
+                )
         else:
             click.echo(click.style("  Installing pfix from PyPI...", fg="cyan"))
-            install_cmd = [python_bin, "-m", "pip", "install", "pfix>=0.1.60"]
+            install_cmd = _python_install_command(
+                project_dir, python_bin, "pfix>=0.1.60"
+            )
 
         install_result = subprocess.run(
-            install_cmd, capture_output=True, text=True, cwd=str(project_dir)
+            install_cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(project_dir),
+            env=isolated_env(str(project_dir)),
         )
         if install_result.returncode != 0:
             click.echo(click.style("  ⚠ Could not install pfix package", fg="yellow"))
+            error = (install_result.stderr or install_result.stdout or "").strip()
+            if error:
+                click.echo(click.style(f"    {error.splitlines()[-1]}", fg="yellow"))
             return False
         click.echo(click.style("  ✓ Pfix package installed", fg="green"))
     else:

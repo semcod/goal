@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 from dataclasses import dataclass
 
+import tomlkit
+
 
 @dataclass
 class PackageManager:
@@ -520,10 +522,45 @@ def _pip_update_all_command(project_root: Path) -> Optional[str]:
     return None
 
 
-def get_update_all_command(
-    pm: PackageManager, project_root: Path
-) -> Optional[str]:
+def get_uv_dependency_flags(project_root: Path, requested: List[str]) -> List[str]:
+    """Map requested development sets to uv's extra/group flags.
+
+    PEP 621 optional dependencies use ``--extra`` while PEP 735 dependency
+    groups use ``--group``.  Passing the wrong form makes ``uv sync`` fail;
+    omitting both silently removes tools such as pytest/pfix from ``.venv``.
+    """
+    pyproject = project_root / "pyproject.toml"
+    try:
+        document = tomlkit.parse(pyproject.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return []
+
+    project = document.get("project", {})
+    optional = project.get("optional-dependencies", {}) if project else {}
+    dependency_groups = document.get("dependency-groups", {})
+    flags: List[str] = []
+    for name in requested:
+        if name in optional:
+            flags.extend(["--extra", name])
+        elif name in dependency_groups:
+            flags.extend(["--group", name])
+    return flags
+
+
+def get_uv_sync_command(project_root: Path, *, upgrade: bool = False) -> str:
+    """Build a uv sync command that preserves the declared dev tool set."""
+    parts = ["uv", "sync"]
+    if upgrade:
+        parts.append("--upgrade")
+    parts.extend(get_uv_dependency_flags(project_root, ["dev"]))
+    return " ".join(parts)
+
+
+def get_update_all_command(pm: PackageManager, project_root: Path) -> Optional[str]:
     """Return a command that updates all dependencies for the given manager."""
+    if pm.name == "uv":
+        return get_uv_sync_command(project_root, upgrade=True)
+
     special_commands = {
         "pip": _pip_update_all_command(project_root),
         "go": "go get -u ./...",

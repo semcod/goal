@@ -11,14 +11,37 @@ from __future__ import annotations
 
 from unittest import mock
 
-from goal.bootstrap.installer import _ensure_python_test_dependency
+from goal.bootstrap.installer import (
+    _ensure_python_test_dependency,
+    _python_install_command,
+)
 
 
 class TestPythonTestDependency:
+    def test_uv_project_installs_into_exact_interpreter(self, tmp_path):
+        (tmp_path / "uv.lock").write_text("", encoding="utf-8")
+        with mock.patch(
+            "goal.bootstrap.installer.shutil.which", return_value="/usr/bin/uv"
+        ):
+            command = _python_install_command(
+                tmp_path, str(tmp_path / ".venv/bin/python"), "pytest"
+            )
+
+        assert command == [
+            "/usr/bin/uv",
+            "pip",
+            "install",
+            "--python",
+            str(tmp_path / ".venv/bin/python"),
+            "pytest",
+        ]
+
     def test_already_installed_pytest_with_working_addopts_is_fast_path(self, tmp_path):
         with mock.patch("subprocess.run") as mock_run:
             mock_run.side_effect = [
-                mock.MagicMock(returncode=0, stdout="9.0.0", stderr=""),  # import pytest OK
+                mock.MagicMock(
+                    returncode=0, stdout="9.0.0", stderr=""
+                ),  # import pytest OK
                 mock.MagicMock(returncode=0, stdout="", stderr=""),  # addopts check OK
             ]
 
@@ -38,16 +61,24 @@ class TestPythonTestDependency:
         editable+dev reinstall, then re-verify before reporting ready."""
         with mock.patch("subprocess.run") as mock_run:
             mock_run.side_effect = [
-                mock.MagicMock(returncode=0, stdout="9.0.0", stderr=""),  # import pytest OK
+                mock.MagicMock(
+                    returncode=0, stdout="9.0.0", stderr=""
+                ),  # import pytest OK
                 mock.MagicMock(
                     returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
                 ),  # addopts check: broken
-                mock.MagicMock(returncode=0, stdout="", stderr=""),  # pip install pytest (no-op fix)
+                mock.MagicMock(
+                    returncode=0, stdout="", stderr=""
+                ),  # pip install pytest (no-op fix)
                 mock.MagicMock(
                     returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
                 ),  # addopts check: still broken
-                mock.MagicMock(returncode=0, stdout="", stderr=""),  # dev-extras reinstall
-                mock.MagicMock(returncode=0, stdout="", stderr=""),  # addopts check: fixed
+                mock.MagicMock(
+                    returncode=0, stdout="", stderr=""
+                ),  # dev-extras reinstall
+                mock.MagicMock(
+                    returncode=0, stdout="", stderr=""
+                ),  # addopts check: fixed
             ]
 
             assert (

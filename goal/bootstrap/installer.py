@@ -20,6 +20,21 @@ from goal.pyenv_health import diagnose as _diagnose_python_env
 from goal.pyenv_health import repair as _repair_python_env
 
 
+def _python_install_command(
+    project_dir: Path, python_bin: str, *arguments: str
+) -> list[str]:
+    """Select the installer that owns the target Python environment.
+
+    uv-created virtual environments normally have no ``pip`` module.  For a
+    project with ``uv.lock`` use ``uv pip --python``; otherwise use the
+    interpreter's regular ``python -m pip``.
+    """
+    uv_bin = shutil.which("uv")
+    if uv_bin and (project_dir / "uv.lock").exists():
+        return [uv_bin, "pip", "install", "--python", python_bin, *arguments]
+    return [python_bin, "-m", "pip", "install", *arguments]
+
+
 def _match_marker(base: Path, pattern: str) -> bool:
     """Check if a marker file/pattern exists under *base*."""
     if "*" in pattern:
@@ -211,7 +226,9 @@ def _ensure_python_test_dependency(
         return True
 
     def addopts_ok() -> bool:
-        return test_dep != "pytest" or _pytest_addopts_satisfied(project_dir, python_bin)
+        return test_dep != "pytest" or _pytest_addopts_satisfied(
+            project_dir, python_bin
+        )
 
     check_result = subprocess.run(
         [python_bin, "-c", f"import {test_dep}; print({test_dep}.__version__)"],
@@ -231,20 +248,22 @@ def _ensure_python_test_dependency(
 
     click.echo(click.style(f"  Installing test dependency: {test_dep}", fg="cyan"))
     install_result = subprocess.run(
-        [python_bin, "-m", "pip", "install", test_dep],
+        _python_install_command(project_dir, python_bin, test_dep),
         capture_output=True,
         text=True,
         cwd=str(project_dir),
+        env=isolated_env(str(project_dir)),
     )
     if install_result.returncode == 0 and not addopts_ok():
         # pytest itself is fine, but the project's own addopts still can't
         # run -- a required plugin lives in a dev/optional extras group
         # that the bare install above doesn't pull in. Pull the full group.
         install_result = subprocess.run(
-            [python_bin, "-m", "pip", "install", "-e", ".[dev]"],
+            _python_install_command(project_dir, python_bin, "-e", ".[dev]"),
             capture_output=True,
             text=True,
             cwd=str(project_dir),
+            env=isolated_env(str(project_dir)),
         )
         if install_result.returncode == 0 and not addopts_ok():
             click.echo(
@@ -258,11 +277,14 @@ def _ensure_python_test_dependency(
             return False
 
     if install_result.returncode != 0:
+        error = (install_result.stderr or install_result.stdout or "").strip()
         click.echo(
             click.style(
                 f"  ⚠ Could not install test dependency: {test_dep}", fg="yellow"
             )
         )
+        if error:
+            click.echo(click.style(f"    {error.splitlines()[-1]}", fg="yellow"))
         return False
 
     click.echo(click.style(f"  ✓ Test dependency installed ({test_dep})", fg="green"))

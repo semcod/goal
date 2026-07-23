@@ -218,6 +218,55 @@ class TestUvManagerReal:
             assert "uv" in result.command
             assert "-e" in result.command
 
+    def test_uv_lockfile_install_keeps_requested_dev_extra(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text(
+            """
+[project]
+name = "demo"
+[project.optional-dependencies]
+dev = ["pytest"]
+""",
+            encoding="utf-8",
+        )
+        monkeypatch.chdir(tmp_path)
+        uv = UvManager()
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            result = uv.install_from_lockfile(["dev"])
+
+        assert result.success is True
+        assert result.command == "uv sync --extra dev"
+
+    def test_broker_runs_uv_in_selected_subproject(self, tmp_path, monkeypatch):
+        project = tmp_path / "packages" / "demo"
+        project.mkdir(parents=True)
+        (project / ".venv" / "bin").mkdir(parents=True)
+        (project / "uv.lock").touch()
+        (project / "pyproject.toml").write_text(
+            """
+[project]
+name = "demo"
+[project.optional-dependencies]
+dev = ["pytest"]
+""",
+            encoding="utf-8",
+        )
+        monkeypatch.chdir(tmp_path)
+        broker = PackageManagerBroker(str(project))
+
+        with (
+            patch.object(broker, "detect_available", return_value=[UvManager()]),
+            patch("subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = MagicMock(returncode=0)
+            result = broker.install(extras=["dev"], prefer="uv", auto_install_uv=False)
+
+        assert result.success is True
+        assert result.command == "uv sync --extra dev"
+        assert mock_run.call_args.kwargs["cwd"] == str(project.resolve())
+        assert mock_run.call_args.kwargs["env"]["VIRTUAL_ENV"] == str(project / ".venv")
+
 
 @pytest.mark.skipif(
     subprocess.run(["which", "poetry"], capture_output=True).returncode != 0,

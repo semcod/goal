@@ -1,5 +1,6 @@
 """Package manager broker - intelligently selects and executes installations."""
 
+from copy import copy
 from pathlib import Path
 from typing import Optional
 from goal.installers.managers.base import AbstractPackageManager, InstallResult
@@ -74,10 +75,15 @@ class PackageManagerBroker:
         manager = self._select_manager(available, prefer)
         if not manager:
             raise RuntimeError("No package manager available!")
+        # Registry entries are shared singletons. Work on a shallow copy so one
+        # broker cannot leak its project directory into another concurrent or
+        # later installation.
+        manager = copy(manager)
+        manager.project_dir = str(Path(self.project_dir).resolve())
 
         # Check for lockfile-based install first (fastest if it works)
         if use_lockfile:
-            lockfile_result = manager.install_from_lockfile()
+            lockfile_result = manager.install_from_lockfile(extras or [])
             if lockfile_result:
                 click.echo(f"📦 Installing via {manager.name} (lockfile)...")
                 self._report(lockfile_result, available)

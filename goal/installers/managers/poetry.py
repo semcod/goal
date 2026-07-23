@@ -34,6 +34,8 @@ class PoetryManager(AbstractPackageManager):
         # Fallback to regular install
         return self._run(["poetry", "install"])
 
-    def install_from_lockfile(self) -> Optional[InstallResult]:
+    def install_from_lockfile(
+        self, extras: Optional[list[str]] = None
+    ) -> Optional[InstallResult]:
         """Install from poetry.lock."""
-        return self._run(["poetry", "install"])
+        return self.install_editable(extras or [])

@@ -3,7 +3,6 @@
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 from goal.cli import main
@@ -16,10 +15,44 @@ from goal.dependency_update import (
 from goal.package_managers import get_package_manager, get_update_all_command
 
 
-def test_get_update_all_command_for_uv() -> None:
+def test_get_update_all_command_for_uv(tmp_path: Path) -> None:
     pm = get_package_manager("uv")
-    command = get_update_all_command(pm, Path("."))
+    command = get_update_all_command(pm, tmp_path)
     assert command == "uv sync --upgrade"
+
+
+def test_get_update_all_command_for_uv_preserves_dev_extra(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        """
+[project]
+name = "demo"
+[project.optional-dependencies]
+dev = ["pytest"]
+""",
+        encoding="utf-8",
+    )
+    pm = get_package_manager("uv")
+
+    command = get_update_all_command(pm, tmp_path)
+
+    assert command == "uv sync --upgrade --extra dev"
+
+
+def test_get_update_all_command_for_uv_preserves_dev_group(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        """
+[project]
+name = "demo"
+[dependency-groups]
+dev = ["pytest"]
+""",
+        encoding="utf-8",
+    )
+    pm = get_package_manager("uv")
+
+    command = get_update_all_command(pm, tmp_path)
+
+    assert command == "uv sync --upgrade --group dev"
 
 
 def test_get_update_all_command_for_pip_with_requirements(tmp_path: Path) -> None:
@@ -56,7 +89,9 @@ def test_select_managers_uses_only_highest_priority_python_lockfile(
     assert [pm.name for pm in managers] == ["uv"]
 
 
-def test_select_managers_uv_only_without_poetry_lock(tmp_path: Path, monkeypatch) -> None:
+def test_select_managers_uv_only_without_poetry_lock(
+    tmp_path: Path, monkeypatch
+) -> None:
     (tmp_path / "pyproject.toml").write_text("[project]\nname='demo'\n")
     (tmp_path / "uv.lock").write_text("")
 
@@ -112,7 +147,9 @@ def test_update_project_dependencies_dry_run(tmp_path: Path, monkeypatch) -> Non
     assert results == []
 
 
-def test_update_project_dependencies_runs_detected_manager(tmp_path: Path, monkeypatch) -> None:
+def test_update_project_dependencies_runs_detected_manager(
+    tmp_path: Path, monkeypatch
+) -> None:
     (tmp_path / "pyproject.toml").write_text("[project]\nname='demo'\n")
     (tmp_path / "uv.lock").write_text("")
 
@@ -220,7 +257,9 @@ def test_aur_sets_recursive_and_upgrade_deps_in_context() -> None:
     with (
         patch("goal.cli._show_goal_version_banner"),
         patch("goal.cli._warn_goal_binary_mismatch"),
-        patch.object(push_cmd, "execute_push_workflow", side_effect=fake_execute) as mock_execute,
+        patch.object(
+            push_cmd, "execute_push_workflow", side_effect=fake_execute
+        ) as mock_execute,
         patch("goal.push.core.execute_push_workflow", side_effect=fake_execute),
     ):
         result = runner.invoke(main, ["-aur"])
@@ -437,7 +476,9 @@ def test_au_sets_upgrade_deps_in_context() -> None:
     with (
         patch("goal.cli._show_goal_version_banner"),
         patch("goal.cli._warn_goal_binary_mismatch"),
-        patch.object(push_cmd, "execute_push_workflow", side_effect=fake_execute) as mock_execute,
+        patch.object(
+            push_cmd, "execute_push_workflow", side_effect=fake_execute
+        ) as mock_execute,
         patch("goal.push.core.execute_push_workflow", side_effect=fake_execute),
     ):
         result = runner.invoke(main, ["-au"])
