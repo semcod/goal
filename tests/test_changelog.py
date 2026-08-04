@@ -134,3 +134,33 @@ Initial release.
             assert "1.0.0" in content
         finally:
             os.chdir(old_cwd)
+
+
+def test_update_changelog_unreleased_section_with_no_prior_release():
+    """An [Unreleased] section that is the *only*/*last* section (no version
+    heading below it yet, e.g. a hand-authored changelog before the first
+    `goal` publish) must not produce a second, duplicate [Unreleased] header.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        import os
+
+        old_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_dir)
+            initial = """# Changelog
+
+## [Unreleased]
+
+### Docs
+- Update TODO.md
+"""
+            Path("CHANGELOG.md").write_text(initial)
+
+            update_changelog("0.1.0", ["a.py"], "fix: first release")
+
+            content = Path("CHANGELOG.md").read_text()
+            assert content.count("## [Unreleased]") == 1
+            assert "0.1.0" in content
+            assert "Update TODO.md" in content
+        finally:
+            os.chdir(old_cwd)

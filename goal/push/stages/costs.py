@@ -118,6 +118,9 @@ def update_cost_badges(
 
         success = update_readme_badge(project_dir, results)
         if success:
+            from goal.version_validation import update_badge_versions
+
+            update_badge_versions(project_dir / "README.md", version)
             click.echo(click.style("✓ Updated AI cost badges in README", fg="green"))
             return True
         return False

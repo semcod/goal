@@ -274,9 +274,40 @@ git add VERSION
 goal push --no-version-sync -m "chore: set version to 2.5.0"
 ```
 
+## Sweep many repos with one command
+
+When a folder holds many independent git repositories, `goal all` runs the full
+`goal -a` workflow in every sub-repo that has **uncommitted changes** (clean
+repos and non-git folders are skipped):
+
+```bash
+# From the parent folder holding all your repos
+cd ~/projects
+
+# Preview which repos would run, without committing/pushing
+goal all ./* --dry-run
+
+# Run for real — lists dirty repos and asks one confirmation
+goal all ./*
+
+# Equivalent shorthands
+goal -a ./*          # -a + paths ⇒ sweep
+goal auto all        # `auto` is a word-form of -a; defaults to *
+
+# Non-interactive (skip the batch confirmation)
+goal all ./* -y
+
+# Restrict to a subset
+goal all packages/*
+```
+
+It continues past per-project failures and prints a succeeded/failed summary at
+the end. See [Command Reference → `goal all`](commands.md#goal-all).
+
 ## Tips and Tricks
 
 - Use `goal push --dry-run` to preview changes
+- Use `goal all ./*` to run `goal -a` across every dirty sub-repo in a folder
 - `goal config show` to see current configuration
 - `goal status` to check repository state
 - Use TICKET file for automatic ticket prefixes

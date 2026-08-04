@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v7
@@ -21,10 +21,30 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Configure test identity
+        run: |
+          git config --global user.name "Goal CI"
+          git config --global user.email "goal-ci@example.invalid"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          Path.home().joinpath(".goal").write_text(
+              json.dumps(
+                  {
+                      "author_name": "Goal CI",
+                      "author_email": "goal-ci@example.invalid",
+                      "license": "apache-2.0",
+                  }
+              ),
+              encoding="utf-8",
+          )
+          PY
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]" || pip install -e . || true
+          python -m pip install -e ".[dev]"
 
       - name: Run tests
         run: |

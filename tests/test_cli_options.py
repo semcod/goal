@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from unittest import mock
 from click.testing import CliRunner
 
@@ -8,7 +9,7 @@ from goal.cli import main
 
 def run_cli(*args):
     return subprocess.run(
-        ["python3", "-m", "goal", *args], capture_output=True, text=True
+        [sys.executable, "-m", "goal", *args], capture_output=True, text=True
     )
 
 
@@ -86,6 +87,7 @@ def test_version_banner_includes_ready_to_run_update_command(
 
     with (
         mock.patch("goal.cli.os.path.exists", return_value=True),
+        mock.patch("goal.cli._is_dev_install", return_value=False),
         mock.patch("goal.version_validation.get_pypi_version", return_value="9999.0.0"),
     ):
         goal_cli._show_goal_version_banner()
@@ -107,7 +109,9 @@ def test_warn_goal_binary_mismatch_detects_local_venv_without_active_virtual_env
     monkeypatch.setattr(
         goal_cli.goal,
         "__file__",
-        "/home/tom/.local/lib/python3.13/site-packages/goal/__init__.py",
+        goal_cli.os.path.expanduser(
+            "~/.local/lib/python3.13/site-packages/goal/__init__.py"
+        ),
     )
 
     goal_cli._warn_goal_binary_mismatch()
@@ -129,7 +133,9 @@ def test_warn_goal_binary_mismatch_prefers_local_goal_binary_hint(
     monkeypatch.setattr(
         goal_cli.goal,
         "__file__",
-        "/home/tom/.local/lib/python3.13/site-packages/goal/__init__.py",
+        goal_cli.os.path.expanduser(
+            "~/.local/lib/python3.13/site-packages/goal/__init__.py"
+        ),
     )
 
     goal_cli._warn_goal_binary_mismatch()
@@ -137,3 +143,154 @@ def test_warn_goal_binary_mismatch_prefers_local_goal_binary_hint(
     out = capsys.readouterr().out
     assert "Prefer:" in out
     assert ".venv/bin/goal" in out
+
+
+def _completed(returncode: int, stderr: str = "") -> subprocess.CompletedProcess:
+    return subprocess.CompletedProcess(args=[], returncode=returncode, stdout="", stderr=stderr)
+
+
+def test_auto_update_goal_retries_with_no_cache_dir_after_crash(monkeypatch, capsys) -> None:
+    calls = []
+
+    def fake_run(cmd):
+        calls.append(cmd)
+        if len(calls) == 1:
+            return _completed(-11)  # SIGSEGV on first attempt
+        return _completed(0)
+
+    monkeypatch.setattr(goal_cli, "_run_pip_update", fake_run)
+
+    ok = goal_cli._auto_update_goal("1.0.0", "2.0.0")
+
+    assert ok is True
+    assert len(calls) == 2
+    assert "--no-cache-dir" not in calls[0]
+    assert "--no-cache-dir" in calls[1]
+    assert "retrying" in capsys.readouterr().out.lower()
+
+
+def test_auto_update_goal_reports_diagnosis_after_persistent_crash(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(goal_cli, "_run_pip_update", lambda cmd: _completed(-11))
+    monkeypatch.setattr(
+        goal_cli, "_diagnose_broken_python_env", lambda: "broken venv: mismatched pyvenv.cfg"
+    )
+    monkeypatch.setattr(goal_cli, "_repair_broken_python_env", lambda: False)
+
+    ok = goal_cli._auto_update_goal("1.0.0", "2.0.0")
+
+    out = capsys.readouterr().out
+    assert ok is False
+    assert "signal 11" in out or "sygna" in out
+    assert "broken venv: mismatched pyvenv.cfg" in out
+    assert "rm -rf" in out
+
+
+def test_auto_update_goal_repairs_env_and_retries_successfully(monkeypatch, capsys) -> None:
+    calls = []
+
+    def fake_run(cmd):
+        calls.append(cmd)
+        if len(calls) <= 2:
+            return _completed(-11)  # crash, then crash again with --no-cache-dir
+        return _completed(0)  # succeeds once the venv is repaired
+
+    monkeypatch.setattr(goal_cli, "_run_pip_update", fake_run)
+    monkeypatch.setattr(
+        goal_cli, "_diagnose_broken_python_env", lambda: "broken venv: mismatched pyvenv.cfg"
+    )
+    monkeypatch.setattr(goal_cli, "_repair_broken_python_env", lambda: True)
+
+    ok = goal_cli._auto_update_goal("1.0.0", "2.0.0")
+
+    out = capsys.readouterr().out
+    assert ok is True
+    assert len(calls) == 3
+    assert "Naprawiono" in out
+    assert "Successfully updated" in out
+
+
+def test_auto_update_goal_reports_failure_if_repair_does_not_fix_install(
+    monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr(goal_cli, "_run_pip_update", lambda cmd: _completed(-11, stderr="boom"))
+    monkeypatch.setattr(
+        goal_cli, "_diagnose_broken_python_env", lambda: "broken venv: mismatched pyvenv.cfg"
+    )
+    monkeypatch.setattr(goal_cli, "_repair_broken_python_env", lambda: True)
+
+    ok = goal_cli._auto_update_goal("1.0.0", "2.0.0")
+
+    assert ok is False
+
+
+def test_auto_update_goal_reports_stderr_for_normal_failure(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        goal_cli, "_run_pip_update", lambda cmd: _completed(1, stderr="no matching distribution")
+    )
+
+    ok = goal_cli._auto_update_goal("1.0.0", "2.0.0")
+
+    out = capsys.readouterr().out
+    assert ok is False
+    assert "no matching distribution" in out
+
+
+def test_maybe_self_update_skips_when_noninteractive_without_yes(monkeypatch) -> None:
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+    called = []
+    monkeypatch.setattr(goal_cli, "_auto_update_goal", lambda *a: called.append(a))
+
+    goal_cli._maybe_self_update("9.9.9", yes=False)
+
+    assert called == []
+
+
+def test_maybe_self_update_skips_when_no_newer_version(monkeypatch) -> None:
+    called = []
+    monkeypatch.setattr(goal_cli, "_auto_update_goal", lambda *a: called.append(a))
+
+    goal_cli._maybe_self_update(None, yes=True)
+
+    assert called == []
+
+
+def test_maybe_self_update_runs_without_prompt_when_yes(monkeypatch) -> None:
+    called = []
+    monkeypatch.setattr(goal_cli, "_auto_update_goal", lambda *a: called.append(a))
+    # A stray confirm() would fail the test (no input available in CI).
+    monkeypatch.setattr(
+        goal_cli.click,
+        "confirm",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not prompt")),
+    )
+
+    goal_cli._maybe_self_update("9.9.9", yes=True)
+
+    assert len(called) == 1
+
+
+def test_diagnose_broken_python_env_detects_version_mismatch(monkeypatch, tmp_path) -> None:
+    # goal_cli._diagnose_broken_python_env is goal.pyenv_health.diagnose (see
+    # tests/test_pyenv_health.py for the module's own thorough coverage);
+    # this only checks the CLI-level delegation still wires through sys.prefix.
+    venv_dir = tmp_path / "venv"
+    (venv_dir / "bin").mkdir(parents=True)
+    (venv_dir / "bin" / "python3").write_text("")
+    (venv_dir / "pyvenv.cfg").write_text("home = /some/other/python/bin\nversion = 9.99.99\n")
+
+    monkeypatch.setattr(goal_cli.sys, "prefix", str(venv_dir))
+    monkeypatch.setattr(goal_cli.sys, "base_prefix", "/usr")
+    monkeypatch.setattr("goal.pyenv_health._probe_version", lambda python_bin: "3.13.7")
+
+    diagnosis = goal_cli._diagnose_broken_python_env()
+
+    assert diagnosis is not None
+    assert "niespójne środowisko venv" in diagnosis
+    assert "9.99.99" in diagnosis
+
+
+def test_diagnose_broken_python_env_returns_none_outside_venv(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(goal_cli.sys, "prefix", "/usr")
+    monkeypatch.setattr(goal_cli.sys, "base_prefix", "/usr")
+
+    assert goal_cli._diagnose_broken_python_env() is None

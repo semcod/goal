@@ -6,7 +6,7 @@ import shlex
 import subprocess
 import sys
 from importlib import import_module
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import click
 import goal
@@ -24,6 +24,8 @@ from goal.git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
 from goal.config import GoalConfig, ensure_config, init_config, load_config
 from goal.user_config import get_user_config, initialize_user_config, show_user_config
 from goal.cli_helpers import split_paths_by_type, stage_paths, confirm, strip_ansi
+from goal.pyenv_health import diagnose as _diagnose_broken_python_env
+from goal.pyenv_health import repair as _repair_broken_python_env
 
 
 DOCS_URL = "https://github.com/wronai/goal#readme"
@@ -55,6 +57,67 @@ def _goal_update_command() -> str:
         return f"{shlex.quote(sys.executable)} -m pip install -U goal"
 
     return "pip install -U goal"
+
+
+def _goal_package_path() -> str:
+    """Absolute path to the imported goal package, or '' if unavailable."""
+    try:
+        return os.path.abspath(getattr(goal, "__file__", "") or "")
+    except Exception:
+        return ""
+
+
+def _is_dev_install() -> bool:
+    """True when goal is imported from a source checkout (editable/dev install).
+
+    A wheel install lives under ``site-packages``/``dist-packages``; an editable
+    or source-tree run resolves ``goal.__file__`` to the checkout instead.
+    """
+    path = _goal_package_path()
+    if not path:
+        return False
+    return "site-packages" not in path and "dist-packages" not in path
+
+
+def _editable_goal_markers(site_dir: str) -> list:
+    """Return pip/uv editable-install marker files for goal in ``site_dir``."""
+    from glob import glob
+
+    return (
+        glob(os.path.join(site_dir, "__editable__.goal-*.pth"))
+        + glob(os.path.join(site_dir, "__editable___goal_*_finder.py"))
+        + glob(os.path.join(site_dir, "goal.pth"))
+    )
+
+
+def _warn_wheel_shadows_editable() -> None:
+    """Warn when a wheel install of goal shadows an editable (dev) install.
+
+    ``pip install goal`` drops a real ``site-packages/goal/`` package that wins
+    over an editable ``.pth`` finder, so local source changes silently stop
+    taking effect. Detect that and point at the fix.
+    """
+    path = _goal_package_path()
+    marker = os.sep + "site-packages" + os.sep
+    if marker not in path:
+        return  # running from source (or an unusual layout) — nothing to warn
+    site_dir = path[: path.index(marker) + len(marker) - 1]
+    if not _editable_goal_markers(site_dir):
+        return
+    click.echo(
+        click.style(
+            f"⚠ goal is running from a wheel in {site_dir} but an editable/dev "
+            "install also exists — the wheel is shadowing your source changes.",
+            fg="yellow",
+        )
+    )
+    click.echo(
+        click.style(
+            "  Restore dev mode: pip install -e <goal source> "
+            "(e.g. pip install -e ./goal)",
+            fg="cyan",
+        )
+    )
 
 
 def _warn_goal_binary_mismatch() -> None:
@@ -141,6 +204,7 @@ def load_command_modules() -> None:
 
     for module_name in (
         ".push_cmd",
+        ".all_cmd",
         ".publish_cmd",
         ".utils_cmd",
         ".doctor_cmd",
@@ -159,8 +223,19 @@ def load_command_modules() -> None:
     _COMMAND_MODULES_LOADED = True
 
 
+def _run_pip_update(cmd: List[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+
 def _auto_update_goal(current_version: str, latest_version: str) -> bool:
     """Attempt to auto-update goal to the latest version.
+
+    Retries once with ``--no-cache-dir`` if the first attempt fails. If pip
+    is killed by a signal (e.g. segfault, returncode < 0 — not just a normal
+    nonzero exit), diagnoses the most common cause — a venv whose declared
+    Python version doesn't match its actual interpreter, which crashes any
+    ``import ctypes`` (see ``goal.pyenv_health``) — and, when found, repairs
+    it in place and retries once more before giving up.
 
     Returns True if update was successful, False otherwise.
     """
@@ -171,14 +246,16 @@ def _auto_update_goal(current_version: str, latest_version: str) -> bool:
         )
     )
 
-    try:
-        # Use the same Python interpreter to run pip install
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-U", "goal"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+    base_cmd = [sys.executable, "-m", "pip", "install", "-U", "goal"]
+    attempts = [base_cmd, base_cmd + ["--no-cache-dir"]]
+
+    result = None
+    for i, cmd in enumerate(attempts):
+        try:
+            result = _run_pip_update(cmd)
+        except Exception as e:
+            click.echo(click.style(f"❌ Update failed: {e}", fg="red"))
+            return False
 
         if result.returncode == 0:
             click.echo(
@@ -189,17 +266,82 @@ def _auto_update_goal(current_version: str, latest_version: str) -> bool:
                 )
             )
             return True
-        else:
-            click.echo(click.style(f"❌ Update failed: {result.stderr}", fg="red"))
-            return False
-    except Exception as e:
-        click.echo(click.style(f"❌ Update failed: {e}", fg="red"))
+
+        if i == 0 and result.returncode < 0:
+            click.echo(
+                click.style(
+                    f"  pip crashed (signal {-result.returncode}) — retrying with "
+                    "--no-cache-dir...",
+                    fg="yellow",
+                )
+            )
+
+    crashed = result.returncode < 0
+    if not crashed:
+        click.echo(click.style(f"❌ Update failed: {result.stderr}", fg="red"))
         return False
 
+    click.echo(
+        click.style(
+            f"❌ pip padł z sygnałem {-result.returncode} zamiast zwrócić błąd "
+            "— to nie jest problem w pakiecie goal, tylko w tym środowisku Pythona.",
+            fg="red",
+        )
+    )
+    diagnosis = _diagnose_broken_python_env()
+    if not diagnosis:
+        click.echo(
+            click.style(
+                "  Nie udało się zdiagnozować przyczyny automatycznie — spróbuj "
+                f"ręcznie: {' '.join(shlex.quote(c) for c in base_cmd)}",
+                fg="yellow",
+            )
+        )
+        return False
 
-def _show_goal_version_banner() -> None:
+    click.echo(click.style(diagnosis, fg="yellow"))
+    click.echo(click.style("  Próbuję naprawić automatycznie...", fg="cyan"))
+    if not _repair_broken_python_env():
+        click.echo(
+            click.style(
+                "  Nie udało się naprawić automatycznie. Ostatnia deska ratunku: "
+                f"usuń i odtwórz venv:\n    rm -rf {shlex.quote(sys.prefix)} && "
+                f"{shlex.quote(sys.executable)} -m venv {shlex.quote(sys.prefix)}",
+                fg="yellow",
+            )
+        )
+        return False
+
+    click.echo(
+        click.style("  ✓ Naprawiono pyvenv.cfg, ponawiam instalację...", fg="green")
+    )
+    result = _run_pip_update(base_cmd)
+    if result.returncode == 0:
+        click.echo(
+            click.style(
+                f"✅ Successfully updated to v{latest_version}", fg="green", bold=True
+            )
+        )
+        return True
+
+    click.echo(click.style(f"❌ Update failed even after repair: {result.stderr}", fg="red"))
+    return False
+
+
+def _show_goal_version_banner() -> Optional[str]:
+    """Print the version banner. Returns the latest PyPI version when this
+    install is outdated (and self-update is applicable), else None."""
     from goal import __version__
     from goal.version_validation import get_pypi_version
+
+    # In a source checkout, never nudge `pip install -U goal` — that would
+    # replace the dev version with a PyPI wheel and silently revert local work.
+    if _is_dev_install():
+        src = os.path.dirname(os.path.dirname(_goal_package_path()))
+        click.echo(
+            click.style(f"Goal v{__version__} (dev — source at {src})", fg="cyan", bold=True)
+        )
+        return None
 
     latest = get_pypi_version("goal")
     if latest and latest != __version__:
@@ -212,8 +354,35 @@ def _show_goal_version_banner() -> None:
             )
         )
         click.echo(click.style(f"  Update now: {update_cmd}", fg="cyan"))
+        return latest
     else:
         click.echo(click.style(f"Goal v{__version__} ✓", fg="cyan", bold=True))
+        return None
+
+
+def _maybe_self_update(latest_version: Optional[str], yes: bool) -> None:
+    """Offer (or, under -y, perform) the self-update `_show_goal_version_banner`
+    only ever suggested before. Skips entirely for non-interactive runs
+    without -y so scripted/CI invocations never block on a prompt or silently
+    start a network install mid-command.
+    """
+    if not latest_version:
+        return
+    if not yes and not sys.stdin.isatty():
+        return
+
+    from goal import __version__
+
+    if not yes:
+        if not click.confirm(
+            click.style(
+                f"  Zaktualizować goal do v{latest_version} teraz?", fg="cyan"
+            ),
+            default=False,
+        ):
+            return
+
+    _auto_update_goal(__version__, latest_version)
 
 
 def _explicit_ascii_flag(argv: list[str] | None = None) -> bool:
@@ -323,25 +492,55 @@ class GoalGroup(click.Group):
             "--nfo-format",
             "--nfo-sink",
         }
-        has_subcommand = False
+        # Split the argv into option tokens (with their values) and bare
+        # positional tokens so we can tell "goal -a" from "goal -a ./foo ./bar".
+        opts: List[str] = []
+        positionals: List[str] = []
         skip_next = False
         for a in args:
             if skip_next:
+                opts.append(a)
                 skip_next = False
                 continue
             if a in _VALUE_OPTIONS:
+                opts.append(a)
                 skip_next = True
                 continue
             if a.startswith("-"):
+                opts.append(a)
                 continue
-            if a in known_cmds:
-                has_subcommand = True
-                break
+            positionals.append(a)
+
+        # `auto` is a word-form of the -a/--all flag, so `goal auto ...` behaves
+        # exactly like `goal -a ...` (auto → push, auto ./* → sweep, auto all →
+        # the `all` command). Only a *leading* positional token counts.
+        auto_used = bool(positionals) and positionals[0] == "auto"
+        if auto_used:
+            positionals = positionals[1:]
+            has_all_flag = True
+            if "-a" not in opts and "--all" not in opts:
+                opts = ["-a"] + opts
+
+        has_subcommand = any(p in known_cmds for p in positionals)
 
         if has_all_flag and not has_subcommand:
-            push_cmd = click.Group.get_command(self, ctx, "push")
-            if push_cmd is not None:
-                args = args + ["push"]
+            if positionals:
+                # `goal -a ./*` (or explicit dirs) → sweep those paths across
+                # every dirty sub-repo via the `all` command.
+                all_cmd = click.Group.get_command(self, ctx, "all")
+                if all_cmd is not None:
+                    args = opts + ["all"] + positionals
+                elif auto_used:
+                    args = opts + positionals
+            else:
+                # Bare `goal -a` → default to the single-repo push workflow.
+                push_cmd = click.Group.get_command(self, ctx, "push")
+                if push_cmd is not None:
+                    args = (opts + ["push"]) if auto_used else (args + ["push"])
+        elif auto_used:
+            # `goal auto all [...]` → the -a we injected into `opts` must reach
+            # Click, so rebuild argv from the split tokens.
+            args = opts + positionals
 
         return super().parse_args(ctx, args)
 
@@ -427,7 +626,9 @@ def main(
     is_help_request = "--help" in sys.argv or "-h" in sys.argv or ctx.resilient_parsing
     if not is_help_request:
         _warn_goal_binary_mismatch()
-        _show_goal_version_banner()
+        _warn_wheel_shadows_editable()
+        latest_version = _show_goal_version_banner()
+        _maybe_self_update(latest_version, yes or all_flags)
     _setup_nfo_logging(nfo_format, nfo_sink)
 
     _configure_main_context(

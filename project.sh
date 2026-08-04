@@ -41,8 +41,9 @@ $VENV/bin/sumd .
 $VENV/bin/sumr .
 
 
-pip install -U goal
-$PIP install goal --upgrade --quiet
+# Install goal from this checkout (editable), NOT the PyPI wheel — a wheel
+# install would shadow the editable package and silently revert local changes.
+$PIP install -e . --quiet
 #$VENV/bin/goal -a
 
 bash tree.sh

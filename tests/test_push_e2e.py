@@ -37,6 +37,7 @@ class TestPublishRetry:
         with (
             patch("goal.cli.publish.run_command_tee", side_effect=fake_run),
             patch("goal.cli.publish.time.sleep") as mock_sleep,
+            patch("goal.cli.publish.get_github_release_config", return_value=None),
         ):
             result = _run_publish_command("python", "twine upload dist/*")
 
@@ -58,6 +59,7 @@ class TestPublishRetry:
         with (
             patch("goal.cli.publish.run_command_tee", side_effect=fake_run),
             patch("goal.cli.publish.time.sleep") as mock_sleep,
+            patch("goal.cli.publish.get_github_release_config", return_value=None),
         ):
             result = _run_publish_command("python", "twine upload dist/*")
 
@@ -78,6 +80,7 @@ class TestPublishRetry:
         with (
             patch("goal.cli.publish.run_command_tee", side_effect=fake_run),
             patch("goal.cli.publish.time.sleep") as mock_sleep,
+            patch("goal.cli.publish.get_github_release_config", return_value=None),
         ):
             result = _run_publish_command("python", "twine upload dist/*")
 
@@ -128,10 +131,11 @@ class TestWorkflowOrder:
             patch("goal.push.core._detect_project_types", return_value=["python"]),
             patch("goal.push.core._bootstrap_projects"),
             patch("goal.push.core.run_git"),
-            patch("goal.push.core.get_staged_files", return_value=["test.txt"]),
+            # A package source file (.py) so the release path runs (bump+commit).
+            patch("goal.push.core.get_staged_files", return_value=["foo.py"]),
             patch("goal.push.core._validate_staged_files"),
             patch("goal.push.core.get_diff_content", return_value="diff"),
-            patch("goal.push.core.get_diff_stats", return_value={"test.txt": (1, 0)}),
+            patch("goal.push.core.get_diff_stats", return_value={"foo.py": (1, 0)}),
             patch(
                 "goal.push.core.get_commit_message",
                 return_value=("feat: test", None, {}),
@@ -170,8 +174,14 @@ class TestWorkflowOrder:
             f"Expected [commit, publish, tag, push] but got {call_order}"
         )
 
-    def test_metadata_only_changes_skip_publish_but_still_tag_and_push(self):
-        """Docs/metadata-only commits should not upload packages to registries."""
+    def test_metadata_only_changes_skip_bump_commit_publish_and_tag(self):
+        """Docs/metadata-only runs must not bump, commit, publish, nor tag.
+
+        When the only staged files are docs/metadata (no package source), goal stays
+        on the current version: no version bump, no commit, no publish, no release
+        tag — avoiding version churn that races ahead of what is published. Use
+        --force-publish to release anyway.
+        """
         from goal.push.core import execute_push_workflow
 
         ctx_obj = {
@@ -191,6 +201,10 @@ class TestWorkflowOrder:
                 "goal.push.core.get_staged_files",
                 return_value=["README.md", "CHANGELOG.md"],
             ),
+            patch(
+                "goal.publish.changes.committed_unreleased_source_files",
+                return_value=[],
+            ),
             patch("goal.push.core._validate_staged_files"),
             patch("goal.push.core.get_diff_content", return_value="diff"),
             patch("goal.push.core.get_diff_stats", return_value={"README.md": (1, 0)}),
@@ -200,9 +214,9 @@ class TestWorkflowOrder:
             ),
             patch("goal.push.core.get_version_info", return_value=("0.1.42", "0.1.43")),
             patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
-            patch("goal.push.core._handle_commit_phase"),
+            patch("goal.push.core._handle_commit_phase") as mock_commit_phase,
             patch("goal.push.stages.publish.publish_project") as mock_publish_project,
-            patch("goal.push.core.create_tag", return_value="v0.1.43") as mock_create_tag,
+            patch("goal.push.core.create_tag", return_value=None) as mock_create_tag,
             patch("goal.git_ops.get_remote_branch", return_value="main"),
             patch("goal.push.core.push_to_remote") as mock_push,
             patch("goal.push.core.handle_todo_stage"),
@@ -225,8 +239,13 @@ class TestWorkflowOrder:
                 todo=False,
             )
 
+        # No version bump and no commit when there is no package source change.
+        mock_commit_phase.assert_not_called()
         mock_publish_project.assert_not_called()
-        mock_create_tag.assert_called_once()
+        # Version stays on current (0.1.42, not the bumped 0.1.43) and the tag is
+        # suppressed, so no orphan release tag is created.
+        mock_create_tag.assert_called_once_with("0.1.42", True)
+        # Push still runs (it is a no-op when no new commit was created).
         mock_push.assert_called_once()
 
     def test_auto_publish_failure_aborts_before_tag_and_push(self):
@@ -700,13 +719,50 @@ class TestPushWorkflowE2E:
             ["python"], "1.2.3", False, config=None
         )
 
+    def test_publish_command_dry_run_never_publishes(self):
+        """Global --dry-run must prevent direct and Makefile publication."""
+        from goal.cli.publish_cmd import _publish_impl
+
+        with (
+            patch(
+                "goal.cli.publish_cmd.detect_project_types", return_value=["python"]
+            ) as mock_detect,
+            patch(
+                "goal.cli.publish_cmd.shutil.which", return_value="/usr/bin/make"
+            ) as mock_which,
+            patch(
+                "goal.cli.publish_cmd.makefile_has_target", return_value=True
+            ) as mock_has_target,
+            patch("goal.cli.publish_cmd.run_command_tee") as mock_run_command,
+            patch("goal.cli.publish_cmd.publish_project") as mock_publish_project,
+            patch("goal.cli.publish_cmd.get_current_version") as mock_version,
+        ):
+            _publish_impl(
+                {"dry_run": True, "config": None},
+                False,
+                "publish",
+                "1.2.3",
+            )
+            _publish_impl(
+                {"dry_run": True, "config": None},
+                True,
+                "release",
+                "1.2.3",
+            )
+
+        mock_detect.assert_called_once_with()
+        mock_which.assert_called_once_with("make")
+        mock_has_target.assert_called_once_with("release")
+        mock_run_command.assert_not_called()
+        mock_publish_project.assert_not_called()
+        mock_version.assert_not_called()
+
     def test_run_tests_ignores_top_level_tests_dir_as_subdir(self):
         """Test that the canonical top-level tests dir is not rerun as a subdir scan."""
         from goal.cli.tests import run_tests
 
         with (
             patch("goal.cli.tests._find_python_test_dirs", return_value=[]),
-            patch("goal.cli.tests._active_venv_python", return_value=None),
             patch(
                 "goal.cli.tests._find_python_bin",
                 return_value="/tmp/project/.venv/bin/python",

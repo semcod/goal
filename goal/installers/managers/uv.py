@@ -1,7 +1,10 @@
 """UV package manager - fastest Python package manager."""
 
+from pathlib import Path
 from typing import Optional
+
 from goal.installers.managers.base import AbstractPackageManager, InstallResult
+from goal.package_managers import get_uv_dependency_flags
 
 
 class UvManager(AbstractPackageManager):
@@ -24,14 +27,18 @@ class UvManager(AbstractPackageManager):
         """Install from requirements file."""
         return self._run(["uv", "pip", "install", "-r", req_file])
 
-    def sync_lockfile(self) -> InstallResult:
+    def sync_lockfile(self, extras: Optional[list[str]] = None) -> InstallResult:
         """Sync dependencies from uv.lock (fastest method)."""
-        return self._run(["uv", "sync"])
+        command = ["uv", "sync"]
+        command.extend(get_uv_dependency_flags(Path(self.project_dir), extras or []))
+        return self._run(command)
 
     def install_self(self) -> InstallResult:
         """Install uv itself using pip."""
         return self._run(["pip", "install", "uv", "--quiet"])
 
-    def install_from_lockfile(self) -> Optional[InstallResult]:
+    def install_from_lockfile(
+        self, extras: Optional[list[str]] = None
+    ) -> Optional[InstallResult]:
         """Sync from uv.lock - fastest reproducible install."""
-        return self._run(["uv", "sync"])
+        return self.sync_lockfile(extras)

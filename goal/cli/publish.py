@@ -36,6 +36,31 @@ def makefile_has_target(target: str) -> bool:
     return re.search(rf"^\s*{re.escape(target)}\s*:", content, re.MULTILINE) is not None
 
 
+# Matches a `python`/`python3` command token, but never a `python` that is part
+# of a path such as ``adapters/python/...`` (negative lookbehind on path chars).
+_PYTHON_INTERP_RE = re.compile(r"(?<![\w./\-])python3?(?=\s)")
+
+# Matches a leading ``cd <dir> &&`` so we can resolve build/publish artifacts
+# relative to the directory the command actually runs in (monorepo subdirs).
+_CD_PREFIX_RE = re.compile(r"^\s*cd\s+([^\s&;|]+)\s*&&")
+
+
+def _replace_python_interpreter(cmd: str, python_bin: str) -> str:
+    """Replace the python interpreter token in a command without touching paths."""
+    return _PYTHON_INTERP_RE.sub(lambda _m: python_bin, cmd)
+
+
+def _command_workdir(cmd: str) -> Path:
+    """Return the working directory a command runs in, honoring a leading ``cd``."""
+    match = _CD_PREFIX_RE.match(cmd or "")
+    return Path(match.group(1)) if match else Path(".")
+
+
+def _dist_dir_for(cmd: str) -> Path:
+    """Return the dist/ directory relative to the command's working directory."""
+    return _command_workdir(cmd) / "dist"
+
+
 def _get_project_strategy(config: Any, project_type: str) -> dict:
     """Get the configured strategy for a project type, if available."""
     if config is None:
@@ -212,9 +237,11 @@ def _normalized_name_candidates(package_name: str) -> list[str]:
     return sorted(candidates)
 
 
-def _python_artifacts_for_version(version: str, package_name: str = "") -> list[Path]:
+def _python_artifacts_for_version(
+    version: str, package_name: str = "", dist_dir: Path = Path("dist")
+) -> list[Path]:
     """Return built Python artifacts that exactly match the requested version."""
-    dist = Path("dist")
+    dist = dist_dir
     if not dist.exists():
         return []
 
@@ -248,15 +275,18 @@ def _resolve_python_publish_cmd(publish_cmd: str, version: str) -> str:
     a different distribution name.
     """
     publish_cmd = publish_cmd.replace("{version}", version)
-    match = re.search(r"dist/[^\s'\"]+", publish_cmd)
+    # Capture the full artifact path token, including any directory prefix such
+    # as ``adapters/python/dist/...`` so monorepo subdir paths survive intact.
+    match = re.search(r"\S*dist/[^\s'\"]+", publish_cmd)
     if not match:
         return publish_cmd
 
     pattern = match.group(0)
+    dist_dir = Path(pattern).parent
     project_name = _read_python_package_name()
-    artifacts = _python_artifacts_for_version(version, project_name)
+    artifacts = _python_artifacts_for_version(version, project_name, dist_dir)
     if not artifacts:
-        artifacts = _python_artifacts_for_version(version)
+        artifacts = _python_artifacts_for_version(version, "", dist_dir)
     if not artifacts:
         return publish_cmd
 
@@ -277,7 +307,7 @@ def _run_python_build(build_cmd: str, python_bin: str) -> bool:
     if not build_cmd:
         return True
 
-    build_cmd = build_cmd.replace("python ", f"{python_bin} ")
+    build_cmd = _replace_python_interpreter(build_cmd, python_bin)
     click.echo(click.style(f"  Build command: {build_cmd}", fg="cyan"))
     build_result = run_command_tee(build_cmd)
     if build_result.returncode == 0:
@@ -301,16 +331,19 @@ def _run_python_build(build_cmd: str, python_bin: str) -> bool:
     return False
 
 
-def _available_dist_artifacts() -> str:
-    artifacts = sorted(path.name for path in Path("dist").glob("*") if path.is_file())
+def _available_dist_artifacts(dist_dir: Path = Path("dist")) -> str:
+    artifacts = sorted(path.name for path in dist_dir.glob("*") if path.is_file())
     return ", ".join(artifacts) if artifacts else "(none)"
 
 
 def _ensure_python_artifacts_for_version(
     version: str, build_cmd: str, python_bin: str
 ) -> bool:
+    dist_dir = _dist_dir_for(build_cmd)
     package_name = _read_python_package_name()
-    if _python_artifacts_for_version(version, package_name) or _python_artifacts_for_version(version):
+    if _python_artifacts_for_version(
+        version, package_name, dist_dir
+    ) or _python_artifacts_for_version(version, "", dist_dir):
         return True
 
     click.echo(
@@ -342,13 +375,15 @@ def _ensure_python_artifacts_for_version(
     if not _run_python_build(build_cmd, python_bin):
         return False
 
-    if _python_artifacts_for_version(version, package_name) or _python_artifacts_for_version(version):
+    if _python_artifacts_for_version(
+        version, package_name, dist_dir
+    ) or _python_artifacts_for_version(version, "", dist_dir):
         return True
 
     click.echo(
         click.style(
             f"  Build did not produce artifacts for version {version}. "
-            f"Available dist artifacts: {_available_dist_artifacts()}",
+            f"Available dist artifacts: {_available_dist_artifacts(dist_dir)}",
             fg="red",
         ),
         err=True,
@@ -596,7 +631,7 @@ def publish_project(
             if not ok:
                 success = False
                 continue
-            publish_cmd = publish_cmd.replace("python ", f"{python_bin} ")
+            publish_cmd = _replace_python_interpreter(publish_cmd, python_bin)
             click.echo(click.style(f"  Command: {publish_cmd}", fg="cyan"))
 
         if ptype == "python":

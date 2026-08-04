@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 _REQUIRED_DEV_DEPS = (
     ("goal", '"goal>=2.1.0"'),
-    ("costs", '"costs>=0.1.20"'),
+    ("costs", '"costs>=0.1.53"'),
     ("pfix", '"pfix>=0.1.60"'),
 )
 

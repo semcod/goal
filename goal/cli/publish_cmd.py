@@ -16,6 +16,22 @@ def _publish_impl(ctx_obj, use_make, target, version_arg) -> None:
         click.echo(click.style("Publishing skipped (--no-publish)", fg="yellow"))
         return
 
+    if ctx_obj.get("dry_run", False):
+        version = version_arg or get_current_version()
+        if use_make and shutil.which("make") and makefile_has_target(target):
+            planned_action = f"make {target}"
+        else:
+            project_types = detect_project_types()
+            project_label = ", ".join(project_types) or "unknown project"
+            planned_action = f"direct publish ({project_label})"
+        click.echo(
+            click.style(
+                f"Dry run: would execute {planned_action} for version {version}",
+                fg="yellow",
+            )
+        )
+        return
+
     project_types = detect_project_types()
     config = ctx_obj.get("config")
 
