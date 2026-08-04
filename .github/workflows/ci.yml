@@ -21,10 +21,25 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Configure test Git identity
+      - name: Configure test identity
         run: |
           git config --global user.name "Goal CI"
           git config --global user.email "goal-ci@example.invalid"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          Path.home().joinpath(".goal").write_text(
+              json.dumps(
+                  {
+                      "author_name": "Goal CI",
+                      "author_email": "goal-ci@example.invalid",
+                      "license": "apache-2.0",
+                  }
+              ),
+              encoding="utf-8",
+          )
+          PY
 
       - name: Install dependencies
         run: |

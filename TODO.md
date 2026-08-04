@@ -20,8 +20,8 @@
 ## ✅ Completed Tasks
 
 - [x] Issue #13 - Align declared, tox and CI support at Python 3.12–3.13,
-  configure the runner Git identity and stop suppressing dependency installation
-  failures.
+  configure the runner Git/Goal identity and stop suppressing dependency
+  installation failures.
 - [x] goal/cli/__init__.py:384 - Relative import (level=1): '.version'
 - [x] goal/cli/__init__.py:307 - String concatenation can be converted to f-string
 - [x] goal/cli/__init__.py:9 - Unused List imported from typing
