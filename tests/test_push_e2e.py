@@ -719,6 +719,44 @@ class TestPushWorkflowE2E:
             ["python"], "1.2.3", False, config=None
         )
 
+    def test_publish_command_dry_run_never_publishes(self):
+        """Global --dry-run must prevent direct and Makefile publication."""
+        from goal.cli.publish_cmd import _publish_impl
+
+        with (
+            patch(
+                "goal.cli.publish_cmd.detect_project_types", return_value=["python"]
+            ) as mock_detect,
+            patch(
+                "goal.cli.publish_cmd.shutil.which", return_value="/usr/bin/make"
+            ) as mock_which,
+            patch(
+                "goal.cli.publish_cmd.makefile_has_target", return_value=True
+            ) as mock_has_target,
+            patch("goal.cli.publish_cmd.run_command_tee") as mock_run_command,
+            patch("goal.cli.publish_cmd.publish_project") as mock_publish_project,
+            patch("goal.cli.publish_cmd.get_current_version") as mock_version,
+        ):
+            _publish_impl(
+                {"dry_run": True, "config": None},
+                False,
+                "publish",
+                "1.2.3",
+            )
+            _publish_impl(
+                {"dry_run": True, "config": None},
+                True,
+                "release",
+                "1.2.3",
+            )
+
+        mock_detect.assert_called_once_with()
+        mock_which.assert_called_once_with("make")
+        mock_has_target.assert_called_once_with("release")
+        mock_run_command.assert_not_called()
+        mock_publish_project.assert_not_called()
+        mock_version.assert_not_called()
+
     def test_run_tests_ignores_top_level_tests_dir_as_subdir(self):
         """Test that the canonical top-level tests dir is not rerun as a subdir scan."""
         from goal.cli.tests import run_tests

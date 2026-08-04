@@ -19,6 +19,8 @@
 
 ## ✅ Completed Tasks
 
+- [x] Issue #11 - Make `goal --dry-run publish` report the planned
+  method/version without invoking Make or a package registry.
 - [x] Issue #13 - Align declared, tox and CI support at Python 3.12–3.13,
   configure the runner Git/Goal identity and stop suppressing dependency
   installation failures.
