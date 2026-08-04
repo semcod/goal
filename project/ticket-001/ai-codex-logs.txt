@@ -1,0 +1,46 @@
+[2026-08-04T12:49:48Z] COMMAND: git status --short
+ M README.md
+ M goal/cli/__init__.py
+ M goal/project_bootstrap.py
+?? .intent/
+?? docs/governance-adoption.md
+?? goal/cli/governance_cmd.py
+?? tests/test_governance_cmd.py
+
+[2026-08-04T12:49:48Z] COMMAND: command -v docker
+/usr/bin/docker
+
+[2026-08-04T12:49:48Z] COMMAND: docker info --format '{{.ServerVersion}}'
+29.1.3
+
+[2026-08-04T12:49:48Z] OBSERVATION
+Target repository has no root Dockerfile, compose file, .governance manifest,
+or project/TICKETS.md. Existing worktree changes predate ticket-001 and are not
+claimed by this ticket.
+
+[2026-08-04T12:49:48Z] COMMAND: python -m json.tool project/ticket-001/intent.json
+EXIT: 0
+
+[2026-08-04T12:49:48Z] COMMAND: git diff --check
+EXIT: 0
+
+[2026-08-04T12:49:48Z] COMMAND: planning artifact non-empty check
+planning artifacts: ok
+
+[2026-08-04T12:49:48Z] COMMAND: ticket-001 planning validation
+GATE_UNAVAILABLE: missing adopted .governance/manifest.json and/or
+project/governance-check.sh
+ticket-001 planning validation: ok
+
+[2026-08-04T12:49:48Z] COMMAND: intent schema check against current hub schema
+intent schema: ok
+intent scope paths: ok
+
+[2026-08-04] USER DECISION
+Continue after ticket-001 review. Do not use Gemini 3.1 Pro Preview through
+OpenRouter; use z-ai/glm-5.2 instead.
+
+[2026-08-04] COMMAND: model reference inventory in Goal
+No Gemini 3.1 Pro Preview reference found.
+Current defaults found: openrouter/x-ai/grok-code-fast-1 and
+openrouter/qwen/qwen3-coder-next.

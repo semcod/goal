@@ -1,0 +1,31 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-001",
+  "summary": "Blueprint refaktoryzacji Goal do URI/DSL/CQRS+ES",
+  "workstream": "integration",
+  "allowedPaths": [
+    "project/ticket-001/**",
+    "project/TICKETS.md",
+    "TODO.md",
+    "docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md",
+    "docs/ARCHITECTURE.md",
+    "docs/LOGIC_FLOW.md"
+  ],
+  "forbiddenPaths": [
+    "goal/**",
+    "tests/**",
+    "pyproject.toml",
+    ".governance/**",
+    "AGENTS.md",
+    "Dockerfile*",
+    "compose*.yml",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}
