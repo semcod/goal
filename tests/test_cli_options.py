@@ -109,7 +109,9 @@ def test_warn_goal_binary_mismatch_detects_local_venv_without_active_virtual_env
     monkeypatch.setattr(
         goal_cli.goal,
         "__file__",
-        "/home/tom/.local/lib/python3.13/site-packages/goal/__init__.py",
+        goal_cli.os.path.expanduser(
+            "~/.local/lib/python3.13/site-packages/goal/__init__.py"
+        ),
     )
 
     goal_cli._warn_goal_binary_mismatch()
@@ -131,7 +133,9 @@ def test_warn_goal_binary_mismatch_prefers_local_goal_binary_hint(
     monkeypatch.setattr(
         goal_cli.goal,
         "__file__",
-        "/home/tom/.local/lib/python3.13/site-packages/goal/__init__.py",
+        goal_cli.os.path.expanduser(
+            "~/.local/lib/python3.13/site-packages/goal/__init__.py"
+        ),
     )
 
     goal_cli._warn_goal_binary_mismatch()
