@@ -20,6 +20,11 @@
   fallback.)
 
 ### Fixed
+- **CI tested Python versions incompatible with the installed CLI dependency
+  and suppressed installation errors.** Goal now declares the effective Python
+  3.12+ floor required by clickmd, the CI/tox matrices cover 3.12–3.13, runners
+  configure a deterministic Git and Goal user identity, and dependency
+  installation fails immediately instead of continuing without pytest.
 - **Bootstrap uv zgłaszał fałszywe błędy instalacji `pfix` i `pytest`.**
   Środowiska tworzone przez uv nie muszą zawierać modułu `pip`, a bootstrap
   wywoływał `<venv>/python -m pip`; dodatkowo `uv sync --upgrade` pomijał
