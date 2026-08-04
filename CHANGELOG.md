@@ -20,6 +20,10 @@
   fallback.)
 
 ### Fixed
+- **The standalone `publish` command ignored global `--dry-run`.** The root
+  CLI recorded dry-run state, but the publish handler still invoked Make or a
+  package registry. It now reports the planned method and version without
+  running either publication path.
 - **Bootstrap uv zgłaszał fałszywe błędy instalacji `pfix` i `pytest`.**
   Środowiska tworzone przez uv nie muszą zawierać modułu `pip`, a bootstrap
   wywoływał `<venv>/python -m pip`; dodatkowo `uv sync --upgrade` pomijał

@@ -19,6 +19,8 @@
 
 ## ✅ Completed Tasks
 
+- [x] Issue #11 - Make `goal --dry-run publish` report the planned
+  method/version without invoking Make or a package registry.
 - [x] goal/cli/__init__.py:384 - Relative import (level=1): '.version'
 - [x] goal/cli/__init__.py:307 - String concatenation can be converted to f-string
 - [x] goal/cli/__init__.py:9 - Unused List imported from typing
