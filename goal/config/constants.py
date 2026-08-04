@@ -220,6 +220,10 @@ DEFAULT_CONFIG = {
                 "repo_map": {},
                 "token_env": "GITHUB_TOKEN",
                 "skip_pypi_retries_on_block": True,
+                # Also create a GitHub Release whenever a version tag is made
+                # (not only when PyPI upload is blocked). Default False keeps
+                # historical behaviour; set true so /releases tracks git tags.
+                "create_on_tag": False,
                 "asset_glob": "dist/*",
             },
         },

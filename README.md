@@ -5,7 +5,7 @@
 
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.257-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.284-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -23,13 +23,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.257-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.67-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-99.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.284-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.99-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-122.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
 
-- 🤖 **LLM usage:** $6.6669 (296 commits)
-- 👤 **Human dev:** ~$9994 (99.9h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $0.9866 (346 commits)
+- 👤 **Human dev:** ~$12247 (122.5h @ $100/h, 30min dedup)
 
-Generated on 2026-06-20 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
+Generated on 2026-07-29 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
 
 ---
 
@@ -58,6 +58,39 @@ goal push      # Runs tests, suggests a commit, bumps patch, updates changelog, 
 # 3. CI/CD or cron-driven release
 goal --all --bump minor   # Non-interactive; perfect for nightly builds or release pipelines.
 ```
+
+## 🆕 What's New in v2.2.2
+
+> **Monorepo sweep** — run the full `goal -a` workflow across every git repository with uncommitted changes under a folder, in one command.
+
+### ✨ New Features
+
+**🧹 `goal all` — sweep many repos at once**
+- `goal all [PATHS...]` runs `goal -a` in every sub-repo that has uncommitted
+  changes (defaults to `*` — all sub-folders of the current directory).
+- Clean repos and non-git folders are skipped automatically.
+- Lists the matched dirty projects and asks **one** batch confirmation
+  (skipped with `-y`/`--yes`, or with `--dry-run`).
+- Continues past per-project failures and prints a succeeded/failed summary.
+
+```bash
+# From the parent folder holding all your repos:
+goal all ./*          # sweep every dirty sub-repo
+goal -a ./*           # identical shorthand (-a + paths ⇒ sweep)
+goal auto all         # `auto` is a word-form of the -a flag
+goal all ./* --dry-run   # preview without committing/pushing
+```
+
+**Equivalences**
+
+| Command | Same as | Action |
+| --- | --- | --- |
+| `goal all ./*` | `goal -a ./*` | sweep dirty sub-repos under the given paths |
+| `goal auto all` | `goal -a all` | sweep dirty sub-repos (defaults to `*`) |
+| `goal auto ./*` | `goal -a ./*` | sweep |
+| `goal auto` | `goal -a` | single-repo push in the current directory |
+
+---
 
 ## 🆕 What's New in v2.2.1
 
@@ -443,6 +476,34 @@ goal --dry-run
 ```
 
 > **Note:** `goal -a` in a directory without a git repository will **skip gracefully** instead of failing. This is safe for CI/CD pipelines.
+
+### 4. Monorepo sweep — run `goal -a` across many repos
+
+When a folder contains many independent git repositories (a "monorepo of
+repos"), you can run the full `goal -a` workflow in every sub-repo that has
+**uncommitted changes** — clean repos and non-git folders are skipped.
+
+```bash
+# From the parent folder holding all your repos:
+goal all ./*          # sweep every dirty sub-repo (lists them, asks once)
+goal -a ./*           # identical shorthand: -a + paths ⇒ sweep
+goal auto all         # word-form of -a; defaults to * (all sub-folders)
+
+# Preview first (no commits/pushes/publishes), then run for real:
+goal all ./* --dry-run
+goal all ./* -y       # skip the batch confirmation
+```
+
+How it behaves:
+- Prints the list of matched dirty projects and asks **one** confirmation before
+  running (skipped with an explicit `-y`/`--yes`, or with `--dry-run`).
+- Runs `goal -a` in each project as an isolated subprocess.
+- **Continues past per-project failures** and prints a succeeded/failed summary
+  at the end (exit code is non-zero if any project failed).
+
+`goal auto …` is a word-form of the `-a` flag, so `goal auto`, `goal auto ./*`
+and `goal auto all` behave exactly like `goal -a`, `goal -a ./*` and
+`goal -a all` respectively.
 
 ### Running from a local clone
 

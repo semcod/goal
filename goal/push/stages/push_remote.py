@@ -83,6 +83,49 @@ def _handle_push_failure(result, branch: str, yes: bool) -> bool:
     return False
 
 
+def _is_rejected_push(stderr: str) -> bool:
+    """True when a push was rejected because the remote moved (non-fast-forward)."""
+    text = (stderr or "").lower()
+    return any(
+        marker in text
+        for marker in (
+            "rejected",
+            "non-fast-forward",
+            "fetch first",
+            "updates were rejected",
+            "tip of your current branch is behind",
+        )
+    )
+
+
+def _pull_rebase_and_retry(branch: str):
+    """Rebase onto the moved remote and retry the push once.
+
+    Returns the retry CompletedProcess, or None if the rebase pull itself failed
+    (e.g. conflicts) so the caller can fall through to normal failure handling.
+    """
+    click.echo(
+        click.style(
+            "  ↻ Remote moved — pulling with --rebase and retrying push...",
+            fg="cyan",
+        )
+    )
+    pull = run_git("pull", "--rebase", "origin", branch, capture=True)
+    if pull.returncode != 0:
+        # Abort a half-applied rebase so the tree isn't left mid-rebase.
+        run_git("rebase", "--abort", capture=True)
+        click.echo(
+            click.style(
+                "  ✗ Rebase pull failed (conflicts?) — leaving push to recovery.",
+                fg="yellow",
+            )
+        )
+        return None
+    return run_git_with_status(
+        "push", "origin", branch, capture=True, show_output=False
+    )
+
+
 def push_to_remote(
     branch: str, tag_name: Optional[str], no_tag: bool, yes: bool
 ) -> bool:
@@ -106,6 +149,13 @@ def push_to_remote(
         result = run_git_with_status(
             "push", "origin", branch, capture=True, show_output=False
         )
+
+        # Non-interactive (sweep/--all): if the remote moved under us, rebase and
+        # retry once instead of failing the whole project.
+        if result.returncode != 0 and yes and _is_rejected_push(result.stderr or ""):
+            retry = _pull_rebase_and_retry(branch)
+            if retry is not None:
+                result = retry
 
         if result.returncode != 0:
             return _handle_push_failure(result, branch, yes)

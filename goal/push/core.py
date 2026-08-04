@@ -2,6 +2,7 @@
 
 import sys
 import time
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 import click
@@ -28,160 +29,13 @@ from goal.push.stages import (
     handle_dry_run,
     handle_todo_stage,
 )
+from goal.push.preview import show_workflow_preview
+from goal.push.tickets import add_slow_test_tickets_to_planfile
 
 
 def run_git_local(*args, **kwargs) -> Any:
     """Local wrapper for run_git to avoid import issues."""
     return run_git(*args, **kwargs)
-
-
-def show_workflow_preview(
-    files,
-    stats,
-    current_version,
-    new_version,
-    commit_msg,
-    commit_body,
-    markdown,
-    ctx_obj,
-) -> None:
-    """Show workflow preview for interactive mode."""
-    total_adds = sum(s[0] for s in stats.values())
-    total_dels = sum(s[1] for s in stats.values())
-    denom = (total_adds + total_dels) or 1
-    deletion_pct = int((total_dels / denom) * 100)
-    net = total_adds - total_dels
-
-    if markdown or ctx_obj.get("markdown"):
-        click.echo("\n## GOAL Workflow Preview\n")
-        click.echo(
-            f"- **Files:** {len(files)} (+{total_adds}/-{total_dels} lines, NET {net}, {deletion_pct}% churn deletions)"
-        )
-        click.echo(f"- **Version:** {current_version} → {new_version}")
-        click.echo(f"- **Commit:** `{commit_msg}`")
-        if commit_body:
-            click.echo(f"\n### Commit Body\n```\n{commit_body}\n```")
-    else:
-        click.echo(click.style("\n=== GOAL Workflow ===", fg="cyan", bold=True))
-        click.echo(
-            f"Will commit {len(files)} files (+{total_adds}/-{total_dels} lines, NET {net}, {deletion_pct}% churn deletions)"
-        )
-        click.echo(f"Version bump: {current_version} -> {new_version}")
-        click.echo(f"Commit message: {click.style(commit_msg, fg='green')}")
-        if commit_body:
-            click.echo(click.style("\nCommit body (preview):", fg="cyan"))
-            click.echo(commit_body)
-
-
-def add_slow_test_tickets_to_planfile(test_details: Dict[str, Any]) -> List[str]:
-    """Create tasks in project/planfile-tickets.yaml for slow tests."""
-    from pathlib import Path
-    import yaml
-    import os
-
-    planfile_path = Path("project/planfile-tickets.yaml")
-    if not planfile_path.exists():
-        return []
-
-    try:
-        with open(planfile_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
-    except Exception:
-        return []
-
-    if not isinstance(data, dict):
-        data = {}
-
-    if "tickets" not in data or not isinstance(data["tickets"], list):
-        data["tickets"] = []
-
-    added_titles = []
-    slow_tests = test_details.get("slow_tests", [])
-
-    # Threshold of 0.5 seconds for a test to require improvement
-    THRESHOLD = 0.5
-
-    for test in slow_tests:
-        duration = test.get("duration", 0.0)
-        if duration < THRESHOLD:
-            continue
-
-        classname = test.get("classname", "unknown")
-        name = test.get("name", "unknown")
-
-        # Map classname to file
-        parts = classname.split(".")
-        file_path = "tests"  # fallback
-        for i in range(len(parts), 0, -1):
-            candidate = "/".join(parts[:i]) + ".py"
-            if os.path.exists(candidate):
-                file_path = candidate
-                break
-
-        title = f"Address slow test: {classname}.{name}"
-        dedupe_key = f"test-optimization:{classname}:{name}"
-
-        # Check if ticket already exists
-        exists = False
-        for ticket in data["tickets"]:
-            if isinstance(ticket, dict) and ticket.get("dedupe_key") == dedupe_key:
-                exists = True
-                break
-
-        if not exists:
-            new_ticket = {
-                "signal": "slow_test_warning",
-                "title": title,
-                "description": (
-                    f"Test `{classname}.{name}` took {duration:.2f}s to run.\n\n"
-                    f"Optimize its setup, mock slow external dependencies, or "
-                    f"refactor its logic to reduce overall test suite execution time."
-                ),
-                "priority": "medium",
-                "labels": ["llm-ready", "test-optimization", "slow-test"],
-                "files": [file_path],
-                "dedupe_key": dedupe_key
-            }
-            data["tickets"].append(new_ticket)
-            added_titles.append(title)
-
-    # Also add a general startup/collection overhead ticket if overhead is high (> 3.0s)
-    startup_overhead = test_details.get("startup_overhead", 0.0)
-    if startup_overhead > 3.0:
-        title = "Address high test suite startup overhead"
-        dedupe_key = "test-optimization:general:startup-overhead"
-        exists = False
-        for ticket in data["tickets"]:
-            if isinstance(ticket, dict) and ticket.get("dedupe_key") == dedupe_key:
-                exists = True
-                break
-
-        if not exists:
-            new_ticket = {
-                "signal": "slow_test_warning",
-                "title": title,
-                "description": (
-                    f"The test suite startup and collection overhead is high: {startup_overhead:.2f}s.\n\n"
-                    f"This overhead is spent on imports, collection, and test environment initialization.\n"
-                    f"Analyze fixtures with broad scopes, reduce heavy imports on test collection, "
-                    f"and optimize pytest-xdist startup settings to decrease the delay before tests start running."
-                ),
-                "priority": "high",
-                "labels": ["llm-ready", "test-optimization", "startup-overhead"],
-                "files": ["pyproject.toml"],
-                "dedupe_key": dedupe_key
-            }
-            data["tickets"].append(new_ticket)
-            added_titles.append(title)
-
-    if added_titles:
-        try:
-            with open(planfile_path, "w", encoding="utf-8") as f:
-                yaml.dump(data, f, sort_keys=False, allow_unicode=True)
-        except Exception:
-            pass
-
-    return added_titles
 
 
 def output_final_summary(
@@ -305,6 +159,7 @@ def output_final_summary(
         )
     )
 
+    tagged = not no_tag and not publish_skip_reason
     actions = [
         "Detected project types",
         "Staged changes",
@@ -312,8 +167,8 @@ def output_final_summary(
         "Committed changes",
         f"Updated version to {new_version}",
         "Updated changelog",
-        f"Created tag v{new_version}" if not no_tag else "Skipped tag creation",
-        "Pushed to remote" if not no_tag else "Pushed to remote without tags",
+        f"Created tag v{new_version}" if tagged else "Skipped tag creation",
+        "Pushed to remote" if tagged else "Pushed to remote without tags",
     ]
     if publish_success:
         actions.append(f"Published version {new_version}")
@@ -547,6 +402,43 @@ def execute_push_workflow(
 
     _validate_staged_files(ctx_obj, dry_run, force)
 
+    # Decide early whether this run should bump+commit+release. When the project
+    # is a registry project but no staged file is package source (only docs,
+    # metadata, lockfiles, tests or generated caches), bumping the version and
+    # committing produces churn: the version races ahead of what is published.
+    # Skip the release machinery in that case. Note we only skip on
+    # "no_package_source_changes" — a non-registry repo (docs/web site) reports
+    # "no_registry_project_types" and must still commit normally. --force-publish
+    # overrides to release anyway.
+    from goal.publish.changes import analyze_publishable_changes
+
+    early_change_report = (
+        None if force_publish else analyze_publishable_changes(files, project_types)
+    )
+    skip_release = bool(
+        early_change_report
+        and early_change_report.reason == "no_package_source_changes"
+    )
+    if skip_release:
+        # Staged files alone miss source changes that are already committed
+        # (agents commit, then a later `goal -a` sees a clean tree and skips
+        # while the registry stays behind HEAD). Release when the last v* tag
+        # is missing committed package source.
+        from goal.publish.changes import committed_unreleased_source_files
+
+        pending_committed = committed_unreleased_source_files(project_types)
+        if pending_committed:
+            preview = ", ".join(pending_committed[:3])
+            more = f" (+{len(pending_committed) - 3} more)" if len(pending_committed) > 3 else ""
+            click.echo(
+                click.style(
+                    f"📦 {len(pending_committed)} package source file(s) committed since the "
+                    f"last release tag — releasing: {preview}{more}",
+                    fg="yellow",
+                )
+            )
+            skip_release = False
+
     diff_content = get_diff_content()
     stats = get_diff_stats()
 
@@ -560,6 +452,11 @@ def execute_push_workflow(
     commit_msg = commit_title
 
     current_version, new_version = get_version_info()
+
+    # No package source changed: keep the current version (no bump). The commit,
+    # tag, publish and bump-file writes are all skipped further below.
+    if skip_release:
+        new_version = current_version
 
     commit_msg = _apply_enhanced_quality_gates(
         ctx_obj, commit_msg, detailed_result, files, stats, message, markdown
@@ -609,20 +506,36 @@ def execute_push_workflow(
         commit_body,
     )
 
-    _handle_commit_phase(
-        ctx_obj,
-        split,
-        message,
-        commit_title,
-        commit_body,
-        commit_msg,
-        files,
-        ticket,
-        new_version,
-        current_version,
-        no_version_sync,
-        no_changelog,
-    )
+    if skip_release:
+        click.echo(
+            click.style(
+                f"⏭ Skipping version bump and publish (staying on v{current_version}) "
+                "— no package source changes. Use --force-publish to release anyway.",
+                fg="yellow",
+            )
+        )
+        # Still commit + push the docs/metadata changes (README badge,
+        # local.dev.txt, lockfiles — often goal's own generated output) so the
+        # working tree doesn't accumulate them uncommitted forever. This is a
+        # plain commit with NO version bump, changelog, tag, or publish.
+        _commit_without_release(
+            ctx_obj, commit_title, commit_body, commit_msg, message
+        )
+    else:
+        _handle_commit_phase(
+            ctx_obj,
+            split,
+            message,
+            commit_title,
+            commit_body,
+            commit_msg,
+            files,
+            ticket,
+            new_version,
+            current_version,
+            no_version_sync,
+            no_changelog,
+        )
 
     publish_config = ctx_obj.get("config")
     if hasattr(publish_config, "reload"):
@@ -668,12 +581,49 @@ def execute_push_workflow(
         click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
         sys.exit(1)
 
-    tag_name = create_tag(new_version, no_tag)
+    # Don't create an orphan release tag when publish was skipped because there
+    # were no package source changes — avoids tags that map to no registry release.
+    skip_tag_no_source = bool(publish_skip_reason)
+    if skip_tag_no_source and not no_tag:
+        click.echo(
+            click.style(
+                f"⏭ Skipping tag v{new_version} — no package source changes to release",
+                fg="yellow",
+            )
+        )
+    tag_name = create_tag(new_version, no_tag or skip_tag_no_source)
 
     from goal.git_ops import get_remote_branch
 
     branch = get_remote_branch()
     push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+
+    # Optionally mirror the git tag as a GitHub Release (Releases page ≠ tags).
+    # Without this, tags advance while /releases/latest stays frozen until PyPI
+    # is blocked and the fallback path runs.
+    if tag_name and not (no_tag or skip_tag_no_source):
+        try:
+            from goal.publish.github_fallback import try_github_release_on_tag
+
+            package_name = ""
+            if isinstance(project_types, (list, tuple)) and project_types:
+                package_name = str(getattr(project_types[0], "name", "") or "")
+            if not package_name:
+                package_name = str(
+                    Path.cwd().name or ""
+                )
+            try_github_release_on_tag(
+                version=new_version,
+                package_name=package_name or "package",
+                config=publish_config,
+            )
+        except Exception as exc:  # pragma: no cover - non-fatal side channel
+            click.echo(
+                click.style(
+                    f"  ⚠ GitHub release-on-tag skipped: {exc}",
+                    fg="yellow",
+                )
+            )
 
     elapsed = time.time() - start_time
     ctx_obj["_elapsed_time"] = elapsed
@@ -828,6 +778,33 @@ def _validate_staged_files(ctx_obj: Dict[str, Any], dry_run: bool, force: bool) 
                 "⚠️  Security validation bypassed with --force", fg="yellow", bold=True
             )
         )
+
+
+def _commit_without_release(
+    ctx_obj: Dict[str, Any],
+    commit_title: str,
+    commit_body: Optional[str],
+    commit_msg: str,
+    message: Optional[str],
+) -> None:
+    """Commit already-staged docs/metadata changes with no bump/tag/publish.
+
+    Used in ``skip_release`` mode so the working tree doesn't keep accumulating
+    goal's own generated docs/metadata (badges, lockfiles) as uncommitted noise.
+    """
+    from goal.cli import confirm
+
+    if not ctx_obj["yes"]:
+        if not confirm("Commit docs/metadata changes (no release)?"):
+            click.echo(click.style("  Skipping commit (user chose N).", fg="yellow"))
+            return
+    else:
+        click.echo(
+            click.style(
+                "🤖 AUTO: Committing docs/metadata, no release (--all mode)", fg="cyan"
+            )
+        )
+    handle_single_commit(commit_title, commit_body, commit_msg, message, ctx_obj["yes"])
 
 
 def _handle_commit_phase(

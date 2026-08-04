@@ -67,7 +67,10 @@ def test_ensure_pytest_for_project_tries_multiple_install_strategies():
     assert calls[3] == ["/usr/bin/python3", "-c", "import pytest"]
 
 
-def test_active_venv_python_is_preferred_for_root_run(monkeypatch):
+def test_local_venv_preferred_over_stale_active_venv_for_root_run(monkeypatch):
+    """A VIRTUAL_ENV left active from an unrelated project must not override
+    the current project's own venv, or `goal test`/`goal push` silently runs
+    the wrong project's tests with the wrong interpreter."""
     monkeypatch.setenv("VIRTUAL_ENV", "/tmp/venv-active")
 
     with (
@@ -83,10 +86,10 @@ def test_active_venv_python_is_preferred_for_root_run(monkeypatch):
 
         assert cli_tests.run_tests(["python"]) is True
 
-    mock_find_python_bin.assert_not_called()
+    mock_find_python_bin.assert_called_once()
     commands = [call.args[0] for call in mock_run.call_args_list]
-    assert ["/tmp/venv-active/bin/python", "-c", "import pytest"] in commands
-    assert ["/tmp/venv-active/bin/python", "-m", "pytest"] in commands
+    assert ["/tmp/other/.venv/bin/python", "-c", "import pytest"] in commands
+    assert ["/tmp/other/.venv/bin/python", "-m", "pytest"] in commands
 
 
 def test_run_tests_uses_configured_python_strategy_and_skips_subdir_scan():
@@ -143,10 +146,13 @@ def test_rewrite_bash_pytest_for_uv_converts_goal_yaml_style_command():
 
 
 def test_build_python_test_command_prefers_venv_pytest_when_importable(monkeypatch):
-    monkeypatch.setenv("VIRTUAL_ENV", "/tmp/venv-active")
+    monkeypatch.delenv("VIRTUAL_ENV", raising=False)
 
     with (
-        patch("goal.cli.tests.Path.exists", return_value=True),
+        patch(
+            "goal.cli.tests._find_python_bin",
+            return_value="/tmp/project/.venv/bin/python",
+        ),
         patch("goal.cli.tests._pytest_importable", return_value=True),
         patch("shutil.which", return_value="/usr/bin/uv"),
     ):
@@ -154,9 +160,84 @@ def test_build_python_test_command_prefers_venv_pytest_when_importable(monkeypat
             "pytest tests/ -v", "pytest tests/ -v"
         )
 
-    assert cmd[:3] == ["/tmp/venv-active/bin/python", "-m", "pytest"]
+    assert cmd[:3] == ["/tmp/project/.venv/bin/python", "-m", "pytest"]
     assert use_subprocess is True
-    assert python_bin == "/tmp/venv-active/bin/python"
+    assert python_bin == "/tmp/project/.venv/bin/python"
+
+
+def test_display_test_error_names_path_exit_code_and_shows_tail(capsys):
+    """A failing subproject must be named with its exit code, and the runner's
+    tail (not its head) must be printed — otherwise the culprit is invisible
+    among green collection/dot output and costs an hour of bisection."""
+    from subprocess import CompletedProcess
+
+    from goal.cli.tests import _FAILURE_TAIL_LINES, _display_test_error
+
+    # Lots of leading "green" collection noise, real failure only at the end.
+    head_lines = [f"collected line {i}" for i in range(40)]
+    tail_marker = "FAILED tests/test_x.py::test_y"
+    summary = "1 failed in 0.05s"
+    stdout = "\n".join(head_lines + [tail_marker, summary]) + "\n"
+    result = CompletedProcess(
+        args=["pytest"], returncode=1, stdout=stdout, stderr="a warning\n"
+    )
+
+    _display_test_error(result, "svc_a/tests", "python")
+
+    captured = capsys.readouterr().out
+    # The culprit is named with its exit code.
+    assert "failed in: svc_a/tests (exit 1)" in captured
+    # The tail (with the real failure) is shown.
+    assert tail_marker in captured
+    assert summary in captured
+    assert "a warning" in captured
+    # Exactly the last n lines of stdout survive; the head is dropped.
+    # Compare as whole stripped lines — "collected line 1" is a substring of
+    # "collected line 18", so substring checks would lie.
+    all_lines = head_lines + [tail_marker, summary]
+    n = _FAILURE_TAIL_LINES
+    rendered = [ln.strip() for ln in captured.splitlines()]
+    for line in all_lines[-n:]:
+        assert line in rendered
+    for line in all_lines[:-n]:
+        assert line not in rendered
+
+
+def test_run_tests_names_project_type_on_unexpected_exception(monkeypatch, capsys):
+    """run_tests() must not silently swallow an exception raised before any
+    subprocess test even ran (e.g. a bug in strategy/config resolution) --
+    otherwise the top-level 'Tests failed' has zero diagnostic value and
+    every individual subproject looks green because none of them actually
+    ran (2026-07-03 incident: an hour of manual bisection to find nothing,
+    because the real failure was in aggregation, not in any subproject)."""
+    monkeypatch.setattr(
+        cli_tests,
+        "_run_project_type_tests",
+        MagicMock(side_effect=KeyError("test_command")),
+    )
+
+    success = cli_tests.run_tests(["python"], config=None)
+
+    assert success is False
+    captured = capsys.readouterr().out
+    assert "failed in: python" in captured
+    assert "KeyError" in captured
+    assert "test_command" in captured
+
+
+def test_run_tests_still_succeeds_when_no_exception(monkeypatch):
+    monkeypatch.setattr(cli_tests, "_run_project_type_tests", MagicMock(return_value=True))
+    assert cli_tests.run_tests(["python"], config=None) is True
+
+
+def test_tail_returns_last_n_lines_and_handles_empty():
+    from goal.cli.tests import _tail
+
+    assert _tail(None) == ""
+    assert _tail("") == ""
+    assert _tail("only one line") == "only one line"
+    text = "\n".join(str(i) for i in range(10))
+    assert _tail(text, n=3) == "7\n8\n9"
 
 
 def test_get_test_execution_details_and_planfile_update(tmp_path, monkeypatch):

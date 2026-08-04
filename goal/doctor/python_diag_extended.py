@@ -116,15 +116,43 @@ class PythonDiagnostics(PythonDiagnosticsCore):
                 issue.fix_description = f"Synchronized name to '{pyproject_name}' in {', '.join(fixed_files)}"
         self.issues.append(issue)
 
+    @staticmethod
+    def _py011_version_key(version: str) -> Optional[tuple]:
+        """Parse ``version`` into a comparable tuple; None when not plain semver."""
+        try:
+            return tuple(int(part) for part in version.strip().split("."))
+        except (ValueError, AttributeError):
+            return None
+
+    def _py011_target_version(self, versions: List[str]) -> str:
+        """Pick the sync target: the highest parseable version.
+
+        A partially applied bump (e.g. VERSION updated but pyproject.toml
+        write failed) leaves the *stale* file behind the intended version.
+        Syncing everything down to the stale value would silently revert the
+        bump and make the next publish collide with an already-released
+        version, so recover forward instead. Falls back to the first entry
+        (pyproject.toml) when nothing parses as semver.
+        """
+        parseable = [v for v in versions if self._py011_version_key(v) is not None]
+        if not parseable:
+            return versions[0]
+        return max(parseable, key=self._py011_version_key)
+
     def _collect_py011_inconsistencies(
         self,
         pyproject_version: str,
         setup_py: Path,
         init_py: Optional[Path],
         version_file: Path,
-    ) -> List[str]:
-        """Collect human-readable mismatches between ``pyproject_version`` and other version sources."""
+    ) -> tuple[List[str], List[str]]:
+        """Collect mismatches between ``pyproject_version`` and other version sources.
+
+        Returns ``(human_readable_mismatches, all_versions_found)`` where the
+        first entry of ``all_versions_found`` is always ``pyproject_version``.
+        """
         inconsistencies: List[str] = []
+        versions: List[str] = [pyproject_version]
 
         if setup_py.exists():
             setup_content = setup_py.read_text(errors="ignore")
@@ -133,6 +161,7 @@ class PythonDiagnostics(PythonDiagnosticsCore):
             )
             if setup_ver_match and setup_ver_match.group(1) != pyproject_version:
                 inconsistencies.append(f"setup.py: '{setup_ver_match.group(1)}'")
+                versions.append(setup_ver_match.group(1))
 
         if init_py and init_py.exists():
             init_content = init_py.read_text(errors="ignore")
@@ -143,13 +172,15 @@ class PythonDiagnostics(PythonDiagnosticsCore):
                 inconsistencies.append(
                     f"{init_py.parent.name}/__init__.py: '{init_ver_match.group(1)}'"
                 )
+                versions.append(init_ver_match.group(1))
 
         if version_file.exists():
             file_version = version_file.read_text().strip()
             if file_version != pyproject_version:
                 inconsistencies.append(f"VERSION: '{file_version}'")
+                versions.append(file_version)
 
-        return inconsistencies
+        return inconsistencies, versions
 
     def _sync_py011_files(
         self,
@@ -195,7 +226,7 @@ class PythonDiagnostics(PythonDiagnosticsCore):
             pkg_name = name_match.group(1).replace("-", "_")
             init_py = self.project_dir / pkg_name / "__init__.py"
 
-        inconsistencies = self._collect_py011_inconsistencies(
+        inconsistencies, versions = self._collect_py011_inconsistencies(
             pyproject_version, setup_py, init_py, version_file
         )
 
@@ -212,9 +243,18 @@ class PythonDiagnostics(PythonDiagnosticsCore):
         )
 
         if self.auto_fix:
-            self._sync_py011_files(pyproject_version, setup_py, init_py, version_file)
+            target_version = self._py011_target_version(versions)
+            if target_version != pyproject_version:
+                self.content = re.sub(
+                    r'^(version\s*=\s*")[^"]+(")',
+                    rf"\g<1>{target_version}\g<2>",
+                    self.content,
+                    count=1,
+                    flags=re.MULTILINE,
+                )
+            self._sync_py011_files(target_version, setup_py, init_py, version_file)
             issue.fixed = True
-            issue.fix_description = f"Synchronized version to '{pyproject_version}'"
+            issue.fix_description = f"Synchronized version to '{target_version}'"
         self.issues.append(issue)
 
     def check_py012_dist_cleanup(self) -> None:

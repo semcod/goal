@@ -1,3 +1,303 @@
+## [Unreleased]
+
+### Changed
+- **`no_package_source_changes` now commits & pushes docs/metadata instead of
+  leaving them uncommitted.** For registry projects where only docs/metadata
+  changed (README badge, `local.dev.txt`, lockfiles — often goal's own
+  generated output), goal skipped the version bump, commit, tag, and publish to
+  avoid version churn — but that left those staged changes uncommitted forever
+  and pushed nothing. Now goal still makes a plain commit and pushes it (no
+  bump, changelog, tag, or publish), so the working tree stays clean and the
+  changes reach the remote. `--force-publish` still forces a full release.
+
+### Added
+- **Push auto-recovery in non-interactive mode.** When `goal -a` (e.g. inside a
+  `goal all` sweep) fails to push because the remote moved under it (rejected /
+  non-fast-forward), it now runs `git pull --rebase` and retries the push once
+  instead of failing the whole project; a rebase conflict aborts cleanly and
+  falls through to normal recovery. (PyPI 429 rate-limit handling on publish
+  already existed: retry backoff `[60, 120, 300]s` plus a GitHub Releases
+  fallback.)
+
+### Fixed
+- **The standalone `publish` command ignored global `--dry-run`.** The root
+  CLI recorded dry-run state, but the publish handler still invoked Make or a
+  package registry. It now reports the planned method and version without
+  running either publication path.
+- **CI tested Python versions incompatible with the installed CLI dependency
+  and suppressed installation errors.** Goal now declares the effective Python
+  3.12+ floor required by clickmd, the CI/tox matrices cover 3.12–3.13, runners
+  configure a deterministic Git and Goal user identity, and dependency
+  installation fails immediately instead of continuing without pytest.
+- **Bootstrap uv zgłaszał fałszywe błędy instalacji `pfix` i `pytest`.**
+  Środowiska tworzone przez uv nie muszą zawierać modułu `pip`, a bootstrap
+  wywoływał `<venv>/python -m pip`; dodatkowo `uv sync --upgrade` pomijał
+  zadeklarowaną grupę/extra `dev` i usuwał narzędzia testowe. Instalacja
+  narzędzi używa teraz `uv pip install --python <venv>/bin/python`, synchronizacja
+  zachowuje PEP 621 `--extra dev` lub PEP 735 `--group dev`, a komunikat błędu
+  pokazuje właściwą przyczynę. Menedżer pakietów wykonuje też polecenia w
+  katalogu wybranego podprojektu zamiast przypadkowo korzystać z bieżącego
+  katalogu procesu.
+- **A PyPI wheel of goal silently reverted local source changes.** `pip install
+  goal` drops a real `site-packages/goal/` that shadows an editable/dev
+  install's `.pth` finder, so the `goal` command stopped running the checkout
+  (dev fixes appeared to have no effect). Now: the version banner detects a
+  source checkout (`goal.__file__` outside site-packages) and prints
+  `Goal vX (dev — source at …)` instead of nudging `pip install -U goal`;
+  a new `_warn_wheel_shadows_editable` warns when a wheel install coexists with
+  an editable one and points at `pip install -e <goal source>`; and
+  `project.sh` installs goal with `pip install -e .` instead of the PyPI wheel.
+- **A stray `uv.lock` shadowed a Poetry project's `poetry.lock`.** `detect_lockfile`
+  returned the first lockfile in registry order (`uv.lock` before `poetry.lock`),
+  so a leftover empty `uv.lock` in a Poetry project made bootstrap run
+  `uv sync`, which reset the `.venv` to the empty lock and wiped its
+  dependencies (tests then failed with collection errors). `detect_lockfile` now
+  prefers `poetry.lock` when the project declares Poetry (`[tool.poetry]` or the
+  poetry build backend), so the authoritative lockfile wins regardless of a
+  spurious `uv.lock`.
+- **Poetry projects didn't get their dev/test dependencies installed.** Bootstrap
+  called the package-manager broker's non-lockfile-aware `install()`, which
+  always picks uv (highest priority) even when a `poetry.lock` is present. uv's
+  editable install builds a Poetry project's core deps but not its dependency
+  *groups* (e.g. `[tool.poetry.group.dev]` → `pytest-asyncio`), so async tests
+  failed en masse with "async def functions are not natively supported". Now
+  bootstrap uses `install_smart()` (lockfile-aware: `poetry.lock` → poetry) at
+  both broker call sites (`bootstrap/installer.py` and `project_bootstrap.py`),
+  `PoetryManager.install_editable` uses a plain `poetry install` (installs the
+  non-optional dev group) instead of the broken `--extras dev` (a group is not a
+  PEP621 extra), and `isolated_env` sets `POETRY_VIRTUALENVS_CREATE=false` so
+  Poetry installs into the project's `.venv` rather than a cache-managed env.
+  Verified on a fixture Poetry project: goal selects poetry and its dev-group
+  dependency lands in the project `.venv`.
+- **Bootstrap installed project dependencies into the wrong virtualenv.** When
+  `goal` was invoked from an activated venv (e.g. a monorepo-wide `venv/` shared
+  across sibling repos), `uv pip install`/`pip install` honored the ambient
+  `VIRTUAL_ENV` and installed a project's deps into that *outer* venv instead of
+  the project's own `.venv`. The outer venv accumulated editable installs of
+  every bootstrapped project while each project's `.venv` stayed incomplete —
+  then `goal` ran the project's tests with `.venv/bin/python` and they failed
+  with confusing `ModuleNotFoundError`s (e.g. `pyserial`, `yaml`, `httpx`
+  missing). Added `goal/installers/env.py::isolated_env`, which scopes
+  `VIRTUAL_ENV` to the project's `.venv` (and drops `CONDA_PREFIX`), and applied
+  it to every package-manager subprocess in `installers/managers/base.py`,
+  `bootstrap/installer.py`, and `project_bootstrap.py`. Installs now land in the
+  project's own `.venv` regardless of the active shell venv. Verified with a new
+  regression suite (`tests/test_installer_env.py`) and an end-to-end check that
+  an install runs into the project `.venv` while an outer venv stays clean.
+
+### Added
+- `goal all [PATHS...]` — a monorepo sweep that runs the full `goal -a`
+  workflow in every git repository with uncommitted changes under the given
+  paths (directories or globs; defaults to `*`, i.e. every sub-directory of the
+  current folder). Clean repos and non-git directories are skipped. It prints
+  the list of matched dirty projects and asks for a single batch confirmation
+  before running (skipped only with an explicit `-y`/`--yes`, or `--dry-run`),
+  then runs `goal -a` in each as an isolated subprocess, continuing past
+  per-project failures and printing a succeeded/failed summary at the end.
+- `goal -a ./*` shorthand — when `-a`/`--all` is combined with one or more
+  path/glob arguments, `GoalGroup` routes the invocation to the new `all`
+  command, so `goal -a ./*` is equivalent to `goal all ./*`.
+- `auto` word-form of the `-a`/`--all` flag: a leading `auto` token makes
+  `goal auto ...` behave exactly like `goal -a ...` — `goal auto` → single-repo
+  push, `goal auto ./*` → sweep, `goal auto all` → the `all` command.
+
+### Fixed
+- `_ensure_python_test_dependency()` (duplicated in `goal/project_bootstrap.py`
+  and `goal/bootstrap/installer.py`) verified the Python test runner was
+  ready by checking only `import pytest` succeeds. That's not sufficient:
+  a project's own `pyproject.toml` `addopts` (e.g. `-n auto` for parallel
+  runs) can require a plugin (`pytest-xdist`) declared under
+  `[project.optional-dependencies] dev` rather than as a hard dependency.
+  A bare `uv sync` (no `--extra dev`) or `pip install pytest` leaves
+  `pytest` importable but every actual test run failing immediately with
+  argparse's "unrecognized arguments: -n" before a single test collects —
+  reported here as a false "test dependency ready", so `goal -a -y` moved
+  on to running tests and then failed with a confusing, unrelated-looking
+  error (2026-07-06 incident: this silently broke `goal -a -y` for
+  `code2llm` after a plain `uv sync` stripped `pytest-xdist`, which
+  `pyproject.toml`'s own `addopts = "-n auto"` required). Fixed by adding
+  `_pytest_addopts_satisfied()` — a `pytest --collect-only` smoke test — as
+  a second readiness gate; on failure, escalates from a bare
+  `pip install pytest` to a full `pip install -e .[dev]` before
+  re-verifying. Verified: 9 new tests across
+  `tests/test_project_bootstrap.py::TestPythonTestDependency` (5, one
+  updated) and the new
+  `tests/test_bootstrap_installer_python_test_dependency.py` (4, covering
+  the previously-untested `bootstrap/installer.py` duplicate). Full suite
+  (405 tests) passes.
+- `run_tests()` (`goal/cli/tests.py`) caught any exception raised while
+  running a project type's tests with a bare `except Exception:
+  success = False` — no message, no project type, no traceback. If the
+  failure happened *before* any subprocess test ran (a bug in strategy/config
+  resolution, a missing key, a bad path) rather than in an actual test run,
+  every individual subproject's output stayed green (nothing ran to fail),
+  yet the top-level `goal -a` pipeline still printed "Aborting workflow
+  because tests failed." with zero indication of why (2026-07-03 incident:
+  "goal printed 'Running tests in 5 subproject(s)' then 'Tests failed.
+  Aborting' with every visible subproject log green — no culprit named," an
+  hour of manual bisection that found nothing because the real failure was
+  in aggregation, not in any subproject). Fixed by naming the failing
+  project type and the exception (type + message) at the point it's caught,
+  matching the detail `_display_test_error()` already gives for genuine
+  subprocess test failures. Verified: 2 new tests
+  (`test_run_tests_names_project_type_on_unexpected_exception`,
+  `test_run_tests_still_succeeds_when_no_exception`) in
+  `tests/test_cli_tests_runner.py`; full suite (397 tests) passes.
+- `changelog.py`'s `_find_unreleased_insert_pos()` returned `None` both when no
+  `## [Unreleased]` section existed *and* when one existed but had no version heading
+  below it yet (e.g. a hand-authored CHANGELOG.md before its first `goal` publish).
+  `_insert_entry()` treated both as "no section exists" and inserted a brand-new
+  `## [Unreleased]` header at the top of the file, pushing the real one (with its
+  content) down intact — creating a permanent duplicate `## [Unreleased]` header
+  frozen partway through the file's history on every affected package's first publish
+  (confirmed in `pfix/CHANGELOG.md`). Fixed by checking for the bare marker before
+  falling through to the "create new section" branches, and inserting the entry right
+  after the existing (headingless) `## [Unreleased]` instead.
+  Verified: reproduced the exact pre-bug pfix CHANGELOG.md structure and confirmed the
+  duplicate no longer occurs; added `test_update_changelog_unreleased_section_with_no_prior_release`
+  covering this case. Full test suite (393 tests) passes.
+- `_resolve_root_python()` (used to run `goal test`/`goal push`/`goal -a`) checked the
+  globally activated `VIRTUAL_ENV` before the current project's own `.venv`/`venv`/`env`.
+  A virtualenv left active from a different, unrelated project (e.g. after `cd`-ing away
+  from it without deactivating) silently made `goal` run the current project's test suite
+  with the wrong interpreter — missing dependencies, false failures, or (worse) tests
+  quietly passing against the wrong codebase. Now the project's own local venv always
+  wins; `VIRTUAL_ENV` and `sys.executable` remain as fallbacks when no local venv exists.
+  Verified against a real repo with a hostile `VIRTUAL_ENV` pointing at an unrelated
+  project's venv — `_resolve_root_python()` now correctly resolves the current project's
+  own interpreter. `_active_venv_python()`, now unused, was removed.
+
+### Chores
+- Removed a stale, unused `[tool.poetry]` section from `pyproject.toml` (build backend is
+  `setuptools`, not Poetry) — its name/version/dependencies/scripts had drifted out of
+  sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
+  and could mislead anyone editing dependencies there, believing it had any effect.
+
+## [2.1.284] - 2026-07-23
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_bootstrap_installer_python_test_dependency.py
+- Update tests/test_dependency_update.py
+- Update tests/test_installers_e2e.py
+
+## [2.1.283] - 2026-07-15
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_options.py
+- Update tests/test_pyenv_health.py
+
+## [2.1.282] - 2026-07-15
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_options.py
+
+## [2.1.275] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/examples.md
+- Update docs/usage.md
+- Update examples/monorepo/README.md
+
+### Test
+- Update tests/test_installer_env.py
+
+### Other
+- Update VERSION
+
+## [2.1.273] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Other
+- Update VERSION
+
+## [2.1.271] - 2026-07-06
+
+### Docs
+- Update README.md
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+- Update project/planfile-tickets.yaml
+- Update wup.yaml
+
+## [2.1.270] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_bootstrap_installer_python_test_dependency.py
+- Update tests/test_project_bootstrap.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+
+## [2.1.269] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+
+### Other
+- Update .gitignore
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+
+## [2.1.268] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_changelog.py
+
+## [2.1.267] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_push_e2e.py
+
+### Other
+- Update .planfile/config.yaml
+- Update .planfile/config.yaml.fast.json
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+- Update VERSION
+- Update examples/go-project/local.dev.txt
+- Update examples/my-new-project/local.dev.txt
+- Update examples/nodejs-app/local.dev.txt
+- Update examples/python-package/local.dev.txt
+- Update examples/rust-crate/local.dev.txt
+- ... and 2 more files
+
 ## [2.1.253] - 2026-06-18
 
 ### Added
@@ -155,6 +455,75 @@
 
 ### Deprecated
 - Legacy `_install_python_deps()` waterfall approach (still works via fallback)
+
+## [2.1.265] - 2026-07-03
+
+### Docs
+- Update README.md
+
+## [2.1.264] - 2026-07-02
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_project_bootstrap.py
+
+## [2.1.263] - 2026-07-02
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cost_badges.py
+- Update tests/test_project_bootstrap.py
+
+## [2.1.262] - 2026-06-29
+
+### Docs
+- Update README.md
+
+## [2.1.261] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+## [2.1.260] - 2026-06-22
+
+### Docs
+- Update README.md
+
+## [2.1.259] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_version_sync.py
+
+### Other
+- Update project/planfile-tickets.yaml
+
+## [2.1.258] - 2026-06-21
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+### Other
+- Update app.doql.less
+- Update project/logic.pl
+- Update project/map.toon.yaml
+- Update project/planfile-tickets.yaml
+- Update tree.txt
 
 ## [2.1.257] - 2026-06-20
 
@@ -3441,4 +3810,3 @@ test(tests): update pyproject.toml, test_cli_options.py
 
 - docs: update README
 - update pyproject.toml
-

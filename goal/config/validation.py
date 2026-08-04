@@ -282,7 +282,11 @@ class ConfigValidator:
                         "publishing.fallback.github_release must be a mapping"
                     )
                 elif isinstance(gh, dict):
-                    for key in ("enabled", "skip_pypi_retries_on_block"):
+                    for key in (
+                        "enabled",
+                        "skip_pypi_retries_on_block",
+                        "create_on_tag",
+                    ):
                         val = gh.get(key)
                         if val is not None and not isinstance(val, bool):
                             self.errors.append(

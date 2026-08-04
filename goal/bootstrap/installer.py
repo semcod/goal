@@ -9,7 +9,30 @@ import click
 
 from goal.bootstrap.templates import PROJECT_TEMPLATES, ProjectTemplate
 from goal.bootstrap.configurator import _find_python_bin
+from goal.bootstrap.costs_badge import (
+    _MIN_COSTS_VERSION,
+    _costs_version_satisfies_minimum,
+    _install_costs_requirement,
+)
 from goal.installers import PackageManagerBroker
+from goal.installers.env import isolated_env
+from goal.pyenv_health import diagnose as _diagnose_python_env
+from goal.pyenv_health import repair as _repair_python_env
+
+
+def _python_install_command(
+    project_dir: Path, python_bin: str, *arguments: str
+) -> list[str]:
+    """Select the installer that owns the target Python environment.
+
+    uv-created virtual environments normally have no ``pip`` module.  For a
+    project with ``uv.lock`` use ``uv pip --python``; otherwise use the
+    interpreter's regular ``python -m pip``.
+    """
+    uv_bin = shutil.which("uv")
+    if uv_bin and (project_dir / "uv.lock").exists():
+        return [uv_bin, "pip", "install", "--python", python_bin, *arguments]
+    return [python_bin, "-m", "pip", "install", *arguments]
 
 
 def _match_marker(base: Path, pattern: str) -> bool:
@@ -47,16 +70,19 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
         cwd=str(project_dir),
     )
     if result.returncode == 0:
-        return True
+        installed_version = result.stdout.strip()
+        if _costs_version_satisfies_minimum(installed_version):
+            return True
+        click.echo(
+            click.style(
+                f"  Upgrading costs package ({installed_version} < {_MIN_COSTS_VERSION})...",
+                fg="cyan",
+            )
+        )
+    else:
+        click.echo(click.style("  Installing costs package...", fg="cyan"))
 
-    click.echo(click.style("  Installing costs package...", fg="cyan"))
-    install_result = subprocess.run(
-        [python_bin, "-m", "pip", "install", "costs"],
-        capture_output=True,
-        text=True,
-        cwd=str(project_dir),
-    )
-    if install_result.returncode == 0:
+    if _install_costs_requirement(project_dir, python_bin):
         click.echo(click.style("  ✓ costs installed", fg="green"))
         return True
     return False
@@ -96,7 +122,12 @@ def _install_python_deps_legacy(
 
         click.echo(click.style(f"  Installing deps: {cmd}", fg="cyan"))
         result = subprocess.run(
-            cmd, shell=True, cwd=str(project_dir), capture_output=True, text=True
+            cmd,
+            shell=True,
+            cwd=str(project_dir),
+            capture_output=True,
+            text=True,
+            env=isolated_env(str(project_dir)),
         )
 
         if result.returncode != 0:
@@ -110,6 +141,7 @@ def _install_python_deps_legacy(
                     cwd=str(project_dir),
                     capture_output=True,
                     text=True,
+                    env=isolated_env(str(project_dir)),
                 )
 
             if result.returncode != 0:
@@ -154,11 +186,36 @@ def _install_python_deps_broker(
     """
     broker = PackageManagerBroker(str(project_dir))
     try:
-        result = broker.install(extras=extras, auto_install_uv=True)
+        # Lockfile-aware selection: poetry.lock → poetry, uv.lock → uv, etc.
+        # Without this, uv (highest priority) is chosen even for Poetry projects,
+        # and Poetry dependency *groups* (e.g. dev → pytest-asyncio) never install.
+        result = broker.install_smart(extras=extras, auto_install_uv=True)
         return result.success
     except RuntimeError as e:
         click.echo(click.style(f"  ⚠  {e}", fg="yellow"))
         return False
+
+
+def _pytest_addopts_satisfied(project_dir: Path, python_bin: str) -> bool:
+    """Check pytest can actually collect, not just import.
+
+    `import pytest` succeeding doesn't mean pytest can run: pyproject.toml's
+    own `addopts` (e.g. `-n auto`) can require a plugin (pytest-xdist) that
+    lives under `[project.optional-dependencies] dev` rather than being a
+    hard dependency. A bare uv/pip sync that skips extras leaves `pytest`
+    importable but every actual test run failing with argparse's
+    "unrecognized arguments" before a single test collects -- reported here
+    as a false "test dependency ready" (2026-07-06: code2llm's `-n auto`
+    addopts silently broke `goal -a -y` this way after a plain `uv sync`).
+    """
+    probe = subprocess.run(
+        [python_bin, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
+        capture_output=True,
+        text=True,
+        cwd=str(project_dir),
+        timeout=60,
+    )
+    return "unrecognized arguments" not in probe.stderr
 
 
 def _ensure_python_test_dependency(
@@ -168,13 +225,18 @@ def _ensure_python_test_dependency(
     if not test_dep:
         return True
 
+    def addopts_ok() -> bool:
+        return test_dep != "pytest" or _pytest_addopts_satisfied(
+            project_dir, python_bin
+        )
+
     check_result = subprocess.run(
         [python_bin, "-c", f"import {test_dep}; print({test_dep}.__version__)"],
         capture_output=True,
         text=True,
         cwd=str(project_dir),
     )
-    if check_result.returncode == 0:
+    if check_result.returncode == 0 and addopts_ok():
         version = check_result.stdout.strip()
         if version:
             click.echo(
@@ -186,21 +248,81 @@ def _ensure_python_test_dependency(
 
     click.echo(click.style(f"  Installing test dependency: {test_dep}", fg="cyan"))
     install_result = subprocess.run(
-        [python_bin, "-m", "pip", "install", test_dep],
+        _python_install_command(project_dir, python_bin, test_dep),
         capture_output=True,
         text=True,
         cwd=str(project_dir),
+        env=isolated_env(str(project_dir)),
     )
+    if install_result.returncode == 0 and not addopts_ok():
+        # pytest itself is fine, but the project's own addopts still can't
+        # run -- a required plugin lives in a dev/optional extras group
+        # that the bare install above doesn't pull in. Pull the full group.
+        install_result = subprocess.run(
+            _python_install_command(project_dir, python_bin, "-e", ".[dev]"),
+            capture_output=True,
+            text=True,
+            cwd=str(project_dir),
+            env=isolated_env(str(project_dir)),
+        )
+        if install_result.returncode == 0 and not addopts_ok():
+            click.echo(
+                click.style(
+                    f"  ⚠ {test_dep} installed but the project's own pytest addopts "
+                    "still fail to run (check for a missing plugin under "
+                    "[project.optional-dependencies] in pyproject.toml)",
+                    fg="yellow",
+                )
+            )
+            return False
+
     if install_result.returncode != 0:
+        error = (install_result.stderr or install_result.stdout or "").strip()
         click.echo(
             click.style(
                 f"  ⚠ Could not install test dependency: {test_dep}", fg="yellow"
             )
         )
+        if error:
+            click.echo(click.style(f"    {error.splitlines()[-1]}", fg="yellow"))
         return False
 
     click.echo(click.style(f"  ✓ Test dependency installed ({test_dep})", fg="green"))
     return True
+
+
+def _ensure_venv_pyvenv_cfg_is_healthy(venv_path: Path) -> None:
+    """Proactively catch/fix a venv whose pyvenv.cfg disagrees with its own
+    interpreter -- before any pip install is attempted against it.
+
+    This is the exact failure mode behind pip (and anything else importing
+    ctypes) segfaulting for no apparent reason inside a seemingly-fine venv:
+    the declared base Python build doesn't match the interpreter the venv's
+    own bin/python actually resolves to, so compiled stdlib extensions load
+    from the wrong build. Left undetected, every dependency install below
+    (costs, the package manager broker, the test runner) fails the same way
+    and each looks like an unrelated, unexplained error.
+    """
+    diagnosis = _diagnose_python_env(str(venv_path))
+    if not diagnosis:
+        return
+    click.echo(click.style(f"\n⚠  {diagnosis}", fg="yellow"))
+    click.echo(click.style("  Próbuję naprawić automatycznie...", fg="cyan"))
+    if _repair_python_env(str(venv_path)):
+        click.echo(
+            click.style(
+                "  ✓ Naprawiono pyvenv.cfg (dopasowano do rzeczywistego interpretera)",
+                fg="green",
+            )
+        )
+    else:
+        click.echo(
+            click.style(
+                "  ⚠  Nie udało się naprawić automatycznie. Ostatnia deska ratunku: "
+                f"usuń i odtwórz venv:\n    rm -rf {venv_path} && python3 -m venv {venv_path}",
+                fg="yellow",
+            )
+        )
 
 
 def _ensure_python_env(project_dir: Path, cfg: ProjectTemplate, yes: bool) -> bool:
@@ -236,6 +358,7 @@ def _ensure_python_env(project_dir: Path, cfg: ProjectTemplate, yes: bool) -> bo
         click.echo(click.style("  ✓ Created .venv", fg="green"))
 
     python_bin = _find_python_bin(project_dir)
+    _ensure_venv_pyvenv_cfg_is_healthy(venv_path)
 
     # Upgrade pip
     subprocess.run(

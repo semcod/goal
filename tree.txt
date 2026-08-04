@@ -167,6 +167,7 @@
 │   ├── deep_analyzer_aggregate.py
 │   ├── deep_analyzer_patterns.py
 │   ├── deep_analyzer.py
+│   ├── dependency_update.py
 │   ├── doctor
 │   │   ├── core.py
 │   │   ├── dotnet.py
@@ -207,6 +208,9 @@
 │   │       ├── pip.py
 │   │       ├── poetry.py
 │   │       └── uv.py
+│   ├── io
+│   │   ├── __init__.py
+│   │   └── stdio.py
 │   ├── license
 │   │   ├── __init__.py
 │   │   ├── manager.py
@@ -219,6 +223,10 @@
 │   │   └── manager.py
 │   ├── project_bootstrap.py
 │   ├── project_doctor.py
+│   ├── publish
+│   │   ├── changes.py
+│   │   ├── github_fallback.py
+│   │   └── __init__.py
 │   ├── push
 │   │   ├── commands.py
 │   │   ├── core.py
@@ -282,6 +290,7 @@
 │   ├── SOURCES.txt
 │   └── top_level.txt
 ├── goal.yaml
+├── index.html
 ├── integration
 │   ├── Dockerfile
 │   ├── run_docker_matrix.sh
@@ -330,6 +339,7 @@
 │   ├── redsl_20260420_111946.log
 │   └── redsl_20260420_112820.log
 ├── Makefile
+├── nlp2uri.yaml
 ├── planfile.yaml
 ├── prefact.yaml
 ├── project
@@ -369,6 +379,7 @@
 ├── redsl.yaml
 ├── REFACTOR_PLAN.md
 ├── regix.yaml
+├── screenshots
 ├── scripts
 │   └── koru_verify_ci.sh
 ├── SUMD.md
@@ -386,16 +397,22 @@
 │   ├── test_clone_repo.py
 │   ├── test_config_shim.py
 │   ├── test_config_validation.py
+│   ├── test_dependency_update.py
+│   ├── test_detect_version_files.py
 │   ├── test_file_validation.py
 │   ├── test_formatter.py
+│   ├── test_github_fallback.py
 │   ├── test_git_ops.py
 │   ├── test_installers_e2e.py
 │   ├── test_project_bootstrap_costs.py
 │   ├── test_project_bootstrap.py
 │   ├── test_project_doctor.py
+│   ├── test_publish_changes.py
+│   ├── test_publish_pattern.py
 │   ├── test_push_e2e.py
 │   ├── test_push_todo_stage.py
 │   ├── test_smart_commit_shim.py
+│   ├── test_token_validator_patterns.py
 │   ├── test_user_config.py
 │   ├── test_version_sync.py
 │   └── test_version_validation.py
@@ -413,4 +430,4 @@
 │   └── on-change-gates.md
 └── wup.yaml
 
-72 directories, 342 files
+75 directories, 356 files

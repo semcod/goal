@@ -195,6 +195,46 @@ class TestDiagnosePython:
         assert '{name = "Tom Sapletta", email = "tom@sapletta.com"}' in content
         assert '<tom@sapletta.com>"' not in content  # old string format removed
 
+    def _version_project(self, tmp_path, pyproject_version, file_version):
+        (tmp_path / "pyproject.toml").write_text(
+            '[build-system]\nrequires = ["setuptools"]\nbuild-backend = "setuptools.build_meta"\n\n'
+            f'[project]\nname = "x"\nversion = "{pyproject_version}"\nrequires-python = ">=3.9"\n'
+        )
+        (tmp_path / "VERSION").write_text(f"{file_version}\n")
+
+    def test_py011_syncs_forward_when_version_file_is_ahead(self, tmp_path):
+        """Partially applied bump (VERSION ahead of pyproject) must recover forward.
+
+        Syncing down would revert the bump and make the next publish collide
+        with an already-released version.
+        """
+        self._version_project(tmp_path, "0.1.35", "0.1.36")
+        issues = _diagnose_python(tmp_path, auto_fix=True)
+        py011 = [i for i in issues if i.code == "PY011"]
+        assert len(py011) == 1
+        assert py011[0].fixed is True
+        assert "0.1.36" in py011[0].fix_description
+        assert 'version = "0.1.36"' in (tmp_path / "pyproject.toml").read_text()
+        assert (tmp_path / "VERSION").read_text().strip() == "0.1.36"
+
+    def test_py011_syncs_others_up_to_pyproject(self, tmp_path):
+        self._version_project(tmp_path, "0.2.0", "0.1.9")
+        issues = _diagnose_python(tmp_path, auto_fix=True)
+        py011 = [i for i in issues if i.code == "PY011"]
+        assert len(py011) == 1
+        assert py011[0].fixed is True
+        assert (tmp_path / "VERSION").read_text().strip() == "0.2.0"
+        assert 'version = "0.2.0"' in (tmp_path / "pyproject.toml").read_text()
+
+    def test_py011_no_fix_leaves_files_alone(self, tmp_path):
+        self._version_project(tmp_path, "0.1.35", "0.1.36")
+        issues = _diagnose_python(tmp_path, auto_fix=False)
+        py011 = [i for i in issues if i.code == "PY011"]
+        assert len(py011) == 1
+        assert py011[0].fixed is False
+        assert 'version = "0.1.35"' in (tmp_path / "pyproject.toml").read_text()
+        assert (tmp_path / "VERSION").read_text().strip() == "0.1.36"
+
 
 # ---------------------------------------------------------------------------
 # Node.js diagnostics

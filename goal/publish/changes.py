@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from dataclasses import dataclass, field
 from fnmatch import fnmatch
 from pathlib import PurePosixPath
@@ -236,3 +237,59 @@ def analyze_publishable_changes(
         non_publishable_files=non_publishable,
         reason="no_package_source_changes",
     )
+
+
+def _latest_release_tag() -> str | None:
+    """Most recent v* tag reachable from HEAD, or None (no tags / not a repo)."""
+    try:
+        proc = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0", "--match", "v*"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    tag = (proc.stdout or "").strip()
+    return tag if proc.returncode == 0 and tag else None
+
+
+def committed_unreleased_source_files(
+    project_types: list[str],
+    *,
+    base_ref: str | None = None,
+) -> list[str]:
+    """Package-source files committed since the last release tag.
+
+    Staged-file analysis alone misses source changes that are already
+    committed (an agent or a second `goal -a` run after a manual commit):
+    the tree is clean, so the release is skipped while the registry stays
+    behind HEAD. This checks ``<last release tag>..HEAD`` with the same
+    publishable-path classifier. Returns [] when no tag exists or git fails
+    (callers keep the conservative skip in that case).
+    """
+    registry_types = [t for t in project_types if t in REGISTRY_PROJECT_TYPES]
+    if not registry_types:
+        return []
+    ref = base_ref or _latest_release_tag()
+    if not ref:
+        return []
+    try:
+        proc = subprocess.run(
+            ["git", "diff", "--name-only", f"{ref}..HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if proc.returncode != 0:
+        return []
+    changed = [line.strip() for line in (proc.stdout or "").splitlines() if line.strip()]
+    return [
+        path
+        for path in changed
+        if any(_is_publishable_for_type(path, ptype) for ptype in registry_types)
+    ]

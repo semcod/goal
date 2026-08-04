@@ -24,6 +24,11 @@ class PdmManager(AbstractPackageManager):
         """PDM can import from requirements."""
         return self._run(["pdm", "import", req_file])
 
-    def install_from_lockfile(self) -> Optional[InstallResult]:
+    def install_from_lockfile(
+        self, extras: Optional[list[str]] = None
+    ) -> Optional[InstallResult]:
         """Install from pdm.lock."""
-        return self._run(["pdm", "sync"])
+        command = ["pdm", "sync"]
+        if extras:
+            command.extend(["-G", ",".join(extras)])
+        return self._run(command)

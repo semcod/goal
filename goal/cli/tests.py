@@ -40,17 +40,6 @@ def _get_project_strategy(config: object, project_type: str) -> dict:
     return {}
 
 
-def _active_venv_python() -> Optional[str]:
-    """Return active virtualenv Python path when VIRTUAL_ENV is set."""
-    venv = os.environ.get("VIRTUAL_ENV")
-    if not venv:
-        return None
-    candidate = Path(venv) / "bin" / "python"
-    if candidate.exists():
-        return str(candidate)
-    return None
-
-
 def _resolve_project_python(project_root: Optional[Path], fallback_python: str) -> str:
     """Resolve Python interpreter for a subproject, preferring its own virtualenv."""
     if not project_root:
@@ -127,18 +116,44 @@ def _coerce_python_strategy_to_project_pytest(
     return None
 
 
+_FAILURE_TAIL_LINES = 15
+
+
+def _tail(text: Optional[str], n: int = _FAILURE_TAIL_LINES) -> str:
+    """Return the last ``n`` lines of ``text`` (the runner's tail).
+
+    Test runners (pytest, jest, ...) emit collection output and progress dots
+    first and the actual failure summary last, so the tail is what points at
+    the real error — the head is usually all green.
+    """
+    if not text:
+        return ""
+    return "\n".join(text.rstrip().split("\n")[-n:])
+
+
 def _display_test_error(
     result: subprocess.CompletedProcess, test_dir: str, project_type: str
 ) -> None:
-    """Display test failure output."""
-    click.echo(click.style(f"\n  ❌ Tests failed in {test_dir}/", fg="red"))
-    if result.stdout:
-        click.echo(click.style("  stdout:", fg="yellow"))
-        for line in result.stdout.strip().split("\n")[:10]:
+    """Display a subproject test failure.
+
+    Names the failing path and exit code up front, then prints the runner's
+    tail (stdout/stderr) so the culprit is obvious without manual bisection.
+    """
+    exit_code = getattr(result, "returncode", None)
+    exit_suffix = f" (exit {exit_code})" if exit_code is not None else ""
+    click.echo(
+        click.style(f"\n  ❌ failed in: {test_dir}{exit_suffix}", fg="red", bold=True)
+    )
+
+    stdout_tail = _tail(result.stdout)
+    if stdout_tail:
+        click.echo(click.style("  stdout (tail):", fg="yellow"))
+        for line in stdout_tail.split("\n"):
             click.echo(f"    {line}")
-    if result.stderr:
-        click.echo(click.style("  stderr:", fg="yellow"))
-        for line in result.stderr.strip().split("\n")[:10]:
+    stderr_tail = _tail(result.stderr)
+    if stderr_tail:
+        click.echo(click.style("  stderr (tail):", fg="yellow"))
+        for line in stderr_tail.split("\n"):
             click.echo(f"    {line}")
     if project_type == "nodejs":
         if not (Path(test_dir) / "node_modules").exists():
@@ -281,10 +296,15 @@ def _run_tests_in_subdirs(project_type: str, base_cmd: List[str]) -> bool:
 
 
 def _resolve_root_python() -> str:
-    """Resolve python executable for root test run."""
-    active_python = _active_venv_python()
-    if active_python:
-        return active_python
+    """Resolve python executable for root test run.
+
+    Prefers this project's own virtualenv (.venv/venv/env under the current
+    directory) over a globally activated VIRTUAL_ENV, which may belong to a
+    different, unrelated project when the caller's shell has one activated
+    (e.g. from working in another repo earlier in the session). Falling back
+    to VIRTUAL_ENV, then sys.executable, is already handled by
+    _find_python_bin when no local venv exists.
+    """
     detected_python = Path(_find_python_bin(Path.cwd()))
     if not detected_python.is_absolute():
         detected_python = (Path.cwd() / detected_python).resolve()
@@ -443,8 +463,16 @@ def run_tests(
         try:
             if not _run_project_type_tests(ptype, config, markdown=markdown):
                 success = False
-        except Exception:
+        except Exception as e:
             success = False
+            click.echo(
+                click.style(
+                    f"\n  ❌ failed in: {ptype} (exception before any test ran: "
+                    f"{type(e).__name__}: {e})",
+                    fg="red",
+                    bold=True,
+                )
+            )
 
     return success
 

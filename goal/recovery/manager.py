@@ -72,6 +72,59 @@ class RecoveryManager:
             click.echo(f"Error: {e.stderr}")
             raise
 
+    def _working_tree_dirty(self) -> bool:
+        """True when the working tree has uncommitted or untracked changes."""
+        result = self.run_git("status", "--porcelain", check=False)
+        return bool((result.stdout or "").strip())
+
+    def _stash_uncommitted_work(self, label: str) -> str | None:
+        """Stash dirty work (incl. untracked) before a destructive git op.
+
+        Concurrent agents/IDE loops may be editing the tree while recovery
+        runs; a bare ``reset --hard`` would silently destroy their work.
+        Returns the stash message when something was stashed, else None.
+        """
+        if not self._working_tree_dirty():
+            return None
+        message = f"goal-recovery-autostash-{label}"
+        result = self.run_git(
+            "stash", "push", "--include-untracked", "-m", message, check=False
+        )
+        if result.returncode != 0:
+            click.echo(
+                click.style(
+                    "⚠️ Could not stash uncommitted work; aborting destructive "
+                    "recovery step to avoid data loss.",
+                    fg="yellow",
+                )
+            )
+            raise RuntimeError("refusing reset --hard over a dirty working tree")
+        click.echo(f"✓ Stashed uncommitted work as: {message}")
+        return message
+
+    def _restore_stashed_work(self, stash_message: str | None) -> None:
+        """Re-apply auto-stashed work; on conflict keep the stash for manual pop."""
+        if not stash_message:
+            return
+        result = self.run_git("stash", "pop", check=False)
+        if result.returncode == 0:
+            click.echo("✓ Restored uncommitted work from auto-stash")
+            return
+        click.echo(
+            click.style(
+                f"⚠️ Auto-stash could not be re-applied cleanly; your work is "
+                f"safe in `git stash list` (message: {stash_message}). "
+                "Run `git stash pop` after resolving.",
+                fg="yellow",
+            )
+        )
+
+    def _reset_hard_preserving_work(self, target: str, *, label: str) -> None:
+        """``git reset --hard <target>`` that never destroys uncommitted work."""
+        stash_message = self._stash_uncommitted_work(label)
+        self.run_git("reset", "--hard", target)
+        self._restore_stashed_work(stash_message)
+
     def recover_from_push_failure(self, error_output: str) -> bool:
         """Attempt to recover from a git push failure."""
         click.echo(
@@ -174,8 +227,8 @@ class RecoveryManager:
             # Switch back to main branch
             self.run_git("checkout", "main", check=False)
 
-            # Reset to backup
-            self.run_git("reset", "--hard", backup_branch)
+            # Reset to backup without destroying concurrent uncommitted work
+            self._reset_hard_preserving_work(backup_branch, label="rollback")
             click.echo(
                 click.style(f"✓ Rolled back to backup: {backup_branch}", fg="green")
             )
@@ -289,10 +342,10 @@ class RecoveryManager:
             )
             click.echo(click.style("✓ Push successful from clean clone", fg="green"))
 
-            # Update original repo
+            # Update original repo without destroying concurrent uncommitted work
             os.chdir(self.repo_path)
             self.run_git("fetch", "origin")
-            self.run_git("reset", "--hard", "origin/main")
+            self._reset_hard_preserving_work("origin/main", label="clean-clone-sync")
 
             return True
 
