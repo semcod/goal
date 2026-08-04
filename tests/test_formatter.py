@@ -1,9 +1,10 @@
 """Tests for goal/formatter.py."""
-import pytest
+
 from goal.formatter import (
     MarkdownFormatter,
     format_status_output,
     format_push_result,
+    format_goal_all_summary,
     _build_functional_overview,
     _determine_next_steps,
 )
@@ -87,7 +88,7 @@ def test_markdown_formatter_summary():
     formatter = MarkdownFormatter()
     formatter.add_summary(
         actions_taken=["Staged files", "Committed"],
-        next_steps=["Push to remote", "Create PR"]
+        next_steps=["Push to remote", "Create PR"],
     )
     result = formatter.render()
     assert "Actions Taken:" in result
@@ -107,7 +108,7 @@ def test_build_functional_overview():
         current_version="1.0.0",
         new_version="1.1.0",
         commit_msg="feat: add features",
-        project_types=["python"]
+        project_types=["python"],
     )
     assert title == "Summary"
     assert "auth" in content or "api" in content
@@ -126,7 +127,7 @@ def test_build_functional_overview_single_feature():
         current_version="1.0.0",
         new_version="1.1.0",
         commit_msg="feat: auth",
-        project_types=["python"]
+        project_types=["python"],
     )
     assert "auth support" in content
 
@@ -142,7 +143,7 @@ def test_build_functional_overview_no_features():
         current_version="1.0.0",
         new_version="1.1.0",
         commit_msg="chore: update",
-        project_types=["python"]
+        project_types=["python"],
     )
     assert title == "Overview"
     assert "Project Type:" in content
@@ -174,7 +175,7 @@ def test_format_status_output():
         version="1.0.0",
         branch="main",
         staged_files=["file1.py", "file2.py"],
-        unstaged_files=["file3.py"]
+        unstaged_files=["file3.py"],
     )
     assert "Goal Status" in result
     assert "1.0.0" in result
@@ -187,10 +188,7 @@ def test_format_status_output_many_unstaged():
     """Test with many unstaged files."""
     files = [f"file{i}.py" for i in range(25)]
     result = format_status_output(
-        version="1.0.0",
-        branch="main",
-        staged_files=[],
-        unstaged_files=files
+        version="1.0.0", branch="main", staged_files=[], unstaged_files=files
     )
     assert "and 5 more files" in result
 
@@ -204,7 +202,7 @@ def test_format_push_result():
         current_version="1.0.0",
         new_version="1.1.0",
         commit_msg="feat: update",
-        actions=["Staged", "Committed"]
+        actions=["Staged", "Committed"],
     )
     assert "Goal Push Result" in result
     assert "1.0.0" in result
@@ -221,7 +219,38 @@ def test_format_push_result_with_error():
         current_version="1.0.0",
         new_version="1.1.0",
         commit_msg="feat: update",
-        error="Something went wrong"
+        error="Something went wrong",
     )
     assert "Error" in result
     assert "Something went wrong" in result
+
+
+def test_format_goal_all_summary_markdown():
+    result = format_goal_all_summary(
+        project_types=["python"],
+        files=["goal/push/core.py"],
+        stats={"goal/push/core.py": (12, 3)},
+        current_version="2.1.250",
+        new_version="2.1.251",
+        commit_msg="fix(goal): markdown stdio",
+        commit_body=None,
+        test_exit_code=0,
+        test_details={
+            "wall_time": 6.1,
+            "total_test_time": 5.0,
+            "startup_overhead": 1.1,
+            "slow_tests": [],
+        },
+        publish_success=True,
+        publish_required=True,
+        publish_skip_reason=None,
+        workflow_success=True,
+        added_tickets=[],
+    )
+    assert "# Goal Result" in result
+    assert "SUCCESS" in result
+    assert "2.1.250" in result
+    assert "2.1.251" in result
+    assert "Test Execution" in result
+    assert "Publish" in result
+    assert "passed" in result

@@ -1,0 +1,8 @@
+# nlp2uri.yaml — desktop URI compiler defaults
+# platform: auto | linux | darwin | windows (auto = detect at runtime)
+
+platform: auto
+host_platform: linux
+locale: null
+dry_run: false
+capture_dir: /tmp/nlp2uri-captures

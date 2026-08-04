@@ -2,13 +2,20 @@
 
 import os
 import re
-from typing import List, Dict, Any
+import shlex
+import subprocess
+import sys
+from importlib import import_module
+from typing import List, Dict, Any, Optional
 
 import click
+import goal
+
+from goal import __version__
 
 try:
     import nfo
-    from nfo.terminal import TerminalSink
+
     _HAS_NFO = True
 except ImportError:
     _HAS_NFO = False
@@ -16,9 +23,146 @@ except ImportError:
 from goal.git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
 from goal.config import GoalConfig, ensure_config, init_config, load_config
 from goal.user_config import get_user_config, initialize_user_config, show_user_config
+from goal.cli_helpers import split_paths_by_type, stage_paths, confirm, strip_ansi
+from goal.pyenv_health import diagnose as _diagnose_broken_python_env
+from goal.pyenv_health import repair as _repair_broken_python_env
 
 
 DOCS_URL = "https://github.com/wronai/goal#readme"
+
+
+def _has_cli_flag(args: List[str], short: str, long: str) -> bool:
+    """Detect a short or long CLI flag, including combined forms like -au."""
+    if long in args or f"-{short}" in args:
+        return True
+
+    for arg in args:
+        if arg.startswith("--"):
+            continue
+        if arg.startswith("-") and len(arg) > 1 and short in arg[1:]:
+            return True
+
+    return False
+
+
+def _goal_update_command() -> str:
+    """Build a safe update command for the current runtime environment."""
+    venv = os.environ.get("VIRTUAL_ENV")
+    if venv:
+        venv_python = os.path.join(venv, "bin", "python")
+        if os.path.exists(venv_python):
+            return f"{shlex.quote(venv_python)} -m pip install -U goal"
+
+    if sys.executable:
+        return f"{shlex.quote(sys.executable)} -m pip install -U goal"
+
+    return "pip install -U goal"
+
+
+def _goal_package_path() -> str:
+    """Absolute path to the imported goal package, or '' if unavailable."""
+    try:
+        return os.path.abspath(getattr(goal, "__file__", "") or "")
+    except Exception:
+        return ""
+
+
+def _is_dev_install() -> bool:
+    """True when goal is imported from a source checkout (editable/dev install).
+
+    A wheel install lives under ``site-packages``/``dist-packages``; an editable
+    or source-tree run resolves ``goal.__file__`` to the checkout instead.
+    """
+    path = _goal_package_path()
+    if not path:
+        return False
+    return "site-packages" not in path and "dist-packages" not in path
+
+
+def _editable_goal_markers(site_dir: str) -> list:
+    """Return pip/uv editable-install marker files for goal in ``site_dir``."""
+    from glob import glob
+
+    return (
+        glob(os.path.join(site_dir, "__editable__.goal-*.pth"))
+        + glob(os.path.join(site_dir, "__editable___goal_*_finder.py"))
+        + glob(os.path.join(site_dir, "goal.pth"))
+    )
+
+
+def _warn_wheel_shadows_editable() -> None:
+    """Warn when a wheel install of goal shadows an editable (dev) install.
+
+    ``pip install goal`` drops a real ``site-packages/goal/`` package that wins
+    over an editable ``.pth`` finder, so local source changes silently stop
+    taking effect. Detect that and point at the fix.
+    """
+    path = _goal_package_path()
+    marker = os.sep + "site-packages" + os.sep
+    if marker not in path:
+        return  # running from source (or an unusual layout) — nothing to warn
+    site_dir = path[: path.index(marker) + len(marker) - 1]
+    if not _editable_goal_markers(site_dir):
+        return
+    click.echo(
+        click.style(
+            f"⚠ goal is running from a wheel in {site_dir} but an editable/dev "
+            "install also exists — the wheel is shadowing your source changes.",
+            fg="yellow",
+        )
+    )
+    click.echo(
+        click.style(
+            "  Restore dev mode: pip install -e <goal source> "
+            "(e.g. pip install -e ./goal)",
+            fg="cyan",
+        )
+    )
+
+
+def _warn_goal_binary_mismatch() -> None:
+    """Warn when a global goal package is used while a virtualenv is active."""
+    venv = os.environ.get("VIRTUAL_ENV")
+    if not venv:
+        cwd_venv = os.path.join(os.getcwd(), ".venv")
+        cwd_venv_python = os.path.join(cwd_venv, "bin", "python")
+        if os.path.exists(cwd_venv_python):
+            venv = cwd_venv
+    if not venv:
+        return
+
+    try:
+        pkg_path = os.path.abspath(getattr(goal, "__file__", ""))
+    except Exception:
+        return
+
+    user_site_prefix = os.path.expanduser("~/.local/lib/")
+    if not pkg_path.startswith(user_site_prefix):
+        return
+
+    venv_goal_bin = os.path.join(venv, "bin", "goal")
+    venv_python = os.path.join(venv, "bin", "python")
+    if os.path.exists(venv_goal_bin):
+        click.echo(
+            click.style(
+                f"⚠ Using global goal from {pkg_path} while VIRTUAL_ENV={venv}",
+                fg="yellow",
+            )
+        )
+        click.echo(click.style(f"  Prefer: {venv_goal_bin} ...", fg="cyan"))
+    elif os.path.exists(venv_python):
+        click.echo(
+            click.style(
+                f"⚠ Using global goal from {pkg_path} while project venv exists at {venv}",
+                fg="yellow",
+            )
+        )
+        click.echo(
+            click.style(
+                f"  Install goal in project venv: {venv_python} -m pip install -U goal",
+                fg="cyan",
+            )
+        )
 
 
 def _setup_nfo_logging(nfo_format: str = "markdown", nfo_sink: str = ""):
@@ -41,181 +185,490 @@ def _nfo_log_call(**kwargs):
     """Conditional @nfo.log_call — no-op decorator when nfo is not installed."""
     if _HAS_NFO:
         return nfo.log_call(**kwargs)
+
     def _passthrough(fn):
         return fn
+
     return _passthrough
 
 
-ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+_COMMAND_MODULES_LOADED = False
 
 
-def strip_ansi(text: str) -> str:
-    try:
-        return ANSI_ESCAPE_RE.sub('', text)
-    except Exception:
-        return text
+def load_command_modules() -> None:
+    """Import Click command modules so they register against `main`."""
+    global _COMMAND_MODULES_LOADED
 
-
-def split_paths_by_type(paths: List[str]) -> Dict[str, List[str]]:
-    """Split file paths into groups (code/docs/ci/examples/other)."""
-    groups: Dict[str, List[str]] = {'code': [], 'docs': [], 'ci': [], 'examples': [], 'other': []}
-    for p in paths:
-        pl = p.lower()
-        if pl.startswith('examples/'):
-            groups['examples'].append(p)
-        elif pl.startswith('docs/') or pl.endswith(('.md', '.rst')) or os.path.basename(pl) in ('readme.md',):
-            groups['docs'].append(p)
-        elif pl.startswith('.github/') or pl.startswith('.gitlab/') or pl.endswith(('.yml', '.yaml')):
-            groups['ci'].append(p)
-        elif pl.startswith('src/') or pl.startswith('lib/') or pl.endswith('.py'):
-            groups['code'].append(p)
-        else:
-            groups['other'].append(p)
-
-    return {k: v for k, v in groups.items() if v}
-
-
-def stage_paths(paths: List[str]) -> None:
-    if not paths:
+    if _COMMAND_MODULES_LOADED:
         return
-    # stage in chunks to avoid arg length issues
-    chunk: List[str] = []
-    for p in paths:
-        chunk.append(p)
-        if len(chunk) >= 100:
-            run_git('add', '--', *chunk)
-            chunk = []
-    if chunk:
-        run_git('add', '--', *chunk)
+
+    for module_name in (
+        ".push_cmd",
+        ".all_cmd",
+        ".publish_cmd",
+        ".utils_cmd",
+        ".doctor_cmd",
+        ".config_cmd",
+        ".commit_cmd",
+        ".recover_cmd",
+        ".wizard_cmd",
+        ".license_cmd",
+        ".authors_cmd",
+        ".hooks_cmd",
+        ".postcommit_cmd",
+        ".validation_cmd",
+    ):
+        import_module(module_name, __name__)
+
+    _COMMAND_MODULES_LOADED = True
 
 
-def confirm(prompt: str, default: bool = True) -> bool:
-    """Ask for user confirmation with Y/n prompt (Enter defaults to Yes)."""
-    if default:
-        suffix = " [Y/n] "
-    else:
-        suffix = " [y/N] "
-    
-    while True:
-        response = input(f"{click.style(prompt, fg='cyan')}{suffix}").strip().lower()
-        
-        if not response:
-            return default
-        
-        if response in ['y', 'yes']:
-            return True
-        elif response in ['n', 'no']:
+def _run_pip_update(cmd: List[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+
+def _auto_update_goal(current_version: str, latest_version: str) -> bool:
+    """Attempt to auto-update goal to the latest version.
+
+    Retries once with ``--no-cache-dir`` if the first attempt fails. If pip
+    is killed by a signal (e.g. segfault, returncode < 0 — not just a normal
+    nonzero exit), diagnoses the most common cause — a venv whose declared
+    Python version doesn't match its actual interpreter, which crashes any
+    ``import ctypes`` (see ``goal.pyenv_health``) — and, when found, repairs
+    it in place and retries once more before giving up.
+
+    Returns True if update was successful, False otherwise.
+    """
+    click.echo(
+        click.style(
+            f"\n🔄 Auto-updating goal from v{current_version} to v{latest_version}...",
+            fg="cyan",
+        )
+    )
+
+    base_cmd = [sys.executable, "-m", "pip", "install", "-U", "goal"]
+    attempts = [base_cmd, base_cmd + ["--no-cache-dir"]]
+
+    result = None
+    for i, cmd in enumerate(attempts):
+        try:
+            result = _run_pip_update(cmd)
+        except Exception as e:
+            click.echo(click.style(f"❌ Update failed: {e}", fg="red"))
             return False
-        else:
-            click.echo(click.style("Please respond with 'y' or 'n'", fg='red'))
+
+        if result.returncode == 0:
+            click.echo(
+                click.style(
+                    f"✅ Successfully updated to v{latest_version}",
+                    fg="green",
+                    bold=True,
+                )
+            )
+            return True
+
+        if i == 0 and result.returncode < 0:
+            click.echo(
+                click.style(
+                    f"  pip crashed (signal {-result.returncode}) — retrying with "
+                    "--no-cache-dir...",
+                    fg="yellow",
+                )
+            )
+
+    crashed = result.returncode < 0
+    if not crashed:
+        click.echo(click.style(f"❌ Update failed: {result.stderr}", fg="red"))
+        return False
+
+    click.echo(
+        click.style(
+            f"❌ pip padł z sygnałem {-result.returncode} zamiast zwrócić błąd "
+            "— to nie jest problem w pakiecie goal, tylko w tym środowisku Pythona.",
+            fg="red",
+        )
+    )
+    diagnosis = _diagnose_broken_python_env()
+    if not diagnosis:
+        click.echo(
+            click.style(
+                "  Nie udało się zdiagnozować przyczyny automatycznie — spróbuj "
+                f"ręcznie: {' '.join(shlex.quote(c) for c in base_cmd)}",
+                fg="yellow",
+            )
+        )
+        return False
+
+    click.echo(click.style(diagnosis, fg="yellow"))
+    click.echo(click.style("  Próbuję naprawić automatycznie...", fg="cyan"))
+    if not _repair_broken_python_env():
+        click.echo(
+            click.style(
+                "  Nie udało się naprawić automatycznie. Ostatnia deska ratunku: "
+                f"usuń i odtwórz venv:\n    rm -rf {shlex.quote(sys.prefix)} && "
+                f"{shlex.quote(sys.executable)} -m venv {shlex.quote(sys.prefix)}",
+                fg="yellow",
+            )
+        )
+        return False
+
+    click.echo(
+        click.style("  ✓ Naprawiono pyvenv.cfg, ponawiam instalację...", fg="green")
+    )
+    result = _run_pip_update(base_cmd)
+    if result.returncode == 0:
+        click.echo(
+            click.style(
+                f"✅ Successfully updated to v{latest_version}", fg="green", bold=True
+            )
+        )
+        return True
+
+    click.echo(click.style(f"❌ Update failed even after repair: {result.stderr}", fg="red"))
+    return False
+
+
+def _show_goal_version_banner() -> Optional[str]:
+    """Print the version banner. Returns the latest PyPI version when this
+    install is outdated (and self-update is applicable), else None."""
+    from goal import __version__
+    from goal.version_validation import get_pypi_version
+
+    # In a source checkout, never nudge `pip install -U goal` — that would
+    # replace the dev version with a PyPI wheel and silently revert local work.
+    if _is_dev_install():
+        src = os.path.dirname(os.path.dirname(_goal_package_path()))
+        click.echo(
+            click.style(f"Goal v{__version__} (dev — source at {src})", fg="cyan", bold=True)
+        )
+        return None
+
+    latest = get_pypi_version("goal")
+    if latest and latest != __version__:
+        update_cmd = _goal_update_command()
+        click.echo(
+            click.style(
+                f"Goal v{__version__} (latest: v{latest} → {update_cmd})",
+                fg="yellow",
+                bold=True,
+            )
+        )
+        click.echo(click.style(f"  Update now: {update_cmd}", fg="cyan"))
+        return latest
+    else:
+        click.echo(click.style(f"Goal v{__version__} ✓", fg="cyan", bold=True))
+        return None
+
+
+def _maybe_self_update(latest_version: Optional[str], yes: bool) -> None:
+    """Offer (or, under -y, perform) the self-update `_show_goal_version_banner`
+    only ever suggested before. Skips entirely for non-interactive runs
+    without -y so scripted/CI invocations never block on a prompt or silently
+    start a network install mid-command.
+    """
+    if not latest_version:
+        return
+    if not yes and not sys.stdin.isatty():
+        return
+
+    from goal import __version__
+
+    if not yes:
+        if not click.confirm(
+            click.style(
+                f"  Zaktualizować goal do v{latest_version} teraz?", fg="cyan"
+            ),
+            default=False,
+        ):
+            return
+
+    _auto_update_goal(__version__, latest_version)
+
+
+def _explicit_ascii_flag(argv: list[str] | None = None) -> bool:
+    """Return True when the user explicitly requested ASCII output."""
+    args = argv if argv is not None else sys.argv
+    return "--ascii" in args
+
+
+def _resolve_output_markdown(output_markdown: bool | None, all_flags: bool) -> bool:
+    """Resolve markdown vs ASCII output for the current invocation."""
+    if output_markdown is True:
+        return True
+    if output_markdown is False:
+        return False
+    return bool(all_flags)
+
+
+def _configure_main_context(
+    ctx,
+    bump,
+    target_version,
+    yes,
+    all_flags,
+    upgrade_deps,
+    recursive,
+    interactive,
+    no_publish,
+    force_publish,
+    todo,
+    markdown,
+    dry_run,
+    config_path,
+    abstraction,
+) -> None:
+    ctx.ensure_object(dict)
+    ctx.obj["bump"] = bump
+    ctx.obj["version"] = target_version
+    ctx.obj["yes"] = yes or all_flags
+    ctx.obj["upgrade_deps"] = upgrade_deps
+    ctx.obj["recursive"] = recursive
+    ctx.obj["interactive"] = interactive
+    ctx.obj["no_publish"] = no_publish
+    ctx.obj["force_publish"] = force_publish
+    ctx.obj["todo"] = todo
+    ctx.obj["markdown"] = _resolve_output_markdown(markdown, all_flags)
+    ctx.obj["dry_run"] = dry_run
+    ctx.obj["abstraction"] = abstraction
+    ctx.obj["config"] = load_config(config_path) if config_path else ensure_config()
+    ctx.obj["user_config"] = get_user_config()
 
 
 class GoalGroup(click.Group):
     """Custom Click Group that shows docs URL for unknown commands (like Poetry),
     and defaults to 'push' command when -a/--all is passed without a subcommand."""
-    
+
     def get_command(self, ctx, cmd_name) -> Any:
         rv = super().get_command(ctx, cmd_name)
         if rv is not None:
             return rv
+        if cmd_name == "push":
+            click.echo(
+                click.style(
+                    "Command 'push' is unavailable (likely incomplete/broken goal installation).",
+                    fg="red",
+                    bold=True,
+                )
+            )
+            click.echo(
+                click.style(
+                    f"Try: {_goal_update_command().replace(' -U goal', ' -U --force-reinstall goal')}",
+                    fg="cyan",
+                )
+            )
+            click.echo(
+                click.style(
+                    "If multiple goal binaries exist, run the one from your project venv.",
+                    fg="yellow",
+                )
+            )
+            click.echo()
         # Unknown command - show helpful message with docs URL
-        click.echo(click.style(f"The requested command {cmd_name} does not exist.\n", fg='red', bold=True))
-        click.echo(click.style(f"Documentation: {DOCS_URL}", fg='cyan'))
+        click.echo(
+            click.style(
+                f"The requested command {cmd_name} does not exist.\n",
+                fg="red",
+                bold=True,
+            )
+        )
+        click.echo(click.style(f"Documentation: {DOCS_URL}", fg="cyan"))
         click.echo()
-        click.echo(click.style("Available commands:", fg='cyan', bold=True))
+        click.echo(click.style("Available commands:", fg="cyan", bold=True))
         self.list_commands(ctx)
         ctx.exit(2)
-    
+
     def parse_args(self, ctx, args) -> Any:
-        # Check if -a or --all is in args without any command
-        has_all_flag = '-a' in args or '--all' in args
-        has_subcommand = any(
-            not a.startswith('-') and a not in ('--help', '-h')
-            for a in args
-        )
-        
+        # Check if -a or --all is in args without any command.
+        # We must skip option *values* (e.g. 'major' in '--bump major') so
+        # they are not mistaken for subcommand names.
+        has_all_flag = _has_cli_flag(args, "a", "--all")
+        known_cmds = set(self.list_commands(ctx) or [])
+        # Options whose next token is a value (not a flag).
+        _VALUE_OPTIONS = {
+            "--bump",
+            "--target-version",
+            "--config",
+            "--abstraction",
+            "--nfo-format",
+            "--nfo-sink",
+        }
+        # Split the argv into option tokens (with their values) and bare
+        # positional tokens so we can tell "goal -a" from "goal -a ./foo ./bar".
+        opts: List[str] = []
+        positionals: List[str] = []
+        skip_next = False
+        for a in args:
+            if skip_next:
+                opts.append(a)
+                skip_next = False
+                continue
+            if a in _VALUE_OPTIONS:
+                opts.append(a)
+                skip_next = True
+                continue
+            if a.startswith("-"):
+                opts.append(a)
+                continue
+            positionals.append(a)
+
+        # `auto` is a word-form of the -a/--all flag, so `goal auto ...` behaves
+        # exactly like `goal -a ...` (auto → push, auto ./* → sweep, auto all →
+        # the `all` command). Only a *leading* positional token counts.
+        auto_used = bool(positionals) and positionals[0] == "auto"
+        if auto_used:
+            positionals = positionals[1:]
+            has_all_flag = True
+            if "-a" not in opts and "--all" not in opts:
+                opts = ["-a"] + opts
+
+        has_subcommand = any(p in known_cmds for p in positionals)
+
         if has_all_flag and not has_subcommand:
-            # Default to push command
-            args = args + ['push']
-        
+            if positionals:
+                # `goal -a ./*` (or explicit dirs) → sweep those paths across
+                # every dirty sub-repo via the `all` command.
+                all_cmd = click.Group.get_command(self, ctx, "all")
+                if all_cmd is not None:
+                    args = opts + ["all"] + positionals
+                elif auto_used:
+                    args = opts + positionals
+            else:
+                # Bare `goal -a` → default to the single-repo push workflow.
+                push_cmd = click.Group.get_command(self, ctx, "push")
+                if push_cmd is not None:
+                    args = (opts + ["push"]) if auto_used else (args + ["push"])
+        elif auto_used:
+            # `goal auto all [...]` → the -a we injected into `opts` must reach
+            # Click, so rebuild argv from the split tokens.
+            args = opts + positionals
+
         return super().parse_args(ctx, args)
 
 
 @click.group(cls=GoalGroup)
-@click.option('--bump', default='patch', help='Version bump type (major, minor, patch)')
-@click.option('--version', default=None, help='Explicit version to use')
-@click.option('--yes', '-y', is_flag=True, help='Auto-confirm all prompts')
-@click.option('--all', '-a', 'all_flags', is_flag=True, help='Run full workflow (tests, push, publish)')
-@click.option('--todo', '-t', is_flag=True, help='Create TODO.md file with detected issues')
-@click.option('--markdown/--ascii', default=False, help='Output format')
-@click.option('--dry-run', is_flag=True, help='Show what would be done without executing')
-@click.option('--config', 'config_path', default=None, help='Path to goal.yaml config file')
-@click.option('--abstraction', default=None, help='Abstraction level for commit messages')
-@click.option('--nfo-format', default='markdown', help='nfo log format')
-@click.option('--nfo-sink', default='', help='Additional nfo sink')
+@click.option("--bump", default="patch", help="Version bump type (major, minor, patch)")
+@click.option("--target-version", default=None, help="Explicit version to use")
+@click.version_option(version=__version__, prog_name="goal")
+@click.option("--yes", "-y", is_flag=True, help="Auto-confirm all prompts")
+@click.option(
+    "--all",
+    "-a",
+    "all_flags",
+    is_flag=True,
+    help="Run full workflow (tests, push, publish)",
+)
+@click.option(
+    "--upgrade-deps",
+    "-u",
+    "upgrade_deps",
+    is_flag=True,
+    help="Update project dependencies to latest available versions",
+)
+@click.option(
+    "--recursive",
+    "-r",
+    "recursive",
+    is_flag=True,
+    help="Update dependencies in subfolders (monorepo support)",
+)
+@click.option(
+    "--interactive",
+    "-i",
+    "interactive",
+    is_flag=True,
+    help="Ask before processing each subproject (without -i, -a/--all runs automatically)",
+)
+@click.option("--no-publish", is_flag=True, help="Skip publishing to registry")
+@click.option(
+    "--force-publish",
+    "-f",
+    is_flag=True,
+    help="Publish even when no package source changes are detected (e.g. source already committed)",
+)
+@click.option(
+    "--todo", "-t", is_flag=True, help="Create TODO.md file with detected issues"
+)
+@click.option("--markdown/--ascii", "output_markdown", default=None, help="Output format")
+@click.option(
+    "--dry-run", is_flag=True, help="Show what would be done without executing"
+)
+@click.option(
+    "--config", "config_path", default=None, help="Path to goal.yaml config file"
+)
+@click.option(
+    "--abstraction", default=None, help="Abstraction level for commit messages"
+)
+@click.option("--nfo-format", default="markdown", help="nfo log format")
+@click.option("--nfo-sink", default="", help="Additional nfo sink")
 @click.pass_context
-def main(ctx, bump, version, yes, all_flags, todo, markdown, dry_run, config_path, abstraction, nfo_format, nfo_sink) -> None:
+def main(
+    ctx,
+    bump,
+    target_version,
+    yes,
+    all_flags,
+    upgrade_deps,
+    recursive,
+    interactive,
+    no_publish,
+    force_publish,
+    todo,
+    output_markdown,
+    dry_run,
+    config_path,
+    abstraction,
+    nfo_format,
+    nfo_sink,
+) -> None:
     """Goal - Automated git push with smart commit messages."""
-    # Display version info at startup with update check
-    from goal import __version__
-    from goal.version_validation import get_pypi_version
-    
-    latest = get_pypi_version("goal")
-    if latest and latest != __version__:
-        click.echo(click.style(f"Goal v{__version__} (latest: v{latest} → pip install -U goal)", fg='yellow', bold=True))
-    else:
-        click.echo(click.style(f"Goal v{__version__} ✓", fg='cyan', bold=True))
-    
+    # Skip version banner for help requests to avoid blocking help output
+    # Check both sys.argv and Click's resilient_parsing (used for --help)
+    is_help_request = "--help" in sys.argv or "-h" in sys.argv or ctx.resilient_parsing
+    if not is_help_request:
+        _warn_goal_binary_mismatch()
+        _warn_wheel_shadows_editable()
+        latest_version = _show_goal_version_banner()
+        _maybe_self_update(latest_version, yes or all_flags)
     _setup_nfo_logging(nfo_format, nfo_sink)
-    
-    ctx.ensure_object(dict)
-    ctx.obj['bump'] = bump
-    ctx.obj['version'] = version
-    ctx.obj['yes'] = yes or all_flags
-    ctx.obj['todo'] = todo
-    ctx.obj['markdown'] = markdown
-    ctx.obj['dry_run'] = dry_run
-    ctx.obj['abstraction'] = abstraction
-    
-    # Load configuration
-    config = load_config(config_path) if config_path else ensure_config()
-    ctx.obj['config'] = config
-    
-    # Load user config
-    user_config = get_user_config()
-    ctx.obj['user_config'] = user_config
+
+    _configure_main_context(
+        ctx,
+        bump,
+        target_version,
+        yes,
+        all_flags,
+        upgrade_deps,
+        recursive,
+        interactive,
+        no_publish,
+        force_publish,
+        todo,
+        output_markdown,
+        dry_run,
+        config_path,
+        abstraction,
+    )
 
 
 # Import commands to register them
-from . import push_cmd
-from . import publish_cmd
-from . import utils_cmd
-from . import doctor_cmd
-from . import config_cmd
-from . import commit_cmd
-from . import recover_cmd
-from . import wizard_cmd
-from . import license_cmd
-from . import authors_cmd
-from . import hooks_cmd
-from . import postcommit_cmd
-from . import validation_cmd
+load_command_modules()
 
 # Import version functions for external access
 from .version import sync_all_versions
 
 __all__ = [
-    'main',
-    'GoalGroup',
-    '_setup_nfo_logging',
-    '_nfo_log_call',
-    'strip_ansi',
-    'read_ticket',
-    'read_tickert',
-    'apply_ticket_prefix',
-    'split_paths_by_type',
-    'stage_paths',
-    'confirm',
-    'sync_all_versions',
-    'DOCS_URL',
+    "main",
+    "GoalGroup",
+    "load_command_modules",
+    "_setup_nfo_logging",
+    "_nfo_log_call",
+    "strip_ansi",
+    "read_ticket",
+    "read_tickert",
+    "apply_ticket_prefix",
+    "split_paths_by_type",
+    "stage_paths",
+    "confirm",
+    "sync_all_versions",
+    "DOCS_URL",
 ]

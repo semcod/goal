@@ -1,5 +1,7 @@
 """Publish command - extracted from cli.py."""
 
+import shutil
+
 import click
 
 from goal.git_ops import run_command_tee
@@ -8,29 +10,73 @@ from goal.cli.version import get_current_version, detect_project_types
 from goal.cli.publish import makefile_has_target, publish_project
 
 
-@main.command()
-@click.option('--make/--no-make', 'use_make', default=True, help='Use Makefile publish target if available')
-@click.option('--target', default='publish', help='Make target to run when using --make')
-@click.option('--version', 'version_arg', default=None, help='Version to publish when not using Makefile')
-@click.pass_context
-def publish(ctx, use_make, target, version_arg) -> None:
-    """Publish the current project (optionally using Makefile)."""
-    project_types = detect_project_types()
+def _publish_impl(ctx_obj, use_make, target, version_arg) -> None:
+    """Implementation of the publish command."""
+    if ctx_obj.get("no_publish", False):
+        click.echo(click.style("Publishing skipped (--no-publish)", fg="yellow"))
+        return
 
-    if use_make and shutil.which('make') and makefile_has_target(target):
+    if ctx_obj.get("dry_run", False):
+        version = version_arg or get_current_version()
+        if use_make and shutil.which("make") and makefile_has_target(target):
+            planned_action = f"make {target}"
+        else:
+            project_types = detect_project_types()
+            project_label = ", ".join(project_types) or "unknown project"
+            planned_action = f"direct publish ({project_label})"
+        click.echo(
+            click.style(
+                f"Dry run: would execute {planned_action} for version {version}",
+                fg="yellow",
+            )
+        )
+        return
+
+    project_types = detect_project_types()
+    config = ctx_obj.get("config")
+
+    if use_make and shutil.which("make") and makefile_has_target(target):
         cmd = f"make {target}"
         click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
         result = run_command_tee(cmd)
         if result.returncode != 0:
-            import sys
-            sys.exit(result.returncode)
-        return
+            click.echo(
+                click.style(
+                    f"Makefile publish failed with exit code {result.returncode}; "
+                    "falling back to direct publish.",
+                    fg="yellow",
+                )
+            )
+        else:
+            return
 
     if version_arg is None:
         version_arg = get_current_version()
 
-    if not publish_project(project_types, version_arg, False):
-        click.echo(click.style("Publish failed. Continuing.", fg='yellow'))
+    if not publish_project(project_types, version_arg, False, config=config):
+        click.echo(click.style("Publish failed. Continuing.", fg="yellow"))
 
 
-__all__ = ['publish']
+@main.command()
+@click.option(
+    "--make/--no-make",
+    "use_make",
+    default=True,
+    help="Use Makefile publish target if available",
+)
+@click.option(
+    "--target", default="publish", help="Make target to run when using --make"
+)
+@click.option(
+    "--version",
+    "version_arg",
+    default=None,
+    help="Version to publish when not using Makefile",
+)
+@click.pass_context
+def publish(ctx, use_make, target, version_arg) -> None:
+    """Publish the current project (optionally using Makefile)."""
+    _publish_impl(ctx.obj or {}, use_make, target, version_arg)
+
+
+__all__ = ["publish", "_publish_impl"]

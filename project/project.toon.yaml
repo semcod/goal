@@ -1,56 +1,54 @@
-# goal | 605 func | 72f | 21341L | python | 2026-03-29
+# goal | 1036 func | 133f | 33087L | python | 2026-06-20
+# generated in 0.00s
 
 HEALTH:
-  CC̄=5.2  critical=91 (limit:10)  dup=0  cycles=0
+  CC̄=4.5  critical=103 (limit:10)  dup=0  cycles=0
 
 ALERTS[20]:
-  !!! cc_exceeded      ContentAnalyzer.short_action_summary = 34 (limit:15)
-  !!! cc_exceeded      validate_project_versions = 30 (limit:15)
-  !!! cc_exceeded      format_enhanced_summary = 29 (limit:15)
-  !!! cc_exceeded      ContentAnalyzer.per_file_notes = 29 (limit:15)
-  !!! high_fan_out     execute_push_workflow = 27 (limit:10)
-  !!! high_fan_out     QualityValidator.auto_fix = 27 (limit:10)
-  !!! high_fan_out     SmartCommitGenerator.analyze_changes = 27 (limit:10)
-  !!! cc_exceeded      EnhancedSummaryGenerator._format_changes_section = 26 (limit:15)
-  !!! cc_exceeded      ensure_project_environment = 25 (limit:15)
-  !!! cc_exceeded      SummaryQualityFilter.classify_intent_smart = 25 (limit:15)
+  !!! high_fan_out     execute_push_workflow = 34 (limit:10)
+  !!! cc_exceeded      _run_publish_command = 33 (limit:15)
+  !!! cc_exceeded      output_final_summary = 29 (limit:15)
+  !!! high_fan_out     EnhancedSummaryGenerator.generate_enhanced_summary = 24 (limit:10)
+  !!! high_fan_out     doctor = 22 (limit:10)
+  !!! high_fan_out     _install_python_deps_legacy = 20 (limit:10)
+  !!  cc_exceeded      add_slow_test_tickets_to_planfile = 22 (limit:15)
+  !!  cc_exceeded      _select_managers_to_update = 21 (limit:15)
+  !!  cc_exceeded      execute_push_workflow = 20 (limit:15)
+  !!  high_fan_out     output_final_summary = 19 (limit:10)
 
-MODULES[96] (top by size):
-  M[goal/project_bootstrap.py] 903L C:0 F:14 CC↑25 D:3 (python)
-  M[goal/recovery/strategies.py] 685L C:7 F:30 CC↑11 D:0 (python)
-  M[goal/summary/generator.py] 675L C:1 F:16 CC↑26 D:0 (python)
-  M[goal/package_managers.py] 628L C:1 F:12 CC↑11 D:1 (python)
-  M[goal/license/manager.py] 580L C:1 F:9 CC↑20 D:1 (python)
-  M[goal/git_ops.py] 566L C:0 F:23 CC↑23 D:13 (python)
-  M[goal/deep_analyzer.py] 554L C:1 F:22 CC↑16 D:0 (python)
-  M[goal/doctor/python.py] 536L C:1 F:17 CC↑17 D:0 (python)
-  M[goal/smart_commit/generator.py] 524L C:1 F:18 CC↑24 D:0 (python)
-  M[goal/validators/file_validator.py] 499L C:4 F:12 CC↑23 D:2 (python)
-  M[goal/config/validation.py] 483L C:2 F:13 CC↑21 D:2 (python)
-  M[goal/config/manager.py] 457L C:1 F:25 CC↑10 D:6 (python)
-  M[goal/config/constants.py] 436L C:0 F:0 CC↑0 D:0 (python)
-  M[goal/push/core.py] 409L C:1 F:12 CC↑13 D:4 (python)
-  M[goal/formatter.py] 402L C:1 F:14 CC↑29 D:3 (python)
-  LANGS: python:93/shell:3
+MODULES[194] (top by size):
+  M[planfile.yaml] 1323L C:0 F:0 CC↑0 D:0 (yaml)
+  M[goal/project_bootstrap.py] 1274L C:0 F:32 CC↑14 D:4 (python)
+  M[goal/push/core.py] 898L C:1 F:21 CC↑29 D:3 (python)
+  M[goal/git_ops.py] 690L C:0 F:28 CC↑14 D:20 (python)
+  M[goal/package_managers.py] 644L C:1 F:18 CC↑6 D:2 (python)
+  M[goal/cli/publish.py] 618L C:0 F:21 CC↑33 D:2 (python)
+  M[goal/summary/generator.py] 589L C:1 F:14 CC↑14 D:0 (python)
+  M[goal/license/manager.py] 587L C:1 F:12 CC↑10 D:1 (python)
+  M[goal/generator/analyzer.py] 563L C:2 F:27 CC↑14 D:0 (python)
+  M[goal/config/validation.py] 556L C:2 F:15 CC↑19 D:2 (python)
+  M[goal/config/manager.py] 550L C:1 F:27 CC↑17 D:7 (python)
+  M[goal/formatter.py] 518L C:1 F:24 CC↑17 D:4 (python)
+  M[goal/cli/tests.py] 517L C:0 F:20 CC↑13 D:1 (python)
+  M[goal/summary/validator.py] 489L C:1 F:24 CC↑10 D:0 (python)
+  M[goal/cli/version_utils.py] 485L C:0 F:23 CC↑8 D:7 (python)
+  LANGS: python:157/yaml:14/shell:6/toml:4/other:3/csharp:2/json:2/go:1/java:1/php:1/yml:1/xml:1/txt:1
 
 HOTSPOTS[10]:
-  ★ execute_push_workflow fan=27  // Execute the complete push workflow.
-  ★ QualityValidator.auto_fix fan=27  // Auto-fix summary issues and return corrected summary.
-  ★ SmartCommitGenerator.analyze_changes fan=27  // Analysis pipeline, 27 stages
+  ★ execute_push_workflow fan=34  // Execute the complete push workflow.
   ★ EnhancedSummaryGenerator.generate_enhanced_summary fan=24  // Generate complete enhanced summary with business value focus.
-  ★ update_changelog fan=23  // Update CHANGELOG.md with new version and changes.
-
-Args:
-    version: New versio
+  ★ doctor fan=22  // Diagnose and auto-fix common project configuration issues.
+  ★ _install_python_deps_legacy fan=20  // Legacy dependency installation using config-based commands.
+  ★ output_final_summary fan=19  // Output final summary in YAML or markdown format.
 
 REFACTOR[15]:
-  [1] H/L Split validate_project_versions (CC=30 → target CC<10)
-  [2] H/L Split ensure_project_environment (CC=25 → target CC<10)
-  [3] H/L Split format_enhanced_summary (CC=29 → target CC<10)
-  [4] H/L Split ContentAnalyzer.short_action_summary (CC=34 → target CC<10)
-  [5] H/L Split ContentAnalyzer.per_file_notes (CC=29 → target CC<10)
+  [1] H/L Split output_final_summary (CC=29)
+  [2] H/L Split _run_publish_command (CC=33)
+  [3] H/H Split god module goal/cli/publish.py (618L, 0 classes)
+  [4] H/H Split god module goal/push/core.py (898L, 1 classes)
+  [5] H/H Split god module goal/config/validation.py (556L, 2 classes)
 
 EVOLUTION:
   2026-03-08 CC̄=6.0 crit=66 12955L // Automated analysis
   2026-03-15 CC̄=6.0 crit=68 13352L // Automated analysis
-  2026-03-29 CC̄=5.2 crit=91 21341L // Automated analysis
+  2026-06-20 CC̄=4.5 crit=103 33087L // Automated analysis

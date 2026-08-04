@@ -1,0 +1,78 @@
+apiVersion: redsl.workflow/v1
+kind: RefactorWorkflow
+metadata:
+  name: goal
+  description: Workflow refaktoryzacji dla projektu goal
+
+spec:
+  # ── PERCEPCJA ──────────────────────────────────────────────────────────
+  perceive:
+    use_code2llm: false    # true = głębsza analiza przez code2llm
+    use_redup: true        # true = wykrywanie duplikatów
+
+  # ── DECYZJE ────────────────────────────────────────────────────────────
+  decide:
+    max_actions: 5         # max liczba plików do refaktoryzacji na cykl
+
+  # ── WYKONANIE ──────────────────────────────────────────────────────────
+  execute:
+    use_sandbox: false          # true = testowe środowisko przed apply
+    rollback_on_failure: false  # true = cofnij zmiany jeśli walidacja failuje
+
+  # ── WALIDACJA (kroki wykonywane po apply, w kolejności) ────────────────
+  validate:
+    steps:
+      - name: regix
+        enabled: true
+        on_failure: warn       # warn | rollback | stop
+
+      - name: pyqual_gates
+        enabled: auto          # auto = uruchom jeśli pyqual.yaml istnieje w projekcie
+        on_failure: tune       # tune = pyqual tune --conservative, potem retry
+        tune:
+          strategy: conservative   # conservative | aggressive
+          retry: true
+
+      - name: tests
+        enabled: false         # true = uruchom testy projektu po zmianach
+        on_failure: rollback
+
+  # ── PLANFILE ───────────────────────────────────────────────────────────
+  planfile:
+    update_on_apply: true      # true = oznacz zadania done po apply
+
+  # ── REFLEKSJA ──────────────────────────────────────────────────────────
+  reflect:
+    enabled: true              # true = redsl uczy się z każdego cyklu
+
+  project_map:
+      # Package metadata
+      package:
+        - pyproject.toml
+      # Quality gates & linting
+      quality:
+        - pyqual.yaml
+        - .pre-commit-config.yaml
+      # Task runners & build scripts
+      task_runner:
+        - Taskfile.yml
+        - Makefile
+        - project.sh
+      # Container & compose
+      container:
+        - .dockerignore
+      # CI/CD pipelines
+      ci_cd:
+        - .github/workflows
+      # Environment & secrets
+      environment:
+        - .env.example
+      # Redsl & project management
+      redsl:
+        - redsl.yaml
+        - planfile.yaml
+        - goal.yaml
+      # Version & changelog
+      versioning:
+        - VERSION
+        - CHANGELOG.md

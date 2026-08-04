@@ -1,0 +1,3295 @@
+# Goal
+
+SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorization
+
+## Contents
+
+- [Metadata](#metadata)
+- [Architecture](#architecture)
+- [Workflows](#workflows)
+- [Quality Pipeline (`pyqual.yaml`)](#quality-pipeline-pyqualyaml)
+- [Dependencies](#dependencies)
+- [Source Map](#source-map)
+- [Call Graph](#call-graph)
+- [Test Contracts](#test-contracts)
+- [Refactoring Analysis](#refactoring-analysis)
+- [Intent](#intent)
+
+## Metadata
+
+- **name**: `goal`
+- **version**: `2.1.257`
+- **python_requires**: `>=3.10`
+- **license**: Apache-2.0
+- **ai_model**: `openrouter/x-ai/grok-code-fast-1`
+- **ecosystem**: SUMD + DOQL + testql + taskfile
+- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, testql(2), app.doql.less, pyqual.yaml, goal.yaml, .env.example, src(19 mod), project/(6 analysis files)
+
+## Architecture
+
+```
+SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (verification)
+```
+
+### DOQL Application Declaration (`app.doql.less`)
+
+```less markpact:doql path=app.doql.less
+// LESS format — define @variables here as needed
+
+app {
+  name: goal;
+  version: 2.1.257;
+}
+
+dependencies {
+  runtime: "click>=8.0.0, typer>=0.24, PyYAML>=6.0, clickmd>=0.1.0, costs>=0.1.21, tomlkit>=0.12.0";
+  nfo: nfo>=0.2.22;
+  dev: "pytest>=7.0.0, build, twine, pfix>=0.1.60, tox>=4.0.0";
+}
+
+interface[type="cli"] {
+  framework: click;
+}
+interface[type="cli"] page[name="goal"] {
+  entry: goal.cli:main;
+}
+
+interface[type="web"] {
+  type: spa;
+  framework: static;
+}
+
+workflow[name="install"] {
+  trigger: manual;
+  step-1: run cmd=pip install .;
+}
+
+workflow[name="dev"] {
+  trigger: manual;
+  step-1: run cmd=pip install -e ".[dev]";
+}
+
+workflow[name="test"] {
+  trigger: manual;
+  step-1: run cmd=python -m pytest -q;
+}
+
+workflow[name="build"] {
+  trigger: manual;
+  step-1: run cmd=python -m pip install --upgrade build twine;
+  step-2: run cmd=python -m build --sdist --wheel;
+}
+
+workflow[name="publish"] {
+  trigger: manual;
+  step-1: run cmd=python -m twine upload dist/*;
+}
+
+workflow[name="clean"] {
+  trigger: manual;
+  step-1: run cmd=rm -rf dist build *.egg-info .pytest_cache __pycache__ goal/__pycache__;
+}
+
+workflow[name="push"] {
+  trigger: manual;
+  step-1: run cmd=if command -v goal &> /dev/null; then \;
+  step-2: run cmd=goal push; \;
+  step-3: run cmd=else \;
+  step-4: run cmd=echo "Goal not installed. Run 'make install' first."; \;
+  step-5: run cmd=fi;
+}
+
+workflow[name="docker-matrix"] {
+  trigger: manual;
+  step-1: run cmd=bash integration/run_docker_matrix.sh;
+}
+
+workflow[name="bump-version"] {
+  trigger: manual;
+  step-1: run cmd=if [ -z "$(PART)" ]; then \;
+  step-2: run cmd=echo "${YELLOW}Error: PART variable not set. Usage: make bump-version PART=<major|minor|patch>${RESET}"; \;
+  step-3: run cmd=exit 1; \;
+  step-4: run cmd=fi;
+  step-5: run cmd=echo "${YELLOW}Bumping $(PART) version...${RESET}";
+  step-6: run cmd=current_version=$$(grep '^version = ' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/'); \;
+  step-7: run cmd=echo "Current version: $$current_version"; \;
+  step-8: run cmd=IFS='.' read -r major minor patch <<< "$$current_version"; \;
+}
+
+workflow[name="koru-gate"] {
+  trigger: manual;
+  step-1: run cmd=./scripts/koru_verify_ci.sh;
+}
+
+workflow[name="help"] {
+  trigger: manual;
+  step-1: run cmd=echo "Targets:";
+  step-2: run cmd=echo "  make install  - install goal locally";
+  step-3: run cmd=echo "  make dev      - install in development mode";
+  step-4: run cmd=echo "  make test     - run tests";
+  step-5: run cmd=echo "  make build    - build package for PyPI";
+  step-6: run cmd=echo "  make publish  - build and upload to PyPI";
+  step-7: run cmd=echo "  make clean    - remove build artifacts";
+  step-8: run cmd=echo "  make push     - use goal to push changes";
+}
+
+workflow[name="health"] {
+  trigger: manual;
+  step-1: run cmd=docker compose ps;
+  step-2: run cmd=docker compose exec app echo "Health check passed";
+}
+
+workflow[name="import-makefile-hint"] {
+  trigger: manual;
+  step-1: run cmd=echo 'Run: taskfile import Makefile to import existing targets.';
+}
+
+workflow[name="all"] {
+  trigger: manual;
+  step-1: run cmd=taskfile run install;
+  step-2: run cmd=taskfile run lint;
+  step-3: run cmd=taskfile run test;
+}
+
+workflow[name="sumd"] {
+  trigger: manual;
+  step-1: run cmd=echo "# $(basename $(pwd))" > SUMD.md
+echo "" >> SUMD.md
+echo "$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('description','Project description'))" 2>/dev/null || echo 'Project description')" >> SUMD.md
+echo "" >> SUMD.md
+echo "## Contents" >> SUMD.md
+echo "" >> SUMD.md
+echo "- [Metadata](#metadata)" >> SUMD.md
+echo "- [Architecture](#architecture)" >> SUMD.md
+echo "- [Dependencies](#dependencies)" >> SUMD.md
+echo "- [Source Map](#source-map)" >> SUMD.md
+echo "- [Intent](#intent)" >> SUMD.md
+echo "" >> SUMD.md
+echo "## Metadata" >> SUMD.md
+echo "" >> SUMD.md
+echo "- **name**: \`$(basename $(pwd))\`" >> SUMD.md
+echo "- **version**: \`$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('version','unknown'))" 2>/dev/null || echo 'unknown')\`" >> SUMD.md
+echo "- **python_requires**: \`>=$(python3 --version 2>/dev/null | cut -d' ' -f2 | cut -d. -f1,2)\`" >> SUMD.md
+echo "- **license**: $(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('license',{}).get('text','MIT'))" 2>/dev/null || echo 'MIT')" >> SUMD.md
+echo "- **ecosystem**: SUMD + DOQL + testql + taskfile" >> SUMD.md
+echo "- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, src/" >> SUMD.md
+echo "" >> SUMD.md
+echo "## Architecture" >> SUMD.md
+echo "" >> SUMD.md
+echo '```' >> SUMD.md
+echo "SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (verification)" >> SUMD.md
+echo '```' >> SUMD.md
+echo "" >> SUMD.md
+echo "## Source Map" >> SUMD.md
+echo "" >> SUMD.md
+find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' -not -path './__pycache__/*' -not -path './.git/*' | head -50 | sed 's|^./||' | sed 's|^|- |' >> SUMD.md
+echo "Generated SUMD.md";
+  step-2: run cmd=python3 -c "
+import json, os, subprocess
+from pathlib import Path
+project_name = Path.cwd().name
+py_files = list(Path('.').rglob('*.py'))
+py_files = [f for f in py_files if not any(x in str(f) for x in ['.venv', 'venv', '__pycache__', '.git'])]
+data = {
+    'project_name': project_name,
+    'description': 'SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorization',
+    'files': [{'path': str(f), 'type': 'python'} for f in py_files[:100]]
+}
+with open('sumd.json', 'w') as f:
+    json.dump(data, f, indent=2)
+print('Generated sumd.json')
+" 2>/dev/null || echo 'Python generation failed, using fallback';
+}
+
+workflow[name="sumr"] {
+  trigger: manual;
+  step-1: run cmd=echo "# $(basename $(pwd)) - Summary Report" > SUMR.md
+echo "" >> SUMR.md
+echo "SUMR - Summary Report for project analysis" >> SUMR.md
+echo "" >> SUMR.md
+echo "## Contents" >> SUMR.md
+echo "" >> SUMR.md
+echo "- [Metadata](#metadata)" >> SUMR.md
+echo "- [Quality Status](#quality-status)" >> SUMR.md
+echo "- [Metrics](#metrics)" >> SUMR.md
+echo "- [Refactoring Analysis](#refactoring-analysis)" >> SUMR.md
+echo "- [Intent](#intent)" >> SUMR.md
+echo "" >> SUMR.md
+echo "## Metadata" >> SUMR.md
+echo "" >> SUMR.md
+echo "- **name**: \`$(basename $(pwd))\`" >> SUMR.md
+echo "- **version**: \`$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('version','unknown'))" 2>/dev/null || echo 'unknown')\`" >> SUMR.md
+echo "- **generated_at**: \`$(date -Iseconds)\`" >> SUMR.md
+echo "" >> SUMR.md
+echo "## Quality Status" >> SUMR.md
+echo "" >> SUMR.md
+if [ -f pyqual.yaml ]; then
+  echo "- **pyqual_config**: ✅ Present" >> SUMR.md
+  echo "- **last_run**: $(stat -c %y .pyqual/pipeline.db 2>/dev/null | cut -d' ' -f1 || echo 'N/A')" >> SUMR.md
+else
+  echo "- **pyqual_config**: ❌ Missing" >> SUMR.md
+fi
+echo "" >> SUMR.md
+echo "## Metrics" >> SUMR.md
+echo "" >> SUMR.md
+py_files=$(find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' | wc -l)
+echo "- **python_files**: $py_files" >> SUMR.md
+lines=$(find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' -exec cat {} \; 2>/dev/null | wc -l)
+echo "- **total_lines**: $lines" >> SUMR.md
+echo "" >> SUMR.md
+echo "## Refactoring Analysis" >> SUMR.md
+echo "" >> SUMR.md
+echo "Run \`code2llm ./ -f evolution\` for detailed refactoring queue." >> SUMR.md
+echo "Generated SUMR.md";
+  step-2: run cmd=python3 -c "
+import json, os, subprocess
+from pathlib import Path
+from datetime import datetime
+project_name = Path.cwd().name
+py_files = len([f for f in Path('.').rglob('*.py') if not any(x in str(f) for x in ['.venv', 'venv', '__pycache__', '.git'])])
+data = {
+    'project_name': project_name,
+    'report_type': 'SUMR',
+    'generated_at': datetime.now().isoformat(),
+    'metrics': {
+        'python_files': py_files,
+        'has_pyqual_config': Path('pyqual.yaml').exists()
+    }
+}
+with open('SUMR.json', 'w') as f:
+    json.dump(data, f, indent=2)
+print('Generated SUMR.json')
+" 2>/dev/null || echo 'Python generation failed, using fallback';
+}
+
+tests {
+  import: testql-scenarios/**/*.testql.toon.yaml;
+}
+
+env_vars {
+  keys: OPENROUTER_API_KEY, LLM_MODEL;
+}
+
+deploy {
+  target: docker;
+}
+
+environment[name="local"] {
+  runtime: docker-compose;
+  env_file: .env;
+  template_file: .env.example;
+  python_version: >=3.10;
+  vars: LLM_MODEL, OPENROUTER_API_KEY;
+  runtime_llm: OPENROUTER_API_KEY;
+}
+```
+
+### Source Modules
+
+- `goal.changelog`
+- `goal.cli`
+- `goal.cli_helpers`
+- `goal.commit_generator`
+- `goal.config`
+- `goal.deep_analyzer`
+- `goal.deep_analyzer_aggregate`
+- `goal.deep_analyzer_patterns`
+- `goal.dependency_update`
+- `goal.enhanced_summary`
+- `goal.formatter`
+- `goal.git_ops`
+- `goal.package_managers`
+- `goal.project_bootstrap`
+- `goal.project_doctor`
+- `goal.smart_commit`
+- `goal.toml_validation`
+- `goal.user_config`
+- `goal.version_validation`
+
+## Workflows
+
+### Taskfile Tasks (`Taskfile.yml`)
+
+```yaml markpact:taskfile path=Taskfile.yml
+version: '3'
+name: goal
+description: Minimal Taskfile
+variables:
+  APP_NAME: goal
+environments:
+  local:
+    container_runtime: docker
+    compose_command: docker compose
+pipeline:
+  python_version: "3.12"
+  runner_image: ubuntu-latest
+  branches: [main]
+  cache: [~/.cache/pip]
+  artifacts: [dist/]
+
+  stages:
+    - name: lint
+      tasks: [lint]
+
+    - name: test
+      tasks: [test]
+
+    - name: build
+      tasks: [build]
+      when: "branch:main"
+
+tasks:
+  install:
+    desc: Install Python dependencies (editable)
+    cmds:
+    - pip install -e .[dev]
+  test:
+    desc: Run pytest suite
+    cmds:
+    - pytest -q
+  koru-gate:
+    desc: Run strict Koru quality gates (fails on regix hard violations)
+    cmds:
+    - ./scripts/koru_verify_ci.sh
+  build:
+    desc: Build wheel + sdist
+    cmds:
+    - python -m build
+  clean:
+    desc: Remove build artefacts
+    cmds:
+    - rm -rf build/ dist/ *.egg-info
+  help:
+    desc: '[imported from Makefile] help'
+    cmds:
+    - echo "Targets:"
+    - echo "  make install  - install goal locally"
+    - echo "  make dev      - install in development mode"
+    - echo "  make test     - run tests"
+    - echo "  make build    - build package for PyPI"
+    - echo "  make publish  - build and upload to PyPI"
+    - echo "  make clean    - remove build artifacts"
+    - echo "  make push     - use goal to push changes"
+  dev:
+    desc: '[imported from Makefile] dev'
+    cmds:
+    - pip install -e ".[dev]"
+  publish:
+    desc: '[imported from Makefile] publish'
+    cmds:
+    - python -m twine upload dist/*
+    deps:
+    - bump-version
+    - build
+  push:
+    desc: '[imported from Makefile] push'
+    cmds:
+    - if command -v goal &> /dev/null; then \
+    - goal push; \
+    - else \
+    - echo "Goal not installed. Run 'make install' first."; \
+    - fi
+    deps:
+    - bump-version
+  docker-matrix:
+    desc: '[imported from Makefile] docker-matrix'
+    cmds:
+    - bash integration/run_docker_matrix.sh
+  bump-version:
+    desc: '[imported from Makefile] bump-version'
+    cmds:
+    - if [ -z "$(PART)" ]; then \
+    - 'echo "${YELLOW}Error: PART variable not set. Usage: make bump-version PART=<major|minor|patch>${RESET}";
+      \'
+    - exit 1; \
+    - fi
+    - echo "${YELLOW}Bumping $(PART) version...${RESET}"
+    - current_version=$$(grep '^version = ' pyproject.toml | head -1 | sed 's/version
+      = "\(.*\)"/\1/'); \
+    - 'echo "Current version: $$current_version"; \'
+    - IFS='.' read -r major minor patch <<< "$$current_version"; \
+    - case "$(PART)" in \
+    - major) major=$$((major + 1)); minor=0; patch=0 ;; \
+    - minor) minor=$$((minor + 1)); patch=0 ;; \
+    - patch) patch=$$((patch + 1)) ;; \
+    - '*) echo "${YELLOW}Error: PART must be major, minor, or patch${RESET}"; exit
+      1 ;; \'
+    - esac; \
+    - new_version="$${major}.$${minor}.$${patch}"; \
+    - sed -i "s/^version = \"$$current_version\"/version = \"$$new_version\"/" pyproject.toml;
+      \
+    - echo "${GREEN}Version bumped to $$new_version${RESET}"; \
+    - git add pyproject.toml; \
+    - git commit -m "Bump version to $$new_version"; \
+    - if git rev-parse "v$$new_version" >/dev/null 2>&1; then \
+    - 'echo "${YELLOW}Error: tag ''v$$new_version'' already exists${RESET}"; \'
+    - exit 1; \
+    - fi; \
+    - git tag -a "v$$new_version" -m "Version $$new_version"; \
+    - echo "${GREEN}Created tag v$$new_version${RESET}"
+  health:
+    desc: '[from doql] workflow: health'
+    cmds:
+    - docker compose ps
+    - docker compose exec app echo "Health check passed"
+  import-makefile-hint:
+    desc: '[from doql] workflow: import-makefile-hint'
+    cmds:
+    - 'echo ''Run: taskfile import Makefile to import existing targets.'''
+  all:
+    desc: Run install, lint, test
+    cmds:
+    - taskfile run install
+    - taskfile run lint
+    - taskfile run test
+  sumd:
+    desc: Generate SUMD (Structured Unified Markdown Descriptor) for AI-aware project description
+    cmds:
+    - |
+      echo "# $(basename $(pwd))" > SUMD.md
+      echo "" >> SUMD.md
+      echo "$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('description','Project description'))" 2>/dev/null || echo 'Project description')" >> SUMD.md
+      echo "" >> SUMD.md
+      echo "## Contents" >> SUMD.md
+      echo "" >> SUMD.md
+      echo "- [Metadata](#metadata)" >> SUMD.md
+      echo "- [Architecture](#architecture)" >> SUMD.md
+      echo "- [Dependencies](#dependencies)" >> SUMD.md
+      echo "- [Source Map](#source-map)" >> SUMD.md
+      echo "- [Intent](#intent)" >> SUMD.md
+      echo "" >> SUMD.md
+      echo "## Metadata" >> SUMD.md
+      echo "" >> SUMD.md
+      echo "- **name**: \`$(basename $(pwd))\`" >> SUMD.md
+      echo "- **version**: \`$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('version','unknown'))" 2>/dev/null || echo 'unknown')\`" >> SUMD.md
+      echo "- **python_requires**: \`>=$(python3 --version 2>/dev/null | cut -d' ' -f2 | cut -d. -f1,2)\`" >> SUMD.md
+      echo "- **license**: $(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('license',{}).get('text','MIT'))" 2>/dev/null || echo 'MIT')" >> SUMD.md
+      echo "- **ecosystem**: SUMD + DOQL + testql + taskfile" >> SUMD.md
+      echo "- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, src/" >> SUMD.md
+      echo "" >> SUMD.md
+      echo "## Architecture" >> SUMD.md
+      echo "" >> SUMD.md
+      echo '```' >> SUMD.md
+      echo "SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (verification)" >> SUMD.md
+      echo '```' >> SUMD.md
+      echo "" >> SUMD.md
+      echo "## Source Map" >> SUMD.md
+      echo "" >> SUMD.md
+      find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' -not -path './__pycache__/*' -not -path './.git/*' | head -50 | sed 's|^./||' | sed 's|^|- |' >> SUMD.md
+      echo "Generated SUMD.md"
+    - |
+      python3 -c "
+      import json, os, subprocess
+      from pathlib import Path
+      project_name = Path.cwd().name
+      py_files = list(Path('.').rglob('*.py'))
+      py_files = [f for f in py_files if not any(x in str(f) for x in ['.venv', 'venv', '__pycache__', '.git'])]
+      data = {
+          'project_name': project_name,
+          'description': 'SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorization',
+          'files': [{'path': str(f), 'type': 'python'} for f in py_files[:100]]
+      }
+      with open('sumd.json', 'w') as f:
+          json.dump(data, f, indent=2)
+      print('Generated sumd.json')
+      " 2>/dev/null || echo 'Python generation failed, using fallback'
+  sumr:
+    desc: Generate SUMR (Summary Report) with project metrics and health status
+    cmds:
+    - |
+      echo "# $(basename $(pwd)) - Summary Report" > SUMR.md
+      echo "" >> SUMR.md
+      echo "SUMR - Summary Report for project analysis" >> SUMR.md
+      echo "" >> SUMR.md
+      echo "## Contents" >> SUMR.md
+      echo "" >> SUMR.md
+      echo "- [Metadata](#metadata)" >> SUMR.md
+      echo "- [Quality Status](#quality-status)" >> SUMR.md
+      echo "- [Metrics](#metrics)" >> SUMR.md
+      echo "- [Refactoring Analysis](#refactoring-analysis)" >> SUMR.md
+      echo "- [Intent](#intent)" >> SUMR.md
+      echo "" >> SUMR.md
+      echo "## Metadata" >> SUMR.md
+      echo "" >> SUMR.md
+      echo "- **name**: \`$(basename $(pwd))\`" >> SUMR.md
+      echo "- **version**: \`$(python3 -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d.get('project',{}).get('version','unknown'))" 2>/dev/null || echo 'unknown')\`" >> SUMR.md
+      echo "- **generated_at**: \`$(date -Iseconds)\`" >> SUMR.md
+      echo "" >> SUMR.md
+      echo "## Quality Status" >> SUMR.md
+      echo "" >> SUMR.md
+      if [ -f pyqual.yaml ]; then
+        echo "- **pyqual_config**: ✅ Present" >> SUMR.md
+        echo "- **last_run**: $(stat -c %y .pyqual/pipeline.db 2>/dev/null | cut -d' ' -f1 || echo 'N/A')" >> SUMR.md
+      else
+        echo "- **pyqual_config**: ❌ Missing" >> SUMR.md
+      fi
+      echo "" >> SUMR.md
+      echo "## Metrics" >> SUMR.md
+      echo "" >> SUMR.md
+      py_files=$(find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' | wc -l)
+      echo "- **python_files**: $py_files" >> SUMR.md
+      lines=$(find . -name '*.py' -not -path './.venv/*' -not -path './venv/*' -exec cat {} \; 2>/dev/null | wc -l)
+      echo "- **total_lines**: $lines" >> SUMR.md
+      echo "" >> SUMR.md
+      echo "## Refactoring Analysis" >> SUMR.md
+      echo "" >> SUMR.md
+      echo "Run \`code2llm ./ -f evolution\` for detailed refactoring queue." >> SUMR.md
+      echo "Generated SUMR.md"
+    - |
+      python3 -c "
+      import json, os, subprocess
+      from pathlib import Path
+      from datetime import datetime
+      project_name = Path.cwd().name
+      py_files = len([f for f in Path('.').rglob('*.py') if not any(x in str(f) for x in ['.venv', 'venv', '__pycache__', '.git'])])
+      data = {
+          'project_name': project_name,
+          'report_type': 'SUMR',
+          'generated_at': datetime.now().isoformat(),
+          'metrics': {
+              'python_files': py_files,
+              'has_pyqual_config': Path('pyqual.yaml').exists()
+          }
+      }
+      with open('SUMR.json', 'w') as f:
+          json.dump(data, f, indent=2)
+      print('Generated SUMR.json')
+      " 2>/dev/null || echo 'Python generation failed, using fallback'
+```
+
+## Quality Pipeline (`pyqual.yaml`)
+
+```yaml markpact:pyqual path=pyqual.yaml
+pipeline:
+  name: quality-loop-with-llx
+
+  # Quality gates — pipeline iterates until ALL pass
+  metrics:
+    cc_max: 20           # cyclomatic complexity per function
+    critical_max: 18     # Phase 2-3 done; lowered from 20 (current: 17)
+    vallm_pass_min: 50   # obecny poziom: 56.6%
+    # coverage_min: 30   # pyqual nie wspiera pytest-cov (zawsze null)
+    # Security gates (uncomment to enable):
+    # vuln_high_max: 0     # pip-audit high severity CVEs
+    # bandit_high_max: 0   # bandit high severity issues
+    # secrets_found_max: 0 # trufflehog/gitleaks secrets
+
+  # Pipeline stages — use 'tool:' for built-in presets or 'run:' for custom
+  stages:
+    # Verify/install all tool dependencies before pipeline starts
+    - name: setup
+      run: |
+        set -e
+        echo "=== pyqual dependency check ==="
+        # Python tools (pip)
+        for pkg in code2llm vallm prefact llx pytest-cov goal; do
+          if python -m pip show "$pkg" >/dev/null 2>&1; then
+            echo "  ✓ $pkg"
+          else
+            echo "  ✗ $pkg — installing…"
+            pip install -q "$pkg" || echo "  ⚠ $pkg install failed (optional)"
+          fi
+        done
+        # Node tools (claude)
+        if command -v claude >/dev/null 2>&1; then
+          echo "  ✓ claude $(claude --version 2>/dev/null)"
+        else
+          echo "  ✗ claude — installing…"
+          npm install -g --prefix="$HOME/.local" @anthropic-ai/claude-code 2>/dev/null \
+            && echo "  ✓ claude installed" \
+            || echo "  ⚠ claude install failed (fix stage will use llx fallback)"
+        fi
+        # Claude Code auth can be either:
+        # - local OAuth session via `claude auth login` 
+        # - ANTHROPIC_API_KEY in CI/GitHub Actions
+        # We only verify the CLI is available here.
+        echo "=== setup done ==="
+      when: first_iteration
+      timeout: 300
+
+    # - name: analyze
+    #   tool: code2llm
+    #   when: first_iteration
+
+    # - name: validate
+    #   run: vallm batch pyqual tests --recursive --format toon --output ./project
+    #   when: always
+
+    # Security scans (uncomment to enable):
+    # - name: audit
+    #   tool: pip-audit
+    #   optional: true
+    # - name: bandit
+    #   tool: bandit
+    #   optional: true
+
+    - name: test
+      run: python3 -m pytest -q --cov=goal --cov-report=term-missing --cov-fail-under=30
+      optional: true
+
+    - name: prefact
+      tool: prefact
+      optional: true
+      when: metrics_fail
+      timeout: 900
+
+    # Claude Code fix - uproszczona wersja bez heredoc
+    - name: claude_fix
+      run: |
+        export PATH="$HOME/.local/bin:$PATH"
+        if ! command -v claude >/dev/null 2>&1; then
+          echo "Claude nie zainstalowany, pominięto"
+          exit 0
+        fi
+        if [ -f TODO.md ] && [ -s TODO.md ]; then
+          echo "Uruchamianie Claude z TODO.md..."
+          timeout 900 claude -p "Fix these issues: $(head -50 TODO.md)" \
+            --model sonnet --allowedTools "Edit,Read,Write,Bash(git diff)" \
+            --output-format text || echo "Claude fix nie powiódł się"
+        else
+          echo "Brak TODO.md do przetworzenia"
+        fi
+      when: metrics_fail
+      timeout: 1200
+
+    # LLX fallback (uncomment if Claude Code unavailable)
+    # - name: fix
+    #   tool: llx-fix
+    #   when: metrics_fail
+    #   timeout: 1800
+
+    - name: verify
+      run: vallm batch pyqual tests --recursive --format toon --output ./project
+      optional: true
+      when: after_fix
+      timeout: 300
+
+    # Generate metrics report (YAML) and update README.md badges
+    - name: report
+      tool: report
+      when: metrics_pass
+      optional: true
+
+    # Continuous improvement: process TODO.md items when all gates pass
+    # Uses parallel execution with multiple tools (Claude Code + llx)
+    - name: todo_fix
+      run: python3 -m pyqual.run_parallel_fix
+      when: metrics_pass
+      optional: true
+      timeout: 1800
+
+    # Simple git push (goal push had "Argument list too long" issue with many files)
+    - name: push
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          git add -A
+          git commit -m "chore: pyqual auto-commit [skip ci]" 2>/dev/null || true
+          git push origin HEAD
+        else
+          echo "No changes to push"
+        fi
+      when: metrics_pass
+      optional: true
+      timeout: 120
+
+    # Publish - tylko build, bez upload (wymaga credentials)
+    # Użyj: twine upload dist/* --username __token__ --password $PYPI_TOKEN
+    - name: publish
+      run: |
+        echo "=== Building package for PyPI ==="
+        make build
+        echo "=== Package built in dist/ ==="
+        echo "To publish: twine upload dist/* --username __token__ --password \$PYPI_TOKEN"
+      when: metrics_pass
+      optional: true
+      timeout: 300
+
+    # Generate comprehensive markdown report with Mermaid diagram and ASCII flow
+    - name: markdown_report
+      run: python3 -m pyqual.report_generator
+      when: always
+      optional: true
+      timeout: 30
+
+  # Loop behavior
+  loop:
+    max_iterations: 3
+    on_fail: report      # report | create_ticket | block
+
+  # Environment (optional)
+  env:
+    LLM_MODEL: openrouter/x-ai/grok-code-fast-1
+    LLX_DEFAULT_TIER: balanced
+    LLX_VERBOSE: true
+```
+
+## Dependencies
+
+### Runtime
+
+```text markpact:deps python
+click>=8.0.0
+typer>=0.24
+PyYAML>=6.0
+clickmd>=0.1.0
+costs>=0.1.21
+tomlkit>=0.12.0
+```
+
+### Development
+
+```text markpact:deps python scope=dev
+pytest>=7.0.0
+build
+twine
+pfix>=0.1.60
+tox>=4.0.0
+```
+
+## Source Map
+
+*Top 5 modules by symbol density — signatures for LLM orientation.*
+
+### `goal.project_bootstrap` (`goal/project_bootstrap.py`)
+
+```python
+def _match_marker(base, pattern)  # CC=2, fan=4
+def detect_project_types_deep(root, max_depth)  # CC=11, fan=10 ⚠
+def _find_python_bin(project_dir)  # CC=5, fan=4
+def _read_openrouter_api_key(env_file)  # CC=11, fan=7 ⚠
+def _find_openrouter_api_key(project_dir)  # CC=6, fan=5
+def _find_git_root(project_dir)  # CC=3, fan=2
+def refresh_test_dependencies(project_types)  # CC=10, fan=13 ⚠
+def _ensure_python_test_dependency(project_dir, python_bin, test_dep)  # CC=5, fan=5
+def _ensure_python_env(project_dir, cfg, yes)  # CC=6, fan=13
+def _should_skip_install(project_dir, markers)  # CC=6, fan=2
+def _install_python_deps(project_dir, cfg, python_bin)  # CC=12, fan=17 ⚠
+def _install_python_deps_broker(project_dir, extras)  # CC=2, fan=5
+def _ensure_generic_env(project_dir, project_type, cfg, yes)  # CC=14, fan=10 ⚠
+def ensure_project_environment(project_dir, project_type, yes)  # CC=3, fan=4
+def find_existing_tests(project_dir, project_type)  # CC=5, fan=4
+def _resolve_scaffold_test_path(project_dir, project_type, cfg, package_name)  # CC=4, fan=2
+def scaffold_test(project_dir, project_type, yes)  # CC=8, fan=12
+def _new_bootstrap_result(project_dir, project_type)  # CC=1, fan=0
+def _pfix_auto_apply(project_dir)  # CC=8, fan=10
+def _coerce_bool(value)  # CC=5, fan=3
+def _goal_yaml_auto_apply(project_dir)  # CC=10, fan=7 ⚠
+def _auto_fix_enabled(project_dir)  # CC=3, fan=4
+def _run_bootstrap_diagnostics(project_dir, project_type, yes)  # CC=4, fan=4
+def _ensure_bootstrap_tests(project_dir, project_type, yes)  # CC=3, fan=2
+def bootstrap_project(project_dir, project_type, yes)  # CC=1, fan=5
+def bootstrap_all_projects(root, yes)  # CC=6, fan=9
+def _ensure_costs_installed(project_dir, python_bin)  # CC=2, fan=4
+def _ensure_pfix_env(project_dir)  # CC=7, fan=9
+def _validate_pfix_env(project_dir)  # CC=4, fan=4
+def _ensure_pfix_installed(project_dir, yes)  # CC=6, fan=14
+def _ensure_pfix_config(project_dir, yes)  # CC=4, fan=7
+def scaffold_test_file(project_dir, project_type)  # CC=1, fan=1
+```
+
+### `goal.git_ops` (`goal/git_ops.py`)
+
+```python
+def run_git()  # CC=1, fan=2
+def run_command(command, capture)  # CC=1, fan=1
+def _echo_cmd(args)  # CC=3, fan=6
+def _run_git_verbose()  # CC=11, fan=8 ⚠
+def run_git_with_status()  # CC=14, fan=8 ⚠
+def run_command_tee(command)  # CC=6, fan=10
+def is_git_repository()  # CC=2, fan=3
+def validate_repo_url(url)  # CC=4, fan=2
+def get_remote_url(remote)  # CC=2, fan=2
+def list_remotes()  # CC=6, fan=7
+def _prompt_remote_url()  # CC=3, fan=5
+def _list_remote_branches(remote)  # CC=5, fan=8
+def get_remote_branch()  # CC=2, fan=2
+def clone_repository(url, target_dir)  # CC=6, fan=9
+def _select_branch(branches)  # CC=3, fan=7
+def _handle_merge_strategy(branches, has_files)  # CC=8, fan=8
+def _handle_init_remote(has_files)  # CC=5, fan=7
+def _handle_clone()  # CC=3, fan=5
+def _handle_local_init()  # CC=2, fan=3
+def ensure_git_repository(auto)  # CC=3, fan=11
+def ensure_remote(auto)  # CC=7, fan=9
+def get_staged_files()  # CC=2, fan=3
+def get_unstaged_files()  # CC=3, fan=3
+def get_working_tree_files()  # CC=5, fan=4
+def get_diff_stats(cached)  # CC=7, fan=6
+def get_diff_content(cached, max_lines)  # CC=5, fan=4
+def read_ticket(path)  # CC=7, fan=7
+def apply_ticket_prefix(title, ticket)  # CC=6, fan=4
+```
+
+### `goal.formatter` (`goal/formatter.py`)
+
+```python
+def _build_functional_overview(features, summary, entities, files, stats, current_version, new_version, commit_msg, project_types)  # CC=12, fan=5 ⚠
+def _build_files_section(formatter, files, stats, analysis)  # CC=8, fan=6
+def _determine_next_steps(error, test_exit_code, new_version)  # CC=4, fan=0
+def format_push_result(project_types, files, stats, current_version, new_version, commit_msg, commit_body, test_result, test_exit_code, actions, error, analysis)  # CC=13, fan=16 ⚠
+def format_goal_all_summary()  # CC=17, fan=15 ⚠
+def _format_complexity_metric(metrics)  # CC=6, fan=2
+def _format_metrics_section(metrics, relations)  # CC=5, fan=5
+def _format_relations_section(relations)  # CC=4, fan=1
+def _build_capabilities_content(capabilities)  # CC=4, fan=1
+def _build_roles_content(roles)  # CC=4, fan=1
+def _build_details_content(commit_body, capabilities)  # CC=3, fan=0
+def _get_optional_sections(capabilities, roles, metrics, relations, commit_body)  # CC=2, fan=5
+def _build_enhanced_summary_section(commit_title, files, stats, current_version, new_version)  # CC=9, fan=4
+def _add_optional_sections(formatter, capabilities, roles, metrics, relations, commit_body)  # CC=3, fan=2
+def format_enhanced_summary(commit_title, commit_body, capabilities, roles, relations, metrics, files, stats, current_version, new_version)  # CC=5, fan=10
+def format_status_output(version, branch, staged_files, unstaged_files)  # CC=4, fan=7
+class MarkdownFormatter:  # Formats Goal output as structured markdown for LLM consumpti
+    def __init__()  # CC=1
+    def add_header(title, level)  # CC=1
+    def add_metadata()  # CC=1
+    def add_section(title, content, code_block, language)  # CC=2
+    def add_list(title, items, ordered)  # CC=3
+    def add_command_output(command, output, exit_code)  # CC=2
+    def add_summary(actions_taken, next_steps)  # CC=4
+    def render()  # CC=4
+```
+
+### `goal.package_managers` (`goal/package_managers.py`)
+
+```python
+def _path_matches(project_root, pattern)  # CC=2, fan=4
+def _has_any_matching_path(project_root, patterns)  # CC=2, fan=2
+def _detect_package_manager(project_root, pm)  # CC=2, fan=1
+def _has_language_extension(project_root, extensions)  # CC=2, fan=3
+def detect_package_managers(project_path)  # CC=3, fan=4
+def get_package_manager(name)  # CC=1, fan=1
+def get_package_managers_by_language(language)  # CC=3, fan=1
+def is_package_manager_available(pm)  # CC=1, fan=1
+def get_available_package_managers(project_path)  # CC=3, fan=2
+def get_preferred_package_manager(project_path, language)  # CC=5, fan=1
+def _pip_update_all_command(project_root)  # CC=6, fan=2
+def get_update_all_command(pm, project_root)  # CC=3, fan=1
+def format_package_manager_command(pm, command_type)  # CC=3, fan=3
+def get_package_manager_info(pm)  # CC=1, fan=1
+def list_all_package_managers()  # CC=2, fan=2
+def detect_project_language(project_path)  # CC=3, fan=3
+def suggest_package_managers(project_path)  # CC=5, fan=7
+class PackageManager:  # Package manager configuration and capabilities.
+    def __post_init__()  # CC=2
+```
+
+### `goal.deep_analyzer_aggregate` (`goal/deep_analyzer_aggregate.py`)
+
+```python
+class CodeChangeAggregatorMixin:
+    def aggregate_changes(file_analyses)  # CC=3
+    def _detect_file_patterns(files)  # CC=6
+    def _check_analyzer_value(file_patterns, added)  # CC=4
+    def _check_cli_value(areas, added)  # CC=8
+    def _check_area_values(areas, added)  # CC=12 ⚠
+    def _check_complexity_value(complexity)  # CC=3
+    def _check_architecture_value(added)  # CC=4
+    def _build_entity_fallback(added, modified)  # CC=7
+    def infer_functional_value(aggregated, files)  # CC=6
+    def detect_relations(file_analyses)  # CC=6
+    def generate_functional_summary(files)  # CC=5
+    def _format_entity_names(items, limit)  # CC=2
+    def _format_relations(relations)  # CC=2
+    def _format_complexity_change(complexity)  # CC=2
+    def _format_areas(areas)  # CC=1
+    def _build_summary(aggregated, value, relations)  # CC=13 ⚠
+```
+
+## Call Graph
+
+*412 nodes · 500 edges · 82 modules · CC̄=4.5*
+
+### Hubs (by degree)
+
+| Function | CC | in | out | total |
+|----------|----|----|-----|-------|
+| `print` *(in integration.run_matrix)* | 0 | 255 | 0 | **255** |
+| `_setup_project_config` *(in goal.cli.wizard_cmd)* | 9 | 1 | 55 | **56** |
+| `initialize_user_config` *(in goal.user_config)* | 11 ⚠ | 4 | 52 | **56** |
+| `execute_push_workflow` *(in goal.push.core)* | 20 ⚠ | 2 | 52 | **54** |
+| `set` *(in goal.user_config.UserConfig)* | 1 | 49 | 1 | **50** |
+| `run_git` *(in goal.git_ops)* | 1 | 46 | 2 | **48** |
+| `validate` *(in goal.cli.commit_cmd)* | 13 ⚠ | 0 | 45 | **45** |
+| `output_final_summary` *(in goal.push.core)* | 29 ⚠ | 2 | 40 | **42** |
+
+```toon markpact:analysis path=project/calls.toon.yaml
+# code2llm call graph | /home/tom/github/semcod/goal
+# generated in 0.20s
+# nodes: 412 | edges: 500 | modules: 82
+# CC̄=4.5
+
+HUBS[20]:
+  integration.run_matrix.print
+    CC=0  in:255  out:0  total:255
+  goal.cli.wizard_cmd._setup_project_config
+    CC=9  in:1  out:55  total:56
+  goal.user_config.initialize_user_config
+    CC=11  in:4  out:52  total:56
+  goal.push.core.execute_push_workflow
+    CC=20  in:2  out:52  total:54
+  goal.user_config.UserConfig.set
+    CC=1  in:49  out:1  total:50
+  goal.git_ops.run_git
+    CC=1  in:46  out:2  total:48
+  goal.cli.commit_cmd.validate
+    CC=13  in:0  out:45  total:45
+  goal.push.core.output_final_summary
+    CC=29  in:2  out:40  total:42
+  goal.cli.wizard_cmd._setup_user_config
+    CC=12  in:1  out:39  total:40
+  goal.cli.doctor_cmd.doctor
+    CC=12  in:0  out:40  total:40
+  goal.cli.wizard_cmd._show_setup_summary
+    CC=7  in:1  out:39  total:40
+  goal.cli.commit_cmd.fix_summary
+    CC=12  in:0  out:38  total:38
+  goal.formatter.format_goal_all_summary
+    CC=17  in:1  out:35  total:36
+  examples.api-usage.01_basic_api.main
+    CC=10  in:0  out:34  total:34
+  goal.cli.wizard_cmd._setup_git_repository
+    CC=10  in:1  out:33  total:34
+  goal.push.stages.todo.handle_todo_stage
+    CC=14  in:1  out:32  total:33
+  goal.bootstrap.installer._install_python_deps_legacy
+    CC=14  in:1  out:32  total:33
+  goal.user_config.show_user_config
+    CC=2  in:1  out:31  total:32
+  examples.api-usage.04_version_validation.main
+    CC=11  in:0  out:30  total:30
+  goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
+    CC=10  in:0  out:29  total:29
+
+MODULES:
+  examples.api-usage.01_basic_api  [1 funcs]
+    main  CC=10  out:34
+  examples.api-usage.02_git_operations  [6 funcs]
+    _check_git_repository  CC=2  out:4
+    _display_diff_content  CC=2  out:5
+    _display_diff_stats  CC=5  out:11
+    _display_staged_files  CC=5  out:7
+    _display_unstaged_files  CC=5  out:7
+    main  CC=2  out:9
+  examples.api-usage.03_commit_generation  [1 funcs]
+    main  CC=9  out:23
+  examples.api-usage.04_version_validation  [1 funcs]
+    main  CC=11  out:30
+  examples.api-usage.05_programmatic_workflow  [2 funcs]
+    create_minimal_workflow  CC=1  out:4
+    run_custom_workflow  CC=1  out:18
+  examples.custom-hooks.post-commit  [5 funcs]
+    get_commit_info  CC=1  out:10
+    log_to_file  CC=1  out:5
+    main  CC=1  out:11
+    notify_slack  CC=3  out:7
+    update_changelog  CC=4  out:8
+  examples.custom-hooks.pre-commit  [4 funcs]
+    check_file_sizes  CC=5  out:8
+    check_secrets  CC=8  out:9
+    main  CC=5  out:23
+    run_tests  CC=2  out:1
+  examples.custom-hooks.pre-publish  [5 funcs]
+    check_version  CC=6  out:12
+    main  CC=4  out:8
+    run_security_check  CC=2  out:5
+    test_build  CC=3  out:11
+    test_install  CC=4  out:17
+  examples.dotnet-project.Calculator  [2 funcs]
+    Add  CC=1  out:0
+    Main  CC=1  out:3
+  examples.template-generator.generate  [2 funcs]
+    generate_project  CC=4  out:23
+    main  CC=2  out:12
+  examples.testing.03_advanced_mocking  [5 funcs]
+    test_conditional_mocking  CC=1  out:8
+    test_mocking_click_interactions  CC=2  out:14
+    test_mocking_external_services  CC=3  out:10
+    test_mocking_git_operations  CC=2  out:7
+    test_spies_and_call_counting  CC=6  out:23
+  examples.testing.04_debugging_diagnostics  [6 funcs]
+    create_debug_report  CC=7  out:22
+    test_config_diagnostics  CC=4  out:12
+    test_debug_output_capture  CC=8  out:21
+    test_import_tracing  CC=5  out:12
+    test_performance_timing  CC=3  out:26
+    test_stack_trace_analysis  CC=3  out:16
+  examples.validation.run_all_validation  [3 funcs]
+    print_summary  CC=6  out:14
+    run_all  CC=3  out:7
+    run_test  CC=5  out:15
+  examples.webhooks.discord-webhook  [2 funcs]
+    main  CC=4  out:9
+    send_discord_notification  CC=5  out:15
+  examples.webhooks.slack-webhook  [2 funcs]
+    main  CC=4  out:9
+    send_slack_notification  CC=5  out:16
+  goal.authors.utils  [1 funcs]
+    format_co_author_trailer  CC=1  out:0
+  goal.bootstrap.configurator  [5 funcs]
+    _find_git_root  CC=3  out:2
+    _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
+    _read_openrouter_api_key  CC=11  out:12
+    scaffold_test_file  CC=14  out:12
+  goal.bootstrap.costs_badge  [9 funcs]
+    _calculate_ai_costs  CC=4  out:8
+    _commit_blob_lower  CC=3  out:3
+    _fetch_commit_diff  CC=3  out:7
+    _filter_ai_commits  CC=4  out:2
+    _generate_costs_badge  CC=6  out:23
+    _load_costs_api  CC=2  out:9
+    _parsed_diff_is_usable  CC=4  out:2
+    _read_model_from_pyproject  CC=3  out:4
+    _single_commit_ai_cost  CC=3  out:5
+  goal.bootstrap.detector  [5 funcs]
+    _match_marker  CC=2  out:4
+    _python_package_dir_exists  CC=5  out:4
+    _python_scaffold_import_name  CC=5  out:4
+    detect_project_types_deep  CC=11  out:11
+    guess_package_name  CC=4  out:3
+  goal.bootstrap.installer  [12 funcs]
+    _ensure_costs_installed  CC=3  out:8
+    _ensure_generic_env  CC=6  out:9
+    _ensure_python_env  CC=9  out:25
+    _ensure_python_test_dependency  CC=5  out:15
+    _get_matching_dep_command  CC=4  out:3
+    _install_python_deps_broker  CC=2  out:5
+    _install_python_deps_legacy  CC=14  out:32
+    _match_marker  CC=2  out:4
+    _needs_install  CC=10  out:9
+    _run_dep_install  CC=4  out:14
+  goal.bootstrap.pyproject_costs_setup  [6 funcs]
+    _add_deps_to_section_match  CC=10  out:9
+    _ensure_costs_config  CC=5  out:13
+    _find_dep_list_end  CC=12  out:2
+    _try_add_deps  CC=4  out:4
+    _try_merge_hatch_default_deps  CC=6  out:6
+    _try_merge_optional_dev_deps  CC=6  out:7
+  goal.changelog  [6 funcs]
+    _build_domain_entry  CC=7  out:12
+    _build_simple_entry  CC=3  out:4
+    _classify_file_domain  CC=5  out:4
+    _find_unreleased_insert_pos  CC=3  out:6
+    _insert_entry  CC=5  out:3
+    update_changelog  CC=5  out:12
+  goal.cli  [2 funcs]
+    _format_import_warning_message  CC=1  out:0
+    _print_import_warning  CC=1  out:2
+  goal.cli.authors_cmd  [5 funcs]
+    authors_co_author  CC=1  out:5
+    authors_current  CC=1  out:4
+    authors_find  CC=1  out:5
+    display_author_details  CC=4  out:15
+    display_current_author  CC=1  out:5
+  goal.cli.commit_cmd  [3 funcs]
+    commit  CC=8  out:27
+    fix_summary  CC=12  out:38
+    validate  CC=13  out:45
+  goal.cli.config_cmd  [6 funcs]
+    config_get  CC=2  out:6
+    config_set  CC=2  out:8
+    config_show  CC=4  out:11
+    config_update  CC=1  out:4
+    config_validate  CC=3  out:8
+    setup  CC=3  out:10
+  goal.cli.config_validate_cmd  [1 funcs]
+    validate_cmd  CC=3  out:11
+  goal.cli.doctor_cmd  [1 funcs]
+    doctor  CC=12  out:40
+  goal.cli.hooks_cmd  [6 funcs]
+    display_failure_message  CC=1  out:3
+    display_install_success  CC=1  out:8
+    display_success_message  CC=1  out:3
+    hooks_install  CC=2  out:6
+    hooks_run  CC=2  out:6
+    hooks_uninstall  CC=2  out:5
+  goal.cli.license_cmd  [5 funcs]
+    license_check  CC=2  out:10
+    license_create  CC=6  out:21
+    license_info  CC=6  out:19
+    license_list  CC=7  out:20
+    license_update  CC=3  out:13
+  goal.cli.publish  [2 funcs]
+    makefile_has_target  CC=4  out:6
+    publish_project  CC=14  out:22
+  goal.cli.publish_cmd  [2 funcs]
+    _publish_impl  CC=8  out:16
+    publish  CC=2  out:5
+  goal.cli.recover_cmd  [2 funcs]
+    _get_error_output  CC=5  out:4
+    recover  CC=6  out:23
+  goal.cli.tests  [20 funcs]
+    _active_venv_python  CC=3  out:4
+    _build_python_test_command  CC=11  out:10
+    _coerce_python_strategy_to_project_pytest  CC=8  out:3
+    _display_test_error  CC=9  out:18
+    _ensure_root_pytest_or_mark_failed  CC=10  out:14
+    _get_project_strategy  CC=7  out:5
+    _has_package  CC=3  out:1
+    _prefer_uv_run  CC=2  out:1
+    _pytest_importable  CC=2  out:2
+    _resolve_project_python  CC=4  out:6
+  goal.cli.tests_discovery  [5 funcs]
+    _find_project_root  CC=5  out:4
+    _has_project_marker  CC=2  out:3
+    _has_usable_test_script  CC=7  out:4
+    find_nodejs_test_dirs  CC=6  out:8
+    find_python_test_dirs  CC=9  out:16
+  goal.cli.tests_pytest_setup  [3 funcs]
+    _is_uv_project  CC=1  out:1
+    _try_uv_install  CC=4  out:2
+    ensure_pytest_for_project  CC=9  out:13
+  goal.cli.utils_cmd  [8 funcs]
+    bootstrap  CC=4  out:11
+    check_versions  CC=2  out:12
+    clone  CC=4  out:15
+    info  CC=2  out:13
+    init  CC=4  out:12
+    package_managers  CC=8  out:16
+    status  CC=10  out:21
+    version  CC=2  out:14
+  goal.cli.version_sync  [1 funcs]
+    sync_all_versions  CC=1  out:11
+  goal.cli.version_utils  [21 funcs]
+    _build_author_block  CC=5  out:6
+    _update_author_section  CC=3  out:8
+    _update_license_section  CC=5  out:8
+    _update_package_json_metadata  CC=4  out:3
+    _update_pyproject_metadata  CC=2  out:2
+    _update_pyproject_with_regex  CC=1  out:3
+    _update_pyproject_with_tomlkit  CC=4  out:5
+    _update_regex_authors  CC=3  out:5
+    _update_regex_classifier  CC=2  out:1
+    _update_regex_license  CC=3  out:6
+  goal.cli.wizard_cmd  [5 funcs]
+    _find_git_root  CC=3  out:2
+    _setup_git_repository  CC=10  out:33
+    _setup_project_config  CC=9  out:55
+    _setup_user_config  CC=12  out:39
+    _show_setup_summary  CC=7  out:39
+  goal.cli_helpers  [3 funcs]
+    confirm  CC=6  out:6
+    split_paths_by_type  CC=14  out:17
+    stage_paths  CC=5  out:4
+  goal.commit_generator  [3 funcs]
+    display_commit_message  CC=1  out:2
+    display_detailed_message  CC=1  out:2
+    print_detailed_message  CC=2  out:3
+  goal.config.manager  [2 funcs]
+    ensure_config  CC=5  out:8
+    init_config  CC=3  out:4
+  goal.config.validation  [2 funcs]
+    validate_config_file  CC=11  out:25
+    validate_config_interactive  CC=10  out:22
+  goal.deep_analyzer  [4 funcs]
+    _analyze_generic_diff  CC=1  out:6
+    _analyze_js_diff  CC=13  out:12
+    _analyze_python_diff  CC=10  out:29
+    _detect_functional_areas  CC=7  out:12
+  goal.deep_analyzer_aggregate  [2 funcs]
+    aggregate_changes  CC=3  out:16
+    detect_relations  CC=6  out:8
+  goal.dependency_update  [7 funcs]
+    _iter_project_marker_files  CC=6  out:3
+    _path_has_skipped_dir  CC=1  out:2
+    _run_update_command  CC=4  out:8
+    _select_managers_to_update  CC=21  out:22
+    _update_dependencies_in_root  CC=12  out:23
+    discover_dependency_project_roots  CC=7  out:19
+    update_project_dependencies  CC=13  out:20
+  goal.formatter  [16 funcs]
+    _add_optional_sections  CC=3  out:2
+    _build_capabilities_content  CC=4  out:1
+    _build_details_content  CC=3  out:0
+    _build_enhanced_summary_section  CC=9  out:6
+    _build_files_section  CC=8  out:12
+    _build_functional_overview  CC=12  out:13
+    _build_roles_content  CC=4  out:1
+    _determine_next_steps  CC=4  out:0
+    _format_complexity_metric  CC=6  out:3
+    _format_metrics_section  CC=5  out:9
+  goal.generator.analyzer  [1 funcs]
+    extract_functions_changed  CC=3  out:10
+  goal.generator.generator  [2 funcs]
+    _classify_files  CC=11  out:7
+    generate_smart_commit_message  CC=1  out:2
+  goal.git_ops  [28 funcs]
+    _echo_cmd  CC=3  out:6
+    _handle_clone  CC=3  out:7
+    _handle_init_remote  CC=5  out:25
+    _handle_local_init  CC=2  out:5
+    _handle_merge_strategy  CC=8  out:25
+    _list_remote_branches  CC=5  out:9
+    _prompt_remote_url  CC=3  out:12
+    _run_git_verbose  CC=11  out:16
+    _select_branch  CC=3  out:9
+    apply_ticket_prefix  CC=6  out:5
+  goal.hooks.manager  [1 funcs]
+    run_validation  CC=4  out:4
+  goal.io.stdio  [9 funcs]
+    echo_auto  CC=2  out:4
+    echo_command_block  CC=2  out:4
+    echo_heading  CC=2  out:4
+    echo_info  CC=2  out:3
+    echo_output_block  CC=3  out:5
+    echo_status_warn  CC=2  out:4
+    echo_via_markdown  CC=2  out:3
+    set_stdio_markdown  CC=1  out:1
+    use_markdown_stdio  CC=2  out:0
+  goal.license.manager  [2 funcs]
+    create_license_file  CC=10  out:21
+    update_license_file  CC=7  out:13
+  goal.license.spdx  [3 funcs]
+    check_compatibility  CC=14  out:8
+    get_license_info  CC=4  out:4
+    validate_spdx_id  CC=11  out:13
+  goal.package_managers  [15 funcs]
+    _detect_package_manager  CC=2  out:2
+    _has_any_matching_path  CC=2  out:2
+    _has_language_extension  CC=2  out:3
+    _path_matches  CC=2  out:4
+    _pip_update_all_command  CC=6  out:3
+    detect_package_managers  CC=3  out:4
+    detect_project_language  CC=3  out:3
+    get_available_package_managers  CC=3  out:2
+    get_package_manager_info  CC=1  out:1
+    get_package_managers_by_language  CC=3  out:1
+  goal.project_bootstrap  [1 funcs]
+    bootstrap_project  CC=1  out:5
+  goal.publish.changes  [8 funcs]
+    _basename  CC=1  out:1
+    _is_metadata_file  CC=7  out:6
+    _is_publishable_for_type  CC=12  out:12
+    _is_test_path  CC=6  out:7
+    _matches_any  CC=5  out:4
+    _normalize_path  CC=1  out:3
+    _suffix  CC=1  out:2
+    analyze_publishable_changes  CC=8  out:8
+  goal.publish.github_fallback  [2 funcs]
+    _publishing_section  CC=10  out:6
+    get_github_release_config  CC=15  out:23
+  goal.push.core  [17 funcs]
+    _apply_enhanced_quality_gates  CC=6  out:6
+    _bootstrap_projects  CC=5  out:3
+    _detect_and_bootstrap_projects  CC=1  out:2
+    _detect_project_types  CC=2  out:4
+    _handle_commit_phase  CC=8  out:19
+    _handle_no_changes  CC=4  out:6
+    _handle_no_files  CC=3  out:1
+    _initialize_context  CC=3  out:3
+    _maybe_show_workflow_preview  CC=2  out:1
+    _run_test_stage_or_exit  CC=3  out:4
+  goal.push.stages.changelog  [1 funcs]
+    handle_changelog  CC=2  out:4
+  goal.push.stages.commit  [8 funcs]
+    _build_validation_summary  CC=1  out:1
+    _commit_file_group  CC=5  out:14
+    _commit_release_metadata  CC=5  out:16
+    _confirm_suggested_title  CC=4  out:1
+    enforce_quality_gates  CC=10  out:14
+    get_commit_message  CC=11  out:21
+    handle_single_commit  CC=7  out:7
+    handle_split_commits  CC=14  out:22
+  goal.push.stages.costs  [3 funcs]
+    _compute_ai_costs  CC=8  out:10
+    _is_cost_tracking_enabled  CC=4  out:8
+    update_cost_badges  CC=11  out:25
+  goal.push.stages.dry_run  [4 funcs]
+    _build_split_plan_body  CC=8  out:13
+    _format_markdown_dry_run  CC=4  out:7
+    _print_plain_dry_run  CC=4  out:13
+    handle_dry_run  CC=5  out:6
+  goal.push.stages.publish  [2 funcs]
+    _format_skip_message  CC=9  out:19
+    handle_publish  CC=15  out:24
+  goal.push.stages.push_remote  [17 funcs]
+    _execute_recovery  CC=3  out:11
+    _handle_automatic_recovery  CC=4  out:13
+    _handle_force_push  CC=4  out:19
+    _handle_large_file_error  CC=6  out:16
+    _handle_large_files_in_history  CC=2  out:18
+    _handle_large_files_staged  CC=2  out:5
+    _handle_pull_merge  CC=3  out:12
+    _handle_push_failure  CC=5  out:16
+    _handle_recovery_choice  CC=5  out:8
+    _handle_view_diff  CC=6  out:18
+  goal.push.stages.tag  [1 funcs]
+    create_tag  CC=4  out:8
+  goal.push.stages.test  [1 funcs]
+    run_test_stage  CC=9  out:23
+  goal.push.stages.todo  [1 funcs]
+    handle_todo_stage  CC=14  out:32
+  goal.push.stages.version  [4 funcs]
+    _get_version_module  CC=1  out:0
+    get_version_info  CC=2  out:3
+    handle_version_sync  CC=3  out:10
+    sync_all_versions_wrapper  CC=1  out:2
+  goal.recovery.large_file  [5 funcs]
+    _extract_file_paths  CC=8  out:9
+    _move_to_lfs  CC=4  out:13
+    _remove_large_files  CC=6  out:17
+    _skip_large_files  CC=2  out:5
+    _run_git_chunked  CC=4  out:4
+  goal.summary.generator  [1 funcs]
+    detect_capabilities  CC=5  out:7
+  goal.summary.quality_filter  [3 funcs]
+    dedupe_files  CC=3  out:4
+    dedupe_relations  CC=4  out:5
+    has_banned_words  CC=4  out:5
+  goal.summary.validator  [1 funcs]
+    _validate_title  CC=10  out:21
+  goal.toml_validation  [4 funcs]
+    check_pyproject_toml  CC=3  out:3
+    get_tomllib  CC=3  out:0
+    validate_project_toml_files  CC=4  out:4
+    validate_toml_file  CC=9  out:19
+  goal.user_config  [7 funcs]
+    set  CC=1  out:1
+    get_git_user_email  CC=3  out:2
+    get_git_user_name  CC=3  out:2
+    get_user_config  CC=2  out:3
+    initialize_user_config  CC=11  out:52
+    prompt_for_license  CC=4  out:25
+    show_user_config  CC=2  out:31
+  goal.validators.dot_folders  [6 funcs]
+    _is_dot_path  CC=3  out:3
+    _is_safe_path  CC=3  out:1
+    _is_whitelisted_path  CC=4  out:5
+    _matches_problematic  CC=4  out:4
+    check_dot_folders  CC=9  out:12
+    manage_dot_folders  CC=9  out:18
+  goal.validators.file_validator  [8 funcs]
+    _check_file_for_tokens  CC=3  out:4
+    _get_deleted_staged_files  CC=4  out:6
+    _handle_oversized_file  CC=3  out:3
+    _is_excluded  CC=3  out:3
+    get_file_size_mb  CC=2  out:1
+    handle_large_files  CC=5  out:14
+    validate_files  CC=12  out:9
+    validate_staged_files  CC=14  out:13
+  goal.validators.gitignore  [2 funcs]
+    load_gitignore  CC=6  out:9
+    save_gitignore  CC=8  out:11
+  goal.validators.tokens  [9 funcs]
+    _calculate_entropy  CC=5  out:4
+    _classify_token  CC=3  out:0
+    _extract_token_value  CC=4  out:3
+    _get_entropy_threshold  CC=1  out:1
+    _is_dummy_value  CC=8  out:7
+    detect_tokens_in_content  CC=10  out:13
+    get_default_token_patterns  CC=1  out:0
+    migrate_token_patterns  CC=1  out:1
+    resolve_token_patterns  CC=7  out:3
+  goal.version_validation  [6 funcs]
+    _validate_single_type  CC=4  out:3
+    check_readme_badges  CC=5  out:4
+    extract_badge_versions  CC=4  out:10
+    format_validation_results  CC=5  out:5
+    get_pypi_version  CC=2  out:6
+    validate_project_versions  CC=2  out:1
+  integration.run_matrix  [1 funcs]
+    print  CC=0  out:0
+
+EDGES:
+  examples.dotnet-project.Calculator.Program.Main → examples.dotnet-project.Calculator.Calculator.Add
+  examples.webhooks.slack-webhook.send_slack_notification → integration.run_matrix.print
+  examples.webhooks.slack-webhook.main → examples.webhooks.slack-webhook.send_slack_notification
+  examples.webhooks.slack-webhook.main → integration.run_matrix.print
+  examples.webhooks.discord-webhook.send_discord_notification → integration.run_matrix.print
+  examples.webhooks.discord-webhook.main → examples.webhooks.discord-webhook.send_discord_notification
+  examples.webhooks.discord-webhook.main → integration.run_matrix.print
+  examples.custom-hooks.post-commit.notify_slack → integration.run_matrix.print
+  examples.custom-hooks.post-commit.update_changelog → integration.run_matrix.print
+  examples.custom-hooks.post-commit.log_to_file → integration.run_matrix.print
+  examples.custom-hooks.post-commit.main → integration.run_matrix.print
+  examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.get_commit_info
+  examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.notify_slack
+  examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.update_changelog
+  examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.log_to_file
+  examples.custom-hooks.pre-publish.test_build → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.test_install → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.check_version → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.run_security_check → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.main → integration.run_matrix.print
+  examples.custom-hooks.pre-commit.main → integration.run_matrix.print
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_secrets
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_file_sizes
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.run_tests
+  examples.api-usage.04_version_validation.main → integration.run_matrix.print
+  examples.api-usage.04_version_validation.main → goal.cli.version_utils.get_current_version
+  examples.api-usage.04_version_validation.main → goal.version_validation.get_pypi_version
+  examples.api-usage.04_version_validation.main → goal.cli.version_utils.detect_project_types
+  examples.api-usage.05_programmatic_workflow.run_custom_workflow → integration.run_matrix.print
+  examples.api-usage.05_programmatic_workflow.create_minimal_workflow → integration.run_matrix.print
+  examples.api-usage.01_basic_api.main → integration.run_matrix.print
+  examples.api-usage.01_basic_api.main → goal.cli.version_utils.detect_project_types
+  examples.api-usage.01_basic_api.main → goal.cli.version_utils.get_current_version
+  examples.api-usage.03_commit_generation.main → integration.run_matrix.print
+  examples.api-usage.03_commit_generation.main → goal.git_ops.get_staged_files
+  examples.api-usage.03_commit_generation.main → goal.git_ops.get_diff_content
+  examples.api-usage.02_git_operations._check_git_repository → integration.run_matrix.print
+  examples.api-usage.02_git_operations._check_git_repository → goal.git_ops.is_git_repository
+  examples.api-usage.02_git_operations._display_staged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_staged_files → goal.git_ops.get_staged_files
+  examples.api-usage.02_git_operations._display_unstaged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_unstaged_files → goal.git_ops.get_unstaged_files
+  examples.api-usage.02_git_operations._display_diff_stats → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_stats → goal.git_ops.get_diff_stats
+  examples.api-usage.02_git_operations._display_diff_content → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_content → goal.git_ops.get_diff_content
+  examples.api-usage.02_git_operations.main → integration.run_matrix.print
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_staged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_unstaged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_diff_stats
+```
+
+## Test Contracts
+
+*Scenarios as contract signatures — what the system guarantees.*
+
+### Cli (2)
+
+**`CLI Command Tests`**
+
+**`Functional probes derived from pytest coverage areas`**
+
+## Refactoring Analysis
+
+*Pre-refactoring snapshot — use this section to identify targets. Generated from `project/` toon files.*
+
+### Call Graph & Complexity (`project/calls.toon.yaml`)
+
+```toon markpact:analysis path=project/calls.toon.yaml
+# code2llm call graph | /home/tom/github/semcod/goal
+# generated in 0.20s
+# nodes: 412 | edges: 500 | modules: 82
+# CC̄=4.5
+
+HUBS[20]:
+  integration.run_matrix.print
+    CC=0  in:255  out:0  total:255
+  goal.cli.wizard_cmd._setup_project_config
+    CC=9  in:1  out:55  total:56
+  goal.user_config.initialize_user_config
+    CC=11  in:4  out:52  total:56
+  goal.push.core.execute_push_workflow
+    CC=20  in:2  out:52  total:54
+  goal.user_config.UserConfig.set
+    CC=1  in:49  out:1  total:50
+  goal.git_ops.run_git
+    CC=1  in:46  out:2  total:48
+  goal.cli.commit_cmd.validate
+    CC=13  in:0  out:45  total:45
+  goal.push.core.output_final_summary
+    CC=29  in:2  out:40  total:42
+  goal.cli.wizard_cmd._setup_user_config
+    CC=12  in:1  out:39  total:40
+  goal.cli.doctor_cmd.doctor
+    CC=12  in:0  out:40  total:40
+  goal.cli.wizard_cmd._show_setup_summary
+    CC=7  in:1  out:39  total:40
+  goal.cli.commit_cmd.fix_summary
+    CC=12  in:0  out:38  total:38
+  goal.formatter.format_goal_all_summary
+    CC=17  in:1  out:35  total:36
+  examples.api-usage.01_basic_api.main
+    CC=10  in:0  out:34  total:34
+  goal.cli.wizard_cmd._setup_git_repository
+    CC=10  in:1  out:33  total:34
+  goal.push.stages.todo.handle_todo_stage
+    CC=14  in:1  out:32  total:33
+  goal.bootstrap.installer._install_python_deps_legacy
+    CC=14  in:1  out:32  total:33
+  goal.user_config.show_user_config
+    CC=2  in:1  out:31  total:32
+  examples.api-usage.04_version_validation.main
+    CC=11  in:0  out:30  total:30
+  goal.deep_analyzer.CodeChangeAnalyzer._analyze_python_diff
+    CC=10  in:0  out:29  total:29
+
+MODULES:
+  examples.api-usage.01_basic_api  [1 funcs]
+    main  CC=10  out:34
+  examples.api-usage.02_git_operations  [6 funcs]
+    _check_git_repository  CC=2  out:4
+    _display_diff_content  CC=2  out:5
+    _display_diff_stats  CC=5  out:11
+    _display_staged_files  CC=5  out:7
+    _display_unstaged_files  CC=5  out:7
+    main  CC=2  out:9
+  examples.api-usage.03_commit_generation  [1 funcs]
+    main  CC=9  out:23
+  examples.api-usage.04_version_validation  [1 funcs]
+    main  CC=11  out:30
+  examples.api-usage.05_programmatic_workflow  [2 funcs]
+    create_minimal_workflow  CC=1  out:4
+    run_custom_workflow  CC=1  out:18
+  examples.custom-hooks.post-commit  [5 funcs]
+    get_commit_info  CC=1  out:10
+    log_to_file  CC=1  out:5
+    main  CC=1  out:11
+    notify_slack  CC=3  out:7
+    update_changelog  CC=4  out:8
+  examples.custom-hooks.pre-commit  [4 funcs]
+    check_file_sizes  CC=5  out:8
+    check_secrets  CC=8  out:9
+    main  CC=5  out:23
+    run_tests  CC=2  out:1
+  examples.custom-hooks.pre-publish  [5 funcs]
+    check_version  CC=6  out:12
+    main  CC=4  out:8
+    run_security_check  CC=2  out:5
+    test_build  CC=3  out:11
+    test_install  CC=4  out:17
+  examples.dotnet-project.Calculator  [2 funcs]
+    Add  CC=1  out:0
+    Main  CC=1  out:3
+  examples.template-generator.generate  [2 funcs]
+    generate_project  CC=4  out:23
+    main  CC=2  out:12
+  examples.testing.03_advanced_mocking  [5 funcs]
+    test_conditional_mocking  CC=1  out:8
+    test_mocking_click_interactions  CC=2  out:14
+    test_mocking_external_services  CC=3  out:10
+    test_mocking_git_operations  CC=2  out:7
+    test_spies_and_call_counting  CC=6  out:23
+  examples.testing.04_debugging_diagnostics  [6 funcs]
+    create_debug_report  CC=7  out:22
+    test_config_diagnostics  CC=4  out:12
+    test_debug_output_capture  CC=8  out:21
+    test_import_tracing  CC=5  out:12
+    test_performance_timing  CC=3  out:26
+    test_stack_trace_analysis  CC=3  out:16
+  examples.validation.run_all_validation  [3 funcs]
+    print_summary  CC=6  out:14
+    run_all  CC=3  out:7
+    run_test  CC=5  out:15
+  examples.webhooks.discord-webhook  [2 funcs]
+    main  CC=4  out:9
+    send_discord_notification  CC=5  out:15
+  examples.webhooks.slack-webhook  [2 funcs]
+    main  CC=4  out:9
+    send_slack_notification  CC=5  out:16
+  goal.authors.utils  [1 funcs]
+    format_co_author_trailer  CC=1  out:0
+  goal.bootstrap.configurator  [5 funcs]
+    _find_git_root  CC=3  out:2
+    _find_openrouter_api_key  CC=6  out:5
+    _find_python_bin  CC=5  out:6
+    _read_openrouter_api_key  CC=11  out:12
+    scaffold_test_file  CC=14  out:12
+  goal.bootstrap.costs_badge  [9 funcs]
+    _calculate_ai_costs  CC=4  out:8
+    _commit_blob_lower  CC=3  out:3
+    _fetch_commit_diff  CC=3  out:7
+    _filter_ai_commits  CC=4  out:2
+    _generate_costs_badge  CC=6  out:23
+    _load_costs_api  CC=2  out:9
+    _parsed_diff_is_usable  CC=4  out:2
+    _read_model_from_pyproject  CC=3  out:4
+    _single_commit_ai_cost  CC=3  out:5
+  goal.bootstrap.detector  [5 funcs]
+    _match_marker  CC=2  out:4
+    _python_package_dir_exists  CC=5  out:4
+    _python_scaffold_import_name  CC=5  out:4
+    detect_project_types_deep  CC=11  out:11
+    guess_package_name  CC=4  out:3
+  goal.bootstrap.installer  [12 funcs]
+    _ensure_costs_installed  CC=3  out:8
+    _ensure_generic_env  CC=6  out:9
+    _ensure_python_env  CC=9  out:25
+    _ensure_python_test_dependency  CC=5  out:15
+    _get_matching_dep_command  CC=4  out:3
+    _install_python_deps_broker  CC=2  out:5
+    _install_python_deps_legacy  CC=14  out:32
+    _match_marker  CC=2  out:4
+    _needs_install  CC=10  out:9
+    _run_dep_install  CC=4  out:14
+  goal.bootstrap.pyproject_costs_setup  [6 funcs]
+    _add_deps_to_section_match  CC=10  out:9
+    _ensure_costs_config  CC=5  out:13
+    _find_dep_list_end  CC=12  out:2
+    _try_add_deps  CC=4  out:4
+    _try_merge_hatch_default_deps  CC=6  out:6
+    _try_merge_optional_dev_deps  CC=6  out:7
+  goal.changelog  [6 funcs]
+    _build_domain_entry  CC=7  out:12
+    _build_simple_entry  CC=3  out:4
+    _classify_file_domain  CC=5  out:4
+    _find_unreleased_insert_pos  CC=3  out:6
+    _insert_entry  CC=5  out:3
+    update_changelog  CC=5  out:12
+  goal.cli  [2 funcs]
+    _format_import_warning_message  CC=1  out:0
+    _print_import_warning  CC=1  out:2
+  goal.cli.authors_cmd  [5 funcs]
+    authors_co_author  CC=1  out:5
+    authors_current  CC=1  out:4
+    authors_find  CC=1  out:5
+    display_author_details  CC=4  out:15
+    display_current_author  CC=1  out:5
+  goal.cli.commit_cmd  [3 funcs]
+    commit  CC=8  out:27
+    fix_summary  CC=12  out:38
+    validate  CC=13  out:45
+  goal.cli.config_cmd  [6 funcs]
+    config_get  CC=2  out:6
+    config_set  CC=2  out:8
+    config_show  CC=4  out:11
+    config_update  CC=1  out:4
+    config_validate  CC=3  out:8
+    setup  CC=3  out:10
+  goal.cli.config_validate_cmd  [1 funcs]
+    validate_cmd  CC=3  out:11
+  goal.cli.doctor_cmd  [1 funcs]
+    doctor  CC=12  out:40
+  goal.cli.hooks_cmd  [6 funcs]
+    display_failure_message  CC=1  out:3
+    display_install_success  CC=1  out:8
+    display_success_message  CC=1  out:3
+    hooks_install  CC=2  out:6
+    hooks_run  CC=2  out:6
+    hooks_uninstall  CC=2  out:5
+  goal.cli.license_cmd  [5 funcs]
+    license_check  CC=2  out:10
+    license_create  CC=6  out:21
+    license_info  CC=6  out:19
+    license_list  CC=7  out:20
+    license_update  CC=3  out:13
+  goal.cli.publish  [2 funcs]
+    makefile_has_target  CC=4  out:6
+    publish_project  CC=14  out:22
+  goal.cli.publish_cmd  [2 funcs]
+    _publish_impl  CC=8  out:16
+    publish  CC=2  out:5
+  goal.cli.recover_cmd  [2 funcs]
+    _get_error_output  CC=5  out:4
+    recover  CC=6  out:23
+  goal.cli.tests  [20 funcs]
+    _active_venv_python  CC=3  out:4
+    _build_python_test_command  CC=11  out:10
+    _coerce_python_strategy_to_project_pytest  CC=8  out:3
+    _display_test_error  CC=9  out:18
+    _ensure_root_pytest_or_mark_failed  CC=10  out:14
+    _get_project_strategy  CC=7  out:5
+    _has_package  CC=3  out:1
+    _prefer_uv_run  CC=2  out:1
+    _pytest_importable  CC=2  out:2
+    _resolve_project_python  CC=4  out:6
+  goal.cli.tests_discovery  [5 funcs]
+    _find_project_root  CC=5  out:4
+    _has_project_marker  CC=2  out:3
+    _has_usable_test_script  CC=7  out:4
+    find_nodejs_test_dirs  CC=6  out:8
+    find_python_test_dirs  CC=9  out:16
+  goal.cli.tests_pytest_setup  [3 funcs]
+    _is_uv_project  CC=1  out:1
+    _try_uv_install  CC=4  out:2
+    ensure_pytest_for_project  CC=9  out:13
+  goal.cli.utils_cmd  [8 funcs]
+    bootstrap  CC=4  out:11
+    check_versions  CC=2  out:12
+    clone  CC=4  out:15
+    info  CC=2  out:13
+    init  CC=4  out:12
+    package_managers  CC=8  out:16
+    status  CC=10  out:21
+    version  CC=2  out:14
+  goal.cli.version_sync  [1 funcs]
+    sync_all_versions  CC=1  out:11
+  goal.cli.version_utils  [21 funcs]
+    _build_author_block  CC=5  out:6
+    _update_author_section  CC=3  out:8
+    _update_license_section  CC=5  out:8
+    _update_package_json_metadata  CC=4  out:3
+    _update_pyproject_metadata  CC=2  out:2
+    _update_pyproject_with_regex  CC=1  out:3
+    _update_pyproject_with_tomlkit  CC=4  out:5
+    _update_regex_authors  CC=3  out:5
+    _update_regex_classifier  CC=2  out:1
+    _update_regex_license  CC=3  out:6
+  goal.cli.wizard_cmd  [5 funcs]
+    _find_git_root  CC=3  out:2
+    _setup_git_repository  CC=10  out:33
+    _setup_project_config  CC=9  out:55
+    _setup_user_config  CC=12  out:39
+    _show_setup_summary  CC=7  out:39
+  goal.cli_helpers  [3 funcs]
+    confirm  CC=6  out:6
+    split_paths_by_type  CC=14  out:17
+    stage_paths  CC=5  out:4
+  goal.commit_generator  [3 funcs]
+    display_commit_message  CC=1  out:2
+    display_detailed_message  CC=1  out:2
+    print_detailed_message  CC=2  out:3
+  goal.config.manager  [2 funcs]
+    ensure_config  CC=5  out:8
+    init_config  CC=3  out:4
+  goal.config.validation  [2 funcs]
+    validate_config_file  CC=11  out:25
+    validate_config_interactive  CC=10  out:22
+  goal.deep_analyzer  [4 funcs]
+    _analyze_generic_diff  CC=1  out:6
+    _analyze_js_diff  CC=13  out:12
+    _analyze_python_diff  CC=10  out:29
+    _detect_functional_areas  CC=7  out:12
+  goal.deep_analyzer_aggregate  [2 funcs]
+    aggregate_changes  CC=3  out:16
+    detect_relations  CC=6  out:8
+  goal.dependency_update  [7 funcs]
+    _iter_project_marker_files  CC=6  out:3
+    _path_has_skipped_dir  CC=1  out:2
+    _run_update_command  CC=4  out:8
+    _select_managers_to_update  CC=21  out:22
+    _update_dependencies_in_root  CC=12  out:23
+    discover_dependency_project_roots  CC=7  out:19
+    update_project_dependencies  CC=13  out:20
+  goal.formatter  [16 funcs]
+    _add_optional_sections  CC=3  out:2
+    _build_capabilities_content  CC=4  out:1
+    _build_details_content  CC=3  out:0
+    _build_enhanced_summary_section  CC=9  out:6
+    _build_files_section  CC=8  out:12
+    _build_functional_overview  CC=12  out:13
+    _build_roles_content  CC=4  out:1
+    _determine_next_steps  CC=4  out:0
+    _format_complexity_metric  CC=6  out:3
+    _format_metrics_section  CC=5  out:9
+  goal.generator.analyzer  [1 funcs]
+    extract_functions_changed  CC=3  out:10
+  goal.generator.generator  [2 funcs]
+    _classify_files  CC=11  out:7
+    generate_smart_commit_message  CC=1  out:2
+  goal.git_ops  [28 funcs]
+    _echo_cmd  CC=3  out:6
+    _handle_clone  CC=3  out:7
+    _handle_init_remote  CC=5  out:25
+    _handle_local_init  CC=2  out:5
+    _handle_merge_strategy  CC=8  out:25
+    _list_remote_branches  CC=5  out:9
+    _prompt_remote_url  CC=3  out:12
+    _run_git_verbose  CC=11  out:16
+    _select_branch  CC=3  out:9
+    apply_ticket_prefix  CC=6  out:5
+  goal.hooks.manager  [1 funcs]
+    run_validation  CC=4  out:4
+  goal.io.stdio  [9 funcs]
+    echo_auto  CC=2  out:4
+    echo_command_block  CC=2  out:4
+    echo_heading  CC=2  out:4
+    echo_info  CC=2  out:3
+    echo_output_block  CC=3  out:5
+    echo_status_warn  CC=2  out:4
+    echo_via_markdown  CC=2  out:3
+    set_stdio_markdown  CC=1  out:1
+    use_markdown_stdio  CC=2  out:0
+  goal.license.manager  [2 funcs]
+    create_license_file  CC=10  out:21
+    update_license_file  CC=7  out:13
+  goal.license.spdx  [3 funcs]
+    check_compatibility  CC=14  out:8
+    get_license_info  CC=4  out:4
+    validate_spdx_id  CC=11  out:13
+  goal.package_managers  [15 funcs]
+    _detect_package_manager  CC=2  out:2
+    _has_any_matching_path  CC=2  out:2
+    _has_language_extension  CC=2  out:3
+    _path_matches  CC=2  out:4
+    _pip_update_all_command  CC=6  out:3
+    detect_package_managers  CC=3  out:4
+    detect_project_language  CC=3  out:3
+    get_available_package_managers  CC=3  out:2
+    get_package_manager_info  CC=1  out:1
+    get_package_managers_by_language  CC=3  out:1
+  goal.project_bootstrap  [1 funcs]
+    bootstrap_project  CC=1  out:5
+  goal.publish.changes  [8 funcs]
+    _basename  CC=1  out:1
+    _is_metadata_file  CC=7  out:6
+    _is_publishable_for_type  CC=12  out:12
+    _is_test_path  CC=6  out:7
+    _matches_any  CC=5  out:4
+    _normalize_path  CC=1  out:3
+    _suffix  CC=1  out:2
+    analyze_publishable_changes  CC=8  out:8
+  goal.publish.github_fallback  [2 funcs]
+    _publishing_section  CC=10  out:6
+    get_github_release_config  CC=15  out:23
+  goal.push.core  [17 funcs]
+    _apply_enhanced_quality_gates  CC=6  out:6
+    _bootstrap_projects  CC=5  out:3
+    _detect_and_bootstrap_projects  CC=1  out:2
+    _detect_project_types  CC=2  out:4
+    _handle_commit_phase  CC=8  out:19
+    _handle_no_changes  CC=4  out:6
+    _handle_no_files  CC=3  out:1
+    _initialize_context  CC=3  out:3
+    _maybe_show_workflow_preview  CC=2  out:1
+    _run_test_stage_or_exit  CC=3  out:4
+  goal.push.stages.changelog  [1 funcs]
+    handle_changelog  CC=2  out:4
+  goal.push.stages.commit  [8 funcs]
+    _build_validation_summary  CC=1  out:1
+    _commit_file_group  CC=5  out:14
+    _commit_release_metadata  CC=5  out:16
+    _confirm_suggested_title  CC=4  out:1
+    enforce_quality_gates  CC=10  out:14
+    get_commit_message  CC=11  out:21
+    handle_single_commit  CC=7  out:7
+    handle_split_commits  CC=14  out:22
+  goal.push.stages.costs  [3 funcs]
+    _compute_ai_costs  CC=8  out:10
+    _is_cost_tracking_enabled  CC=4  out:8
+    update_cost_badges  CC=11  out:25
+  goal.push.stages.dry_run  [4 funcs]
+    _build_split_plan_body  CC=8  out:13
+    _format_markdown_dry_run  CC=4  out:7
+    _print_plain_dry_run  CC=4  out:13
+    handle_dry_run  CC=5  out:6
+  goal.push.stages.publish  [2 funcs]
+    _format_skip_message  CC=9  out:19
+    handle_publish  CC=15  out:24
+  goal.push.stages.push_remote  [17 funcs]
+    _execute_recovery  CC=3  out:11
+    _handle_automatic_recovery  CC=4  out:13
+    _handle_force_push  CC=4  out:19
+    _handle_large_file_error  CC=6  out:16
+    _handle_large_files_in_history  CC=2  out:18
+    _handle_large_files_staged  CC=2  out:5
+    _handle_pull_merge  CC=3  out:12
+    _handle_push_failure  CC=5  out:16
+    _handle_recovery_choice  CC=5  out:8
+    _handle_view_diff  CC=6  out:18
+  goal.push.stages.tag  [1 funcs]
+    create_tag  CC=4  out:8
+  goal.push.stages.test  [1 funcs]
+    run_test_stage  CC=9  out:23
+  goal.push.stages.todo  [1 funcs]
+    handle_todo_stage  CC=14  out:32
+  goal.push.stages.version  [4 funcs]
+    _get_version_module  CC=1  out:0
+    get_version_info  CC=2  out:3
+    handle_version_sync  CC=3  out:10
+    sync_all_versions_wrapper  CC=1  out:2
+  goal.recovery.large_file  [5 funcs]
+    _extract_file_paths  CC=8  out:9
+    _move_to_lfs  CC=4  out:13
+    _remove_large_files  CC=6  out:17
+    _skip_large_files  CC=2  out:5
+    _run_git_chunked  CC=4  out:4
+  goal.summary.generator  [1 funcs]
+    detect_capabilities  CC=5  out:7
+  goal.summary.quality_filter  [3 funcs]
+    dedupe_files  CC=3  out:4
+    dedupe_relations  CC=4  out:5
+    has_banned_words  CC=4  out:5
+  goal.summary.validator  [1 funcs]
+    _validate_title  CC=10  out:21
+  goal.toml_validation  [4 funcs]
+    check_pyproject_toml  CC=3  out:3
+    get_tomllib  CC=3  out:0
+    validate_project_toml_files  CC=4  out:4
+    validate_toml_file  CC=9  out:19
+  goal.user_config  [7 funcs]
+    set  CC=1  out:1
+    get_git_user_email  CC=3  out:2
+    get_git_user_name  CC=3  out:2
+    get_user_config  CC=2  out:3
+    initialize_user_config  CC=11  out:52
+    prompt_for_license  CC=4  out:25
+    show_user_config  CC=2  out:31
+  goal.validators.dot_folders  [6 funcs]
+    _is_dot_path  CC=3  out:3
+    _is_safe_path  CC=3  out:1
+    _is_whitelisted_path  CC=4  out:5
+    _matches_problematic  CC=4  out:4
+    check_dot_folders  CC=9  out:12
+    manage_dot_folders  CC=9  out:18
+  goal.validators.file_validator  [8 funcs]
+    _check_file_for_tokens  CC=3  out:4
+    _get_deleted_staged_files  CC=4  out:6
+    _handle_oversized_file  CC=3  out:3
+    _is_excluded  CC=3  out:3
+    get_file_size_mb  CC=2  out:1
+    handle_large_files  CC=5  out:14
+    validate_files  CC=12  out:9
+    validate_staged_files  CC=14  out:13
+  goal.validators.gitignore  [2 funcs]
+    load_gitignore  CC=6  out:9
+    save_gitignore  CC=8  out:11
+  goal.validators.tokens  [9 funcs]
+    _calculate_entropy  CC=5  out:4
+    _classify_token  CC=3  out:0
+    _extract_token_value  CC=4  out:3
+    _get_entropy_threshold  CC=1  out:1
+    _is_dummy_value  CC=8  out:7
+    detect_tokens_in_content  CC=10  out:13
+    get_default_token_patterns  CC=1  out:0
+    migrate_token_patterns  CC=1  out:1
+    resolve_token_patterns  CC=7  out:3
+  goal.version_validation  [6 funcs]
+    _validate_single_type  CC=4  out:3
+    check_readme_badges  CC=5  out:4
+    extract_badge_versions  CC=4  out:10
+    format_validation_results  CC=5  out:5
+    get_pypi_version  CC=2  out:6
+    validate_project_versions  CC=2  out:1
+  integration.run_matrix  [1 funcs]
+    print  CC=0  out:0
+
+EDGES:
+  examples.dotnet-project.Calculator.Program.Main → examples.dotnet-project.Calculator.Calculator.Add
+  examples.webhooks.slack-webhook.send_slack_notification → integration.run_matrix.print
+  examples.webhooks.slack-webhook.main → examples.webhooks.slack-webhook.send_slack_notification
+  examples.webhooks.slack-webhook.main → integration.run_matrix.print
+  examples.webhooks.discord-webhook.send_discord_notification → integration.run_matrix.print
+  examples.webhooks.discord-webhook.main → examples.webhooks.discord-webhook.send_discord_notification
+  examples.webhooks.discord-webhook.main → integration.run_matrix.print
+  examples.custom-hooks.post-commit.notify_slack → integration.run_matrix.print
+  examples.custom-hooks.post-commit.update_changelog → integration.run_matrix.print
+  examples.custom-hooks.post-commit.log_to_file → integration.run_matrix.print
+  examples.custom-hooks.post-commit.main → integration.run_matrix.print
+  examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.get_commit_info
+  examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.notify_slack
+  examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.update_changelog
+  examples.custom-hooks.post-commit.main → examples.custom-hooks.post-commit.log_to_file
+  examples.custom-hooks.pre-publish.test_build → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.test_install → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.check_version → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.run_security_check → integration.run_matrix.print
+  examples.custom-hooks.pre-publish.main → integration.run_matrix.print
+  examples.custom-hooks.pre-commit.main → integration.run_matrix.print
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_secrets
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.check_file_sizes
+  examples.custom-hooks.pre-commit.main → examples.custom-hooks.pre-commit.run_tests
+  examples.api-usage.04_version_validation.main → integration.run_matrix.print
+  examples.api-usage.04_version_validation.main → goal.cli.version_utils.get_current_version
+  examples.api-usage.04_version_validation.main → goal.version_validation.get_pypi_version
+  examples.api-usage.04_version_validation.main → goal.cli.version_utils.detect_project_types
+  examples.api-usage.05_programmatic_workflow.run_custom_workflow → integration.run_matrix.print
+  examples.api-usage.05_programmatic_workflow.create_minimal_workflow → integration.run_matrix.print
+  examples.api-usage.01_basic_api.main → integration.run_matrix.print
+  examples.api-usage.01_basic_api.main → goal.cli.version_utils.detect_project_types
+  examples.api-usage.01_basic_api.main → goal.cli.version_utils.get_current_version
+  examples.api-usage.03_commit_generation.main → integration.run_matrix.print
+  examples.api-usage.03_commit_generation.main → goal.git_ops.get_staged_files
+  examples.api-usage.03_commit_generation.main → goal.git_ops.get_diff_content
+  examples.api-usage.02_git_operations._check_git_repository → integration.run_matrix.print
+  examples.api-usage.02_git_operations._check_git_repository → goal.git_ops.is_git_repository
+  examples.api-usage.02_git_operations._display_staged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_staged_files → goal.git_ops.get_staged_files
+  examples.api-usage.02_git_operations._display_unstaged_files → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_unstaged_files → goal.git_ops.get_unstaged_files
+  examples.api-usage.02_git_operations._display_diff_stats → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_stats → goal.git_ops.get_diff_stats
+  examples.api-usage.02_git_operations._display_diff_content → integration.run_matrix.print
+  examples.api-usage.02_git_operations._display_diff_content → goal.git_ops.get_diff_content
+  examples.api-usage.02_git_operations.main → integration.run_matrix.print
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_staged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_unstaged_files
+  examples.api-usage.02_git_operations.main → examples.api-usage.02_git_operations._display_diff_stats
+```
+
+### Code Analysis (`project/analysis.toon.yaml`)
+
+```toon markpact:analysis path=project/analysis.toon.yaml
+# code2llm | 194f 33087L | python:156,yaml:14,shell:6,toml:4,csharp:2,json:2,txt:1,yml:1,go:1,xml:1,java:1,php:1 | 2026-06-20
+# generated in 0.05s
+# CC̅=4.5 | critical:11/1036 | dups:0 | cycles:0
+
+HEALTH[11]:
+  🟡 CC    format_goal_all_summary CC=17 (limit:15)
+  🟡 CC    _select_managers_to_update CC=21 (limit:15)
+  🟡 CC    add_slow_test_tickets_to_planfile CC=22 (limit:15)
+  🟡 CC    output_final_summary CC=29 (limit:15)
+  🟡 CC    execute_push_workflow CC=20 (limit:15)
+  🟡 CC    handle_publish CC=15 (limit:15)
+  🟡 CC    _validate_publishing_section CC=19 (limit:15)
+  🟡 CC    get_github_release_config CC=15 (limit:15)
+  🟡 CC    publish_github_release CC=15 (limit:15)
+  🟡 CC    _run_publish_command CC=33 (limit:15)
+  🟡 CC    _detect_version_files CC=17 (limit:15)
+
+REFACTOR[1]:
+  1. split 11 high-CC methods  (CC>15)
+
+PIPELINES[549]:
+  [1] Src [Add_ReturnsSum]: Add_ReturnsSum
+      PURITY: 100% pure
+  [2] Src [Subtract_ReturnsDifference]: Subtract_ReturnsDifference
+      PURITY: 100% pure
+  [3] Src [Multiply_ReturnsProduct]: Multiply_ReturnsProduct
+      PURITY: 100% pure
+  [4] Src [Divide_ReturnsQuotient]: Divide_ReturnsQuotient
+      PURITY: 100% pure
+  [5] Src [Main]: Main → Add
+      PURITY: 100% pure
+  [6] Src [main]: main → send_slack_notification → print
+      PURITY: 100% pure
+  [7] Src [main]: main → send_discord_notification → print
+      PURITY: 100% pure
+  [8] Src [main]: main → print
+      PURITY: 100% pure
+  [9] Src [test_build]: test_build → print
+      PURITY: 100% pure
+  [10] Src [test_install]: test_install → print
+      PURITY: 100% pure
+  [11] Src [check_version]: check_version → print
+      PURITY: 100% pure
+  [12] Src [run_security_check]: run_security_check → print
+      PURITY: 100% pure
+  [13] Src [main]: main → print
+      PURITY: 100% pure
+  [14] Src [main]: main → print
+      PURITY: 100% pure
+  [15] Src [main]: main
+      PURITY: 100% pure
+  [16] Src [main]: main → print
+      PURITY: 100% pure
+  [17] Src [run_custom_workflow]: run_custom_workflow → print
+      PURITY: 100% pure
+  [18] Src [create_minimal_workflow]: create_minimal_workflow → print
+      PURITY: 100% pure
+  [19] Src [main]: main → print
+      PURITY: 100% pure
+  [20] Src [main]: main → print
+      PURITY: 100% pure
+  [21] Src [main]: main → print
+      PURITY: 100% pure
+  [22] Src [run_test]: run_test → print
+      PURITY: 100% pure
+  [23] Src [run_all]: run_all → print
+      PURITY: 100% pure
+  [24] Src [print_summary]: print_summary → print
+      PURITY: 100% pure
+  [25] Src [main]: main
+      PURITY: 100% pure
+  [26] Src [main]: main
+      PURITY: 100% pure
+  [27] Src [main]: main → generate_project → print
+      PURITY: 100% pure
+  [28] Src [test_debug_output_capture]: test_debug_output_capture → print
+      PURITY: 100% pure
+  [29] Src [test_stack_trace_analysis]: test_stack_trace_analysis → print
+      PURITY: 100% pure
+  [30] Src [test_performance_timing]: test_performance_timing → print
+      PURITY: 100% pure
+  [31] Src [test_import_tracing]: test_import_tracing → set
+      PURITY: 100% pure
+  [32] Src [test_config_diagnostics]: test_config_diagnostics → print
+      PURITY: 100% pure
+  [33] Src [create_debug_report]: create_debug_report → print
+      PURITY: 100% pure
+  [34] Src [test_mocking_external_services]: test_mocking_external_services → validate_project_versions → _validate_single_type
+      PURITY: 100% pure
+  [35] Src [test_mocking_git_operations]: test_mocking_git_operations → run_git
+      PURITY: 100% pure
+  [36] Src [test_mocking_click_interactions]: test_mocking_click_interactions → print
+      PURITY: 100% pure
+  [37] Src [test_spies_and_call_counting]: test_spies_and_call_counting → print
+      PURITY: 100% pure
+  [38] Src [test_mocking_file_system]: test_mocking_file_system
+      PURITY: 100% pure
+  [39] Src [test_conditional_mocking]: test_conditional_mocking → run_git
+      PURITY: 100% pure
+  [40] Src [test_mock_context_manager]: test_mock_context_manager → bootstrap_project → _new_bootstrap_result
+      PURITY: 100% pure
+  [41] Src [_print_import_warning]: _print_import_warning → _format_import_warning_message
+      PURITY: 100% pure
+  [42] Src [__init__]: __init__
+      PURITY: 100% pure
+  [43] Src [_load]: _load
+      PURITY: 100% pure
+  [44] Src [_save]: _save
+      PURITY: 100% pure
+  [45] Src [get]: get
+      PURITY: 100% pure
+  [46] Src [get_npm_version]: get_npm_version
+      PURITY: 100% pure
+  [47] Src [get_cargo_version]: get_cargo_version
+      PURITY: 100% pure
+  [48] Src [get_rubygems_version]: get_rubygems_version
+      PURITY: 100% pure
+  [49] Src [get_registry_version]: get_registry_version
+      PURITY: 100% pure
+  [50] Src [_detect_python_package]: _detect_python_package
+      PURITY: 100% pure
+
+LAYERS:
+  goal/                           CC̄=4.6    ←in:164  →out:34  !! split
+  │ !! project_bootstrap         1274L  0C   32m  CC=14     ←4
+  │ !! core                       898L  1C   21m  CC=29     ←3
+  │ !! git_ops                    690L  0C   28m  CC=14     ←20
+  │ !! package_managers           644L  1C   18m  CC=6      ←2
+  │ !! publish                    618L  0C   21m  CC=33     ←2
+  │ !! generator                  589L  1C   14m  CC=14     ←0
+  │ !! manager                    587L  1C   12m  CC=10     ←1
+  │ !! analyzer                   563L  2C   27m  CC=14     ←0
+  │ !! validation                 556L  2C   15m  CC=19     ←2
+  │ !! manager                    550L  1C   27m  CC=17     ←7
+  │ !! formatter                  518L  1C   24m  CC=17     ←4
+  │ !! tests                      517L  0C   20m  CC=13     ←1
+  │ validator                  489L  1C   24m  CC=10     ←0
+  │ version_utils              485L  0C   23m  CC=8      ←7
+  │ constants                  480L  0C    0m  CC=0.0    ←0
+  │ push_remote                473L  0C   17m  CC=11     ←1
+  │ __init__                   472L  1C   14m  CC=10     ←0
+  │ generator                  432L  1C   24m  CC=12     ←2
+  │ large_file                 397L  1C   12m  CC=11     ←0
+  │ python_diag_extended       393L  1C   18m  CC=10     ←0
+  │ installer                  391L  0C   12m  CC=14     ←0
+  │ quality_filter             389L  1C   18m  CC=14     ←0
+  │ wizard_cmd                 367L  0C    7m  CC=12     ←0
+  │ manager                    348L  1C   12m  CC=7      ←0
+  │ manager                    346L  1C   14m  CC=6      ←0
+  │ version_validation         341L  0C   15m  CC=9      ←5
+  │ !! dependency_update          340L  1C    8m  CC=21     ←1
+  │ python_diag_core           338L  1C   12m  CC=8      ←0
+  │ version_sync               332L  0C   16m  CC=13     ←3
+  │ user_config                323L  1C   12m  CC=11     ←29
+  │ !! github_fallback            316L  1C   13m  CC=15     ←1
+  │ manager                    313L  1C   14m  CC=4      ←0
+  │ deep_analyzer              304L  1C   11m  CC=13     ←0
+  │ file_validator             303L  0C    8m  CC=14     ←2
+  │ commit                     303L  0C    9m  CC=14     ←2
+  │ tokens                     286L  0C    9m  CC=10     ←2
+  │ spdx                       283L  0C    7m  CC=14     ←2
+  │ deep_analyzer_aggregate    280L  1C   16m  CC=13     ←0
+  │ abstraction                278L  1C   11m  CC=12     ←0
+  │ generator_generate         278L  1C   11m  CC=13     ←0
+  │ generator_core             267L  1C   13m  CC=11     ←0
+  │ rules                      252L  6C   19m  CC=11     ←0
+  │ costs_badge                245L  0C   10m  CC=6      ←1
+  │ actions                    239L  5C   16m  CC=7      ←0
+  │ changes                    238L  1C    8m  CC=12     ←1
+  │ pyproject_costs_setup      234L  0C    7m  CC=12     ←1
+  │ utils_cmd                  229L  0C    8m  CC=10     ←0
+  │ commit_cmd                 228L  0C    5m  CC=13     ←0
+  │ utils                      217L  0C    9m  CC=5      ←2
+  │ body_formatter             214L  1C   12m  CC=7      ←0
+  │ manager                    211L  1C    7m  CC=6      ←0
+  │ manager                    207L  1C    7m  CC=7      ←0
+  │ license_cmd                206L  0C    8m  CC=7      ←0
+  │ templates                  194L  1C    0m  CC=0.0    ←0
+  │ git_ops                    177L  1C    7m  CC=11     ←0
+  │ dot_folders                161L  0C    6m  CC=9      ←1
+  │ broker                     158L  1C    8m  CC=9      ←0
+  │ push_cmd                   152L  0C    1m  CC=5      ←0
+  │ dry_run                    151L  0C    4m  CC=8      ←1
+  │ detector                   149L  0C    9m  CC=11     ←5
+  │ todo                       144L  0C    5m  CC=9      ←1
+  │ configurator               142L  0C    5m  CC=14     ←3
+  │ version_types              135L  0C    0m  CC=0.0    ←0
+  │ recover_cmd                132L  0C    2m  CC=6      ←0
+  │ tests_pytest_setup         131L  0C    4m  CC=9      ←0
+  │ costs                      130L  0C    3m  CC=11     ←0
+  │ changelog                  129L  0C    6m  CC=7      ←0
+  │ divergent                  129L  1C    6m  CC=9      ←0
+  │ !! publish                    127L  0C    2m  CC=15     ←1
+  │ authors_cmd                127L  0C   12m  CC=4      ←0
+  │ doctor_cmd                 125L  0C    1m  CC=12     ←0
+  │ config_cmd                 125L  0C    7m  CC=4      ←0
+  │ toml_validation            117L  0C    4m  CC=9      ←3
+  │ tests_discovery            107L  0C    5m  CC=9      ←1
+  │ config                     106L  0C    2m  CC=8      ←0
+  │ todo                       100L  0C    1m  CC=14     ←1
+  │ cli_helpers                 97L  0C    4m  CC=14     ←7
+  │ core                        93L  0C    2m  CC=8      ←3
+  │ test                        91L  0C    1m  CC=9      ←1
+  │ nodejs                      91L  0C    1m  CC=13     ←0
+  │ hooks_cmd                   87L  0C    8m  CC=2      ←0
+  │ stdio                       86L  0C   11m  CC=3      ←6
+  │ validation_cmd              85L  0C    5m  CC=7      ←0
+  │ auth                        83L  1C    2m  CC=8      ←0
+  │ postcommit_cmd              82L  0C    5m  CC=6      ←0
+  │ exceptions                  78L  9C    9m  CC=3      ←0
+  │ commands                    75L  0C    1m  CC=4      ←0
+  │ publish_cmd                 66L  0C    2m  CC=8      ←0
+  │ deep_analyzer_patterns      63L  0C    0m  CC=0.0    ←0
+  │ base                        60L  2C    5m  CC=3      ←0
+  │ lfs                         59L  1C    2m  CC=6      ←0
+  │ corrupted                   57L  1C    2m  CC=4      ←0
+  │ __init__                    57L  0C    0m  CC=0.0    ←0
+  │ version                     56L  0C    4m  CC=3      ←2
+  │ __init__                    56L  0C    0m  CC=0.0    ←0
+  │ __init__                    55L  0C    0m  CC=0.0    ←0
+  │ php                         54L  0C    1m  CC=7      ←0
+  │ force_push                  51L  1C    2m  CC=5      ←0
+  │ base                        50L  1C    5m  CC=2      ←0
+  │ gitignore                   49L  0C    2m  CC=8      ←2
+  │ __init__                    48L  0C    0m  CC=0.0    ←0
+  │ config_validate_cmd         47L  0C    1m  CC=3      ←0
+  │ models                      47L  2C    0m  CC=0.0    ←0
+  │ exceptions                  46L  4C    3m  CC=2      ←0
+  │ config                      44L  1C    2m  CC=3      ←0
+  │ python                      44L  0C    1m  CC=6      ←0
+  │ project_doctor              43L  0C    0m  CC=0.0    ←0
+  │ __init__                    42L  0C    3m  CC=2      ←0
+  │ rust                        41L  0C    1m  CC=4      ←0
+  │ go                          41L  0C    1m  CC=5      ←0
+  │ java                        39L  0C    1m  CC=6      ←0
+  │ uv                          37L  1C    5m  CC=2      ←0
+  │ __init__                    36L  0C    0m  CC=0.0    ←0
+  │ __init__                    36L  0C    0m  CC=0.0    ←0
+  │ commit_generator            35L  0C    4m  CC=2      ←0
+  │ version                     35L  0C    0m  CC=0.0    ←0
+  │ poetry                      32L  1C    3m  CC=2      ←0
+  │ tag                         32L  0C    1m  CC=4      ←1
+  │ dotnet                      31L  0C    1m  CC=4      ←0
+  │ pdm                         29L  1C    3m  CC=2      ←0
+  │ logging                     29L  0C    2m  CC=3      ←1
+  │ __init__                    29L  0C    0m  CC=0.0    ←0
+  │ pip                         28L  1C    3m  CC=2      ←0
+  │ ruby                        28L  0C    1m  CC=3      ←0
+  │ __init__                    27L  0C    0m  CC=0.0    ←0
+  │ __init__                    27L  0C    0m  CC=0.0    ←0
+  │ changelog                   24L  0C    2m  CC=2      ←1
+  │ enhanced_summary            23L  0C    0m  CC=0.0    ←0
+  │ strategies                  23L  0C    0m  CC=0.0    ←0
+  │ __init__                    20L  0C    0m  CC=0.0    ←0
+  │ __init__                    19L  0C    0m  CC=0.0    ←0
+  │ __init__                    19L  0C    0m  CC=0.0    ←0
+  │ __main__                    18L  0C    0m  CC=0.0    ←0
+  │ __init__                    16L  0C    0m  CC=0.0    ←0
+  │ generator                   15L  1C    1m  CC=1      ←0
+  │ __init__                    14L  0C    0m  CC=0.0    ←0
+  │ __init__                    14L  0C    0m  CC=0.0    ←0
+  │ __init__                    11L  0C    0m  CC=0.0    ←0
+  │ __init__                     9L  0C    0m  CC=0.0    ←0
+  │ __init__                     5L  0C    0m  CC=0.0    ←0
+  │ __init__                     3L  0C    0m  CC=0.0    ←0
+  │ cli                          0L  0C    2m  CC=1      ←0
+  │
+  examples/                       CC̄=3.3    ←in:0  →out:0
+  │ 04_debugging_diagnostics   301L  0C    6m  CC=8      ←0
+  │ 03_advanced_mocking        283L  0C    7m  CC=6      ←0
+  │ generate                   240L  0C    2m  CC=4      ←0
+  │ config-example.yaml        183L  0C    0m  CC=0.0    ←0
+  │ pre-publish                167L  0C    5m  CC=6      ←0
+  │ post-commit                144L  0C    5m  CC=4      ←1
+  │ pre-commit                 128L  0C    4m  CC=8      ←1
+  │ 05_programmatic_workflow   120L  0C    2m  CC=1      ←0
+  │ run_all_validation         120L  1C    5m  CC=6      ←0
+  │ slack-webhook              116L  0C    2m  CC=5      ←0
+  │ discord-webhook            109L  0C    2m  CC=5      ←0
+  │ Makefile                   105L  0C    0m  CC=0.0    ←0
+  │ 02_git_operations          100L  0C    6m  CC=5      ←0
+  │ 04_version_validation       79L  0C    1m  CC=11     ←0
+  │ 01_basic_api                74L  0C    1m  CC=10     ←0
+  │ 03_commit_generation        70L  0C    1m  CC=9      ←0
+  │ markdown-demo.sh            70L  0C    0m  CC=0.0    ←0
+  │ package.json                64L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml              57L  0C    0m  CC=0.0    ←0
+  │ Cargo.toml                  49L  0C    0m  CC=0.0    ←0
+  │ pom.xml                     40L  0C    0m  CC=0.0    ←0
+  │ CalculatorTests.cs          32L  1C    4m  CC=1      ←0
+  │ install.sh                  31L  0C    0m  CC=0.0    ←0
+  │ Calculator.cs               21L  2C    5m  CC=1      ←0
+  │ goal.yaml                   17L  0C    0m  CC=0.0    ←0
+  │ Main.java                   15L  1C    2m  CC=1      ←0
+  │ pyproject.toml              15L  0C    0m  CC=0.0    ←0
+  │ composer.json               15L  0C    0m  CC=0.0    ←0
+  │ Example.php                 11L  1C    1m  CC=1      ←0
+  │ main.go                     10L  0C    1m  CC=1      ←0
+  │ __init__                     3L  0C    0m  CC=0.0    ←0
+  │
+  integration/                    CC̄=0.0    ←in:255  →out:0
+  │ run_matrix.sh              216L  1C    4m  CC=0.0    ←16
+  │ Dockerfile                  15L  0C    0m  CC=0.0    ←0
+  │ run_docker_matrix.sh         5L  0C    0m  CC=0.0    ←0
+  │
+  ./                              CC̄=0.0    ←in:0  →out:0
+  │ !! planfile.yaml             1323L  0C    0m  CC=0.0    ←0
+  │ tree.txt                   416L  0C    0m  CC=0.0    ←0
+  │ Taskfile.yml               244L  0C    0m  CC=0.0    ←0
+  │ pyqual.yaml                161L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml             139L  0C    0m  CC=0.0    ←0
+  │ Makefile                    91L  0C    0m  CC=0.0    ←0
+  │ wup.yaml                    90L  0C    0m  CC=0.0    ←0
+  │ prefact.yaml                82L  0C    0m  CC=0.0    ←0
+  │ redsl.yaml                  78L  0C    0m  CC=0.0    ←0
+  │ regix.yaml                  51L  0C    0m  CC=0.0    ←0
+  │ project.sh                  48L  0C    0m  CC=0.0    ←0
+  │ .pre-commit-config.yaml     38L  0C    0m  CC=0.0    ←0
+  │ redsl_refactor_report.toon.yaml    33L  0C    0m  CC=0.0    ←0
+  │ redsl_refactor_plan.toon.yaml    26L  0C    0m  CC=0.0    ←0
+  │ nlp2uri.yaml                 8L  0C    0m  CC=0.0    ←0
+  │
+  scripts/                        CC̄=0.0    ←in:0  →out:0
+  │ koru_verify_ci.sh           49L  0C    0m  CC=0.0    ←0
+  │
+  testql-scenarios/               CC̄=0.0    ←in:0  →out:0
+  │ generated-from-pytests.testql.toon.yaml    79L  0C    0m  CC=0.0    ←0
+  │ generated-cli-tests.testql.toon.yaml    20L  0C    0m  CC=0.0    ←0
+  │
+  ── zero ──
+     goal/cli.py                               0L
+
+COUPLING:
+                                               integration                         goal           examples.api-usage                    goal.push                     goal.cli             examples.testing        examples.custom-hooks                      goal.io          examples.validation              goal.validators                  goal.config            examples.webhooks               goal.bootstrap  examples.template-generator                 goal.publish
+                  integration                           ──                           ←5                         ←102                                                                                    ←59                          ←50                                                       ←20                                                                                    ←10                                                        ←9                               hub
+                         goal                            5                           ──                          ←11                          ←56                          ←45                          ←13                                                        20                                                       ←15                            2                                                         5                                                        ←3  hub
+           examples.api-usage                          102                           11                           ──                                                         4                                                                                                                                                                             1                                                                                                                      !! fan-out
+                    goal.push                                                        56                                                        ──                            8                           ←1                            3                           24                                                         1                                                                                      1                                                         1  !! fan-out
+                     goal.cli                                                        45                           ←4                            1                           ──                                                                                      4                                                                                     11                                                         4                                                         5  hub
+             examples.testing                           59                           13                                                         1                                                        ──                                                                                                                                                                                                                                                                       !! fan-out
+        examples.custom-hooks                           50                                                                                     ←3                                                                                     ──                                                                                                                                                                                                                                          !! fan-out
+                      goal.io                                                       ←20                                                       ←24                           ←4                                                                                     ──                                                                                                                                                                                                             hub
+          examples.validation                           20                                                                                                                                                                                                                                      ──                                                                                                                                                                                !! fan-out
+              goal.validators                                                        15                                                        ←1                                                                                                                                                                            ──                           ←1                                                                                                                      !! fan-out
+                  goal.config                                                         1                           ←1                                                       ←11                                                                                                                                                1                           ──                                                                                                                      hub
+            examples.webhooks                           10                                                                                                                                                                                                                                                                                                                             ──                                                                                         !! fan-out
+               goal.bootstrap                                                        ←5                                                        ←1                           ←4                                                                                                                                                                                                                                      ──                                                            hub
+  examples.template-generator                            9                                                                                                                                                                                                                                                                                                                                                                                       ──                               !! fan-out
+                 goal.publish                                                         3                                                        ←1                           ←5                                                                                                                                                                                                                                                                                                ──  hub
+  CYCLES: none
+  HUB: goal.cli/ (fan-in=12)
+  HUB: goal.bootstrap/ (fan-in=10)
+  HUB: goal.publish/ (fan-in=6)
+  HUB: goal.io/ (fan-in=48)
+  HUB: goal.config/ (fan-in=15)
+  HUB: integration/ (fan-in=255)
+  HUB: goal/ (fan-in=164)
+  HUB: goal.license/ (fan-in=7)
+  SMELL: goal.cli/ fan-out=81 → split needed
+  SMELL: examples.api-usage/ fan-out=120 → split needed
+  SMELL: examples.validation/ fan-out=20 → split needed
+  SMELL: goal.push/ fan-out=94 → split needed
+  SMELL: examples.template-generator/ fan-out=9 → split needed
+  SMELL: examples.webhooks/ fan-out=10 → split needed
+  SMELL: goal/ fan-out=34 → split needed
+  SMELL: examples.testing/ fan-out=73 → split needed
+  SMELL: examples.custom-hooks/ fan-out=50 → split needed
+  SMELL: goal.validators/ fan-out=15 → split needed
+
+EXTERNAL:
+  validation: run `vallm batch .` → validation.toon
+  duplication: run `redup scan .` → duplication.toon
+```
+
+### Duplication (`project/duplication.toon.yaml`)
+
+```toon markpact:analysis path=project/duplication.toon.yaml
+# redup/duplication | 32 groups | 150f 26995L | 2026-06-19
+
+SUMMARY:
+  files_scanned: 150
+  total_lines:   26995
+  dup_groups:    32
+  dup_fragments: 82
+  saved_lines:   384
+  scan_ms:       4682
+
+HOTSPOTS[7] (files with most duplication):
+  goal/project_bootstrap.py  dup=148L  groups=8  frags=8  (0.5%)
+  goal/bootstrap/installer.py  dup=104L  groups=5  frags=5  (0.4%)
+  goal/bootstrap/configurator.py  dup=44L  groups=3  frags=3  (0.2%)
+  goal/hooks/manager.py  dup=35L  groups=2  frags=3  (0.1%)
+  goal/cli/postcommit_cmd.py  dup=27L  groups=4  frags=4  (0.1%)
+  goal/cli/validation_cmd.py  dup=27L  groups=4  frags=4  (0.1%)
+  goal/validation/rules.py  dup=24L  groups=4  frags=8  (0.1%)
+
+DUPLICATES[32] (ranked by impact):
+  [c63c6249e55cb28f] ! EXAC  _ensure_python_test_dependency  L=40 N=2 saved=40 sim=1.00
+      goal/bootstrap/installer.py:164-203  (_ensure_python_test_dependency)
+      goal/project_bootstrap.py:421-460  (_ensure_python_test_dependency)
+  [fa0b74b14de61573]   EXAC  _install_python_deps_broker  L=22 N=2 saved=22 sim=1.00
+      goal/bootstrap/installer.py:140-161  (_install_python_deps_broker)
+      goal/project_bootstrap.py:606-627  (_install_python_deps_broker)
+  [92a676278db9e76e]   STRU  uninstall_hooks  L=11 N=3 saved=22 sim=1.00
+      goal/hooks/manager.py:289-299  (uninstall_hooks)
+      goal/postcommit/manager.py:201-211  (run_post_commit_actions)
+      goal/validation/manager.py:197-207  (run_custom_validations)
+  [632e6e2ec1a0e267]   STRU  ensure_project_environment  L=20 N=2 saved=20 sim=1.00
+      goal/bootstrap/installer.py:372-391  (ensure_project_environment)
+      goal/project_bootstrap.py:687-706  (ensure_project_environment)
+  [0269aa7743a3214a]   STRU  authors_list  L=4 N=6 saved=20 sim=1.00
+      goal/cli/authors_cmd.py:40-43  (authors_list)
+      goal/cli/authors_cmd.py:77-80  (authors_import)
+      goal/cli/authors_cmd.py:84-87  (authors_export)
+      goal/cli/hooks_cmd.py:75-78  (hooks_status)
+      goal/cli/postcommit_cmd.py:28-31  (postcommit_list)
+      goal/cli/validation_cmd.py:28-31  (validation_list)
+  [cb9ebedb82c1a435]   STRU  main  L=19 N=2 saved=19 sim=1.00
+      examples/webhooks/discord-webhook.py:87-105  (main)
+      examples/webhooks/slack-webhook.py:94-112  (main)
+  [116594718eb1c607]   STRU  _find_openrouter_api_key  L=19 N=2 saved=19 sim=1.00
+      goal/bootstrap/configurator.py:114-132  (_find_openrouter_api_key)
+      goal/project_bootstrap.py:335-353  (_find_openrouter_api_key)
+  [4b00d0a6a1f57e43]   EXAC  _find_python_bin  L=17 N=2 saved=17 sim=1.00
+      goal/bootstrap/configurator.py:69-85  (_find_python_bin)
+      goal/project_bootstrap.py:289-305  (_find_python_bin)
+  [ee9bc07d711dabc5]   EXAC  _should_skip_install  L=17 N=2 saved=17 sim=1.00
+      goal/bootstrap/installer.py:22-38  (_should_skip_install)
+      goal/project_bootstrap.py:517-533  (_should_skip_install)
+  [90e6c0a8cb78d015]   STRU  authors  L=3 N=6 saved=15 sim=1.00
+      goal/cli/authors_cmd.py:34-36  (authors)
+      goal/cli/config_cmd.py:11-13  (config)
+      goal/cli/hooks_cmd.py:35-37  (hooks)
+      goal/cli/license_cmd.py:18-20  (license)
+      goal/cli/postcommit_cmd.py:10-12  (postcommit)
+      goal/cli/validation_cmd.py:10-12  (validation)
+  [e925cb15bbf37024]   STRU  get_name  L=3 N=6 saved=15 sim=1.00
+      goal/postcommit/actions.py:43-45  (get_name)
+      goal/postcommit/actions.py:95-97  (get_name)
+      goal/postcommit/actions.py:141-143  (get_name)
+      goal/validation/rules.py:42-44  (get_name)
+      goal/validation/rules.py:73-75  (get_name)
+      goal/validation/rules.py:123-125  (get_name)
+  [61866fcb488af822]   STRU  install_hooks  L=12 N=2 saved=12 sim=1.00
+      goal/hooks/manager.py:275-286  (install_hooks)
+      goal/hooks/manager.py:302-313  (run_hooks)
+  [c1baa8942e76bd7e]   STRU  validate_config  L=3 N=5 saved=12 sim=1.00
+      goal/postcommit/actions.py:99-101  (validate_config)
+      goal/postcommit/actions.py:145-147  (validate_config)
+      goal/validation/rules.py:46-48  (validate_config)
+      goal/validation/rules.py:77-79  (validate_config)
+      goal/validation/rules.py:127-129  (validate_config)
+  [a9e49749ba7879d1]   STRU  _display_staged_files  L=11 N=2 saved=11 sim=1.00
+      examples/api-usage/02_git_operations.py:31-41  (_display_staged_files)
+      examples/api-usage/02_git_operations.py:44-54  (_display_unstaged_files)
+  [7aa96675d99bbfa5]   STRU  postcommit_validate  L=11 N=2 saved=11 sim=1.00
+      goal/cli/postcommit_cmd.py:35-45  (postcommit_validate)
+      goal/cli/validation_cmd.py:35-45  (validation_validate)
+  [79664e1b14e94359]   STRU  get_git_user_name  L=11 N=2 saved=11 sim=1.00
+      goal/user_config.py:113-123  (get_git_user_name)
+      goal/user_config.py:126-136  (get_git_user_email)
+  [ecb29c37ddf8ec5c]   EXAC  _match_marker  L=5 N=3 saved=10 sim=1.00
+      goal/bootstrap/detector.py:11-15  (_match_marker)
+      goal/bootstrap/installer.py:15-19  (_match_marker)
+      goal/project_bootstrap.py:245-249  (_match_marker)
+  [647457419bebba7a]   STRU  is_copyleft  L=10 N=2 saved=10 sim=1.00
+      goal/license/spdx.py:262-271  (is_copyleft)
+      goal/license/spdx.py:274-283  (is_permissive)
+  [be5dc2ccfaf1a50f]   STRU  postcommit_run  L=9 N=2 saved=9 sim=1.00
+      goal/cli/postcommit_cmd.py:16-24  (postcommit_run)
+      goal/cli/validation_cmd.py:16-24  (validation_run)
+  [395199f7c31b5150]   STRU  get_npm_version  L=9 N=2 saved=9 sim=1.00
+      goal/version_validation.py:26-34  (get_npm_version)
+      goal/version_validation.py:37-45  (get_cargo_version)
+  [9be14950000fe561]   EXAC  _find_git_root  L=8 N=2 saved=8 sim=1.00
+      goal/bootstrap/configurator.py:135-142  (_find_git_root)
+      goal/project_bootstrap.py:356-363  (_find_git_root)
+  [95a03c7e292f0023]   EXAC  __init__  L=8 N=2 saved=8 sim=1.00
+      goal/postcommit/manager.py:15-22  (__init__)
+      goal/validation/manager.py:16-23  (__init__)
+  [ec98b40481b22142]   STRU  install_editable  L=8 N=2 saved=8 sim=1.00
+      goal/installers/managers/pdm.py:14-21  (install_editable)
+      goal/installers/managers/poetry.py:14-22  (install_editable)
+  [20e408c9d9d242cc]   STRU  validate_summary  L=8 N=2 saved=8 sim=1.00
+      goal/summary/__init__.py:15-22  (validate_summary)
+      goal/summary/__init__.py:25-32  (auto_fix_summary)
+  [144ef4134cc76962]   STRU  install_from_lockfile  L=3 N=3 saved=6 sim=1.00
+      goal/installers/managers/pdm.py:27-29  (install_from_lockfile)
+      goal/installers/managers/poetry.py:30-32  (install_from_lockfile)
+      goal/installers/managers/uv.py:35-37  (install_from_lockfile)
+  [8da890bc2ee176f1]   STRU  __init__  L=5 N=2 saved=5 sim=1.00
+      goal/recovery/exceptions.py:35-39  (__init__)
+      goal/recovery/exceptions.py:45-49  (__init__)
+  [dbda8ef1dc9b7e17]   STRU  authors_add  L=4 N=2 saved=4 sim=1.00
+      goal/cli/authors_cmd.py:51-54  (authors_add)
+      goal/cli/authors_cmd.py:70-73  (authors_update)
+  [432344fee46df3c6]   STRU  display_success_message  L=4 N=2 saved=4 sim=1.00
+      goal/cli/hooks_cmd.py:9-12  (display_success_message)
+      goal/cli/hooks_cmd.py:15-18  (display_failure_message)
+  [a056b755248bcc9e]   EXAC  get_name  L=3 N=2 saved=3 sim=1.00
+      goal/postcommit/actions.py:30-32  (get_name)
+      goal/validation/rules.py:29-31  (get_name)
+  [8d361abedd2fedda]   EXAC  validate_config  L=3 N=2 saved=3 sim=1.00
+      goal/postcommit/actions.py:35-37  (validate_config)
+      goal/validation/rules.py:34-36  (validate_config)
+  [41defae02867c5b3]   STRU  _sync_uv_lock  L=3 N=2 saved=3 sim=1.00
+      goal/cli/version_sync.py:254-256  (_sync_uv_lock)
+      goal/cli/version_sync.py:259-261  (_sync_dependency_locks_after_manifest_updates)
+  [5ea2c6da8fc2aeed]   STRU  __init__  L=3 N=2 saved=3 sim=1.00
+      goal/recovery/exceptions.py:17-19  (__init__)
+      goal/recovery/exceptions.py:55-57  (__init__)
+
+REFACTOR[32] (ranked by priority):
+  [1] ◐ extract_function   → goal/utils/_ensure_python_test_dependency.py
+      WHY: 2 occurrences of 40-line block across 2 files — saves 40 lines
+      FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
+  [2] ○ extract_function   → goal/utils/_install_python_deps_broker.py
+      WHY: 2 occurrences of 22-line block across 2 files — saves 22 lines
+      FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
+  [3] ○ extract_function   → goal/utils/uninstall_hooks.py
+      WHY: 3 occurrences of 11-line block across 3 files — saves 22 lines
+      FILES: goal/hooks/manager.py, goal/postcommit/manager.py, goal/validation/manager.py
+  [4] ○ extract_function   → goal/utils/ensure_project_environment.py
+      WHY: 2 occurrences of 20-line block across 2 files — saves 20 lines
+      FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
+  [5] ○ extract_function   → goal/cli/utils/authors_list.py
+      WHY: 6 occurrences of 4-line block across 4 files — saves 20 lines
+      FILES: goal/cli/authors_cmd.py, goal/cli/hooks_cmd.py, goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
+  [6] ○ extract_function   → examples/webhooks/utils/main.py
+      WHY: 2 occurrences of 19-line block across 2 files — saves 19 lines
+      FILES: examples/webhooks/discord-webhook.py, examples/webhooks/slack-webhook.py
+  [7] ○ extract_function   → goal/utils/_find_openrouter_api_key.py
+      WHY: 2 occurrences of 19-line block across 2 files — saves 19 lines
+      FILES: goal/bootstrap/configurator.py, goal/project_bootstrap.py
+  [8] ○ extract_function   → goal/utils/_find_python_bin.py
+      WHY: 2 occurrences of 17-line block across 2 files — saves 17 lines
+      FILES: goal/bootstrap/configurator.py, goal/project_bootstrap.py
+  [9] ○ extract_function   → goal/utils/_should_skip_install.py
+      WHY: 2 occurrences of 17-line block across 2 files — saves 17 lines
+      FILES: goal/bootstrap/installer.py, goal/project_bootstrap.py
+  [10] ○ extract_function   → goal/cli/utils/authors.py
+      WHY: 6 occurrences of 3-line block across 6 files — saves 15 lines
+      FILES: goal/cli/authors_cmd.py, goal/cli/config_cmd.py, goal/cli/hooks_cmd.py, goal/cli/license_cmd.py, goal/cli/postcommit_cmd.py +1 more
+  [11] ○ extract_function   → goal/utils/get_name.py
+      WHY: 6 occurrences of 3-line block across 2 files — saves 15 lines
+      FILES: goal/postcommit/actions.py, goal/validation/rules.py
+  [12] ○ extract_function   → goal/hooks/utils/install_hooks.py
+      WHY: 2 occurrences of 12-line block across 1 files — saves 12 lines
+      FILES: goal/hooks/manager.py
+  [13] ○ extract_function   → goal/utils/validate_config.py
+      WHY: 5 occurrences of 3-line block across 2 files — saves 12 lines
+      FILES: goal/postcommit/actions.py, goal/validation/rules.py
+  [14] ○ extract_function   → examples/api-usage/utils/_display_staged_files.py
+      WHY: 2 occurrences of 11-line block across 1 files — saves 11 lines
+      FILES: examples/api-usage/02_git_operations.py
+  [15] ○ extract_function   → goal/cli/utils/postcommit_validate.py
+      WHY: 2 occurrences of 11-line block across 2 files — saves 11 lines
+      FILES: goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
+  [16] ○ extract_function   → goal/utils/get_git_user_name.py
+      WHY: 2 occurrences of 11-line block across 1 files — saves 11 lines
+      FILES: goal/user_config.py
+  [17] ○ extract_function   → goal/utils/_match_marker.py
+      WHY: 3 occurrences of 5-line block across 3 files — saves 10 lines
+      FILES: goal/bootstrap/detector.py, goal/bootstrap/installer.py, goal/project_bootstrap.py
+  [18] ○ extract_function   → goal/license/utils/is_copyleft.py
+      WHY: 2 occurrences of 10-line block across 1 files — saves 10 lines
+      FILES: goal/license/spdx.py
+  [19] ○ extract_function   → goal/cli/utils/postcommit_run.py
+      WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
+      FILES: goal/cli/postcommit_cmd.py, goal/cli/validation_cmd.py
+  [20] ○ extract_function   → goal/utils/get_npm_version.py
+      WHY: 2 occurrences of 9-line block across 1 files — saves 9 lines
+      FILES: goal/version_validation.py
+  [21] ○ extract_function   → goal/utils/_find_git_root.py
+      WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
+      FILES: goal/bootstrap/configurator.py, goal/project_bootstrap.py
+  [22] ○ extract_function   → goal/utils/__init__.py
+      WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
+      FILES: goal/postcommit/manager.py, goal/validation/manager.py
+  [23] ○ extract_function   → goal/installers/managers/utils/install_editable.py
+      WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
+      FILES: goal/installers/managers/pdm.py, goal/installers/managers/poetry.py
+  [24] ○ extract_function   → goal/summary/utils/validate_summary.py
+      WHY: 2 occurrences of 8-line block across 1 files — saves 8 lines
+      FILES: goal/summary/__init__.py
+  [25] ○ extract_function   → goal/installers/managers/utils/install_from_lockfile.py
+      WHY: 3 occurrences of 3-line block across 3 files — saves 6 lines
+      FILES: goal/installers/managers/pdm.py, goal/installers/managers/poetry.py, goal/installers/managers/uv.py
+  [26] ○ extract_function   → goal/recovery/utils/__init__.py
+      WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
+      FILES: goal/recovery/exceptions.py
+  [27] ○ extract_function   → goal/cli/utils/authors_add.py
+      WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
+      FILES: goal/cli/authors_cmd.py
+  [28] ○ extract_function   → goal/cli/utils/display_success_message.py
+      WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
+      FILES: goal/cli/hooks_cmd.py
+  [29] ○ extract_function   → goal/utils/get_name.py
+      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
+      FILES: goal/postcommit/actions.py, goal/validation/rules.py
+  [30] ○ extract_function   → goal/utils/validate_config.py
+      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
+      FILES: goal/postcommit/actions.py, goal/validation/rules.py
+  [31] ○ extract_function   → goal/cli/utils/_sync_uv_lock.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: goal/cli/version_sync.py
+  [32] ○ extract_function   → goal/recovery/utils/__init__.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: goal/recovery/exceptions.py
+
+QUICK_WINS[24] (low risk, high savings — do first):
+  [2] extract_function   saved=22L  → goal/utils/_install_python_deps_broker.py
+      FILES: installer.py, project_bootstrap.py
+  [3] extract_function   saved=22L  → goal/utils/uninstall_hooks.py
+      FILES: manager.py, manager.py, manager.py
+  [4] extract_function   saved=20L  → goal/utils/ensure_project_environment.py
+      FILES: installer.py, project_bootstrap.py
+  [5] extract_function   saved=20L  → goal/cli/utils/authors_list.py
+      FILES: authors_cmd.py, hooks_cmd.py, postcommit_cmd.py +1
+  [6] extract_function   saved=19L  → examples/webhooks/utils/main.py
+      FILES: discord-webhook.py, slack-webhook.py
+  [7] extract_function   saved=19L  → goal/utils/_find_openrouter_api_key.py
+      FILES: configurator.py, project_bootstrap.py
+  [8] extract_function   saved=17L  → goal/utils/_find_python_bin.py
+      FILES: configurator.py, project_bootstrap.py
+  [9] extract_function   saved=17L  → goal/utils/_should_skip_install.py
+      FILES: installer.py, project_bootstrap.py
+  [10] extract_function   saved=15L  → goal/cli/utils/authors.py
+      FILES: authors_cmd.py, config_cmd.py, hooks_cmd.py +3
+  [11] extract_function   saved=15L  → goal/utils/get_name.py
+      FILES: actions.py, rules.py
+
+EFFORT_ESTIMATE (total ≈ 13.5h):
+  hard   _ensure_python_test_dependency      saved=40L  ~120min
+  medium _install_python_deps_broker         saved=22L  ~44min
+  medium uninstall_hooks                     saved=22L  ~44min
+  medium ensure_project_environment          saved=20L  ~40min
+  medium authors_list                        saved=20L  ~40min
+  medium main                                saved=19L  ~38min
+  medium _find_openrouter_api_key            saved=19L  ~38min
+  medium _find_python_bin                    saved=17L  ~34min
+  medium _should_skip_install                saved=17L  ~34min
+  medium authors                             saved=15L  ~30min
+  ... +22 more (~346min)
+
+METRICS-TARGET:
+  dup_groups:  32 → 0
+  saved_lines: 384 lines recoverable
+```
+
+### Evolution / Churn (`project/evolution.toon.yaml`)
+
+```toon markpact:analysis path=project/evolution.toon.yaml
+# code2llm/evolution | 974 func | 114f | 2026-06-20
+# generated in 0.00s
+
+NEXT[10] (ranked by impact):
+  [1] !! SPLIT           goal/push/core.py
+      WHY: 898L, 1 classes, max CC=29
+      EFFORT: ~4h  IMPACT: 26042
+
+  [2] !! SPLIT           goal/project_bootstrap.py
+      WHY: 1274L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 17836
+
+  [3] !  SPLIT-FUNC      execute_push_workflow  CC=20  fan=34
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 680
+
+  [4] !! SPLIT-FUNC      output_final_summary  CC=29  fan=19
+      WHY: CC=29 exceeds 15
+      EFFORT: ~1h  IMPACT: 551
+
+  [5] !! SPLIT-FUNC      _run_publish_command  CC=33  fan=15
+      WHY: CC=33 exceeds 15
+      EFFORT: ~1h  IMPACT: 495
+
+  [6] !  SPLIT-FUNC      add_slow_test_tickets_to_planfile  CC=22  fan=16
+      WHY: CC=22 exceeds 15
+      EFFORT: ~1h  IMPACT: 352
+
+  [7] !  SPLIT-FUNC      _select_managers_to_update  CC=21  fan=15
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 315
+
+  [8] !  SPLIT-FUNC      format_goal_all_summary  CC=17  fan=18
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 306
+
+  [9] !  SPLIT-FUNC      GoalConfig._detect_version_files  CC=17  fan=15
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 255
+
+  [10] !  SPLIT-FUNC      handle_publish  CC=15  fan=15
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 225
+
+
+RISKS[3]:
+  ⚠ Splitting planfile.yaml may break 0 import paths
+  ⚠ Splitting goal/project_bootstrap.py may break 32 import paths
+  ⚠ Splitting goal/push/core.py may break 21 import paths
+
+METRICS-TARGET:
+  CC̄:          4.5 → ≤3.1
+  max-CC:      33 → ≤16
+  god-modules: 13 → 0
+  high-CC(≥15): 11 → ≤5
+  hub-types:   0 → ≤0
+
+PATTERNS (language parser shared logic):
+  _extract_declarations() in base.py — unified extraction for:
+    - TypeScript: interfaces, types, classes, functions, arrow funcs
+    - PHP: namespaces, traits, classes, functions, includes
+    - Ruby: modules, classes, methods, requires
+    - C++: classes, structs, functions, #includes
+    - C#: classes, interfaces, methods, usings
+    - Java: classes, interfaces, methods, imports
+    - Go: packages, functions, structs
+    - Rust: modules, functions, traits, use statements
+
+  Shared regex patterns per language:
+    - import: language-specific import/require/using patterns
+    - class: class/struct/trait declarations with inheritance
+    - function: function/method signatures with visibility
+    - brace_tracking: for C-family languages ({ })
+    - end_keyword_tracking: for Ruby (module/class/def...end)
+
+  Benefits:
+    - Consistent extraction logic across all languages
+    - Reduced code duplication (~70% reduction in parser LOC)
+    - Easier maintenance: fix once, apply everywhere
+    - Standardized FunctionInfo/ClassInfo models
+
+HISTORY:
+  prev CC̄=4.5 → now CC̄=4.5
+```
+
+### Validation (`project/validation.toon.yaml`)
+
+```toon markpact:analysis path=project/validation.toon.yaml
+# vallm batch | 264f | 0✓ 181⚠ 0✗ | 2026-04-26
+
+SUMMARY:
+  scanned: 264  passed: 0 (0.0%)  warnings: 181  errors: 0  unsupported: 0
+
+WARNINGS[181]{path,score}:
+  examples/validation/test_api_signatures.py,0.71
+    issues[3]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+      complexity.lizard_cc,warning,extract_function_calls: CC=20 exceeds limit 15,27
+      complexity.lizard_cc,warning,validate_call: CC=20 exceeds limit 15,123
+  examples/validation/test_readme_consistency.py,0.74
+    issues[2]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+      complexity.lizard_cc,warning,validate_readme: CC=22 exceeds limit 15,92
+  integration/run_matrix.sh,0.74
+    issues[2]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+      complexity.lizard_length,warning,run_case: 175 lines exceeds limit 100,11
+  .aider/analytics.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  .aider/caches/model_prices_and_context_window.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  .aider/caches/openrouter_models.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  .aider/installs.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  .pre-commit-config.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  .taskill/state.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  examples/api-usage/01_basic_api.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/02_git_operations.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/03_commit_generation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/04_version_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/05_programmatic_workflow.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/test_integration.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/custom-hooks/post-commit.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/custom-hooks/pre-commit.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/custom-hooks/pre-publish.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/enhanced-summary/config-example.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  examples/git-hooks/install.sh,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+  examples/go-project/main.go,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse GO: Download error: Language 'GO' not available for download. Available groups: [""all""]",
+  examples/java-project/src/main/java/com/example/Main.java,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JAVA: Download error: Language 'JAVA' not available for download. Available groups: [""all""]",
+  examples/java-project/src/test/java/com/example/MainTest.java,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JAVA: Download error: Language 'JAVA' not available for download. Available groups: [""all""]",
+  examples/markdown-demo.sh,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+  examples/my-new-project/goal.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  examples/my-new-project/pyproject.toml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse TOML: Download error: Language 'TOML' not available for download. Available groups: [""all""]",
+  examples/my-new-project/src/my-new-project/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/my-new-project/tests/test_my-new-project.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/nodejs-app/package.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  examples/php-project/composer.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  examples/php-project/src/Example.php,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PHP: Download error: Language 'PHP' not available for download. Available groups: [""all""]",
+  examples/python-package/pyproject.toml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse TOML: Download error: Language 'TOML' not available for download. Available groups: [""all""]",
+  examples/rust-crate/Cargo.toml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse TOML: Download error: Language 'TOML' not available for download. Available groups: [""all""]",
+  examples/template-generator/generate.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/testing/03_advanced_mocking.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/testing/04_debugging_diagnostics.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/validation/run_all_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/validation/test_imports.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/validation/test_syntax_check.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/webhooks/discord-webhook.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/webhooks/slack-webhook.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  goal/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/__main__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/authors/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/authors/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/authors/utils.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/changelog.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/authors_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/commit_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/config_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/config_validate_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/doctor_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/hooks_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/license_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/postcommit_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/publish.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/publish_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/push_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/recover_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/tests.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/utils_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/validation_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/version.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/version_sync.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/version_types.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/version_utils.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/wizard_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/commit_generator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config/constants.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config/validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/deep_analyzer.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/core.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/dotnet.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/go.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/java.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/logging.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/models.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/nodejs.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/php.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/python.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/ruby.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/rust.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/todo.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/enhanced_summary.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/formatter.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/generator/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/generator/analyzer.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/generator/generator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/generator/git_ops.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/git_ops.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/hooks/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/hooks/config.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/hooks/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/license/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/license/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/license/spdx.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/package_managers.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/postcommit/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/postcommit/actions.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/postcommit/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/project_bootstrap.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/project_doctor.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/commands.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/core.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/changelog.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/commit.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/costs.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/dry_run.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/publish.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/push_remote.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/tag.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/test.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/todo.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/version.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/auth.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/base.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/corrupted.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/divergent.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/exceptions.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/force_push.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/large_file.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/lfs.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/strategies.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/smart_commit.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/smart_commit/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/smart_commit/abstraction.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/smart_commit/generator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/body_formatter.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/generator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/quality_filter.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/validator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/toml_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/user_config.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validation/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validation/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validation/rules.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/dot_folders.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/exceptions.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/file_validator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/gitignore.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/tokens.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/version_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  integration/run_docker_matrix.sh,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+  planfile.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  prefact.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  project.sh,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+  project.toon-schema.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  project/calls.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  project/project.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  pyproject.toml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse TOML: Download error: Language 'TOML' not available for download. Available groups: [""all""]",
+  pyqual.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  redsl.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  test_recovery.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_changelog.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_cli_options.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_clone_repo.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_config_shim.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_config_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_file_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_formatter.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_git_ops.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_project_bootstrap.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_project_doctor.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_push_e2e.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_smart_commit_shim.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_user_config.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_version_sync.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_version_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+```
+
+## Intent
+
+Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management.

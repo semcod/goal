@@ -14,11 +14,6 @@ Goal supports configuring multiple package registries for publishing your projec
 | Gemfury | Ruby | https://rubygems.org/ | `GEMFURY_TOKEN` |
 | Private Registry | Any | Custom URL | Custom |
 
-## Basic Configuration
-
-### Single Registry
-
-```yaml
 # goal.yaml
 registries:
   pypi:
@@ -40,8 +35,6 @@ registries:
     url: "https://pypi.mycompany.com/simple/"
     token_env: "PRIVATE_PYPI_TOKEN"
 ```
-
-## Python Registries
 
 ### PyPI Production
 
@@ -104,8 +97,6 @@ strategies:
       twine upload dist/*
 ```
 
-## Node.js Registries
-
 ### npm Public
 
 ```yaml
@@ -155,8 +146,6 @@ strategies:
     # publish: "npm publish --access private"
 ```
 
-## Rust Registries
-
 ### crates.io
 
 ```yaml
@@ -182,8 +171,6 @@ strategies:
   rust:
     publish: "cargo publish --registry private"
 ```
-
-## Ruby Registries
 
 ### RubyGems
 
@@ -211,8 +198,6 @@ strategies:
     publish: "gem push *.gem --host https://push.fury.io/username/"
 ```
 
-## Authentication
-
 ### API Tokens
 
 Most registries use API tokens:
@@ -224,8 +209,6 @@ export NPM_TOKEN="npm_xxxxxx"
 export GITHUB_TOKEN="ghp_xxxxxx"
 export CARGO_REGISTRY_TOKEN="xxxxxx"
 ```
-
-### In CI/CD
 
 #### GitHub Actions
 
@@ -271,8 +254,6 @@ strategies:
         --password $REGISTRY_PASS \
         dist/*
 ```
-
-## Advanced Configuration
 
 ### Conditional Publishing
 
@@ -328,11 +309,6 @@ strategies:
       npm publish --registry https://npm.company.com/
 ```
 
-## Environment-Specific Registries
-
-### Development
-
-```yaml
 # .goal/development.yaml
 registries:
   npm:
@@ -340,9 +316,6 @@ registries:
     token_env: "DEV_NPM_TOKEN"
 ```
 
-### Staging
-
-```yaml
 # .goal/staging.yaml
 registries:
   pypi:
@@ -350,17 +323,12 @@ registries:
     token_env: "STAGING_PYPI_TOKEN"
 ```
 
-### Production
-
-```yaml
 # .goal/production.yaml
 registries:
   pypi:
     url: "https://pypi.org/simple/"
     token_env: "PROD_PYPI_TOKEN"
 ```
-
-## Security Best Practices
 
 ### 1. Use Environment Variables
 
@@ -415,33 +383,16 @@ strategies:
       echo "Published successfully at $(date)" >> publish.log
 ```
 
-## Troubleshooting
-
-### Authentication Errors
-
-```bash
-# Test PyPI token
-twine check dist/*
-
-# Test npm token
-npm whoami
-
 # Test cargo token
 cargo login --registry crates.io
 ```
 
-### Registry Not Found
-
-```yaml
 # Verify URL format
 registries:
   pypi:
     url: "https://pypi.org/simple/"  # Must end with /
 ```
 
-### Permission Denied
-
-```yaml
 # Check token permissions
 strategies:
   python:
@@ -449,9 +400,6 @@ strategies:
       twine upload --verbose dist/*  # Shows error details
 ```
 
-### Network Issues
-
-```yaml
 # Use proxy if needed
 strategies:
   python:
@@ -459,11 +407,6 @@ strategies:
       https_proxy=$HTTPS_PROXY twine upload dist/*
 ```
 
-## Examples
-
-### Complete Python Package Setup
-
-```yaml
 # goal.yaml
 project:
   name: "my-package"

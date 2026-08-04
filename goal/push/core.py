@@ -2,49 +2,40 @@
 
 import sys
 import time
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Dict, List, Any, Optional
 
 import click
 
 from goal.git_ops import run_git, get_staged_files, get_diff_content, get_diff_stats
-from goal.project_bootstrap import detect_project_types_deep, bootstrap_project
-from goal.push.stages import (
-    get_commit_message, enforce_quality_gates, handle_single_commit,
-    handle_split_commits, handle_version_sync, get_version_info,
-    handle_changelog, run_test_stage, create_tag, push_to_remote,
-    handle_publish, handle_dry_run
+from goal.project_bootstrap import (
+    detect_project_types_deep,
+    bootstrap_project,
+    refresh_test_dependencies,
 )
+from goal.toml_validation import check_pyproject_toml
+from goal.push.stages import (
+    get_commit_message,
+    enforce_quality_gates,
+    handle_single_commit,
+    handle_split_commits,
+    handle_version_sync,
+    get_version_info,
+    handle_changelog,
+    run_test_stage,
+    create_tag,
+    push_to_remote,
+    handle_publish,
+    handle_dry_run,
+    handle_todo_stage,
+)
+from goal.push.preview import show_workflow_preview
+from goal.push.tickets import add_slow_test_tickets_to_planfile
 
 
 def run_git_local(*args, **kwargs) -> Any:
     """Local wrapper for run_git to avoid import issues."""
     return run_git(*args, **kwargs)
-
-
-def show_workflow_preview(files, stats, current_version, new_version, commit_msg, commit_body, markdown, ctx_obj) -> None:
-    """Show workflow preview for interactive mode."""
-    total_adds = sum(s[0] for s in stats.values())
-    total_dels = sum(s[1] for s in stats.values())
-    denom = (total_adds + total_dels) or 1
-    deletion_pct = int((total_dels / denom) * 100)
-    net = total_adds - total_dels
-    
-    if markdown or ctx_obj.get('markdown'):
-        click.echo(f"\n## GOAL Workflow Preview\n")
-        click.echo(f"- **Files:** {len(files)} (+{total_adds}/-{total_dels} lines, NET {net}, {deletion_pct}% churn deletions)")
-        click.echo(f"- **Version:** {current_version} → {new_version}")
-        click.echo(f"- **Commit:** `{commit_msg}`")
-        if commit_body:
-            click.echo(f"\n### Commit Body\n```\n{commit_body}\n```")
-    else:
-        click.echo(click.style("\n=== GOAL Workflow ===", fg='cyan', bold=True))
-        click.echo(f"Will commit {len(files)} files (+{total_adds}/-{total_dels} lines, NET {net}, {deletion_pct}% churn deletions)")
-        click.echo(f"Version bump: {current_version} -> {new_version}")
-        click.echo(f"Commit message: {click.style(commit_msg, fg='green')}")
-        if commit_body:
-            click.echo(click.style("\nCommit body (preview):", fg='cyan'))
-            click.echo(commit_body)
 
 
 def output_final_summary(
@@ -59,17 +50,116 @@ def output_final_summary(
     commit_body: Optional[str],
     test_exit_code: int,
     publish_success: bool,
-    no_tag: bool
+    no_tag: bool,
+    publish_required: bool = False,
+    publish_skip_reason: Optional[str] = None,
 ) -> None:
-    """Output final summary in markdown format if requested."""
-    if not (markdown or ctx_obj.get('markdown')):
+    """Output final summary in YAML or markdown format."""
+    import yaml
+    from datetime import datetime
+
+    from goal.io.stdio import echo_via_markdown, use_markdown_stdio
+
+    test_details = ctx_obj.get("test_details", {})
+    added_tickets = []
+    if test_details:
+        added_tickets = add_slow_test_tickets_to_planfile(test_details)
+
+    use_markdown = markdown or ctx_obj.get("markdown")
+    is_all_mode = ctx_obj.get("yes") or use_markdown
+
+    workflow_success = test_exit_code == 0 and (
+        publish_success or not publish_required
+    )
+
+    if use_markdown and is_all_mode:
+        from goal.formatter import format_goal_all_summary
+
+        md_output = format_goal_all_summary(
+            project_types=project_types,
+            files=files,
+            stats=stats,
+            current_version=current_version,
+            new_version=new_version,
+            commit_msg=commit_msg,
+            commit_body=commit_body,
+            test_exit_code=test_exit_code,
+            test_details=test_details,
+            publish_success=publish_success,
+            publish_required=publish_required,
+            publish_skip_reason=publish_skip_reason,
+            workflow_success=workflow_success,
+            added_tickets=added_tickets,
+        )
+        echo_via_markdown("\n" + md_output)
+        if not use_markdown_stdio():
+            click.echo("")
         return
-    
+
+    if is_all_mode:
+        # Build YAML report
+        slowest = []
+        needs_improvement = []
+        for t in test_details.get("slow_tests", []):
+            duration = t.get("duration", 0.0)
+            formatted_test = f"{t.get('classname')}.{t.get('name')} ({duration:.2f}s)"
+            if len(slowest) < 5:
+                slowest.append(formatted_test)
+            if duration >= 0.5:
+                needs_improvement.append(formatted_test)
+
+        workflow_success = test_exit_code == 0 and (
+            publish_success or not publish_required
+        )
+        yaml_report = {
+            "goal_summary": {
+                "timestamp": datetime.now().isoformat(),
+                "status": "SUCCESS" if workflow_success else "FAILED",
+                "version_update": {
+                    "from": current_version,
+                    "to": new_version
+                },
+                "git": {
+                    "commit_message": commit_msg,
+                    "files_changed": len(files)
+                },
+                "test_execution": {
+                    "status": "passed" if test_exit_code == 0 else "failed",
+                    "total_wall_time_seconds": round(test_details.get("wall_time", 0.0), 2),
+                    "sum_individual_test_time_seconds": round(test_details.get("total_test_time", 0.0), 2),
+                    "startup_and_collection_overhead_seconds": round(test_details.get("startup_overhead", 0.0), 2),
+                    "slowest_tests_top_5": slowest,
+                    "tests_requiring_improvement": needs_improvement,
+                },
+                "planfile_updates": {
+                    "tickets_added": added_tickets
+                },
+                "publish": _build_publish_summary(
+                    publish_success, publish_required, publish_skip_reason
+                )
+            }
+        }
+
+        click.echo(click.style("\n=== GOAL RESULT (YAML) ===", fg="green", bold=True))
+        click.echo(yaml.dump(yaml_report, sort_keys=False, allow_unicode=True))
+        click.echo(click.style("==========================\n", fg="green", bold=True))
+
+    if not (markdown or ctx_obj.get("markdown")):
+        return
+
     from goal.formatter import format_push_result
-    
-    success_emoji = "🎉" if test_exit_code == 0 and publish_success else "✅"
-    click.echo(click.style(f"\n{success_emoji} Process completed successfully!", fg='green', bold=True))
-    
+
+    workflow_success = test_exit_code == 0 and (
+        publish_success or not publish_required
+    )
+    success_emoji = "🎉" if workflow_success else "⚠"
+    click.echo(
+        click.style(
+            f"\n{success_emoji} Process completed successfully!", fg="green", bold=True
+        )
+    )
+
+    tagged = not no_tag and not publish_skip_reason
     actions = [
         "Detected project types",
         "Staged changes",
@@ -77,14 +167,18 @@ def output_final_summary(
         "Committed changes",
         f"Updated version to {new_version}",
         "Updated changelog",
-        f"Created tag v{new_version}" if not no_tag else "Skipped tag creation",
-        "Pushed to remote" if not no_tag else "Pushed to remote without tags",
+        f"Created tag v{new_version}" if tagged else "Skipped tag creation",
+        "Pushed to remote" if tagged else "Pushed to remote without tags",
     ]
     if publish_success:
         actions.append(f"Published version {new_version}")
+    elif publish_required:
+        actions.append("Publish failed")
+    elif publish_skip_reason:
+        actions.append(f"Publish skipped ({publish_skip_reason})")
     else:
-        actions.append("Publish failed or skipped")
-    
+        actions.append("Publish skipped")
+
     md_output = format_push_result(
         project_types=project_types,
         files=files,
@@ -93,21 +187,139 @@ def output_final_summary(
         new_version=new_version,
         commit_msg=commit_msg,
         commit_body=commit_body,
-        test_result="Tests passed" if test_exit_code == 0 else "Tests failed but continued",
+        test_result="Tests passed"
+        if test_exit_code == 0
+        else "Tests failed but continued",
         test_exit_code=test_exit_code,
-        actions=actions
+        actions=actions,
     )
     click.echo("\n" + md_output)
 
 
 class PushContext:
     """Context object wrapper for push command."""
-    
+
     def __init__(self, ctx_obj: Dict[str, Any]):
         self.obj = ctx_obj
-    
+
     def get(self, key: str, default=None) -> Any:
         return self.obj.get(key, default)
+
+
+def _validate_toml_or_exit(dry_run: bool) -> None:
+    """Abort the workflow when ``pyproject.toml`` has a syntax error (skipped on dry-run)."""
+    if dry_run:
+        return
+    toml_error = check_pyproject_toml()
+    if toml_error:
+        click.echo(click.style(toml_error, fg="red", bold=True), err=True)
+        click.echo(
+            click.style("\nFix the TOML syntax error and try again.", fg="yellow"),
+            err=True,
+        )
+        sys.exit(1)
+
+
+def _apply_enhanced_quality_gates(
+    ctx_obj: Dict[str, Any],
+    commit_msg: str,
+    detailed_result: Dict,
+    files: List[str],
+    stats: Dict,
+    message: Optional[str],
+    markdown: bool,
+) -> str:
+    if message or not detailed_result or not detailed_result.get("enhanced"):
+        return commit_msg
+
+    total_adds = sum(s[0] for s in stats.values())
+    total_dels = sum(s[1] for s in stats.values())
+    return enforce_quality_gates(
+        ctx_obj,
+        commit_msg,
+        detailed_result,
+        files,
+        total_adds,
+        total_dels,
+        ctx_obj["yes"],
+        markdown,
+    )
+
+
+def _handle_no_files(
+    ctx_obj: Dict[str, Any],
+    project_types: List[str],
+    dry_run: bool,
+    markdown: bool,
+    files: List[str],
+) -> bool:
+    if files and files != [""]:
+        return False
+    _handle_no_changes(ctx_obj, project_types, dry_run, markdown)
+    return True
+
+
+def _abort_if_missing_commit_title(commit_title: Optional[str]) -> bool:
+    if commit_title:
+        return False
+    click.echo(click.style("No changes to commit.", fg="yellow"))
+    return True
+
+
+def _maybe_show_workflow_preview(
+    ctx_obj: Dict[str, Any],
+    files: List[str],
+    stats: Dict,
+    current_version: str,
+    new_version: str,
+    commit_msg: str,
+    commit_body: Optional[str],
+    markdown: bool,
+) -> None:
+    if not ctx_obj["yes"]:
+        show_workflow_preview(
+            files,
+            stats,
+            current_version,
+            new_version,
+            commit_msg,
+            commit_body,
+            markdown,
+            ctx_obj,
+        )
+
+
+def _run_test_stage_or_exit(
+    project_types: List[str],
+    ctx_obj: Dict[str, Any],
+    markdown: bool,
+    files: List[str],
+    stats: Dict,
+    current_version: str,
+    new_version: str,
+    commit_msg: str,
+    commit_body: Optional[str],
+):
+    test_result, test_exit_code = run_test_stage(
+        project_types,
+        ctx_obj["yes"],
+        markdown,
+        ctx_obj,
+        files,
+        stats,
+        current_version,
+        new_version,
+        commit_msg,
+        commit_body,
+    )
+
+    if test_exit_code != 0 and ctx_obj["yes"]:
+        click.echo(
+            click.style("Aborting workflow because tests failed.", fg="red", bold=True)
+        )
+        sys.exit(1)
+
+    return test_result, test_exit_code
 
 
 def execute_push_workflow(
@@ -126,149 +338,394 @@ def execute_push_workflow(
     todo: bool,
     force: bool = False,
     model: Optional[str] = None,
-    api_key: Optional[str] = None
+    api_key: Optional[str] = None,
+    no_publish: bool = False,
+    force_publish: bool = False,
 ) -> None:
     """Execute the complete push workflow."""
-    
-    # Start timing
+
+    _validate_toml_or_exit(dry_run)
+
     start_time = time.time()
-    
-    # Initialize context
+
     _initialize_context(ctx_obj, bump, message, yes, markdown)
-    
-    # Get updated yes value from context (includes -a flag)
-    yes = ctx_obj['yes']
-    
-    # Detect and bootstrap projects
-    project_types = _detect_and_bootstrap_projects(ctx_obj, dry_run, yes)
-    
-    # Stage all changes
+
+    yes = ctx_obj["yes"]
+    no_publish = no_publish or ctx_obj.get("no_publish", False)
+    force_publish = force_publish or ctx_obj.get("force_publish", False)
+
+    project_types = _detect_project_types()
+
+    # Run dependency updates before bootstrap: uv sync removes packages (like goal)
+    # that are not listed in the project lockfile.
+    if ctx_obj.get("upgrade_deps"):
+        from goal.dependency_update import update_project_dependencies
+
+        update_results = update_project_dependencies(
+            yes=ctx_obj["yes"],
+            dry_run=dry_run or ctx_obj.get("dry_run", False),
+            recursive=ctx_obj.get("recursive", False),
+            interactive=ctx_obj.get("interactive", False),
+        )
+        if update_results and not all(result.success for result in update_results):
+            click.echo(
+                click.style(
+                    "Aborting workflow because dependency updates failed.",
+                    fg="red",
+                    bold=True,
+                )
+            )
+            sys.exit(1)
+
+    _bootstrap_projects(project_types, dry_run, yes)
+
+    if ctx_obj.get("upgrade_deps"):
+        refresh_test_dependencies(project_types, yes=yes, dry_run=dry_run)
+
+    # Handle TODO update via prefact
+    ctx_obj["todo"] = todo
+    todo_stage_ok = handle_todo_stage(ctx_obj, yes, dry_run)
+    if not todo_stage_ok:
+        click.echo(
+            click.style(
+                "Aborting workflow because TODO stage failed.", fg="red", bold=True
+            )
+        )
+        sys.exit(2)
+
     if not dry_run:
-        run_git('add', '-A')
-    
-    # Get staged files
+        run_git("add", "-A")
+
     files = get_staged_files()
-    if not files or files == ['']:
-        _handle_no_changes(ctx_obj, project_types, dry_run, markdown)
+    if _handle_no_files(ctx_obj, project_types, dry_run, markdown, files):
         return
-    
-    # Validate staged files
+
     _validate_staged_files(ctx_obj, dry_run, force)
-    
-    # Get diff content and stats
+
+    # Decide early whether this run should bump+commit+release. When the project
+    # is a registry project but no staged file is package source (only docs,
+    # metadata, lockfiles, tests or generated caches), bumping the version and
+    # committing produces churn: the version races ahead of what is published.
+    # Skip the release machinery in that case. Note we only skip on
+    # "no_package_source_changes" — a non-registry repo (docs/web site) reports
+    # "no_registry_project_types" and must still commit normally. --force-publish
+    # overrides to release anyway.
+    from goal.publish.changes import analyze_publishable_changes
+
+    early_change_report = (
+        None if force_publish else analyze_publishable_changes(files, project_types)
+    )
+    skip_release = bool(
+        early_change_report
+        and early_change_report.reason == "no_package_source_changes"
+    )
+    if skip_release:
+        # Staged files alone miss source changes that are already committed
+        # (agents commit, then a later `goal -a` sees a clean tree and skips
+        # while the registry stays behind HEAD). Release when the last v* tag
+        # is missing committed package source.
+        from goal.publish.changes import committed_unreleased_source_files
+
+        pending_committed = committed_unreleased_source_files(project_types)
+        if pending_committed:
+            preview = ", ".join(pending_committed[:3])
+            more = f" (+{len(pending_committed) - 3} more)" if len(pending_committed) > 3 else ""
+            click.echo(
+                click.style(
+                    f"📦 {len(pending_committed)} package source file(s) committed since the "
+                    f"last release tag — releasing: {preview}{more}",
+                    fg="yellow",
+                )
+            )
+            skip_release = False
+
     diff_content = get_diff_content()
     stats = get_diff_stats()
-    
-    # Generate commit message
+
     commit_title, commit_body, detailed_result = get_commit_message(
         ctx_obj, files, diff_content, message, ticket, abstraction
     )
-    
-    if not commit_title:
-        click.echo(click.style("No changes to commit.", fg='yellow'))
+
+    if _abort_if_missing_commit_title(commit_title):
         return
-    
+
     commit_msg = commit_title
-    
-    # Get version info
+
     current_version, new_version = get_version_info()
-    
-    # Enforce quality gates
-    if not message and detailed_result and detailed_result.get('enhanced'):
-        total_adds = sum(s[0] for s in stats.values())
-        total_dels = sum(s[1] for s in stats.values())
-        commit_msg = enforce_quality_gates(
-            ctx_obj, commit_msg, detailed_result, files, total_adds, total_dels,
-            ctx_obj['yes'], markdown
-        )
-    
-    # Handle dry run
-    if dry_run:
-        handle_dry_run(ctx_obj, project_types, files, stats, current_version, new_version,
-                      commit_msg, commit_body, detailed_result, split, ticket, bump,
-                      no_version_sync, no_changelog, no_tag, markdown)
-        return
-    
-    # Interactive workflow preview
-    if not ctx_obj['yes']:
-        show_workflow_preview(files, stats, current_version, new_version,
-                             commit_msg, commit_body, markdown, ctx_obj)
-    
-    # Test stage
-    test_result, test_exit_code = run_test_stage(
-        project_types, ctx_obj['yes'], markdown, ctx_obj, files, stats,
-        current_version, new_version, commit_msg, commit_body
+
+    # No package source changed: keep the current version (no bump). The commit,
+    # tag, publish and bump-file writes are all skipped further below.
+    if skip_release:
+        new_version = current_version
+
+    commit_msg = _apply_enhanced_quality_gates(
+        ctx_obj, commit_msg, detailed_result, files, stats, message, markdown
     )
-    
-    # Commit changes
-    _handle_commit_phase(ctx_obj, split, message, commit_title, commit_body, commit_msg,
-                         files, ticket, new_version, current_version, no_version_sync,
-                         no_changelog)
-    
-    # Create tag
-    tag_name = create_tag(new_version, no_tag)
-    
-    # Push to remote
+
+    if dry_run:
+        handle_dry_run(
+            ctx_obj,
+            project_types,
+            files,
+            stats,
+            current_version,
+            new_version,
+            commit_msg,
+            commit_body,
+            detailed_result,
+            split,
+            ticket,
+            bump,
+            no_version_sync,
+            no_changelog,
+            no_tag,
+            markdown,
+        )
+        return
+
+    _maybe_show_workflow_preview(
+        ctx_obj,
+        files,
+        stats,
+        current_version,
+        new_version,
+        commit_msg,
+        commit_body,
+        markdown,
+    )
+
+    test_result, test_exit_code = _run_test_stage_or_exit(
+        project_types,
+        ctx_obj,
+        markdown,
+        files,
+        stats,
+        current_version,
+        new_version,
+        commit_msg,
+        commit_body,
+    )
+
+    if skip_release:
+        click.echo(
+            click.style(
+                f"⏭ Skipping version bump and publish (staying on v{current_version}) "
+                "— no package source changes. Use --force-publish to release anyway.",
+                fg="yellow",
+            )
+        )
+        # Still commit + push the docs/metadata changes (README badge,
+        # local.dev.txt, lockfiles — often goal's own generated output) so the
+        # working tree doesn't accumulate them uncommitted forever. This is a
+        # plain commit with NO version bump, changelog, tag, or publish.
+        _commit_without_release(
+            ctx_obj, commit_title, commit_body, commit_msg, message
+        )
+    else:
+        _handle_commit_phase(
+            ctx_obj,
+            split,
+            message,
+            commit_title,
+            commit_body,
+            commit_msg,
+            files,
+            ticket,
+            new_version,
+            current_version,
+            no_version_sync,
+            no_changelog,
+        )
+
+    publish_config = ctx_obj.get("config")
+    if hasattr(publish_config, "reload"):
+        publish_config.reload()
+
+    publish_success, publish_change_report = handle_publish(
+        project_types,
+        new_version,
+        ctx_obj["yes"],
+        no_publish=no_publish,
+        config=publish_config,
+        staged_files=files,
+        force_publish=force_publish,
+    )
+
+    publish_skip_reason = (
+        publish_change_report.skip_reason if publish_change_report else None
+    )
+    publish_required = (
+        ctx_obj["yes"]
+        and not no_publish
+        and not publish_skip_reason
+    )
+    if publish_required and not publish_success:
+        elapsed = time.time() - start_time
+        ctx_obj["_elapsed_time"] = elapsed
+        output_final_summary(
+            ctx_obj,
+            markdown,
+            project_types,
+            files,
+            stats,
+            current_version,
+            new_version,
+            commit_msg,
+            commit_body,
+            test_exit_code,
+            publish_success,
+            no_tag,
+            publish_required=publish_required,
+            publish_skip_reason=publish_skip_reason,
+        )
+        click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
+        sys.exit(1)
+
+    # Don't create an orphan release tag when publish was skipped because there
+    # were no package source changes — avoids tags that map to no registry release.
+    skip_tag_no_source = bool(publish_skip_reason)
+    if skip_tag_no_source and not no_tag:
+        click.echo(
+            click.style(
+                f"⏭ Skipping tag v{new_version} — no package source changes to release",
+                fg="yellow",
+            )
+        )
+    tag_name = create_tag(new_version, no_tag or skip_tag_no_source)
+
     from goal.git_ops import get_remote_branch
+
     branch = get_remote_branch()
-    push_to_remote(branch, tag_name, no_tag, ctx_obj['yes'])
-    
-    # Publish
-    publish_success = handle_publish(project_types, new_version, ctx_obj['yes'])
-    
-    # Calculate elapsed time
+    push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+
+    # Optionally mirror the git tag as a GitHub Release (Releases page ≠ tags).
+    # Without this, tags advance while /releases/latest stays frozen until PyPI
+    # is blocked and the fallback path runs.
+    if tag_name and not (no_tag or skip_tag_no_source):
+        try:
+            from goal.publish.github_fallback import try_github_release_on_tag
+
+            package_name = ""
+            if isinstance(project_types, (list, tuple)) and project_types:
+                package_name = str(getattr(project_types[0], "name", "") or "")
+            if not package_name:
+                package_name = str(
+                    Path.cwd().name or ""
+                )
+            try_github_release_on_tag(
+                version=new_version,
+                package_name=package_name or "package",
+                config=publish_config,
+            )
+        except Exception as exc:  # pragma: no cover - non-fatal side channel
+            click.echo(
+                click.style(
+                    f"  ⚠ GitHub release-on-tag skipped: {exc}",
+                    fg="yellow",
+                )
+            )
+
     elapsed = time.time() - start_time
-    ctx_obj['_elapsed_time'] = elapsed
-    
-    # Final summary
-    output_final_summary(ctx_obj, markdown, project_types, files, stats, current_version,
-                        new_version, commit_msg, commit_body, test_exit_code,
-                        publish_success, no_tag)
-    
-    # Print timing info
-    click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg='cyan'))
-    
-    # Update AI cost badges in README
-    _update_cost_badges(ctx_obj, new_version)
+    ctx_obj["_elapsed_time"] = elapsed
+
+    output_final_summary(
+        ctx_obj,
+        markdown,
+        project_types,
+        files,
+        stats,
+        current_version,
+        new_version,
+        commit_msg,
+        commit_body,
+        test_exit_code,
+        publish_success,
+        no_tag,
+        publish_required=publish_required,
+        publish_skip_reason=publish_skip_reason,
+    )
+
+    click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
 
 
-def _initialize_context(ctx_obj: Dict[str, Any], bump: str, message: Optional[str],
-                       yes: bool, markdown: bool) -> None:
+def _build_publish_summary(
+    publish_success: bool,
+    publish_required: bool,
+    publish_skip_reason: Optional[str],
+) -> Dict[str, Any]:
+    """Build the publish section for the YAML goal summary."""
+    if publish_success:
+        return {"status": "passed"}
+    if publish_skip_reason:
+        return {
+            "status": "skipped",
+            "reason": publish_skip_reason,
+        }
+    if publish_required:
+        return {"status": "failed"}
+    return {"status": "skipped"}
+
+
+def _initialize_context(
+    ctx_obj: Dict[str, Any],
+    bump: str,
+    message: Optional[str],
+    yes: bool,
+    markdown: bool,
+) -> None:
     """Initialize context with common values."""
+    from goal.io.stdio import set_stdio_markdown
+
     # Use yes from context (includes -a from main command) or local --yes flag
-    yes = ctx_obj.get('yes', False) or yes
-    ctx_obj['yes'] = yes
-    ctx_obj['bump'] = bump
-    ctx_obj['message'] = message
-    ctx_obj['markdown'] = markdown or ctx_obj.get('markdown', False)
+    yes = ctx_obj.get("yes", False) or yes
+    ctx_obj["yes"] = yes
+    ctx_obj["bump"] = bump
+    ctx_obj["message"] = message
+    effective_markdown = markdown or ctx_obj.get("markdown", False)
+    ctx_obj["markdown"] = effective_markdown
+    set_stdio_markdown(effective_markdown)
 
 
-def _detect_and_bootstrap_projects(ctx_obj: Dict[str, Any], dry_run: bool,
-                                 yes: bool) -> List[str]:
-    """Detect project types and bootstrap environments."""
-    # Detect project types (lazy import to avoid circular dependency)
+def _detect_project_types() -> List[str]:
+    """Detect project types without bootstrapping environments."""
     from goal.cli.version import detect_project_types
+
     project_types = detect_project_types()
-    if project_types and not dry_run:
-        click.echo(f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}")
-    
-    # Bootstrap project environments
-    if not dry_run and project_types:
-        deep_detected = detect_project_types_deep()
-        for ptype, dirs in deep_detected.items():
-            for pdir in dirs:
-                bootstrap_project(pdir, ptype, yes=yes)
-    
+    if project_types:
+        click.echo(
+            f"Detected project types: {click.style(', '.join(project_types), fg='cyan')}"
+        )
     return project_types
 
 
-def _handle_no_changes(ctx_obj: Dict[str, Any], project_types: List[str],
-                      dry_run: bool, markdown: bool) -> None:
+def _bootstrap_projects(project_types: List[str], dry_run: bool, yes: bool) -> None:
+    """Bootstrap project environments (venv, deps, tests)."""
+    if dry_run or not project_types:
+        return
+
+    deep_detected = detect_project_types_deep()
+    for ptype, dirs in deep_detected.items():
+        for pdir in dirs:
+            bootstrap_project(pdir, ptype, yes=yes)
+
+
+def _detect_and_bootstrap_projects(
+    ctx_obj: Dict[str, Any], dry_run: bool, yes: bool
+) -> List[str]:
+    """Detect project types and bootstrap environments."""
+    project_types = _detect_project_types()
+    _bootstrap_projects(project_types, dry_run, yes)
+    return project_types
+
+
+def _handle_no_changes(
+    ctx_obj: Dict[str, Any], project_types: List[str], dry_run: bool, markdown: bool
+) -> None:
     """Handle case when no changes are staged."""
-    if markdown or ctx_obj.get('markdown'):
+    if markdown or ctx_obj.get("markdown"):
         from goal.cli.version import get_current_version
         from goal.formatter import format_push_result
-        
+
         current_version = get_current_version()
         md_output = format_push_result(
             project_types=project_types or [],
@@ -281,170 +738,138 @@ def _handle_no_changes(ctx_obj: Dict[str, Any], project_types: List[str],
             test_result="Not executed",
             test_exit_code=0,
             actions=["Detected project types"],
-            error="No changes to commit"
+            error="No changes to commit",
         )
         click.echo(md_output)
     else:
-        click.echo(click.style("No changes to commit.", fg='yellow'))
+        click.echo(click.style("No changes to commit.", fg="yellow"))
 
 
 def _validate_staged_files(ctx_obj: Dict[str, Any], dry_run: bool, force: bool) -> None:
     """Validate staged files for security issues."""
     if not dry_run and not force:
         from goal.validators import validate_staged_files
+
         try:
-            validate_staged_files(ctx_obj.get('config'))
+            validate_staged_files(ctx_obj.get("config"))
         except Exception as e:
-            click.echo(click.style(f"\n❌ Validation Error: {str(e)}", fg='red', bold=True))
-            click.echo(click.style("\nFor security reasons, the commit has been blocked.", fg='red'))
-            click.echo(click.style("\nTo bypass this check, you can:", fg='yellow'))
-            click.echo(click.style("1. Remove the sensitive/large file(s)", fg='yellow'))
-            click.echo(click.style("2. Add the file(s) to .gitignore", fg='yellow'))
-            click.echo(click.style("3. Use --force to bypass validation (not recommended)", fg='yellow'))
+            click.echo(
+                click.style(f"\n❌ Validation Error: {str(e)}", fg="red", bold=True)
+            )
+            click.echo(
+                click.style(
+                    "\nFor security reasons, the commit has been blocked.", fg="red"
+                )
+            )
+            click.echo(click.style("\nTo bypass this check, you can:", fg="yellow"))
+            click.echo(
+                click.style("1. Remove the sensitive/large file(s)", fg="yellow")
+            )
+            click.echo(click.style("2. Add the file(s) to .gitignore", fg="yellow"))
+            click.echo(
+                click.style(
+                    "3. Use --force to bypass validation (not recommended)", fg="yellow"
+                )
+            )
             sys.exit(1)
     elif force and not dry_run:
-        click.echo(click.style("⚠️  Security validation bypassed with --force", fg='yellow', bold=True))
+        click.echo(
+            click.style(
+                "⚠️  Security validation bypassed with --force", fg="yellow", bold=True
+            )
+        )
 
 
-def _handle_commit_phase(ctx_obj: Dict[str, Any], split: bool, message: Optional[str],
-                        commit_title: str, commit_body: Optional[str], commit_msg: str,
-                        files: List[str], ticket: Optional[str], new_version: str,
-                        current_version: str, no_version_sync: bool, no_changelog: bool) -> None:
+def _commit_without_release(
+    ctx_obj: Dict[str, Any],
+    commit_title: str,
+    commit_body: Optional[str],
+    commit_msg: str,
+    message: Optional[str],
+) -> None:
+    """Commit already-staged docs/metadata changes with no bump/tag/publish.
+
+    Used in ``skip_release`` mode so the working tree doesn't keep accumulating
+    goal's own generated docs/metadata (badges, lockfiles) as uncommitted noise.
+    """
+    from goal.cli import confirm
+
+    if not ctx_obj["yes"]:
+        if not confirm("Commit docs/metadata changes (no release)?"):
+            click.echo(click.style("  Skipping commit (user chose N).", fg="yellow"))
+            return
+    else:
+        click.echo(
+            click.style(
+                "🤖 AUTO: Committing docs/metadata, no release (--all mode)", fg="cyan"
+            )
+        )
+    handle_single_commit(commit_title, commit_body, commit_msg, message, ctx_obj["yes"])
+
+
+def _handle_commit_phase(
+    ctx_obj: Dict[str, Any],
+    split: bool,
+    message: Optional[str],
+    commit_title: str,
+    commit_body: Optional[str],
+    commit_msg: str,
+    files: List[str],
+    ticket: Optional[str],
+    new_version: str,
+    current_version: str,
+    no_version_sync: bool,
+    no_changelog: bool,
+) -> None:
     """Handle the commit phase of the workflow."""
     from goal.cli import confirm
-    
+
     # Commit confirmation
-    if not ctx_obj['yes']:
+    if not ctx_obj["yes"]:
         if not confirm("Commit changes?"):
-            click.echo(click.style("  🤖 AUTO: Aborting commit (user chose N)", fg='cyan'))
-            click.echo(click.style("Aborted.", fg='red'))
+            click.echo(
+                click.style("  🤖 AUTO: Aborting commit (user chose N)", fg="cyan")
+            )
+            click.echo(click.style("Aborted.", fg="red"))
             sys.exit(1)
     else:
-        click.echo(click.style("🤖 AUTO: Committing changes (--all mode)", fg='cyan'))
-    
+        click.echo(click.style("🤖 AUTO: Committing changes (--all mode)", fg="cyan"))
+
     # Handle split commits or single commit
     if split and not message:
-        run_git('reset')  # Unstage everything
-        handle_split_commits(ctx_obj, files, ticket, new_version, current_version,
-                            no_version_sync, no_changelog, ctx_obj['yes'])
+        run_git("reset")  # Unstage everything
+        handle_split_commits(
+            ctx_obj,
+            files,
+            ticket,
+            new_version,
+            current_version,
+            no_version_sync,
+            no_changelog,
+            ctx_obj["yes"],
+        )
     else:
         # Version sync
-        user_config = ctx_obj.get('user_config')
-        handle_version_sync(new_version, no_version_sync, user_config, ctx_obj['yes'])
-        
+        user_config = ctx_obj.get("user_config")
+        handle_version_sync(new_version, no_version_sync, user_config, ctx_obj["yes"])
+
         # Changelog
-        config_dict = (ctx_obj.get('config') or {}).to_dict() if ctx_obj.get('config') else None
-        handle_changelog(new_version, files, commit_msg, config_dict, no_changelog)
-        
-        # Single commit
-        handle_single_commit(commit_title, commit_body, commit_msg, message, ctx_obj['yes'])
-
-
-def _update_cost_badges(ctx_obj: Dict[str, Any], version: str, model: Optional[str] = None, api_key: Optional[str] = None) -> None:
-    """Update AI cost badges in README using costs package."""
-    try:
-        # Lazy import to avoid hard dependency
-        from costs.reports.badge import update_readme_badge, calculate_human_time
-        from costs.git_parser import parse_commits, get_repo_stats
-        from costs.calculator import ai_cost
-        
-        # Use provided model or default
-        model = model or ctx_obj.get('cost_model') or "openrouter/qwen/qwen3-coder-next"
-        api_key = api_key or ctx_obj.get('cost_api_key')
-        
-        # Check if costs tracking is enabled in pyproject.toml
-        import tomllib
-        config_path = Path("pyproject.toml")
-        
-        # Default to enabled unless explicitly disabled
-        badge_enabled = True
-        update_readme_enabled = True
-        auto_commit = False
-        
-        if config_path.exists():
-            with open(config_path, "rb") as f:
-                config = tomllib.load(f)
-            
-            tool_costs = config.get("tool", {}).get("costs", {})
-            # Only disable if explicitly set to False
-            if tool_costs.get("badge") is False:
-                badge_enabled = False
-            if tool_costs.get("update_readme") is False:
-                update_readme_enabled = False
-            auto_commit = tool_costs.get("auto_commit", False)
-        
-        if not badge_enabled and not update_readme_enabled:
-            return
-        
-        # Get repository statistics and build results
-        project_dir = Path(".")
-        repo_stats = get_repo_stats(str(project_dir))
-        
-        # Get all commits with AI detection
-        all_commits_data = parse_commits(
-            str(project_dir),
-            max_count=500,
-            ai_only=False,
-            full_history=True
+        config_dict = (
+            (ctx_obj.get("config") or {}).to_dict() if ctx_obj.get("config") else None
         )
-        
-        # Calculate costs for AI commits
-        ai_commits = [c for c in all_commits_data if c[1].get('is_ai', False)]
-        
-        # Calculate total cost from AI commits
-        total_cost = 0.0
-        total_commits = len(ai_commits)
-        
-        if ai_commits:
-            for commit_obj, commit_data in ai_commits[:50]:
-                try:
-                    from costs.git_parser import get_commit_diff
-                    diff = get_commit_diff(str(project_dir), commit_obj.hexsha)
-                    if diff:
-                        cost_result = ai_cost(diff, model=model, api_key=api_key)
-                        total_cost += cost_result.get('cost', 0.0)
-                except Exception:
-                    total_cost += 0.15
-        
-        if total_cost == 0 and len(all_commits_data) > 0:
-            total_cost = len(all_commits_data) * 0.15
-            total_commits = len(all_commits_data)
-        
-        # Calculate human time
-        all_commits_list = [
-            {"date": c[0].committed_datetime.isoformat(), "author": c[0].author.name}
-            for c in all_commits_data
-        ]
-        human_hours = calculate_human_time(all_commits_list)
-        
-        # Build results structure
-        results = {
-            "summary": {
-                "total_cost": total_cost,
-                "total_cost_formatted": f"${total_cost:.4f}",
-                "total_commits": total_commits,
-                "model": model,
-                "version": version,
-                "human_time": human_hours,
-                "human_cost": human_hours * 100
-            }
-        }
-        
-        # Update badge
-        success = update_readme_badge(project_dir, results)
-        if success:
-            click.echo(click.style("✓ Updated AI cost badges in README", fg='green'))
-        
-        # Optionally commit the badge update
-        if auto_commit:
-            from goal.git_ops import run_git
-            run_git('add', 'README.md')
-            run_git('commit', '-m', f'chore: update AI cost badges for v{version}')
-                
-    except ImportError:
-        # costs package not installed, skip silently
-        pass
-    except Exception as e:
-        # Non-critical feature, log error only in verbose mode
-        if ctx_obj.get('verbose'):
-            click.echo(click.style(f"⚠ Could not update cost badges: {e}", fg='yellow'))
+        handle_changelog(new_version, files, commit_msg, config_dict, no_changelog)
+
+        # Refresh costs README content before committing so the update is included.
+        if _update_cost_badges(ctx_obj, new_version):
+            run_git_local("add", "README.md")
+
+        # Single commit
+        handle_single_commit(
+            commit_title, commit_body, commit_msg, message, ctx_obj["yes"]
+        )
+
+
+# Backward-compat shims — moved to goal.push.stages.costs
+from goal.push.stages.costs import (  # noqa: E402
+    update_cost_badges as _update_cost_badges,
+)

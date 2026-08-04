@@ -1,9 +1,8 @@
 """Tests for project environment bootstrapping and test scaffolding."""
 
-import json
 import os
-import subprocess
-from pathlib import Path
+import sys
+import types
 from unittest import mock
 
 import pytest
@@ -19,13 +18,22 @@ from goal.project_bootstrap import (
     bootstrap_project,
     bootstrap_all_projects,
     _match_marker,
+    _find_openrouter_api_key,
+    _find_git_root,
+    _ensure_costs_installed,
+    _ensure_python_test_dependency,
+    _ensure_pfix_installed,
+    _validate_pfix_env,
+    _ensure_pfix_env,
 )
+from goal.bootstrap.costs_badge import _install_costs_package
 from goal.cli import main
 
 
 # ---------------------------------------------------------------------------
 # _match_marker
 # ---------------------------------------------------------------------------
+
 
 class TestMatchMarker:
     def test_exact_file(self, tmp_path):
@@ -42,6 +50,7 @@ class TestMatchMarker:
 # ---------------------------------------------------------------------------
 # detect_project_types_deep
 # ---------------------------------------------------------------------------
+
 
 class TestDetectProjectTypesDeep:
     def test_root_python(self, tmp_path):
@@ -100,6 +109,7 @@ class TestDetectProjectTypesDeep:
 # guess_package_name
 # ---------------------------------------------------------------------------
 
+
 class TestGuessPackageName:
     def test_python_from_pyproject(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text('name = "my-cool-lib"')
@@ -120,10 +130,17 @@ class TestGuessPackageName:
     def test_fallback_to_dirname(self, tmp_path):
         assert guess_package_name(tmp_path, "php") == tmp_path.name.replace("-", "_")
 
+    def test_test_harness_uses_directory_name(self, tmp_path):
+        tests_proj = tmp_path / "tests"
+        tests_proj.mkdir()
+        (tests_proj / "pyproject.toml").write_text('name = "myapp-tests"')
+        assert guess_package_name(tests_proj, "python") == "tests"
+
 
 # ---------------------------------------------------------------------------
 # find_existing_tests
 # ---------------------------------------------------------------------------
+
 
 class TestFindExistingTests:
     def test_finds_python_tests(self, tmp_path):
@@ -161,6 +178,7 @@ class TestFindExistingTests:
 # ---------------------------------------------------------------------------
 # scaffold_test
 # ---------------------------------------------------------------------------
+
 
 class TestScaffoldTest:
     def test_creates_python_test(self, tmp_path):
@@ -223,6 +241,15 @@ class TestScaffoldTest:
         created = scaffold_test(tmp_path, "python", yes=True)
         assert created is None
 
+    def test_scaffold_in_tests_project_avoids_nested_dir(self, tmp_path):
+        tests_proj = tmp_path / "tests"
+        tests_proj.mkdir()
+        (tests_proj / "pyproject.toml").write_text('name = "myapp-tests"')
+        created = scaffold_test(tests_proj, "python", yes=True)
+        assert created is not None
+        assert created.parent == tests_proj
+        assert "import tests" in created.read_text()
+
     def test_skips_unknown_type(self, tmp_path):
         created = scaffold_test(tmp_path, "unknown_lang", yes=True)
         assert created is None
@@ -238,33 +265,45 @@ class TestScaffoldTest:
 # ensure_project_environment (Python)
 # ---------------------------------------------------------------------------
 
+
 class TestEnsureProjectEnvironmentPython:
     def test_creates_venv_and_installs(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "testpkg"\nversion = "0.1.0"'
         )
         # Mock subprocess to avoid slow venv creation and pip installs
-        with mock.patch('subprocess.run') as mock_run:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             result = ensure_project_environment(tmp_path, "python", yes=True)
             assert result is True
             # Verify venv creation was attempted
-            venv_calls = [call for call in mock_run.call_args_list 
-                         if '-m' in str(call) and 'venv' in str(call)]
+            venv_calls = [
+                call
+                for call in mock_run.call_args_list
+                if "-m" in str(call) and "venv" in str(call)
+            ]
             assert len(venv_calls) >= 1
 
     def test_skips_if_venv_exists(self, tmp_path):
         (tmp_path / ".venv" / "bin").mkdir(parents=True)
         (tmp_path / ".venv" / "bin" / "python").write_text("#!/bin/sh")
         (tmp_path / ".venv" / "bin" / "python").chmod(0o755)
-        with mock.patch('subprocess.run') as mock_run:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             result = ensure_project_environment(tmp_path, "python", yes=True)
             assert result is True
             # Should not create venv (no call with -m venv), but pip upgrade is still called
             calls_args = [call.args[0] for call in mock_run.call_args_list if call.args]
-            venv_module_calls = [args for args in calls_args if '-m' in args and 'venv' in args]
-            assert len(venv_module_calls) == 0, "venv creation should be skipped when .venv exists"
+            venv_module_calls = [
+                args for args in calls_args if "-m" in args and "venv" in args
+            ]
+            assert len(venv_module_calls) == 0, (
+                "venv creation should be skipped when .venv exists"
+            )
 
     def test_interactive_decline(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"')
@@ -278,6 +317,7 @@ class TestEnsureProjectEnvironmentPython:
 # ensure_project_environment (generic / non-Python)
 # ---------------------------------------------------------------------------
 
+
 class TestEnsureProjectEnvironmentGeneric:
     def test_unknown_type_returns_true(self, tmp_path):
         assert ensure_project_environment(tmp_path, "unknown_lang") is True
@@ -290,8 +330,415 @@ class TestEnsureProjectEnvironmentGeneric:
 
 
 # ---------------------------------------------------------------------------
+# OpenRouter / pfix env discovery
+# ---------------------------------------------------------------------------
+
+
+class TestOpenRouterEnvDiscovery:
+    def test_finds_parent_env_over_blank_local_env(self, tmp_path):
+        root_env = tmp_path / ".env"
+        root_env.write_text(
+            "OPENROUTER_API_KEY=sk-or-v1-root-key\nLLM_MODEL=openrouter/qwen/qwen3-coder-next\n",
+            encoding="utf-8",
+        )
+
+        sub = tmp_path / "my-api"
+        sub.mkdir()
+        (sub / ".env").write_text("OPENROUTER_API_KEY=\n", encoding="utf-8")
+
+        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
+            env_file, api_key = _find_openrouter_api_key(sub)
+
+        assert env_file == root_env
+        assert api_key == "sk-or-v1-root-key"
+        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
+            assert _validate_pfix_env(sub) is True
+
+    def test_does_not_create_local_env_when_parent_key_exists(self, tmp_path):
+        root_env = tmp_path / ".env"
+        root_env.write_text(
+            "OPENROUTER_API_KEY=sk-or-v1-root-key\n",
+            encoding="utf-8",
+        )
+
+        sub = tmp_path / "my-api"
+        sub.mkdir()
+
+        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
+            assert _ensure_pfix_env(sub) is True
+
+        assert not (sub / ".env").exists()
+
+    def test_creates_llm_model_template_when_no_api_key_exists(self, tmp_path):
+        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=True):
+            assert _ensure_pfix_env(tmp_path) is True
+
+        env_text = (tmp_path / ".env").read_text(encoding="utf-8")
+        example_text = (tmp_path / ".env.example").read_text(encoding="utf-8")
+
+        assert "LLM_MODEL=openrouter/qwen/qwen3-coder-next" in env_text
+        assert "LLM_MODEL=openrouter/qwen/qwen3-coder-next" in example_text
+        assert "PFIX_MODEL" not in env_text
+        assert "PFIX_MODEL" not in example_text
+
+
+# ---------------------------------------------------------------------------
+# Python test dependency installation
+# ---------------------------------------------------------------------------
+
+
+class TestPythonTestDependency:
+    def test_installs_missing_pytest(self, tmp_path):
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),  # import fails
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # pip install pytest
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # addopts check after install
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/python3", "pytest")
+                is True
+            )
+
+        assert mock_run.call_args_list[0].args[0] == [
+            "/usr/bin/python3",
+            "-c",
+            "import pytest; print(pytest.__version__)",
+        ]
+        assert mock_run.call_args_list[1].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pip",
+            "install",
+            "pytest",
+        ]
+        assert mock_run.call_args_list[2].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pytest",
+            "--collect-only",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+        ]
+        assert mock_run.call_count == 3
+
+    def test_pytest_importable_but_addopts_broken_triggers_dev_extras_reinstall(
+        self, tmp_path
+    ):
+        """2026-07-06 regression: `import pytest` succeeding is not enough --
+        pyproject.toml's own `addopts` (e.g. `-n auto`) can need a plugin
+        that lives under [project.optional-dependencies] dev, which a bare
+        `uv sync`/`pip install pytest` never installs. Must escalate to a
+        full editable+dev reinstall, then re-verify before reporting ready.
+        """
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=0, stdout="9.0.0", stderr=""),  # import pytest OK
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: broken
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # pip install pytest (no-op fix)
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: still broken
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # dev-extras reinstall
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # addopts check: fixed
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/python3", "pytest")
+                is True
+            )
+
+        assert mock_run.call_args_list[4].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pip",
+            "install",
+            "-e",
+            ".[dev]",
+        ]
+        assert mock_run.call_count == 6
+
+    def test_addopts_still_broken_after_dev_extras_reinstall_reports_failure(
+        self, tmp_path
+    ):
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=0, stdout="9.0.0", stderr=""),  # import pytest OK
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: broken
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # pip install pytest (no-op fix)
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: still broken
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # dev-extras reinstall
+                mock.MagicMock(
+                    returncode=4, stdout="", stderr="error: unrecognized arguments: -n"
+                ),  # addopts check: still broken even after dev extras
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/python3", "pytest")
+                is False
+            )
+
+    def test_already_installed_pytest_with_working_addopts_is_fast_path(self, tmp_path):
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=0, stdout="9.0.0", stderr=""),  # import pytest OK
+                mock.MagicMock(returncode=0, stdout="", stderr=""),  # addopts smoke test OK
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/python3", "pytest")
+                is True
+            )
+        assert mock_run.call_count == 2
+
+    def test_non_pytest_test_dep_skips_addopts_check(self, tmp_path):
+        """jest/rspec/etc. aren't Python pytest plugins -- the addopts smoke
+        test only makes sense for test_dep == 'pytest'."""
+        with mock.patch("subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=0, stdout="1.0.0", stderr=""),
+            ]
+
+            assert (
+                _ensure_python_test_dependency(tmp_path, "/usr/bin/node", "jest")
+                is True
+            )
+        assert mock_run.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# pfix installation source selection
+# ---------------------------------------------------------------------------
+
+
+class TestPfixInstallSource:
+    def test_installs_pfix_from_pypi_by_default(self, tmp_path):
+        with (
+            mock.patch.dict(os.environ, {}, clear=False),
+            mock.patch(
+                "goal.project_bootstrap._find_python_bin",
+                return_value="/usr/bin/python3",
+            ),
+            mock.patch("goal.project_bootstrap._ensure_pfix_config", return_value=True),
+            mock.patch("goal.project_bootstrap._ensure_pfix_env", return_value=True),
+            mock.patch("goal.project_bootstrap._validate_pfix_env", return_value=True),
+            mock.patch("subprocess.run") as mock_run,
+        ):
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),
+                mock.MagicMock(returncode=0, stdout="", stderr=""),
+            ]
+
+            assert _ensure_pfix_installed(tmp_path, yes=True) is True
+
+        assert mock_run.call_args_list[1].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pip",
+            "install",
+            "pfix>=0.1.60",
+        ]
+
+    def test_installs_pfix_from_local_path_when_configured(self, tmp_path):
+        local_pfix = tmp_path / "local-pfix"
+        local_pfix.mkdir()
+
+        with (
+            mock.patch.dict(
+                os.environ, {"GOAL_PFIX_LOCAL_PATH": str(local_pfix)}, clear=False
+            ),
+            mock.patch(
+                "goal.project_bootstrap._find_python_bin",
+                return_value="/usr/bin/python3",
+            ),
+            mock.patch("goal.project_bootstrap._ensure_pfix_config", return_value=True),
+            mock.patch("goal.project_bootstrap._ensure_pfix_env", return_value=True),
+            mock.patch("goal.project_bootstrap._validate_pfix_env", return_value=True),
+            mock.patch("subprocess.run") as mock_run,
+        ):
+            mock_run.side_effect = [
+                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),
+                mock.MagicMock(returncode=0, stdout="", stderr=""),
+            ]
+
+            assert _ensure_pfix_installed(tmp_path, yes=True) is True
+
+        assert mock_run.call_args_list[1].args[0] == [
+            "/usr/bin/python3",
+            "-m",
+            "pip",
+            "install",
+            "-e",
+            str(local_pfix.resolve()),
+        ]
+
+
+# ---------------------------------------------------------------------------
+# costs / badge generation
+# ---------------------------------------------------------------------------
+
+
+class TestCostsBadgeGeneration:
+    def test_costs_install_upgrades_stale_version(self, tmp_path):
+        calls = []
+
+        def fake_run(command, **kwargs):
+            calls.append(command)
+            import_command = [
+                "/usr/bin/python",
+                "-c",
+                "import costs; print(costs.__version__)",
+            ]
+            if command[:3] == import_command:
+                return mock.MagicMock(returncode=0, stdout="0.1.51\n", stderr="")
+            return mock.MagicMock(returncode=0, stdout="", stderr="")
+
+        with mock.patch("goal.bootstrap.costs_badge.subprocess.run", side_effect=fake_run):
+            assert _install_costs_package(tmp_path, "/usr/bin/python") is True
+
+        assert calls == [
+            ["/usr/bin/python", "-c", "import costs; print(costs.__version__)"],
+            [
+                "/usr/bin/python",
+                "-m",
+                "pip",
+                "install",
+                "-U",
+                "costs>=0.1.53",
+            ],
+        ]
+
+    def test_costs_install_falls_back_to_uv_when_pip_unavailable(self, tmp_path):
+        calls = []
+
+        def fake_run(command, **kwargs):
+            calls.append(command)
+            import_command = [
+                "/venv/bin/python",
+                "-c",
+                "import costs; print(costs.__version__)",
+            ]
+            if command[:3] == import_command:
+                return mock.MagicMock(returncode=0, stdout="0.1.51\n", stderr="")
+            if command[:4] == ["/venv/bin/python", "-m", "pip", "install"]:
+                return mock.MagicMock(returncode=1, stdout="", stderr="No module named pip")
+            return mock.MagicMock(returncode=0, stdout="", stderr="")
+
+        with (
+            mock.patch("goal.bootstrap.costs_badge.shutil.which", return_value="/usr/bin/uv"),
+            mock.patch("goal.bootstrap.costs_badge.subprocess.run", side_effect=fake_run),
+        ):
+            assert _install_costs_package(tmp_path, "/venv/bin/python") is True
+
+        assert calls[-1] == [
+            "/usr/bin/uv",
+            "pip",
+            "install",
+            "--python",
+            "/venv/bin/python",
+            "costs>=0.1.53",
+        ]
+
+    def test_uses_git_root_for_subproject_analysis(self, tmp_path):
+        repo_root = tmp_path
+        (repo_root / ".git").mkdir()
+        (repo_root / "README.md").write_text("# Repo\n\n## AI Cost Tracking\n")
+        (repo_root / "pyproject.toml").write_text(
+            '[project]\nname = "goal"\nversion = "2.1.262"\n',
+            encoding="utf-8",
+        )
+
+        subproject = repo_root / "my-api"
+        subproject.mkdir()
+
+        fake_costs = types.ModuleType("costs")
+        fake_costs.__path__ = []
+        fake_costs.calculate_human_time = lambda commits: 1.0
+        calls = {}
+
+        def fake_update_readme_badge(project_dir, results):
+            calls["readme_update"] = project_dir
+            calls["readme_results"] = results
+            return True
+
+        fake_costs.update_readme_badge = fake_update_readme_badge
+
+        fake_git_parser = types.ModuleType("costs.git_parser")
+
+        class FakeAuthor:
+            name = "Tom"
+
+        class FakeCommit:
+            def __init__(self):
+                from datetime import datetime, timezone
+
+                self.hexsha = "abc123"
+                self.committed_datetime = datetime(2026, 1, 1, tzinfo=timezone.utc)
+                self.author = FakeAuthor()
+
+        def fake_get_repo_stats(path):
+            calls["repo_stats"] = path
+            return {"repo_name": "goal"}
+
+        def fake_parse_commits(path, max_count, ai_only, full_history):
+            calls["parse_commits"] = (path, max_count, ai_only, full_history)
+            return [(FakeCommit(), "AI: generated by llm")]
+
+        def fake_get_commit_diff(path, sha):
+            calls["commit_diff"] = (path, sha)
+            return "diff --git a/file b/file"
+
+        fake_git_parser.get_repo_stats = fake_get_repo_stats
+        fake_git_parser.parse_commits = fake_parse_commits
+        fake_git_parser.get_commit_diff = fake_get_commit_diff
+
+        fake_calculator = types.ModuleType("costs.calculator")
+        fake_calculator.ai_cost = lambda diff, model=None, api_key=None: {"cost": 0.25}
+
+        with (
+            mock.patch.dict(
+                sys.modules,
+                {
+                    "costs": fake_costs,
+                    "costs.git_parser": fake_git_parser,
+                    "costs.calculator": fake_calculator,
+                },
+                clear=False,
+            ),
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch(
+                "goal.project_bootstrap._ensure_costs_config", return_value=True
+            ),
+            mock.patch(
+                "goal.project_bootstrap._ensure_env_template", return_value=True
+            ),
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="0.1.48", stderr=""
+            )
+            result = _ensure_costs_installed(subproject, "/usr/bin/python")
+
+        assert result is True
+        assert _find_git_root(subproject) == repo_root
+        assert calls["repo_stats"] == str(repo_root)
+        assert calls["parse_commits"][0] == str(repo_root)
+        assert calls["commit_diff"][0] == str(repo_root)
+        assert calls["readme_update"] == repo_root
+        assert calls["readme_results"]["summary"]["version"] == "2.1.262"
+
+
+# ---------------------------------------------------------------------------
 # bootstrap_project
 # ---------------------------------------------------------------------------
+
 
 class TestBootstrapProject:
     def test_full_bootstrap_python(self, tmp_path):
@@ -299,10 +746,14 @@ class TestBootstrapProject:
             '[project]\nname = "testpkg"\nversion = "0.1.0"'
         )
         # Mock expensive operations
-        with mock.patch('subprocess.run') as mock_run, \
-             mock.patch('goal.project_bootstrap._ensure_costs_installed') as mock_costs, \
-             mock.patch('goal.project_bootstrap._ensure_pfix_installed') as mock_pfix:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with (
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
+            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             mock_costs.return_value = True
             mock_pfix.return_value = True
             result = bootstrap_project(tmp_path, "python", yes=True)
@@ -321,10 +772,14 @@ class TestBootstrapProject:
         tests_dir.mkdir()
         (tests_dir / "test_existing.py").write_text("def test_x(): pass")
         # Mock expensive operations
-        with mock.patch('subprocess.run') as mock_run, \
-             mock.patch('goal.project_bootstrap._ensure_costs_installed') as mock_costs, \
-             mock.patch('goal.project_bootstrap._ensure_pfix_installed') as mock_pfix:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with (
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
+            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             mock_costs.return_value = True
             mock_pfix.return_value = True
             result = bootstrap_project(tmp_path, "python", yes=True)
@@ -335,6 +790,7 @@ class TestBootstrapProject:
 # ---------------------------------------------------------------------------
 # bootstrap_all_projects
 # ---------------------------------------------------------------------------
+
 
 class TestBootstrapAllProjects:
     def test_detects_and_bootstraps(self, tmp_path):
@@ -349,14 +805,20 @@ class TestBootstrapAllProjects:
         try:
             os.chdir(tmp_path)
             # Mock expensive operations
-            with mock.patch('subprocess.run') as mock_run, \
-                 mock.patch('goal.project_bootstrap._ensure_costs_installed') as mock_costs, \
-                 mock.patch('goal.project_bootstrap._ensure_pfix_installed') as mock_pfix, \
-                 mock.patch('shutil.which') as mock_which:
+            with (
+                mock.patch("subprocess.run") as mock_run,
+                mock.patch(
+                    "goal.project_bootstrap._ensure_costs_installed"
+                ) as mock_costs,
+                mock.patch(
+                    "goal.project_bootstrap._ensure_pfix_installed"
+                ) as mock_pfix,
+                mock.patch("shutil.which") as mock_which,
+            ):
                 mock_run.return_value = mock.MagicMock(returncode=0)
                 mock_costs.return_value = True
                 mock_pfix.return_value = True
-                mock_which.return_value = '/usr/bin/npm'
+                mock_which.return_value = "/usr/bin/npm"
                 results = bootstrap_all_projects(tmp_path, yes=True)
         finally:
             os.chdir(old)
@@ -380,6 +842,7 @@ class TestBootstrapAllProjects:
 # CLI: goal bootstrap
 # ---------------------------------------------------------------------------
 
+
 class TestBootstrapCommand:
     def test_bootstrap_help(self):
         runner = CliRunner()
@@ -399,10 +862,14 @@ class TestBootstrapCommand:
         )
         runner = CliRunner()
         # Mock subprocess to avoid slow venv/pip operations
-        with mock.patch('subprocess.run') as mock_run, \
-             mock.patch('goal.project_bootstrap._ensure_costs_installed') as mock_costs, \
-             mock.patch('goal.project_bootstrap._ensure_pfix_installed') as mock_pfix:
-            mock_run.return_value = mock.MagicMock(returncode=0, stdout='3.9.0', stderr='')
+        with (
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
+            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
             mock_costs.return_value = True
             mock_pfix.return_value = True
             result = runner.invoke(main, ["bootstrap", "-y", "--path", str(tmp_path)])
@@ -414,6 +881,7 @@ class TestBootstrapCommand:
 # ---------------------------------------------------------------------------
 # All project types have required keys in PROJECT_BOOTSTRAP
 # ---------------------------------------------------------------------------
+
 
 class TestProjectBootstrapConfig:
     @pytest.mark.parametrize("ptype", list(PROJECT_BOOTSTRAP.keys()))
@@ -427,3 +895,77 @@ class TestProjectBootstrapConfig:
         assert isinstance(cfg["marker_files"], list)
         assert isinstance(cfg["test_dirs"], list)
         assert isinstance(cfg["dep_install_commands"], list)
+
+
+def _write_pyproject(tmp_path, body: str):
+    (tmp_path / "pyproject.toml").write_text(body, encoding="utf-8")
+    return tmp_path
+
+
+def test_pfix_auto_apply_defaults_true(tmp_path):
+    from goal.project_bootstrap import _pfix_auto_apply
+
+    # no pyproject at all
+    assert _pfix_auto_apply(tmp_path) is True
+    # pyproject without [tool.pfix]
+    _write_pyproject(tmp_path, "[project]\nname = 'x'\n")
+    assert _pfix_auto_apply(tmp_path) is True
+    # [tool.pfix] without auto_apply key
+    _write_pyproject(tmp_path, "[tool.pfix]\nmodel = 'm'\n")
+    assert _pfix_auto_apply(tmp_path) is True
+
+
+def test_pfix_auto_apply_false_is_respected(tmp_path):
+    from goal.project_bootstrap import _pfix_auto_apply
+
+    _write_pyproject(tmp_path, "[tool.pfix]\nauto_apply = false\n")
+    assert _pfix_auto_apply(tmp_path) is False
+    _write_pyproject(tmp_path, "[tool.pfix]\nauto_apply = true\n")
+    assert _pfix_auto_apply(tmp_path) is True
+
+
+def test_run_bootstrap_diagnostics_gated_by_auto_apply(tmp_path, monkeypatch):
+    import goal.project_bootstrap as pb
+
+    captured = {}
+
+    def fake_diag(project_dir, project_type, auto_fix):
+        captured["auto_fix"] = auto_fix
+        return {"ok": True}
+
+    monkeypatch.setattr(pb, "diagnose_and_report", fake_diag)
+
+    # auto_apply = false -> even with yes=True, auto_fix must be False
+    _write_pyproject(tmp_path, "[tool.pfix]\nauto_apply = false\n")
+    pb._run_bootstrap_diagnostics(tmp_path, "python", yes=True)
+    assert captured["auto_fix"] is False
+
+    # auto_apply = true -> yes=True propagates as auto_fix=True
+    _write_pyproject(tmp_path, "[tool.pfix]\nauto_apply = true\n")
+    pb._run_bootstrap_diagnostics(tmp_path, "python", yes=True)
+    assert captured["auto_fix"] is True
+
+    # yes=False is always False regardless of setting
+    pb._run_bootstrap_diagnostics(tmp_path, "python", yes=False)
+    assert captured["auto_fix"] is False
+
+
+def test_auto_fix_enabled_reads_goal_yaml(tmp_path):
+    from goal.project_bootstrap import _auto_fix_enabled
+
+    (tmp_path / "goal.yaml").write_text("auto_apply: false\n", encoding="utf-8")
+    assert _auto_fix_enabled(tmp_path) is False
+    (tmp_path / "goal.yaml").write_text("advanced:\n  auto_apply: false\n", encoding="utf-8")
+    assert _auto_fix_enabled(tmp_path) is False
+    (tmp_path / "goal.yaml").write_text("version: '1.0'\n", encoding="utf-8")
+    assert _auto_fix_enabled(tmp_path) is True  # unset -> default True
+
+
+def test_auto_fix_enabled_env_override(tmp_path, monkeypatch):
+    from goal.project_bootstrap import _auto_fix_enabled
+
+    (tmp_path / "goal.yaml").write_text("auto_apply: true\n", encoding="utf-8")
+    monkeypatch.setenv("GOAL_AUTO_FIX", "false")
+    assert _auto_fix_enabled(tmp_path) is False
+    monkeypatch.setenv("GOAL_AUTO_FIX", "true")
+    assert _auto_fix_enabled(tmp_path) is True

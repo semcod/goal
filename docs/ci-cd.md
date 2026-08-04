@@ -2,11 +2,6 @@
 
 Goal is designed to work seamlessly in CI/CD pipelines for automated releases.
 
-## GitHub Actions
-
-### Basic Release Workflow
-
-```yaml
 # .github/workflows/release.yml
 name: Release
 
@@ -69,9 +64,6 @@ jobs:
           path: release-*.md
 ```
 
-### Multi-Stage Pipeline
-
-```yaml
 # .github/workflows/pipeline.yml
 name: CI/CD Pipeline
 
@@ -133,11 +125,6 @@ jobs:
         run: goal --all --bump patch
 ```
 
-## GitLab CI
-
-### Basic Release
-
-```yaml
 # .gitlab-ci.yml
 stages:
   - test
@@ -173,9 +160,6 @@ release:
       - release-*.md
 ```
 
-### Environment-Specific Releases
-
-```yaml
 # .gitlab-ci.yml
 stages:
   - test
@@ -210,8 +194,6 @@ release-production:
   script:
     - goal -c .goal/production.yaml --all --bump patch
 ```
-
-## Jenkins
 
 ### Declarative Pipeline
 
@@ -269,11 +251,6 @@ pipeline {
 }
 ```
 
-## Azure DevOps
-
-### YAML Pipeline
-
-```yaml
 # azure-pipelines.yml
 trigger:
   branches:
@@ -329,11 +306,6 @@ stages:
       displayName: 'Release with Goal'
 ```
 
-## Docker
-
-### Multi-stage Build
-
-```dockerfile
 # Dockerfile
 FROM python:3.11-slim as builder
 
@@ -342,12 +314,6 @@ COPY . .
 
 # Install build dependencies
 RUN pip install --no-cache-dir -e .[dev]
-
-# Run tests
-RUN pytest
-
-# Build package
-RUN python -m build
 
 # Release stage
 FROM python:3.11-slim as release
@@ -368,9 +334,6 @@ ENV PYPI_TOKEN=${PYPI_TOKEN}
 CMD ["goal", "--all", "--bump", "patch"]
 ```
 
-### Docker Compose
-
-```yaml
 # docker-compose.yml
 version: '3.8'
 
@@ -395,8 +358,6 @@ services:
 volumes:
   git-config:
 ```
-
-## Configuration for CI/CD
 
 ### Environment-Specific Configs
 
@@ -442,9 +403,6 @@ hooks:
   post_push: "npm run deploy:staging"
 ```
 
-### Using in Pipeline
-
-```bash
 # Production
 goal -c .goal/production.yaml --all
 
@@ -455,11 +413,6 @@ goal -c .goal/staging.yaml --all --bump minor
 goal -c ci-config.yaml --yes
 ```
 
-## Best Practices
-
-### 1. Secure Credentials
-
-```yaml
 # GitHub Actions - use secrets
 env:
   PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
@@ -475,9 +428,6 @@ environment {
 }
 ```
 
-### 2. Conditional Releases
-
-```yaml
 # Only release on main branch
 - if: github.ref == 'refs/heads/main'
   run: goal --all
@@ -493,9 +443,6 @@ environment {
   run: goal --all
 ```
 
-### 3. Version Bump Strategy
-
-```yaml
 # Auto-detect bump type based on changes
 - name: Determine bump type
   id: bump
@@ -512,10 +459,6 @@ environment {
   run: goal --all --bump ${{ steps.bump.outputs.type }}
 ```
 
-### 4. Rollback Strategy
-
-```bash
-#!/bin/bash
 # rollback.sh
 NEW_VERSION=$1
 PREVIOUS_VERSION=$2
@@ -529,9 +472,6 @@ goal config set git.tag.prefix "rollback-"
 goal push -m "chore: rollback $NEW_VERSION to $PREVIOUS_VERSION" --no-version-sync
 ```
 
-### 5. Notifications
-
-```yaml
 # Slack notification after release
 - name: Notify Slack
   uses: 8398a7/action-slack@v3
@@ -545,8 +485,6 @@ goal push -m "chore: rollback $NEW_VERSION to $PREVIOUS_VERSION" --no-version-sy
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
   if: always()
 ```
-
-## Troubleshooting
 
 ### Common Issues
 
@@ -583,3 +521,121 @@ goal push -m "chore: rollback $NEW_VERSION to $PREVIOUS_VERSION" --no-version-sy
 ## Examples Repository
 
 See [github.com/wronai/goal-examples](https://github.com/wronai/goal-examples) for complete CI/CD configurations for various platforms.
+
+## Pyqual Quality Pipeline
+
+Goal używa **pyqual** do automatycznego zarządzania jakością kodu z iteracyjnym pipeline.
+
+### Konfiguracja (`pyqual.yaml`)
+
+```yaml
+pipeline:
+  name: quality-loop-with-llx
+
+  metrics:
+    cc_max: 20           # cyclomatic complexity per function
+    critical_max: 20     # critical issues threshold
+    vallm_pass_min: 50   # vallm validation pass rate (%)
+
+  stages:
+    - name: setup        # Install dependencies
+    - name: test         # Run pytest with coverage
+    - name: prefact      # AI refactoring (when metrics fail)
+    - name: claude_fix   # Claude Code fixes (fallback)
+    - name: verify       # Re-validate after fixes
+    - name: report       # Generate metrics report
+    - name: push         # Git push (when metrics pass)
+    - name: publish      # Build package for PyPI
+
+  loop:
+    max_iterations: 3
+    on_fail: report
+```
+
+# Uruchom pipeline
+pyqual run --config pyqual.yaml
+
+# Walidacja bez uruchamiania
+pyqual validate --config pyqual.yaml
+
+# Status metryk
+pyqual status --config pyqual.yaml
+```
+
+# .github/workflows/quality.yml
+name: Quality Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          pip install pyqual tox
+      
+      - name: Run quality pipeline
+        run: pyqual run --config pyqual.yaml
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+```
+
+### Tox - testowanie wielu środowisk
+
+Skonfigurowane w `pyproject.toml`:
+
+```toml
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py38,py39,py310,py311,py312
+isolated_build = true
+
+[testenv]
+deps =
+    pytest>=7.0.0
+    build
+    twine
+extras = nfo
+commands = pytest {posargs}
+"""
+```
+
+Uruchomienie:
+
+```bash
+# Z pokryciem
+tox -e py311 -- --cov=goal
+```
+
+### Stage'y pipeline
+
+| Stage | Opis | Warunek |
+|-------|------|---------|
+| `setup` | Instalacja zależności | `first_iteration` |
+| `test` | Pytest + coverage | `always` |
+| `prefact` | AI refactoring | `metrics_fail` |
+| `claude_fix` | Claude Code CLI fix | `metrics_fail` |
+| `verify` | Re-walidacja | `after_fix` |
+| `push` | Git push | `metrics_pass` |
+| `publish` | Build do PyPI | `metrics_pass` |
+| `markdown_report` | Raport z metrykami | `always` |
+
+### Gate'y jakości
+
+- **CC** ≤ 20 - cyclomatic complexity na funkcję
+- **Critical** ≤ 20 - krytyczne problemy
+- **Vallm pass** ≥ 50% - procent poprawnych walidacji
+

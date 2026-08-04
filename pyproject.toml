@@ -1,13 +1,12 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.1.157"
+version = "2.1.284"
 description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
 readme = "README.md"
-license = "Apache-2.0"
 authors = [
     {name = "Tom Sapletta", email = "tom@sapletta.com"},
 ]
@@ -16,23 +15,28 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 dependencies = [
     "click>=8.0.0",
+    "typer>=0.24",
     "PyYAML>=6.0",
     "clickmd>=0.1.0",
-    "costs>=0.1.21",
+    "costs>=0.1.53",
+    "tomlkit>=0.12.0",
 ]
+license = "Apache-2.0"
+license-files = ["LICEN[CS]E*"]
 
 [project.optional-dependencies]
 nfo = [
-    "nfo>=0.3.0",
+    "nfo>=0.2.22",
 ]
 dev = [
     "pytest>=7.0.0",
     "build",
     "twine",
     "pfix>=0.1.60",
+    "tox>=4.0.0",
 ]
 
 [project.scripts]
@@ -52,7 +56,7 @@ include = ["goal*"]
 badge = true
 update_readme = true
 readme_path = "README.md"
-default_model = "openrouter/qwen/qwen3-coder-next"
+default_model = "openrouter/x-ai/grok-code-fast-1"
 analysis_mode = "byok"
 full_history = true
 max_commits = 500
@@ -67,7 +71,7 @@ python_files = ["test_*.py"]
 
 [tool.pfix]
 # Self-healing Python configuration
-model = "openrouter/qwen/qwen3-coder-next"
+model = "openrouter/x-ai/grok-code-fast-1"
 auto_apply = true
 auto_install_deps = true
 auto_restart = false
@@ -80,3 +84,29 @@ enabled = true
 todo_file = "TODO.md"
 min_severity = "low"
 deduplicate = true
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py312,py313
+isolated_build = true
+
+[testenv]
+deps =
+    pytest>=7.0.0
+    build
+    twine
+    pfix>=0.1.60
+extras = nfo
+commands = pytest {posargs}
+
+[testenv:lint]
+deps =
+    pfix>=0.1.60
+commands = pfix check {posargs}
+
+[testenv:pyqual]
+deps =
+    pyqual>=0.2.0
+commands = pyqual validate --config pyqual.yaml
+"""

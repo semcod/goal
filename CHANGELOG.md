@@ -1,5 +1,1706 @@
 ## [Unreleased]
 
+### Changed
+- **`no_package_source_changes` now commits & pushes docs/metadata instead of
+  leaving them uncommitted.** For registry projects where only docs/metadata
+  changed (README badge, `local.dev.txt`, lockfiles — often goal's own
+  generated output), goal skipped the version bump, commit, tag, and publish to
+  avoid version churn — but that left those staged changes uncommitted forever
+  and pushed nothing. Now goal still makes a plain commit and pushes it (no
+  bump, changelog, tag, or publish), so the working tree stays clean and the
+  changes reach the remote. `--force-publish` still forces a full release.
+
+### Added
+- **Push auto-recovery in non-interactive mode.** When `goal -a` (e.g. inside a
+  `goal all` sweep) fails to push because the remote moved under it (rejected /
+  non-fast-forward), it now runs `git pull --rebase` and retries the push once
+  instead of failing the whole project; a rebase conflict aborts cleanly and
+  falls through to normal recovery. (PyPI 429 rate-limit handling on publish
+  already existed: retry backoff `[60, 120, 300]s` plus a GitHub Releases
+  fallback.)
+
+### Fixed
+- **The standalone `publish` command ignored global `--dry-run`.** The root
+  CLI recorded dry-run state, but the publish handler still invoked Make or a
+  package registry. It now reports the planned method and version without
+  running either publication path.
+- **CI tested Python versions incompatible with the installed CLI dependency
+  and suppressed installation errors.** Goal now declares the effective Python
+  3.12+ floor required by clickmd, the CI/tox matrices cover 3.12–3.13, runners
+  configure a deterministic Git and Goal user identity, and dependency
+  installation fails immediately instead of continuing without pytest.
+- **Bootstrap uv zgłaszał fałszywe błędy instalacji `pfix` i `pytest`.**
+  Środowiska tworzone przez uv nie muszą zawierać modułu `pip`, a bootstrap
+  wywoływał `<venv>/python -m pip`; dodatkowo `uv sync --upgrade` pomijał
+  zadeklarowaną grupę/extra `dev` i usuwał narzędzia testowe. Instalacja
+  narzędzi używa teraz `uv pip install --python <venv>/bin/python`, synchronizacja
+  zachowuje PEP 621 `--extra dev` lub PEP 735 `--group dev`, a komunikat błędu
+  pokazuje właściwą przyczynę. Menedżer pakietów wykonuje też polecenia w
+  katalogu wybranego podprojektu zamiast przypadkowo korzystać z bieżącego
+  katalogu procesu.
+- **A PyPI wheel of goal silently reverted local source changes.** `pip install
+  goal` drops a real `site-packages/goal/` that shadows an editable/dev
+  install's `.pth` finder, so the `goal` command stopped running the checkout
+  (dev fixes appeared to have no effect). Now: the version banner detects a
+  source checkout (`goal.__file__` outside site-packages) and prints
+  `Goal vX (dev — source at …)` instead of nudging `pip install -U goal`;
+  a new `_warn_wheel_shadows_editable` warns when a wheel install coexists with
+  an editable one and points at `pip install -e <goal source>`; and
+  `project.sh` installs goal with `pip install -e .` instead of the PyPI wheel.
+- **A stray `uv.lock` shadowed a Poetry project's `poetry.lock`.** `detect_lockfile`
+  returned the first lockfile in registry order (`uv.lock` before `poetry.lock`),
+  so a leftover empty `uv.lock` in a Poetry project made bootstrap run
+  `uv sync`, which reset the `.venv` to the empty lock and wiped its
+  dependencies (tests then failed with collection errors). `detect_lockfile` now
+  prefers `poetry.lock` when the project declares Poetry (`[tool.poetry]` or the
+  poetry build backend), so the authoritative lockfile wins regardless of a
+  spurious `uv.lock`.
+- **Poetry projects didn't get their dev/test dependencies installed.** Bootstrap
+  called the package-manager broker's non-lockfile-aware `install()`, which
+  always picks uv (highest priority) even when a `poetry.lock` is present. uv's
+  editable install builds a Poetry project's core deps but not its dependency
+  *groups* (e.g. `[tool.poetry.group.dev]` → `pytest-asyncio`), so async tests
+  failed en masse with "async def functions are not natively supported". Now
+  bootstrap uses `install_smart()` (lockfile-aware: `poetry.lock` → poetry) at
+  both broker call sites (`bootstrap/installer.py` and `project_bootstrap.py`),
+  `PoetryManager.install_editable` uses a plain `poetry install` (installs the
+  non-optional dev group) instead of the broken `--extras dev` (a group is not a
+  PEP621 extra), and `isolated_env` sets `POETRY_VIRTUALENVS_CREATE=false` so
+  Poetry installs into the project's `.venv` rather than a cache-managed env.
+  Verified on a fixture Poetry project: goal selects poetry and its dev-group
+  dependency lands in the project `.venv`.
+- **Bootstrap installed project dependencies into the wrong virtualenv.** When
+  `goal` was invoked from an activated venv (e.g. a monorepo-wide `venv/` shared
+  across sibling repos), `uv pip install`/`pip install` honored the ambient
+  `VIRTUAL_ENV` and installed a project's deps into that *outer* venv instead of
+  the project's own `.venv`. The outer venv accumulated editable installs of
+  every bootstrapped project while each project's `.venv` stayed incomplete —
+  then `goal` ran the project's tests with `.venv/bin/python` and they failed
+  with confusing `ModuleNotFoundError`s (e.g. `pyserial`, `yaml`, `httpx`
+  missing). Added `goal/installers/env.py::isolated_env`, which scopes
+  `VIRTUAL_ENV` to the project's `.venv` (and drops `CONDA_PREFIX`), and applied
+  it to every package-manager subprocess in `installers/managers/base.py`,
+  `bootstrap/installer.py`, and `project_bootstrap.py`. Installs now land in the
+  project's own `.venv` regardless of the active shell venv. Verified with a new
+  regression suite (`tests/test_installer_env.py`) and an end-to-end check that
+  an install runs into the project `.venv` while an outer venv stays clean.
+
+### Added
+- `goal all [PATHS...]` — a monorepo sweep that runs the full `goal -a`
+  workflow in every git repository with uncommitted changes under the given
+  paths (directories or globs; defaults to `*`, i.e. every sub-directory of the
+  current folder). Clean repos and non-git directories are skipped. It prints
+  the list of matched dirty projects and asks for a single batch confirmation
+  before running (skipped only with an explicit `-y`/`--yes`, or `--dry-run`),
+  then runs `goal -a` in each as an isolated subprocess, continuing past
+  per-project failures and printing a succeeded/failed summary at the end.
+- `goal -a ./*` shorthand — when `-a`/`--all` is combined with one or more
+  path/glob arguments, `GoalGroup` routes the invocation to the new `all`
+  command, so `goal -a ./*` is equivalent to `goal all ./*`.
+- `auto` word-form of the `-a`/`--all` flag: a leading `auto` token makes
+  `goal auto ...` behave exactly like `goal -a ...` — `goal auto` → single-repo
+  push, `goal auto ./*` → sweep, `goal auto all` → the `all` command.
+
+### Fixed
+- `_ensure_python_test_dependency()` (duplicated in `goal/project_bootstrap.py`
+  and `goal/bootstrap/installer.py`) verified the Python test runner was
+  ready by checking only `import pytest` succeeds. That's not sufficient:
+  a project's own `pyproject.toml` `addopts` (e.g. `-n auto` for parallel
+  runs) can require a plugin (`pytest-xdist`) declared under
+  `[project.optional-dependencies] dev` rather than as a hard dependency.
+  A bare `uv sync` (no `--extra dev`) or `pip install pytest` leaves
+  `pytest` importable but every actual test run failing immediately with
+  argparse's "unrecognized arguments: -n" before a single test collects —
+  reported here as a false "test dependency ready", so `goal -a -y` moved
+  on to running tests and then failed with a confusing, unrelated-looking
+  error (2026-07-06 incident: this silently broke `goal -a -y` for
+  `code2llm` after a plain `uv sync` stripped `pytest-xdist`, which
+  `pyproject.toml`'s own `addopts = "-n auto"` required). Fixed by adding
+  `_pytest_addopts_satisfied()` — a `pytest --collect-only` smoke test — as
+  a second readiness gate; on failure, escalates from a bare
+  `pip install pytest` to a full `pip install -e .[dev]` before
+  re-verifying. Verified: 9 new tests across
+  `tests/test_project_bootstrap.py::TestPythonTestDependency` (5, one
+  updated) and the new
+  `tests/test_bootstrap_installer_python_test_dependency.py` (4, covering
+  the previously-untested `bootstrap/installer.py` duplicate). Full suite
+  (405 tests) passes.
+- `run_tests()` (`goal/cli/tests.py`) caught any exception raised while
+  running a project type's tests with a bare `except Exception:
+  success = False` — no message, no project type, no traceback. If the
+  failure happened *before* any subprocess test ran (a bug in strategy/config
+  resolution, a missing key, a bad path) rather than in an actual test run,
+  every individual subproject's output stayed green (nothing ran to fail),
+  yet the top-level `goal -a` pipeline still printed "Aborting workflow
+  because tests failed." with zero indication of why (2026-07-03 incident:
+  "goal printed 'Running tests in 5 subproject(s)' then 'Tests failed.
+  Aborting' with every visible subproject log green — no culprit named," an
+  hour of manual bisection that found nothing because the real failure was
+  in aggregation, not in any subproject). Fixed by naming the failing
+  project type and the exception (type + message) at the point it's caught,
+  matching the detail `_display_test_error()` already gives for genuine
+  subprocess test failures. Verified: 2 new tests
+  (`test_run_tests_names_project_type_on_unexpected_exception`,
+  `test_run_tests_still_succeeds_when_no_exception`) in
+  `tests/test_cli_tests_runner.py`; full suite (397 tests) passes.
+- `changelog.py`'s `_find_unreleased_insert_pos()` returned `None` both when no
+  `## [Unreleased]` section existed *and* when one existed but had no version heading
+  below it yet (e.g. a hand-authored CHANGELOG.md before its first `goal` publish).
+  `_insert_entry()` treated both as "no section exists" and inserted a brand-new
+  `## [Unreleased]` header at the top of the file, pushing the real one (with its
+  content) down intact — creating a permanent duplicate `## [Unreleased]` header
+  frozen partway through the file's history on every affected package's first publish
+  (confirmed in `pfix/CHANGELOG.md`). Fixed by checking for the bare marker before
+  falling through to the "create new section" branches, and inserting the entry right
+  after the existing (headingless) `## [Unreleased]` instead.
+  Verified: reproduced the exact pre-bug pfix CHANGELOG.md structure and confirmed the
+  duplicate no longer occurs; added `test_update_changelog_unreleased_section_with_no_prior_release`
+  covering this case. Full test suite (393 tests) passes.
+- `_resolve_root_python()` (used to run `goal test`/`goal push`/`goal -a`) checked the
+  globally activated `VIRTUAL_ENV` before the current project's own `.venv`/`venv`/`env`.
+  A virtualenv left active from a different, unrelated project (e.g. after `cd`-ing away
+  from it without deactivating) silently made `goal` run the current project's test suite
+  with the wrong interpreter — missing dependencies, false failures, or (worse) tests
+  quietly passing against the wrong codebase. Now the project's own local venv always
+  wins; `VIRTUAL_ENV` and `sys.executable` remain as fallbacks when no local venv exists.
+  Verified against a real repo with a hostile `VIRTUAL_ENV` pointing at an unrelated
+  project's venv — `_resolve_root_python()` now correctly resolves the current project's
+  own interpreter. `_active_venv_python()`, now unused, was removed.
+
+### Chores
+- Removed a stale, unused `[tool.poetry]` section from `pyproject.toml` (build backend is
+  `setuptools`, not Poetry) — its name/version/dependencies/scripts had drifted out of
+  sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
+  and could mislead anyone editing dependencies there, believing it had any effect.
+
+## [2.1.284] - 2026-07-23
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_bootstrap_installer_python_test_dependency.py
+- Update tests/test_dependency_update.py
+- Update tests/test_installers_e2e.py
+
+## [2.1.283] - 2026-07-15
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_options.py
+- Update tests/test_pyenv_health.py
+
+## [2.1.282] - 2026-07-15
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_options.py
+
+## [2.1.275] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/examples.md
+- Update docs/usage.md
+- Update examples/monorepo/README.md
+
+### Test
+- Update tests/test_installer_env.py
+
+### Other
+- Update VERSION
+
+## [2.1.273] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Other
+- Update VERSION
+
+## [2.1.271] - 2026-07-06
+
+### Docs
+- Update README.md
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+- Update project/planfile-tickets.yaml
+- Update wup.yaml
+
+## [2.1.270] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_bootstrap_installer_python_test_dependency.py
+- Update tests/test_project_bootstrap.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+
+## [2.1.269] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+
+### Other
+- Update .gitignore
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+
+## [2.1.268] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_changelog.py
+
+## [2.1.267] - 2026-07-05
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_push_e2e.py
+
+### Other
+- Update .planfile/config.yaml
+- Update .planfile/config.yaml.fast.json
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.fast.json
+- Update VERSION
+- Update examples/go-project/local.dev.txt
+- Update examples/my-new-project/local.dev.txt
+- Update examples/nodejs-app/local.dev.txt
+- Update examples/python-package/local.dev.txt
+- Update examples/rust-crate/local.dev.txt
+- ... and 2 more files
+
+## [2.1.253] - 2026-06-18
+
+### Added
+- **Monorepo dependency updates**: `goal -u` discovers and upgrades dependencies in subfolders when the root has no package manifest
+- **`--recursive, -r`**: Force scanning subfolders for dependency manifests (e.g. `goal -aur`)
+- **`--interactive, -i`**: Ask before processing each subproject during dependency updates (e.g. `goal -aiu`)
+- Combined short flags for dependency workflow: `-au`, `-aur`, `-aiu`, `-air`, etc.
+
+### Fixed
+- Global `--dry-run` is now respected during dependency upgrade stage (`goal -au --dry-run`)
+
+## [2.1.241] - 2026-06-03
+
+## [0.1.10] - 2026-06-08
+
+### Fixed
+- Fix relative-imports issues (ticket-6ffdf184)
+- Fix ai-boilerplate issues (ticket-5c7fe6eb)
+- Fix string-concat issues (ticket-ffd86490)
+- Fix magic-numbers issues (ticket-72e063c1)
+- Fix llm-generated-code issues (ticket-3d5d23ae)
+- Fix llm-generated-code issues (ticket-c67d7dc6)
+- Fix smart-return-type issues (ticket-e4eb091a)
+- Fix unused-imports issues (ticket-ee47f395)
+- Fix magic-numbers issues (ticket-7d159f8b)
+- Fix string-concat issues (ticket-fdb97e3c)
+- Fix unused-imports issues (ticket-9eb1874a)
+- Fix llm-generated-code issues (ticket-6f485870)
+- Fix string-concat issues (ticket-d4e3e5d9)
+- Fix llm-generated-code issues (ticket-6f238a23)
+- Fix smart-return-type issues (ticket-13ffec07)
+- Fix relative-imports issues (ticket-d891f624)
+- Fix string-concat issues (ticket-a5066b7f)
+- Fix unused-imports issues (ticket-1fb93116)
+- Fix relative-imports issues (ticket-a12b43b4)
+- Fix smart-return-type issues (ticket-bfe2ab0a)
+- Fix smart-return-type issues (ticket-bf75c893)
+- Fix string-concat issues (ticket-87216eaa)
+- Fix magic-numbers issues (ticket-00e007c1)
+- Fix string-concat issues (ticket-321cf87c)
+- Fix magic-numbers issues (ticket-d999b342)
+- Fix magic-numbers issues (ticket-4f93f900)
+- Fix string-concat issues (ticket-9f353b29)
+- Fix magic-numbers issues (ticket-c3bd2359)
+- Fix unused-imports issues (ticket-94f0d592)
+- Fix magic-numbers issues (ticket-3c9b650c)
+- Fix relative-imports issues (ticket-1747b620)
+- Fix relative-imports issues (ticket-a1a7a963)
+- Fix magic-numbers issues (ticket-9e509799)
+- Fix smart-return-type issues (ticket-9f4e98ca)
+- Fix relative-imports issues (ticket-e37ef835)
+- Fix string-concat issues (ticket-0d22f91b)
+- Fix unused-imports issues (ticket-f9b8ef02)
+- Fix ai-boilerplate issues (ticket-41f077a4)
+- Fix magic-numbers issues (ticket-88530c76)
+- Fix ai-boilerplate issues (ticket-2a97e91c)
+- Fix relative-imports issues (ticket-adf2e12c)
+- Fix magic-numbers issues (ticket-a5d61a36)
+- Fix llm-generated-code issues (ticket-cf3d98ea)
+- Fix smart-return-type issues (ticket-1b552216)
+- Fix string-concat issues (ticket-6d2226bf)
+- Fix llm-generated-code issues (ticket-cf8b12e8)
+- Fix string-concat issues (ticket-9506b597)
+- Fix relative-imports issues (ticket-e9d90a2e)
+- Fix unused-imports issues (ticket-d9982610)
+- Fix string-concat issues (ticket-17d0f4e6)
+- Fix llm-generated-code issues (ticket-a3061483)
+- Fix relative-imports issues (ticket-5722901a)
+- Fix string-concat issues (ticket-73fc5a50)
+- Fix llm-generated-code issues (ticket-1bbeab29)
+- Fix relative-imports issues (ticket-60238f99)
+- Fix relative-imports issues (ticket-c1b28cdb)
+- Fix string-concat issues (ticket-eda9fce4)
+- Fix magic-numbers issues (ticket-8cce5e66)
+- Fix llm-generated-code issues (ticket-5ca0239f)
+- Fix magic-numbers issues (ticket-c49c4576)
+- Fix llm-generated-code issues (ticket-c1674106)
+- Fix string-concat issues (ticket-db256d03)
+- Fix smart-return-type issues (ticket-b338f68e)
+- Fix string-concat issues (ticket-65ea4331)
+- Fix magic-numbers issues (ticket-e8323fdc)
+- Fix smart-return-type issues (ticket-afc71edf)
+- Fix relative-imports issues (ticket-b8770605)
+- Fix smart-return-type issues (ticket-31f7a7f8)
+- Fix string-concat issues (ticket-c85170fb)
+- Fix magic-numbers issues (ticket-eed103c2)
+- Fix llm-generated-code issues (ticket-c4b45d93)
+- Fix llm-generated-code issues (ticket-99a82c71)
+- Fix relative-imports issues (ticket-87658dfc)
+- Fix magic-numbers issues (ticket-6250f32c)
+- Fix llm-generated-code issues (ticket-652b2b88)
+- Fix ai-boilerplate issues (ticket-8648f1d9)
+- Fix magic-numbers issues (ticket-aa13ce81)
+- Fix magic-numbers issues (ticket-361762a4)
+- Fix llm-generated-code issues (ticket-2c62c4ef)
+- Fix magic-numbers issues (ticket-f9120453)
+- Fix magic-numbers issues (ticket-57efd947)
+- Fix relative-imports issues (ticket-f80ace05)
+- Fix llm-generated-code issues (ticket-a3bcc668)
+- Fix ai-boilerplate issues (ticket-8505c73d)
+- Fix llm-generated-code issues (ticket-70f349c0)
+- Fix relative-imports issues (ticket-6ba97fc3)
+- Fix magic-numbers issues (ticket-618fbb85)
+- Fix llm-generated-code issues (ticket-d6deb1a8)
+- Fix llm-generated-code issues (ticket-143f5f36)
+- Fix relative-imports issues (ticket-6790085a)
+- Fix magic-numbers issues (ticket-199c6bd2)
+- Fix llm-generated-code issues (ticket-a5a9f92b)
+- Fix relative-imports issues (ticket-a13254b8)
+- Fix unused-imports issues (ticket-b02a6284)
+- Fix llm-generated-code issues (ticket-92b609d0)
+- Fix relative-imports issues (ticket-173ed083)
+- Fix string-concat issues (ticket-b3a2881c)
+- Fix smart-return-type issues (ticket-24e36212)
+- Fix relative-imports issues (ticket-092fe5c3)
+- Fix smart-return-type issues (ticket-4a3846ab)
+
+### Fixed
+- Python test scaffold in `tests/` subprojects no longer generates broken `import <project>_tests` when no on-disk package exists (e.g. `nlp2dsl-tests` → `import tests`)
+- Scaffold sample tests are no longer placed under nested `tests/tests/` when the project directory is already named `tests` or `test`
+- Removed duplicate `guess_package_name` implementation from `project_bootstrap.py` (canonical logic in `goal/bootstrap/detector.py`)
+
+### Added
+- Regression tests for test-harness package naming and scaffold path resolution
+
+## [Unreleased]
+
+### Fixed
+- Auto-update prompt no longer blocks help commands (--help, -h) by skipping version banner check
+- Fixed nfo dependency constraint from nfo>=0.3.0 to nfo>=0.2.22 to match available PyPI version
+- Subproject tests now automatically install dev dependencies when pytest is not available
+
+### Changed
+- Updated minimum Python version from 3.8 to 3.10 to match pfix>=0.1.60 requirements
+- Updated tox test matrix from py38,py39,py310,py311,py312 to py310,py311,py312,py313
+
+### Added
+- **PackageManagerBroker**: Intelligent package manager selection system
+  - Automatic detection of uv, pdm, poetry, pip with priority-based selection
+  - Lockfile-aware installation (uv.lock, poetry.lock, pdm.lock detection)
+  - Auto-installation of uv when missing: `pip install uv --quiet`
+  - Timing and fallback reporting: "✅ uv (12.3s) | fallback: pip"
+  - New module `goal/installers/` with abstract base class and manager implementations
+  - UvManager (priority=10), PdmManager (priority=20), PoetryManager (priority=30), PipManager (priority=100)
+- **`goal doctor --manager`**: Force specific package manager for dependency installation
+- **21 new E2E tests** for installer system in `tests/test_installers_e2e.py`
+
+### Changed
+- **Refactored bootstrap system**: Split `project_bootstrap.py` (1265L) → `goal/bootstrap/` module
+  - `goal/bootstrap/detector.py` - Project type detection
+  - `goal/bootstrap/templates.py` - Project templates and configuration
+  - `goal/bootstrap/installer.py` - Environment setup with PackageManagerBroker integration
+  - `goal/bootstrap/configurator.py` - Test scaffolding and configuration helpers
+  - Full backward compatibility maintained via re-exports in `goal/project_bootstrap.py`
+
+### Deprecated
+- Legacy `_install_python_deps()` waterfall approach (still works via fallback)
+
+## [2.1.265] - 2026-07-03
+
+### Docs
+- Update README.md
+
+## [2.1.264] - 2026-07-02
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_project_bootstrap.py
+
+## [2.1.263] - 2026-07-02
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cost_badges.py
+- Update tests/test_project_bootstrap.py
+
+## [2.1.262] - 2026-06-29
+
+### Docs
+- Update README.md
+
+## [2.1.261] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+## [2.1.260] - 2026-06-22
+
+### Docs
+- Update README.md
+
+## [2.1.259] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_version_sync.py
+
+### Other
+- Update project/planfile-tickets.yaml
+
+## [2.1.258] - 2026-06-21
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+### Other
+- Update app.doql.less
+- Update project/logic.pl
+- Update project/map.toon.yaml
+- Update project/planfile-tickets.yaml
+- Update tree.txt
+
+## [2.1.257] - 2026-06-20
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- ... and 7 more files
+
+## [2.1.256] - 2026-06-20
+
+### Docs
+- Update README.md
+
+## [2.1.254] - 2026-06-18
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/commands.md
+- Update docs/faq.md
+- Update docs/usage.md
+- Update examples/monorepo/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_github_fallback.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- ... and 7 more files
+
+## [2.1.253] - 2026-06-18
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_dependency_update.py
+
+### Other
+- Update project/planfile-tickets.yaml
+
+## [2.1.252] - 2026-06-18
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_dependency_update.py
+
+## [2.1.251] - 2026-06-17
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_publish_changes.py
+- Update tests/test_push_e2e.py
+
+## [2.1.250] - 2026-06-16
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_file_validation.py
+
+### Other
+- Update VERSION
+- Update project/planfile-tickets.yaml
+
+## [2.1.248] - 2026-06-16
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_file_validation.py
+- Update tests/test_token_validator_patterns.py
+
+### Other
+- Update .gitignore
+- Update nlp2uri.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- ... and 9 more files
+
+## [2.1.247] - 2026-06-14
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_dependency_update.py
+- Update tests/test_publish_pattern.py
+- Update tests/test_push_e2e.py
+- Update tests/test_version_sync.py
+
+### Other
+- Update project/planfile-tickets.yaml
+
+## [2.1.246] - 2026-06-08
+
+### Docs
+- Update README.md
+
+### Other
+- Update project/planfile-tickets.yaml
+
+## [2.1.245] - 2026-06-08
+
+### Docs
+- Update README.md
+
+## [2.1.244] - 2026-06-08
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_dependency_update.py
+- Update tests/test_push_e2e.py
+
+### Other
+- Update project/planfile-tickets.yaml
+
+## [2.1.243] - 2026-06-08
+
+### Docs
+- Update README.md
+
+## [2.1.243] - 2026-06-08
+
+### Docs
+- Update README.md
+
+## [2.1.242] - 2026-06-08
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_dependency_update.py
+
+### Other
+- Update .gitignore
+- Update app.doql.less
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- ... and 11 more files
+
+## [2.1.239] - 2026-05-26
+
+### Docs
+- Update README.md
+
+### Other
+- Update VERSION
+- Update examples/my-new-project/src/my-new-project/__init__.py
+- Update project/duplication.toon.yaml
+
+## [2.1.237] - 2026-05-26
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update .code2llm_cache/__init___1779814332916493610_36.pkl
+- Update .code2llm_cache/__init___1779816442203796225_125.pkl
+- Update .code2llm_cache/pyproject_1779816432734638797_3131.pkl
+- Update .code2llm_cache/tests_1779814803254668281_14882.pkl
+- Update .code2llm_cache/tests_pytest_setup_1779815863157928008_3285.pkl
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- ... and 10 more files
+
+## [2.1.235] - 2026-05-26
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- ... and 7 more files
+
+## [2.1.234] - 2026-05-24
+
+### Docs
+- Update README.md
+
+## [2.1.233] - 2026-05-24
+
+### Docs
+- Update README.md
+- Update TODO/zaproponuj refaktoryzacje, aby ta paczka goal potr.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_installers_e2e.py
+- Update tests/test_version_sync.py
+
+### Other
+- Update "TODO/chcia\305\202by uruchamia\304\207 unit tetsy i inne z pytest, it.md"
+- Update "TODO/stworz liste projektow github i pypi, ktore przy\305\233.md"
+- Update VERSION
+- Update examples/api-usage/02_git_operations.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- ... and 11 more files
+
+## [2.1.230] - 2026-05-13
+
+### Docs
+- Update README.md
+
+## [2.1.229] - 2026-05-12
+
+### Docs
+- Update README.md
+
+## [2.1.228] - 2026-05-11
+
+### Docs
+- Update README.md
+
+## [2.1.227] - 2026-05-11
+
+### Docs
+- Update README.md
+
+## [2.1.226] - 2026-05-11
+
+### Docs
+- Update README.md
+
+### Test
+- Update testql-scenarios/generated-cli-tests.testql.toon.yaml
+
+## [2.1.225] - 2026-05-11
+
+### Docs
+- Update README.md
+
+### Test
+- Update testql-scenarios/generated-from-pytests.testql.toon.yaml
+
+### Other
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+
+## [2.1.224] - 2026-05-11
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_project_bootstrap_costs.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+
+## [2.1.222] - 2026-05-11
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_project_bootstrap_costs.py
+
+## [2.1.219] - 2026-05-11
+
+### Docs
+- Update README.md
+
+### Other
+- Update planfile.yaml
+
+## [2.1.218] - 2026-04-26
+
+### Docs
+- Update README.md
+
+## [2.1.217] - 2026-04-26
+
+### Docs
+- Update README.md
+
+## [2.1.216] - 2026-04-26
+
+### Docs
+- Update README.md
+
+## [2.1.215] - 2026-04-26
+
+### Docs
+- Update README.md
+
+## [2.1.214] - 2026-04-26
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_project_bootstrap.py
+
+### Other
+- Update uv.lock
+
+## [2.1.213] - 2026-04-26
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_options.py
+
+### Other
+- Update VERSION
+- Update uv.lock
+
+## [2.1.210] - 2026-04-26
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_push_e2e.py
+
+### Other
+- Update uv.lock
+
+## [2.1.209] - 2026-04-26
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_options.py
+- Update tests/test_cli_tests_runner.py
+- Update tests/test_push_e2e.py
+
+### Other
+- Update uv.lock
+
+## [2.1.208] - 2026-04-26
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+### Other
+- Update tree.txt
+- Update uv.lock
+
+## [2.1.207] - 2026-04-26
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+
+### Other
+- Update app.doql.less
+- Update project/map.toon.yaml
+- Update uv.lock
+
+## [2.1.206] - 2026-04-26
+
+### Docs
+- Update README.md
+- Update project/README.md
+
+### Other
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- Update project/index.html
+- ... and 2 more files
+
+## [2.1.205] - 2026-04-26
+
+### Docs
+- Update README.md
+- Update project/context.md
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/map.toon.yaml
+- Update project/mermaid.export
+
+## [2.1.204] - 2026-04-26
+
+### Docs
+- Update README.md
+
+### Other
+- Update uv.lock
+
+## [2.1.203] - 2026-04-26
+
+### Docs
+- Update README.md
+
+## [2.1.202] - 2026-04-26
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Other
+- Update .gitignore
+- Update app.doql.css
+- Update uv.lock
+
+## [2.1.201] - 2026-04-26
+
+### Docs
+- Update README.md
+
+## [2.1.200] - 2026-04-26
+
+### Docs
+- Update README.md
+
+## [2.1.199] - 2026-04-26
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+
+### Test
+- Update tests/test_installers_e2e.py
+
+## [2.1.198] - 2026-04-26
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update testql-scenarios/generated-cli-tests.testql.toon.yaml
+- Update testql-scenarios/generated-from-pytests.testql.toon.yaml
+
+### Other
+- Update SUMR.json
+- Update app.doql.less
+- Update planfile.yaml
+- Update project.sh
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- ... and 15 more files
+
+## [0.1.10] - 2026-04-26
+
+### Fixed
+- Fix ai-boilerplate issues (ticket-5c7fe6eb)
+- Fix relative-imports issues (ticket-6ffdf184)
+- Fix string-concat issues (ticket-ffd86490)
+- Fix magic-numbers issues (ticket-72e063c1)
+- Fix llm-generated-code issues (ticket-3d5d23ae)
+- Fix string-concat issues (ticket-d4e3e5d9)
+- Fix llm-generated-code issues (ticket-6f238a23)
+- Fix llm-generated-code issues (ticket-c67d7dc6)
+- Fix relative-imports issues (ticket-d891f624)
+- Fix string-concat issues (ticket-a5066b7f)
+- Fix unused-imports issues (ticket-1fb93116)
+- Fix duplicate-imports issues (ticket-59df6747)
+- Fix smart-return-type issues (ticket-13ffec07)
+- Fix relative-imports issues (ticket-a12b43b4)
+- Fix smart-return-type issues (ticket-bfe2ab0a)
+- Fix smart-return-type issues (ticket-bf75c893)
+- Fix string-concat issues (ticket-87216eaa)
+- Fix magic-numbers issues (ticket-00e007c1)
+- Fix magic-numbers issues (ticket-4f93f900)
+- Fix string-concat issues (ticket-9f353b29)
+- Fix magic-numbers issues (ticket-c3bd2359)
+- Fix smart-return-type issues (ticket-9f4e98ca)
+- Fix relative-imports issues (ticket-1747b620)
+- Fix relative-imports issues (ticket-a1a7a963)
+- Fix magic-numbers issues (ticket-9e509799)
+- Fix relative-imports issues (ticket-e37ef835)
+- Fix string-concat issues (ticket-0d22f91b)
+- Fix ai-boilerplate issues (ticket-41f077a4)
+- Fix unused-imports issues (ticket-9a1f39a9)
+- Fix magic-numbers issues (ticket-88530c76)
+- Fix ai-boilerplate issues (ticket-2a97e91c)
+- Fix relative-imports issues (ticket-adf2e12c)
+- Fix magic-numbers issues (ticket-a5d61a36)
+- Fix duplicate-imports issues (ticket-60fb35fd)
+- Fix llm-generated-code issues (ticket-cf3d98ea)
+- Fix smart-return-type issues (ticket-1b552216)
+- Fix string-concat issues (ticket-6d2226bf)
+- Fix duplicate-imports issues (ticket-3ab472e5)
+- Fix llm-generated-code issues (ticket-cf8b12e8)
+- Fix relative-imports issues (ticket-e9d90a2e)
+- Fix unused-imports issues (ticket-d9982610)
+- Fix string-concat issues (ticket-9506b597)
+- Fix string-concat issues (ticket-17d0f4e6)
+- Fix llm-generated-code issues (ticket-a3061483)
+- Fix relative-imports issues (ticket-5722901a)
+- Fix string-concat issues (ticket-7e3d16e7)
+- Fix duplicate-imports issues (ticket-a4236fcf)
+- Fix llm-generated-code issues (ticket-2bc855c2)
+- Fix relative-imports issues (ticket-c1b28cdb)
+- Fix string-concat issues (ticket-eda9fce4)
+- Fix magic-numbers issues (ticket-8cce5e66)
+- Fix llm-generated-code issues (ticket-5ca0239f)
+- Fix relative-imports issues (ticket-60238f99)
+- Fix magic-numbers issues (ticket-c49c4576)
+- Fix llm-generated-code issues (ticket-c1674106)
+- Fix string-concat issues (ticket-db256d03)
+- Fix smart-return-type issues (ticket-b338f68e)
+- Fix string-concat issues (ticket-65ea4331)
+- Fix magic-numbers issues (ticket-e8323fdc)
+- Fix smart-return-type issues (ticket-afc71edf)
+- Fix relative-imports issues (ticket-b8770605)
+- Fix llm-generated-code issues (ticket-99a82c71)
+- Fix smart-return-type issues (ticket-31f7a7f8)
+- Fix string-concat issues (ticket-c85170fb)
+- Fix magic-numbers issues (ticket-eed103c2)
+- Fix llm-generated-code issues (ticket-c4b45d93)
+- Fix relative-imports issues (ticket-f80ace05)
+- Fix relative-imports issues (ticket-87658dfc)
+- Fix magic-numbers issues (ticket-6250f32c)
+- Fix llm-generated-code issues (ticket-652b2b88)
+- Fix ai-boilerplate issues (ticket-8648f1d9)
+- Fix llm-generated-code issues (ticket-a3bcc668)
+- Fix ai-boilerplate issues (ticket-8505c73d)
+- Fix llm-generated-code issues (ticket-70f349c0)
+- Fix relative-imports issues (ticket-6ba97fc3)
+- Fix magic-numbers issues (ticket-618fbb85)
+- Fix llm-generated-code issues (ticket-d6deb1a8)
+- Fix llm-generated-code issues (ticket-143f5f36)
+- Fix relative-imports issues (ticket-6790085a)
+- Fix magic-numbers issues (ticket-199c6bd2)
+- Fix llm-generated-code issues (ticket-a5a9f92b)
+- Fix relative-imports issues (ticket-a13254b8)
+- Fix relative-imports issues (ticket-173ed083)
+- Fix string-concat issues (ticket-b3a2881c)
+- Fix unused-imports issues (ticket-7832d2a1)
+- Fix duplicate-imports issues (ticket-ac5773ec)
+- Fix smart-return-type issues (ticket-ffff0750)
+- Fix duplicate-imports issues (ticket-9cfce62b)
+- Fix magic-numbers issues (ticket-9fae4ec0)
+- Fix smart-return-type issues (ticket-24e36212)
+- Fix relative-imports issues (ticket-092fe5c3)
+- Fix duplicate-imports issues (ticket-28ea3db1)
+- Fix smart-return-type issues (ticket-4a3846ab)
+- Fix duplicate-imports issues (ticket-ce157c5e)
+- Fix magic-numbers issues (ticket-1617f838)
+- Fix relative-imports issues (ticket-4d6cc601)
+- Fix string-concat issues (ticket-097ed693)
+- Fix duplicate-imports issues (ticket-0f5ca70a)
+- Fix relative-imports issues (ticket-66f1db01)
+- Fix string-concat issues (ticket-8057661f)
+
+### Fixed
+- Remove `--asyncio-mode=auto` from pytest configuration for compatibility with older pytest-asyncio versions used by `goal -a`
+
+- feat(goal): configuration management system
+- feat(goal): code analysis engine / intelligent analysis pipeline
+- feat(goal): CLI interface improvements and output/markdown support
+- feat(goal): improved commit message generation
+- fix: TODO batch fixes
+- refactor(goal): multi-language support and configuration refactors
+- docs(docs): update README and documentation for configuration management and markdown output
+- chore(goal): update CLI docs and tests
+
+## [2.1.197] - 2026-04-26
+
+### Docs
+- Update README.md
+
+## [2.1.196] - 2026-04-25
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+
+### Other
+- Update .taskill/state.json
+
+## [2.1.195] - 2026-04-24
+
+### Docs
+- Update README.md
+
+## [2.1.194] - 2026-04-24
+
+### Docs
+- Update README.md
+
+## [2.1.193] - 2026-04-24
+
+### Docs
+- Update README.md
+
+## [2.1.192] - 2026-04-24
+
+### Docs
+- Update README.md
+
+## [2.1.191] - 2026-04-24
+
+### Docs
+- Update README.md
+- Update redsl_refactor_plan.md
+- Update redsl_refactor_report.md
+
+### Test
+- Update tests/test_file_validation.py
+
+### Other
+- Update .redsl/history.jsonl
+- Update planfile.yaml
+- Update redsl_refactor_plan.toon.yaml
+- Update redsl_refactor_report.toon.yaml
+
+## [2.1.190] - 2026-04-20
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update redsl_refactor_plan.md
+- Update redsl_refactor_report.md
+
+### Other
+- Update .gitignore
+- Update .redsl/history.jsonl
+- Update SUMR.json
+- Update goal/cli.py.bak
+- Update goal/commit_generator.py.bak
+- Update goal/enhanced_summary.py.bak
+- Update planfile.yaml
+- Update redsl.yaml
+- Update redsl_refactor_plan.toon.yaml
+- Update redsl_refactor_report.toon.yaml
+- ... and 1 more files
+
+## [2.1.189] - 2026-04-19
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_version_sync.py
+
+## [2.1.188] - 2026-04-19
+
+### Docs
+- Update README.md
+
+### Other
+- Update Taskfile.yml
+
+## [2.1.187] - 2026-04-19
+
+### Docs
+- Update README.md
+
+## [2.1.186] - 2026-04-09
+
+### Docs
+- Update README.md
+
+## [2.1.185] - 2026-04-09
+
+### Docs
+- Update README.md
+
+## [2.1.184] - 2026-04-09
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- Update project/index.html
+- ... and 4 more files
+
+## [2.1.183] - 2026-04-09
+
+### Docs
+- Update README.md
+
+## [2.1.182] - 2026-04-09
+
+### Docs
+- Update README.md
+
+## [2.1.181] - 2026-04-09
+
+### Docs
+- Update README.md
+
+### Other
+- Update goal/cli.py.bak
+- Update goal/commit_generator.py.bak
+
+## [2.1.180] - 2026-04-08
+
+### Docs
+- Update README.md
+
+## [2.1.179] - 2026-04-08
+
+### Docs
+- Update README.md
+
+### Other
+- Update .aider/caches/model_prices_and_context_window.json
+- Update .aider/caches/openrouter_models.json
+- Update goal/cli.py.bak
+- Update goal/commit_generator.py.bak
+- Update goal/enhanced_summary.py.bak
+
+## [2.1.178] - 2026-04-08
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+## [0.1.10] - 2026-04-07
+
+### Fixed
+- Fix string-concat issues (ticket-8057661f)
+- Fix wildcard-imports issues (ticket-055e3416)
+- Fix string-concat issues (ticket-f0741dec)
+- Fix wildcard-imports issues (ticket-bbe82c9b)
+
+## [2.1.177] - 2026-04-01
+
+### Docs
+- Update README.md
+
+## [2.1.176] - 2026-03-31
+
+### Docs
+- Update README.md
+
+### Other
+- Update project/validation.toon.yaml
+
+## [2.1.175] - 2026-03-31
+
+### Docs
+- Update README.md
+- Update REFACTOR_PLAN.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update project.sh
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- ... and 6 more files
+
+## [2.1.174] - 2026-03-31
+
+### Docs
+- Update README.md
+- Update TODO.md
+- Update docs/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_project_bootstrap.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- Update project/index.html
+- Update project/validation.toon.yaml
+
+## [2.1.173] - 2026-03-31
+
+### Docs
+- Update README.md
+- Update TODO.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- Update project/index.html
+- ... and 3 more files
+
+## [2.1.172] - 2026-03-31
+
+### Docs
+- Update README.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_project_bootstrap.py
+- Update tests/test_push_e2e.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/validation.toon.yaml
+
+## [2.1.171] - 2026-03-30
+
+### Test
+- Update tests/test_push_e2e.py
+
+## [2.1.170] - 2026-03-30
+
+### Docs
+- Update TODO.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+### Other
+- Update .gitignore
+- Update Taskfile.yml
+- Update pyqual.yaml
+
+## [2.1.169] - 2026-03-30
+
+### Test
+- Update tests/test_push_e2e.py
+
+## [2.1.168] - 2026-03-30
+
+### Docs
+- Update TODO.md
+
+## [2.1.167] - 2026-03-30
+
+### Docs
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- Update project/index.html
+- ... and 3 more files
+
+## [2.1.166] - 2026-03-30
+
+### Docs
+- Update TODO.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_push_e2e.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- Update project/index.html
+- Update project/map.toon.yaml
+- ... and 2 more files
+
+## [2.1.165] - 2026-03-29
+
+### Docs
+- Update CHANGELOG.md
+- Update TODO.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_project_bootstrap.py
+- Update tests/test_push_e2e.py
+- Update tests/test_version_sync.py
+
+### Other
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- ... and 4 more files
+
+## [0.1.10] - 2026-03-29
+
+### Fixed
+- Fix string-concat issues (ticket-9f353b29)
+- Fix llm-generated-code issues (ticket-2bc855c2)
+- Fix smart-return-type issues (ticket-cb167f51)
+- Fix duplicate-imports issues (ticket-9009a38a)
+- Fix llm-generated-code issues (ticket-bbf26324)
+
+## [2.1.164] - 2026-03-29
+
+## [2.1.163] - 2026-03-29
+
+### Test
+- Update tests/test_project_bootstrap.py
+
+## [2.1.162] - 2026-03-29
+
+### Test
+- Update tests/test_project_bootstrap.py
+
+## [2.1.161] - 2026-03-29
+
+## [2.1.160] - 2026-03-29
+
+## [2.1.159] - 2026-03-29
+
+### Docs
+- Update examples/testing/README.md
+
+### Other
+- Update examples/run_all_examples.py
+- Update examples/testing/01_duplicate_call_detection.py
+- Update examples/testing/02_project_detection_tests.py
+
+## [2.1.158] - 2026-03-29
+
+### Docs
+- Update CHANGELOG.md
+- Update TODO.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/flow.png
+- ... and 5 more files
+
+## [0.1.10] - 2026-03-29
+
+### Fixed
+- Fix smart-return-type issues (ticket-fead239f)
+- Fix string-concat issues (ticket-26a7c4e2)
+- Fix magic-numbers issues (ticket-5e7fd1ad)
+- Fix ai-boilerplate issues (ticket-0c0b01c1)
+- Fix smart-return-type issues (ticket-d8a5fd93)
+- Fix string-concat issues (ticket-6ce598f4)
+- Fix unused-imports issues (ticket-69da7e0f)
+- Fix ai-boilerplate issues (ticket-b4a4f07a)
+- Fix smart-return-type issues (ticket-3e3aeddf)
+- Fix string-concat issues (ticket-b4c77793)
+- Fix unused-imports issues (ticket-cd93bccd)
+- Fix magic-numbers issues (ticket-b8748b1a)
+- Fix ai-boilerplate issues (ticket-147a27ab)
+- Fix smart-return-type issues (ticket-e4700044)
+- Fix string-concat issues (ticket-c2e40204)
+- Fix unused-imports issues (ticket-5fd9a508)
+- Fix magic-numbers issues (ticket-5161efdb)
+- Fix ai-boilerplate issues (ticket-54d70962)
+- Fix smart-return-type issues (ticket-736906aa)
+- Fix string-concat issues (ticket-e8219611)
+- Fix ai-boilerplate issues (ticket-6fdc6e8c)
+- Fix smart-return-type issues (ticket-c7eed05c)
+- Fix magic-numbers issues (ticket-251af8ff)
+- Fix ai-boilerplate issues (ticket-2f2b7a84)
+- Fix smart-return-type issues (ticket-e9b9f418)
+- Fix ai-boilerplate issues (ticket-905e7053)
+- Fix smart-return-type issues (ticket-114501e4)
+- Fix unused-imports issues (ticket-b70775c5)
+- Fix duplicate-imports issues (ticket-56cf5f7d)
+- Fix llm-generated-code issues (ticket-0aa571a3)
+- Fix ai-boilerplate issues (ticket-ae5a7772)
+- Fix smart-return-type issues (ticket-c4a4e677)
+- Fix magic-numbers issues (ticket-6ef1ccc3)
+- Fix ai-boilerplate issues (ticket-c808f292)
+- Fix smart-return-type issues (ticket-44afdd03)
+- Fix unused-imports issues (ticket-c4ea6b78)
+- Fix ai-boilerplate issues (ticket-3a00d5f3)
+- Fix smart-return-type issues (ticket-9cfd9d22)
+- Fix string-concat issues (ticket-474c8384)
+- Fix magic-numbers issues (ticket-86634dce)
+- Fix llm-generated-code issues (ticket-ac153a97)
+- Fix ai-boilerplate issues (ticket-9376b731)
+- Fix smart-return-type issues (ticket-74f626fa)
+- Fix string-concat issues (ticket-e24f8933)
+- Fix unused-imports issues (ticket-2bae89d4)
+- Fix duplicate-imports issues (ticket-7839b691)
+- Fix ai-boilerplate issues (ticket-d1683d0d)
+- Fix smart-return-type issues (ticket-45fe8f2a)
+- Fix string-concat issues (ticket-494249c6)
+- Fix duplicate-imports issues (ticket-1047a7cd)
+- Fix ai-boilerplate issues (ticket-66acbce1)
+- Fix smart-return-type issues (ticket-a112c847)
+- Fix string-concat issues (ticket-a64e0ed4)
+- Fix unused-imports issues (ticket-f0016308)
+- Fix duplicate-imports issues (ticket-8be42d9d)
+- Fix ai-boilerplate issues (ticket-c90887b4)
+- Fix smart-return-type issues (ticket-f6719cf0)
+- Fix string-concat issues (ticket-51d3cb91)
+- Fix duplicate-imports issues (ticket-d449e6b7)
+- Fix magic-numbers issues (ticket-ef24defc)
+- Fix ai-boilerplate issues (ticket-22ab3397)
+- Fix smart-return-type issues (ticket-5fa9baf8)
+- Fix string-concat issues (ticket-162db73c)
+- Fix magic-numbers issues (ticket-4b8132ef)
+- Fix ai-boilerplate issues (ticket-fc757004)
+- Fix smart-return-type issues (ticket-4311914f)
+- Fix string-concat issues (ticket-0cd1498e)
+- Fix unused-imports issues (ticket-e9f8b389)
+- Fix ai-boilerplate issues (ticket-5fb6f214)
+- Fix smart-return-type issues (ticket-9a9f1285)
+- Fix string-concat issues (ticket-0ea4b57d)
+- Fix ai-boilerplate issues (ticket-ade3d464)
+- Fix smart-return-type issues (ticket-8c6049ff)
+- Fix string-concat issues (ticket-70bde475)
+- Fix ai-boilerplate issues (ticket-520bc420)
+- Fix smart-return-type issues (ticket-585fa109)
+- Fix string-concat issues (ticket-53069f77)
+- Fix unused-imports issues (ticket-8367cc7d)
+- Fix ai-boilerplate issues (ticket-e51c67a5)
+- Fix smart-return-type issues (ticket-956564dd)
+- Fix magic-numbers issues (ticket-6babf634)
+- Fix ai-boilerplate issues (ticket-99b1bd9a)
+- Fix smart-return-type issues (ticket-9fa46c37)
+- Fix magic-numbers issues (ticket-0add6e1d)
+- Fix ai-boilerplate issues (ticket-a2957074)
+
 ## [2.1.157] - 2026-03-29
 
 ### Docs
@@ -2109,4 +3810,3 @@ test(tests): update pyproject.toml, test_cli_options.py
 
 - docs: update README
 - update pyproject.toml
-

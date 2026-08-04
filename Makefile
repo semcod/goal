@@ -40,12 +40,11 @@ test:
 	python -m pytest -q
 
 build: clean
-	python -m pip install --upgrade build twine
-	python -m build --sdist --wheel
+	uv build --sdist --wheel
 
 
 publish: bump-version build
-	python -m twine upload dist/*
+	twine upload dist/*
 
 clean:
 	rm -rf dist build *.egg-info .pytest_cache __pycache__ goal/__pycache__

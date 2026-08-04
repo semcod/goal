@@ -23,7 +23,7 @@ jobs:
           pip install pip-tools
           pip list --outdated --format=json > outdated.json
           echo "outdated=$(cat outdated.json)" >> $GITHUB_OUTPUT
-          pip-index-outdated | head -20 || true
+          cat outdated.json | python3 -c "import json,sys; deps=json.load(sys.stdin); [print(f'{d[\"name\"]}=={d[\"version\"]} -> {d[\"latest_version\"]}') for d in deps[:20]]" || true
 
       - name: Install and test with latest deps
         run: |

@@ -25,23 +25,20 @@ def run_custom_workflow():
     print("=" * 60)
     print("Goal API - Programmatic Workflow")
     print("=" * 60)
-    
+
     # Create context object with settings
     ctx_obj = {
-        'yes': True,  # Non-interactive mode
-        'markdown': False,
-        'config': None,
-        'user_config': {
-            'author_name': 'Developer',
-            'author_email': 'dev@example.com'
-        },
-        'verbose': True
+        "yes": True,  # Non-interactive mode
+        "markdown": False,
+        "config": None,
+        "user_config": {"author_name": "Developer", "author_email": "dev@example.com"},
+        "verbose": True,
     }
-    
+
     print("\n1. Configuration:")
     print(f"   Auto mode: {ctx_obj['yes']}")
     print(f"   Author: {ctx_obj['user_config']['author_name']}")
-    
+
     print("\n2. Workflow Structure:")
     print("   - Stage changes: run_git('add', '-A')")
     print("   - Run tests: run_tests(project_types)")
@@ -49,9 +46,9 @@ def run_custom_workflow():
     print("   - Update versions: handle_version_sync(...)")
     print("   - Push to remote: push_to_remote(...)")
     print("   - Publish: handle_publish(...)")
-    
+
     print("\n3. Example code (not executed):")
-    example_code = '''
+    example_code = """
     # This is how you would call it in production:
     from goal.push.core import execute_push_workflow
     
@@ -71,9 +68,9 @@ def run_custom_workflow():
         todo=False,
         force=False
     )
-    '''
+    """
     print(example_code)
-    
+
     print("\n" + "=" * 60)
     print("Workflow definition ready!")
     print("=" * 60)
@@ -84,7 +81,7 @@ def create_minimal_workflow():
     print("\n" + "=" * 60)
     print("Minimal Workflow Example")
     print("=" * 60)
-    
+
     workflow = """
     from goal.push.stages import (
         handle_single_commit,
@@ -114,7 +111,7 @@ def create_minimal_workflow():
         yes=True
     )
     """
-    
+
     print(workflow)
 
 

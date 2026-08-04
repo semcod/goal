@@ -1,172 +1,371 @@
-# code2llm | 96f 18245L | python:93,shell:3 | 2026-03-29
-# CC̄=5.2 | critical:34/605 | dups:0 | cycles:0
+# code2llm | 194f 33087L | python:156,yaml:14,shell:6,toml:4,csharp:2,json:2,txt:1,yml:1,go:1,xml:1,java:1,php:1 | 2026-06-20
+# generated in 0.05s
+# CC̅=4.5 | critical:11/1036 | dups:0 | cycles:0
 
-HEALTH[20]:
-  🔴 GOD   goal/recovery/strategies.py = 685L, 7 classes, 30m, max CC=11
-  🟡 CC    update_changelog CC=24 (limit:15)
-  🟡 CC    validate_project_versions CC=30 (limit:15)
-  🟡 CC    guess_package_name CC=20 (limit:15)
-  🟡 CC    ensure_project_environment CC=25 (limit:15)
-  🟡 CC    scaffold_test CC=15 (limit:15)
-  🟡 CC    _ensure_costs_config CC=20 (limit:15)
-  🟡 CC    format_enhanced_summary CC=29 (limit:15)
-  🟡 CC    _analyze_python_diff CC=15 (limit:15)
-  🟡 CC    _build_summary CC=16 (limit:15)
-  🟡 CC    _score_by_signals CC=15 (limit:15)
-  🟡 CC    short_action_summary CC=34 (limit:15)
-  🟡 CC    per_file_notes CC=29 (limit:15)
-  🟡 CC    ensure_git_repository CC=23 (limit:15)
-  🟡 CC    detect_tokens_in_content CC=17 (limit:15)
-  🟡 CC    check_dot_folders CC=23 (limit:15)
-  🟡 CC    validate_files CC=18 (limit:15)
-  🟡 CC    commit CC=17 (limit:15)
-  🟡 CC    update_project_metadata CC=18 (limit:15)
-  🟡 CC    _validate_advanced_section CC=21 (limit:15)
+HEALTH[11]:
+  🟡 CC    format_goal_all_summary CC=17 (limit:15)
+  🟡 CC    _select_managers_to_update CC=21 (limit:15)
+  🟡 CC    add_slow_test_tickets_to_planfile CC=22 (limit:15)
+  🟡 CC    output_final_summary CC=29 (limit:15)
+  🟡 CC    execute_push_workflow CC=20 (limit:15)
+  🟡 CC    handle_publish CC=15 (limit:15)
+  🟡 CC    _validate_publishing_section CC=19 (limit:15)
+  🟡 CC    get_github_release_config CC=15 (limit:15)
+  🟡 CC    publish_github_release CC=15 (limit:15)
+  🟡 CC    _run_publish_command CC=33 (limit:15)
+  🟡 CC    _detect_version_files CC=17 (limit:15)
 
-REFACTOR[2]:
-  1. split goal/recovery/strategies.py  (god module)
-  2. split 19 high-CC methods  (CC>15)
+REFACTOR[1]:
+  1. split 11 high-CC methods  (CC>15)
 
-PIPELINES[392]:
-  [1] Src [__init__]: __init__
+PIPELINES[549]:
+  [1] Src [Add_ReturnsSum]: Add_ReturnsSum
       PURITY: 100% pure
-  [2] Src [_load]: _load
+  [2] Src [Subtract_ReturnsDifference]: Subtract_ReturnsDifference
       PURITY: 100% pure
-  [3] Src [_save]: _save
+  [3] Src [Multiply_ReturnsProduct]: Multiply_ReturnsProduct
       PURITY: 100% pure
-  [4] Src [get]: get
+  [4] Src [Divide_ReturnsQuotient]: Divide_ReturnsQuotient
       PURITY: 100% pure
-  [5] Src [get_registry_version]: get_registry_version
+  [5] Src [Main]: Main → Add
+      PURITY: 100% pure
+  [6] Src [main]: main → send_slack_notification → print
+      PURITY: 100% pure
+  [7] Src [main]: main → send_discord_notification → print
+      PURITY: 100% pure
+  [8] Src [main]: main → print
+      PURITY: 100% pure
+  [9] Src [test_build]: test_build → print
+      PURITY: 100% pure
+  [10] Src [test_install]: test_install → print
+      PURITY: 100% pure
+  [11] Src [check_version]: check_version → print
+      PURITY: 100% pure
+  [12] Src [run_security_check]: run_security_check → print
+      PURITY: 100% pure
+  [13] Src [main]: main → print
+      PURITY: 100% pure
+  [14] Src [main]: main → print
+      PURITY: 100% pure
+  [15] Src [main]: main
+      PURITY: 100% pure
+  [16] Src [main]: main → print
+      PURITY: 100% pure
+  [17] Src [run_custom_workflow]: run_custom_workflow → print
+      PURITY: 100% pure
+  [18] Src [create_minimal_workflow]: create_minimal_workflow → print
+      PURITY: 100% pure
+  [19] Src [main]: main → print
+      PURITY: 100% pure
+  [20] Src [main]: main → print
+      PURITY: 100% pure
+  [21] Src [main]: main → print
+      PURITY: 100% pure
+  [22] Src [run_test]: run_test → print
+      PURITY: 100% pure
+  [23] Src [run_all]: run_all → print
+      PURITY: 100% pure
+  [24] Src [print_summary]: print_summary → print
+      PURITY: 100% pure
+  [25] Src [main]: main
+      PURITY: 100% pure
+  [26] Src [main]: main
+      PURITY: 100% pure
+  [27] Src [main]: main → generate_project → print
+      PURITY: 100% pure
+  [28] Src [test_debug_output_capture]: test_debug_output_capture → print
+      PURITY: 100% pure
+  [29] Src [test_stack_trace_analysis]: test_stack_trace_analysis → print
+      PURITY: 100% pure
+  [30] Src [test_performance_timing]: test_performance_timing → print
+      PURITY: 100% pure
+  [31] Src [test_import_tracing]: test_import_tracing → set
+      PURITY: 100% pure
+  [32] Src [test_config_diagnostics]: test_config_diagnostics → print
+      PURITY: 100% pure
+  [33] Src [create_debug_report]: create_debug_report → print
+      PURITY: 100% pure
+  [34] Src [test_mocking_external_services]: test_mocking_external_services → validate_project_versions → _validate_single_type
+      PURITY: 100% pure
+  [35] Src [test_mocking_git_operations]: test_mocking_git_operations → run_git
+      PURITY: 100% pure
+  [36] Src [test_mocking_click_interactions]: test_mocking_click_interactions → print
+      PURITY: 100% pure
+  [37] Src [test_spies_and_call_counting]: test_spies_and_call_counting → print
+      PURITY: 100% pure
+  [38] Src [test_mocking_file_system]: test_mocking_file_system
+      PURITY: 100% pure
+  [39] Src [test_conditional_mocking]: test_conditional_mocking → run_git
+      PURITY: 100% pure
+  [40] Src [test_mock_context_manager]: test_mock_context_manager → bootstrap_project → _new_bootstrap_result
+      PURITY: 100% pure
+  [41] Src [_print_import_warning]: _print_import_warning → _format_import_warning_message
+      PURITY: 100% pure
+  [42] Src [__init__]: __init__
+      PURITY: 100% pure
+  [43] Src [_load]: _load
+      PURITY: 100% pure
+  [44] Src [_save]: _save
+      PURITY: 100% pure
+  [45] Src [get]: get
+      PURITY: 100% pure
+  [46] Src [get_npm_version]: get_npm_version
+      PURITY: 100% pure
+  [47] Src [get_cargo_version]: get_cargo_version
+      PURITY: 100% pure
+  [48] Src [get_rubygems_version]: get_rubygems_version
+      PURITY: 100% pure
+  [49] Src [get_registry_version]: get_registry_version
+      PURITY: 100% pure
+  [50] Src [_detect_python_package]: _detect_python_package
       PURITY: 100% pure
 
 LAYERS:
-  goal/                           CC̄=5.2    ←in:118  →out:3
-  │ !! project_bootstrap          903L  0C   14m  CC=25     ←3
-  │ !! strategies                 685L  7C   30m  CC=11     ←0
-  │ !! generator                  675L  1C   16m  CC=26     ←0
-  │ !! package_managers           628L  1C   12m  CC=11     ←1
-  │ !! manager                    580L  1C    9m  CC=20     ←1
-  │ !! git_ops                    566L  0C   23m  CC=23     ←13
-  │ !! deep_analyzer              554L  1C   22m  CC=16     ←0
-  │ !! python                     536L  1C   17m  CC=17     ←0
-  │ !! generator                  524L  1C   18m  CC=24     ←0
-  │ !! file_validator             499L  4C   12m  CC=23     ←2
-  │ !! validation                 483L  2C   13m  CC=21     ←2
-  │ manager                    457L  1C   25m  CC=10     ←6
-  │ constants                  436L  0C    0m  CC=0.0    ←0
-  │ core                       409L  1C   12m  CC=13     ←4
-  │ !! formatter                  402L  1C   14m  CC=29     ←3
-  │ !! analyzer                   395L  2C   16m  CC=34     ←0
-  │ generator                  382L  1C   24m  CC=12     ←0
-  │ !! push_remote                377L  0C   14m  CC=16     ←1
-  │ wizard_cmd                 340L  0C    7m  CC=12     ←0
-  │ !! quality_filter             328L  1C   14m  CC=25     ←0
-  │ manager                    315L  1C   14m  CC=6      ←0
-  │ manager                    315L  1C   12m  CC=7      ←0
-  │ !! version_utils              310L  0C    9m  CC=18     ←5
-  │ !! validator                  310L  1C   13m  CC=19     ←0
-  │ manager                    302L  1C   14m  CC=4      ←1
-  │ !! version_validation         301L  0C   10m  CC=30     ←2
-  │ !! abstraction                269L  1C    9m  CC=20     ←0
-  │ user_config                247L  1C   12m  CC=11     ←21
-  │ spdx                       222L  0C    7m  CC=14     ←2
-  │ actions                    221L  5C   16m  CC=7      ←0
-  │ rules                      220L  6C   19m  CC=11     ←0
-  │ !! commit                     220L  0C    4m  CC=18     ←1
-  │ utils                      212L  0C    9m  CC=5      ←2
-  │ __init__                   211L  1C    9m  CC=14     ←5
-  │ utils_cmd                  207L  0C    8m  CC=10     ←0
-  │ !! commit_cmd                 205L  0C    3m  CC=17     ←0
-  │ license_cmd                198L  0C    8m  CC=7      ←0
-  │ manager                    192L  1C    7m  CC=6      ←0
-  │ manager                    190L  1C    7m  CC=7      ←0
-  │ git_ops                    171L  1C    7m  CC=11     ←0
-  │ version_sync               151L  0C    9m  CC=7      ←2
-  │ publish                    135L  0C    4m  CC=13     ←2
-  │ config_cmd                 129L  0C    7m  CC=4      ←0
-  │ todo                       127L  0C    5m  CC=9      ←1
-  │ recover_cmd                125L  0C    2m  CC=6      ←0
-  │ !! changelog                  123L  0C    1m  CC=24     ←1
-  │ authors_cmd                118L  0C   10m  CC=4      ←0
-  │ version_types              113L  0C    0m  CC=0.0    ←0
-  │ config                     105L  0C    2m  CC=8      ←0
-  │ push_cmd                   104L  0C    1m  CC=1      ←0
-  │ doctor_cmd                  99L  0C    1m  CC=12     ←0
-  │ !! dry_run                     98L  0C    1m  CC=19     ←1
-  │ core                        87L  0C    2m  CC=8      ←2
+  goal/                           CC̄=4.6    ←in:164  →out:34  !! split
+  │ !! project_bootstrap         1274L  0C   32m  CC=14     ←4
+  │ !! core                       898L  1C   21m  CC=29     ←3
+  │ !! git_ops                    690L  0C   28m  CC=14     ←20
+  │ !! package_managers           644L  1C   18m  CC=6      ←2
+  │ !! publish                    618L  0C   21m  CC=33     ←2
+  │ !! generator                  589L  1C   14m  CC=14     ←0
+  │ !! manager                    587L  1C   12m  CC=10     ←1
+  │ !! analyzer                   563L  2C   27m  CC=14     ←0
+  │ !! validation                 556L  2C   15m  CC=19     ←2
+  │ !! manager                    550L  1C   27m  CC=17     ←7
+  │ !! formatter                  518L  1C   24m  CC=17     ←4
+  │ !! tests                      517L  0C   20m  CC=13     ←1
+  │ validator                  489L  1C   24m  CC=10     ←0
+  │ version_utils              485L  0C   23m  CC=8      ←7
+  │ constants                  480L  0C    0m  CC=0.0    ←0
+  │ push_remote                473L  0C   17m  CC=11     ←1
+  │ __init__                   472L  1C   14m  CC=10     ←0
+  │ generator                  432L  1C   24m  CC=12     ←2
+  │ large_file                 397L  1C   12m  CC=11     ←0
+  │ python_diag_extended       393L  1C   18m  CC=10     ←0
+  │ installer                  391L  0C   12m  CC=14     ←0
+  │ quality_filter             389L  1C   18m  CC=14     ←0
+  │ wizard_cmd                 367L  0C    7m  CC=12     ←0
+  │ manager                    348L  1C   12m  CC=7      ←0
+  │ manager                    346L  1C   14m  CC=6      ←0
+  │ version_validation         341L  0C   15m  CC=9      ←5
+  │ !! dependency_update          340L  1C    8m  CC=21     ←1
+  │ python_diag_core           338L  1C   12m  CC=8      ←0
+  │ version_sync               332L  0C   16m  CC=13     ←3
+  │ user_config                323L  1C   12m  CC=11     ←29
+  │ !! github_fallback            316L  1C   13m  CC=15     ←1
+  │ manager                    313L  1C   14m  CC=4      ←0
+  │ deep_analyzer              304L  1C   11m  CC=13     ←0
+  │ file_validator             303L  0C    8m  CC=14     ←2
+  │ commit                     303L  0C    9m  CC=14     ←2
+  │ tokens                     286L  0C    9m  CC=10     ←2
+  │ spdx                       283L  0C    7m  CC=14     ←2
+  │ deep_analyzer_aggregate    280L  1C   16m  CC=13     ←0
+  │ abstraction                278L  1C   11m  CC=12     ←0
+  │ generator_generate         278L  1C   11m  CC=13     ←0
+  │ generator_core             267L  1C   13m  CC=11     ←0
+  │ rules                      252L  6C   19m  CC=11     ←0
+  │ costs_badge                245L  0C   10m  CC=6      ←1
+  │ actions                    239L  5C   16m  CC=7      ←0
+  │ changes                    238L  1C    8m  CC=12     ←1
+  │ pyproject_costs_setup      234L  0C    7m  CC=12     ←1
+  │ utils_cmd                  229L  0C    8m  CC=10     ←0
+  │ commit_cmd                 228L  0C    5m  CC=13     ←0
+  │ utils                      217L  0C    9m  CC=5      ←2
+  │ body_formatter             214L  1C   12m  CC=7      ←0
+  │ manager                    211L  1C    7m  CC=6      ←0
+  │ manager                    207L  1C    7m  CC=7      ←0
+  │ license_cmd                206L  0C    8m  CC=7      ←0
+  │ templates                  194L  1C    0m  CC=0.0    ←0
+  │ git_ops                    177L  1C    7m  CC=11     ←0
+  │ dot_folders                161L  0C    6m  CC=9      ←1
+  │ broker                     158L  1C    8m  CC=9      ←0
+  │ push_cmd                   152L  0C    1m  CC=5      ←0
+  │ dry_run                    151L  0C    4m  CC=8      ←1
+  │ detector                   149L  0C    9m  CC=11     ←5
+  │ todo                       144L  0C    5m  CC=9      ←1
+  │ configurator               142L  0C    5m  CC=14     ←3
+  │ version_types              135L  0C    0m  CC=0.0    ←0
+  │ recover_cmd                132L  0C    2m  CC=6      ←0
+  │ tests_pytest_setup         131L  0C    4m  CC=9      ←0
+  │ costs                      130L  0C    3m  CC=11     ←0
+  │ changelog                  129L  0C    6m  CC=7      ←0
+  │ divergent                  129L  1C    6m  CC=9      ←0
+  │ !! publish                    127L  0C    2m  CC=15     ←1
+  │ authors_cmd                127L  0C   12m  CC=4      ←0
+  │ doctor_cmd                 125L  0C    1m  CC=12     ←0
+  │ config_cmd                 125L  0C    7m  CC=4      ←0
+  │ toml_validation            117L  0C    4m  CC=9      ←3
+  │ tests_discovery            107L  0C    5m  CC=9      ←1
+  │ config                     106L  0C    2m  CC=8      ←0
+  │ todo                       100L  0C    1m  CC=14     ←1
+  │ cli_helpers                 97L  0C    4m  CC=14     ←7
+  │ core                        93L  0C    2m  CC=8      ←3
+  │ test                        91L  0C    1m  CC=9      ←1
+  │ nodejs                      91L  0C    1m  CC=13     ←0
+  │ hooks_cmd                   87L  0C    8m  CC=2      ←0
+  │ stdio                       86L  0C   11m  CC=3      ←6
   │ validation_cmd              85L  0C    5m  CC=7      ←0
+  │ auth                        83L  1C    2m  CC=8      ←0
   │ postcommit_cmd              82L  0C    5m  CC=6      ←0
-  │ nodejs                      77L  0C    1m  CC=13     ←0
-  │ hooks_cmd                   71L  0C    5m  CC=2      ←0
-  │ exceptions                  58L  9C    9m  CC=3      ←0
+  │ exceptions                  78L  9C    9m  CC=3      ←0
+  │ commands                    75L  0C    1m  CC=4      ←0
+  │ publish_cmd                 66L  0C    2m  CC=8      ←0
+  │ deep_analyzer_patterns      63L  0C    0m  CC=0.0    ←0
+  │ base                        60L  2C    5m  CC=3      ←0
+  │ lfs                         59L  1C    2m  CC=6      ←0
+  │ corrupted                   57L  1C    2m  CC=4      ←0
+  │ __init__                    57L  0C    0m  CC=0.0    ←0
+  │ version                     56L  0C    4m  CC=3      ←2
   │ __init__                    56L  0C    0m  CC=0.0    ←0
   │ __init__                    55L  0C    0m  CC=0.0    ←0
-  │ config_validate_cmd         50L  0C    1m  CC=3      ←0
-  │ version                     49L  0C    4m  CC=3      ←2
+  │ php                         54L  0C    1m  CC=7      ←0
+  │ force_push                  51L  1C    2m  CC=5      ←0
+  │ base                        50L  1C    5m  CC=2      ←0
+  │ gitignore                   49L  0C    2m  CC=8      ←2
   │ __init__                    48L  0C    0m  CC=0.0    ←0
-  │ php                         45L  0C    1m  CC=7      ←0
-  │ commit_generator            45L  0C    0m  CC=0.0    ←0
+  │ config_validate_cmd         47L  0C    1m  CC=3      ←0
+  │ models                      47L  2C    0m  CC=0.0    ←0
+  │ exceptions                  46L  4C    3m  CC=2      ←0
+  │ config                      44L  1C    2m  CC=3      ←0
+  │ python                      44L  0C    1m  CC=6      ←0
+  │ project_doctor              43L  0C    0m  CC=0.0    ←0
   │ __init__                    42L  0C    3m  CC=2      ←0
-  │ models                      41L  2C    0m  CC=0.0    ←0
-  │ commands                    40L  0C    1m  CC=1      ←0
-  │ publish_cmd                 36L  0C    1m  CC=7      ←0
+  │ rust                        41L  0C    1m  CC=4      ←0
+  │ go                          41L  0C    1m  CC=5      ←0
+  │ java                        39L  0C    1m  CC=6      ←0
+  │ uv                          37L  1C    5m  CC=2      ←0
   │ __init__                    36L  0C    0m  CC=0.0    ←0
-  │ rust                        35L  0C    1m  CC=4      ←0
-  │ go                          35L  0C    1m  CC=5      ←0
+  │ __init__                    36L  0C    0m  CC=0.0    ←0
+  │ commit_generator            35L  0C    4m  CC=2      ←0
   │ version                     35L  0C    0m  CC=0.0    ←0
-  │ java                        33L  0C    1m  CC=6      ←0
-  │ project_doctor              32L  0C    0m  CC=0.0    ←0
-  │ publish                     31L  0C    1m  CC=5      ←1
-  │ changelog                   30L  0C    2m  CC=2      ←1
-  │ tag                         28L  0C    1m  CC=4      ←1
+  │ poetry                      32L  1C    3m  CC=2      ←0
+  │ tag                         32L  0C    1m  CC=4      ←1
+  │ dotnet                      31L  0C    1m  CC=4      ←0
+  │ pdm                         29L  1C    3m  CC=2      ←0
+  │ logging                     29L  0C    2m  CC=3      ←1
+  │ __init__                    29L  0C    0m  CC=0.0    ←0
+  │ pip                         28L  1C    3m  CC=2      ←0
+  │ ruby                        28L  0C    1m  CC=3      ←0
   │ __init__                    27L  0C    0m  CC=0.0    ←0
   │ __init__                    27L  0C    0m  CC=0.0    ←0
-  │ __init__                    27L  0C    0m  CC=0.0    ←0
-  │ dotnet                      26L  0C    1m  CC=4      ←0
-  │ enhanced_summary            26L  0C    0m  CC=0.0    ←0
-  │ ruby                        25L  0C    1m  CC=3      ←0
-  │ logging                     25L  0C    2m  CC=3      ←1
-  │ __init__                    25L  0C    0m  CC=0.0    ←0
+  │ changelog                   24L  0C    2m  CC=2      ←1
+  │ enhanced_summary            23L  0C    0m  CC=0.0    ←0
+  │ strategies                  23L  0C    0m  CC=0.0    ←0
   │ __init__                    20L  0C    0m  CC=0.0    ←0
   │ __init__                    19L  0C    0m  CC=0.0    ←0
   │ __init__                    19L  0C    0m  CC=0.0    ←0
-  │ __main__                    17L  0C    0m  CC=0.0    ←0
+  │ __main__                    18L  0C    0m  CC=0.0    ←0
+  │ __init__                    16L  0C    0m  CC=0.0    ←0
+  │ generator                   15L  1C    1m  CC=1      ←0
   │ __init__                    14L  0C    0m  CC=0.0    ←0
   │ __init__                    14L  0C    0m  CC=0.0    ←0
+  │ __init__                    11L  0C    0m  CC=0.0    ←0
+  │ __init__                     9L  0C    0m  CC=0.0    ←0
+  │ __init__                     5L  0C    0m  CC=0.0    ←0
+  │ __init__                     3L  0C    0m  CC=0.0    ←0
+  │ cli                          0L  0C    2m  CC=1      ←0
+  │
+  examples/                       CC̄=3.3    ←in:0  →out:0
+  │ 04_debugging_diagnostics   301L  0C    6m  CC=8      ←0
+  │ 03_advanced_mocking        283L  0C    7m  CC=6      ←0
+  │ generate                   240L  0C    2m  CC=4      ←0
+  │ config-example.yaml        183L  0C    0m  CC=0.0    ←0
+  │ pre-publish                167L  0C    5m  CC=6      ←0
+  │ post-commit                144L  0C    5m  CC=4      ←1
+  │ pre-commit                 128L  0C    4m  CC=8      ←1
+  │ 05_programmatic_workflow   120L  0C    2m  CC=1      ←0
+  │ run_all_validation         120L  1C    5m  CC=6      ←0
+  │ slack-webhook              116L  0C    2m  CC=5      ←0
+  │ discord-webhook            109L  0C    2m  CC=5      ←0
+  │ Makefile                   105L  0C    0m  CC=0.0    ←0
+  │ 02_git_operations          100L  0C    6m  CC=5      ←0
+  │ 04_version_validation       79L  0C    1m  CC=11     ←0
+  │ 01_basic_api                74L  0C    1m  CC=10     ←0
+  │ 03_commit_generation        70L  0C    1m  CC=9      ←0
+  │ markdown-demo.sh            70L  0C    0m  CC=0.0    ←0
+  │ package.json                64L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml              57L  0C    0m  CC=0.0    ←0
+  │ Cargo.toml                  49L  0C    0m  CC=0.0    ←0
+  │ pom.xml                     40L  0C    0m  CC=0.0    ←0
+  │ CalculatorTests.cs          32L  1C    4m  CC=1      ←0
+  │ install.sh                  31L  0C    0m  CC=0.0    ←0
+  │ Calculator.cs               21L  2C    5m  CC=1      ←0
+  │ goal.yaml                   17L  0C    0m  CC=0.0    ←0
+  │ Main.java                   15L  1C    2m  CC=1      ←0
+  │ pyproject.toml              15L  0C    0m  CC=0.0    ←0
+  │ composer.json               15L  0C    0m  CC=0.0    ←0
+  │ Example.php                 11L  1C    1m  CC=1      ←0
+  │ main.go                     10L  0C    1m  CC=1      ←0
   │ __init__                     3L  0C    0m  CC=0.0    ←0
   │
-  integration/                    CC̄=0.0    ←in:0  →out:0
-  │ run_matrix.sh              216L  1C    4m  CC=0.0    ←0
+  integration/                    CC̄=0.0    ←in:255  →out:0
+  │ run_matrix.sh              216L  1C    4m  CC=0.0    ←16
+  │ Dockerfile                  15L  0C    0m  CC=0.0    ←0
   │ run_docker_matrix.sh         5L  0C    0m  CC=0.0    ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
-  │ project.sh                  24L  0C    0m  CC=0.0    ←0
+  │ !! planfile.yaml             1323L  0C    0m  CC=0.0    ←0
+  │ tree.txt                   416L  0C    0m  CC=0.0    ←0
+  │ Taskfile.yml               244L  0C    0m  CC=0.0    ←0
+  │ pyqual.yaml                161L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml             139L  0C    0m  CC=0.0    ←0
+  │ Makefile                    91L  0C    0m  CC=0.0    ←0
+  │ wup.yaml                    90L  0C    0m  CC=0.0    ←0
+  │ prefact.yaml                82L  0C    0m  CC=0.0    ←0
+  │ redsl.yaml                  78L  0C    0m  CC=0.0    ←0
+  │ regix.yaml                  51L  0C    0m  CC=0.0    ←0
+  │ project.sh                  48L  0C    0m  CC=0.0    ←0
+  │ .pre-commit-config.yaml     38L  0C    0m  CC=0.0    ←0
+  │ redsl_refactor_report.toon.yaml    33L  0C    0m  CC=0.0    ←0
+  │ redsl_refactor_plan.toon.yaml    26L  0C    0m  CC=0.0    ←0
+  │ nlp2uri.yaml                 8L  0C    0m  CC=0.0    ←0
   │
+  scripts/                        CC̄=0.0    ←in:0  →out:0
+  │ koru_verify_ci.sh           49L  0C    0m  CC=0.0    ←0
+  │
+  testql-scenarios/               CC̄=0.0    ←in:0  →out:0
+  │ generated-from-pytests.testql.toon.yaml    79L  0C    0m  CC=0.0    ←0
+  │ generated-cli-tests.testql.toon.yaml    20L  0C    0m  CC=0.0    ←0
+  │
+  ── zero ──
+     goal/cli.py                               0L
 
 COUPLING:
-                                  goal           goal.cli          goal.push        goal.config    goal.validators       goal.license       goal.authors       goal.summary        goal.doctor         goal.hooks     goal.generator  goal.smart_commit    goal.validation      goal.recovery
-               goal                 ──                ←39                ←46                  2                ←11                                    ←2                 ←6                  1                 ←1                 ←4                 ←2                 ←2                 ←1  hub
-           goal.cli                 39                 ──                  1                 11                                     7                  3                                     1                  3                                                                              hub
-          goal.push                 46                  7                 ──                                     1                                                                                                                                                                             !! fan-out
-        goal.config                  1                ←11                                    ──                                                       ←1                                                                                                                                       hub
-    goal.validators                 11                                    ←1                                    ──                                                                                             ←1                                                                              !! fan-out
-       goal.license                                    ←7                                                                          ──                                                                                                                                                          hub
-       goal.authors                  2                 ←3                                     1                                                       ──                                                                                                                                     
-       goal.summary                  6                                                                                                                                   ──                                                                                                                  
-        goal.doctor                  3                 ←1                                                                                                                                   ──                                                                                               
-         goal.hooks                  1                 ←3                                                        1                                                                                             ──                                                                            
-     goal.generator                  4                                                                                                                                                                                            ──                                                         
-  goal.smart_commit                  2                                                                                                                                                                                                               ──                                      
-    goal.validation                  2                                                                                                                                                                                                                                  ──                   
-      goal.recovery                  1                                                                                                                                                                                                                                                     ──
+                                               integration                         goal           examples.api-usage                    goal.push                     goal.cli             examples.testing        examples.custom-hooks                      goal.io          examples.validation              goal.validators                  goal.config            examples.webhooks               goal.bootstrap  examples.template-generator                 goal.publish
+                  integration                           ──                           ←5                         ←102                                                                                    ←59                          ←50                                                       ←20                                                                                    ←10                                                        ←9                               hub
+                         goal                            5                           ──                          ←11                          ←56                          ←45                          ←13                                                        20                                                       ←15                            2                                                         5                                                        ←3  hub
+           examples.api-usage                          102                           11                           ──                                                         4                                                                                                                                                                             1                                                                                                                      !! fan-out
+                    goal.push                                                        56                                                        ──                            8                           ←1                            3                           24                                                         1                                                                                      1                                                         1  !! fan-out
+                     goal.cli                                                        45                           ←4                            1                           ──                                                                                      4                                                                                     11                                                         4                                                         5  hub
+             examples.testing                           59                           13                                                         1                                                        ──                                                                                                                                                                                                                                                                       !! fan-out
+        examples.custom-hooks                           50                                                                                     ←3                                                                                     ──                                                                                                                                                                                                                                          !! fan-out
+                      goal.io                                                       ←20                                                       ←24                           ←4                                                                                     ──                                                                                                                                                                                                             hub
+          examples.validation                           20                                                                                                                                                                                                                                      ──                                                                                                                                                                                !! fan-out
+              goal.validators                                                        15                                                        ←1                                                                                                                                                                            ──                           ←1                                                                                                                      !! fan-out
+                  goal.config                                                         1                           ←1                                                       ←11                                                                                                                                                1                           ──                                                                                                                      hub
+            examples.webhooks                           10                                                                                                                                                                                                                                                                                                                             ──                                                                                         !! fan-out
+               goal.bootstrap                                                        ←5                                                        ←1                           ←4                                                                                                                                                                                                                                      ──                                                            hub
+  examples.template-generator                            9                                                                                                                                                                                                                                                                                                                                                                                       ──                               !! fan-out
+                 goal.publish                                                         3                                                        ←1                           ←5                                                                                                                                                                                                                                                                                                ──  hub
   CYCLES: none
-  HUB: goal.config/ (fan-in=14)
-  HUB: goal/ (fan-in=118)
-  HUB: goal.cli/ (fan-in=7)
+  HUB: goal.cli/ (fan-in=12)
+  HUB: goal.bootstrap/ (fan-in=10)
+  HUB: goal.publish/ (fan-in=6)
+  HUB: goal.io/ (fan-in=48)
+  HUB: goal.config/ (fan-in=15)
+  HUB: integration/ (fan-in=255)
+  HUB: goal/ (fan-in=164)
   HUB: goal.license/ (fan-in=7)
-  SMELL: goal.push/ fan-out=54 → split needed
-  SMELL: goal.validators/ fan-out=11 → split needed
-  SMELL: goal.cli/ fan-out=65 → split needed
+  SMELL: goal.cli/ fan-out=81 → split needed
+  SMELL: examples.api-usage/ fan-out=120 → split needed
+  SMELL: examples.validation/ fan-out=20 → split needed
+  SMELL: goal.push/ fan-out=94 → split needed
+  SMELL: examples.template-generator/ fan-out=9 → split needed
+  SMELL: examples.webhooks/ fan-out=10 → split needed
+  SMELL: goal/ fan-out=34 → split needed
+  SMELL: examples.testing/ fan-out=73 → split needed
+  SMELL: examples.custom-hooks/ fan-out=50 → split needed
+  SMELL: goal.validators/ fan-out=15 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

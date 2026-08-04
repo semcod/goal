@@ -22,8 +22,6 @@ To use legacy ASCII output:
 goal --ascii push
 ```
 
-## Output Structure
-
 ### Front Matter
 
 Every markdown output includes YAML front matter:
@@ -37,8 +35,6 @@ file_count: 7
 timestamp: "2026-01-29T10:30:00Z"
 ---
 ```
-
-### Sections
 
 #### Overview
 Summary of the operation:
@@ -139,44 +135,12 @@ file_count: 7
 timestamp: "2026-01-29T10:30:00Z"
 ---
 
-# Goal Push Result
-
 ## Overview
 
 **Project Type:** python
 **Files Changed:** 7 (+1140/-99 lines)
 **Version:** 1.0.1 → 1.0.2
 **Commit Message:** feat(goal): add YAML configuration support
-
-## Files Changed
-
-| File | Added | Deleted |
-|------|-------|--------|
-| goal/config.py | 450 | 0 |
-| goal/cli.py | 120 | 15 |
-| README.md | 50 | 10 |
-| pyproject.toml | 2 | 0 |
-| VERSION | 1 | 1 |
-| CHANGELOG.md | 25 | 0 |
-| goal/__init__.py | 1 | 1 |
-
-## Test Results
-
-**Status:** ✓ Passed
-**Command:** pytest tests/ -v
-**Duration:** 2.3s
-**Exit Code:** 0
-
-```
-pytest tests/ -v
-============================= test session starts ==============================
-collected 15 items
-
-tests/test_config.py .......                                            [ 46%]
-tests/test_cli.py ........                                                [100%]
-
-============================== 15 passed in 2.31s ==============================
-```
 
 ## Actions Performed
 
@@ -198,8 +162,6 @@ tests/test_cli.py ........                                                [100%]
 - Update documentation if needed
 - Announce release to users
 ```
-
-## Using in CI/CD
 
 ### GitHub Actions
 
@@ -226,8 +188,6 @@ release:
       - release-notes.md
 ```
 
-### Parsing with Tools
-
 #### Python
 
 ```python
@@ -242,27 +202,16 @@ print(f"Version bump: {front_matter['version_bump']}")
 print(f"Files changed: {front_matter['file_count']}")
 ```
 
-#### jq (JSON)
-
-```bash
 # Convert to JSON and parse
 goal --all --bump patch | \
   yq eval '.front_matter' -o json | \
   jq '.version_bump'
 ```
 
-## Customizing Output
-
-### Disabling Markdown
-
-```bash
 # For scripts that need plain output
 goal --ascii push
 ```
 
-### Redirecting to File
-
-```bash
 # Save release notes
 goal --all --bump patch > release-$(date +%Y%m%d).md
 
@@ -270,9 +219,6 @@ goal --all --bump patch > release-$(date +%Y%m%d).md
 goal push >> release.log 2>&1
 ```
 
-### Filtering Sections
-
-```bash
 # Get only the summary
 goal push | grep -A 10 "## Summary"
 
@@ -280,12 +226,6 @@ goal push | grep -A 10 "## Summary"
 goal push | grep "Version:" | cut -d: -f2
 ```
 
-## Integration Examples
-
-### Slack Notification
-
-```bash
-#!/bin/bash
 # notify-slack.sh
 
 WEBHOOK_URL="$SLACK_WEBHOOK_URL"
@@ -298,10 +238,6 @@ curl -X POST -H 'Content-type: application/json' \
   "$WEBHOOK_URL"
 ```
 
-### Email Report
-
-```bash
-#!/bin/bash
 # email-report.sh
 
 goal --all --bump minor | \
@@ -310,10 +246,6 @@ goal --all --bump minor | \
        team@example.com
 ```
 
-### Jira Integration
-
-```bash
-#!/bin/bash
 # update-jira.sh
 
 RELEASE_MD=$(goal --all --bump patch)

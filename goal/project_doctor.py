@@ -6,9 +6,12 @@ The actual implementation has been split into the goal.doctor package.
 
 # Re-export everything from the new doctor package for backward compatibility
 from goal.doctor import (
-    Issue, DoctorReport,
-    diagnose_project, diagnose_and_report,
-    add_issues_to_todo, diagnose_and_report_with_todo,
+    Issue,
+    DoctorReport,
+    diagnose_project,
+    diagnose_and_report,
+    add_issues_to_todo,
+    diagnose_and_report_with_todo,
     # Private functions for test compatibility
     diagnose_python as _diagnose_python,
     diagnose_nodejs as _diagnose_nodejs,
@@ -23,10 +26,18 @@ from goal.doctor import (
 
 # Maintain backward compatibility for direct function access
 __all__ = [
-    'Issue', 'DoctorReport',
-    'diagnose_project', 'diagnose_and_report',
-    'add_issues_to_todo', 'diagnose_and_report_with_todo',
-    '_diagnose_python', '_diagnose_nodejs', '_diagnose_rust',
-    '_diagnose_go', '_diagnose_ruby', '_diagnose_php',
-    '_diagnose_dotnet', '_diagnose_java',
+    "Issue",
+    "DoctorReport",
+    "diagnose_project",
+    "diagnose_and_report",
+    "add_issues_to_todo",
+    "diagnose_and_report_with_todo",
+    "_diagnose_python",
+    "_diagnose_nodejs",
+    "_diagnose_rust",
+    "_diagnose_go",
+    "_diagnose_ruby",
+    "_diagnose_php",
+    "_diagnose_dotnet",
+    "_diagnose_java",
 ]

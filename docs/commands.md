@@ -9,12 +9,18 @@ These options can be used with any Goal command:
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--config PATH` | `-c PATH` | Path to goal.yaml config file |
+| `--yes` | `-y` | Skip all prompts (run automatically) |
+| `--all` | `-a` | Automate all stages including tests, commit, push, and publish |
+| `--upgrade-deps` | `-u` | Update project dependencies to latest available versions |
+| `--recursive` | `-r` | Scan subfolders for dependency manifests (monorepo support) |
+| `--interactive` | `-i` | Ask before processing each subproject during dependency updates |
+| `--dry-run` | | Show what would be done without doing it |
 | `--markdown` | | Use markdown output format (default) |
 | `--ascii` | | Use ASCII output format |
 | `--help` | `-h` | Show help message |
 | `--version` | | Show version and exit |
 
-## Main Commands
+Short flags can be combined, e.g. `-au`, `-aur`, `-aiu`.
 
 ### `goal` (default)
 
@@ -28,6 +34,9 @@ goal [OPTIONS]
 - `--bump, -b {patch,minor,major}`: Version bump type (default: patch)
 - `--yes, -y`: Skip all prompts (run automatically)
 - `--all, -a`: Automate all stages including tests, commit, push, and publish
+- `--upgrade-deps, -u`: Update project dependencies to latest available versions
+- `--recursive, -r`: Scan subfolders for dependency manifests (monorepo support)
+- `--interactive, -i`: Ask before processing each subproject during dependency updates
 - `--dry-run`: Show what would be done without doing it
 
 **Examples:**
@@ -36,6 +45,9 @@ goal                          # Interactive workflow
 goal --bump minor            # Interactive with minor bump
 goal --yes                   # Automatic workflow
 goal --all                   # Full automation
+goal -au                     # Full automation + upgrade dependencies
+goal -aur                    # Monorepo: recursive dependency upgrades
+goal -aiu                    # Monorepo: ask per subproject before upgrading
 goal --dry-run               # Preview changes
 ```
 
@@ -67,6 +79,43 @@ goal push -m "Custom message"                # Custom message
 goal push --split                            # Split by type
 goal push --no-tag                           # No git tag
 goal push --dry-run                          # Preview
+```
+
+### `goal all`
+
+Run the full `goal -a` workflow in **every git repository with uncommitted
+changes** under the given paths. Use it from a folder that contains many
+independent repositories (a "monorepo of repos"). Clean repositories and
+non-git directories are skipped.
+
+```bash
+goal all [PATHS...]
+```
+
+**Arguments:**
+- `PATHS...`: Directories or globs to sweep (default: `*` — all entries in the
+  current directory).
+
+**Behavior:**
+- Lists the matched dirty projects and asks a **single** batch confirmation
+  before running (skipped with `-y`/`--yes`, or with `--dry-run`).
+- Runs `goal -a` in each project as an isolated subprocess.
+- Continues past per-project failures; prints a succeeded/failed summary and
+  exits non-zero if any project failed.
+
+**Equivalent forms:**
+- `goal -a ./*` — combining `-a`/`--all` with path arguments routes to `goal all`.
+- `goal auto all`, `goal auto ./*`, `goal auto` — `auto` is a word-form of the
+  `-a` flag (so `goal auto all` == `goal -a all`, `goal auto` == `goal -a`).
+
+**Examples:**
+```bash
+goal all ./*                                 # Sweep every dirty sub-repo
+goal -a ./*                                  # Same, shorthand
+goal auto all                                # Same; defaults to * (all sub-folders)
+goal all ./* --dry-run                       # Preview, no commits/pushes
+goal all ./* -y                              # Skip the batch confirmation
+goal all packages/*                          # Only repos under packages/
 ```
 
 ### `goal init`
@@ -251,8 +300,6 @@ goal commit               # Simple message
 goal commit --detailed    # Detailed message with body
 goal commit --unstaged    # Analyze unstaged changes
 ```
-
-## Configuration Commands
 
 ### `goal config`
 
@@ -513,10 +560,6 @@ Goal looks for `goal.yaml` in this order:
 2. Current directory
 3. Parent directories (up to git root)
 
-## Examples by Use Case
-
-### Development Workflow
-```bash
 # Make changes...
 goal                    # Interactive commit and push
 ```

@@ -5,7 +5,7 @@
 
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.157-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.284-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -23,13 +23,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.157-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$23.81-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-66.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.284-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.99-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-122.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
 
-- 🤖 **LLM usage:** $23.8118 (168 commits)
-- 👤 **Human dev:** ~$6615 (66.1h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $0.9866 (346 commits)
+- 👤 **Human dev:** ~$12247 (122.5h @ $100/h, 30min dedup)
 
-Generated on 2026-03-29 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-07-29 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
 
 ---
 
@@ -58,6 +58,80 @@ goal push      # Runs tests, suggests a commit, bumps patch, updates changelog, 
 # 3. CI/CD or cron-driven release
 goal --all --bump minor   # Non-interactive; perfect for nightly builds or release pipelines.
 ```
+
+## 🆕 What's New in v2.2.2
+
+> **Monorepo sweep** — run the full `goal -a` workflow across every git repository with uncommitted changes under a folder, in one command.
+
+### ✨ New Features
+
+**🧹 `goal all` — sweep many repos at once**
+- `goal all [PATHS...]` runs `goal -a` in every sub-repo that has uncommitted
+  changes (defaults to `*` — all sub-folders of the current directory).
+- Clean repos and non-git folders are skipped automatically.
+- Lists the matched dirty projects and asks **one** batch confirmation
+  (skipped with `-y`/`--yes`, or with `--dry-run`).
+- Continues past per-project failures and prints a succeeded/failed summary.
+
+```bash
+# From the parent folder holding all your repos:
+goal all ./*          # sweep every dirty sub-repo
+goal -a ./*           # identical shorthand (-a + paths ⇒ sweep)
+goal auto all         # `auto` is a word-form of the -a flag
+goal all ./* --dry-run   # preview without committing/pushing
+```
+
+**Equivalences**
+
+| Command | Same as | Action |
+| --- | --- | --- |
+| `goal all ./*` | `goal -a ./*` | sweep dirty sub-repos under the given paths |
+| `goal auto all` | `goal -a all` | sweep dirty sub-repos (defaults to `*`) |
+| `goal auto ./*` | `goal -a ./*` | sweep |
+| `goal auto` | `goal -a` | single-repo push in the current directory |
+
+---
+
+## 🆕 What's New in v2.2.1
+
+> **Intelligent Package Manager Broker** — Automatic detection and selection of the fastest available package manager (uv, pdm, poetry, pip)
+
+### ✨ New Features
+
+**📦 PackageManagerBroker**
+- Automatic detection of available package managers (uv, pdm, poetry, pip)
+- Lockfile-aware installation (uv.lock → uv sync, poetry.lock → poetry install)
+- Priority-based selection (uv fastest, pip as fallback)
+- Auto-installation of uv when missing and pip is available
+- Smart dependency installation with timing and reporting
+
+```bash
+# Doctor shows available managers
+goal doctor
+📦 Available package managers:
+   ✓ uv       ⚡ fast   
+     poetry   ⚡ fast   🔒
+     pip      🐢 slow
+
+# Force specific manager
+goal doctor --manager uv
+```
+
+**⚡ Faster Python Installs**
+- uv integration: 5-30s installs vs 2-10min with pip
+- Automatic uv installation: `pip install uv` when uv missing
+- Lockfile-first strategy: sync from lock when available
+- Detailed timing reports: "✅ uv (12.3s) | fallback: pip"
+
+### 🔧 Architecture Improvements
+
+**Refactored Bootstrap System**
+- Split `project_bootstrap.py` (1265L) → `goal/bootstrap/` module
+- `goal/installers/` - new package manager abstraction layer
+- `goal/bootstrap/installer.py` - unified installation interface
+- Full backward compatibility maintained
+
+---
 
 ## 🆕 What's New in v2.2.0
 
@@ -151,6 +225,9 @@ goal push
 
 # Also works with automation modes:
 goal -a          # Full automation with validation
+goal -au         # Full automation + update dependencies to latest
+goal -aiu        # Full automation, but ask per subproject before upgrading deps
+goal -aur        # Full automation + recursive dependency scan in subfolders
 goal --all       # All stages with validation
 goal --yes       # Auto-confirm with validation
 
@@ -399,6 +476,34 @@ goal --dry-run
 ```
 
 > **Note:** `goal -a` in a directory without a git repository will **skip gracefully** instead of failing. This is safe for CI/CD pipelines.
+
+### 4. Monorepo sweep — run `goal -a` across many repos
+
+When a folder contains many independent git repositories (a "monorepo of
+repos"), you can run the full `goal -a` workflow in every sub-repo that has
+**uncommitted changes** — clean repos and non-git folders are skipped.
+
+```bash
+# From the parent folder holding all your repos:
+goal all ./*          # sweep every dirty sub-repo (lists them, asks once)
+goal -a ./*           # identical shorthand: -a + paths ⇒ sweep
+goal auto all         # word-form of -a; defaults to * (all sub-folders)
+
+# Preview first (no commits/pushes/publishes), then run for real:
+goal all ./* --dry-run
+goal all ./* -y       # skip the batch confirmation
+```
+
+How it behaves:
+- Prints the list of matched dirty projects and asks **one** confirmation before
+  running (skipped with an explicit `-y`/`--yes`, or with `--dry-run`).
+- Runs `goal -a` in each project as an isolated subprocess.
+- **Continues past per-project failures** and prints a succeeded/failed summary
+  at the end (exit code is non-zero if any project failed).
+
+`goal auto …` is a word-form of the `-a` flag, so `goal auto`, `goal auto ./*`
+and `goal auto all` behave exactly like `goal -a`, `goal -a ./*` and
+`goal -a all` respectively.
 
 ### Running from a local clone
 
@@ -774,6 +879,9 @@ Main command for the complete workflow.
 - `--bump, -b`: Version bump type [patch|minor|major] (default: patch)
 - `--yes, -y`: Skip all prompts (run automatically)
 - `--all, -a`: Automate all stages including tests, commit, push, and publish
+- `--upgrade-deps, -u`: Update project dependencies to latest available versions
+- `--recursive, -r`: Scan subfolders for dependency manifests (monorepo support)
+- `--interactive, -i`: Ask before processing each subproject during dependency updates
 - `--todo/--no-todo, -t`: Add unfixed issues to TODO.md during doctor phase (default: no)
 - `--markdown/--ascii`: Output format (default: markdown)
 - `--split`: Create separate commits per change type (docs/code/ci/examples)
@@ -984,9 +1092,54 @@ goal --all
 # Short form
 goal -a
 
+# Update dependencies and run full workflow
+goal -au
+goal -a -u
+
+# Monorepo: auto-discovers subprojects when root has no manifest
+goal -au
+
+# Monorepo: explicit recursive scan (root + all subfolders)
+goal -aur
+
+# Monorepo: choose which subprojects to upgrade
+goal -aiu
+
 # With specific version bump
 goal --all --bump minor
 ```
+
+### Dependency Updates (Monorepo)
+
+Goal can update dependencies across multiple packages in one run. It detects
+`pyproject.toml`, `uv.lock`, `package.json`, `requirements.txt`, and other
+manifests in subfolders.
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| Auto (CI) | `goal -au` | Upgrade all detected projects without prompts |
+| Recursive | `goal -aur` | Same as `-au`, but also scans when root has a manifest |
+| Interactive | `goal -aiu` | Ask `Process project <path>?` before each subproject |
+| Manual | `goal -u` | Single project: one prompt; many projects: one bulk confirm |
+
+Short flags can be combined: `-au`, `-aur`, `-aiu`, `-air`, etc.
+
+```bash
+# Root has no pyproject.toml — auto-discovers packages/frontend, packages/backend, ...
+cd my-monorepo
+goal -au
+
+# Preview dependency upgrades only
+goal -au --dry-run
+
+# Pick subprojects interactively
+goal -aiu
+```
+
+**Rules:**
+- Without `-i`, `-a`/`--all` upgrades all detected projects automatically.
+- With `-i`, Goal asks before each subproject (even when `-a` is set).
+- Without `-a` and without `-i`, a single project gets one confirmation; multiple projects get one bulk confirm first.
 
 ### CI/CD Pipeline
 
@@ -1645,3 +1798,17 @@ Licensed under Apache-2.0.
 ## Author
 
 Tom Sapletta
+## Status
+
+_Last updated by [taskill](https://github.com/oqlos/taskill) at 2026-04-25 13:38 UTC_
+
+| Metric | Value |
+|---|---|
+| HEAD | `7edd05b` |
+| Coverage | — |
+| Failing tests | — |
+| Commits in last cycle | 50 |
+
+> Introduces a configuration management system, improves the code analysis engine and commit message generation, expands CLI functionality and markdown output support, and applies bulk TODO fixes and documentation updates.
+
+<!-- taskill:status:end -->

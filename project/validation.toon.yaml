@@ -1,248 +1,554 @@
-# vallm batch | 176f | 101✓ 20⚠ 28✗ | 2026-03-29
+# vallm batch | 264f | 0✓ 181⚠ 0✗ | 2026-04-26
 
 SUMMARY:
-  scanned: 176  passed: 101 (57.4%)  warnings: 20  errors: 28  unsupported: 47
+  scanned: 264  passed: 0 (0.0%)  warnings: 181  errors: 0  unsupported: 0
 
-WARNINGS[20]{path,score}:
-  goal/project_bootstrap.py,0.87
-    issues[9]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,guess_package_name has cyclomatic complexity 20 (max: 15),253
-      complexity.cyclomatic,warning,ensure_project_environment has cyclomatic complexity 25 (max: 15),340
-      complexity.cyclomatic,warning,_ensure_costs_installed has cyclomatic complexity 20 (max: 15),599
-      complexity.cyclomatic,warning,_ensure_costs_config has cyclomatic complexity 20 (max: 15),733
-      complexity.maintainability,warning,Low maintainability index: 19.1 (threshold: 20),
-      complexity.lizard_cc,warning,guess_package_name: CC=20 exceeds limit 15,253
-      complexity.lizard_cc,warning,ensure_project_environment: CC=25 exceeds limit 15,340
-      complexity.lizard_cc,warning,_ensure_costs_installed: CC=20 exceeds limit 15,599
-      complexity.lizard_cc,warning,_ensure_costs_config: CC=20 exceeds limit 15,733
-  goal/validators/file_validator.py,0.90
-    issues[6]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,detect_tokens_in_content has cyclomatic complexity 17 (max: 15),68
-      complexity.cyclomatic,warning,check_dot_folders has cyclomatic complexity 23 (max: 15),164
-      complexity.cyclomatic,warning,validate_files has cyclomatic complexity 18 (max: 15),287
-      complexity.lizard_cc,warning,detect_tokens_in_content: CC=17 exceeds limit 15,68
-      complexity.lizard_cc,warning,check_dot_folders: CC=23 exceeds limit 15,164
-      complexity.lizard_cc,warning,validate_files: CC=18 exceeds limit 15,287
-  goal/generator/analyzer.py,0.93
-    issues[5]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,ContentAnalyzer has cyclomatic complexity 33 (max: 15),274
-      complexity.cyclomatic,warning,short_action_summary has cyclomatic complexity 34 (max: 15),277
-      complexity.cyclomatic,warning,per_file_notes has cyclomatic complexity 29 (max: 15),333
-      complexity.lizard_cc,warning,short_action_summary: CC=34 exceeds limit 15,277
-      complexity.lizard_cc,warning,per_file_notes: CC=29 exceeds limit 15,333
-  goal/git_ops.py,0.93
+WARNINGS[181]{path,score}:
+  examples/validation/test_api_signatures.py,0.71
     issues[3]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,ensure_git_repository has cyclomatic complexity 23 (max: 15),276
-      complexity.lizard_cc,warning,ensure_git_repository: CC=23 exceeds limit 15,276
-      complexity.lizard_length,warning,ensure_git_repository: 112 lines exceeds limit 100,276
-  goal/license/manager.py,0.93
-    issues[4]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,update_license_file has cyclomatic complexity 18 (max: 15),427
-      complexity.cyclomatic,warning,validate_license_file has cyclomatic complexity 20 (max: 15),494
-      complexity.lizard_cc,warning,update_license_file: CC=18 exceeds limit 15,427
-      complexity.lizard_cc,warning,validate_license_file: CC=20 exceeds limit 15,494
-  goal/smart_commit/generator.py,0.93
-    issues[4]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,analyze_changes has cyclomatic complexity 24 (max: 15),32
-      complexity.cyclomatic,warning,_generate_functional_summary has cyclomatic complexity 22 (max: 15),144
-      complexity.lizard_cc,warning,analyze_changes: CC=24 exceeds limit 15,32
-      complexity.lizard_cc,warning,_generate_functional_summary: CC=22 exceeds limit 15,144
-  goal/summary/generator.py,0.93
-    issues[4]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,generate_value_title has cyclomatic complexity 19 (max: 15),330
-      complexity.cyclomatic,warning,_format_changes_section has cyclomatic complexity 26 (max: 15),478
-      complexity.lizard_cc,warning,generate_value_title: CC=19 exceeds limit 15,330
-      complexity.lizard_cc,warning,_format_changes_section: CC=26 exceeds limit 15,478
-  goal/deep_analyzer.py,0.96
-    issues[3]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,_build_summary has cyclomatic complexity 16 (max: 15),522
-      complexity.maintainability,warning,Low maintainability index: 16.2 (threshold: 20),
-      complexity.lizard_cc,warning,_build_summary: CC=16 exceeds limit 15,522
-  goal/doctor/python.py,0.96
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+      complexity.lizard_cc,warning,extract_function_calls: CC=20 exceeds limit 15,27
+      complexity.lizard_cc,warning,validate_call: CC=20 exceeds limit 15,123
+  examples/validation/test_readme_consistency.py,0.74
     issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,check_py011_version_consistency has cyclomatic complexity 17 (max: 15),328
-      complexity.maintainability,warning,Low maintainability index: 16.4 (threshold: 20),
-  goal/changelog.py,0.97
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+      complexity.lizard_cc,warning,validate_readme: CC=22 exceeds limit 15,92
+  integration/run_matrix.sh,0.74
     issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,update_changelog has cyclomatic complexity 24 (max: 15),9
-      complexity.lizard_cc,warning,update_changelog: CC=24 exceeds limit 15,9
-  goal/cli/tests.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,_run_tests_in_subdirs has cyclomatic complexity 20 (max: 15),32
-      complexity.lizard_cc,warning,_run_tests_in_subdirs: CC=20 exceeds limit 15,32
-  goal/config/validation.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,_validate_advanced_section has cyclomatic complexity 21 (max: 15),261
-      complexity.lizard_cc,warning,_validate_advanced_section: CC=21 exceeds limit 15,261
-  goal/formatter.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,format_enhanced_summary has cyclomatic complexity 29 (max: 15),265
-      complexity.lizard_cc,warning,format_enhanced_summary: CC=28 exceeds limit 15,265
-  goal/push/stages/dry_run.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,handle_dry_run has cyclomatic complexity 19 (max: 15),12
-      complexity.lizard_cc,warning,handle_dry_run: CC=19 exceeds limit 15,12
-  goal/push/stages/push_remote.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,push_to_remote has cyclomatic complexity 16 (max: 15),20
-      complexity.lizard_cc,warning,push_to_remote: CC=16 exceeds limit 15,20
-  goal/smart_commit/abstraction.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,extract_entities has cyclomatic complexity 20 (max: 15),60
-      complexity.lizard_cc,warning,extract_entities: CC=20 exceeds limit 15,60
-  goal/summary/quality_filter.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,classify_intent_smart has cyclomatic complexity 25 (max: 15),258
-      complexity.lizard_cc,warning,classify_intent_smart: CC=24 exceeds limit 15,258
-  goal/summary/validator.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,auto_fix has cyclomatic complexity 19 (max: 15),204
-      complexity.lizard_cc,warning,auto_fix: CC=19 exceeds limit 15,204
-  goal/version_validation.py,0.97
-    issues[2]{rule,severity,message,line}:
-      complexity.cyclomatic,warning,validate_project_versions has cyclomatic complexity 30 (max: 15),132
-      complexity.lizard_cc,warning,validate_project_versions: CC=30 exceeds limit 15,132
-  integration/run_matrix.sh,0.97
-    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
       complexity.lizard_length,warning,run_case: 175 lines exceeds limit 100,11
+  .aider/analytics.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  .aider/caches/model_prices_and_context_window.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  .aider/caches/openrouter_models.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  .aider/installs.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  .pre-commit-config.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  .taskill/state.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  examples/api-usage/01_basic_api.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/02_git_operations.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/03_commit_generation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/04_version_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/05_programmatic_workflow.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/api-usage/test_integration.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/custom-hooks/post-commit.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/custom-hooks/pre-commit.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/custom-hooks/pre-publish.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/enhanced-summary/config-example.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  examples/git-hooks/install.sh,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+  examples/go-project/main.go,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse GO: Download error: Language 'GO' not available for download. Available groups: [""all""]",
+  examples/java-project/src/main/java/com/example/Main.java,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JAVA: Download error: Language 'JAVA' not available for download. Available groups: [""all""]",
+  examples/java-project/src/test/java/com/example/MainTest.java,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JAVA: Download error: Language 'JAVA' not available for download. Available groups: [""all""]",
+  examples/markdown-demo.sh,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+  examples/my-new-project/goal.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  examples/my-new-project/pyproject.toml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse TOML: Download error: Language 'TOML' not available for download. Available groups: [""all""]",
+  examples/my-new-project/src/my-new-project/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/my-new-project/tests/test_my-new-project.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/nodejs-app/package.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  examples/php-project/composer.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  examples/php-project/src/Example.php,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PHP: Download error: Language 'PHP' not available for download. Available groups: [""all""]",
+  examples/python-package/pyproject.toml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse TOML: Download error: Language 'TOML' not available for download. Available groups: [""all""]",
+  examples/rust-crate/Cargo.toml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse TOML: Download error: Language 'TOML' not available for download. Available groups: [""all""]",
+  examples/template-generator/generate.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/testing/03_advanced_mocking.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/testing/04_debugging_diagnostics.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/validation/run_all_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/validation/test_imports.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/validation/test_syntax_check.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/webhooks/discord-webhook.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  examples/webhooks/slack-webhook.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  goal/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/__main__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/authors/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/authors/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/authors/utils.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/changelog.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/authors_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/commit_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/config_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/config_validate_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/doctor_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/hooks_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/license_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/postcommit_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/publish.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/publish_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/push_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/recover_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/tests.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/utils_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/validation_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/version.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/version_sync.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/version_types.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/version_utils.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/cli/wizard_cmd.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/commit_generator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config/constants.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/config/validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/deep_analyzer.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/core.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/dotnet.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/go.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/java.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/logging.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/models.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/nodejs.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/php.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/python.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/ruby.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/rust.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/doctor/todo.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/enhanced_summary.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/formatter.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/generator/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/generator/analyzer.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/generator/generator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/generator/git_ops.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/git_ops.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/hooks/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/hooks/config.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/hooks/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/license/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/license/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/license/spdx.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/package_managers.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/postcommit/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/postcommit/actions.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/postcommit/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/project_bootstrap.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/project_doctor.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/commands.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/core.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/changelog.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/commit.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/costs.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/dry_run.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/publish.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/push_remote.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/tag.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/test.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/todo.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/push/stages/version.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/auth.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/base.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/corrupted.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/divergent.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/exceptions.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/force_push.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/large_file.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/lfs.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/recovery/strategies.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/smart_commit.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/smart_commit/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/smart_commit/abstraction.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/smart_commit/generator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/body_formatter.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/generator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/quality_filter.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/summary/validator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/toml_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/user_config.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validation/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validation/manager.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validation/rules.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/__init__.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/dot_folders.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/exceptions.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/file_validator.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/gitignore.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/validators/tokens.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  goal/version_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  integration/run_docker_matrix.sh,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+  planfile.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  prefact.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  project.sh,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse BASH: Download error: Language 'BASH' not available for download. Available groups: [""all""]",
+  project.toon-schema.json,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse JSON: Download error: Language 'JSON' not available for download. Available groups: [""all""]",
+  project/calls.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  project/project.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  pyproject.toml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse TOML: Download error: Language 'TOML' not available for download. Available groups: [""all""]",
+  pyqual.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  redsl.yaml,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse YAML: Download error: Language 'YAML' not available for download. Available groups: [""all""]",
+  test_recovery.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_changelog.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_cli_options.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_clone_repo.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_config_shim.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_config_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_file_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_formatter.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_git_ops.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_project_bootstrap.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_project_doctor.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_push_e2e.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_smart_commit_shim.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_user_config.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_version_sync.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
+  tests/test_version_validation.py,0.78
+    issues[1]{rule,severity,message,line}:
+      syntax.unsupported,warning,"Could not parse PYTHON: Download error: Language 'PYTHON' not available for download. Available groups: [""all""]",
 
-ERRORS[28]{path,score}:
-  goal/authors/__init__.py,0.57
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'manager' not found,9
-      python.import.resolvable,error,Module 'utils' not found,10
-  goal/cli/version.py,0.57
-    issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'version_types' not found,8
-      python.import.resolvable,error,Module 'version_utils' not found,9
-      python.import.resolvable,error,Module 'version_sync' not found,20
-  goal/config/__init__.py,0.57
-    issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'constants' not found,8
-      python.import.resolvable,error,Module 'manager' not found,11
-      python.import.resolvable,error,Module 'validation' not found,19
-  goal/generator/__init__.py,0.57
-    issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'git_ops' not found,3
-      python.import.resolvable,error,Module 'analyzer' not found,4
-      python.import.resolvable,error,Module 'generator' not found,5
-  goal/hooks/__init__.py,0.57
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'manager' not found,9
-      python.import.resolvable,error,Module 'config' not found,10
-  goal/license/__init__.py,0.57
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'manager' not found,10
-      python.import.resolvable,error,Module 'spdx' not found,11
-  goal/postcommit/__init__.py,0.57
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'manager' not found,10
-      python.import.resolvable,error,Module 'actions' not found,11
-  goal/push/__init__.py,0.57
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'core' not found,9
-      python.import.resolvable,error,Module 'stages' not found,18
-  goal/recovery/__init__.py,0.57
-    issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'strategies' not found,12
-      python.import.resolvable,error,Module 'manager' not found,21
-      python.import.resolvable,error,Module 'exceptions' not found,22
-  goal/smart_commit/__init__.py,0.57
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'abstraction' not found,7
-      python.import.resolvable,error,Module 'generator' not found,8
-  goal/summary/__init__.py,0.57
-    issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'quality_filter' not found,3
-      python.import.resolvable,error,Module 'validator' not found,4
-      python.import.resolvable,error,Module 'generator' not found,5
-  goal/validation/__init__.py,0.57
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'manager' not found,10
-      python.import.resolvable,error,Module 'rules' not found,11
-  goal/validators/__init__.py,0.57
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'file_validator' not found,7
-  goal/doctor/__init__.py,0.61
-    issues[11]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'models' not found,8
-      python.import.resolvable,error,Module 'core' not found,11
-      python.import.resolvable,error,Module 'python' not found,18
-      python.import.resolvable,error,Module 'nodejs' not found,19
-      python.import.resolvable,error,Module 'rust' not found,20
-      python.import.resolvable,error,Module 'go' not found,21
-      python.import.resolvable,error,Module 'ruby' not found,22
-      python.import.resolvable,error,Module 'php' not found,23
-      python.import.resolvable,error,Module 'dotnet' not found,24
-      python.import.resolvable,error,Module 'java' not found,25
-      python.import.resolvable,error,Module 'todo' not found,28
-  goal/push/stages/__init__.py,0.62
-    issues[7]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'commit' not found,3
-      python.import.resolvable,error,Module 'version' not found,4
-      python.import.resolvable,error,Module 'changelog' not found,5
-      python.import.resolvable,error,Module 'tag' not found,7
-      python.import.resolvable,error,Module 'push_remote' not found,8
-      python.import.resolvable,error,Module 'publish' not found,9
-      python.import.resolvable,error,Module 'dry_run' not found,10
-  goal/cli.py,0.67
-    issues[10]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'cli' not found,10
-      python.import.resolvable,error,Module 'cli.version' not found,16
-      python.import.resolvable,error,Module 'cli.publish' not found,22
-      python.import.resolvable,error,Module 'cli.tests' not found,23
-      python.import.resolvable,error,Module 'cli.push_cmd' not found,24
-      python.import.resolvable,error,Module 'cli.publish_cmd' not found,25
-      python.import.resolvable,error,Module 'cli.utils_cmd' not found,26
-      python.import.resolvable,error,Module 'cli.doctor_cmd' not found,27
-      python.import.resolvable,error,Module 'cli.config_cmd' not found,28
-      python.import.resolvable,error,Module 'cli.commit_cmd' not found,29
-  goal/doctor/logging.py,0.79
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'models' not found,4
-  goal/cli/__init__.py,0.87
-    issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'version' not found,195
-      python.import.resolvable,error,Module 'nfo' not found,10
-      python.import.resolvable,error,Module 'nfo.terminal' not found,11
-  goal/push/stages/commit.py,0.88
-    issues[3]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'core' not found,195
-      python.import.resolvable,error,Module 'version' not found,199
-      python.import.resolvable,error,Module 'changelog' not found,209
-  goal/hooks/manager.py,0.89
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'validators.file_validator' not found,14
-      python.import.resolvable,error,Module 'git_ops' not found,15
-  goal/recovery/manager.py,0.89
-    issues[2]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'strategies' not found,10
-      python.import.resolvable,error,Module 'exceptions' not found,19
-  goal/cli/version_sync.py,0.91
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'version_utils' not found,7
-  goal/cli/version_utils.py,0.91
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'version_types' not found,8
-  goal/cli/commit_cmd.py,0.93
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'enhanced_summary' not found,86
-  goal/postcommit/manager.py,0.93
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'actions' not found,9
-  goal/validation/manager.py,0.94
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'rules' not found,10
-  goal/doctor/todo.py,0.95
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'core' not found,117
-  goal/recovery/strategies.py,0.95
-    issues[1]{rule,severity,message,line}:
-      python.import.resolvable,error,Module 'exceptions' not found,11
-
-UNSUPPORTED[5]{bucket,count}:
-  *.md,30
-  Dockerfile*,1
-  *.txt,1
-  *.yml,1
-  other,14

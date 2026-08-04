@@ -6,9 +6,9 @@ from .generator import CommitMessageGenerator, generate_smart_commit_message
 
 
 __all__ = [
-    'GitDiffOperations',
-    'ChangeAnalyzer',
-    'ContentAnalyzer',
-    'CommitMessageGenerator',
-    'generate_smart_commit_message',
+    "GitDiffOperations",
+    "ChangeAnalyzer",
+    "ContentAnalyzer",
+    "CommitMessageGenerator",
+    "generate_smart_commit_message",
 ]

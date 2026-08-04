@@ -37,19 +37,19 @@ from .todo import (
 from .logging import _log_issue, _log_fix, _SEVERITY_STYLE
 
 __all__ = [
-    'Issue',
-    'DoctorReport',
-    'diagnose_project',
-    'diagnose_and_report',
-    'diagnose_and_report_with_todo',
-    'add_issues_to_todo',
+    "Issue",
+    "DoctorReport",
+    "diagnose_project",
+    "diagnose_and_report",
+    "diagnose_and_report_with_todo",
+    "add_issues_to_todo",
     # Language-specific diagnostics
-    'diagnose_python',
-    'diagnose_nodejs',
-    'diagnose_rust',
-    'diagnose_go',
-    'diagnose_ruby',
-    'diagnose_php',
-    'diagnose_dotnet',
-    'diagnose_java',
+    "diagnose_python",
+    "diagnose_nodejs",
+    "diagnose_rust",
+    "diagnose_go",
+    "diagnose_ruby",
+    "diagnose_php",
+    "diagnose_dotnet",
+    "diagnose_java",
 ]

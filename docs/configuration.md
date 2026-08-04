@@ -2,17 +2,9 @@
 
 Goal uses `goal.yaml` for configuration. Run `goal init` to create it automatically with detected settings.
 
-## Creating Configuration
-
-```bash
-# Initialize with auto-detected settings
-goal init
-
 # Force regenerate (overwrite existing)
 goal init --force
 ```
-
-## Configuration Structure
 
 ### Project Settings
 
@@ -136,14 +128,6 @@ advanced:
     timeout_test: 300          # Test timeout in seconds
 ```
 
-## Configuration Commands
-
-### Show Configuration
-
-```bash
-# Show full configuration
-goal config show
-
 # Show specific section
 goal config show -k git.commit
 
@@ -151,24 +135,10 @@ goal config show -k git.commit
 goal config show -k project.name
 ```
 
-### Get Values
-
-```bash
 # Get project name
 goal config get project.name
-# Output: my-project
-
 # Get version files
 goal config get versioning.files
-# Output:
-# - VERSION
-# - pyproject.toml:version
-# - package.json:version
-```
-
-### Set Values
-
-```bash
 # Set commit scope
 goal config set git.commit.scope "my-app"
 
@@ -186,22 +156,6 @@ goal config set versioning.files '["VERSION", "pyproject.toml:version"]'
 
 ```bash
 goal config validate
-# ✓ Configuration is valid
-# or
-# ✗ Configuration errors:
-#   ✗ project.name is required
-```
-
-### Update Configuration
-
-```bash
-# Update based on project detection
-goal config update
-# ✓ Configuration updated with detected changes
-```
-
-## Examples
-
 ### Python Project
 
 ```yaml
@@ -278,9 +232,6 @@ hooks:
   pre_push: "cd backend && pytest && cd ../frontend && npm test"
 ```
 
-## Custom Config Files
-
-```bash
 # Use custom config
 goal --config staging.yaml push
 
@@ -289,9 +240,6 @@ goal -c .goal/production.yaml --all
 goal -c .goal/development.yaml --bump patch
 ```
 
-### Example: Production Config
-
-```yaml
 # .goal/production.yaml
 versioning:
   strategy: "semver"

@@ -61,8 +61,8 @@ rules:
 plugins:
   enabled: true
   directories:
-  - ~/.pprefact/plugins
-  - ./.pprefact/plugins
+  - ~/.prefact/plugins
+  - ./.prefact/plugins
 environments:
   development:
     rules:

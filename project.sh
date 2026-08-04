@@ -1,24 +1,49 @@
 #!/usr/bin/env bash
+set -e
 clear
-pip install -e .
-pip install prefact --upgrade
-pip install vallm --upgrade
-pip install redup --upgrade
-pip install glon --upgrade
-pip install goal --upgrade
-pip install code2logic --upgrade
-pip install code2llm --upgrade
-#code2llm ./ -f toon,evolution,code2logic,project-yaml -o ./project --no-chunk
-code2llm ./ -f all -o ./project --no-chunk
-#code2llm report --format all       # → all views
-rm project/analysis.json
-rm project/analysis.yaml
 
-pip install code2docs --upgrade
-code2docs ./ --readme-only
-redup scan . --format toon --output ./project
-#redup scan . --functions-only -f toon --output ./project
-#vallm batch ./src --recursive --semantic --model qwen2.5-coder:7b
-#vallm batch --parallel .
-vallm batch . --recursive --format toon --output ./project
-prefact -a
+VENV="venv"
+PIP="$VENV/bin/pip"
+
+if [ ! -f "$PIP" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "$VENV"
+fi
+
+$PIP install -e .
+$PIP install regix --upgrade --quiet
+#$PIP install pyqual --upgrade --quiet
+$PIP install prefact --upgrade --quiet
+$PIP install vallm --upgrade --quiet
+$PIP install redup --upgrade --quiet
+$PIP install glon --upgrade --quiet
+$PIP install code2logic --upgrade --quiet
+$PIP install code2llm --upgrade --quiet
+#$VENV/bin/code2llm ./ -f toon,evolution,code2logic,project-yaml -o ./project --no-chunk
+$VENV/bin/code2llm ./ -f all -o ./project --no-chunk --exclude '*.md'
+#$VENV/bin/code2llm report --format all       # → all views
+
+#$PIP install code2docs --upgrade --quiet
+#$VENV/bin/code2docs ./ --readme-only
+$VENV/bin/redup scan . --format toon --output ./project
+#$VENV/bin/redup scan . --functions-only -f toon --output ./project
+#$VENV/bin/vallm batch ./src --recursive --semantic --model qwen2.5-coder:7b
+#$VENV/bin/vallm batch --parallel .
+#$VENV/bin/vallm batch . --recursive --format toon --output ./project
+$VENV/bin/prefact -a -e "examples/**"
+
+
+$PIP install doql --upgrade --quiet
+$VENV/bin/doql adopt . --format less --output app.doql.less --force
+
+$PIP install sumd --upgrade --quiet
+$VENV/bin/sumd .
+$VENV/bin/sumr .
+
+
+# Install goal from this checkout (editable), NOT the PyPI wheel — a wheel
+# install would shadow the editable package and silently revert local changes.
+$PIP install -e . --quiet
+#$VENV/bin/goal -a
+
+bash tree.sh
