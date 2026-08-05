@@ -1,0 +1,23 @@
+{
+  "schema": "new-project.package-manifest/v1",
+  "files": [
+    { "source": "template/files/AGENTS.template.md", "target": "AGENTS.md", "strategy": "managed", "executable": false },
+    { "source": "project.sh", "target": "project.sh", "strategy": "managed", "executable": true },
+    { "source": "project.bat", "target": "project.bat", "strategy": "managed", "executable": false },
+    { "source": "governance/approval-evidence.schema.json", "target": ".governance/approval-evidence.schema.json", "strategy": "managed", "executable": false },
+    { "source": "governance/diagnostics.json", "target": ".governance/diagnostics.json", "strategy": "managed", "executable": false },
+    { "source": "governance/intent.schema.json", "target": ".governance/intent.schema.json", "strategy": "managed", "executable": false },
+    { "source": "governance/lock.schema.json", "target": ".governance/lock.schema.json", "strategy": "managed", "executable": false },
+    { "source": "governance/manifest.schema.json", "target": ".governance/manifest.schema.json", "strategy": "managed", "executable": false },
+    { "source": "governance/package-manifest.json", "target": ".governance/package-manifest.json", "strategy": "managed", "executable": false },
+    { "source": "governance/stack-profiles.json", "target": ".governance/stack-profiles.json", "strategy": "managed", "executable": false },
+    { "source": "governance/work-classification.dsl.json", "target": ".governance/work-classification.dsl.json", "strategy": "managed", "executable": false },
+    { "source": "governance/work-classification.schema.json", "target": ".governance/work-classification.schema.json", "strategy": "managed", "executable": false },
+    { "source": "scripts/governance_check.py", "target": ".governance/governance_check.py", "strategy": "managed", "executable": false },
+    { "source": "project/governance-check.sh", "target": "project/governance-check.sh", "strategy": "managed", "executable": true },
+    { "source": "project/governance-check.bat", "target": "project/governance-check.bat", "strategy": "managed", "executable": false },
+    { "source": "project/new-ticket.sh", "target": "project/new-ticket.sh", "strategy": "managed", "executable": true },
+    { "source": "project/readme.sh", "target": "project/readme.sh", "strategy": "managed", "executable": true },
+    { "source": "governance/manifest.default.json", "target": ".governance/manifest.json", "strategy": "seed", "executable": false }
+  ]
+}

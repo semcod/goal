@@ -1,0 +1,29 @@
+2026-08-05 plan preflight
+global goal governance: unavailable
+local .venv/bin/goal governance: available
+source revision: cc9b04673bbd85cb4e35fb683d288ef34be1485f
+read-only adoption result: target manifest version must equal adopted standard version 0.11.0
+result: expected PLAN boundary; no target files written by adoption command
+python3 -m json.tool project/ticket-006/intent.json: PASS
+new-project 0.11.0 intent schema validation: PASS
+git diff --check: PASS
+implementation tests: NOT RUN; ticket remains PLAN / WAIT_FOR_APPROVAL
+2026-08-05 hosted draft evidence
+PR #16 Python 3.12/3.13: FAIL
+failure: NameError name 'api_key' is not defined in goal/project_bootstrap.py:_validate_pfix_env
+Python 3.13 summary: 1 failed, 471 passed, 7 skipped
+unchanged main@b84d40a CI run 30986834239: FAILURE
+classification: pre-existing SERVICE/health debt outside ticket-006 scope
+2026-08-05 APPROVAL: user requested continuation and approved ticket-006
+transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
+2026-08-05 goal governance adopt --upgrade: PASS, new-project 0.11.0 at cc9b04673bbd85cb4e35fb683d288ef34be1485f
+2026-08-05 goal governance adopt --check: PASS, up-to-date
+2026-08-05 ./project/governance-check.sh: GOV-PASS (0 errors, 0 warnings)
+2026-08-05 focused governance/adoption tests: PASS (11 passed)
+2026-08-05 full local suite: BASELINE FAILURE (476 passed, 2 skipped, 1 pre-existing NameError)
+2026-08-05 git diff --check: PASS
+transition: EDIT -> VALIDATION
+2026-08-05 refreshed from main after ticket-007 DONE
+2026-08-05 governance adoption check: PASS, immutable 0.11.0 up to date
+2026-08-05 focused governance/bootstrap tests: PASS (76 passed)
+2026-08-05 full pytest after baseline repair: PASS (477 passed, 2 skipped)

@@ -1,13 +1,17 @@
 {
   "managedFiles": {
-    ".governance/diagnostics.json": "85f2d054803ed8a347bbf3ca8e0fd153de1e747c3e0e48e9986bb5fa06362251",
-    ".governance/governance_check.py": "4304976cb0b16b3cc6a676aa41425211647babefc54cf135ed8d11e1f4c3e4db",
-    ".governance/intent.schema.json": "b2dc37ee348ca33e2f0d33515dd79c2403ac8afb504257cdebb65edf472a2637",
+    ".governance/approval-evidence.schema.json": "488dee5a4bfbf221206acc45947fce5283eb5e80614ec0ef478b5d618cc4eb83",
+    ".governance/diagnostics.json": "19a90eee30bb84827379c731bb7c688f39d3124a1408226116dec1631ee67a5a",
+    ".governance/governance_check.py": "aabd710d8c273faa59e6fd26b6d5d9c04f55b084cb9fd3df3c26c5ba0cbc56ea",
+    ".governance/intent.schema.json": "d618a2c7ef4b4a24fbf95d516bf8c8231836e7752b28f0450cc96f02f07b6780",
     ".governance/lock.schema.json": "fc6f1143ef713c993b61270dd2d7545a52cb0b8501aadb188e6d0152a208b207",
-    ".governance/manifest.json": "f5afc8093ebce57cff836f66a37094d402fcb7306fda97fde527ad88a280f829",
-    ".governance/manifest.schema.json": "6504e451643c603b02e93e2c52ec72a6b3a6d72c556f7b2cdfb35856541021d3",
+    ".governance/manifest.json": "4ca33d114f24ad645cc234c1f10188d1f38b9c3106aabd480c4b6c4f79acb858",
+    ".governance/manifest.schema.json": "d48f258e3397ac2d8c5010e5ccdeef9eaf87b0b015d56798d11d5916c5f70a18",
+    ".governance/package-manifest.json": "d9d7052c51f0df5d92260b1f97fb0f7e1f77bd9b890a095daea5a1ea625b4ab3",
     ".governance/stack-profiles.json": "6fa3f8f44e50cfd0539413a85092817d3fab4e82fe376405f1e443120724dff2",
-    "AGENTS.md": "204fb955fc54bb976008f213e526891da5717fdc76c3f7dfb5be1d885bc0df78",
+    ".governance/work-classification.dsl.json": "3a947c41938c0b8ef1717957f313ff9248764252735182de30b1f2d6878748b6",
+    ".governance/work-classification.schema.json": "f5c2b518238543589e4f8d3805cc6455e19d6919643644aaeae034abf472a467",
+    "AGENTS.md": "e3928661a4e3ede5e9e60d8c0b28d4f6bb08057994a290da10197170f38a108d",
     "project.bat": "d707e014dba4d66e64ff6d4e212ceeedb8b65ec96ce76677cc3fc025875f45f6",
     "project.sh": "90f82d9f0feea9bde34dca3e1c657604a65f3bfc938709e3cf69682f07dd1bc1",
     "project/governance-check.bat": "7207bc499483d7a7a1ab2c230ad288c2484cdf02f3a773ba69f4b760b67a3388",
@@ -20,7 +24,7 @@
     "id": "wellmanifest/new-project",
     "publicationStatus": "published",
     "sourceRepository": "wellmanifest/new-project",
-    "sourceRevision": "c0bb63e7fc889934140c96b1625f3ab232122baf",
-    "version": "0.9.0"
+    "sourceRevision": "cc9b04673bbd85cb4e35fb683d288ef34be1485f",
+    "version": "0.11.0"
   }
 }
