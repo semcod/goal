@@ -1,0 +1,7 @@
+2026-08-05 plan preflight
+main: b84d40a36d9a2e8e5a0e6e99e10c27263ab1a049
+failure: NameError name 'api_key' is not defined in goal/project_bootstrap.py:_validate_pfix_env
+classification: SERVICE / health
+planned application files: 1
+existing regression test: tests/test_project_bootstrap.py::TestOpenRouterEnvDiscovery::test_finds_parent_env_over_blank_local_env
+implementation tests: NOT RUN; WAIT_FOR_APPROVAL
