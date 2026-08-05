@@ -27,3 +27,7 @@ transition: EDIT -> VALIDATION
 2026-08-05 governance adoption check: PASS, immutable 0.11.0 up to date
 2026-08-05 focused governance/bootstrap tests: PASS (76 passed)
 2026-08-05 full pytest after baseline repair: PASS (477 passed, 2 skipped)
+2026-08-05 hosted CI: PASS (Python 3.12 and 3.13)
+2026-08-05 exact-head Validator approval: f3a8327bfaf780b0fe2e165da968ef2e7524983c
+2026-08-05 merged PR #16: 8e859fc55df8905b5d731adf6a11e2d41c7fb6d2
+transition: VALIDATION -> DONE
