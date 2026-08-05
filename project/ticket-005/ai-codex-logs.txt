@@ -1,0 +1,26 @@
+[2026-08-05] PLAN
+ticket=ticket-005
+state=WAIT_FOR_APPROVAL
+default_delivery=pull-request
+server_enforcement=not_in_scope
+implementation_writes=none
+
+[2026-08-05] APPROVAL
+state=IN_PROGRESS/EDIT
+goal_yaml_owner=governance
+policy_enabled=true
+
+[2026-08-05] ACTIVATION
+default_mode=pull-request
+allowed_modes=direct-main,publish-only,pull-request
+remote=origin
+base_branch=main
+hook_installed=true
+local_hook_security_boundary=false
+server_enforcement_required=true
+
+[2026-08-05] VALIDATION
+focused_tests=6 passed
+governance=PASS
+errors=0
+warnings=0

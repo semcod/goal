@@ -69,7 +69,7 @@
       "application": { "ownedPaths": ["goal/**", "src/**", "app/**", "lib/**", "test/**", "tests/**"] },
       "interfaces": { "ownedPaths": ["api/**", "sdk/**", "clients/**"] },
       "infrastructure": { "ownedPaths": ["Dockerfile*", "compose*.yml", "compose*.yaml", "infra/**", ".github/**"] },
-      "governance": { "ownedPaths": [".governance/**", ".gitignore", "AGENTS.md", "README.md", "TODO.md", "project/**", "project.sh", "project.bat"] },
+      "governance": { "ownedPaths": [".governance/**", ".gitignore", "AGENTS.md", "README.md", "TODO.md", "goal.yaml", "project/**", "project.sh", "project.bat"] },
       "integration": { "ownedPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml", "docs/**"] }
     },
     "integration": {
