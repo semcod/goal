@@ -15,13 +15,16 @@
 - [ ] Review [ticket-006](project/ticket-006/README.md): adopt immutable
   new-project 0.11.0 through Goal's local governance adapter before adding the
   CC-to-kind runtime classifier. State: `IN_PROGRESS / VALIDATION`.
+- [x] Review and deliver [ticket-007](project/ticket-007/README.md): repair the
+  existing OpenRouter environment-validation NameError. State: `DONE`;
+  classification: `SERVICE / health`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
 
 > Current workflow state: `ticket-001 DONE`; `ticket-002 DONE`;
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
-> `ticket-006 IN_PROGRESS / VALIDATION`.
+> `ticket-006 IN_PROGRESS / VALIDATION`; `ticket-007 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

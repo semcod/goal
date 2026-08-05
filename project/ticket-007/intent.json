@@ -1,0 +1,25 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-007",
+  "summary": "Repair the OpenRouter environment validator undefined-name baseline failure",
+  "workstream": "application",
+  "allowedPaths": [
+    "goal/project_bootstrap.py",
+    "tests/test_project_bootstrap.py",
+    "project/ticket-007/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".env",
+    ".env.*",
+    ".governance/**",
+    "project/ticket-*/user-*.md",
+    "goal.yaml",
+    ".github/**"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}
