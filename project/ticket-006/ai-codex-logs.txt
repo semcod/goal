@@ -8,3 +8,9 @@ python3 -m json.tool project/ticket-006/intent.json: PASS
 new-project 0.11.0 intent schema validation: PASS
 git diff --check: PASS
 implementation tests: NOT RUN; ticket remains PLAN / WAIT_FOR_APPROVAL
+2026-08-05 hosted draft evidence
+PR #16 Python 3.12/3.13: FAIL
+failure: NameError name 'api_key' is not defined in goal/project_bootstrap.py:_validate_pfix_env
+Python 3.13 summary: 1 failed, 471 passed, 7 skipped
+unchanged main@b84d40a CI run 30986834239: FAILURE
+classification: pre-existing SERVICE/health debt outside ticket-006 scope

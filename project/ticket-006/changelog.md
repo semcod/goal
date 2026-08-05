@@ -6,3 +6,5 @@
 - No human participant identity or content was generated.
 - Planned the immutable 0.11.0 governance adoption through Goal's local adapter.
 - Kept CC-to-kind classification outside this governance-only ticket.
+- Recorded the current-main `api_key` NameError as separate SERVICE debt rather
+  than expanding the adoption ticket into application repair.

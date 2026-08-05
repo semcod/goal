@@ -39,3 +39,6 @@ application ticket after adoption.
   ticket uses the repository's verified `.venv/bin/goal` entry point.
 - Cross-version adoption fails closed until the target manifest version is
   explicitly reviewed and advanced.
+- Hosted CI already fails on unchanged `main@b84d40a` because
+  `_validate_pfix_env` references an undefined `api_key` on Python 3.12/3.13.
+  This pre-existing `SERVICE/health` bug is outside the governance-only scope.

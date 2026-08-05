@@ -30,6 +30,8 @@ current 0.9.0 target manifest until that declaration is reviewed.
 ## Blockers
 
 - Human approval is required before implementation.
+- Full hosted CI requires a separate application ticket for the pre-existing
+  environment-discovery defect; ticket-006 does not broaden into runtime code.
 
 ## Preflight evidence
 
@@ -37,3 +39,6 @@ current 0.9.0 target manifest until that declaration is reviewed.
 - Global Goal does not expose the governance group and is not used.
 - Read-only adoption fails at the expected manifest version boundary without
   writing target files.
+- Draft PR CI reproduces the current-main failure in
+  `tests/test_project_bootstrap.py`: `NameError: api_key` from
+  `goal/project_bootstrap.py`; 471 tests pass and seven skip on Python 3.13.
