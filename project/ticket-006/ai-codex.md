@@ -34,8 +34,8 @@ current 0.9.0 target manifest until that declaration is reviewed.
 
 ## Blockers
 
-- Full hosted CI requires a separate application ticket for the pre-existing
-  environment-discovery defect; ticket-006 does not broaden into runtime code.
+- None. Ticket-007 repaired the independent baseline defect and was merged
+  before this adoption branch was refreshed.
 
 ## Preflight evidence
 
@@ -46,5 +46,5 @@ current 0.9.0 target manifest until that declaration is reviewed.
 - Draft PR CI reproduces the current-main failure in
   `tests/test_project_bootstrap.py`: `NameError: api_key` from
   `goal/project_bootstrap.py`; 471 tests pass and seven skip on Python 3.13.
-- Local focused governance tests pass 11/11; the full local run passes 476 with
-  two skips and reproduces only the already documented `api_key` NameError.
+- After refreshing from `main`, local governance/adoption/bootstrap tests pass
+  76/76 and the complete suite passes 477 with two skips and zero failures.

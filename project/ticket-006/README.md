@@ -39,9 +39,9 @@ application ticket after adoption.
   ticket uses the repository's verified `.venv/bin/goal` entry point.
 - Cross-version adoption fails closed until the target manifest version is
   explicitly reviewed and advanced.
-- Hosted CI already fails on unchanged `main@b84d40a` because
-  `_validate_pfix_env` references an undefined `api_key` on Python 3.12/3.13.
-  This pre-existing `SERVICE/health` bug is outside the governance-only scope.
+- The pre-existing `_validate_pfix_env` failure was repaired independently by
+  ticket-007 before this branch was refreshed from `main`; this ticket does not
+  contain that application change in its own diff.
 
 ## Session authorization
 
@@ -52,7 +52,7 @@ This authorizes implementation inside `intent.json`, not merge approval.
 
 - Repeated adoption check: up to date at immutable new-project 0.11.0 SHA.
 - `./project/governance-check.sh`: PASS with zero errors and warnings.
-- Focused governance/adoption tests: 11 passed.
-- Full local suite: 476 passed, 2 skipped and the single documented
-  current-main `api_key` NameError failed.
+- Focused governance/adoption and bootstrap tests: 76 passed.
+- Full local suite after merging the ticket-007 baseline: 477 passed, 2 skipped,
+  0 failed.
 - `git diff --check`: PASS.

@@ -11,3 +11,5 @@
 - Adopted the complete immutable 0.11.0 governance package and canonical
   classification contract through Goal's own adapter.
 - Passed the deterministic gate and all 11 focused adoption/delivery tests.
+- Refreshed from `main` after ticket-007 and passed 76 focused plus 477 full
+  tests with two skips and zero failures.

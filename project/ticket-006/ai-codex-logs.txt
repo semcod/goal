@@ -23,3 +23,7 @@ transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
 2026-08-05 full local suite: BASELINE FAILURE (476 passed, 2 skipped, 1 pre-existing NameError)
 2026-08-05 git diff --check: PASS
 transition: EDIT -> VALIDATION
+2026-08-05 refreshed from main after ticket-007 DONE
+2026-08-05 governance adoption check: PASS, immutable 0.11.0 up to date
+2026-08-05 focused governance/bootstrap tests: PASS (76 passed)
+2026-08-05 full pytest after baseline repair: PASS (477 passed, 2 skipped)
