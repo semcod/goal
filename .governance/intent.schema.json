@@ -20,9 +20,145 @@
         { "type": "null" },
         { "type": "string", "pattern": "^ticket-[0-9]{3}$" }
       ]
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptedBaseSha",
+        "targetBranch",
+        "outcome",
+        "nonGoals",
+        "complexity",
+        "estimatedMinutes",
+        "budgets",
+        "architecture",
+        "runtimeDependencies",
+        "validation"
+      ],
+      "properties": {
+        "acceptedBaseSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "targetBranch": { "$ref": "#/$defs/branch" },
+        "outcome": { "type": "string", "minLength": 1 },
+        "nonGoals": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "complexity": { "enum": ["XS", "S"] },
+        "estimatedMinutes": { "type": "integer", "minimum": 1, "maximum": 30 },
+        "budgets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxImplementationFiles",
+            "maxAffectedComponents",
+            "maxPublicInterfaceChanges",
+            "maxRuntimeDependencies"
+          ],
+          "properties": {
+            "maxImplementationFiles": { "type": "integer", "minimum": 1 },
+            "maxAffectedComponents": { "type": "integer", "minimum": 1 },
+            "maxPublicInterfaceChanges": { "type": "integer", "minimum": 0 },
+            "maxRuntimeDependencies": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "architecture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "decision",
+            "components",
+            "responsibilityChanges",
+            "interfaceChanges",
+            "dataChanges",
+            "ui",
+            "rollback"
+          ],
+          "properties": {
+            "status": { "const": "accepted" },
+            "decision": { "type": "string", "minLength": 1 },
+            "components": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "paths"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "paths": {
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/glob" },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              }
+            },
+            "responsibilityChanges": { "type": "boolean" },
+            "interfaceChanges": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            },
+            "dataChanges": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            },
+            "ui": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["impact", "states", "evidence"],
+              "properties": {
+                "impact": { "enum": ["none", "single-state", "multi-state"] },
+                "states": {
+                  "type": "array",
+                  "items": { "enum": ["loading", "empty", "error", "success"] },
+                  "uniqueItems": true
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 },
+                  "uniqueItems": true
+                }
+              }
+            },
+            "rollback": { "type": "string", "minLength": 1 }
+          }
+        },
+        "runtimeDependencies": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "validation": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["criterion", "commands", "evidence"],
+            "properties": {
+              "criterion": { "type": "string", "pattern": "^AC-[0-9]+$" },
+              "commands": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "evidence": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
-    "glob": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" }
+    "glob": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" },
+    "branch": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:\\.\\.|//|@\\{|[~^:?*\\[\\\\])).+$" }
   }
 }

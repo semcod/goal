@@ -28,8 +28,17 @@ Before any multi-step implementation, an agent must:
    and `BLOCKED` retain evidence without blocking another implementation;
    transition back to `IN_PROGRESS` before changing source or tests.
 11. Treat GitHub review as trusted only when it targets the current HEAD and
-   the reviewer login is in the protected reusable-workflow
-   `trusted-reviewers` input.
+   either a `User` login is in protected `trusted-reviewers` or a `Bot` login
+   is in the separate protected `trusted-validator-apps` input. Never trust an
+   arbitrary Bot review.
+12. Require merge approval evidence to bind repository, PR, current HEAD,
+   active ticket and actor. The protected resolver creates that evidence
+   outside the PR checkout; repository-authored evidence is untrusted.
+13. A signed attestation is trusted only after a protected verifier validates
+   its signature, issuer, predicate type and subject bindings.
+14. Validator-agent examples use
+   `LLM_MODEL_VALIDATOR=openrouter/z-ai/glm-5.2`; model findings stay advisory.
 
 Markdown approval is an audit note, not trusted merge authorization. Required
-merge approval comes from the repository's protected review/ruleset boundary.
+merge approval comes from the repository's protected review, attestation and
+ruleset boundary.

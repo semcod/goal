@@ -2,8 +2,8 @@
 
 - **ID**: ticket-006
 - **Owner**: unresolved:human
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-05
 
 ## Goal and scope
@@ -20,12 +20,12 @@ application ticket after adoption.
 
 ## Acceptance criteria
 
-- [ ] AC-01: Scope and immutable source SHA are approved by a human owner.
-- [ ] AC-02: The target manifest preserves Goal ownership and declares 0.11.0.
-- [ ] AC-03: Local Goal reports and applies only the reviewed immutable upgrade.
-- [ ] AC-04: The resulting lock binds 0.11.0, published status, full SHA and
+- [x] AC-01: Scope and immutable source SHA are approved by a human owner.
+- [x] AC-02: The target manifest preserves Goal ownership and declares 0.11.0.
+- [x] AC-03: Local Goal reports and applies only the reviewed immutable upgrade.
+- [x] AC-04: The resulting lock binds 0.11.0, published status, full SHA and
   managed classification DSL/schema files.
-- [ ] AC-05: Governance and focused Goal adoption tests pass; Docker remains
+- [x] AC-05: Governance and focused Goal adoption tests pass; Docker remains
   optional as declared by the preserved target manifest.
 
 ## Participants
@@ -42,3 +42,17 @@ application ticket after adoption.
 - Hosted CI already fails on unchanged `main@b84d40a` because
   `_validate_pfix_env` references an undefined `api_key` on Python 3.12/3.13.
   This pre-existing `SERVICE/health` bug is outside the governance-only scope.
+
+## Session authorization
+
+The user approved ticket-006 with the instruction to continue on 2026-08-05.
+This authorizes implementation inside `intent.json`, not merge approval.
+
+## Validation evidence
+
+- Repeated adoption check: up to date at immutable new-project 0.11.0 SHA.
+- `./project/governance-check.sh`: PASS with zero errors and warnings.
+- Focused governance/adoption tests: 11 passed.
+- Full local suite: 476 passed, 2 skipped and the single documented
+  current-main `api_key` NameError failed.
+- `git diff --check`: PASS.

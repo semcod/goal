@@ -21,9 +21,34 @@
     "governancePaths": { "type": "array", "items": { "$ref": "#/$defs/glob" }, "uniqueItems": true },
     "trustedApprovalSources": {
       "type": "array",
-      "items": { "enum": ["github-review", "signed-attestation"] },
+      "items": { "enum": ["github-review", "github-app-review", "signed-attestation"] },
       "minItems": 1,
       "uniqueItems": true
+    },
+    "approvalEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "requiredBindings", "reviewVerificationMethod", "signedAttestationPredicateType"],
+      "properties": {
+        "schema": { "const": "new-project.approval-evidence/v1" },
+        "requiredBindings": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "repository" },
+            { "const": "pullRequest" },
+            { "const": "headSha" },
+            { "const": "ticket" },
+            { "const": "actor" }
+          ],
+          "items": false,
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "reviewVerificationMethod": { "const": "github-api-allowlist" },
+        "signedAttestationPredicateType": {
+          "const": "https://wellmanifest.dev/attestations/validator/v1"
+        }
+      }
     },
     "ticket": {
       "type": "object",
@@ -83,6 +108,54 @@
         }
       }
     },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiredForImplementation",
+        "maxActiveMinutes",
+        "checkpointMinutes",
+        "allowedComplexityClasses",
+        "maxImplementationFiles",
+        "maxAffectedComponents",
+        "maxPublicInterfaceChanges",
+        "maxRuntimeDependencies",
+        "targetBranches",
+        "publicInterfacePaths",
+        "dependencyManifestPaths"
+      ],
+      "properties": {
+        "requiredForImplementation": { "type": "boolean" },
+        "maxActiveMinutes": { "type": "integer", "minimum": 1, "maximum": 30 },
+        "checkpointMinutes": { "type": "integer", "minimum": 1, "maximum": 29 },
+        "allowedComplexityClasses": {
+          "type": "array",
+          "items": { "enum": ["XS", "S"] },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "maxImplementationFiles": { "type": "integer", "minimum": 1 },
+        "maxAffectedComponents": { "type": "integer", "minimum": 1 },
+        "maxPublicInterfaceChanges": { "type": "integer", "minimum": 0 },
+        "maxRuntimeDependencies": { "type": "integer", "minimum": 0 },
+        "targetBranches": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/branch" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "publicInterfacePaths": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/glob" },
+          "uniqueItems": true
+        },
+        "dependencyManifestPaths": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/path" },
+          "uniqueItems": true
+        }
+      }
+    },
     "stacks": {
       "type": "array",
       "items": { "enum": ["node", "python", "go", "rust", "java", "docker", "frontend", "terraform", "kubernetes"] },
@@ -92,6 +165,7 @@
   },
   "$defs": {
     "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" },
-    "glob": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" }
+    "glob": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" },
+    "branch": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:\\.\\.|//|@\\{|[~^:?*\\[\\\\])).+$" }
   }
 }

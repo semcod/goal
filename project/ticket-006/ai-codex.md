@@ -25,11 +25,15 @@ current 0.9.0 target manifest until that declaration is reviewed.
 
 ## Actual changes
 
-- None; waiting for approval.
+- User approval received; ticket transitioned to `IN_PROGRESS / EDIT`.
+- Goal adopted new-project 0.11.0 at the immutable release SHA and then reported
+  the target up to date on a repeated check.
+- The managed package now includes the approval-evidence schema, package
+  manifest, canonical classification DSL/schema, current governance checker
+  and agent authority rules.
 
 ## Blockers
 
-- Human approval is required before implementation.
 - Full hosted CI requires a separate application ticket for the pre-existing
   environment-discovery defect; ticket-006 does not broaden into runtime code.
 
@@ -42,3 +46,5 @@ current 0.9.0 target manifest until that declaration is reviewed.
 - Draft PR CI reproduces the current-main failure in
   `tests/test_project_bootstrap.py`: `NameError: api_key` from
   `goal/project_bootstrap.py`; 471 tests pass and seven skip on Python 3.13.
+- Local focused governance tests pass 11/11; the full local run passes 476 with
+  two skips and reproduces only the already documented `api_key` NameError.

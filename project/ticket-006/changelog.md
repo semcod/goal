@@ -8,3 +8,6 @@
 - Kept CC-to-kind classification outside this governance-only ticket.
 - Recorded the current-main `api_key` NameError as separate SERVICE debt rather
   than expanding the adoption ticket into application repair.
+- Adopted the complete immutable 0.11.0 governance package and canonical
+  classification contract through Goal's own adapter.
+- Passed the deterministic gate and all 11 focused adoption/delivery tests.

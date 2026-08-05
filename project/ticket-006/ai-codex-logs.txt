@@ -14,3 +14,12 @@ failure: NameError name 'api_key' is not defined in goal/project_bootstrap.py:_v
 Python 3.13 summary: 1 failed, 471 passed, 7 skipped
 unchanged main@b84d40a CI run 30986834239: FAILURE
 classification: pre-existing SERVICE/health debt outside ticket-006 scope
+2026-08-05 APPROVAL: user requested continuation and approved ticket-006
+transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
+2026-08-05 goal governance adopt --upgrade: PASS, new-project 0.11.0 at cc9b04673bbd85cb4e35fb683d288ef34be1485f
+2026-08-05 goal governance adopt --check: PASS, up-to-date
+2026-08-05 ./project/governance-check.sh: GOV-PASS (0 errors, 0 warnings)
+2026-08-05 focused governance/adoption tests: PASS (11 passed)
+2026-08-05 full local suite: BASELINE FAILURE (476 passed, 2 skipped, 1 pre-existing NameError)
+2026-08-05 git diff --check: PASS
+transition: EDIT -> VALIDATION
