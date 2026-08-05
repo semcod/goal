@@ -1,0 +1,68 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-006",
+  "summary": "Adopt immutable new-project 0.11.0",
+  "workstream": "governance",
+  "allowedPaths": [
+    ".governance/**",
+    "AGENTS.md",
+    "project.sh",
+    "project.bat",
+    "project/governance-check.sh",
+    "project/governance-check.bat",
+    "project/new-ticket.sh",
+    "project/readme.sh",
+    "project/ticket-006/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "goal/**",
+    "tests/**",
+    "pyproject.toml",
+    "goal.yaml",
+    "Dockerfile*",
+    "compose*.yml"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-001",
+  "delivery": {
+    "acceptedBaseSha": "b84d40a36d9a2e8e5a0e6e99e10c27263ab1a049",
+    "targetBranch": "main",
+    "outcome": "Pin Goal to immutable new-project 0.11.0 and install its canonical work-classification package",
+    "nonGoals": [
+      "No Goal runtime classifier or queue change",
+      "No dependency, package, release or Docker configuration change",
+      "No branch-based or moving-tag adoption"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use Goal's own immutable adoption adapter while preserving the customized target manifest",
+      "components": [
+        {"name": "goal-governance-manifest", "paths": [".governance/manifest.json"]},
+        {"name": "managed-governance-package", "paths": [".governance/**", "AGENTS.md", "project.sh", "project.bat", "project/governance-check.*", "project/new-ticket.sh", "project/readme.sh"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": ["Governance lock advances from 0.9.0 to immutable 0.11.0"],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Re-adopt the previous full source revision through a reviewed ticket without moving tags"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-03", "commands": [".venv/bin/goal governance adopt --source-revision cc9b04673bbd85cb4e35fb683d288ef34be1485f --target-root . --check"], "evidence": "Deterministic immutable adoption plan"},
+      {"criterion": "AC-05", "commands": ["./project/governance-check.sh", ".venv/bin/pytest -q tests/test_governance_cmd.py"], "evidence": "Governance and Goal adapter tests pass"}
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+2026-08-05 plan preflight
+global goal governance: unavailable
+local .venv/bin/goal governance: available
+source revision: cc9b04673bbd85cb4e35fb683d288ef34be1485f
+read-only adoption result: target manifest version must equal adopted standard version 0.11.0
+result: expected PLAN boundary; no target files written by adoption command
+python3 -m json.tool project/ticket-006/intent.json: PASS
+new-project 0.11.0 intent schema validation: PASS
+git diff --check: PASS
+implementation tests: NOT RUN; ticket remains PLAN / WAIT_FOR_APPROVAL
