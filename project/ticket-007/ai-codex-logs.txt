@@ -11,3 +11,7 @@ transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
 2026-08-05 full pytest: PASS (477 passed, 2 skipped, 0 failed)
 2026-08-05 git diff --check: PASS
 transition: EDIT -> VALIDATION
+2026-08-05 hosted CI: PASS (Python 3.12 and 3.13)
+2026-08-05 exact-head Validator approval: b48ac9a784daaea42a80a84e8da1143abd822d29
+2026-08-05 merged PR #17: eb54f4e5391389fbb1125f5621517da88230a643
+transition: VALIDATION -> DONE
