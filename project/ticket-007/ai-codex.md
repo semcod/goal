@@ -21,8 +21,11 @@ defined. The existing test already proves the intended parent `.env` behavior.
 
 ## Actual changes
 
-- None; waiting for human approval.
+- Human approval received; ticket transitioned to `IN_PROGRESS / EDIT`.
+- Replaced the undefined legacy name with the credential already returned by
+  the existing resolver; no value is printed or persisted.
+- Focused and full test suites pass without failures.
 
 ## Blockers
 
-- P-CORE-008 approval is required before editing application code.
+- None during implementation.

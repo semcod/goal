@@ -1169,7 +1169,7 @@ def _validate_pfix_env(project_dir: Path) -> bool:
         return False
 
     # Check if key looks valid (starts with sk-or-v1-)
-    if not api_key.startswith("sk-or-v1-"):
+    if not credential.startswith("sk-or-v1-"):
         click.echo(
             click.style(
                 "\n  ⚠️ OPENROUTER_API_KEY format appears invalid!", fg="red", bold=True

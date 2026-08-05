@@ -21,39 +21,5 @@
   "stacks": ["python"],
   "dependsOn": [],
   "conflictsWith": [],
-  "integrationTicket": null,
-  "delivery": {
-    "acceptedBaseSha": "b84d40a36d9a2e8e5a0e6e99e10c27263ab1a049",
-    "targetBranch": "main",
-    "outcome": "Restore green OpenRouter environment validation without exposing credentials",
-    "nonGoals": [
-      "No provider, model, secret-storage or discovery behavior change",
-      "No governance adoption or workflow change"
-    ],
-    "complexity": "XS",
-    "estimatedMinutes": 10,
-    "budgets": {
-      "maxImplementationFiles": 2,
-      "maxAffectedComponents": 1,
-      "maxPublicInterfaceChanges": 0,
-      "maxRuntimeDependencies": 0
-    },
-    "architecture": {
-      "status": "accepted",
-      "decision": "Use the credential value already returned by the existing resolver",
-      "components": [
-        {"name": "project-bootstrap-env-validation", "paths": ["goal/project_bootstrap.py", "tests/test_project_bootstrap.py"]}
-      ],
-      "responsibilityChanges": false,
-      "interfaceChanges": [],
-      "dataChanges": [],
-      "ui": {"impact": "none", "states": [], "evidence": []},
-      "rollback": "Revert the single application-line repair"
-    },
-    "runtimeDependencies": [],
-    "validation": [
-      {"criterion": "AC-03", "commands": ["python -m pytest tests/test_project_bootstrap.py -q"], "evidence": "Focused environment-discovery regression passes"},
-      {"criterion": "AC-04", "commands": ["python -m pytest -q"], "evidence": "Full suite has no undefined-name failure"}
-    ]
-  }
+  "integrationTicket": null
 }

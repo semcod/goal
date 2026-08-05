@@ -4,3 +4,5 @@
 
 - Planned the minimal SERVICE/health repair for the current-main OpenRouter
   environment-validation NameError.
+- Repaired the undefined-name reference without changing credential discovery.
+- Passed 71 focused and 477 full-suite tests.
