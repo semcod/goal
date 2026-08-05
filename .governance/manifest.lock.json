@@ -4,7 +4,7 @@
     ".governance/governance_check.py": "4304976cb0b16b3cc6a676aa41425211647babefc54cf135ed8d11e1f4c3e4db",
     ".governance/intent.schema.json": "b2dc37ee348ca33e2f0d33515dd79c2403ac8afb504257cdebb65edf472a2637",
     ".governance/lock.schema.json": "fc6f1143ef713c993b61270dd2d7545a52cb0b8501aadb188e6d0152a208b207",
-    ".governance/manifest.json": "55c10d41d9b2980cecbb8e5195f2bbee59c83b273f88edd35020087f0c83dedb",
+    ".governance/manifest.json": "f5afc8093ebce57cff836f66a37094d402fcb7306fda97fde527ad88a280f829",
     ".governance/manifest.schema.json": "6504e451643c603b02e93e2c52ec72a6b3a6d72c556f7b2cdfb35856541021d3",
     ".governance/stack-profiles.json": "6fa3f8f44e50cfd0539413a85092817d3fab4e82fe376405f1e443120724dff2",
     "AGENTS.md": "204fb955fc54bb976008f213e526891da5717fdc76c3f7dfb5be1d885bc0df78",

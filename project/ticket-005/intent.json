@@ -1,0 +1,28 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-005",
+  "summary": "Enable governed delivery policy in Goal",
+  "workstream": "governance",
+  "allowedPaths": [
+    "project/ticket-005/**",
+    "project/TICKETS.md",
+    "TODO.md",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    "goal.yaml"
+  ],
+  "forbiddenPaths": [
+    "AGENTS.md",
+    "README.md",
+    "CHANGELOG.md",
+    "docs/**",
+    "goal/**",
+    "tests/**",
+    "pyproject.toml",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-003"],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-001"
+}

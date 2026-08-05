@@ -12,6 +12,17 @@
 # Edit this file to customize Goal's behavior for your project.
 
 version: '1.0'
+governance:
+  delivery:
+    require_goal_a: true
+    default_mode: pull-request
+    allowed_modes:
+    - direct-main
+    - publish-only
+    - pull-request
+    remote: origin
+    base_branch: main
+    require_clean_governance: true
 project:
   name: goal
   type:
