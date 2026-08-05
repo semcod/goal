@@ -1,0 +1,81 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schema": "new-project.governance/v2",
+  "standard": {
+    "id": "wellmanifest/new-project",
+    "version": "0.9.0"
+  },
+  "requiredFiles": [
+    "README.md",
+    "VERSION",
+    "CHANGELOG.md",
+    "TODO.md",
+    "AGENTS.md",
+    "project/TICKETS.md",
+    "project/new-ticket.sh",
+    "project/readme.sh"
+  ],
+  "governancePaths": [
+    "TODO.md",
+    "project/TICKETS.md",
+    "project/ticket-*/**"
+  ],
+  "trustedApprovalSources": [
+    "github-review",
+    "signed-attestation"
+  ],
+  "ticket": {
+    "root": "project",
+    "directoryPattern": "^ticket-[0-9]{3}$",
+    "requiredFiles": [
+      "README.md",
+      "preprompt.md",
+      "changelog.md",
+      "intent.json"
+    ],
+    "requiredAgentFiles": [
+      "ai-*.md",
+      "ai-*-logs.txt"
+    ],
+    "activeStatuses": [
+      "IN_PROGRESS"
+    ],
+    "nonActiveStatuses": [
+      "BACKLOG",
+      "PLAN",
+      "BLOCKED"
+    ],
+    "closedStatuses": [
+      "DONE",
+      "CANCELLED"
+    ],
+    "implementationStates": [
+      "EDIT",
+      "VALIDATION",
+      "PUBLICATION"
+    ],
+    "intentFile": "intent.json"
+  },
+  "docker": {
+    "required": false,
+    "dockerfiles": ["Dockerfile", "Dockerfile.e2e"],
+    "composeFiles": ["compose.yml", "docker-compose.yml", "compose.e2e.yml"]
+  },
+  "coordination": {
+    "mode": "workstreams",
+    "maxActiveTicketsPerWorkstream": 1,
+    "rejectActiveScopeOverlap": true,
+    "workstreams": {
+      "application": { "ownedPaths": ["goal/**", "src/**", "app/**", "lib/**", "test/**", "tests/**"] },
+      "interfaces": { "ownedPaths": ["api/**", "sdk/**", "clients/**"] },
+      "infrastructure": { "ownedPaths": ["Dockerfile*", "compose*.yml", "compose*.yaml", "infra/**", ".github/**"] },
+      "governance": { "ownedPaths": [".governance/**", ".gitignore", "AGENTS.md", "README.md", "TODO.md", "project/**", "project.sh", "project.bat"] },
+      "integration": { "ownedPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml", "docs/**"] }
+    },
+    "integration": {
+      "workstream": "integration",
+      "requiredForPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml"]
+    }
+  },
+  "stacks": ["python"]
+}

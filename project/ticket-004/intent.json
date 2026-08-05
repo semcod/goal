@@ -1,0 +1,23 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-004",
+  "summary": "Governance scanner compatibility cleanup",
+  "workstream": "application",
+  "allowedPaths": [
+    "project/ticket-004/**",
+    "goal/project_bootstrap.py"
+  ],
+  "forbiddenPaths": [
+    ".governance/**",
+    "AGENTS.md",
+    "README.md",
+    "goal/cli/**",
+    "goal/push/**",
+    "tests/**",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-001"],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-001"
+}

@@ -217,6 +217,7 @@ def load_command_modules() -> None:
         ".hooks_cmd",
         ".postcommit_cmd",
         ".validation_cmd",
+        ".governance_cmd",
     ):
         import_module(module_name, __name__)
 

@@ -1,0 +1,68 @@
+[2026-08-04] COMMAND: published governance source inventory
+Published main revision: 0b33a8a865b73c6826c27cd249111d204a297d6a
+Published VERSION: 0.8.0
+scripts/create_adoption_lock.py: absent from published revision
+Local VERSION: 0.9.0
+Local adoption generator and lock schema: uncommitted
+
+[2026-08-04] DECISION
+Fail closed before managed governance writes. Do not invoke OpenRouter or any
+LLM in ticket-002.
+
+[2026-08-04] COMMAND: ticket-001/ticket-002 intent schema validation
+intent schemas: ok
+
+[2026-08-04] COMMAND: ticket-002 allowed/forbidden path validation
+ticket-002 scope: ok
+
+[2026-08-04] COMMAND: governance gate availability check
+GATE_UNAVAILABLE: governance adoption pending
+
+[2026-08-04] COMMAND: git diff --check
+EXIT: 0
+
+[2026-08-04] COMMAND: verify published Governance Hub main
+remote_main=c0bb63e7fc889934140c96b1625f3ab232122baf
+local_head=c0bb63e7fc889934140c96b1625f3ab232122baf
+VERSION=0.9.0
+adoption_generator=present
+lock_schema=present
+
+[2026-08-04] COMMAND: create_adoption_lock.py --check
+CREATE .governance/diagnostics.json
+CREATE .governance/governance_check.py
+CREATE .governance/intent.schema.json
+CREATE .governance/lock.schema.json
+CREATE .governance/manifest.json
+CREATE .governance/manifest.schema.json
+CREATE .governance/stack-profiles.json
+CREATE AGENTS.md
+CREATE project.bat
+UPDATE project.sh
+CREATE project/governance-check.bat
+CREATE project/governance-check.sh
+CREATE project/new-ticket.sh
+CREATE project/readme.sh
+CREATE .governance/manifest.lock.json
+drift detected: 15 change(s) required
+check_exit=1
+
+[2026-08-04] SCOPE CHANGE
+Add project/analysis.sh to preserve the existing Goal-specific analysis
+pipeline before the standard replaces root project.sh. Fresh approval required.
+
+[2026-08-04] COMMAND: changed intent validation
+ticket-002 intent schema: ok
+legacy analysis preservation scope: ok
+managed writes before renewed approval: none
+
+[2026-08-05] HUMAN APPROVAL
+Approved execution of ticket-002 followed by ticket-003.
+
+[2026-08-05] ADOPTION
+source_revision=c0bb63e7fc889934140c96b1625f3ab232122baf
+standard_version=0.9.0
+legacy_analysis=project/analysis.sh
+application_owned_paths_added=goal/**,tests/**
+stacks=python
+docker_required=false

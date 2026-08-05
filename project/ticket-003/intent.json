@@ -1,0 +1,39 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-003",
+  "summary": "Governed Goal delivery modes",
+  "workstream": "release",
+  "allowedPaths": [
+    "project/ticket-003/**",
+    "project/TICKETS.md",
+    "TODO.md",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/commands.md",
+    "goal.yaml",
+    "goal/cli/__init__.py",
+    "goal/cli/governance_cmd.py",
+    "goal/governance/**",
+    "goal/push/core.py",
+    "goal/push/stages/push_remote.py",
+    "goal/push/stages/publish.py",
+    "tests/test_governance_delivery.py"
+  ],
+  "forbiddenPaths": [
+    ".governance/**",
+    "AGENTS.md",
+    "project.sh",
+    "project.bat",
+    "project/README.md",
+    "project/ticket-*/user-*.md",
+    "pyproject.toml"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [
+    "ticket-002"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-001"
+}

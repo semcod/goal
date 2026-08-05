@@ -1,0 +1,26 @@
+{
+  "managedFiles": {
+    ".governance/diagnostics.json": "85f2d054803ed8a347bbf3ca8e0fd153de1e747c3e0e48e9986bb5fa06362251",
+    ".governance/governance_check.py": "4304976cb0b16b3cc6a676aa41425211647babefc54cf135ed8d11e1f4c3e4db",
+    ".governance/intent.schema.json": "b2dc37ee348ca33e2f0d33515dd79c2403ac8afb504257cdebb65edf472a2637",
+    ".governance/lock.schema.json": "fc6f1143ef713c993b61270dd2d7545a52cb0b8501aadb188e6d0152a208b207",
+    ".governance/manifest.json": "55c10d41d9b2980cecbb8e5195f2bbee59c83b273f88edd35020087f0c83dedb",
+    ".governance/manifest.schema.json": "6504e451643c603b02e93e2c52ec72a6b3a6d72c556f7b2cdfb35856541021d3",
+    ".governance/stack-profiles.json": "6fa3f8f44e50cfd0539413a85092817d3fab4e82fe376405f1e443120724dff2",
+    "AGENTS.md": "204fb955fc54bb976008f213e526891da5717fdc76c3f7dfb5be1d885bc0df78",
+    "project.bat": "d707e014dba4d66e64ff6d4e212ceeedb8b65ec96ce76677cc3fc025875f45f6",
+    "project.sh": "90f82d9f0feea9bde34dca3e1c657604a65f3bfc938709e3cf69682f07dd1bc1",
+    "project/governance-check.bat": "7207bc499483d7a7a1ab2c230ad288c2484cdf02f3a773ba69f4b760b67a3388",
+    "project/governance-check.sh": "158ca61531b8e51ba484de8eb6f91f4e4fbba908ae3c8db678b63bf6bab49923",
+    "project/new-ticket.sh": "ee13b5a73afe18ff85ce36b00ae5b3d6811c96a336ce64dd55078061e77bfe29",
+    "project/readme.sh": "8a19819ab97fff26dbca179ead831d697f785c48774d8154714d768968fcfaf0"
+  },
+  "schema": "new-project.lock/v1",
+  "standard": {
+    "id": "wellmanifest/new-project",
+    "publicationStatus": "published",
+    "sourceRepository": "wellmanifest/new-project",
+    "sourceRevision": "c0bb63e7fc889934140c96b1625f3ab232122baf",
+    "version": "0.9.0"
+  }
+}

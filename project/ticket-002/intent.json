@@ -1,0 +1,41 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-002",
+  "summary": "Pinned governance bootstrap for Goal",
+  "workstream": "governance",
+  "allowedPaths": [
+    "project/ticket-002/**",
+    "project/TICKETS.md",
+    "TODO.md",
+    ".gitignore",
+    ".governance/**",
+    "AGENTS.md",
+    "README.md",
+    "project.sh",
+    "project.bat",
+    "project/governance-check.sh",
+    "project/governance-check.bat",
+    "project/new-ticket.sh",
+    "project/readme.sh",
+    "project/analysis.sh"
+  ],
+  "forbiddenPaths": [
+    "goal/**",
+    "tests/**",
+    "docs/**",
+    "pyproject.toml",
+    "Dockerfile*",
+    "compose*.yml",
+    "project/README.md",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-001"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-001"
+}

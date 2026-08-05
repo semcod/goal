@@ -1,0 +1,15 @@
+[2026-08-05] REQUEST
+Design governed enforcement of goal -a before remote delivery with direct-main,
+publish-only, and pull-request modes.
+
+[2026-08-05] DECISION
+Create a dependent implementation ticket. Do not edit application code while
+ticket-002 is WAIT_FOR_APPROVAL and explicitly forbids goal/** and tests/**.
+
+[2026-08-05] SECURITY BOUNDARY
+A local pre-push hook is a developer guard, not authoritative enforcement.
+Protected branches and a required CI status are required on the server.
+
+[2026-08-05] CURRENT STATE
+ticket-003=BLOCKED_BY_TICKET_002
+application_writes=none

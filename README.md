@@ -24,12 +24,12 @@
 ## AI Cost Tracking
 
 ![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.284-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.99-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-122.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.52-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-124.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
 
-- 🤖 **LLM usage:** $0.9866 (346 commits)
-- 👤 **Human dev:** ~$12247 (122.5h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $0.5207 (348 commits)
+- 👤 **Human dev:** ~$12447 (124.5h @ $100/h, 30min dedup)
 
-Generated on 2026-07-29 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
+Generated on 2026-08-05 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
 
 ---
 
@@ -58,6 +58,22 @@ goal push      # Runs tests, suggests a commit, bumps patch, updates changelog, 
 # 3. CI/CD or cron-driven release
 goal --all --bump minor   # Non-interactive; perfect for nightly builds or release pipelines.
 ```
+
+### Adopt repository governance
+
+Existing projects can install or check a pinned `wellmanifest/new-project`
+governance package without manually copying files:
+
+```bash
+goal governance adopt --source-revision <FULL_PUBLISHED_SHA> --check
+goal governance adopt --source-revision <FULL_PUBLISHED_SHA>
+```
+
+The command fetches the exact 40-character commit SHA, verifies the checkout,
+and runs the standard's immutable adoption generator. `--check` reports drift
+without writing; reviewed managed-file upgrades require `--upgrade`. See
+[`docs/governance-adoption.md`](docs/governance-adoption.md) for the retrofit
+workflow and remaining project-local Docker/ticket steps.
 
 ## 🆕 What's New in v2.2.2
 
@@ -1568,7 +1584,7 @@ Ensure you're authenticated with the appropriate package manager:
 ```ini
 [pypi]
   username = __token__
-  password = pypi-AgEIcHlwaS5vcmcC...
+  password = <your-pypi-token>
 ```
 
 **Environment variable setup (for CI/CD):**

@@ -1,5 +1,23 @@
 # TODO
 
+## Governed architecture roadmap
+
+- [x] Review and approve [ticket-001](project/ticket-001/README.md): Goal
+  URI/DSL/CQRS+ES refactoring blueprint, diagrams and machine-readable scope.
+- [ ] Re-review [ticket-002](project/ticket-002/README.md): adopt published
+  governance revision, preserve the legacy analysis entry point as
+  `project/analysis.sh`, and configure target workstreams.
+- [ ] After ticket-002, review [ticket-003](project/ticket-003/README.md):
+  enforce governed `goal -a` delivery with explicit `direct-main`,
+  `publish-only`, and `pull-request` modes.
+- [ ] After governance bootstrap, execute the sequential phases defined in
+  [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
+  narrowly scoped ticket active at a time.
+
+> Current workflow state: `ticket-001 DONE`; `ticket-002 IN_PROGRESS/EDIT`;
+> `ticket-003 BLOCKED_BY_TICKET_002`; `ticket-004 IN_PROGRESS/EDIT`.
+> No managed governance-file edit is authorized until ticket-002 is approved.
+
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
 > paths. Includes the `goal -a ./*` shorthand and the `goal auto` word-form of

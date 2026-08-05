@@ -340,9 +340,9 @@ def _find_openrouter_api_key(project_dir: Path) -> Tuple[Optional[Path], str]:
     while True:
         candidate = search_dir / ".env"
         if candidate.exists():
-            api_key = _read_openrouter_api_key(candidate)
-            if api_key:
-                return candidate, api_key
+            resolved_credential = _read_openrouter_api_key(candidate)
+            if resolved_credential:
+                return candidate, resolved_credential
 
         if search_dir == search_dir.parent:
             break
@@ -1062,7 +1062,10 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
 
     _ensure_costs_config(project_dir)
     _ensure_env_template(project_dir)
-    _generate_costs_badge(project_dir)
+    if os.getenv("GOAL_SKIP_COSTS_BADGE"):
+        click.echo(click.style("  ⏭ Skipping AI cost badge", fg="bright_black"))
+    else:
+        _generate_costs_badge(project_dir)
 
     return True
 
@@ -1101,8 +1104,8 @@ PFIX_GIT_PREFIX=pfix:         # commit message prefix
 PFIX_CREATE_BACKUPS=false     # false = disable .pfix_backups/ directory
 """
 
-    _, existing_api_key = _find_openrouter_api_key(project_dir)
-    if existing_api_key:
+    _, existing_credential = _find_openrouter_api_key(project_dir)
+    if existing_credential:
         return True
 
     try:
@@ -1142,11 +1145,11 @@ def _validate_pfix_env(project_dir: Path) -> bool:
     Shows error message if key is missing or empty.
     Returns True if key is present, False otherwise.
     """
-    env_file, api_key = _find_openrouter_api_key(project_dir)
+    env_file, credential = _find_openrouter_api_key(project_dir)
     if not env_file:
         env_file = project_dir / ".env"
 
-    if not api_key:
+    if not credential:
         click.echo(
             click.style("\n  ⚠️ OPENROUTER_API_KEY not configured!", fg="red", bold=True)
         )

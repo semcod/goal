@@ -228,5 +228,6 @@ deps.json
 .github/
 .planfile/
 .taskill/
+.intent/cache/
 .venv_test/
 .wup/

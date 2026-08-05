@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wellmanifest/new-project/governance/manifest.schema.json",
+  "title": "new-project governance manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "standard", "requiredFiles", "ticket", "docker", "governancePaths", "trustedApprovalSources", "coordination"],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1 },
+    "schema": { "const": "new-project.governance/v2" },
+    "standard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "const": "wellmanifest/new-project" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      }
+    },
+    "requiredFiles": { "type": "array", "items": { "$ref": "#/$defs/path" }, "uniqueItems": true },
+    "governancePaths": { "type": "array", "items": { "$ref": "#/$defs/glob" }, "uniqueItems": true },
+    "trustedApprovalSources": {
+      "type": "array",
+      "items": { "enum": ["github-review", "signed-attestation"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "ticket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "directoryPattern", "requiredFiles", "requiredAgentFiles", "activeStatuses", "nonActiveStatuses", "closedStatuses", "implementationStates", "intentFile"],
+      "properties": {
+        "root": { "$ref": "#/$defs/path" },
+        "directoryPattern": { "type": "string", "minLength": 1 },
+        "requiredFiles": { "type": "array", "items": { "$ref": "#/$defs/path" }, "uniqueItems": true },
+        "requiredAgentFiles": { "type": "array", "items": { "$ref": "#/$defs/glob" }, "uniqueItems": true },
+        "activeStatuses": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true },
+        "nonActiveStatuses": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true },
+        "closedStatuses": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true },
+        "implementationStates": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true },
+        "intentFile": { "$ref": "#/$defs/path" }
+      }
+    },
+    "docker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "dockerfiles", "composeFiles"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "dockerfiles": { "type": "array", "items": { "$ref": "#/$defs/path" }, "minItems": 1 },
+        "composeFiles": { "type": "array", "items": { "$ref": "#/$defs/path" }, "minItems": 1 }
+      }
+    },
+    "coordination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "maxActiveTicketsPerWorkstream", "rejectActiveScopeOverlap", "workstreams", "integration"],
+      "properties": {
+        "mode": { "const": "workstreams" },
+        "maxActiveTicketsPerWorkstream": { "type": "integer", "minimum": 1 },
+        "rejectActiveScopeOverlap": { "type": "boolean" },
+        "workstreams": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["ownedPaths"],
+            "properties": {
+              "ownedPaths": { "type": "array", "items": { "$ref": "#/$defs/glob" }, "minItems": 1, "uniqueItems": true }
+            }
+          }
+        },
+        "integration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["workstream", "requiredForPaths"],
+          "properties": {
+            "workstream": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+            "requiredForPaths": { "type": "array", "items": { "$ref": "#/$defs/glob" }, "uniqueItems": true }
+          }
+        }
+      }
+    },
+    "stacks": {
+      "type": "array",
+      "items": { "enum": ["node", "python", "go", "rust", "java", "docker", "frontend", "terraform", "kubernetes"] },
+      "uniqueItems": true,
+      "default": []
+    }
+  },
+  "$defs": {
+    "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" },
+    "glob": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" }
+  }
+}
