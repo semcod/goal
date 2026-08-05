@@ -49,7 +49,7 @@ Docker infrastructure or dependency metadata.
 
 ## Blockers
 
-- None; deterministic validation remains before closure.
+- None. Ticket-scoped governance validation passed.
 
 ## Response routing
 

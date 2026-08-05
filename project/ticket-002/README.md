@@ -2,8 +2,8 @@
 
 - **ID**: ticket-002
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-04
 - **Workstream**: governance
 - **Depends on**: ticket-001
@@ -35,18 +35,18 @@ release implementation, tests and dependency changes belong to later tickets.
 
 ## Acceptance criteria
 
-- [ ] AC-01: Lock identifies a published 40-character source revision.
-- [ ] AC-02: Managed file hashes match the adopted revision.
-- [ ] AC-03: Existing `project/README.md` remains owned by the analysis
+- [x] AC-01: Lock identifies a published 40-character source revision.
+- [x] AC-02: Managed file hashes match the adopted revision.
+- [x] AC-03: Existing `project/README.md` remains owned by the analysis
   generator and is not overwritten.
-- [ ] AC-03a: Existing root `project.sh` analysis commands remain available via
+- [x] AC-03a: Existing root `project.sh` analysis commands remain available via
   `project/analysis.sh`, while root `project.sh` becomes the pinned gate.
-- [ ] AC-04: Manifest declares non-overlapping ownership for `goal/**`,
+- [x] AC-04: Manifest declares non-overlapping ownership for `goal/**`,
   `tests/**`, docs/contracts and infrastructure.
-- [ ] AC-05: Ticket tooling never creates a human-owned `user-*.md` file.
-- [ ] AC-06: Governance gate runs deterministically and its output is logged.
-- [ ] AC-07: Existing unrelated worktree changes remain preserved.
-- [ ] AC-08: No OpenRouter/LLM call is made during governance bootstrap;
+- [x] AC-05: Ticket tooling never creates a human-owned `user-*.md` file.
+- [x] AC-06: Governance gate runs deterministically and its output is logged.
+- [x] AC-07: Existing unrelated worktree changes remain preserved.
+- [x] AC-08: No OpenRouter/LLM call is made during governance bootstrap;
   Gemini 3.1 Pro Preview remains prohibited.
 
 ## Risks
@@ -68,8 +68,8 @@ Published revision `c0bb63e7fc889934140c96b1625f3ab232122baf` identifies version
 
 Human approval was received on 2026-08-05. The legacy analysis entry point was
 preserved as `project/analysis.sh`, and the pinned standard was adopted. Target
-workstream ownership uses the Python-only package profile; lock regeneration is
-in progress.
+workstream ownership uses the Python-only package profile. The lock was
+regenerated and ticket-scoped governance validation passed.
 
 ## Participants
 

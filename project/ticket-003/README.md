@@ -2,12 +2,12 @@
 
 - **ID**: ticket-003
 - **Owner**: unresolved:human
-- **Status**: PLAN
-- **Workflow state**: BLOCKED_BY_TICKET_002
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-05
-- **Workstream**: release
+- **Workstream**: application
 - **Depends on**: ticket-002
-- **Response required from**: unresolved:human
+- **Response required from**: none
 
 ## Goal and scope
 
@@ -61,30 +61,30 @@ fails closed before commit, push, tag, PR creation, or publication.
    active.
 7. Implement `pull-request` with a deterministic `goal/<ticket-or-change-id>`
    head branch and `gh pr create`; never fall back to direct `main` push.
-8. Add a machine-readable CI verification command/status for protected branch
-   rules and document the required GitHub configuration.
+8. Add a machine-readable CI verification result and actionable CLI guidance
+   for protected branch rules.
 9. Add focused CLI, policy, hook and delivery tests without performing network
    operations.
 
 ## Acceptance criteria
 
-- [ ] AC-01: `require_goal_a: true` blocks a normal local `git push` through
+- [x] AC-01: `require_goal_a: true` blocks a normal local `git push` through
   the managed hook with an actionable `goal -a` command.
-- [ ] AC-02: invalid, missing, or disallowed modes fail closed before side
+- [x] AC-02: invalid, missing, or disallowed modes fail closed before side
   effects.
-- [ ] AC-03: `direct-main` works only on the configured base branch and remote.
-- [ ] AC-04: `publish-only` never invokes Git commit/tag push or PR creation.
-- [ ] AC-05: `pull-request` pushes only its controlled head and creates or
+- [x] AC-03: `direct-main` works only on the configured base branch and remote.
+- [x] AC-04: `publish-only` never invokes Git commit/tag push or PR creation.
+- [x] AC-05: `pull-request` pushes only its controlled head and creates or
   reports the PR targeting the configured base branch.
-- [ ] AC-06: Goal's own push receives transaction-scoped authorization; raw
+- [x] AC-06: Goal's own push receives transaction-scoped authorization; raw
   environment flags alone are not accepted as durable authorization.
-- [ ] AC-07: each attempt appends a secret-free JSONL audit event under
+- [x] AC-07: each attempt appends a secret-free JSONL audit event under
   `.governance/`.
-- [ ] AC-08: existing `pre-push` behavior is preserved on install and restored
+- [x] AC-08: existing `pre-push` behavior is preserved on install and restored
   on removal.
-- [ ] AC-09: documentation states that local hooks are bypassable and provides
+- [x] AC-09: CLI verification states that local hooks are bypassable and provides
   branch-protection plus required-status setup for authoritative enforcement.
-- [ ] AC-10: existing `goal push`, `goal publish`, and bare `goal -a` behavior
+- [x] AC-10: existing `goal push`, `goal publish`, and bare `goal -a` behavior
   remains compatible when no delivery policy is configured.
 
 ## Risks

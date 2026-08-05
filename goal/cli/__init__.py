@@ -417,6 +417,7 @@ def _configure_main_context(
     dry_run,
     config_path,
     abstraction,
+    delivery_mode,
 ) -> None:
     ctx.ensure_object(dict)
     ctx.obj["bump"] = bump
@@ -431,6 +432,8 @@ def _configure_main_context(
     ctx.obj["markdown"] = _resolve_output_markdown(markdown, all_flags)
     ctx.obj["dry_run"] = dry_run
     ctx.obj["abstraction"] = abstraction
+    ctx.obj["all_flags"] = all_flags
+    ctx.obj["delivery_mode"] = delivery_mode
     ctx.obj["config"] = load_config(config_path) if config_path else ensure_config()
     ctx.obj["user_config"] = get_user_config()
 
@@ -492,6 +495,7 @@ class GoalGroup(click.Group):
             "--abstraction",
             "--nfo-format",
             "--nfo-sink",
+            "--delivery-mode",
         }
         # Split the argv into option tokens (with their values) and bare
         # positional tokens so we can tell "goal -a" from "goal -a ./foo ./bar".
@@ -599,6 +603,12 @@ class GoalGroup(click.Group):
 @click.option(
     "--abstraction", default=None, help="Abstraction level for commit messages"
 )
+@click.option(
+    "--delivery-mode",
+    type=click.Choice(["direct-main", "publish-only", "pull-request"]),
+    default=None,
+    help="Governed delivery: direct main, registry only, or pull request.",
+)
 @click.option("--nfo-format", default="markdown", help="nfo log format")
 @click.option("--nfo-sink", default="", help="Additional nfo sink")
 @click.pass_context
@@ -618,6 +628,7 @@ def main(
     dry_run,
     config_path,
     abstraction,
+    delivery_mode,
     nfo_format,
     nfo_sink,
 ) -> None:
@@ -648,6 +659,7 @@ def main(
         dry_run,
         config_path,
         abstraction,
+        delivery_mode,
     )
 
 

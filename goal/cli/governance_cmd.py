@@ -1,6 +1,7 @@
 """Adopt pinned wellmanifest/new-project governance into existing projects."""
 
 from pathlib import Path
+import json
 import re
 import subprocess
 import sys
@@ -9,6 +10,15 @@ import tempfile
 import click
 
 from goal.cli import main
+from goal.config import ensure_config
+from goal.governance.delivery import (
+    authorize_hook_push,
+    check_delivery_hook,
+    install_delivery_hook,
+    policy_payload,
+    remove_delivery_hook,
+    resolve_delivery_policy,
+)
 
 
 DEFAULT_STANDARD_REPOSITORY = "https://github.com/wellmanifest/new-project.git"
@@ -62,6 +72,61 @@ def _checkout_standard(repository, revision, destination):
 @main.group()
 def governance():
     """Adopt and verify pinned repository governance."""
+
+
+@governance.group("delivery-hook")
+def delivery_hook():
+    """Manage the local fail-fast pre-push guard."""
+
+
+@delivery_hook.command("install")
+def delivery_hook_install():
+    path = install_delivery_hook()
+    click.echo(f"installed governed pre-push block in {path}")
+
+
+@delivery_hook.command("check")
+def delivery_hook_check():
+    if not check_delivery_hook():
+        raise click.ClickException(
+            "governed pre-push block is missing; run `goal governance delivery-hook install`"
+        )
+    click.echo("governed pre-push block is installed")
+
+
+@delivery_hook.command("remove")
+def delivery_hook_remove():
+    path = remove_delivery_hook()
+    click.echo(f"removed governed block from {path}; project-owned hook code preserved")
+
+
+@governance.command("authorize-push", hidden=True)
+@click.argument("remote_name")
+@click.argument("remote_url", required=False)
+def authorize_push(remote_name, remote_url):
+    config = ensure_config()
+    policy = resolve_delivery_policy(config, None, all_flags=True)
+    authorize_hook_push(policy, remote_name)
+
+
+@governance.command("verify-delivery")
+@click.option(
+    "--delivery-mode",
+    type=click.Choice(["direct-main", "publish-only", "pull-request"]),
+    default=None,
+)
+def verify_delivery(delivery_mode):
+    """Print the resolved policy and local/server enforcement boundary."""
+    policy = resolve_delivery_policy(
+        ensure_config(), delivery_mode, all_flags=True
+    )
+    payload = policy_payload(policy)
+    payload["hookInstalled"] = check_delivery_hook()
+    payload["serverGuidance"] = (
+        "Protect the base branch and require a CI governance status; local hooks "
+        "can be bypassed with --no-verify or removed."
+    )
+    click.echo(json.dumps(payload, indent=2, sort_keys=True))
 
 
 @governance.command("adopt")
@@ -141,4 +206,4 @@ def adopt(standard_repository, source_revision, target_root, check, upgrade):
             raise click.exceptions.Exit(result.returncode)
 
 
-__all__ = ["governance", "adopt"]
+__all__ = ["governance", "adopt", "delivery_hook", "verify_delivery"]

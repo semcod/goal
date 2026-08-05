@@ -23,43 +23,45 @@ if HAS_CLICKMD:
     from clickmd import echo_md
 
 
-def _print_push_header(branch: str, yes: bool) -> None:
+def _print_push_header(branch: str, yes: bool, remote: str = "origin") -> None:
     from goal.io.stdio import echo_auto, echo_via_markdown, use_markdown_stdio
 
     if not yes:
         if use_markdown_stdio():
             echo_via_markdown("\n### 📤 Pushing to Remote Repository")
             echo_via_markdown(f"**Branch:** `{branch}`")
-            echo_via_markdown("**Remote:** `origin`")
+            echo_via_markdown(f"**Remote:** `{remote}`")
         elif HAS_CLICKMD:
             echo_md("\n### 📤 Pushing to Remote Repository")
             echo_md(f"**Branch:** `{branch}`")
-            echo_md("**Remote:** `origin`")
+            echo_md(f"**Remote:** `{remote}`")
         else:
             click.echo(
                 click.style("\n📤 Pushing to Remote Repository", fg="blue", bold=True)
             )
             click.echo(f"Branch: {branch}")
-            click.echo("Remote: origin")
+            click.echo(f"Remote: {remote}")
     else:
         echo_auto("Pushing to remote (--all mode)")
 
 
-def _push_tag_if_needed(tag_name: Optional[str], no_tag: bool) -> None:
+def _push_tag_if_needed(
+    tag_name: Optional[str], no_tag: bool, remote: str = "origin"
+) -> None:
     if tag_name and not no_tag:
-        _echo_cmd(["git", "push", "origin", tag_name])
-        result = run_git("push", "origin", tag_name, capture=False)
+        _echo_cmd(["git", "push", remote, tag_name])
+        result = run_git("push", remote, tag_name, capture=False)
         if result.returncode != 0:
             click.echo(click.style(f"⚠  Could not push tag {tag_name}.", fg="yellow"))
 
 
-def _handle_push_failure(result, branch: str, yes: bool) -> bool:
+def _handle_push_failure(result, branch: str, yes: bool, remote: str) -> bool:
     click.echo(click.style(f"✗ Push failed (exit {result.returncode}).", fg="red"))
 
     if not yes and result.stderr:
         if _offer_recovery(result.stderr):
             click.echo(click.style("\nRetrying push after recovery...", fg="cyan"))
-            retry = run_git("push", "origin", branch, capture=False)
+            retry = run_git("push", remote, branch, capture=False)
             if retry.returncode == 0:
                 click.echo(click.style("✓ Push successful after recovery!", fg="green"))
                 return True
@@ -98,7 +100,7 @@ def _is_rejected_push(stderr: str) -> bool:
     )
 
 
-def _pull_rebase_and_retry(branch: str):
+def _pull_rebase_and_retry(branch: str, remote: str = "origin"):
     """Rebase onto the moved remote and retry the push once.
 
     Returns the retry CompletedProcess, or None if the rebase pull itself failed
@@ -110,7 +112,7 @@ def _pull_rebase_and_retry(branch: str):
             fg="cyan",
         )
     )
-    pull = run_git("pull", "--rebase", "origin", branch, capture=True)
+    pull = run_git("pull", "--rebase", remote, branch, capture=True)
     if pull.returncode != 0:
         # Abort a half-applied rebase so the tree isn't left mid-rebase.
         run_git("rebase", "--abort", capture=True)
@@ -122,12 +124,16 @@ def _pull_rebase_and_retry(branch: str):
         )
         return None
     return run_git_with_status(
-        "push", "origin", branch, capture=True, show_output=False
+        "push", remote, branch, capture=True, show_output=False
     )
 
 
 def push_to_remote(
-    branch: str, tag_name: Optional[str], no_tag: bool, yes: bool
+    branch: str,
+    tag_name: Optional[str],
+    no_tag: bool,
+    yes: bool,
+    remote: str = "origin",
 ) -> bool:
     """Push commits and tags to remote."""
     has_remote = ensure_remote(auto=yes)
@@ -145,22 +151,22 @@ def push_to_remote(
             return False
 
     try:
-        _print_push_header(branch, yes)
+        _print_push_header(branch, yes, remote)
         result = run_git_with_status(
-            "push", "origin", branch, capture=True, show_output=False
+            "push", remote, branch, capture=True, show_output=False
         )
 
         # Non-interactive (sweep/--all): if the remote moved under us, rebase and
         # retry once instead of failing the whole project.
         if result.returncode != 0 and yes and _is_rejected_push(result.stderr or ""):
-            retry = _pull_rebase_and_retry(branch)
+            retry = _pull_rebase_and_retry(branch, remote)
             if retry is not None:
                 result = retry
 
         if result.returncode != 0:
-            return _handle_push_failure(result, branch, yes)
+            return _handle_push_failure(result, branch, yes, remote)
 
-        _push_tag_if_needed(tag_name, no_tag)
+        _push_tag_if_needed(tag_name, no_tag, remote)
         click.echo(
             click.style(f"\n✓ Successfully pushed to {branch}", fg="green", bold=True)
         )

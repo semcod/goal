@@ -344,6 +344,29 @@ def execute_push_workflow(
 ) -> None:
     """Execute the complete push workflow."""
 
+    from goal.governance.delivery import (
+        authorized_push,
+        deliver_pull_request,
+        record_delivery_event,
+        resolve_delivery_policy,
+        validate_delivery_ready,
+    )
+
+    delivery = resolve_delivery_policy(
+        ctx_obj.get("config"),
+        ctx_obj.get("delivery_mode"),
+        all_flags=bool(ctx_obj.get("all_flags", False)),
+    )
+    if delivery is not None:
+        if delivery.mode == "publish-only" and (
+            no_publish or ctx_obj.get("no_publish", False)
+        ):
+            raise click.ClickException(
+                "publish-only conflicts with --no-publish"
+            )
+        validate_delivery_ready(delivery)
+        ctx_obj["delivery_mode"] = delivery.mode
+
     _validate_toml_or_exit(dry_run)
 
     start_time = time.time()
@@ -353,6 +376,14 @@ def execute_push_workflow(
     yes = ctx_obj["yes"]
     no_publish = no_publish or ctx_obj.get("no_publish", False)
     force_publish = force_publish or ctx_obj.get("force_publish", False)
+    if delivery is not None and delivery.mode == "pull-request":
+        no_publish = True
+        click.echo(
+            click.style(
+                "Governed pull-request mode: registry publish waits for merge.",
+                fg="yellow",
+            )
+        )
 
     project_types = _detect_project_types()
 
@@ -483,6 +514,9 @@ def execute_push_workflow(
         )
         return
 
+    if delivery is not None:
+        record_delivery_event(delivery, "started")
+
     _maybe_show_workflow_preview(
         ctx_obj,
         files,
@@ -591,17 +625,66 @@ def execute_push_workflow(
                 fg="yellow",
             )
         )
-    tag_name = create_tag(new_version, no_tag or skip_tag_no_source)
+    governed_no_tag = bool(
+        delivery is not None
+        and delivery.mode in {"publish-only", "pull-request"}
+    )
+    effective_no_tag = no_tag or skip_tag_no_source or governed_no_tag
+    if governed_no_tag and not no_tag:
+        click.echo(
+            click.style(
+                f"Governed {delivery.mode} mode: remote release tag skipped.",
+                fg="yellow",
+            )
+        )
+    tag_name = create_tag(new_version, effective_no_tag)
 
-    from goal.git_ops import get_remote_branch
+    if delivery is None:
+        from goal.git_ops import get_remote_branch
 
-    branch = get_remote_branch()
-    push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+        branch = get_remote_branch()
+        push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+    elif delivery.mode == "publish-only":
+        record_delivery_event(
+            delivery,
+            "published" if publish_success else "publish-skipped",
+            detail=publish_skip_reason or "",
+        )
+        click.echo(
+            click.style(
+                "Governed publish-only mode: Git remote push skipped.",
+                fg="green",
+            )
+        )
+    elif delivery.mode == "direct-main":
+        with authorized_push(delivery):
+            pushed = push_to_remote(
+                delivery.base_branch,
+                tag_name,
+                no_tag,
+                ctx_obj["yes"],
+                remote=delivery.remote,
+            )
+        record_delivery_event(
+            delivery, "pushed" if pushed else "push-failed"
+        )
+        if not pushed:
+            raise click.ClickException("governed direct-main push failed")
+    else:
+        head, pr_url = deliver_pull_request(
+            delivery,
+            ticket=ticket,
+            title=commit_title,
+        )
+        record_delivery_event(
+            delivery, "pull-request", detail=pr_url, head=head
+        )
+        click.echo(click.style(f"Pull request: {pr_url}", fg="green"))
 
     # Optionally mirror the git tag as a GitHub Release (Releases page ≠ tags).
     # Without this, tags advance while /releases/latest stays frozen until PyPI
     # is blocked and the fallback path runs.
-    if tag_name and not (no_tag or skip_tag_no_source):
+    if tag_name and not effective_no_tag:
         try:
             from goal.publish.github_fallback import try_github_release_on_tag
 

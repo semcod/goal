@@ -2,8 +2,8 @@
 
 - **ID**: ticket-004
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-05
 - **Workstream**: application
 - **Depends on**: ticket-001
@@ -21,10 +21,10 @@ OpenRouter bootstrap path. Preserve behavior and public interfaces.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The scanner no longer treats function-return assignments as
+- [x] AC-01: The scanner no longer treats function-return assignments as
   embedded credentials.
-- [ ] AC-02: OpenRouter lookup and validation behavior is unchanged.
-- [ ] AC-03: No credential value is logged or added to the repository.
+- [x] AC-02: OpenRouter lookup and validation behavior is unchanged.
+- [x] AC-03: No credential value is logged or added to the repository.
 
 ## Participants
 

@@ -20,3 +20,5 @@
 - Recorded human approval and adopted the pinned 0.9.0 governance standard.
 - Preserved the legacy analysis pipeline as `project/analysis.sh`.
 - Configured Goal source/test ownership and the Python-only package profile.
+- Regenerated the immutable lock and passed ticket-scoped governance with zero
+  errors and warnings.

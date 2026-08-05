@@ -13,3 +13,17 @@ Protected branches and a required CI status are required on the server.
 [2026-08-05] CURRENT STATE
 ticket-003=BLOCKED_BY_TICKET_002
 application_writes=none
+
+[2026-08-05] IMPLEMENTATION
+delivery_modes=direct-main,publish-only,pull-request
+authorization=file-backed-expiring-capability
+hook=managed-pre-push-block
+audit=.governance/delivery-events.jsonl
+server_boundary=protected-branch-plus-required-ci
+
+[2026-08-05] VALIDATION
+regression_tests=55 passed
+focused_retry=6 passed
+governance=PASS
+errors=0
+warnings=0
