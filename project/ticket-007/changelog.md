@@ -6,3 +6,5 @@
   environment-validation NameError.
 - Repaired the undefined-name reference without changing credential discovery.
 - Passed 71 focused and 477 full-suite tests.
+- Received exact-head approval from the Validator App and merged PR #17 as
+  `eb54f4e5391389fbb1125f5621517da88230a643`.

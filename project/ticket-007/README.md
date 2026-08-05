@@ -2,8 +2,8 @@
 
 - **ID**: ticket-007
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-05
 - **Work classification**: `SERVICE / health`
 
@@ -42,4 +42,11 @@ already open governance adoption PR #16 to obtain a green baseline.
 ## Session authorization
 
 The user approved ticket-007 and autonomous continuation on 2026-08-05. Merge
-still requires exact-head publication evidence.
+completed only after the Validator App approved the exact PR head.
+
+## Delivery evidence
+
+- PR: `semcod/goal#17`.
+- Approved head: `b48ac9a784daaea42a80a84e8da1143abd822d29`.
+- Validator identity: `ifuri-validator-agent[bot]`.
+- Merge commit: `eb54f4e5391389fbb1125f5621517da88230a643`.
