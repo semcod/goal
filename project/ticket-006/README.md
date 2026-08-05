@@ -2,8 +2,8 @@
 
 - **ID**: ticket-006
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-05
 
 ## Goal and scope
@@ -47,6 +47,13 @@ application ticket after adoption.
 
 The user approved ticket-006 with the instruction to continue on 2026-08-05.
 This authorizes implementation inside `intent.json`, not merge approval.
+
+## Delivery evidence
+
+- PR: `semcod/goal#16`.
+- Approved head: `f3a8327bfaf780b0fe2e165da968ef2e7524983c`.
+- Validator identity: `ifuri-validator-agent[bot]`.
+- Merge commit: `8e859fc55df8905b5d731adf6a11e2d41c7fb6d2`.
 
 ## Validation evidence
 
