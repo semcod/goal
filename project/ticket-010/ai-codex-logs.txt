@@ -19,3 +19,4 @@ transition: PUBLICATION -> EDIT
 2026-08-10 follow-up focused Python 3.12 suite: PASS (40 passed)
 2026-08-10 follow-up project/governance-check.sh: PASS (0 errors, 0 warnings)
 transition: EDIT -> VALIDATION -> PUBLICATION
+2026-08-10 corrective publication input prepared on main for governed goal -a release
