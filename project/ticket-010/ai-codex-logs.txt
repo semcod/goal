@@ -10,3 +10,4 @@ transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
 2026-08-10 project/governance-check.sh: PASS (0 errors, 0 warnings)
 transition: EDIT -> VALIDATION
 transition: VALIDATION -> PUBLICATION
+2026-08-10 publication input prepared on main for governed goal -a release
