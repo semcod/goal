@@ -21,6 +21,10 @@
 - [x] Validate and deliver [ticket-009](project/ticket-009/README.md): preserve
   multi-line `VERSION` contracts and governed explicit delivery modes. State:
   `DONE`; classification: `SERVICE / delivery`.
+- [ ] Review and approve [ticket-010](project/ticket-010/README.md): make Goal
+  resolve normal, already-bumped and partially bumped version states from
+  file/Git/registry evidence, then enforce strict pre-release consistency.
+  State: `IN_PROGRESS / EDIT`; classification: `SERVICE / release`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
@@ -28,6 +32,7 @@
 > Current workflow state: `ticket-001 DONE`; `ticket-002 DONE`;
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
+> `ticket-010 IN_PROGRESS / EDIT`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

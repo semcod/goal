@@ -1,0 +1,41 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-010",
+  "summary": "Dependency-aware version state validation and synchronization",
+  "workstream": "application",
+  "allowedPaths": [
+    "goal/cli/version.py",
+    "goal/cli/version_state.py",
+    "goal/cli/version_utils.py",
+    "goal/cli/version_sync.py",
+    "goal/cli/utils_cmd.py",
+    "goal/config/manager.py",
+    "goal/push/core.py",
+    "goal/push/stages/version.py",
+    "goal/push/stages/commit.py",
+    "goal/version_validation.py",
+    "tests/test_version_state.py",
+    "tests/test_version_sync.py",
+    "tests/test_version_validation.py",
+    "tests/test_detect_version_files.py",
+    "tests/test_cli_options.py",
+    "tests/test_push_e2e.py",
+    "project/ticket-010/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".env",
+    ".env.*",
+    ".governance/**",
+    ".github/**",
+    "goal.yaml",
+    "pyproject.toml",
+    "docs/**",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}
