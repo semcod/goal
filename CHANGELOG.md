@@ -173,6 +173,16 @@
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
 
+## [2.1.285] - 2026-08-09
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_detect_version_files.py
+- Update tests/test_push_e2e.py
+- Update tests/test_version_sync.py
+
 ## [2.1.284] - 2026-07-23
 
 ### Docs
