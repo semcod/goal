@@ -7,6 +7,7 @@ from goal.git_ops import (
     get_remote_branch,
     get_staged_files,
     get_unstaged_files,
+    get_working_tree_files,
     run_git,
     ensure_git_repository,
     validate_repo_url,
@@ -192,6 +193,18 @@ def check_versions(ctx, update_badges):
         for project_type, result in results.items()
         if result.get("registry_version")
     }
+    from goal.publish.changes import (
+        analyze_publishable_changes,
+        committed_unreleased_source_files,
+    )
+
+    pending_files = list(
+        dict.fromkeys([*get_staged_files(), *get_working_tree_files()])
+    )
+    change_report = analyze_publishable_changes(pending_files, project_types)
+    release_required = change_report.has_changes or bool(
+        committed_unreleased_source_files(project_types)
+    )
     try:
         decision = resolve_version_decision(
             bump=ctx.obj.get("bump", "patch"),
@@ -199,6 +212,7 @@ def check_versions(ctx, update_badges):
             config=ctx.obj.get("config"),
             project_types=project_types,
             registry_versions=registry_versions,
+            release_required=release_required,
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc

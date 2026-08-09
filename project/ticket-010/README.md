@@ -111,6 +111,15 @@ instructed the agent to continue.  This authorizes the transition from
 - `goal --ascii check-versions` on Goal itself reports matching Git tag and
   PyPI evidence, all three managed version declarations and derived updates.
 - Governance check: PASS (0 errors, 0 warnings).
+- Post-publication smoke exposed that standalone `check-versions` did not yet
+  reuse the release-intent classifier from `goal -a`; a documentation-only
+  tree could therefore be reported as a normal bump.  The same file and Git
+  evidence now drives both commands, with regression coverage for uncommitted
+  documentation and committed-but-unreleased package source.
+- Follow-up focused suite: 88 passed, 1 optional skip.
+- Follow-up full Python 3.13 suite: 503 passed, 2 optional skips.
+- Follow-up focused Python 3.12 suite: 40 passed.
+- Follow-up governance check: PASS (0 errors, 0 warnings).
 
 ## Infrastructure observation
 
