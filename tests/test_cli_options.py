@@ -42,6 +42,37 @@ def test_known_commands_work() -> None:
     assert "Usage:" in res.stdout
 
 
+def test_push_uses_global_bump_when_local_option_is_default() -> None:
+    from goal.cli import push_cmd
+
+    runner = CliRunner()
+    with mock.patch.object(push_cmd, "execute_push_workflow") as execute:
+        result = runner.invoke(
+            push_cmd.push,
+            [],
+            obj={"bump": "minor", "yes": True, "version": "2.0.0"},
+        )
+
+    assert result.exit_code == 0, result.output
+    assert execute.call_args.kwargs["bump"] == "minor"
+    assert execute.call_args.kwargs["ctx_obj"]["version"] == "2.0.0"
+
+
+def test_explicit_push_bump_overrides_global_bump() -> None:
+    from goal.cli import push_cmd
+
+    runner = CliRunner()
+    with mock.patch.object(push_cmd, "execute_push_workflow") as execute:
+        result = runner.invoke(
+            push_cmd.push,
+            ["--bump", "patch"],
+            obj={"bump": "minor", "yes": True},
+        )
+
+    assert result.exit_code == 0, result.output
+    assert execute.call_args.kwargs["bump"] == "patch"
+
+
 def test_all_help_does_not_fail_when_push_unavailable() -> None:
     runner = CliRunner()
     push_cmd = main.commands.pop("push", None)

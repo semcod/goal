@@ -9,6 +9,7 @@
     "goal/cli/version_utils.py",
     "goal/cli/version_sync.py",
     "goal/cli/utils_cmd.py",
+    "goal/cli/push_cmd.py",
     "goal/config/manager.py",
     "goal/push/core.py",
     "goal/push/stages/version.py",

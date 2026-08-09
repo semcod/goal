@@ -5,7 +5,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import Iterable, List, Optional
 
 try:
     import tomlkit
@@ -18,6 +18,7 @@ from .version_utils import (
     update_project_metadata,
     update_readme_metadata,
 )
+from .version_state import validate_version_sources, write_version_source
 from goal.version_validation import update_badge_versions
 
 
@@ -433,7 +434,29 @@ def _sync_nested_versions(
                 _update_cargo_version(rel, new_version, user_config, updated)
 
 
-def sync_all_versions(new_version: str, user_config=None) -> List[str]:
+def _sync_selected_version_sources(
+    version_specs: Iterable[str], new_version: str, updated: List[str]
+) -> tuple[str, ...]:
+    """Synchronize the resolver-selected release set exactly."""
+    selected = tuple(dict.fromkeys(version_specs))
+    for spec in selected:
+        if write_version_source(spec, new_version):
+            path = (
+                spec.rsplit(":", 1)[0]
+                if spec.endswith((":version", ":__version__"))
+                else spec
+            )
+            if path not in updated:
+                updated.append(path)
+    return selected
+
+
+def sync_all_versions(
+    new_version: str,
+    user_config=None,
+    version_specs: Optional[Iterable[str]] = None,
+    strict: bool = False,
+) -> List[str]:
     """Update version, author, and license in all detected project files."""
     updated: List[str] = []
 
@@ -446,10 +469,19 @@ def sync_all_versions(new_version: str, user_config=None) -> List[str]:
     _update_setup_py_version(new_version, user_config, updated)
     _update_cargo_version("Cargo.toml", new_version, user_config, updated)
     _sync_nested_versions(old_version, new_version, user_config, updated)
+    selected_specs: tuple[str, ...] = ()
+    if version_specs is not None:
+        selected_specs = _sync_selected_version_sources(
+            version_specs, new_version, updated
+        )
     _sync_dependency_locks_after_manifest_updates(updated)
     _update_csproj_versions(new_version, updated)
     _update_pom_xml(new_version, updated)
     _update_readme_metadata(user_config, new_version, updated)
-    _update_init_py_versions(new_version, updated)
+    if version_specs is None:
+        _update_init_py_versions(new_version, updated)
+
+    if strict:
+        validate_version_sources(selected_specs, new_version)
 
     return updated

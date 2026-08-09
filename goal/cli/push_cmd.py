@@ -5,6 +5,7 @@ This file maintains backward compatibility for imports.
 """
 
 import click
+from click.core import ParameterSource
 
 from goal.cli import main
 
@@ -67,6 +68,8 @@ def push(
     api_key,
 ) -> None:
     """Add, commit, tag, and push changes to remote."""
+    if ctx.get_parameter_source("bump") == ParameterSource.DEFAULT:
+        bump = ctx.obj.get("bump", bump)
     # Use yes from ctx.obj (set by -a/--all or -y/--yes global flags)
     yes = ctx.obj.get("yes", False)
     no_publish = no_publish or ctx.obj.get("no_publish", False)

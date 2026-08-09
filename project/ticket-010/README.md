@@ -3,7 +3,7 @@
 - **ID**: ticket-010
 - **Owner**: session user (identity unresolved)
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-09
 - **Work classification**: `SERVICE / release`
 
@@ -31,9 +31,12 @@ validated against published/released versions and every configured source.
    the candidate is not bumped a second time.
 3. If every local source equals the released baseline, Goal computes the next
    version using the requested bump kind.
-4. Conflicting forward candidates, a regression below the release baseline,
-   unreadable configured sources, or residual drift after synchronization are
-   fatal and block release operations.
+4. A source below the release baseline is repaired forward when another
+   managed source proves the baseline and there is no conflicting forward
+   candidate.  Without package changes this is a repair-only commit; with
+   package changes all sources advance to the next release.  Ambiguous
+   regressions, conflicting forward candidates, unreadable sources or residual
+   drift remain fatal.
 5. Registry lookup is safety evidence, not a required online dependency.  An
    unavailable registry is reported and Git/local evidence remains usable;
    a registry version ahead of the selected target blocks publication.
@@ -45,23 +48,23 @@ validated against published/released versions and every configured source.
 
 - [x] AC-01: A human owner approves this scope and the transition to
   `IN_PROGRESS / EDIT`.
-- [ ] AC-02: Goal inventories every configured or safely detected version
+- [x] AC-02: Goal inventories every configured or safely detected version
   source and reports its path, selector, observed value and relation to the
   selected baseline/target.
-- [ ] AC-03: The version resolver handles normal, already-bumped and partial
+- [x] AC-03: The version resolver handles normal, already-bumped and partial
   bump states according to the decision rules without performing a second
   accidental bump.
-- [ ] AC-04: `--target-version` and `--bump` reach the resolver consistently in
+- [x] AC-04: `--target-version` and `--bump` reach the resolver consistently in
   `goal push`, bare `goal -a` and dry-run mode.
-- [ ] AC-05: Synchronization is followed by strict read-back validation;
+- [x] AC-05: Synchronization is followed by strict read-back validation;
   missing, unreadable, unsupported or still-stale configured sources stop the
   workflow before commit, tag, build or publication.
-- [ ] AC-06: `goal check-versions` and dry-run explain the decision and affected
+- [x] AC-06: `goal check-versions` and dry-run explain the decision and affected
   derived files without mutation, while retaining registry comparison.
-- [ ] AC-07: Regression tests cover a complete pre-bump, partial pre-bump,
+- [x] AC-07: Regression tests cover a complete pre-bump, partial pre-bump,
   ordinary bump, explicit target, divergent candidates, registry-ahead guard,
   multiline contracts and lockstep versus independent monorepo packages.
-- [ ] AC-08: Focused tests, the full Python suite and
+- [x] AC-08: Focused tests, the full Python suite and
   `project/governance-check.sh` pass before publication is considered.
 
 ## Analysis evidence
@@ -97,3 +100,22 @@ On 2026-08-10 the session user reviewed the prepared scope and explicitly
 instructed the agent to continue.  This authorizes the transition from
 `PLAN / WAIT_FOR_APPROVAL` to the narrowly scoped implementation in
 `IN_PROGRESS / EDIT`.
+
+## Validation evidence
+
+- Version-focused suite: 115 passed, 1 optional skip.
+- Full Python 3.13 suite: 501 passed, 2 optional skips.
+- Focused Python 3.12 suite: 68 passed.
+- Container integration matrix on Python 3.12: 8 project types passed, 0
+  failed.
+- `goal --ascii check-versions` on Goal itself reports matching Git tag and
+  PyPI evidence, all three managed version declarations and derived updates.
+- Governance check: PASS (0 errors, 0 warnings).
+
+## Infrastructure observation
+
+The repository-provided `integration/Dockerfile` still starts from Python 3.11
+although `pyproject.toml` requires Python 3.12 or newer.  Its build therefore
+fails before testing.  This infrastructure-owned defect is outside this
+application ticket; equivalent matrix validation passed in a one-shot
+`python:3.12-slim` container.
