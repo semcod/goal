@@ -209,12 +209,24 @@ def _commit_release_metadata(
     if not no_version_sync:
         from .version import sync_all_versions_wrapper
 
-        stage_paths(sync_all_versions_wrapper(new_version, ctx_obj.get("user_config")))
+        stage_paths(
+            sync_all_versions_wrapper(
+                new_version,
+                ctx_obj.get("user_config"),
+                ctx_obj.get("version_decision"),
+            )
+        )
     else:
-        from pathlib import Path
+        decision = ctx_obj.get("version_decision")
+        if decision is None:
+            from pathlib import Path
 
-        Path("VERSION").write_text(f"{new_version}\n")
-        stage_paths(["VERSION"])
+            Path("VERSION").write_text(f"{new_version}\n")
+            stage_paths(["VERSION"])
+        else:
+            from goal.cli.version_state import validate_version_sources
+
+            validate_version_sources(decision.managed_specs, new_version)
 
     if not no_changelog:
         from ...changelog import update_changelog

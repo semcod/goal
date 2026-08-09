@@ -362,3 +362,48 @@ def test_sync_warns_on_unwritable_pyproject(tmp_path, capsys):
     finally:
         (tmp_path / "pyproject.toml").chmod(0o644)
         os.chdir(old_cwd)
+
+
+def test_strict_selected_sync_repairs_partial_prebump(tmp_path, monkeypatch):
+    """A stale configured file is repaired to the selected pre-bumped target."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "VERSION").write_text("1.2.4\n")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "fixture"\nversion = "1.2.3"\n'
+    )
+
+    func = sync_all_versions
+    while hasattr(func, "__wrapped__"):
+        func = func.__wrapped__
+    updated = func(
+        "1.2.4",
+        version_specs=("VERSION", "pyproject.toml:version"),
+        strict=True,
+    )
+
+    assert "pyproject.toml" in updated
+    assert 'version = "1.2.4"' in (tmp_path / "pyproject.toml").read_text()
+
+
+def test_strict_selected_sync_updates_stale_nested_lockstep_package(
+    tmp_path, monkeypatch
+):
+    """Selection evidence, rather than the already-bumped root, drives repair."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "VERSION").write_text("1.2.4\n")
+    package = tmp_path / "packages" / "worker"
+    package.mkdir(parents=True)
+    manifest = package / "pyproject.toml"
+    manifest.write_text('[project]\nname = "worker"\nversion = "1.2.3"\n')
+
+    func = sync_all_versions
+    while hasattr(func, "__wrapped__"):
+        func = func.__wrapped__
+    updated = func(
+        "1.2.4",
+        version_specs=("VERSION", "packages/worker/pyproject.toml:version"),
+        strict=True,
+    )
+
+    assert "packages/worker/pyproject.toml" in updated
+    assert 'version = "1.2.4"' in manifest.read_text()

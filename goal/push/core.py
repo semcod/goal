@@ -482,12 +482,50 @@ def execute_push_workflow(
 
     commit_msg = commit_title
 
-    current_version, new_version = get_version_info()
+    try:
+        resolved_version = get_version_info(
+            bump=bump,
+            target_version=ctx_obj.get("version"),
+            config=ctx_obj.get("config"),
+            project_types=project_types,
+            include_decision=True,
+            release_required=not skip_release,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
 
-    # No package source changed: keep the current version (no bump). The commit,
-    # tag, publish and bump-file writes are all skipped further below.
-    if skip_release:
-        new_version = current_version
+    if len(resolved_version) == 3:
+        current_version, new_version, version_decision = resolved_version
+    else:  # compatibility with extensions/tests returning the legacy tuple
+        current_version, new_version = resolved_version
+        version_decision = None
+        if skip_release:
+            new_version = current_version
+
+    version_release_intent = bool(
+        skip_release
+        and version_decision is not None
+        and version_decision.reason
+        in {"already-bumped", "partial-bump", "explicit-target"}
+        and new_version != current_version
+    )
+    if version_release_intent:
+        skip_release = False
+        click.echo(
+            click.style(
+                "📦 Explicit/pre-bumped version state requests a release despite "
+                "metadata-only staged changes.",
+                fg="yellow",
+            )
+        )
+
+    if version_decision is not None:
+        from goal.cli.version_state import format_version_decision
+
+        for line in format_version_decision(version_decision):
+            click.echo(line)
+
+    ctx_obj["version_decision"] = version_decision
 
     commit_msg = _apply_enhanced_quality_gates(
         ctx_obj, commit_msg, detailed_result, files, stats, message, markdown
@@ -552,6 +590,14 @@ def execute_push_workflow(
         # local.dev.txt, lockfiles — often goal's own generated output) so the
         # working tree doesn't accumulate them uncommitted forever. This is a
         # plain commit with NO version bump, changelog, tag, or publish.
+        if version_decision is not None and version_decision.local_drift:
+            handle_version_sync(
+                new_version,
+                no_version_sync,
+                ctx_obj.get("user_config"),
+                ctx_obj["yes"],
+                version_decision,
+            )
         _commit_without_release(
             ctx_obj, commit_title, commit_body, commit_msg, message
         )
@@ -582,7 +628,7 @@ def execute_push_workflow(
         no_publish=no_publish,
         config=publish_config,
         staged_files=files,
-        force_publish=force_publish,
+        force_publish=force_publish or version_release_intent,
     )
 
     publish_skip_reason = (
@@ -934,7 +980,19 @@ def _handle_commit_phase(
     else:
         # Version sync
         user_config = ctx_obj.get("user_config")
-        handle_version_sync(new_version, no_version_sync, user_config, ctx_obj["yes"])
+        version_decision = ctx_obj.get("version_decision")
+        if version_decision is None:
+            handle_version_sync(
+                new_version, no_version_sync, user_config, ctx_obj["yes"]
+            )
+        else:
+            handle_version_sync(
+                new_version,
+                no_version_sync,
+                user_config,
+                ctx_obj["yes"],
+                version_decision,
+            )
 
         # Changelog
         config_dict = (

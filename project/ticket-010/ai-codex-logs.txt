@@ -2,3 +2,11 @@
 2026-08-10 status: PLAN / WAIT_FOR_APPROVAL; implementation tests NOT RUN
 2026-08-10 session authorization: user instructed agent to continue
 transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
+2026-08-10 version-focused suite: PASS (115 passed, 1 skipped)
+2026-08-10 full Python 3.13 suite: PASS (501 passed, 2 skipped)
+2026-08-10 focused Python 3.12 suite: PASS (68 passed)
+2026-08-10 repository Dockerfile: FAIL before tests; Python 3.11 violates requires-python >=3.12
+2026-08-10 one-shot Python 3.12 container matrix: PASS (8 passed, 0 failed)
+2026-08-10 project/governance-check.sh: PASS (0 errors, 0 warnings)
+transition: EDIT -> VALIDATION
+transition: VALIDATION -> PUBLICATION

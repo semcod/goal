@@ -18,6 +18,15 @@ from .version_utils import (
     update_readme_metadata,
 )
 from .version_sync import sync_all_versions
+from .version_state import (
+    VersionDecision,
+    VersionSource,
+    VersionStateError,
+    collect_version_sources,
+    format_version_decision,
+    resolve_version_decision,
+    validate_version_sources,
+)
 
 # Make all re-exported names available in __all__
 __all__ = [
@@ -32,4 +41,11 @@ __all__ = [
     "update_project_metadata",
     "update_readme_metadata",
     "sync_all_versions",
+    "VersionDecision",
+    "VersionSource",
+    "VersionStateError",
+    "collect_version_sources",
+    "format_version_decision",
+    "resolve_version_decision",
+    "validate_version_sources",
 ]

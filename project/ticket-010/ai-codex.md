@@ -32,8 +32,20 @@ late build/publish failures.
 
 ## Actual changes
 
-- Ticket scope approved; implementation started on an isolated ticket branch.
+- Added a typed, side-effect-free version state collector and decision model.
+- Added Git tag/history and optional registry evidence with offline fallback.
+- Distinguished normal, already-complete and partial bumps; rejected ambiguous
+  candidates and regressions.
+- Passed global `--bump` and `--target-version` into the push decision.
+- Synchronized the selected lockstep release set and enforced strict read-back
+  before commit/publication.
+- Expanded `check-versions` with file-level evidence and local drift failure.
+- Added regression tests for version decisions, strict synchronization and CLI
+  option precedence.
 
 ## Blockers
 
 - None at the start of implementation.
+- The legacy Dockerfile uses unsupported Python 3.11; validation was repeated
+  successfully in a one-shot Python 3.12 container without changing the
+  infrastructure-owned file.

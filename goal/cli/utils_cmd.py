@@ -21,12 +21,18 @@ from goal.package_managers import (
     detect_project_language,
     suggest_package_managers,
 )
-from goal.version_validation import validate_project_versions, format_validation_results
+from goal.version_validation import (
+    format_validation_results,
+    update_badge_versions,
+    validate_project_versions,
+)
 from goal.cli import main
 from goal.cli.version import (
     get_current_version,
     bump_version,
     detect_project_types,
+    format_version_decision,
+    resolve_version_decision,
     sync_all_versions,
 )
 
@@ -160,10 +166,12 @@ def package_managers(language, available):
 
 @main.command()
 @click.option("--update-badges", is_flag=True, help="Update README badge versions")
-def check_versions(update_badges):
+@click.pass_context
+def check_versions(ctx, update_badges):
     """Check version consistency across registries and README badges."""
     current_version = get_current_version()
     project_types = detect_project_types()
+    results = {}
 
     click.echo(f"Current version: {click.style(current_version, fg='cyan')}")
 
@@ -171,10 +179,46 @@ def check_versions(update_badges):
         click.echo(f"Project types: {', '.join(project_types)}")
 
         results = validate_project_versions(project_types, current_version)
-        output = format_validation_results(results)
-        click.echo(output)
+        for line in format_validation_results(results):
+            click.echo(line)
     else:
         click.echo("No project types detected.")
+
+    registry_versions = {
+        (
+            f"{result.get('registry') or project_type}:"
+            f"{result.get('package_name') or 'unknown-package'}"
+        ): result["registry_version"]
+        for project_type, result in results.items()
+        if result.get("registry_version")
+    }
+    try:
+        decision = resolve_version_decision(
+            bump=ctx.obj.get("bump", "patch"),
+            target_version=ctx.obj.get("version"),
+            config=ctx.obj.get("config"),
+            project_types=project_types,
+            registry_versions=registry_versions,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    for line in format_version_decision(decision):
+        click.echo(line)
+
+    badge_version = (
+        decision.target_version
+        if decision.reason in {"already-bumped", "partial-bump", "explicit-target"}
+        else decision.current_version
+    )
+    if update_badges and update_badge_versions(Path("README.md"), badge_version):
+        click.echo(f"Updated README badges to {badge_version}")
+
+    if decision.local_drift:
+        raise click.ClickException(
+            "Local version files are inconsistent; run the governed release "
+            "sync or set an explicit target."
+        )
 
 
 @main.command()
