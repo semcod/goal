@@ -296,8 +296,14 @@ class GoalConfig:
                     init_candidates.append(rel)
 
         version_files: List[str] = []
-        if Path("VERSION").exists():
-            version_files.append("VERSION")
+        version_path = Path("VERSION")
+        if version_path.exists():
+            value = version_path.read_text(encoding="utf-8").strip()
+            if re.fullmatch(
+                r"v?\d+\.\d+\.\d+(?:[-+.]?[0-9A-Za-z][0-9A-Za-z.-]*)?",
+                value,
+            ):
+                version_files.append("VERSION")
         for filename in manifests:
             if filename in shallowest:
                 version_files.append(f"{shallowest[filename]}:version")

@@ -174,7 +174,14 @@ class TestWorkflowOrder:
             f"Expected [commit, publish, tag, push] but got {call_order}"
         )
 
-    def test_metadata_only_changes_skip_bump_commit_publish_and_tag(self):
+    @pytest.mark.parametrize(
+        "project_types",
+        [["python"], []],
+        ids=["metadata-only-package", "non-registry-repository"],
+    )
+    def test_metadata_only_changes_skip_bump_commit_publish_and_tag(
+        self, project_types
+    ):
         """Docs/metadata-only runs must not bump, commit, publish, nor tag.
 
         When the only staged files are docs/metadata (no package source), goal stays
@@ -194,7 +201,7 @@ class TestWorkflowOrder:
         with (
             patch("goal.push.core.check_pyproject_toml", return_value=None),
             patch("goal.push.core._initialize_context"),
-            patch("goal.push.core._detect_project_types", return_value=["python"]),
+            patch("goal.push.core._detect_project_types", return_value=project_types),
             patch("goal.push.core._bootstrap_projects"),
             patch("goal.push.core.run_git"),
             patch(

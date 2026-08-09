@@ -3,7 +3,28 @@ import subprocess
 import pytest
 from goal.cli import sync_all_versions
 from goal.cli.version import PROJECT_TYPES
-from goal.cli.version_utils import bump_version
+from goal.cli.version_utils import bump_version, get_current_version
+
+
+def test_sync_preserves_multiline_version_contract(tmp_path, monkeypatch):
+    """VERSION may be an integrity manifest rather than release metadata."""
+    monkeypatch.chdir(tmp_path)
+    contract = (
+        "FORMAT=bioxfoundry.conversion-version/v1\n"
+        "ARTIFACT=markdown-mirror\n"
+        "CONVERTER_VERSION=0.5.19\n"
+    )
+    (tmp_path / "VERSION").write_text(contract)
+    (tmp_path / "package.json").write_text('{"name":"fixture","version":"1.2.3"}\n')
+
+    func = sync_all_versions
+    while hasattr(func, "__wrapped__"):
+        func = func.__wrapped__
+    updated = func("1.2.4")
+
+    assert (tmp_path / "VERSION").read_text() == contract
+    assert "VERSION" not in updated
+    assert get_current_version() == "1.2.4"
 
 
 def test_sync_updates_init_py(tmp_path):

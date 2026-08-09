@@ -13,6 +13,7 @@ except ImportError:
     tomlkit = None
 
 from .version_utils import (
+    is_plain_version,
     update_json_version,
     update_project_metadata,
     update_readme_metadata,
@@ -59,7 +60,12 @@ def _warn_version_sync(filename: str, exc: Exception) -> None:
 
 def _update_version_file(new_version: str, updated: List[str]) -> None:
     """Update VERSION file."""
-    Path("VERSION").write_text(f"{new_version}\n")
+    path = Path("VERSION")
+    if path.exists():
+        current = path.read_text(encoding="utf-8").strip()
+        if current and not is_plain_version(current):
+            return
+    path.write_text(f"{new_version}\n")
     updated.append("VERSION")
 
 
@@ -352,7 +358,8 @@ def _read_version_of(path: Path) -> Optional[str]:
     try:
         name = path.name
         if name == "VERSION":
-            return path.read_text(encoding="utf-8").strip() or None
+            value = path.read_text(encoding="utf-8").strip()
+            return value if value and is_plain_version(value) else None
         if name in ("package.json", "composer.json"):
             return json.loads(path.read_text(encoding="utf-8")).get("version")
         if name == "pyproject.toml":
@@ -377,7 +384,7 @@ def _read_root_version() -> Optional[str]:
     root_version = Path("VERSION")
     if root_version.exists():
         value = root_version.read_text(encoding="utf-8").strip()
-        if value:
+        if value and is_plain_version(value):
             return value
     for candidate in ("package.json", "composer.json", "pyproject.toml", "Cargo.toml"):
         path = Path(candidate)

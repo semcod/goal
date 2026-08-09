@@ -437,10 +437,9 @@ def execute_push_workflow(
     # is a registry project but no staged file is package source (only docs,
     # metadata, lockfiles, tests or generated caches), bumping the version and
     # committing produces churn: the version races ahead of what is published.
-    # Skip the release machinery in that case. Note we only skip on
-    # "no_package_source_changes" — a non-registry repo (docs/web site) reports
-    # "no_registry_project_types" and must still commit normally. --force-publish
-    # overrides to release anyway.
+    # Skip the release machinery in that case. A non-registry repository also
+    # gets a plain commit: there is no package version or release to advance.
+    # --force-publish overrides to release anyway.
     from goal.publish.changes import analyze_publishable_changes
 
     early_change_report = (
@@ -448,7 +447,8 @@ def execute_push_workflow(
     )
     skip_release = bool(
         early_change_report
-        and early_change_report.reason == "no_package_source_changes"
+        and early_change_report.reason
+        in {"no_package_source_changes", "no_registry_project_types"}
     )
     if skip_release:
         # Staged files alone miss source changes that are already committed

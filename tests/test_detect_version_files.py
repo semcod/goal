@@ -70,6 +70,7 @@ def test_monorepo_detects_nested_manifest(tmp_path):
     files = _detect_in(tmp_path)
 
     assert "package.json:version" in files
+    assert "VERSION" in files
     assert "adapters/python/pyproject.toml:version" in files
     assert not any("node_modules" in f for f in files)
 
@@ -103,3 +104,15 @@ def test_prefers_shallowest_package(tmp_path):
     init_entries = [f for f in files if ":__version__" in f]
 
     assert init_entries == ["rootpkg/__init__.py:__version__"]
+
+
+def test_multiline_version_contract_is_not_the_release_version(tmp_path):
+    (tmp_path / "VERSION").write_text(
+        "FORMAT=bioxfoundry.intent-version/v1\nARTIFACT=intent-corpus\n"
+    )
+    (tmp_path / "package.json").write_text('{"version":"2.4.0"}\n')
+
+    files = _detect_in(tmp_path)
+
+    assert "package.json:version" in files
+    assert "VERSION" not in files

@@ -20,6 +20,21 @@ else:
 from .version_types import PROJECT_TYPES
 
 
+_PLAIN_VERSION_RE = re.compile(
+    r"^v?\d+\.\d+\.\d+(?:[-+.]?[0-9A-Za-z][0-9A-Za-z.-]*)?$"
+)
+
+
+def is_plain_version(value: str) -> bool:
+    """Return whether *value* is a single semver/calver-style version.
+
+    Some repositories use a file named VERSION as a multi-line integrity
+    contract.  Such a file is data, not release metadata, and must never be
+    replaced by Goal's version synchronizer.
+    """
+    return bool(_PLAIN_VERSION_RE.fullmatch(value.strip()))
+
+
 def detect_project_types() -> List[str]:
     """Detect what type(s) of project this is."""
     detected = []
@@ -65,7 +80,7 @@ def get_current_version() -> str:
     version_file = Path("VERSION")
     if version_file.exists():
         content = version_file.read_text().strip()
-        if content:
+        if content and is_plain_version(content):
             return content
 
     # Try to get from project files

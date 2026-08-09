@@ -24,12 +24,12 @@
 ## AI Cost Tracking
 
 ![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.284-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.52-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-124.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.90-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-133.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
 
-- 🤖 **LLM usage:** $0.5207 (348 commits)
-- 👤 **Human dev:** ~$12447 (124.5h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $7.8977 (357 commits)
+- 👤 **Human dev:** ~$13363 (133.6h @ $100/h, 30min dedup)
 
-Generated on 2026-08-05 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
+Generated on 2026-08-09 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
 
 ---
 
