@@ -11,3 +11,11 @@ transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
 transition: EDIT -> VALIDATION
 transition: VALIDATION -> PUBLICATION
 2026-08-10 publication input prepared on main for governed goal -a release
+2026-08-10 public PyPI fresh-install smoke for goal 2.1.287: PASS
+2026-08-10 check-versions post-release audit: FAIL; docs-only changes reported normal-bump
+transition: PUBLICATION -> EDIT
+2026-08-10 follow-up version/CLI suite: PASS (88 passed, 1 skipped)
+2026-08-10 follow-up full Python 3.13 suite: PASS (503 passed, 2 skipped)
+2026-08-10 follow-up focused Python 3.12 suite: PASS (40 passed)
+2026-08-10 follow-up project/governance-check.sh: PASS (0 errors, 0 warnings)
+transition: EDIT -> VALIDATION -> PUBLICATION

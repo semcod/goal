@@ -164,19 +164,13 @@ def test_explicit_target_repairs_stale_sources_without_extra_bump(
     }
 
 
-def test_multiline_version_contract_is_reported_but_not_managed(
-    tmp_path, monkeypatch
-):
-    (tmp_path / "VERSION").write_text(
-        "FORMAT=example.integrity/v1\nARTIFACT=fixture\n"
-    )
+def test_multiline_version_contract_is_reported_but_not_managed(tmp_path, monkeypatch):
+    (tmp_path / "VERSION").write_text("FORMAT=example.integrity/v1\nARTIFACT=fixture\n")
     (tmp_path / "package.json").write_text(
         json.dumps({"name": "fixture", "version": "2.0.0"}) + "\n"
     )
     monkeypatch.chdir(tmp_path)
-    config = {
-        "versioning": {"files": ["VERSION", "package.json:version"]}
-    }
+    config = {"versioning": {"files": ["VERSION", "package.json:version"]}}
 
     decision = resolve_version_decision(config=config, registry_versions={})
 
@@ -228,29 +222,21 @@ def test_git_history_detects_uncommitted_prebump_without_release_tag(
 
 def test_strict_validation_lists_every_stale_source(tmp_path, monkeypatch):
     (tmp_path / "VERSION").write_text("1.0.0\n")
-    (tmp_path / "package.json").write_text(
-        '{"name": "fixture", "version": "1.0.1"}\n'
-    )
+    (tmp_path / "package.json").write_text('{"name": "fixture", "version": "1.0.1"}\n')
     monkeypatch.chdir(tmp_path)
 
     with pytest.raises(VersionStateError) as error:
-        validate_version_sources(
-            ["VERSION", "package.json:version"], "1.0.2"
-        )
+        validate_version_sources(["VERSION", "package.json:version"], "1.0.2")
 
     message = str(error.value)
     assert "VERSION: expected 1.0.2, found 1.0.0" in message
     assert "package.json:version: expected 1.0.2, found 1.0.1" in message
 
 
-def test_imported_version_name_is_not_detected_as_a_declaration(
-    tmp_path, monkeypatch
-):
+def test_imported_version_name_is_not_detected_as_a_declaration(tmp_path, monkeypatch):
     package = tmp_path / "package"
     package.mkdir()
-    (package / "__init__.py").write_text(
-        "from package.metadata import __version__\n"
-    )
+    (package / "__init__.py").write_text("from package.metadata import __version__\n")
     (tmp_path / "VERSION").write_text("1.0.0\n")
     monkeypatch.chdir(tmp_path)
 
@@ -259,9 +245,7 @@ def test_imported_version_name_is_not_detected_as_a_declaration(
     assert {source.spec for source in sources} == {"VERSION"}
 
 
-def test_registry_failure_does_not_disable_local_git_decision(
-    tmp_path, monkeypatch
-):
+def test_registry_failure_does_not_disable_local_git_decision(tmp_path, monkeypatch):
     config = _init_release(tmp_path, "1.2.3")
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
@@ -289,9 +273,7 @@ def _registry_result(version: str) -> dict:
     }
 
 
-def test_check_versions_explains_complete_prebump(
-    tmp_path, monkeypatch
-):
+def test_check_versions_explains_complete_prebump(tmp_path, monkeypatch):
     from goal.cli import utils_cmd
 
     config = _init_release(tmp_path, "1.2.3")
@@ -314,9 +296,7 @@ def test_check_versions_explains_complete_prebump(
     assert "Version decision: already-bumped -> 1.2.4" in result.output
 
 
-def test_check_versions_fails_and_explains_partial_prebump(
-    tmp_path, monkeypatch
-):
+def test_check_versions_fails_and_explains_partial_prebump(tmp_path, monkeypatch):
     from goal.cli import utils_cmd
 
     config = _init_release(tmp_path, "1.2.3")
@@ -335,3 +315,51 @@ def test_check_versions_fails_and_explains_partial_prebump(
     assert result.exit_code == 1
     assert "Version decision: partial-bump -> 1.2.4" in result.output
     assert "pyproject.toml:version" in result.output
+
+
+def test_check_versions_does_not_bump_for_documentation_only_changes(
+    tmp_path, monkeypatch
+):
+    from goal.cli import utils_cmd
+
+    config = _init_release(tmp_path, "1.2.3")
+    (tmp_path / "README.md").write_text("documentation only\n")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        utils_cmd, "validate_project_versions", lambda *args: _registry_result("1.2.3")
+    )
+
+    result = CliRunner().invoke(
+        utils_cmd.check_versions,
+        [],
+        obj={"config": config, "bump": "patch", "version": None},
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Version decision: no-release -> 1.2.3" in result.output
+
+
+def test_check_versions_bumps_for_committed_unreleased_package_source(
+    tmp_path, monkeypatch
+):
+    from goal.cli import utils_cmd
+
+    config = _init_release(tmp_path, "1.2.3")
+    package = tmp_path / "fixture"
+    package.mkdir()
+    (package / "__init__.py").write_text("VALUE = 1\n")
+    _git(tmp_path, "add", "fixture/__init__.py")
+    _git(tmp_path, "commit", "-m", "add package source")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        utils_cmd, "validate_project_versions", lambda *args: _registry_result("1.2.3")
+    )
+
+    result = CliRunner().invoke(
+        utils_cmd.check_versions,
+        [],
+        obj={"config": config, "bump": "patch", "version": None},
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Version decision: normal-bump -> 1.2.4" in result.output

@@ -18,3 +18,9 @@
   Python 3.12 container matrix and governance validation.
 - Entered `IN_PROGRESS / VALIDATION`.
 - Completed validation and entered `IN_PROGRESS / PUBLICATION`.
+- Re-entered `EDIT` after the public smoke found a standalone
+  `check-versions` release-intent discrepancy.
+- Reused working-tree and committed-since-tag package-source evidence so
+  `check-versions` reports `no-release` for documentation-only changes.
+- Passed the follow-up focused, full, Python 3.12 and governance validation;
+  re-entered `PUBLICATION` for the corrective release.
