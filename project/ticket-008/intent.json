@@ -1,0 +1,24 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-008",
+  "summary": "Reserve the existing wellmanifest DSL alignment branch until human scope is supplied",
+  "workstream": "governance",
+  "allowedPaths": [
+    "project/ticket-008/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "goal/**",
+    "tests/**",
+    ".env",
+    ".env.*",
+    ".governance/**",
+    "project/ticket-*/user-*.md",
+    ".github/**"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": ["ticket-009"],
+  "integrationTicket": null
+}

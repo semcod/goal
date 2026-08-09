@@ -283,7 +283,8 @@ def authorize_hook_push(
         secrets.compare_digest(str(payload.get("tokenHash", "")), expected)
         and int(payload.get("expires", 0)) >= int(time.time())
         and payload.get("remote") == remote_name
-        and payload.get("mode") == policy.mode
+        and payload.get("remote") == policy.remote
+        and payload.get("mode") in policy.allowed_modes
     )
     if not valid:
         raise click.ClickException("expired or mismatched Goal delivery transaction")

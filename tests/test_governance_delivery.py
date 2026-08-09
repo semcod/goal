@@ -110,6 +110,24 @@ def test_file_backed_transaction_authorizes_matching_remote(tmp_path):
         )
 
 
+def test_hook_accepts_an_explicit_allowed_mode_when_default_differs(tmp_path):
+    root = _repository(tmp_path)
+    config = _config(
+        default_mode="pull-request",
+        allowed_modes=["pull-request", "direct-main"],
+        require_clean_governance=False,
+    )
+    hook_policy = delivery.resolve_delivery_policy(config, None, all_flags=True)
+    direct_policy = delivery.resolve_delivery_policy(
+        config, "direct-main", all_flags=True
+    )
+
+    with delivery.authorized_push(direct_policy, cwd=root):
+        assert delivery.authorize_hook_push(
+            hook_policy, "origin", cwd=root
+        ) is True
+
+
 def test_policy_payload_marks_server_enforcement_as_required():
     policy = delivery.resolve_delivery_policy(
         _config(default_mode="publish-only"), None, all_flags=True

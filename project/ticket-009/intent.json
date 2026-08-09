@@ -1,0 +1,32 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-009",
+  "summary": "Preserve multi-line VERSION contracts and authorize explicitly selected allowed delivery modes",
+  "workstream": "application",
+  "allowedPaths": [
+    "goal/cli/version_utils.py",
+    "goal/cli/version_sync.py",
+    "goal/config/manager.py",
+    "goal/push/core.py",
+    "goal/governance/delivery.py",
+    "tests/test_version_sync.py",
+    "tests/test_detect_version_files.py",
+    "tests/test_push_e2e.py",
+    "tests/test_governance_delivery.py",
+    "project/ticket-009/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".env",
+    ".env.*",
+    ".governance/**",
+    "project/ticket-*/user-*.md",
+    "goal.yaml",
+    ".github/**"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}
