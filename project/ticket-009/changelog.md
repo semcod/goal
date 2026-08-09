@@ -11,3 +11,6 @@
 - Accepted explicitly selected delivery modes when they are allowed by policy
   and target the configured remote.
 - Added regression coverage and entered final validation.
+- Passed 481 tests with 2 optional skips and a clean governance check.
+- Published `goal 2.1.286` and synchronized both `v2.1.285` and `v2.1.286`
+  tags to the remote.

@@ -37,4 +37,4 @@ transaction despite `direct-main` being in `allowedModes`.
 
 ## Blockers
 
-- Final governance validation and publication remain to be completed.
+- None.  Validation and governed publication completed successfully.

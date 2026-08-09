@@ -2,8 +2,8 @@
 
 - **ID**: ticket-009
 - **Owner**: session user (identity unresolved)
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-09
 - **Work classification**: `SERVICE / delivery`
 
@@ -25,7 +25,7 @@ policy even if it differs from the policy default.
   version bump or registry publication.
 - [x] AC-04: A `direct-main` transaction is accepted when `direct-main` is an
   allowed mode and the configured default is `pull-request`.
-- [ ] AC-05: Full tests, governance validation and governed publication pass.
+- [x] AC-05: Full tests, governance validation and governed publication pass.
 
 ## Validation evidence
 
@@ -34,7 +34,8 @@ policy even if it differs from the policy default.
 - Full suite before the delivery-mode repair: 480 passed, 2 skipped.
 - Final full suite: 481 passed, 2 skipped.
 - Governance check: PASS (0 errors, 0 warnings).
-- Governed publication: pending.
+- Governed publication: `goal 2.1.286` published to PyPI; `main`, `v2.1.286`
+  and the previously pending `v2.1.285` tag pushed successfully.
 
 ## Participants
 
@@ -51,3 +52,10 @@ authorizes the narrowly scoped implementation and delivery recorded here.
 
 This ticket does not change credentials, provider behavior, branch protection,
 the set of allowed delivery modes, or any human-owned participant file.
+
+## Delivery evidence
+
+- Release commit: `665f4ba4a9a92ad32db6e9a46d84e1fc4dd7e74a`.
+- Release tag: `v2.1.286`.
+- Previous published tag synchronized: `v2.1.285`.
+- PyPI release: `goal 2.1.286`.
