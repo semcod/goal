@@ -24,3 +24,6 @@
   `check-versions` reports `no-release` for documentation-only changes.
 - Passed the follow-up focused, full, Python 3.12 and governance validation;
   re-entered `PUBLICATION` for the corrective release.
+- Published corrective release `goal 2.1.288` with wheel and source archive.
+- Verified the public Python 3.12 install and remote branch/tag/PR state, then
+  closed the ticket as `DONE`.

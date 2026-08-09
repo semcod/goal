@@ -20,3 +20,8 @@ transition: PUBLICATION -> EDIT
 2026-08-10 follow-up project/governance-check.sh: PASS (0 errors, 0 warnings)
 transition: EDIT -> VALIDATION -> PUBLICATION
 2026-08-10 corrective publication input prepared on main for governed goal -a release
+2026-08-10 corrective goal --ascii --delivery-mode direct-main -a: PASS; PyPI goal 2.1.288
+2026-08-10 public PyPI Python 3.12 install/import/CLI/resolver smoke: PASS
+2026-08-10 remote main and annotated tag v2.1.288: PUSHED at 63761d07d0254454b3eaf74c66b6097a1148258c
+2026-08-10 remote audit: PASS (one branch, zero open pull requests)
+transition: PUBLICATION -> DONE

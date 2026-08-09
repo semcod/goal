@@ -2,8 +2,8 @@
 
 - **ID**: ticket-010
 - **Owner**: session user (identity unresolved)
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-09
 - **Work classification**: `SERVICE / release`
 
@@ -128,3 +128,18 @@ although `pyproject.toml` requires Python 3.12 or newer.  Its build therefore
 fails before testing.  This infrastructure-owned defect is outside this
 application ticket; equivalent matrix validation passed in a one-shot
 `python:3.12-slim` container.
+
+## Delivery evidence
+
+- Initial governed release `goal 2.1.287` established the dependency-aware
+  resolver and passed a fresh public-PyPI Python 3.12 smoke test.
+- The post-release audit found and corrected the standalone `check-versions`
+  release-intent discrepancy; the governed corrective release is
+  `goal 2.1.288`.
+- Corrective release commit: `63761d07d0254454b3eaf74c66b6097a1148258c`.
+- Corrective annotated tag: `v2.1.288`, peeled to the release commit locally
+  and remotely.
+- Public PyPI exposes the `2.1.288` wheel and source archive; a Python 3.12
+  install, import, resolver and CLI version smoke test passed.
+- Remote audit after publication: `HEAD == origin/main == v2.1.288`, one
+  branch (`main`) and zero open pull requests.
