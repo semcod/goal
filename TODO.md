@@ -29,10 +29,10 @@
   metadata-only workflow test from real Git commits and abort delivery when a
   docs-only commit fails. State: `DONE`; classification:
   `SERVICE / delivery`.
-- [ ] Deliver [ticket-012](project/ticket-012/README.md): align the integration
+- [x] Deliver [ticket-012](project/ticket-012/README.md): align the integration
   runtime with Python 3.12+, refresh compatible dependencies, pass the full
   test/container matrix and publish through `goal -a`. State:
-  `IN_PROGRESS / EDIT`; release 2.1.290 verified, evidence PR pending;
+  `DONE / PUBLICATION`; release 2.1.290 verified from the public registry;
   classification: `SERVICE / integration`.
 - [x] Deliver [ticket-013](project/ticket-013/README.md): adopt immutable
   new-project 0.14.1 and assign integration/lockfile ownership. State:

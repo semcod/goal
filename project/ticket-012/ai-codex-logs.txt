@@ -50,3 +50,8 @@
   because the release-version carrier `goal/__init__.py` was classified as
   new package source after the older v2.1.289 tag. Reverted that generated
   bump without rewriting history; a dedicated classifier regression follows.
+- 2026-08-10: PR #32 passed Python 3.12/3.13 CI and validator-agent review at
+  exact head `515792b30485889c7e2bb001283a4309f72ab516`, then merged as
+  `0f3847b1c20d1f9e13faa70367b3013c0041d19c`.
+- 2026-08-10: Moved ticket 012 to `DONE / PUBLICATION`; the false post-release
+  bump is separated into a dedicated regression ticket.

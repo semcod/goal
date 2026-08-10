@@ -23,3 +23,5 @@
 - Published Goal 2.1.290 wheel and sdist to PyPI through governed `goal -a`,
   verified a clean public installation, audited downstream constraints, and
   closed the ticket as `DONE / PUBLICATION`.
+- Merged the publication evidence through exact-head PR #32 and finalized the
+  ticket state on the protected branch.

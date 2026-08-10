@@ -21,7 +21,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "68e69b8d26d3e5ba851bad98351c5e801e17e040",
+    "acceptedBaseSha": "0f3847b1c20d1f9e13faa70367b3013c0041d19c",
     "targetBranch": "main",
     "outcome": "Publish the already merged and consistent Goal 2.1.290 artifacts to PyPI through goal -a publish-only and record independently verifiable publication evidence",
     "nonGoals": [

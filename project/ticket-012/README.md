@@ -2,8 +2,8 @@
 
 - **ID**: ticket-012
 - **Owner**: session user (identity unresolved)
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
@@ -51,6 +51,11 @@ already-reviewed Goal 2.1.290 state. Repository changes are limited to Goal's
 generated `README.md`, `CHANGELOG.md` and ticket evidence; no new version,
 source, dependency-range or public-interface change is authorized. Each
 downstream repository remains subject to its own governance boundary.
+
+The publication-evidence PR #32 passed Python 3.12/3.13 CI and independent
+validator approval at exact head `515792b30485889c7e2bb001283a4309f72ab516`.
+It merged as `0f3847b1c20d1f9e13faa70367b3013c0041d19c`; all ticket outcomes are now
+present on the protected target branch.
 
 ## Validation evidence: runtime and lock slice
 
