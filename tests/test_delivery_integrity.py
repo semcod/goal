@@ -7,6 +7,16 @@ import click
 import pytest
 
 
+def test_self_update_ignores_non_string_version_provider_result() -> None:
+    """Only a concrete version string may authorize a self-update attempt."""
+    from goal.cli import _maybe_self_update
+
+    with patch("goal.cli._auto_update_goal") as auto_update:
+        _maybe_self_update(object(), yes=True)  # type: ignore[arg-type]
+
+    auto_update.assert_not_called()
+
+
 @pytest.mark.parametrize("existing_config", [False, True])
 def test_dry_run_context_does_not_create_or_rewrite_goal_yaml(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing_config: bool

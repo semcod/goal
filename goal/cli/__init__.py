@@ -367,7 +367,7 @@ def _maybe_self_update(latest_version: Optional[str], yes: bool) -> None:
     without -y so scripted/CI invocations never block on a prompt or silently
     start a network install mid-command.
     """
-    if not latest_version:
+    if not isinstance(latest_version, str) or not latest_version:
         return
     if not yes and not sys.stdin.isatty():
         return
