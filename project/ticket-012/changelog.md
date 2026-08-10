@@ -20,3 +20,6 @@
   proved that a second resolution returns `already-bumped` without advancing.
 - Published the five-file version slice through PR #31 after exact-head
   validation and activated the irreversible registry-publication boundary.
+- Published Goal 2.1.290 wheel and sdist to PyPI through governed `goal -a`,
+  verified a clean public installation, audited downstream constraints, and
+  closed the ticket as `DONE / PUBLICATION`.
