@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema", "ticket", "summary", "workstream", "allowedPaths", "forbiddenPaths", "stacks", "dependsOn", "conflictsWith", "integrationTicket"],
   "properties": {
-    "schema": { "const": "new-project.intent/v2" },
+    "schema": { "enum": ["new-project.intent/v2", "new-project.intent/v3"] },
     "ticket": { "type": "string", "pattern": "^ticket-[0-9]{3}$" },
     "summary": { "type": "string", "minLength": 1 },
     "workstream": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
@@ -20,6 +20,16 @@
         { "type": "null" },
         { "type": "string", "pattern": "^ticket-[0-9]{3}$" }
       ]
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "priority", "origin"],
+      "properties": {
+        "kind": { "enum": ["BUG", "FEATURE", "SERVICE"] },
+        "priority": { "enum": ["P0", "P1", "P2", "P3"] },
+        "origin": { "enum": ["regression", "requested", "health"] }
+      }
     },
     "delivery": {
       "type": "object",
@@ -48,6 +58,16 @@
         },
         "complexity": { "enum": ["XS", "S"] },
         "estimatedMinutes": { "type": "integer", "minimum": 1, "maximum": 30 },
+        "standardAdoption": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sourceRepository", "fromRevision", "toRevision"],
+          "properties": {
+            "sourceRepository": { "const": "wellmanifest/new-project" },
+            "fromRevision": { "$ref": "#/$defs/sha" },
+            "toRevision": { "$ref": "#/$defs/sha" }
+          }
+        },
         "budgets": {
           "type": "object",
           "additionalProperties": false,
@@ -157,8 +177,25 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "schema": { "const": "new-project.intent/v3" } },
+        "required": ["schema"]
+      },
+      "then": { "required": ["classification"] }
+    },
+    {
+      "if": {
+        "properties": { "schema": { "const": "new-project.intent/v2" } },
+        "required": ["schema"]
+      },
+      "then": { "not": { "required": ["classification"] } }
+    }
+  ],
   "$defs": {
     "glob": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" },
-    "branch": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:\\.\\.|//|@\\{|[~^:?*\\[\\\\])).+$" }
+    "branch": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:\\.\\.|//|@\\{|[~^:?*\\[\\\\])).+$" },
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
   }
 }

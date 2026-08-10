@@ -1,5 +1,4 @@
 {
-  "$schema": "./manifest.schema.json",
   "approvalEvidence": {
     "requiredBindings": [
       "repository",
@@ -14,74 +13,11 @@
   },
   "coordination": {
     "integration": {
-      "requiredForPaths": [
-        "package.json",
-        "pyproject.toml",
-        "go.mod",
-        "Cargo.toml",
-        "pom.xml"
-      ],
       "workstream": "integration"
     },
     "maxActiveTicketsPerWorkstream": 1,
     "mode": "workstreams",
-    "rejectActiveScopeOverlap": true,
-    "workstreams": {
-      "application": {
-        "ownedPaths": [
-          "goal/**",
-          "src/**",
-          "app/**",
-          "lib/**",
-          "test/**",
-          "tests/**"
-        ]
-      },
-      "governance": {
-        "ownedPaths": [
-          ".governance/**",
-          ".gitignore",
-          "AGENTS.md",
-          "README.md",
-          "TODO.md",
-          "goal.yaml",
-          "project/**",
-          "project.sh",
-          "project.bat",
-          "scripts/runtime.sh"
-        ]
-      },
-      "infrastructure": {
-        "ownedPaths": [
-          "Dockerfile*",
-          "compose*.yml",
-          "compose*.yaml",
-          "infra/**",
-          ".github/**"
-        ]
-      },
-      "integration": {
-        "ownedPaths": [
-          "package.json",
-          "pyproject.toml",
-          "go.mod",
-          "Cargo.toml",
-          "pom.xml",
-          "docs/**",
-          "integration/**",
-          "uv.lock",
-          "poetry.lock",
-          "Pipfile.lock"
-        ]
-      },
-      "interfaces": {
-        "ownedPaths": [
-          "api/**",
-          "sdk/**",
-          "clients/**"
-        ]
-      }
-    }
+    "rejectActiveScopeOverlap": true
   },
   "delivery": {
     "allowedComplexityClasses": [
@@ -101,12 +37,6 @@
     "maxImplementationFiles": 5,
     "maxPublicInterfaceChanges": 0,
     "maxRuntimeDependencies": 0,
-    "publicInterfacePaths": [
-      "api/**",
-      "sdk/**",
-      "src/public/**"
-    ],
-    "requiredForImplementation": true,
     "targetBranches": [
       "main"
     ]
@@ -134,14 +64,13 @@
     "CHANGELOG.md",
     "TODO.md",
     "AGENTS.md",
+    "Dockerfile",
     "project/TICKETS.md",
     "project/new-ticket.sh",
-    "project/readme.sh",
-    "Dockerfile"
+    "project/readme.sh"
   ],
   "schema": "new-project.governance/v2",
   "stacks": [
-    "python",
     "docker"
   ],
   "standard": {
@@ -182,7 +111,7 @@
   },
   "trustedApprovalSources": [
     "github-review",
-    "signed-attestation",
-    "github-app-review"
+    "github-app-review",
+    "signed-attestation"
   ]
 }

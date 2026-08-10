@@ -1,0 +1,33 @@
+{
+  "schema": "new-project.required-checks/v1",
+  "version": 1,
+  "repository": "wellmanifest/new-project",
+  "workflowFile": ".github/workflows/ci.yml",
+  "requiredCheckNames": [
+    "test",
+    "windows-governance"
+  ],
+  "circularGovernanceChecksIgnoredByValidator": [
+    "governance / enforce",
+    "governance / governance / enforce"
+  ],
+  "externalConsumers": [
+    {
+      "name": "validator-agent",
+      "repository": "subactor/validator-agent",
+      "mustRead": "governance/required-checks.json#/requiredCheckNames",
+      "bindings": [
+        "DIRECT_PR_REQUIRED_CHECKS",
+        "DIRECT_PR_SCAN_CONFIG[\"wellmanifest/new-project\"].required_checks",
+        "bin/dispatch-direct-pr.sh resolve_required_checks"
+      ],
+      "note": "External consumers must load requiredCheckNames from this file (or an equivalent generated export). Hardcoding a subset is a governance defect of the same class as ticket-025."
+    },
+    {
+      "name": "github-ruleset",
+      "id": "main-governance-protection",
+      "mustMatch": "requiredCheckNames",
+      "note": "Ruleset lives outside the repository and cannot be read from CI without admin API. Align it manually with requiredCheckNames; CI gates the workflow side only."
+    }
+  ]
+}

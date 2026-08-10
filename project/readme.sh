@@ -56,6 +56,14 @@ printf '%s\n' \
 
 for dir in project/ticket-*; do
   [[ -d "$dir" ]] || continue
+  # A ticket git does not track yet belongs to work in flight, often somebody
+  # else's. Indexing it writes rows whose links resolve in no commit but that
+  # author's working tree, so whoever regenerates the index next ships broken
+  # links. An untracked ticket appears in the index once it is committed.
+  if git rev-parse --git-dir >/dev/null 2>&1 && [[ -z "$(git ls-files -- "$dir")" ]]; then
+    printf 'skipping untracked %s; commit it to have it indexed\n' "$dir" >&2
+    continue
+  fi
   ticket_name="$(basename "$dir")"
   spec='-'
   preprompt='-'

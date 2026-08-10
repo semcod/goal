@@ -11,9 +11,11 @@ Before any multi-step implementation, an agent must:
    Otherwise run `./project/new-ticket.sh --title "..." --agent "..."
    --workstream "..."`.
 3. Complete the ticket `README.md`, owned `ai-*.md`, `intent.json` and `TODO.md`.
-4. Stop in `WAIT_FOR_APPROVAL`; do not change implementation files yet.
-5. After explicit approval, move to `EDIT` and stay inside `intent.json`
-   `allowedPaths`.
+4. Treat a user request that already says to execute or work autonomously as
+   `SESSION_EXECUTION_AUTHORIZATION`; record it in the agent-owned ticket file.
+5. Move to `EDIT` without a second confirmation and stay inside `intent.json`
+   `allowedPaths`. Ask for new authority only for destructive action, secret
+   access, new external coordination, or material objective expansion.
 6. Never create or edit `project/ticket-*/user-*.md`; only its human owner or a
    trusted intake boundary may do so.
 7. Keep executable source/tests/scripts outside ticket directories.
@@ -38,7 +40,11 @@ Before any multi-step implementation, an agent must:
    its signature, issuer, predicate type and subject bindings.
 14. Validator-agent examples use
    `LLM_MODEL_VALIDATOR=openrouter/z-ai/glm-5.2`; model findings stay advisory.
+15. Configure GitHub with `delete_branch_on_merge=true`. A merged ticket branch
+   must disappear after merge. A PR closed without merge keeps its branch until
+   the owner explicitly discards that unmerged work. When no PR is open, the
+   only remote branch is the default branch.
 
-Markdown approval is an audit note, not trusted merge authorization. Required
+Markdown approval is an audit note, not trusted merge approval. Required
 merge approval comes from the repository's protected review, attestation and
 ruleset boundary.

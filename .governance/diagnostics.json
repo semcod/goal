@@ -37,6 +37,10 @@
     "GOV-DOCKER-001": "The required Docker runtime declaration is incomplete.",
     "GOV-STACK-001": "The declared technology stack lacks its required project marker.",
     "GOV-SECRET-001": "A changed file contains a probable secret assignment.",
-    "GOV-PATH-001": "A committed governance artifact contains a machine-local absolute path."
+    "GOV-PATH-001": "A committed governance artifact contains a machine-local absolute path.",
+    "GOV-DECISION-001": "An autonomous decision that changes repository state lacks an append-only decision record, or an earlier record was rewritten.",
+    "GOV-DECISION-002": "A decision record is not recomputable: inputs are summaries or the applied rule cannot be replayed.",
+    "GOV-DECISION-003": "A decision record treats ADVISORY LLM output as the verdict authority.",
+    "GOV-DECISION-004": "Replaying INPUT against APPLIED_RULE diverges from the recorded VERDICT."
   }
 }
