@@ -214,7 +214,9 @@ def test_non_governed_push_failure_aborts_before_success_summary() -> None:
     summary.assert_not_called()
 
 
-def test_clean_force_publish_uses_premerged_version_without_commit() -> None:
+def test_clean_force_publish_uses_premerged_version_without_commit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """A clean publish-only release must not stop at the no-files shortcut."""
     from goal.push.core import execute_push_workflow
 
@@ -239,6 +241,12 @@ def test_clean_force_publish_uses_premerged_version_without_commit() -> None:
             "local_drift": False,
         },
     )()
+    bootstrap_controls: list[str | None] = []
+
+    def observe_bootstrap(*_args: object, **_kwargs: object) -> None:
+        bootstrap_controls.append(os.getenv("GOAL_SKIP_COSTS_BADGE"))
+
+    monkeypatch.delenv("GOAL_SKIP_COSTS_BADGE", raising=False)
 
     with (
         patch(
@@ -250,9 +258,10 @@ def test_clean_force_publish_uses_premerged_version_without_commit() -> None:
         patch("goal.push.core.check_pyproject_toml", return_value=None),
         patch("goal.push.core._initialize_context"),
         patch("goal.push.core._detect_project_types", return_value=["python"]),
-        patch("goal.push.core._bootstrap_projects"),
+        patch("goal.push.core._bootstrap_projects", side_effect=observe_bootstrap),
         patch("goal.push.core.run_git"),
         patch("goal.push.core.get_staged_files", return_value=[]),
+        patch("goal.push.core.get_working_tree_files", return_value=[]),
         patch("goal.push.core.get_commit_message") as commit_message,
         patch(
             "goal.push.core.get_version_info",
@@ -291,10 +300,64 @@ def test_clean_force_publish_uses_premerged_version_without_commit() -> None:
     assert publish.call_args.kwargs["staged_files"] == []
     assert publish.call_args.kwargs["force_publish"] is True
     create_tag.assert_called_once_with("2.1.293", True)
+    assert bootstrap_controls == ["1"]
+    assert os.getenv("GOAL_SKIP_COSTS_BADGE") is None
     assert [call.args[1] for call in delivery_event.call_args_list] == [
         "started",
         "published",
     ]
+
+
+def test_publish_only_aborts_when_bootstrap_mutates_source() -> None:
+    """Bootstrap mutations must fail before staging, tests, commit or publish."""
+    from goal.push.core import execute_push_workflow
+
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": {},
+        "user_config": {},
+        "delivery_mode": "publish-only",
+    }
+    delivery = type("Delivery", (), {"mode": "publish-only"})()
+
+    with (
+        patch("goal.governance.delivery.resolve_delivery_policy", return_value=delivery),
+        patch("goal.governance.delivery.validate_delivery_ready"),
+        patch("goal.push.core.check_pyproject_toml", return_value=None),
+        patch("goal.push.core._initialize_context"),
+        patch("goal.push.core._detect_project_types", return_value=["python"]),
+        patch("goal.push.core._bootstrap_projects"),
+        patch("goal.push.core.get_staged_files", return_value=[]),
+        patch("goal.push.core.get_working_tree_files", return_value=["README.md"]),
+        patch("goal.push.core.run_git") as run_git,
+        patch("goal.push.core.run_test_stage") as tests,
+        patch("goal.push.core._handle_commit_phase") as commit_phase,
+        patch("goal.push.core.handle_publish") as publish,
+        pytest.raises(click.ClickException, match="bootstrap modified.*README.md"),
+    ):
+        execute_push_workflow(
+            ctx_obj=ctx_obj,
+            bump="patch",
+            no_tag=False,
+            no_changelog=True,
+            no_version_sync=False,
+            no_publish=False,
+            force_publish=True,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket=None,
+            abstraction=None,
+            todo=False,
+        )
+
+    run_git.assert_not_called()
+    tests.assert_not_called()
+    commit_phase.assert_not_called()
+    publish.assert_not_called()
 
 
 def test_uv_sync_preserves_test_extra_when_dev_is_not_declared(tmp_path: Path) -> None:

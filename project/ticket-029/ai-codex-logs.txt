@@ -1,0 +1,7 @@
+2026-08-11 reproduction: clean merged 051a59a became local cf038b8 during publish-only bootstrap
+2026-08-11 external state: Goal 2.1.294 wheel and sdist public; remote main/tag/PR state unchanged by local commit
+2026-08-11 authorization: user requested autonomous Goal refactoring, testing and publication
+2026-08-11 focused validation: 23 passed; Ruff PASS
+2026-08-11 full validation: 528 passed, 2 skipped; build and governance PASS
+2026-08-11 Docker: production build PASS; offline CLI reports Goal 2.1.294
+2026-08-11 version decision: public baseline 2.1.294, normal-bump -> 2.1.295; carriers deferred to integration

@@ -2,6 +2,9 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-029](project/ticket-029/README.md): keep governed
+  publish-only artifacts on the exact clean remote base and make bootstrap
+  read-only. State: `IN_PROGRESS`; classification: `BUG / application`.
 - [ ] Deliver [ticket-028](project/ticket-028/README.md): publish the merged
   exact-head PR lifecycle repair as Goal 2.1.294 and verify a clean public
   install. State: `IN_PROGRESS`; classification: `SERVICE / integration`.
