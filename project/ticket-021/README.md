@@ -2,8 +2,8 @@
 
 - **ID**: ticket-021
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 
 ## Goal and scope
@@ -31,6 +31,10 @@ from rewriting a valid `goal.yaml` to an unreadable selector.
 - The detector run against `wellmanifest/wellm` selects
   `src/wellmanifest/version.py:__version__` and excludes the compatibility
   re-export in `src/well/__init__.py`.
+- PR #39 passed Python 3.12/3.13 CI and exact-head validator approval for
+  `05ef1167cf43e43fbe1b512ea9808a7ed458adfe`.
+- Protected merge completed as
+  `c48ff33d12dd9797868959caa3fda4adeec766ff`.
 
 ## Session authorization
 

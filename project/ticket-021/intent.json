@@ -31,7 +31,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "97a27a5cbaff522d078bef2390358741f7b8eed4",
+    "acceptedBaseSha": "c48ff33d12dd9797868959caa3fda4adeec766ff",
     "targetBranch": "main",
     "outcome": "Goal detects the real writable Python version carrier and never mistakes an import-only module for one",
     "nonGoals": [
