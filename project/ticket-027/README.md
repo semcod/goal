@@ -2,8 +2,8 @@
 
 - **ID**: ticket-027
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-10
 - **Work classification**: `BUG / regression / P1 / application`
 
@@ -29,7 +29,7 @@ same exact-head lookup.
   the current pushed commit SHA.
 - [x] AC-04: After `gh pr create`, Goal resolves the new open PR again and
   fails closed if its exact-head binding cannot be proven.
-- [ ] AC-05: Focused regression tests, full Python tests, governance, Docker,
+- [x] AC-05: Focused regression tests, full Python tests, governance, Docker,
   hosted CI and exact-head validator approval pass before merge.
 
 ## Boundary
@@ -50,6 +50,16 @@ the target repository's protected approval boundary.
   reports Goal 2.1.293.
 - Goal registry comparison selects `normal-bump -> 2.1.294`; the application
   ticket intentionally leaves release carriers to a later integration ticket.
+
+## Delivery evidence
+
+- Pull request: `semcod/goal#56`.
+- Approved exact head: `0fafc34cd8c7ac4d12707f9998b5a295d88f8926`.
+- Target CI run: `31437352017`; Python 3.12 and 3.13 PASS.
+- Validator run: `31437462144`; approval identity:
+  `ifuri-validator-agent[bot]`.
+- Merge commit: `5aab7bc874ec6100dedc7dc0666002223c6c1317`.
+- The controlled branch was deleted and no PR remains open after merge.
 
 ## Session authorization
 
