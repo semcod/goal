@@ -58,6 +58,12 @@ _VERSION_FILENAMES = {
     "setup.py",
     "pom.xml",
 }
+_PYTHON_VERSION_FILENAMES = {
+    "__init__.py",
+    "version.py",
+    "_version.py",
+    "__about__.py",
+}
 _DERIVED_LOCKS = {
     "pyproject.toml": ("uv.lock", "poetry.lock", "pdm.lock"),
     "package.json": ("package-lock.json", "pnpm-lock.yaml"),
@@ -291,7 +297,7 @@ def _configured_specs(config) -> tuple[str, ...]:
 
 
 def _candidate_spec(path: Path, content: Optional[str] = None) -> Optional[str]:
-    if path.name == "__init__.py":
+    if path.name in _PYTHON_VERSION_FILENAMES:
         try:
             text = content if content is not None else path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):

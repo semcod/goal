@@ -10,6 +10,7 @@ from goal.cli.version_state import (
     collect_version_sources,
     resolve_version_decision,
     validate_version_sources,
+    write_version_source,
 )
 
 
@@ -243,6 +244,26 @@ def test_imported_version_name_is_not_detected_as_a_declaration(tmp_path, monkey
     sources = collect_version_sources({"versioning": {"files": ["VERSION"]}})
 
     assert {source.spec for source in sources} == {"VERSION"}
+
+
+def test_conventional_version_module_is_detected_and_writable(tmp_path, monkeypatch):
+    package = tmp_path / "src/package"
+    package.mkdir(parents=True)
+    version_module = package / "version.py"
+    version_module.write_text('__version__ = "1.0.0"\n')
+    (package / "__init__.py").write_text(
+        "from package.version import __version__\n"
+    )
+    (tmp_path / "VERSION").write_text("1.0.0\n")
+    monkeypatch.chdir(tmp_path)
+
+    sources = collect_version_sources({"versioning": {"files": ["VERSION"]}})
+
+    by_spec = {source.spec: source for source in sources}
+    assert "src/package/__init__.py:__version__" not in by_spec
+    assert by_spec["src/package/version.py:__version__"].value == "1.0.0"
+    assert write_version_source("src/package/version.py:__version__", "1.0.1")
+    assert version_module.read_text() == '__version__ = "1.0.1"\n'
 
 
 def test_registry_failure_does_not_disable_local_git_decision(tmp_path, monkeypatch):

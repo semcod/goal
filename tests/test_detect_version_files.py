@@ -106,6 +106,22 @@ def test_prefers_shallowest_package(tmp_path):
     assert init_entries == ["rootpkg/__init__.py:__version__"]
 
 
+def test_import_only_initializer_defers_to_version_module(tmp_path):
+    compatibility = tmp_path / "src/well"
+    compatibility.mkdir(parents=True)
+    (compatibility / "__init__.py").write_text(
+        "from wellmanifest import __version__\n"
+    )
+    package = tmp_path / "src/wellmanifest"
+    package.mkdir(parents=True)
+    (package / "version.py").write_text('__version__ = "0.2.0rc4"\n')
+
+    files = _detect_in(tmp_path)
+
+    assert "src/well/__init__.py:__version__" not in files
+    assert "src/wellmanifest/version.py:__version__" in files
+
+
 def test_multiline_version_contract_is_not_the_release_version(tmp_path):
     (tmp_path / "VERSION").write_text(
         "FORMAT=bioxfoundry.intent-version/v1\nARTIFACT=intent-corpus\n"
