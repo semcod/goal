@@ -278,7 +278,7 @@ class GoalConfig:
         }
         manifests = ("pyproject.toml", "package.json", "Cargo.toml", "setup.py")
         shallowest: Dict[str, str] = {}
-        init_candidates: List[str] = []
+        python_version_candidates: List[str] = []
 
         for dirpath, dirnames, filenames in os.walk("."):
             dirnames[:] = [
@@ -292,8 +292,13 @@ class GoalConfig:
                     prev = shallowest.get(filename)
                     if prev is None or rel.count(os.sep) < prev.count(os.sep):
                         shallowest[filename] = rel
-                elif filename == "__init__.py":
-                    init_candidates.append(rel)
+                elif filename in {
+                    "__init__.py",
+                    "version.py",
+                    "_version.py",
+                    "__about__.py",
+                }:
+                    python_version_candidates.append(rel)
 
         version_files: List[str] = []
         version_path = Path("VERSION")
@@ -308,14 +313,22 @@ class GoalConfig:
             if filename in shallowest:
                 version_files.append(f"{shallowest[filename]}:version")
 
-        # First __init__.py (shallowest, then alphabetical) that declares
-        # __version__ — only project packages remain after pruning above.
-        for rel in sorted(init_candidates, key=lambda p: (p.count(os.sep), p)):
+        # First conventional Python carrier (shallowest, then alphabetical)
+        # with a writable literal assignment. Imports and re-exports are not
+        # declarations and must never replace an explicit configured source.
+        for rel in sorted(
+            python_version_candidates, key=lambda p: (p.count(os.sep), p)
+        ):
             try:
-                if "__version__" in Path(rel).read_text():
+                content = Path(rel).read_text(encoding="utf-8")
+                if re.search(
+                    r'^__version__\s*=\s*["\'][^"\']+["\']',
+                    content,
+                    re.MULTILINE,
+                ):
                     version_files.append(f"{rel}:__version__")
                     break
-            except OSError as exc:
+            except (OSError, UnicodeDecodeError) as exc:
                 logger.debug("Unable to scan %s for __version__: %s", rel, exc)
 
         if not version_files:

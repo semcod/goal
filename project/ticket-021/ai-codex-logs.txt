@@ -1,0 +1,4 @@
+2026-08-10: Reproduced in wellmanifest/wellm: detection selected an import-only
+src/well/__init__.py and made goal check-versions unreadable.
+2026-08-10: New detector selects src/wellmanifest/version.py:__version__.
+2026-08-10: Focused tests 26 passed; full suite 512 passed, 2 skipped.

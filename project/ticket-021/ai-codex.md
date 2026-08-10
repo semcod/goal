@@ -23,6 +23,9 @@ the correct configured carrier and makes `check-versions` fail.
 ## Actual changes
 
 - Initialized the bounded ticket and reproduced the defect in wellm.
+- Restricted Python carrier discovery to anchored literal assignments.
+- Added conventional `version.py`, `_version.py` and `__about__.py` carriers.
+- Added manager and version-state regression coverage; full suite passes.
 
 ## Blockers
 

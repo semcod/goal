@@ -3,7 +3,7 @@
 - **ID**: ticket-021
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-10
 
 ## Goal and scope
@@ -18,11 +18,19 @@ from rewriting a valid `goal.yaml` to an unreadable selector.
 
 - [x] AC-01: The user requested autonomous continuation and correct Goal
   decisions about which files carry versions.
-- [ ] AC-02: Import-only `__init__.py` files are ignored by configuration
+- [x] AC-02: Import-only `__init__.py` files are ignored by configuration
   detection.
-- [ ] AC-03: A conventional Python version module with a literal assignment is
+- [x] AC-03: A conventional Python version module with a literal assignment is
   discovered and remains readable/writable by version-state logic.
-- [ ] AC-04: Focused and full tests plus governance pass.
+- [x] AC-04: Focused and full tests plus governance pass.
+
+## Validation evidence
+
+- Focused version-discovery suite: 26 passed.
+- Full Goal suite: 512 passed, 2 skipped.
+- The detector run against `wellmanifest/wellm` selects
+  `src/wellmanifest/version.py:__version__` and excludes the compatibility
+  re-export in `src/well/__init__.py`.
 
 ## Session authorization
 

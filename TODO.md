@@ -63,7 +63,7 @@
   State: `DONE / PUBLICATION`; classification: `SERVICE / integration`.
 - [ ] Deliver [ticket-021](project/ticket-021/README.md): detect only writable
   Python `__version__` declarations and support conventional version modules.
-  State: `IN_PROGRESS / EDIT`; classification: `BUG / application`.
+  State: `IN_PROGRESS / VALIDATION`; classification: `BUG / application`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
