@@ -2,8 +2,8 @@
 
 - **ID**: ticket-012
 - **Owner**: session user (identity unresolved)
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_DEPENDENCY
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
@@ -20,11 +20,11 @@ governed repositories.
 
 - [x] AC-01: The user explicitly requested testing, publication and dependency
   refresh after the Python 3.11 container mismatch was reported.
-- [ ] AC-02: The integration image uses a Python version supported by
+- [x] AC-02: The integration image uses a Python version supported by
   `requires-python` and its eight-project matrix passes.
-- [ ] AC-03: `uv.lock` is regenerated against current compatible releases and
+- [x] AC-03: `uv.lock` is regenerated against current compatible releases and
   remains consistent with `pyproject.toml`.
-- [ ] AC-04: The full Python suite, build checks and governance gate pass.
+- [x] AC-04: The full Python suite, build checks and governance gate pass.
 - [ ] AC-05: Publication is performed through governed `goal -a`, and the
   released version is independently installable.
 - [ ] AC-06: Explicit stale Goal constraints found in in-scope local consumers
@@ -44,16 +44,27 @@ the transition from `PLAN / WAIT_FOR_APPROVAL` to `IN_PROGRESS / EDIT`.
 
 ## Boundary
 
-This ticket may change `integration/Dockerfile`, `pyproject.toml` and `uv.lock`.
-It does not authorize speculative source refactors, automatic major-version
-dependency changes, or edits to dirty downstream repositories.  Each downstream
-repository remains subject to its own governance and publication boundary.
+This first delivery slice may change only `integration/Dockerfile`, `uv.lock`
+and ticket evidence. It does not authorize speculative source refactors,
+automatic major-version dependency changes, or edits to dirty downstream
+repositories. Each downstream repository remains subject to its own governance
+and publication boundary. The atomic five-file package release is a second
+slice after this runtime/lockfile PR merges and establishes a fresh base SHA.
 
-## Dependency discovered by the gate
+## Validation evidence: runtime and lock slice
 
-The adopted governance revision 0.11.0 does not assign `uv.lock` or
-`integration/**` to any workstream.  Ticket 012 therefore releases its active
-reservation until a separate governance ticket upgrades the immutable standard
-and installs an explicit target-local ownership extension.  Implementation
-must not begin before that dependency is merged and this intent is re-approved
-with the final paths.
+- The digest-pinned integration image runs Python 3.12.13.
+- The isolated container matrix passed for Python, Node.js, Rust, Go, Ruby,
+  PHP, .NET and Java (`8 passed, 0 failed`).
+- `uv lock --upgrade` refreshed the compatible 142-package resolution and
+  `uv lock --check` passed without changing declared dependency ranges.
+- The host suite passed (`508 passed, 2 skipped`) and both wheel and source
+  distributions for Goal 2.1.289 were built successfully.
+
+## Dependency resolution
+
+Tickets 013, 016, and 017 are published. Goal now runs immutable governance
+v0.14.1, excludes governance helpers from package-source classification, and
+assigns integration ownership to the runtime, lockfile, and atomic release
+metadata paths. The original session authorization therefore permits this
+ticket to resume without another confirmation.

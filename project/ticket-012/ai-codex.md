@@ -30,8 +30,11 @@ projects that declare Goal as a dependency.
 - The governance gate rejected unowned `uv.lock` and `integration/Dockerfile`
   paths, so the ticket returned to a non-active waiting state before any
   implementation file was changed.
+- Tickets 013, 016 and 017 resolved immutable standard adoption, false source
+  classification and atomic release metadata ownership; resumed with a v3
+  intent for the runtime/lockfile slice.
 
 ## Blockers
 
-- The currently adopted governance standard must be upgraded and extended by
-  ticket 013 before this integration ticket can enter `EDIT`.
+- None for the runtime/lockfile slice. The package-release slice starts only
+  after this slice merges and records a fresh accepted base SHA.

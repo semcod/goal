@@ -31,8 +31,8 @@
   `SERVICE / delivery`.
 - [ ] Deliver [ticket-012](project/ticket-012/README.md): align the integration
   runtime with Python 3.12+, refresh compatible dependencies, pass the full
-  test/container matrix and publish through `goal -a`. State: `PLAN`, awaiting
-  ticket 013 governance adoption;
+  test/container matrix and publish through `goal -a`. State:
+  `IN_PROGRESS / EDIT`, runtime/lockfile slice;
   classification: `SERVICE / integration`.
 - [x] Deliver [ticket-013](project/ticket-013/README.md): adopt immutable
   new-project 0.14.1 and assign integration/lockfile ownership. State:
@@ -48,9 +48,9 @@
   governance Python helpers from package release classification before ticket
   012 publishes. State: `DONE / PUBLICATION`; classification:
   `BUG / application`.
-- [ ] Deliver [ticket-017](project/ticket-017/README.md): assign the remaining
+- [x] Deliver [ticket-017](project/ticket-017/README.md): assign the remaining
   atomic release metadata to integration before ticket 012 publishes. State:
-  `IN_PROGRESS / EDIT`; classification: `SERVICE / governance`.
+  `DONE / PUBLICATION`; classification: `SERVICE / governance`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
@@ -58,9 +58,9 @@
 > Current workflow state: `ticket-001 DONE`; `ticket-002 DONE`;
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
-> `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 PLAN`;
+> `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 IN_PROGRESS`;
 > `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`;
-> `ticket-016 DONE`; `ticket-017 IN_PROGRESS`.
+> `ticket-016 DONE`; `ticket-017 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

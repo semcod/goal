@@ -2,8 +2,8 @@
 
 - **ID**: ticket-017
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 
 ## Goal and scope
@@ -51,3 +51,12 @@ standard-managed base content, or GitHub policy.
 
 - Human participant: unresolved; no user-* file was created by this script.
 - Agent participant: [ai-codex.md](ai-codex.md)
+
+## Publication
+
+- Governed delivery produced [PR #29](https://github.com/semcod/goal/pull/29).
+- CI passed on Python 3.12 and 3.13.
+- `ifuri-validator-agent` approved exact head
+  `80417cddeb2549713e895497e3e9c5de094d11c0`.
+- The protected PR merged as
+  `cd1d8bafea301ffdac21f06bc5f547fd79aee3cd`.
