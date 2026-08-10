@@ -2,3 +2,12 @@
 2026-08-10 read-only analysis: outer docs-only commit ignores handle_single_commit false result and continues delivery
 2026-08-10 session authorization: user instructed agent to continue the reported follow-up
 transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
+2026-08-10 metadata-only focused E2E: PASS (3 passed)
+2026-08-10 full push E2E module: PASS (38 passed)
+2026-08-10 full Python 3.13 suite: PASS (506 passed, 2 skipped); HEAD unchanged
+2026-08-10 focused Python 3.12: PASS (3 passed); HEAD unchanged
+2026-08-10 ruff changed source/tests: PASS
+2026-08-10 project/governance-check.sh: PASS (0 errors, 0 warnings)
+2026-08-10 repository Dockerfile: FAIL before tests; Python 3.11 violates requires-python >=3.12
+2026-08-10 temporary Python 3.12 container matrix with network disabled: PASS (8 passed, 0 failed)
+transition: EDIT -> VALIDATION -> PUBLICATION

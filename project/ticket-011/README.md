@@ -3,7 +3,7 @@
 - **ID**: ticket-011
 - **Owner**: session user (identity unresolved)
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / delivery`
 
@@ -18,13 +18,13 @@ decision: no version bump, release tag or registry publication is introduced.
 
 - [x] AC-01: The user approved continuation after the duplicate commit symptom
   was reported.
-- [ ] AC-02: The metadata-only workflow test cannot execute a real Git commit
+- [x] AC-02: The metadata-only workflow test cannot execute a real Git commit
   in its caller's repository.
-- [ ] AC-03: A successful docs-only workflow requests exactly one plain commit,
+- [x] AC-03: A successful docs-only workflow requests exactly one plain commit,
   skips version bump/publication/tag and can continue to push.
-- [ ] AC-04: A failed docs-only commit aborts before publish, tag or push and
+- [x] AC-04: A failed docs-only commit aborts before publish, tag or push and
   cannot be reported as a successful workflow.
-- [ ] AC-05: Focused tests, the full suite and governance validation pass.
+- [x] AC-05: Focused tests, the full suite and governance validation pass.
 
 ## Participants
 
@@ -42,3 +42,22 @@ authorizes this narrowly scoped correction and transition to
 
 This ticket does not change version selection, release publication, registry
 credentials, delivery policies or GitHub configuration.
+
+## Validation evidence
+
+- Metadata-only focused E2E cases: 3 passed on Python 3.13 and Python 3.12.
+- Full push E2E module: 38 passed.
+- Full Python 3.13 suite: 506 passed, 2 optional skips.
+- Test-isolation invariant: Git `HEAD` was identical before and after the full
+  suite and both focused runs.
+- Ruff on changed source/tests: PASS.
+- Governance check: PASS (0 errors, 0 warnings).
+- Equivalent Python 3.12 container matrix: 8 project types passed, 0 failed,
+  with runtime networking disabled.
+
+## Infrastructure observation
+
+The repository `integration/Dockerfile` still uses Python 3.11 although the
+package requires Python 3.12 or newer, so its build fails before tests.  The
+same matrix passed in a temporary Python 3.12 image; no infrastructure file was
+changed by this application ticket.
