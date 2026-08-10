@@ -2,8 +2,8 @@
 
 - **ID**: ticket-011
 - **Owner**: session user (identity unresolved)
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / delivery`
 
@@ -61,3 +61,13 @@ The repository `integration/Dockerfile` still uses Python 3.11 although the
 package requires Python 3.12 or newer, so its build fails before tests.  The
 same matrix passed in a temporary Python 3.12 image; no infrastructure file was
 changed by this application ticket.
+
+## Delivery evidence
+
+- Governed release command: `goal --ascii --delivery-mode direct-main -a`.
+- Release: `goal 2.1.289`; public PyPI exposes the package and `uvx` reports
+  `goal, version 2.1.289`.
+- Release commit and annotated tag target:
+  `f2c6d3b76c72225abd59293fd07f4bdd3eab1e4d` / `v2.1.289`.
+- Production workflow ran 506 tests with 2 optional skips, then created exactly
+  one release commit after the ticket merge; no nested test commit appeared.

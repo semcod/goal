@@ -11,3 +11,6 @@
 - Passed focused Python 3.12/3.13, full-suite, lint, governance and equivalent
   Python 3.12 container validation.
 - Entered `IN_PROGRESS / PUBLICATION`.
+- Published `goal 2.1.289` through governed direct-main delivery.
+- Verified public CLI resolution and the single-commit production invariant;
+  closed the ticket as `DONE`.

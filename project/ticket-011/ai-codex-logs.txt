@@ -12,3 +12,7 @@ transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
 2026-08-10 temporary Python 3.12 container matrix with network disabled: PASS (8 passed, 0 failed)
 transition: EDIT -> VALIDATION -> PUBLICATION
 2026-08-10 publication input prepared on main for governed goal -a release
+2026-08-10 governed goal -a release: PASS (506 passed, 2 skipped); PyPI goal 2.1.289
+2026-08-10 production commit-isolation check: PASS (exactly one commit after merge)
+2026-08-10 public uvx smoke: PASS (goal, version 2.1.289)
+transition: PUBLICATION -> DONE
