@@ -1,0 +1,33 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-024",
+  "summary": "Preserve dry-run state and fail closed on delivery errors",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "goal/cli/__init__.py",
+    "goal/package_managers.py",
+    "goal/project_bootstrap.py",
+    "goal/push/core.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-024/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".env",
+    ".env.*",
+    ".governance/**",
+    ".github/**",
+    "pyproject.toml",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}

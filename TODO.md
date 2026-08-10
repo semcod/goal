@@ -2,6 +2,10 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-024](project/ticket-024/README.md): preserve dry-run state,
+  fail closed on every Git push error and retain declared UV verification
+  dependencies. State: `IN_PROGRESS / EDIT`; classification:
+  `BUG / application`.
 - [x] Review and approve [ticket-001](project/ticket-001/README.md): Goal
   URI/DSL/CQRS+ES refactoring blueprint, diagrams and machine-readable scope.
 - [x] Re-review [ticket-002](project/ticket-002/README.md): adopt published
