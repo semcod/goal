@@ -9,3 +9,8 @@
   errors and warnings.
 - 2026-08-10: Invoking governed pull-request delivery with `goal -a`; package
   release metadata remains deferred to the integration-owned ticket 012.
+- 2026-08-10: PR #29 passed Python 3.12/3.13 CI; trusted validator approved
+  exact head `80417cddeb2549713e895497e3e9c5de094d11c0`.
+- 2026-08-10: PR #29 merged as
+  `cd1d8bafea301ffdac21f06bc5f547fd79aee3cd`; ticket closed as
+  `DONE / PUBLICATION`.

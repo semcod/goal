@@ -1,17 +1,93 @@
 {
-  "schema": "new-project.intent/v2",
+  "schema": "new-project.intent/v3",
   "ticket": "ticket-012",
   "summary": "Refresh runtime and release dependencies",
   "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
   "allowedPaths": [
-    "pyproject.toml",
+    "integration/Dockerfile",
+    "uv.lock",
     "project/ticket-012/**",
     "TODO.md",
     "project/TICKETS.md"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python", "docker"],
-  "dependsOn": ["ticket-013"],
+  "dependsOn": ["ticket-013", "ticket-016", "ticket-017"],
   "conflictsWith": [],
-  "integrationTicket": null
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "cd1d8bafea301ffdac21f06bc5f547fd79aee3cd",
+    "targetBranch": "main",
+    "outcome": "Move the integration matrix to digest-pinned Python 3.12 and refresh the compatible locked dependency resolution before the package-release slice",
+    "nonGoals": [
+      "No package version or registry publication in this slice",
+      "No application-source or public-interface change",
+      "No direct dependency-range or major-version change",
+      "No downstream consumer mutation"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Align the isolated eight-project integration runner with requires-python and refresh only the resolved lock graph, leaving release metadata for a separate atomic slice",
+      "components": [
+        {
+          "name": "integration-runtime",
+          "paths": ["integration/Dockerfile"]
+        },
+        {
+          "name": "python-resolution",
+          "paths": ["uv.lock"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the prior digest-pinned integration base and previous uv.lock in one reviewed integration change"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "docker build -t goal-integration-matrix -f integration/Dockerfile .",
+          "docker run --rm --network none goal-integration-matrix"
+        ],
+        "evidence": "The Python 3.12 image completes all eight language detection and dry-run cases"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "uv lock --upgrade",
+          "uv lock --check"
+        ],
+        "evidence": "The refreshed lock is compatible with the unchanged project dependency contract"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          ".venv/bin/python -m pytest tests -q",
+          ".venv/bin/python -m build",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Host tests, build and governance pass before protected delivery"
+      }
+    ]
+  }
 }

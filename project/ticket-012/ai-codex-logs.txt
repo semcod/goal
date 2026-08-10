@@ -6,3 +6,7 @@
 - 2026-08-10: Governance correctly rejected `uv.lock` and
   `integration/Dockerfile` because standard 0.11.0 assigns neither path to the
   integration workstream; no implementation edit was made.
+- 2026-08-10: Tickets 013, 016 and 017 merged with exact-head validation,
+  resolving governance adoption, source classification and release ownership.
+- 2026-08-10: Resumed ticket 012 under the existing user authorization with a
+  v3 runtime/lockfile slice bound to base `cd1d8bafea301ffdac21f06bc5f547fd79aee3cd`.

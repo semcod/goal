@@ -8,3 +8,6 @@
 - Defined the integration runtime, dependency refresh, test and delivery scope.
 - Returned the ticket to `PLAN / WAIT_FOR_DEPENDENCY` after deterministic
   ownership validation exposed missing paths in the adopted standard.
+- Resolved dependencies through published tickets 013, 016 and 017.
+- Resumed `IN_PROGRESS / EDIT` with a v3, base-bound runtime/lockfile slice;
+  atomic package publication remains the next slice.

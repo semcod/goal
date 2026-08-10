@@ -2,8 +2,8 @@
 
 - **ID**: ticket-012
 - **Owner**: session user (identity unresolved)
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_DEPENDENCY
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
@@ -44,16 +44,17 @@ the transition from `PLAN / WAIT_FOR_APPROVAL` to `IN_PROGRESS / EDIT`.
 
 ## Boundary
 
-This ticket may change `integration/Dockerfile`, `pyproject.toml` and `uv.lock`.
-It does not authorize speculative source refactors, automatic major-version
-dependency changes, or edits to dirty downstream repositories.  Each downstream
-repository remains subject to its own governance and publication boundary.
+This first delivery slice may change only `integration/Dockerfile`, `uv.lock`
+and ticket evidence. It does not authorize speculative source refactors,
+automatic major-version dependency changes, or edits to dirty downstream
+repositories. Each downstream repository remains subject to its own governance
+and publication boundary. The atomic five-file package release is a second
+slice after this runtime/lockfile PR merges and establishes a fresh base SHA.
 
-## Dependency discovered by the gate
+## Dependency resolution
 
-The adopted governance revision 0.11.0 does not assign `uv.lock` or
-`integration/**` to any workstream.  Ticket 012 therefore releases its active
-reservation until a separate governance ticket upgrades the immutable standard
-and installs an explicit target-local ownership extension.  Implementation
-must not begin before that dependency is merged and this intent is re-approved
-with the final paths.
+Tickets 013, 016, and 017 are published. Goal now runs immutable governance
+v0.14.1, excludes governance helpers from package-source classification, and
+assigns integration ownership to the runtime, lockfile, and atomic release
+metadata paths. The original session authorization therefore permits this
+ticket to resume without another confirmation.
