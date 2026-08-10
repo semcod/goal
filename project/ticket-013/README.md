@@ -2,8 +2,8 @@
 
 - **ID**: ticket-013
 - **Owner**: session user (identity unresolved)
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / governance`
 
@@ -64,3 +64,12 @@ disabled or bypassed.
 The base planning intent remains `new-project.intent/v2` while the target runs
 the v0.11 checker. This adoption transaction upgrades the checker, schema and
 intent to v3 in one validated change, avoiding a mixed-schema delivery gap.
+
+## Publication
+
+- Governed delivery produced [PR #23](https://github.com/semcod/goal/pull/23).
+- Target CI passed on Python 3.12 and 3.13.
+- `ifuri-validator-agent` approved exact head
+  `a3e493a145c5d7257daddcc6aa7aac624f682305`.
+- The protected PR merged as
+  `c1f1305dc71efc7aac1a5bc6b05d3cd8b55275d3`.

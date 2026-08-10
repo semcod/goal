@@ -29,3 +29,9 @@
   Goal source, so the derived 2.1.290 bump and generated metadata were reverted.
 - 2026-08-10: Goal pushed `goal/ticket-013` but reused merged PR #20; a fresh PR
   is required for the corrected exact head.
+- 2026-08-10: PR #23 target CI passed for Python 3.12 and 3.13.
+- 2026-08-10: Trusted validator approved exact head
+  `a3e493a145c5d7257daddcc6aa7aac624f682305`; PR #23 merged as
+  `c1f1305dc71efc7aac1a5bc6b05d3cd8b55275d3`.
+- 2026-08-10: Closed ticket 013 as `DONE / PUBLICATION` and released ticket
+  012's dependency.
