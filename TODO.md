@@ -61,9 +61,9 @@
 - [x] Deliver [ticket-020](project/ticket-020/README.md): record Goal 2.1.291
   release notes and publication evidence without another version change.
   State: `DONE / PUBLICATION`; classification: `SERVICE / integration`.
-- [ ] Deliver [ticket-021](project/ticket-021/README.md): detect only writable
+- [x] Deliver [ticket-021](project/ticket-021/README.md): detect only writable
   Python `__version__` declarations and support conventional version modules.
-  State: `IN_PROGRESS / VALIDATION`; classification: `BUG / application`.
+  State: `DONE / PUBLICATION`; classification: `BUG / application`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
@@ -74,7 +74,7 @@
 > `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 DONE`;
 > `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`;
 > `ticket-016 DONE`; `ticket-017 DONE`; `ticket-018 DONE`;
-> `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 IN_PROGRESS`.
+> `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
