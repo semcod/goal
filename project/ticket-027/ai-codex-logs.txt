@@ -7,3 +7,6 @@
 2026-08-10 full validation: 525 passed, 2 skipped; governance 0/0
 2026-08-10 Docker: production build PASS; offline CLI reports Goal 2.1.293
 2026-08-10 version decision: public baseline 2.1.293, normal-bump -> 2.1.294; carriers deferred to integration
+2026-08-10 target CI: run 31437352017 PASS on Python 3.12 and 3.13
+2026-08-10 validator: run 31437462144 approved exact head 0fafc34 as ifuri-validator-agent[bot]
+2026-08-10 merge: PR #56 -> 5aab7bc874ec; controlled branch deleted, no open PR
