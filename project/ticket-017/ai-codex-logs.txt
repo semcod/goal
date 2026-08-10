@@ -1,0 +1,5 @@
+- 2026-08-10: Ticket-012 dry planning showed that Goal's atomic release touches
+  four paths not owned by integration: VERSION, CHANGELOG.md, README.md and
+  goal/__init__.py.
+- 2026-08-10: User SESSION_EXECUTION_AUTHORIZATION covers this narrow
+  publication prerequisite; started ticket 017 in `IN_PROGRESS / EDIT`.
