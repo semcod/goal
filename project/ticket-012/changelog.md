@@ -14,3 +14,5 @@
 - Aligned the integration runtime with the package's Python 3.12 floor,
   pinned its base image by digest, refreshed `uv.lock`, and recorded passing
   host, build and isolated eight-language matrix evidence.
+- Published the runtime/lock slice through PR #30 after exact-head validation,
+  then activated the fresh-base five-file release-version slice.
