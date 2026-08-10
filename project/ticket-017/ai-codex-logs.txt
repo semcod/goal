@@ -1,0 +1,11 @@
+- 2026-08-10: Ticket-012 dry planning showed that Goal's atomic release touches
+  four paths not owned by integration: VERSION, CHANGELOG.md, README.md and
+  goal/__init__.py.
+- 2026-08-10: User SESSION_EXECUTION_AUTHORIZATION covers this narrow
+  publication prerequisite; started ticket 017 in `IN_PROGRESS / EDIT`.
+- 2026-08-10: Added VERSION, CHANGELOG.md, README.md and goal/__init__.py to
+  target-local integration ownership; prior entries were preserved.
+- 2026-08-10: Release ownership assertion PASS; governance gate PASS with zero
+  errors and warnings.
+- 2026-08-10: Invoking governed pull-request delivery with `goal -a`; package
+  release metadata remains deferred to the integration-owned ticket 012.

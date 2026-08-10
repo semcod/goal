@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-017",
+  "summary": "Assign release metadata to integration",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".governance/manifest.json",
+    "project/ticket-017/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1443cdff4364187554ebcf9b03628096b09f31e5",
+    "targetBranch": "main",
+    "outcome": "The integration workstream owns every repository path that Goal updates during one atomic Python package release",
+    "nonGoals": [
+      "No source or version-value change",
+      "No dependency or lockfile change",
+      "No edit to standard-managed base governance",
+      "No weakening of exact-head approval"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Complete the existing target-local integration ownership extension with only Goal's four deterministic release metadata outputs",
+      "components": [
+        {
+          "name": "target-workstream-ownership",
+          "paths": [".governance/manifest.json"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Remove only the four target-local owned paths in a separately validated governance transaction"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["manifest integration ownership assertion"],
+        "evidence": "The integration ownedPaths set contains all four release outputs and retains its prior entries"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["./project/governance-check.sh --changed-file VERSION --changed-file CHANGELOG.md --changed-file README.md --changed-file goal/__init__.py --changed-file pyproject.toml --changed-file uv.lock"],
+        "evidence": "A representative atomic release diff resolves to ticket 012's integration workstream"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["./project/governance-check.sh"],
+        "evidence": "Governance validation reports zero errors and warnings"
+      }
+    ]
+  }
+}
