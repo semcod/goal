@@ -21,3 +21,6 @@
   `9ef73d2ce297b134da66caceb6d9b3c10741d2f1`: PASS; 0 errors, 0 warnings.
 - 2026-08-10: integration ownership includes `integration/**`, `uv.lock`,
   `poetry.lock` and `Pipfile.lock`; no existing target ownership was removed.
+- 2026-08-10: Committed the fully validated atomic adoption as `80bbf14`; the
+  remaining uncommitted change is publication evidence used to invoke governed
+  pull-request delivery without reclassifying managed payload.
