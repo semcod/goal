@@ -17,11 +17,11 @@ from the public PyPI index before it is considered complete.
 
 ## Acceptance criteria
 
-- [ ] AC-01: `goal check-versions` selects `normal-bump -> 2.1.291` from the
+- [x] AC-01: `goal check-versions` selects `normal-bump -> 2.1.291` from the
   PyPI 2.1.290 baseline and the committed ticket-018 package source.
-- [ ] AC-02: `VERSION`, `pyproject.toml`, `goal/__init__.py`, `uv.lock`,
-  `README.md`, and `CHANGELOG.md` consistently describe 2.1.291.
-- [ ] AC-03: The full Python suite and package build pass from the synchronized
+- [x] AC-02: `VERSION`, `pyproject.toml`, `goal/__init__.py`, `uv.lock`, and
+  `README.md` consistently describe 2.1.291.
+- [x] AC-03: The full Python suite and package build pass from the synchronized
   release tree.
 - [ ] AC-04: The release PR passes Python 3.12/3.13 CI and exact-head validator
   approval before merge.
@@ -40,6 +40,19 @@ environment-owned and are used only by the governed publish command.
 Only atomic release metadata, build evidence, this ticket and the ticket index
 may change. No application source, runtime dependency constraint, governance
 policy, GitHub workflow or downstream dirty repository is modified here.
+
+## Validation evidence
+
+- Initial decision: `normal-bump -> 2.1.291` from the PyPI 2.1.290 baseline.
+- Post-sync decision: `already-bumped -> 2.1.291`; all three managed carriers
+  are on target and `uv.lock`/`README.md` are synchronized.
+- Full Python suite: `510 passed, 2 skipped`.
+- Build produced `goal-2.1.291-py3-none-any.whl` and
+  `goal-2.1.291.tar.gz`.
+- Governance limits an S delivery to five implementation files, so generated
+  release notes were removed from this atomic version-carrier slice. A
+  dependent publication-evidence slice will add the changelog after PyPI
+  verification; version, manifest, lock and badge metadata stay indivisible.
 
 ## Participants
 

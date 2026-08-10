@@ -1,3 +1,10 @@
 - 2026-08-10: Started the bounded Goal 2.1.291 release ticket on accepted base
   `c8ac6ef28e0e491b305b9d4f0d129116823c4100` under the user's autonomous
   test and publication authorization.
+- 2026-08-10: Goal selected normal-bump 2.1.290 -> 2.1.291; post-sync
+  validation selected already-bumped -> 2.1.291.
+- 2026-08-10: Full suite passed (510 passed, 2 skipped); Python build produced
+  the 2.1.291 wheel and sdist.
+- 2026-08-10: Governance rejected six implementation files under S and the
+  schema disallowed M. Removed only generated top-level release notes from this
+  slice; a dependent post-publication evidence slice will own that metadata.

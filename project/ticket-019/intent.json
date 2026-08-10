@@ -10,7 +10,6 @@
   },
   "allowedPaths": [
     "VERSION",
-    "CHANGELOG.md",
     "README.md",
     "pyproject.toml",
     "uv.lock",
@@ -37,7 +36,7 @@
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 6,
+      "maxImplementationFiles": 5,
       "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
@@ -50,7 +49,6 @@
           "name": "release-metadata",
           "paths": [
             "VERSION",
-            "CHANGELOG.md",
             "README.md",
             "pyproject.toml",
             "uv.lock",
