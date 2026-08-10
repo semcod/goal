@@ -64,6 +64,9 @@
 - [x] Deliver [ticket-021](project/ticket-021/README.md): detect only writable
   Python `__version__` declarations and support conventional version modules.
   State: `DONE / PUBLICATION`; classification: `BUG / application`.
+- [ ] Deliver [ticket-023](project/ticket-023/README.md): publish the merged
+  Python carrier fix as Goal 2.1.292 and verify a clean public install.
+  State: `IN_PROGRESS / EDIT`; classification: `SERVICE / integration`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
@@ -74,7 +77,8 @@
 > `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 DONE`;
 > `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`;
 > `ticket-016 DONE`; `ticket-017 DONE`; `ticket-018 DONE`;
-> `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 DONE`.
+> `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 DONE`;
+> `ticket-023 IN_PROGRESS`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
