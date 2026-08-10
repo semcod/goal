@@ -24,9 +24,17 @@ governance-adoption PR.
 
 ## Actual changes
 
-- Scope and session authorization recorded; implementation not started at the
-  planning commit.
+- Added a digest-pinned Python 3.12 slim image that copies and installs the
+  checked-in Goal package, exposes `goal` as its entrypoint and defaults to
+  `--help`.
+- Built the image and verified Goal 2.1.289 plus Python 3.12.13 with runtime
+  networking disabled.
+- Passed the complete host suite: 506 tests passed and 2 optional tests skipped.
+- Verified that v0.14.1 declares root `Dockerfile` as the required Docker stack
+  marker needed by the pending adoption.
 
 ## Blockers
 
-- None inside this intent. Trusted merge approval remains external.
+- None inside this intent. The old installed checker passes after ticket 013's
+  planning intent was kept at v2 until the atomic standard migration. Trusted
+  exact-head merge approval remains external.
