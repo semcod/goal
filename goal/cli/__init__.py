@@ -367,7 +367,7 @@ def _maybe_self_update(latest_version: Optional[str], yes: bool) -> None:
     without -y so scripted/CI invocations never block on a prompt or silently
     start a network install mid-command.
     """
-    if not latest_version:
+    if not isinstance(latest_version, str) or not latest_version:
         return
     if not yes and not sys.stdin.isatty():
         return
@@ -434,13 +434,39 @@ def _configure_main_context(
     ctx.obj["abstraction"] = abstraction
     ctx.obj["all_flags"] = all_flags
     ctx.obj["delivery_mode"] = delivery_mode
-    ctx.obj["config"] = load_config(config_path) if config_path else ensure_config()
+    if config_path:
+        ctx.obj["config"] = load_config(config_path)
+    elif dry_run:
+        # Dry-run must be observably read-only. ensure_config can create a
+        # missing goal.yaml or rewrite an existing one after auto-detection.
+        ctx.obj["config"] = load_config()
+    else:
+        ctx.obj["config"] = ensure_config()
     ctx.obj["user_config"] = get_user_config()
 
 
 class GoalGroup(click.Group):
     """Custom Click Group that shows docs URL for unknown commands (like Poetry),
     and defaults to 'push' command when -a/--all is passed without a subcommand."""
+
+    def add_command(self, cmd: click.Command, name: str | None = None) -> None:
+        """Keep the canonical CLI push command when the legacy shim is imported.
+
+        ``goal.push.commands`` remains importable for compatibility, but importing
+        it must not replace the registered ``goal.cli.push_cmd`` callback and
+        thereby bypass patches, policy checks, or future CLI-only behavior.
+        """
+        command_name = name or cmd.name
+        existing = self.commands.get(command_name) if command_name else None
+        existing_module = getattr(getattr(existing, "callback", None), "__module__", "")
+        candidate_module = getattr(getattr(cmd, "callback", None), "__module__", "")
+        if (
+            command_name == "push"
+            and existing_module == "goal.cli.push_cmd"
+            and candidate_module == "goal.push.commands"
+        ):
+            return
+        super().add_command(cmd, name)
 
     def get_command(self, ctx, cmd_name) -> Any:
         rv = super().get_command(ctx, cmd_name)

@@ -1,5 +1,6 @@
 """Push workflow core - orchestrator and utilities."""
 
+import os
 import sys
 import time
 from pathlib import Path
@@ -300,18 +301,23 @@ def _run_test_stage_or_exit(
     commit_msg: str,
     commit_body: Optional[str],
 ):
-    test_result, test_exit_code = run_test_stage(
-        project_types,
-        ctx_obj["yes"],
-        markdown,
-        ctx_obj,
-        files,
-        stats,
-        current_version,
-        new_version,
-        commit_msg,
-        commit_body,
-    )
+    goal_skip_costs_badge = os.environ.pop("GOAL_SKIP_COSTS_BADGE", None)
+    try:
+        test_result, test_exit_code = run_test_stage(
+            project_types,
+            ctx_obj["yes"],
+            markdown,
+            ctx_obj,
+            files,
+            stats,
+            current_version,
+            new_version,
+            commit_msg,
+            commit_body,
+        )
+    finally:
+        if goal_skip_costs_badge is not None:
+            os.environ["GOAL_SKIP_COSTS_BADGE"] = goal_skip_costs_badge
 
     if test_exit_code != 0 and ctx_obj["yes"]:
         click.echo(
@@ -699,7 +705,9 @@ def execute_push_workflow(
         from goal.git_ops import get_remote_branch
 
         branch = get_remote_branch()
-        push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+        pushed = push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+        if pushed is False:
+            raise click.ClickException("Git remote push failed")
     elif delivery.mode == "publish-only":
         record_delivery_event(
             delivery,
@@ -1013,7 +1021,9 @@ def _handle_commit_phase(
         handle_changelog(new_version, files, commit_msg, config_dict, no_changelog)
 
         # Refresh costs README content before committing so the update is included.
-        if _update_cost_badges(ctx_obj, new_version):
+        if not os.getenv("GOAL_SKIP_COSTS_BADGE") and _update_cost_badges(
+            ctx_obj, new_version
+        ):
             run_git_local("add", "README.md")
 
         # Single commit

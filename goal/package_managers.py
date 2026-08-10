@@ -552,7 +552,7 @@ def get_uv_sync_command(project_root: Path, *, upgrade: bool = False) -> str:
     parts = ["uv", "sync"]
     if upgrade:
         parts.append("--upgrade")
-    parts.extend(get_uv_dependency_flags(project_root, ["dev"]))
+    parts.extend(get_uv_dependency_flags(project_root, ["dev", "test"]))
     return " ".join(parts)
 
 
