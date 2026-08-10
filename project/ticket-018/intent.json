@@ -22,7 +22,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "d2523133bc57ef79d8d273a784fe8d97a0b8e89a",
+    "acceptedBaseSha": "114d62a3f2b37ff89f2ee05bcd2d142cd06d6609",
     "targetBranch": "main",
     "outcome": "Post-release metadata delivery stays on the published version while source committed after the synchronized version transition still requests a new release",
     "nonGoals": [

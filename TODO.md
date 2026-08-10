@@ -51,9 +51,9 @@
 - [x] Deliver [ticket-017](project/ticket-017/README.md): assign the remaining
   atomic release metadata to integration before ticket 012 publishes. State:
   `DONE / PUBLICATION`; classification: `SERVICE / governance`.
-- [ ] Deliver [ticket-018](project/ticket-018/README.md): infer the synchronized
+- [x] Deliver [ticket-018](project/ticket-018/README.md): infer the synchronized
   version transition after a stale tag so post-publication metadata delivery
-  does not select a duplicate patch. State: `IN_PROGRESS / EDIT`;
+  does not select a duplicate patch. State: `DONE / PUBLICATION`;
   classification: `BUG / application`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
@@ -64,7 +64,7 @@
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
 > `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 IN_PROGRESS`;
 > `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`;
-> `ticket-016 DONE`; `ticket-017 DONE`; `ticket-018 IN_PROGRESS`.
+> `ticket-016 DONE`; `ticket-017 DONE`; `ticket-018 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
