@@ -1,0 +1,4 @@
+2026-08-11 base: protected main 851e6c0c0fa9b4a8493d6260a442324bcf8df576
+2026-08-11 scope: atomic Goal 2.1.294 release after ticket-027
+2026-08-11 release decision: explicit-target -> 2.1.294
+2026-08-11 local Goal workflow: 525 passed, 2 skipped; PR #58 created
