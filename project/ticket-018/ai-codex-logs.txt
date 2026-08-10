@@ -11,3 +11,7 @@
 - 2026-08-10: Fresh-base governance passed with zero errors and warnings.
 - 2026-08-10: The first protected-delivery attempt correctly rejected REVIEW
   while implementation files were present; restored EDIT for PR delivery.
+- 2026-08-10: PR #34 passed Python 3.12/3.13 CI; validator run 31381519101
+  approved exact head a96e79f86d7c3194a0a14c5bfca41777e6d4466a.
+- 2026-08-10: Protected merge completed as
+  114d62a3f2b37ff89f2ee05bcd2d142cd06d6609; ticket moved to DONE/PUBLICATION.

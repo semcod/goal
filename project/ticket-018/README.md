@@ -2,8 +2,8 @@
 
 - **ID**: ticket-018
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 - **Work classification**: `BUG / application`
 
@@ -26,7 +26,7 @@ request the next release.
 - [x] AC-03: Real package source committed after the transition remains
   publishable, and existing pre-bump/version-resolution behavior stays green.
 - [x] AC-04: Focused history/version tests and the full Python suite pass.
-- [ ] AC-05: Fresh-base governance and exact-head protected delivery pass.
+- [x] AC-05: Fresh-base governance and exact-head protected delivery pass.
 
 ## Session authorization
 
@@ -65,3 +65,14 @@ is authorized.
 
 - Human participant: unresolved; no user-* file was created.
 - Agent participant: [ai-codex.md](ai-codex.md)
+
+## Publication
+
+- Governed delivery produced [PR #34](https://github.com/semcod/goal/pull/34).
+- CI passed on Python 3.12 and 3.13.
+- `ifuri-validator-agent` approved exact head
+  `a96e79f86d7c3194a0a14c5bfca41777e6d4466a`.
+- The protected PR merged as
+  `114d62a3f2b37ff89f2ee05bcd2d142cd06d6609`.
+- Package publication is intentionally handled by a subsequent release slice;
+  this application ticket did not mix release metadata into its diff.
