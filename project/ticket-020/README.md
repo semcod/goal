@@ -22,7 +22,7 @@ registry catches up.
 - [x] AC-02: PyPI JSON/Simple APIs expose 2.1.291 wheel and sdist.
 - [x] AC-03: A fresh Python 3.13 public-index install reports 2.1.291 for CLI
   and import from isolated site-packages.
-- [ ] AC-04: Changelog and ticket-019 record the release fix and protected
+- [x] AC-04: Changelog and ticket-019 record the release fix and protected
   delivery chain; README retains the publish-run cost refresh.
 - [ ] AC-05: This metadata-only PR passes governance, target CI and exact-head
   validator approval before merge.
