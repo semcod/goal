@@ -1,0 +1,5 @@
+2026-08-10 reproduction: clean goal -a publish-only --force-publish exited after No changes to commit
+2026-08-10 base: protected main 5486c6249c27285ffd81595f2c4721d2de50fa14
+2026-08-10 focused tests: 10 passed
+2026-08-10 full tests: 522 passed, 2 skipped
+2026-08-10 governance: 0 errors, 0 warnings
