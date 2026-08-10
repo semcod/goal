@@ -9,11 +9,8 @@
     "origin": "requested"
   },
   "allowedPaths": [
-    "VERSION",
-    "pyproject.toml",
-    "goal/__init__.py",
     "README.md",
-    "uv.lock",
+    "CHANGELOG.md",
     "project/ticket-012/**",
     "TODO.md",
     "project/TICKETS.md"
@@ -24,35 +21,32 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "3c8b1d68313d200cec355e0d4e18510b6e706f04",
+    "acceptedBaseSha": "68e69b8d26d3e5ba851bad98351c5e801e17e040",
     "targetBranch": "main",
-    "outcome": "Have Goal resolve the pending package-source change to version 2.1.290 and atomically synchronize its five release-version carriers before registry publication",
+    "outcome": "Publish the already merged and consistent Goal 2.1.290 artifacts to PyPI through goal -a publish-only and record independently verifiable publication evidence",
     "nonGoals": [
-      "No registry upload or Git release tag before this pull request merges",
+      "No further version bump or version-carrier modification",
       "No application-source, dependency-range or public-interface change",
-      "No generated CHANGELOG entry in this five-file consistency slice",
+      "No remote branch push or Git release tag during the publish-only transaction",
       "No downstream consumer mutation"
     ],
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 5,
+      "maxImplementationFiles": 2,
       "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Treat VERSION, pyproject metadata, package __version__, the README version badge and the tracked uv lock root as one atomic Goal release-version component",
+      "decision": "Publish only the exact merged 2.1.290 state and allow Goal to refresh its generated README cost evidence and release notes without changing version state",
       "components": [
         {
-          "name": "goal-release-version",
+          "name": "goal-release-publication",
           "paths": [
-            "VERSION",
-            "pyproject.toml",
-            "goal/__init__.py",
             "README.md",
-            "uv.lock"
+            "CHANGELOG.md"
           ]
         }
       ],
@@ -64,26 +58,25 @@
         "states": [],
         "evidence": []
       },
-      "rollback": "Restore all five version carriers to 2.1.289 in one reviewed change before any registry upload"
+      "rollback": "PyPI releases are immutable; on publication failure retain 2.1.290 metadata, diagnose the failed transaction, and never overwrite an uploaded artifact"
     },
     "runtimeDependencies": [],
     "validation": [
       {
         "criterion": "AC-05",
         "commands": [
-          ".venv/bin/goal --check-versions",
-          "uv lock --check"
+          ".venv/bin/goal --delivery-mode publish-only --force-publish -a",
+          "python -m pip install goal==2.1.290"
         ],
-        "evidence": "Goal selects 2.1.290 once and every configured or derived version carrier agrees"
+        "evidence": "PyPI accepts Goal 2.1.290 and a fresh isolated environment installs and reports that exact version"
       },
       {
         "criterion": "AC-04",
         "commands": [
-          ".venv/bin/python -m pytest tests -q",
-          ".venv/bin/python -m build",
-          "./project/governance-check.sh --base 3c8b1d68313d200cec355e0d4e18510b6e706f04"
+          ".venv/bin/goal check-versions",
+          "./project/governance-check.sh --base 68e69b8d26d3e5ba851bad98351c5e801e17e040"
         ],
-        "evidence": "Host tests, build and fresh-base governance pass before protected delivery"
+        "evidence": "Version resolution remains already-bumped and fresh-base governance passes before the irreversible registry upload"
       }
     ]
   }

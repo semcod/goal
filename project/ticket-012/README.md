@@ -25,9 +25,9 @@ governed repositories.
 - [x] AC-03: `uv.lock` is regenerated against current compatible releases and
   remains consistent with `pyproject.toml`.
 - [x] AC-04: The full Python suite, build checks and governance gate pass.
-- [ ] AC-05: Publication is performed through governed `goal -a`, and the
+- [x] AC-05: Publication is performed through governed `goal -a`, and the
   released version is independently installable.
-- [ ] AC-06: Explicit stale Goal constraints found in in-scope local consumers
+- [x] AC-06: Explicit stale Goal constraints found in in-scope local consumers
   are reported and updated only after their own repository policy is honored.
 
 ## Participants
@@ -44,14 +44,13 @@ the transition from `PLAN / WAIT_FOR_APPROVAL` to `IN_PROGRESS / EDIT`.
 
 ## Boundary
 
-The merged first slice changed only `integration/Dockerfile`, `uv.lock` and
-ticket evidence. This second slice is freshly based on merge
-`3c8b1d68313d200cec355e0d4e18510b6e706f04` and may atomically synchronize
-only `VERSION`, `pyproject.toml`, `goal/__init__.py`, `README.md` and `uv.lock`.
-Registry upload and generated release notes follow only after exact-head CI,
-validator approval and merge. It does not authorize speculative source
-refactors, dependency-range changes or edits to dirty downstream repositories.
-Each downstream repository remains subject to its own governance boundary.
+The first slice merged the runtime and lock refresh. The second slice merged
+the atomic five-file version state. This final publication slice is freshly
+based on merge `68e69b8d26d3e5ba851bad98351c5e801e17e040` and may publish only that
+already-reviewed Goal 2.1.290 state. Repository changes are limited to Goal's
+generated `README.md`, `CHANGELOG.md` and ticket evidence; no new version,
+source, dependency-range or public-interface change is authorized. Each
+downstream repository remains subject to its own governance boundary.
 
 ## Validation evidence: runtime and lock slice
 
@@ -74,6 +73,30 @@ ticket to resume without another confirmation.
 PR #30 merged the runtime and lock slice at exact validated head
 `2e0e6202dc5c54582b3d1438c92fb8051ab50e73`. Its merge commit is the accepted
 base for the release-version slice.
+
+PR #31 merged the synchronized Goal 2.1.290 version state at exact validated
+head `e8767fda6890f6b3c7d79984599dcd2f1f823e51`; merge
+`68e69b8d26d3e5ba851bad98351c5e801e17e040` is the accepted publication base.
+
+## Publication evidence
+
+- Governed `goal -a --delivery-mode publish-only --force-publish` published
+  both Goal 2.1.290 wheel and sdist successfully.
+- PyPI exposes the immutable version at
+  <https://pypi.org/project/goal/2.1.290/>.
+- A fresh Python 3.13 virtual environment installed `goal==2.1.290` from the
+  public index; both `goal --version` and `goal.__version__` reported 2.1.290.
+
+## Downstream dependency audit
+
+Every explicit Goal declaration found in the in-scope repositories is an open
+lower-bound range (`goal>=2.1.0`, `>=2.1.218`, `>=2.1.235` or `>=2.1.264`) and
+already accepts 2.1.290, so no declaration was stale or required a semantic
+edit. Koru and c2004 resolve older Goal versions in their lockfiles, but both
+worktrees contain unrelated user changes; their locks were reported and left
+untouched. Wellm's clean lock is inconsistent with its current manifest and
+still contains a removed dev dependency on Goal, so that repository needs its
+own governed lock-repair task rather than a false version-only edit here.
 
 ## Validation evidence: release-version slice
 

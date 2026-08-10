@@ -30,3 +30,23 @@
 - 2026-08-10: Removed the generated CHANGELOG block to retain the approved
   atomic five-file boundary. `uv lock --check`, the 508-test suite (2 skipped),
   wheel/sdist build, and fresh-base governance gate passed.
+- 2026-08-10: PR #31 passed Python 3.12/3.13 CI and validator-agent review at
+  exact head `e8767fda6890f6b3c7d79984599dcd2f1f823e51`, then merged as
+  `68e69b8d26d3e5ba851bad98351c5e801e17e040`.
+- 2026-08-10: Activated a publish-only slice for the exact merged 2.1.290
+  state; no further bump, source edit or dependency mutation is permitted.
+- 2026-08-10: Started governed `goal -a --delivery-mode publish-only
+  --force-publish` for the already-bumped 2.1.290 state.
+- 2026-08-10: PyPI accepted Goal 2.1.290 wheel and sdist. After index
+  propagation, a fresh Python 3.13 environment installed the public release;
+  CLI and imported package both reported 2.1.290.
+- 2026-08-10: Audited explicit Goal constraints across the in-scope local
+  organizations. All lower bounds accept 2.1.290. Older Koru/c2004 locks were
+  not touched because both worktrees contain unrelated changes; Wellm's stale
+  removed dev dependency requires a separate governed lock repair.
+- 2026-08-10: Marked all acceptance criteria complete; the ticket remains
+  `IN_PROGRESS / EDIT` until exact-head delivery of publication evidence.
+- 2026-08-10: A post-publication PR invocation incorrectly proposed 2.1.291
+  because the release-version carrier `goal/__init__.py` was classified as
+  new package source after the older v2.1.289 tag. Reverted that generated
+  bump without rewriting history; a dedicated classifier regression follows.
