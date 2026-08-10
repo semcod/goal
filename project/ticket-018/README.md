@@ -3,7 +3,7 @@
 - **ID**: ticket-018
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: REVIEW
+- **Workflow state**: EDIT
 - **Created**: 2026-08-10
 - **Work classification**: `BUG / application`
 
