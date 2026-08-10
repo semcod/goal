@@ -1,0 +1,68 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-021",
+  "summary": "Detect writable Python version declarations",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "goal/config/manager.py",
+    "goal/cli/version_state.py",
+    "tests/test_detect_version_files.py",
+    "tests/test_version_state.py",
+    "project/ticket-021/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".governance/**",
+    ".github/**",
+    "project/ticket-*/user-*.md",
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "97a27a5cbaff522d078bef2390358741f7b8eed4",
+    "targetBranch": "main",
+    "outcome": "Goal detects the real writable Python version carrier and never mistakes an import-only module for one",
+    "nonGoals": [
+      "No bump arithmetic, registry, dependency or publication change",
+      "No version metadata or governance package change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use one anchored literal-assignment predicate for conventional Python version carrier modules",
+      "components": [
+        {"name": "version-source-discovery", "paths": ["goal/config/manager.py", "goal/cli/version_state.py", "tests/test_detect_version_files.py", "tests/test_version_state.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the discovery predicate and its regression tests"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-02", "commands": ["pytest tests/test_detect_version_files.py -q"], "evidence": "Import-only modules are excluded"},
+      {"criterion": "AC-03", "commands": ["pytest tests/test_version_state.py -q"], "evidence": "Conventional version modules are readable and writable"},
+      {"criterion": "AC-04", "commands": ["pytest -q", "./project/governance-check.sh"], "evidence": "Full suite and governance pass"}
+    ]
+  }
+}
