@@ -11,3 +11,6 @@
 - Resolved dependencies through published tickets 013, 016 and 017.
 - Resumed `IN_PROGRESS / EDIT` with a v3, base-bound runtime/lockfile slice;
   atomic package publication remains the next slice.
+- Aligned the integration runtime with the package's Python 3.12 floor,
+  pinned its base image by digest, refreshed `uv.lock`, and recorded passing
+  host, build and isolated eight-language matrix evidence.

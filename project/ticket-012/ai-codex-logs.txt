@@ -10,3 +10,8 @@
   resolving governance adoption, source classification and release ownership.
 - 2026-08-10: Resumed ticket 012 under the existing user authorization with a
   v3 runtime/lockfile slice bound to base `cd1d8bafea301ffdac21f06bc5f547fd79aee3cd`.
+- 2026-08-10: Rebuilt the integration image from digest-pinned Python 3.12;
+  the image reports Python 3.12.13 and the network-isolated eight-language
+  matrix passed (`8 passed, 0 failed`).
+- 2026-08-10: Refreshed the 142-package compatible lock graph. `uv lock
+  --check`, 508 host tests (2 skipped), and wheel/sdist builds passed.
