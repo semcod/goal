@@ -1,0 +1,106 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-019",
+  "summary": "Publish Goal 2.1.291",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "README.md",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "project/ticket-019/**",
+    "project/TICKETS.md",
+    "TODO.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-018"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c8ac6ef28e0e491b305b9d4f0d129116823c4100",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.291 is atomically versioned, protected, published and verified from the public registry",
+    "nonGoals": [
+      "No application source changes",
+      "No dependency constraint changes",
+      "No governance or CI policy changes",
+      "No writes to dirty downstream repositories"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Apply Goal's normal patch decision as one synchronized release transition, protect it through exact-head PR validation, then publish only from clean main",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": [
+            "VERSION",
+            "README.md",
+            "pyproject.toml",
+            "uv.lock",
+            "goal/__init__.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Do not publish or merge the release when version, build, CI or exact-head evidence disagrees"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [".venv/bin/goal check-versions"],
+        "evidence": "Decision is normal-bump from PyPI 2.1.290 to 2.1.291"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [".venv/bin/goal check-versions"],
+        "evidence": "All managed carriers and derived files agree on 2.1.291"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          ".venv/bin/python -m pytest tests -q",
+          ".venv/bin/python -m build"
+        ],
+        "evidence": "Complete suite and wheel/sdist build pass"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh --base c8ac6ef28e0e491b305b9d4f0d129116823c4100"
+        ],
+        "evidence": "Governance, target CI and external exact-head validation pass"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m pip install --index-url https://pypi.org/simple goal==2.1.291",
+          "goal --version"
+        ],
+        "evidence": "Fresh public-index installation reports Goal 2.1.291"
+      }
+    ]
+  }
+}
