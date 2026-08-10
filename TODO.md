@@ -2,6 +2,10 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-025](project/ticket-025/README.md): publish the merged
+  delivery-integrity fixes as Goal 2.1.293 and verify a clean public install.
+  State: `IN_PROGRESS / IMPLEMENTATION`; classification:
+  `SERVICE / integration`.
 - [x] Deliver [ticket-024](project/ticket-024/README.md): preserve dry-run state,
   fail closed on every Git push error and retain declared UV verification
   dependencies. State: `DONE / PUBLICATION`; classification:
@@ -82,7 +86,7 @@
 > `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`;
 > `ticket-016 DONE`; `ticket-017 DONE`; `ticket-018 DONE`;
 > `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 DONE`;
-> `ticket-023 DONE`; `ticket-024 DONE`.
+> `ticket-023 DONE`; `ticket-024 DONE`; `ticket-025 IN_PROGRESS`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
