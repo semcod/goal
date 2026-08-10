@@ -1,0 +1,12 @@
+- 2026-08-10: Reproduced failure with published new-project 0.14.0:
+  `legacy manifest base revision is unavailable`.
+- 2026-08-10: Confirmed the old 0.11.0 revision does contain
+  `governance/manifest.default.json`; it is absent only from Goal's depth-one
+  temporary checkout.
+- 2026-08-10: Experimental prior-SHA fetch passed nine focused adapter tests,
+  but the real upgrade then failed with `$/approvalEvidence is required by the
+  managed base`.
+- 2026-08-10: Compared locked Goal manifest with the 0.11.0 default. The legacy
+  lock authenticates the target manifest, so that target projection—not the
+  pristine default—is the correct three-way merge base.
+- 2026-08-10: Removed the uncommitted experiment and cancelled this ticket.

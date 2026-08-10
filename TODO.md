@@ -29,6 +29,21 @@
   metadata-only workflow test from real Git commits and abort delivery when a
   docs-only commit fails. State: `DONE`; classification:
   `SERVICE / delivery`.
+- [ ] Deliver [ticket-012](project/ticket-012/README.md): align the integration
+  runtime with Python 3.12+, refresh compatible dependencies, pass the full
+  test/container matrix and publish through `goal -a`. State: `PLAN`, awaiting
+  ticket 013 governance adoption;
+  classification: `SERVICE / integration`.
+- [ ] Deliver [ticket-013](project/ticket-013/README.md): adopt immutable
+  new-project 0.14.1 and assign integration/lockfile ownership. State:
+  `IN_PROGRESS / EDIT`; classification: `SERVICE / governance`.
+- [ ] Deliver [ticket-015](project/ticket-015/README.md): add the required root
+  Goal CLI image on Python 3.12 so the v0.14.1 governance adoption can pass.
+  State: `IN_PROGRESS / EDIT`; classification: `SERVICE / infrastructure`.
+- [x] Close [ticket-014](project/ticket-014/README.md): the proposed Goal-side
+  prior-revision fetch was disproved and safely cancelled before implementation;
+  the defect was routed upstream. State: `CANCELLED`; classification:
+  `BUG / application`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
@@ -36,7 +51,8 @@
 > Current workflow state: `ticket-001 DONE`; `ticket-002 DONE`;
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
-> `ticket-010 DONE`; `ticket-011 DONE`.
+> `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 PLAN`;
+> `ticket-013 IN_PROGRESS`; `ticket-014 CANCELLED`; `ticket-015 IN_PROGRESS`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

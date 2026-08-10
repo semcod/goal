@@ -1,0 +1,7 @@
+[2026-08-10 analysis]
+requires-python=>=3.12
+root-dockerfile=ABSENT
+integration-dockerfile-python=3.11
+new-project-v0.14.1-docker-required=true
+session-execution-authorization=GRANTED_WITHIN_INTENT
+trusted-merge-self-approval=FORBIDDEN

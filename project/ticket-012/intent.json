@@ -1,0 +1,17 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-012",
+  "summary": "Refresh runtime and release dependencies",
+  "workstream": "integration",
+  "allowedPaths": [
+    "pyproject.toml",
+    "project/ticket-012/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-013"],
+  "conflictsWith": [],
+  "integrationTicket": null
+}
