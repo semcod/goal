@@ -17,3 +17,16 @@
   --check`, 508 host tests (2 skipped), and wheel/sdist builds passed.
 - 2026-08-10: Invoked governed autonomous pull-request delivery through
   `goal -a`; release metadata remains excluded from this first slice.
+- 2026-08-10: PR #30 passed Python 3.12/3.13 CI and validator-agent review at
+  exact head `2e0e6202dc5c54582b3d1438c92fb8051ab50e73`, then merged as
+  `3c8b1d68313d200cec355e0d4e18510b6e706f04`.
+- 2026-08-10: Activated the five-file release-version slice on that fresh base;
+  registry upload remains gated on its own exact-head merge.
+- 2026-08-10: Invoked `goal -a` to resolve and synchronize the release version;
+  the selected version must be proven by the resulting commit and checks.
+- 2026-08-10: Goal selected `normal-bump -> 2.1.290`; after synchronization,
+  `goal check-versions` selected `already-bumped -> 2.1.290` against tag and
+  PyPI baseline 2.1.289, so no second bump occurred.
+- 2026-08-10: Removed the generated CHANGELOG block to retain the approved
+  atomic five-file boundary. `uv lock --check`, the 508-test suite (2 skipped),
+  wheel/sdist build, and fresh-base governance gate passed.

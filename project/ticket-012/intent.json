@@ -9,7 +9,10 @@
     "origin": "requested"
   },
   "allowedPaths": [
-    "integration/Dockerfile",
+    "VERSION",
+    "pyproject.toml",
+    "goal/__init__.py",
+    "README.md",
     "uv.lock",
     "project/ticket-012/**",
     "TODO.md",
@@ -21,34 +24,36 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "cd1d8bafea301ffdac21f06bc5f547fd79aee3cd",
+    "acceptedBaseSha": "3c8b1d68313d200cec355e0d4e18510b6e706f04",
     "targetBranch": "main",
-    "outcome": "Move the integration matrix to digest-pinned Python 3.12 and refresh the compatible locked dependency resolution before the package-release slice",
+    "outcome": "Have Goal resolve the pending package-source change to version 2.1.290 and atomically synchronize its five release-version carriers before registry publication",
     "nonGoals": [
-      "No package version or registry publication in this slice",
-      "No application-source or public-interface change",
-      "No direct dependency-range or major-version change",
+      "No registry upload or Git release tag before this pull request merges",
+      "No application-source, dependency-range or public-interface change",
+      "No generated CHANGELOG entry in this five-file consistency slice",
       "No downstream consumer mutation"
     ],
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 2,
-      "maxAffectedComponents": 2,
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Align the isolated eight-project integration runner with requires-python and refresh only the resolved lock graph, leaving release metadata for a separate atomic slice",
+      "decision": "Treat VERSION, pyproject metadata, package __version__, the README version badge and the tracked uv lock root as one atomic Goal release-version component",
       "components": [
         {
-          "name": "integration-runtime",
-          "paths": ["integration/Dockerfile"]
-        },
-        {
-          "name": "python-resolution",
-          "paths": ["uv.lock"]
+          "name": "goal-release-version",
+          "paths": [
+            "VERSION",
+            "pyproject.toml",
+            "goal/__init__.py",
+            "README.md",
+            "uv.lock"
+          ]
         }
       ],
       "responsibilityChanges": false,
@@ -59,34 +64,26 @@
         "states": [],
         "evidence": []
       },
-      "rollback": "Restore the prior digest-pinned integration base and previous uv.lock in one reviewed integration change"
+      "rollback": "Restore all five version carriers to 2.1.289 in one reviewed change before any registry upload"
     },
     "runtimeDependencies": [],
     "validation": [
       {
-        "criterion": "AC-02",
+        "criterion": "AC-05",
         "commands": [
-          "docker build -t goal-integration-matrix -f integration/Dockerfile .",
-          "docker run --rm --network none goal-integration-matrix"
-        ],
-        "evidence": "The Python 3.12 image completes all eight language detection and dry-run cases"
-      },
-      {
-        "criterion": "AC-03",
-        "commands": [
-          "uv lock --upgrade",
+          ".venv/bin/goal --check-versions",
           "uv lock --check"
         ],
-        "evidence": "The refreshed lock is compatible with the unchanged project dependency contract"
+        "evidence": "Goal selects 2.1.290 once and every configured or derived version carrier agrees"
       },
       {
         "criterion": "AC-04",
         "commands": [
           ".venv/bin/python -m pytest tests -q",
           ".venv/bin/python -m build",
-          "./project/governance-check.sh"
+          "./project/governance-check.sh --base 3c8b1d68313d200cec355e0d4e18510b6e706f04"
         ],
-        "evidence": "Host tests, build and governance pass before protected delivery"
+        "evidence": "Host tests, build and fresh-base governance pass before protected delivery"
       }
     ]
   }

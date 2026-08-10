@@ -44,12 +44,14 @@ the transition from `PLAN / WAIT_FOR_APPROVAL` to `IN_PROGRESS / EDIT`.
 
 ## Boundary
 
-This first delivery slice may change only `integration/Dockerfile`, `uv.lock`
-and ticket evidence. It does not authorize speculative source refactors,
-automatic major-version dependency changes, or edits to dirty downstream
-repositories. Each downstream repository remains subject to its own governance
-and publication boundary. The atomic five-file package release is a second
-slice after this runtime/lockfile PR merges and establishes a fresh base SHA.
+The merged first slice changed only `integration/Dockerfile`, `uv.lock` and
+ticket evidence. This second slice is freshly based on merge
+`3c8b1d68313d200cec355e0d4e18510b6e706f04` and may atomically synchronize
+only `VERSION`, `pyproject.toml`, `goal/__init__.py`, `README.md` and `uv.lock`.
+Registry upload and generated release notes follow only after exact-head CI,
+validator approval and merge. It does not authorize speculative source
+refactors, dependency-range changes or edits to dirty downstream repositories.
+Each downstream repository remains subject to its own governance boundary.
 
 ## Validation evidence: runtime and lock slice
 
@@ -68,3 +70,16 @@ v0.14.1, excludes governance helpers from package-source classification, and
 assigns integration ownership to the runtime, lockfile, and atomic release
 metadata paths. The original session authorization therefore permits this
 ticket to resume without another confirmation.
+
+PR #30 merged the runtime and lock slice at exact validated head
+`2e0e6202dc5c54582b3d1438c92fb8051ab50e73`. Its merge commit is the accepted
+base for the release-version slice.
+
+## Validation evidence: release-version slice
+
+- `goal -a` selected `normal-bump -> 2.1.290` from the shared tag/registry
+  baseline 2.1.289 and synchronized all five approved version carriers.
+- A subsequent `goal check-versions` selected `already-bumped -> 2.1.290`,
+  proving that the complete local bump is not repeated.
+- The 508-test suite passed (2 skipped), `uv lock --check` passed for the
+  142-package graph, and Goal 2.1.290 wheel and sdist builds succeeded.

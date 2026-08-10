@@ -32,7 +32,7 @@
 - [ ] Deliver [ticket-012](project/ticket-012/README.md): align the integration
   runtime with Python 3.12+, refresh compatible dependencies, pass the full
   test/container matrix and publish through `goal -a`. State:
-  `IN_PROGRESS / EDIT`, runtime/lockfile slice;
+  `IN_PROGRESS / EDIT`, release-version slice after runtime/lockfile merge;
   classification: `SERVICE / integration`.
 - [x] Deliver [ticket-013](project/ticket-013/README.md): adopt immutable
   new-project 0.14.1 and assign integration/lockfile ownership. State:
