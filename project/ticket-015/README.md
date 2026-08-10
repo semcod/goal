@@ -2,8 +2,8 @@
 
 - **ID**: ticket-015
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 
 ## Goal and scope
@@ -54,6 +54,18 @@ No long-running service, secret, port, registry push, dependency refresh or
 application-source change belongs to this ticket. The Compose service is only
 a network-isolated CLI entrypoint. Session authorization is not trusted merge
 approval.
+
+## Publication
+
+- Goal created [PR #21](https://github.com/semcod/goal/pull/21).
+- GitHub CI passed on Python 3.12 and 3.13.
+- `ifuri-validator-agent` approved exact head
+  `105c297fecaa5adcedc24219f7c5404c5fe907d0`.
+- The protected PR merged as
+  `bd9d6076c24f1a9297eb4dce073c43236dac9b43`.
+- Compose follow-up [PR #22](https://github.com/semcod/goal/pull/22) passed both
+  CI jobs, was approved by the trusted validator at
+  `61b018dcd37127ca13173de7295a8ac34204d3f5`, and merged as `9ef73d2`.
 
 ## Participants
 

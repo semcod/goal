@@ -19,11 +19,25 @@ weakening path enforcement or editing managed files outside the adoption tool.
 - [x] AC-01: The user's dependency/runtime update request authorizes the
   necessary governance adoption identified by the deterministic gate.
 - [x] AC-02: Adoption uses the published full SHA behind `v0.14.1`.
-- [ ] AC-03: Managed-file provenance and governance validation pass after the
+- [x] AC-03: Managed-file provenance and governance validation pass after the
   upgrade.
-- [ ] AC-04: The integration workstream explicitly owns `integration/**` and
+- [x] AC-04: The integration workstream explicitly owns `integration/**` and
   Python lockfiles while all existing owned paths remain intact.
-- [ ] AC-05: Ticket 012 can claim its final implementation paths.
+- [x] AC-05: Ticket 012 can claim its final implementation paths.
+
+## Validation evidence
+
+- `goal governance adopt --standard-repository ... --source-revision
+  63a3d56b648da0d338be7cf28cbf9045adbb3e5e --check`: PASS; immutable
+  adoption is up to date.
+- The v0.14.1 gate with accepted base
+  `9ef73d2ce297b134da66caceb6d9b3c10741d2f1`: PASS; 0 errors, 0 warnings.
+- Atomic adoption verified every changed managed path against both the legacy
+  v0.11 lock and v0.14.1 lock; no budget or ownership bypass was used.
+- Target manifest retains all existing workstreams and adds `integration/**`,
+  `uv.lock`, `poetry.lock` and `Pipfile.lock` to integration ownership.
+- Required Python 3.12 Dockerfile and network-isolated Compose declarations
+  were published first in PRs #21 and #22.
 
 ## Participants
 
@@ -47,7 +61,6 @@ extension, and this ticket's governance evidence may change.  The adoption
 must be executed through `goal governance adopt`; no integrity check is
 disabled or bypassed.
 
-The committed planning intent remains `new-project.intent/v2` while the target
-still runs the v0.11 checker. The adoption transaction upgrades the checker,
-schema and this intent to v3 in one validated change, avoiding a mixed-schema
-bootstrap state that would otherwise block governed delivery.
+The base planning intent remains `new-project.intent/v2` while the target runs
+the v0.11 checker. This adoption transaction upgrades the checker, schema and
+intent to v3 in one validated change, avoiding a mixed-schema delivery gap.

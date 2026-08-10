@@ -9,6 +9,14 @@ AGENT="antigravity"
 WORKSTREAM=""
 FORCE_NEW=false
 
+# Work classification for intent/v3. The defaults are the contract's own answer
+# for an unclassified new ticket: rule W-CLASS-006 (work-request / maintenance)
+# assigns SERVICE and health, and priorityDerivation.serviceDefault is P2.
+# Declare --kind/--priority/--origin when the ticket is a defect or new behavior.
+KIND="SERVICE"
+PRIORITY="P2"
+ORIGIN="health"
+
 usage() {
   cat <<'EOF'
 Usage: ./project/new-ticket.sh [options]
@@ -17,8 +25,16 @@ Usage: ./project/new-ticket.sh [options]
   -a, --agent ID         Agent provider/id used for ai-{ID}.md
   -w, --workstream ID    Required workstream declared in the governance manifest
   -u, --users IDS        Compatibility input only; human files are not created
+  -k, --kind KIND        Work kind; default SERVICE
+  -p, --priority P       Work priority; default P2
+  -o, --origin ORIGIN    Work origin; default health
       --force-new        Create a new ticket despite an unfinished ticket
   -h, --help             Show this help
+
+Accepted classification values are read from the work classification contract,
+not hardcoded here. The defaults are that contract's own answer for an
+unclassified new ticket (rule W-CLASS-006 plus the service priority default);
+declare the three explicitly for a defect or new behavior.
 
 Only a human may authorize --force-new. Human-owned user-*.md files must be
 created and written by that human or by a trusted intake boundary.
@@ -53,6 +69,21 @@ while [[ $# -gt 0 ]]; do
     -w|--workstream)
       require_value "$@"
       WORKSTREAM="$2"
+      shift 2
+      ;;
+    -k|--kind)
+      require_value "$@"
+      KIND="$2"
+      shift 2
+      ;;
+    -p|--priority)
+      require_value "$@"
+      PRIORITY="$2"
+      shift 2
+      ;;
+    -o|--origin)
+      require_value "$@"
+      ORIGIN="$2"
       shift 2
       ;;
     --force-new)
@@ -98,8 +129,94 @@ is_active_ticket() {
   [[ -f "$readme" ]] && grep -Eiq '^-[[:space:]]+\*\*Status\*\*:[[:space:]]*IN_PROGRESS([[:space:]]|$)' "$readme"
 }
 
+# The dimension vocabularies live in the work classification contract, which is
+# shipped to targets as .governance/ and kept at governance/ in the hub. Reading
+# them keeps this script from drifting away from the contract it must satisfy.
+classification_dsl() {
+  local candidate
+  for candidate in .governance/work-classification.dsl.json governance/work-classification.dsl.json; do
+    if [[ -f "$candidate" ]]; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+require_classification_value() {
+  local dimension="$1" value="$2" dsl
+  if ! dsl="$(classification_dsl)"; then
+    echo "GOV-CLASS-000: work classification contract not found; cannot validate --$dimension." >&2
+    echo "  remediation: restore .governance/work-classification.dsl.json from the pinned package." >&2
+    exit 1
+  fi
+  local allowed
+  allowed="$(python3 -c 'import json,sys
+data = json.load(open(sys.argv[1]))
+print("\n".join(data["dimensions"][sys.argv[2]]))' "$dsl" "$dimension")"
+  if ! printf '%s\n' "$allowed" | grep -Fxq -- "$value"; then
+    echo "GOV-CLASS-001: '$value' is not a declared $dimension in $dsl." >&2
+    echo "  accepted: $(printf '%s' "$allowed" | tr '\n' ' ')" >&2
+    exit 1
+  fi
+}
+
+require_classification_value kind "$KIND"
+require_classification_value priority "$PRIORITY"
+require_classification_value origin "$ORIGIN"
+
+# Serialize allocation across every worktree sharing this clone. The high-water
+# mark reserves a number even before its ticket is committed and therefore
+# remains visible when another worktree cannot see the new directory.
+allocation_lock=""
+allocation_state=""
+release_allocation_lock() {
+  if [[ -n "$allocation_lock" ]]; then
+    rmdir "$allocation_lock" 2>/dev/null || true
+  fi
+}
+if git_common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
+  allocation_lock="$git_common_dir/new-project-ticket-allocation.lock"
+  allocation_state="$git_common_dir/new-project-ticket-high-water"
+  if ! mkdir "$allocation_lock" 2>/dev/null; then
+    echo "GOV-TICKET-LOCK-001: another ticket allocation is active in this clone." >&2
+    echo "  remediation: wait for it to finish; remove a stale lock only after confirming no allocator is running." >&2
+    exit 4
+  fi
+  trap release_allocation_lock EXIT INT TERM
+fi
+
+# A ticket number taken on a branch is invisible on disk in another worktree.
+# Consult every local and fetched remote branch known to this clone.
+refs_highest() {
+  local highest_ref=0 ref number decimal
+  while read -r ref; do
+    [[ -n "$ref" ]] || continue
+    while read -r number; do
+      decimal=$((10#$number))
+      (( decimal > highest_ref )) && highest_ref=$decimal
+    done < <(
+      git ls-tree -d -r --name-only "$ref" -- project 2>/dev/null \
+        | sed -nE 's|^project/ticket-([0-9]+)$|\1|p'
+    )
+  done < <(git for-each-ref --format='%(refname)' refs/heads refs/remotes 2>/dev/null)
+  printf '%s' "$highest_ref"
+}
+
 highest=0
 conflicting_ticket=""
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  highest="$(refs_highest)"
+  if [[ -n "$allocation_state" && -f "$allocation_state" ]]; then
+    read -r reserved_highest < "$allocation_state"
+    if [[ ! "$reserved_highest" =~ ^[0-9]+$ ]]; then
+      echo "GOV-TICKET-LOCK-002: ticket allocation state is invalid." >&2
+      exit 4
+    fi
+    reserved_decimal=$((10#$reserved_highest))
+    (( reserved_decimal > highest )) && highest=$reserved_decimal
+  fi
+fi
 if [[ -d project ]]; then
   for dir in project/ticket-*; do
     [[ -d "$dir" ]] || continue
@@ -131,7 +248,15 @@ date_only="${timestamp%%T*}"
 agent_file="ai-$AGENT.md"
 agent_log="ai-$AGENT-logs.txt"
 
-mkdir -p "$ticket_dir"
+if ! mkdir "$ticket_dir" 2>/dev/null; then
+  echo "GOV-TICKET-LOCK-003: ticket directory already exists: $ticket_dir" >&2
+  exit 4
+fi
+if [[ -n "$allocation_state" ]]; then
+  allocation_state_tmp="$allocation_state.$$"
+  printf '%s\n' "$next_num" > "$allocation_state_tmp"
+  mv "$allocation_state_tmp" "$allocation_state"
+fi
 
 escape_sed() {
   local value="$1"
@@ -175,6 +300,9 @@ render_json_template() {
     -e "s|{YYYY-MM-DD}|$(escape_sed "$(json_escape "$date_only")")|g" \
     -e "s|{PROVIDER}|$(escape_sed "$(json_escape "$AGENT")")|g" \
     -e "s|{WORKSTREAM}|$(escape_sed "$(json_escape "$WORKSTREAM")")|g" \
+    -e "s|{KIND}|$(escape_sed "$(json_escape "$KIND")")|g" \
+    -e "s|{PRIORITY}|$(escape_sed "$(json_escape "$PRIORITY")")|g" \
+    -e "s|{ORIGIN}|$(escape_sed "$(json_escape "$ORIGIN")")|g" \
     "$source" > "$target"
 }
 
@@ -186,8 +314,8 @@ else
 
 - **ID**: $ticket_id
 - **Owner**: unresolved:human
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
 - **Created**: $date_only
 
 ## Goal and scope
@@ -217,6 +345,10 @@ else
 
 Keep executable implementation outside this governance/evidence directory.
 Read a human-owned user-*.md file only when one exists.
+The request to execute this work creates SESSION_EXECUTION_AUTHORIZATION;
+proceed within the recorded intent without a redundant confirmation prompt.
+Require new authority for destructive action, secrets, external coordination,
+material objective expansion and trusted merge approval.
 EOF
 fi
 
@@ -225,10 +357,15 @@ if [[ -f template/files/intent.template.json ]]; then
 else
   cat > "$ticket_dir/intent.json" <<EOF
 {
-  "schema": "new-project.intent/v2",
+  "schema": "new-project.intent/v3",
   "ticket": "$ticket_id",
   "summary": "$(json_escape "$TITLE")",
   "workstream": "$WORKSTREAM",
+  "classification": {
+    "kind": "$KIND",
+    "priority": "$PRIORITY",
+    "origin": "$ORIGIN"
+  },
   "allowedPaths": ["project/$ticket_id/**", "TODO.md", "project/TICKETS.md"],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": [],
@@ -261,11 +398,14 @@ To be completed after reading human-owned input and the ticket preprompt.
 
 ## Actual changes
 
-- None; waiting for approval.
+- Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
+  from the request to execute this work.
 
 ## Blockers
 
-- Human approval is required before implementation.
+- None inside the recorded intent; proceed without a second confirmation.
+- New authority remains required for destructive action, secret access, new
+  external coordination, material objective expansion and trusted merge.
 EOF
 fi
 

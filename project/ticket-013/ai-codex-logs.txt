@@ -13,3 +13,11 @@
 - 2026-08-10: Kept the committed planning intent at
   `new-project.intent/v2` while v0.11 is installed; v3 will arrive atomically
   with the complete v0.14.1 managed payload on the adoption branch.
+- 2026-08-10: Published Python 3.12 Docker and network-isolated Compose
+  prerequisites through protected PRs #21 and #22.
+- 2026-08-10: `goal governance adopt ... --check`: PASS; v0.14.1 at exact SHA
+  is up to date.
+- 2026-08-10: v0.14.1 governance gate against accepted base
+  `9ef73d2ce297b134da66caceb6d9b3c10741d2f1`: PASS; 0 errors, 0 warnings.
+- 2026-08-10: integration ownership includes `integration/**`, `uv.lock`,
+  `poetry.lock` and `Pipfile.lock`; no existing target ownership was removed.

@@ -25,7 +25,14 @@ installed lock, so Goal does not need to reconstruct or fetch the old default.
 
 - Verified published v0.14.1 at full SHA `63a3d56b648da0d338be7cf28cbf9045adbb3e5e`
   and resumed the bounded adoption ticket autonomously.
+- Installed the complete hash-bound v0.14.1 managed payload through Goal and
+  retained the authenticated legacy base for atomic migration validation.
+- Extended only target-owned manifest values so integration owns its container
+  and Python lockfiles, while the managed base remains intact.
+- Upgraded ticket 013 to the deterministic v3 delivery contract in the same
+  transaction as its v3 schema and passed the new gate with zero findings.
 
 ## Blockers
 
-- None; the upstream migration patch is published immutably.
+- None; publication still requires green target CI and independent exact-head
+  validator approval.
