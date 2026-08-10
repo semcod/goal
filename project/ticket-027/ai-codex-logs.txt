@@ -1,0 +1,9 @@
+2026-08-10 reproduction: Koru Goal run pushed 7204329388a3 but returned merged PR #28 at ef673a4a0df2
+2026-08-10 recovery: created Koru PR #29 through API, hosted smoke and validator approved exact head, merged as 29ec7c0965c5
+2026-08-10 authorization: user requested autonomous Goal refactoring, tests and publication
+2026-08-10 accepted base: 98d4ed1390e8c39123aae790f53d01a7591bc512
+2026-08-10 implementation: open base/head query plus exact headRefOid binding and post-create verification
+2026-08-10 focused validation: 10 passed; Ruff PASS
+2026-08-10 full validation: 525 passed, 2 skipped; governance 0/0
+2026-08-10 Docker: production build PASS; offline CLI reports Goal 2.1.293
+2026-08-10 version decision: public baseline 2.1.293, normal-bump -> 2.1.294; carriers deferred to integration
