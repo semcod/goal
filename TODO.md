@@ -25,6 +25,10 @@
   resolve normal, already-bumped and partially bumped version states from
   file/Git/registry evidence, then enforce strict pre-release consistency.
   State: `DONE`; classification: `SERVICE / release`.
+- [ ] Deliver [ticket-011](project/ticket-011/README.md): isolate the
+  metadata-only workflow test from real Git commits and abort delivery when a
+  docs-only commit fails. State: `IN_PROGRESS / EDIT`; classification:
+  `SERVICE / delivery`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
@@ -32,7 +36,7 @@
 > Current workflow state: `ticket-001 DONE`; `ticket-002 DONE`;
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
-> `ticket-010 DONE`.
+> `ticket-010 DONE`; `ticket-011 IN_PROGRESS / EDIT`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

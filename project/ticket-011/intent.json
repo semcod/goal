@@ -1,0 +1,25 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-011",
+  "summary": "Eliminate duplicate docs-only commit attempt",
+  "workstream": "application",
+  "allowedPaths": [
+    "goal/push/core.py",
+    "tests/test_push_e2e.py",
+    "project/ticket-011/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".env",
+    ".env.*",
+    ".governance/**",
+    ".github/**",
+    "pyproject.toml",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}

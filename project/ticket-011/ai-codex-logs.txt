@@ -1,0 +1,4 @@
+2026-08-10 read-only analysis: metadata-only test calls real _commit_without_release during outer goal -a test stage
+2026-08-10 read-only analysis: outer docs-only commit ignores handle_single_commit false result and continues delivery
+2026-08-10 session authorization: user instructed agent to continue the reported follow-up
+transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
