@@ -14,3 +14,6 @@
 - Isolated the Goal-only badge control from project test execution.
 - Added nine regressions and completed full Python, Ruff, governance and
   network-disabled Docker validation.
+- Passed Python 3.12/3.13 target CI and validator-agent exact-head approval.
+- Merged protected PR #50 as `4fae2ec251f6181f15c02c53fe3078ea51c96c9b`
+  and removed its remote branch.

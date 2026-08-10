@@ -26,3 +26,13 @@ refresh, and the generated README diff was restored before retrying delivery.
 The first retry then demonstrated that this Goal-only environment switch leaked
 into the project's own tests. Delivery failed closed before commit; the test
 stage now temporarily removes the switch and restores it afterward.
+
+Publication evidence:
+- Goal created PR #50 at exact head
+  `a1c11f4e3b2a23b2c52f2d53ae07d9f464007f57` without version, tag, changelog
+  or registry mutation.
+- Target checks `test (3.12)` and `test (3.13)` passed.
+- validator-agent run `31425350829` submitted deterministic approval bound to
+  that exact head; advisory LLM verdict was also APPROVE with no findings.
+- GitHub merged PR #50 as `4fae2ec251f6181f15c02c53fe3078ea51c96c9b`.
+- The remote PR branch is absent and the open-PR list is empty.
