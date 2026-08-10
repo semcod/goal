@@ -173,6 +173,14 @@
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
 
+## [2.1.293] - 2026-08-10
+
+### Docs
+- Update README.md
+
+### Other
+- Update uv.lock
+
 ## [2.1.291] - 2026-08-10
 
 ### Fixed
