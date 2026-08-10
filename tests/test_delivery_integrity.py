@@ -1,10 +1,22 @@
 """Regression coverage for ticket-024 delivery integrity boundaries."""
 
+import importlib
 from pathlib import Path
 from unittest.mock import patch
 
 import click
 import pytest
+
+
+def test_legacy_push_import_does_not_replace_canonical_cli_command() -> None:
+    """Importing the compatibility module must not replace the governed CLI."""
+    from goal.cli import main
+
+    canonical = main.commands["push"]
+    legacy = importlib.import_module("goal.push.commands")
+    importlib.reload(legacy)
+
+    assert main.commands["push"] is canonical
 
 
 def test_self_update_ignores_non_string_version_provider_result() -> None:
