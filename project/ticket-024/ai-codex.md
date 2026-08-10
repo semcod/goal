@@ -36,7 +36,12 @@ named `dev` even when verification tools live under `test`.
 - Prevented the compatibility `goal.push.commands` module from replacing the
   canonical registered `goal.cli.push_cmd`; this removed a real workflow side
   effect exposed by sequential E2E tests.
-- Added seven delivery-integrity regressions and passed 519 full-suite tests
+- Made `GOAL_SKIP_COSTS_BADGE` cover the commit-phase refresh as well as the
+  bootstrap refresh, preventing optional generated metadata from escaping the
+  ticket boundary.
+- Prevented Goal-only cost-badge control state from leaking into the project's
+  test subprocess, while restoring it for Goal's later commit phase.
+- Added nine delivery-integrity regressions and passed 521 full-suite tests
   with two optional skips, Ruff, governance, Diagit command selection and the
   isolated Docker smoke checks.
 

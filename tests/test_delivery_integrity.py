@@ -1,6 +1,7 @@
 """Regression coverage for ticket-024 delivery integrity boundaries."""
 
 import importlib
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -27,6 +28,77 @@ def test_self_update_ignores_non_string_version_provider_result() -> None:
         _maybe_self_update(object(), yes=True)  # type: ignore[arg-type]
 
     auto_update.assert_not_called()
+
+
+def test_cost_badge_skip_applies_to_commit_phase(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The documented skip switch must cover both bootstrap and commit refresh."""
+    from goal.push.core import _handle_commit_phase
+
+    monkeypatch.setenv("GOAL_SKIP_COSTS_BADGE", "1")
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": None,
+        "user_config": {},
+    }
+    with (
+        patch("goal.push.core.handle_version_sync"),
+        patch("goal.push.core.handle_changelog"),
+        patch("goal.push.core._update_cost_badges") as update_badges,
+        patch("goal.push.core.run_git_local") as run_git_local,
+        patch("goal.push.core.handle_single_commit") as single_commit,
+    ):
+        _handle_commit_phase(
+            ctx_obj=ctx_obj,
+            split=False,
+            message=None,
+            commit_title="fix: preserve metadata boundary",
+            commit_body=None,
+            commit_msg="fix: preserve metadata boundary",
+            files=["goal/push/core.py"],
+            ticket=None,
+            new_version="1.2.4",
+            current_version="1.2.3",
+            no_version_sync=False,
+            no_changelog=False,
+        )
+
+    update_badges.assert_not_called()
+    run_git_local.assert_not_called()
+    single_commit.assert_called_once()
+
+
+def test_goal_cost_badge_control_does_not_leak_into_project_tests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Goal-only control variables must not alter the project's own test suite."""
+    from goal.push.core import _run_test_stage_or_exit
+
+    monkeypatch.setenv("GOAL_SKIP_COSTS_BADGE", "1")
+    observed: list[str | None] = []
+
+    def run_test_stage(*_args: object, **_kwargs: object) -> tuple[str, int]:
+        observed.append(os.getenv("GOAL_SKIP_COSTS_BADGE"))
+        return "Tests passed", 0
+
+    with patch("goal.push.core.run_test_stage", side_effect=run_test_stage):
+        result = _run_test_stage_or_exit(
+            project_types=["python"],
+            ctx_obj={"yes": True},
+            markdown=False,
+            files=["goal/push/core.py"],
+            stats={},
+            current_version="1.2.3",
+            new_version="1.2.3",
+            commit_msg="fix: isolate Goal controls",
+            commit_body=None,
+        )
+
+    assert result == ("Tests passed", 0)
+    assert observed == [None]
+    assert os.environ["GOAL_SKIP_COSTS_BADGE"] == "1"
 
 
 @pytest.mark.parametrize("existing_config", [False, True])

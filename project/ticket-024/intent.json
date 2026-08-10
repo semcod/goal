@@ -48,7 +48,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Keep configuration reads non-persistent in dry-run, propagate the existing push result, preserve both conventional UV verification sets and reject legacy replacement of the canonical push command",
+      "decision": "Keep configuration reads non-persistent in dry-run, propagate the existing push result, preserve both conventional UV verification sets, reject legacy replacement of the canonical push command and honor the optional cost-badge skip without leaking Goal-only state into project tests",
       "components": [
         {
           "name": "delivery-orchestration",

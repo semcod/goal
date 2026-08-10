@@ -4,7 +4,7 @@
 
 - [ ] Deliver [ticket-024](project/ticket-024/README.md): preserve dry-run state,
   fail closed on every Git push error and retain declared UV verification
-  dependencies. State: `IN_PROGRESS / VALIDATION`; classification:
+  dependencies. State: `IN_PROGRESS / PUBLICATION`; classification:
   `BUG / application`.
 - [x] Review and approve [ticket-001](project/ticket-001/README.md): Goal
   URI/DSL/CQRS+ES refactoring blueprint, diagrams and machine-readable scope.
@@ -82,7 +82,7 @@
 > `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`;
 > `ticket-016 DONE`; `ticket-017 DONE`; `ticket-018 DONE`;
 > `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 DONE`;
-> `ticket-023 DONE`; `ticket-024 IN_PROGRESS / VALIDATION`.
+> `ticket-023 DONE`; `ticket-024 IN_PROGRESS / PUBLICATION`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

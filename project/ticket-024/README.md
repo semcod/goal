@@ -3,7 +3,7 @@
 - **ID**: ticket-024
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 
 ## Goal and scope
@@ -24,11 +24,13 @@ set when Goal synchronizes an UV-managed environment.
 
 ## Validation evidence
 
-- Seven ticket regressions pass, covering absent and existing `goal.yaml`, a
+- Nine ticket regressions pass, covering absent and existing `goal.yaml`, a
   failed remote push, both UV verification sets, invalid self-update evidence,
-  and protection of the canonical CLI command from the legacy push shim.
-- The related delivery/bootstrap suite passes with 163 tests and one optional
-  skip; the complete suite passes with 519 tests and two optional skips.
+  protection of the canonical CLI command from the legacy push shim, and the
+  cost-badge skip boundary across bootstrap and commit phases, and isolation of
+  Goal-only controls from the project test environment.
+- The related delivery/bootstrap suite passes with 165 tests and one optional
+  skip; the complete suite passes with 521 tests and two optional skips.
 - Importing `goal.push.commands` no longer replaces the registered
   `goal.cli.push_cmd` callback, so sequential tests and runtime policy cannot
   accidentally invoke an unpatched legacy workflow.
