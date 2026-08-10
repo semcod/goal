@@ -3,8 +3,9 @@
 import sys
 import subprocess
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import DEFAULT, patch, MagicMock
 
+import click
 import pytest
 
 # Add project root to path
@@ -179,15 +180,15 @@ class TestWorkflowOrder:
         [["python"], []],
         ids=["metadata-only-package", "non-registry-repository"],
     )
-    def test_metadata_only_changes_skip_bump_commit_publish_and_tag(
+    def test_metadata_only_changes_commit_once_without_bump_publish_or_tag(
         self, project_types
     ):
-        """Docs/metadata-only runs must not bump, commit, publish, nor tag.
+        """Docs/metadata-only runs make one plain commit without a release.
 
         When the only staged files are docs/metadata (no package source), goal stays
-        on the current version: no version bump, no commit, no publish, no release
-        tag — avoiding version churn that races ahead of what is published. Use
-        --force-publish to release anyway.
+        on the current version: one plain commit, no version bump, no publish and no
+        release tag.  The commit helper must be mocked so this workflow test can
+        never commit the repository that is running the suite.
         """
         from goal.push.core import execute_push_workflow
 
@@ -197,6 +198,7 @@ class TestWorkflowOrder:
             "config": {},
             "user_config": {},
         }
+        mock_commit_without_release = MagicMock(return_value=True)
 
         with (
             patch("goal.push.core.check_pyproject_toml", return_value=None),
@@ -221,7 +223,11 @@ class TestWorkflowOrder:
             ),
             patch("goal.push.core.get_version_info", return_value=("0.1.42", "0.1.43")),
             patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
-            patch("goal.push.core._handle_commit_phase") as mock_commit_phase,
+            patch.multiple(
+                "goal.push.core",
+                _handle_commit_phase=DEFAULT,
+                _commit_without_release=mock_commit_without_release,
+            ) as commit_mocks,
             patch("goal.push.stages.publish.publish_project") as mock_publish_project,
             patch("goal.push.core.create_tag", return_value=None) as mock_create_tag,
             patch("goal.git_ops.get_remote_branch", return_value="main"),
@@ -246,14 +252,101 @@ class TestWorkflowOrder:
                 todo=False,
             )
 
-        # No version bump and no commit when there is no package source change.
-        mock_commit_phase.assert_not_called()
+        # No release commit, but the docs/metadata commit is requested exactly once.
+        commit_mocks["_handle_commit_phase"].assert_not_called()
+        mock_commit_without_release.assert_called_once_with(
+            ctx_obj, "docs: update readme", None, "docs: update readme", None
+        )
         mock_publish_project.assert_not_called()
         # Version stays on current (0.1.42, not the bumped 0.1.43) and the tag is
         # suppressed, so no orphan release tag is created.
         mock_create_tag.assert_called_once_with("0.1.42", True)
-        # Push still runs (it is a no-op when no new commit was created).
+        # Push delivers the plain docs/metadata commit.
         mock_push.assert_called_once()
+
+    def test_metadata_only_commit_failure_aborts_before_publish_tag_and_push(self):
+        """A failed plain commit cannot be reported or pushed as a success."""
+        from goal.push.core import execute_push_workflow
+
+        ctx_obj = {
+            "yes": True,
+            "markdown": False,
+            "config": {},
+            "user_config": {},
+        }
+
+        with (
+            patch("goal.push.core.check_pyproject_toml", return_value=None),
+            patch("goal.push.core._initialize_context"),
+            patch("goal.push.core._detect_project_types", return_value=["python"]),
+            patch("goal.push.core._bootstrap_projects"),
+            patch("goal.push.core.run_git"),
+            patch(
+                "goal.push.core.get_staged_files",
+                return_value=["README.md", "CHANGELOG.md"],
+            ),
+            patch(
+                "goal.publish.changes.committed_unreleased_source_files",
+                return_value=[],
+            ),
+            patch("goal.push.core._validate_staged_files"),
+            patch("goal.push.core.get_diff_content", return_value="diff"),
+            patch("goal.push.core.get_diff_stats", return_value={"README.md": (1, 0)}),
+            patch(
+                "goal.push.core.get_commit_message",
+                return_value=("docs: update readme", None, {}),
+            ),
+            patch("goal.push.core.get_version_info", return_value=("0.1.42", "0.1.43")),
+            patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
+            patch("goal.push.core._commit_without_release", return_value=False),
+            patch("goal.push.core.handle_publish") as mock_publish,
+            patch("goal.push.core.create_tag") as mock_create_tag,
+            patch("goal.push.core.push_to_remote") as mock_push,
+            patch("goal.push.core.handle_todo_stage"),
+            patch("goal.push.core.output_final_summary"),
+        ):
+            with pytest.raises(click.ClickException, match="commit failed"):
+                execute_push_workflow(
+                    ctx_obj=ctx_obj,
+                    bump="patch",
+                    no_tag=False,
+                    no_changelog=False,
+                    no_version_sync=False,
+                    no_publish=False,
+                    message=None,
+                    dry_run=False,
+                    yes=True,
+                    markdown=False,
+                    split=False,
+                    ticket=None,
+                    abstraction=None,
+                    todo=False,
+                )
+
+        mock_publish.assert_not_called()
+        mock_create_tag.assert_not_called()
+        mock_push.assert_not_called()
+
+    @pytest.mark.parametrize("commit_result", [True, False])
+    def test_docs_only_commit_helper_propagates_commit_result(self, commit_result):
+        """The orchestrator must receive the real plain-commit outcome."""
+        from goal.push.core import _commit_without_release
+
+        with patch(
+            "goal.push.core.handle_single_commit", return_value=commit_result
+        ) as mock_commit:
+            result = _commit_without_release(
+                {"yes": True},
+                "docs: update readme",
+                None,
+                "docs: update readme",
+                None,
+            )
+
+        assert result is commit_result
+        mock_commit.assert_called_once_with(
+            "docs: update readme", None, "docs: update readme", None, True
+        )
 
     def test_auto_publish_failure_aborts_before_tag_and_push(self):
         """--all must not tag or push a release when publishing failed."""
@@ -272,10 +365,13 @@ class TestWorkflowOrder:
             patch("goal.push.core._detect_project_types", return_value=["python"]),
             patch("goal.push.core._bootstrap_projects"),
             patch("goal.push.core.run_git"),
-            patch("goal.push.core.get_staged_files", return_value=["test.txt"]),
+            patch("goal.push.core.get_staged_files", return_value=["goal/feature.py"]),
             patch("goal.push.core._validate_staged_files"),
             patch("goal.push.core.get_diff_content", return_value="diff"),
-            patch("goal.push.core.get_diff_stats", return_value={"test.txt": (1, 0)}),
+            patch(
+                "goal.push.core.get_diff_stats",
+                return_value={"goal/feature.py": (1, 0)},
+            ),
             patch(
                 "goal.push.core.get_commit_message",
                 return_value=("feat: test", None, {}),

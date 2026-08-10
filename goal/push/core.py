@@ -598,9 +598,19 @@ def execute_push_workflow(
                 ctx_obj["yes"],
                 version_decision,
             )
-        _commit_without_release(
+        commit_succeeded = _commit_without_release(
             ctx_obj, commit_title, commit_body, commit_msg, message
         )
+        if not commit_succeeded:
+            if delivery is not None:
+                record_delivery_event(
+                    delivery,
+                    "commit-failed",
+                    detail="docs/metadata commit failed",
+                )
+            raise click.ClickException(
+                "docs/metadata commit failed; publish, tag, and push were not attempted"
+            )
     else:
         _handle_commit_phase(
             ctx_obj,
@@ -915,7 +925,7 @@ def _commit_without_release(
     commit_body: Optional[str],
     commit_msg: str,
     message: Optional[str],
-) -> None:
+) -> bool:
     """Commit already-staged docs/metadata changes with no bump/tag/publish.
 
     Used in ``skip_release`` mode so the working tree doesn't keep accumulating
@@ -926,14 +936,16 @@ def _commit_without_release(
     if not ctx_obj["yes"]:
         if not confirm("Commit docs/metadata changes (no release)?"):
             click.echo(click.style("  Skipping commit (user chose N).", fg="yellow"))
-            return
+            return True
     else:
         click.echo(
             click.style(
                 "🤖 AUTO: Committing docs/metadata, no release (--all mode)", fg="cyan"
             )
         )
-    handle_single_commit(commit_title, commit_body, commit_msg, message, ctx_obj["yes"])
+    return handle_single_commit(
+        commit_title, commit_body, commit_msg, message, ctx_obj["yes"]
+    )
 
 
 def _handle_commit_phase(

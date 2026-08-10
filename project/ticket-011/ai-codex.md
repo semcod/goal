@@ -25,8 +25,15 @@ delivery continues.
 
 ## Actual changes
 
-- None yet; implementation authorized.
+- Replaced the real commit boundary in the metadata-only workflow test with a
+  controlled mock and asserted one call.
+- Corrected the publish-failure fixture to use a publishable package-source
+  path instead of accidentally entering the docs-only path.
+- Propagated the plain-commit result to the orchestrator and made failure abort
+  before publish, tag and push.
+- Added successful and failed commit-result regression coverage.
 
 ## Blockers
 
-- None.
+- The repository Dockerfile uses unsupported Python 3.11; the equivalent
+  Python 3.12 matrix passed without modifying infrastructure-owned files.
