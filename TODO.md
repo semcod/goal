@@ -37,6 +37,9 @@
 - [ ] Deliver [ticket-013](project/ticket-013/README.md): adopt immutable
   new-project 0.14.1 and assign integration/lockfile ownership. State:
   `IN_PROGRESS / EDIT`; classification: `SERVICE / governance`.
+- [ ] Deliver [ticket-015](project/ticket-015/README.md): add the required root
+  Goal CLI image on Python 3.12 so the v0.14.1 governance adoption can pass.
+  State: `IN_PROGRESS / EDIT`; classification: `SERVICE / infrastructure`.
 - [x] Close [ticket-014](project/ticket-014/README.md): the proposed Goal-side
   prior-revision fetch was disproved and safely cancelled before implementation;
   the defect was routed upstream. State: `CANCELLED`; classification:
@@ -49,7 +52,7 @@
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
 > `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 PLAN`;
-> `ticket-013 IN_PROGRESS`; `ticket-014 CANCELLED`.
+> `ticket-013 IN_PROGRESS`; `ticket-014 CANCELLED`; `ticket-015 IN_PROGRESS`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

@@ -1,0 +1,12 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-015",
+  "summary": "Add required Python 3.12 Docker entrypoint",
+  "workstream": "infrastructure",
+  "allowedPaths": ["Dockerfile", "project/ticket-015/**", "TODO.md", "project/TICKETS.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md", ".env", "**/*.pem", "**/*secret*"],
+  "stacks": ["docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}
