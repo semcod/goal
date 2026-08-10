@@ -29,5 +29,64 @@
   "stacks": ["python"],
   "dependsOn": [],
   "conflictsWith": [],
-  "integrationTicket": null
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "21132e9d42767039632b43c52fcb81e9bdd2e9d0",
+    "targetBranch": "main",
+    "outcome": "Goal dry-runs are read-only, failed pushes fail closed and UV sync preserves declared verification dependencies",
+    "nonGoals": [
+      "No public CLI, version-selection, registry credential or release-order change",
+      "No runtime dependency, GitHub policy or governance package change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep configuration reads non-persistent in dry-run, propagate the existing push result and preserve both conventional UV verification sets",
+      "components": [
+        {
+          "name": "delivery-orchestration",
+          "paths": ["goal/cli/__init__.py", "goal/push/core.py", "tests/test_delivery_integrity.py"]
+        },
+        {
+          "name": "python-bootstrap",
+          "paths": ["goal/package_managers.py", "goal/project_bootstrap.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the four implementation changes and their ticket-024 regression tests"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "Missing and existing goal.yaml remain byte-identical during dry-run"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "A false remote push result raises before the success summary"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q tests/test_delivery_integrity.py tests/test_dependency_update.py tests/test_project_bootstrap.py tests/test_installers_e2e.py"],
+        "evidence": "UV test-only extras and bootstrap dependency-set requests are preserved"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["pytest -q", "./project/governance-check.sh", "docker build -t goal-ticket-024 ."],
+        "evidence": "Full suite, governance and container build pass"
+      }
+    ]
+  }
 }

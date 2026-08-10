@@ -434,7 +434,14 @@ def _configure_main_context(
     ctx.obj["abstraction"] = abstraction
     ctx.obj["all_flags"] = all_flags
     ctx.obj["delivery_mode"] = delivery_mode
-    ctx.obj["config"] = load_config(config_path) if config_path else ensure_config()
+    if config_path:
+        ctx.obj["config"] = load_config(config_path)
+    elif dry_run:
+        # Dry-run must be observably read-only. ensure_config can create a
+        # missing goal.yaml or rewrite an existing one after auto-detection.
+        ctx.obj["config"] = load_config()
+    else:
+        ctx.obj["config"] = ensure_config()
     ctx.obj["user_config"] = get_user_config()
 
 

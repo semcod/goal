@@ -558,7 +558,9 @@ def _ensure_python_env(project_dir: Path, cfg: dict, yes: bool) -> bool:
     _ensure_costs_installed(project_dir, python_bin)
 
     # Install deps using broker first (preferred), fallback to legacy
-    broker_success = _install_python_deps_broker(project_dir, extras=["dev"])
+    broker_success = _install_python_deps_broker(
+        project_dir, extras=["dev", "test"]
+    )
     if not broker_success:
         _install_python_deps(project_dir, cfg, python_bin)
 

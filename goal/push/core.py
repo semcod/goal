@@ -699,7 +699,9 @@ def execute_push_workflow(
         from goal.git_ops import get_remote_branch
 
         branch = get_remote_branch()
-        push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+        pushed = push_to_remote(branch, tag_name, no_tag, ctx_obj["yes"])
+        if pushed is False:
+            raise click.ClickException("Git remote push failed")
     elif delivery.mode == "publish-only":
         record_delivery_event(
             delivery,
