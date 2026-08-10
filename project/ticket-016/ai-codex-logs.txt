@@ -12,3 +12,8 @@
 - 2026-08-10: Corrected the delivery class from `XS` to `S`; the unchanged
   20-minute estimate is above the standard's 10-minute XS ceiling but remains
   within the 30-minute S policy limit. Scope and file budgets did not change.
+- 2026-08-10: PR #27 passed Python 3.12/3.13 CI and trusted validator approval
+  for exact head `6aa382ac56095204e2adc26e48fe3208610d5fcf`.
+- 2026-08-10: PR #27 merged as
+  `3715d5a30f5e9ebae0d0f9f1d59798cbce9f7e86`; ticket closed as
+  `DONE / PUBLICATION`, with registry release delegated to ticket 012.
