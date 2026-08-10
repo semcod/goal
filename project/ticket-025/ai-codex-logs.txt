@@ -1,0 +1,2 @@
+2026-08-10 base: protected main 8c688ccaa4950807acfa328cf7e79b3c3285a9f9
+2026-08-10 scope: atomic Goal 2.1.293 release after ticket-024
