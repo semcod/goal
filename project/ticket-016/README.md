@@ -2,8 +2,8 @@
 
 - **ID**: ticket-016
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 - **Work classification**: `BUG / application`
 
@@ -24,7 +24,7 @@ preserving releases for actual Python package modules.
 - [x] AC-03: Real source below `src/`, `goal/`, and top-level package paths
   remains publishable.
 - [x] AC-04: Focused classifier/version tests and the full Python suite pass.
-- [ ] AC-05: The governance gate passes and the fix is delivered through a
+- [x] AC-05: The governance gate passes and the fix is delivered through a
   protected PR with exact-head validator approval.
 
 ## Reproduction evidence
@@ -67,3 +67,14 @@ Trusted merge approval remains external and exact-head bound.
 Only the publishable-path classifier, its focused regression tests, and this
 ticket's governance evidence may change. No package manifest, version file,
 registry state, dependency, public CLI, or governance policy changes here.
+
+## Publication
+
+- Clean implementation [PR #27](https://github.com/semcod/goal/pull/27)
+  passed CI on Python 3.12 and 3.13.
+- `ifuri-validator-agent` approved exact head
+  `6aa382ac56095204e2adc26e48fe3208610d5fcf`.
+- The protected PR merged as
+  `3715d5a30f5e9ebae0d0f9f1d59798cbce9f7e86`.
+- Package version publication is intentionally delegated to integration ticket
+  012, which owns `pyproject.toml`, `uv.lock`, and the runtime matrix.
