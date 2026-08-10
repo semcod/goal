@@ -261,14 +261,15 @@ def committed_unreleased_source_files(
     *,
     base_ref: str | None = None,
 ) -> list[str]:
-    """Package-source files committed since the last release tag.
+    """Package-source files committed since the newest safe release evidence.
 
     Staged-file analysis alone misses source changes that are already
     committed (an agent or a second `goal -a` run after a manual commit):
     the tree is clean, so the release is skipped while the registry stays
-    behind HEAD. This checks ``<last release tag>..HEAD`` with the same
-    publishable-path classifier. Returns [] when no tag exists or git fails
-    (callers keep the conservative skip in that case).
+    behind HEAD. This starts at the last release tag, or at the synchronized
+    current-version transition when a publish-only release left that tag
+    behind. Ambiguous history falls back to the tag. Returns [] when no tag
+    exists or git fails (callers keep the conservative skip in that case).
     """
     registry_types = [t for t in project_types if t in REGISTRY_PROJECT_TYPES]
     if not registry_types:
@@ -276,9 +277,23 @@ def committed_unreleased_source_files(
     ref = base_ref or _latest_release_tag()
     if not ref:
         return []
+    effective_ref = ref
+    try:
+        from goal.cli.version_state import (
+            collect_version_sources,
+            detect_version_transition_boundary,
+        )
+
+        transition = detect_version_transition_boundary(
+            collect_version_sources(), ref
+        )
+        if transition:
+            effective_ref = transition
+    except (OSError, subprocess.SubprocessError, ValueError):
+        effective_ref = ref
     try:
         proc = subprocess.run(
-            ["git", "diff", "--name-only", f"{ref}..HEAD"],
+            ["git", "diff", "--name-only", f"{effective_ref}..HEAD"],
             capture_output=True,
             text=True,
             timeout=30,

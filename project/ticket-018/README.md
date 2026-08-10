@@ -3,7 +3,7 @@
 - **ID**: ticket-018
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: REVIEW
 - **Created**: 2026-08-10
 - **Work classification**: `BUG / application`
 
@@ -21,11 +21,11 @@ request the next release.
 
 - [x] AC-01: Goal 2.1.290 was published from synchronized version metadata, but
   a subsequent metadata-only `goal -a` reproduced a false 2.1.291 proposal.
-- [ ] AC-02: When all managed carriers reached the current version after the
+- [x] AC-02: When all managed carriers reached the current version after the
   last tag, source already preceding that transition is not reported again.
-- [ ] AC-03: Real package source committed after the transition remains
+- [x] AC-03: Real package source committed after the transition remains
   publishable, and existing pre-bump/version-resolution behavior stays green.
-- [ ] AC-04: Focused history/version tests and the full Python suite pass.
+- [x] AC-04: Focused history/version tests and the full Python suite pass.
 - [ ] AC-05: Fresh-base governance and exact-head protected delivery pass.
 
 ## Session authorization
@@ -42,6 +42,17 @@ After PyPI exposed 2.1.290 while the latest reachable Git tag was v2.1.289,
 `goal/__init__.py` and the already-published `goal/publish/changes.py` as new
 source and selected `normal-bump -> 2.1.291`. The generated bump was reverted
 before merge in PRs #32 and #33; 2.1.291 was never published.
+
+## Implementation evidence
+
+- Managed carriers with one synchronized current value now identify the first
+  post-tag commit at which all of them reached that value.
+- Committed-source analysis uses that transition as its effective release
+  boundary and conservatively falls back to the reachable tag when history is
+  missing or ambiguous.
+- Focused regression/version tests: `27 passed`.
+- Full Python suite: `510 passed, 2 skipped`.
+- Fresh-base governance: `GOV-PASS` with zero errors and warnings.
 
 ## Boundary
 
