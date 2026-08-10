@@ -178,6 +178,11 @@
 ### Docs
 - Update README.md
 
+## [2.1.293] - 2026-08-10
+
+### Docs
+- Update README.md
+
 ### Other
 - Update uv.lock
 
