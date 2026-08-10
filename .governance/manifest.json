@@ -69,6 +69,10 @@
           "pom.xml",
           "docs/**",
           "integration/**",
+          "VERSION",
+          "CHANGELOG.md",
+          "README.md",
+          "goal/__init__.py",
           "uv.lock",
           "poetry.lock",
           "Pipfile.lock"

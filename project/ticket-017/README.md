@@ -18,12 +18,22 @@ sync is rejected as a cross-workstream diff.
 
 - [x] AC-01: The user's autonomous test/publish request authorizes this narrow
   prerequisite without another confirmation.
-- [ ] AC-02: Integration ownership includes the four missing release metadata
+- [x] AC-02: Integration ownership includes the four missing release metadata
   paths and preserves all existing ownership.
-- [ ] AC-03: Ticket 012 can validate one atomic Goal version-sync diff without
+- [x] AC-03: Ticket 012 can validate one atomic Goal version-sync diff without
   a workstream ownership violation.
-- [ ] AC-04: Managed provenance and governance validation pass with zero
+- [x] AC-04: Managed provenance and governance validation pass with zero
   findings.
+
+## Validation evidence
+
+- Target manifest assertion confirms integration owns `VERSION`,
+  `CHANGELOG.md`, `README.md`, `goal/__init__.py`, `pyproject.toml`, and
+  `uv.lock`; all pre-existing entries remain present.
+- `./project/governance-check.sh --base
+  1443cdff4364187554ebcf9b03628096b09f31e5`: PASS; 0 errors, 0 warnings.
+- The change is limited to four additions in the extendable target manifest;
+  standard-managed base and lock provenance are unchanged.
 
 ## Session authorization
 
