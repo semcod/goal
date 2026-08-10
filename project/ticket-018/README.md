@@ -1,0 +1,56 @@
+# Ticket 018: Stop post-release duplicate version bumps
+
+- **ID**: ticket-018
+- **Owner**: unresolved:human
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
+- **Created**: 2026-08-10
+- **Work classification**: `BUG / application`
+
+## Goal and scope
+
+Prevent a metadata-only Goal run after a publish-only release from selecting
+the next patch merely because the remote Git tag still names the prior release.
+Committed-source analysis must recognize the commit where every managed version
+carrier first reached the current version and inspect only source changes after
+that boundary. A complete pre-bump ahead of the registry must continue to
+request publication, and real source committed after the boundary must still
+request the next release.
+
+## Acceptance criteria
+
+- [x] AC-01: Goal 2.1.290 was published from synchronized version metadata, but
+  a subsequent metadata-only `goal -a` reproduced a false 2.1.291 proposal.
+- [ ] AC-02: When all managed carriers reached the current version after the
+  last tag, source already preceding that transition is not reported again.
+- [ ] AC-03: Real package source committed after the transition remains
+  publishable, and existing pre-bump/version-resolution behavior stays green.
+- [ ] AC-04: Focused history/version tests and the full Python suite pass.
+- [ ] AC-05: Fresh-base governance and exact-head protected delivery pass.
+
+## Session authorization
+
+The user explicitly requested autonomous continuation, testing and publication
+of the Goal version-resolution work. This directly reproduced regression is a
+bounded prerequisite and proceeds without another confirmation. Trusted merge
+approval remains external and exact-head bound.
+
+## Reproduction evidence
+
+After PyPI exposed 2.1.290 while the latest reachable Git tag was v2.1.289,
+`goal -a --no-publish --delivery-mode pull-request` reported both
+`goal/__init__.py` and the already-published `goal/publish/changes.py` as new
+source and selected `normal-bump -> 2.1.291`. The generated bump was reverted
+before merge in PRs #32 and #33; 2.1.291 was never published.
+
+## Boundary
+
+Only version-transition history detection, committed-source classification,
+focused regression tests and this ticket's evidence may change. No package
+version, dependency, registry artifact, public CLI or governance policy change
+is authorized.
+
+## Participants
+
+- Human participant: unresolved; no user-* file was created.
+- Agent participant: [ai-codex.md](ai-codex.md)

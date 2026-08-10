@@ -1,0 +1,6 @@
+- 2026-08-10: Reproduced false `normal-bump -> 2.1.291` after PyPI already
+  exposed 2.1.290 and publish-only intentionally left tag v2.1.289 reachable.
+- 2026-08-10: Reverted both generated 2.1.291 changes before merge; no invalid
+  version was published.
+- 2026-08-10: Started bounded ticket 018 under the user's autonomous execution
+  authorization on accepted base `d2523133bc57ef79d8d273a784fe8d97a0b8e89a`.
