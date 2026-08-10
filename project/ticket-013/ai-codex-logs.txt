@@ -24,3 +24,8 @@
 - 2026-08-10: Committed the fully validated atomic adoption as `80bbf14`; the
   remaining uncommitted change is publication evidence used to invoke governed
   pull-request delivery without reclassifying managed payload.
+- 2026-08-10: `goal -a` full suite PASS (506 passed, 2 skipped); its package
+  classifier incorrectly treated managed `.governance/*.py` as distributable
+  Goal source, so the derived 2.1.290 bump and generated metadata were reverted.
+- 2026-08-10: Goal pushed `goal/ticket-013` but reused merged PR #20; a fresh PR
+  is required for the corrected exact head.
