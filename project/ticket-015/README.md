@@ -12,7 +12,9 @@ Add the required root Docker entrypoint that the published governance standard
 expects for a repository declaring the Docker stack. The image must use Python
 3.12, matching `requires-python >=3.12`, install the local Goal package and
 provide `goal` as its entrypoint. This is a narrow prerequisite for ticket 013;
-the eight-project integration matrix remains ticket 012.
+the eight-project integration matrix remains ticket 012. The published v0.14.1
+target contract also requires a Compose declaration when Docker is required,
+so the root CLI service must run without allocating a Docker network pool.
 
 ## Acceptance criteria
 
@@ -25,6 +27,8 @@ the eight-project integration matrix remains ticket 012.
 - [x] AC-04: Existing host tests remain green and the published v0.14.1 Docker
   stack profile recognizes the new root `Dockerfile` marker required by ticket
   013's adoption.
+- [x] AC-05: `compose.yml` validates, runs the Goal entrypoint, and uses
+  `network_mode: none` so it cannot consume a host address pool.
 
 ## Validation evidence
 
@@ -38,12 +42,18 @@ the eight-project integration matrix remains ticket 012.
 - `./project/governance-check.sh`: PASS; 0 errors, 0 warnings. Ticket 013 now
   keeps its planning intent at v2 until schema v3 arrives atomically with the
   v0.14.1 adoption, so there is no mixed-schema delivery gap.
+- `docker compose config --quiet`: PASS.
+- `docker compose build goal`: PASS.
+- `docker compose run --rm goal --version`: PASS; Goal 2.1.289.
+- Post-run inspection found no Compose container or project network; the
+  resolved service has `network_mode: none`.
 
 ## Safety boundary
 
-No Compose services, secrets, ports, registry push, dependency refresh or
-application-source changes belong to this ticket. Session authorization is not
-trusted merge approval.
+No long-running service, secret, port, registry push, dependency refresh or
+application-source change belongs to this ticket. The Compose service is only
+a network-isolated CLI entrypoint. Session authorization is not trusted merge
+approval.
 
 ## Participants
 
