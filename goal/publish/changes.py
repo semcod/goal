@@ -59,6 +59,7 @@ MANIFEST_BASENAMES = frozenset(
 
 NON_PUBLISHABLE_PREFIXES = (
     "docs/",
+    ".governance/",
     ".github/",
     ".gitlab/",
     ".planfile/",

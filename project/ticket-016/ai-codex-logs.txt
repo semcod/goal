@@ -1,0 +1,11 @@
+- 2026-08-10: `goal -a --no-publish --delivery-mode pull-request` selected a
+  false 2.1.290 bump from three managed `.governance/*.py` files.
+- 2026-08-10: Closed invalid PR #24, deleted its branch, and merged clean
+  ticket-013 closure PR #25 after exact-head validation.
+- 2026-08-10: User SESSION_EXECUTION_AUTHORIZATION covers this bounded
+  prerequisite; started ticket 016 in `IN_PROGRESS / EDIT`.
+- 2026-08-10: Added the `.governance/` non-publishable prefix and regression
+  tests for staged plus committed-since-tag classification.
+- 2026-08-10: Focused tests PASS (15); full suite PASS (508 passed, 2 skipped).
+- 2026-08-10: Governance gate against accepted base `c5d706c` PASS with zero
+  errors and warnings.
