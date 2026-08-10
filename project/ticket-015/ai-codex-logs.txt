@@ -17,3 +17,5 @@ v0.14.1-docker-marker=Dockerfile
 legacy-governance-check=EXPECTED_BOOTSTRAP_BLOCK GOV-INTENT-002 ticket-013/new-project.intent/v3
 bootstrap-plan-correction=PASS ticket-013 remains new-project.intent/v2 until atomic adoption
 governance-check=PASS 0 errors, 0 warnings
+goal-a-pull-request=PASS PR-21
+goal-derived-readme-cost-badge=REVERTED outside ticket-015 allowedPaths
