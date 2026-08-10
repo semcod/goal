@@ -35,3 +35,5 @@
   `68e69b8d26d3e5ba851bad98351c5e801e17e040`.
 - 2026-08-10: Activated a publish-only slice for the exact merged 2.1.290
   state; no further bump, source edit or dependency mutation is permitted.
+- 2026-08-10: Started governed `goal -a --delivery-mode publish-only
+  --force-publish` for the already-bumped 2.1.290 state.
