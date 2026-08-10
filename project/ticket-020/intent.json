@@ -24,7 +24,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "6c31d88fe59134a2a1fe6f51b33329489536b6f0",
+    "acceptedBaseSha": "decbee3a5901e87e1abfe708e64cae9fa32f5b1d",
     "targetBranch": "main",
     "outcome": "Goal 2.1.291 publication and protected delivery evidence are recorded without another version change",
     "nonGoals": [

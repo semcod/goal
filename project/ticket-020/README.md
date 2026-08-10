@@ -2,8 +2,8 @@
 
 - **ID**: ticket-020
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
@@ -24,7 +24,7 @@ registry catches up.
   and import from isolated site-packages.
 - [x] AC-04: Changelog and ticket-019 record the release fix and protected
   delivery chain; README retains the publish-run cost refresh.
-- [ ] AC-05: This metadata-only PR passes governance, target CI and exact-head
+- [x] AC-05: This metadata-only PR passes governance, target CI and exact-head
   validator approval before merge.
 
 ## Session authorization
@@ -44,3 +44,12 @@ modified here.
 
 - Human participant: unresolved; no user-* file was created.
 - Agent participant: [ai-codex.md](ai-codex.md)
+
+## Publication
+
+- Metadata [PR #37](https://github.com/semcod/goal/pull/37) passed Python 3.12
+  and 3.13 CI.
+- `ifuri-validator-agent` approved exact head
+  `41a1e42f7058395e078c36594d0dbd59f726d0af`.
+- The protected PR merged as
+  `decbee3a5901e87e1abfe708e64cae9fa32f5b1d`.
