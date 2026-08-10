@@ -1,2 +1,11 @@
 2026-08-10 base: protected main 8c688ccaa4950807acfa328cf7e79b3c3285a9f9
 2026-08-10 scope: atomic Goal 2.1.293 release after ticket-024
+2026-08-10 release decision: normal-bump -> 2.1.293, then already-bumped
+2026-08-10 release validation: 521 passed, 2 skipped; build and governance passed
+2026-08-10 release validator: run 31426414052 approved d6ec0a2d49895326660d6807fc84580be3a6cf41
+2026-08-10 release merge: PR #52 -> 5486c6249c27285ffd81595f2c4721d2de50fa14
+2026-08-10 blocker repair: ticket-026 PR #53 -> 0b8f7563fe261b402dc9742ae187864261ce7c94
+2026-08-10 publication: goal -a --delivery-mode publish-only --force-publish; 522 passed, 2 skipped
+2026-08-10 public verification: uvx --python 3.13 --default-index https://pypi.org/simple --refresh --no-cache --from goal==2.1.293 goal --version
+2026-08-10 wheel sha256: 649c62990a831fef9016662ec399feb343bbfe1cb751babc9fe8d0df32e54834
+2026-08-10 sdist sha256: 2aeb3a1361959e31456b1068c712e49f99b783eaebbe244f5845add81ed6a5a6

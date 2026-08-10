@@ -22,9 +22,17 @@ Goal release. This ticket owns only the 2.1.293 release and public evidence.
 ## Actual changes
 
 - Initialized the bounded release ticket from merged ticket-024 head.
+- Selected one `normal-bump -> 2.1.293`, synchronized the five carriers and
+  confirmed the subsequent `already-bumped` decision.
+- Passed 521 tests with 2 skips, governance, build, target CI and exact-head
+  validator run 31426414052; merged release PR #52 as `5486c62`.
+- Repaired the clean publication blocker under ticket-026, then published the
+  final protected source from `0b8f756` with 522 tests and 2 skips.
+- Verified the exact public artifact hashes and a fresh no-cache installation
+  reporting Goal 2.1.293.
 
 ## Blockers
 
-- None.
+- None; all acceptance criteria are complete.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.
