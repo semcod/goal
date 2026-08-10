@@ -10,3 +10,6 @@
   non-draft and non-prerelease.
 - 2026-08-10: Session execution authorization remains valid for the same
   bounded prerequisite; workflow entered `IN_PROGRESS / EDIT`.
+- 2026-08-10: Kept the committed planning intent at
+  `new-project.intent/v2` while v0.11 is installed; v3 will arrive atomically
+  with the complete v0.14.1 managed payload on the adoption branch.

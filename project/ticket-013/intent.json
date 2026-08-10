@@ -1,13 +1,8 @@
 {
-  "schema": "new-project.intent/v3",
+  "schema": "new-project.intent/v2",
   "ticket": "ticket-013",
   "summary": "Adopt governance ownership extensions",
   "workstream": "governance",
-  "classification": {
-    "kind": "SERVICE",
-    "priority": "P1",
-    "origin": "requested"
-  },
   "allowedPaths": [
     ".governance/**",
     "AGENTS.md",
@@ -17,7 +12,6 @@
     "project/governance-check.bat",
     "project/new-ticket.sh",
     "project/readme.sh",
-    "scripts/runtime.sh",
     "project/ticket-013/**",
     "TODO.md",
     "project/TICKETS.md"
@@ -26,49 +20,5 @@
   "stacks": ["python"],
   "dependsOn": [],
   "conflictsWith": [],
-  "integrationTicket": null,
-  "delivery": {
-    "acceptedBaseSha": "b88991db1db92416bb7c9fc55d934ab018774905",
-    "targetBranch": "main",
-    "standardAdoption": {
-      "sourceRepository": "wellmanifest/new-project",
-      "fromRevision": "cc9b04673bbd85cb4e35fb683d288ef34be1485f",
-      "toRevision": "63a3d56b648da0d338be7cf28cbf9045adbb3e5e"
-    },
-    "outcome": "Adopt immutable new-project v0.14.1 and give Goal's integration workstream explicit ownership of integration artifacts and Python lockfiles",
-    "nonGoals": [
-      "No bypass of managed-file hashes or atomic adoption validation",
-      "No runtime, dependency or release change in this ticket",
-      "No branch-based or moving-tag adoption",
-      "No agent self-approval for merge"
-    ],
-    "complexity": "S",
-    "estimatedMinutes": 30,
-    "budgets": {
-      "maxImplementationFiles": 5,
-      "maxAffectedComponents": 2,
-      "maxPublicInterfaceChanges": 0,
-      "maxRuntimeDependencies": 0
-    },
-    "architecture": {
-      "status": "accepted",
-      "decision": "Apply the complete provenance-bound managed payload from exact v0.14.1 and retain Goal's target-owned workstreams while extending only integration ownership",
-      "components": [
-        {"name": "standard-adoption", "paths": [".governance/**", "AGENTS.md", "project.sh", "project.bat", "project/**", "scripts/runtime.sh"]},
-        {"name": "target-ownership", "paths": [".governance/manifest.json"]}
-      ],
-      "responsibilityChanges": false,
-      "interfaceChanges": [],
-      "dataChanges": ["Goal's immutable standard moves from 0.11.0 to 0.14.1 and integration gains ownership of integration/** plus Python lockfiles"],
-      "ui": {"impact": "none", "states": [], "evidence": []},
-      "rollback": "Re-adopt the previous immutable revision through a separately reviewed transaction; never move a standard release tag"
-    },
-    "runtimeDependencies": [],
-    "validation": [
-      {"criterion": "AC-02", "commands": ["git verify-tag v0.14.1", "goal governance adopt --source-revision 63a3d56b648da0d338be7cf28cbf9045adbb3e5e --check"], "evidence": "The adoption uses the full SHA behind the verified immutable release"},
-      {"criterion": "AC-03", "commands": ["./project/governance-check.sh", "goal governance adopt --source-revision 63a3d56b648da0d338be7cf28cbf9045adbb3e5e --check"], "evidence": "Managed provenance, lock hashes and idempotence pass"},
-      {"criterion": "AC-04", "commands": ["manifest ownership assertion"], "evidence": "Integration owns integration/**, uv.lock, poetry.lock and Pipfile.lock without losing existing paths"},
-      {"criterion": "AC-05", "commands": ["./project/governance-check.sh --changed-file integration/Dockerfile --changed-file uv.lock"], "evidence": "Ticket 012 paths resolve to the integration workstream after adoption"}
-    ]
-  }
+  "integrationTicket": null
 }

@@ -46,3 +46,8 @@ Only standard-managed governance artifacts, the target-owned manifest
 extension, and this ticket's governance evidence may change.  The adoption
 must be executed through `goal governance adopt`; no integrity check is
 disabled or bypassed.
+
+The committed planning intent remains `new-project.intent/v2` while the target
+still runs the v0.11 checker. The adoption transaction upgrades the checker,
+schema and this intent to v3 in one validated change, avoiding a mixed-schema
+bootstrap state that would otherwise block governed delivery.
