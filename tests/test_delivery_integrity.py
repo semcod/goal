@@ -120,24 +120,24 @@ def test_non_governed_push_failure_aborts_before_success_summary() -> None:
         patch("goal.push.core.push_to_remote", return_value=False),
         patch("goal.push.core.handle_todo_stage", return_value=True),
         patch("goal.push.core.output_final_summary") as summary,
+        pytest.raises(click.ClickException, match="Git remote push failed"),
     ):
-        with pytest.raises(click.ClickException, match="Git remote push failed"):
-            execute_push_workflow(
-                ctx_obj=ctx_obj,
-                bump="patch",
-                no_tag=False,
-                no_changelog=False,
-                no_version_sync=False,
-                no_publish=False,
-                message=None,
-                dry_run=False,
-                yes=True,
-                markdown=False,
-                split=False,
-                ticket=None,
-                abstraction=None,
-                todo=False,
-            )
+        execute_push_workflow(
+            ctx_obj=ctx_obj,
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            no_publish=False,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket=None,
+            abstraction=None,
+            todo=False,
+        )
 
     summary.assert_not_called()
 

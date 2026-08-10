@@ -1,0 +1,18 @@
+2026-08-10 ticket-024 validation evidence
+
+- `pytest -q tests/test_delivery_integrity.py`: 7 passed.
+- Related push/dependency/bootstrap/installer suite: 163 passed, 1 skipped.
+- `pytest -q`: 519 passed, 2 skipped; Git HEAD remained unchanged.
+- Ruff: new regression module passed; E9 syntax checks passed for all changed
+  implementation/test files.
+- Diagit UV selection: `uv sync --extra test`.
+- `./project/governance-check.sh`: GOV-PASS, 0 errors, 0 warnings.
+- Docker build: `goal-ticket-024:validation`, image
+  `sha256:6a42109443c1d0f20150aa268396b0c8c1c966264d7cb27b3c06fc8268f3e17d`.
+- Network-disabled container smoke checks: `goal --version` reported 2.1.292;
+  `goal --help` completed successfully.
+
+During validation, sequential CLI tests exposed duplicate command registration:
+importing `goal.push.commands` replaced the canonical command and could execute
+a real workflow. The runs were stopped, all automatically generated version and
+documentation changes were restored, and a regression now prevents replacement.

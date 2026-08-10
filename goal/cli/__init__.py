@@ -449,7 +449,7 @@ class GoalGroup(click.Group):
     """Custom Click Group that shows docs URL for unknown commands (like Poetry),
     and defaults to 'push' command when -a/--all is passed without a subcommand."""
 
-    def add_command(self, cmd: click.Command, name: Optional[str] = None) -> None:
+    def add_command(self, cmd: click.Command, name: str | None = None) -> None:
         """Keep the canonical CLI push command when the legacy shim is imported.
 
         ``goal.push.commands`` remains importable for compatibility, but importing

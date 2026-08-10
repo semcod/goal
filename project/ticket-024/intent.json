@@ -33,7 +33,7 @@
   "delivery": {
     "acceptedBaseSha": "21132e9d42767039632b43c52fcb81e9bdd2e9d0",
     "targetBranch": "main",
-    "outcome": "Goal dry-runs are read-only, failed pushes fail closed and UV sync preserves declared verification dependencies",
+    "outcome": "Goal dry-runs are read-only, failed pushes fail closed, UV sync preserves declared verification dependencies and the CLI retains one canonical push callback",
     "nonGoals": [
       "No public CLI, version-selection, registry credential or release-order change",
       "No runtime dependency, GitHub policy or governance package change"
@@ -48,7 +48,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Keep configuration reads non-persistent in dry-run, propagate the existing push result and preserve both conventional UV verification sets",
+      "decision": "Keep configuration reads non-persistent in dry-run, propagate the existing push result, preserve both conventional UV verification sets and reject legacy replacement of the canonical push command",
       "components": [
         {
           "name": "delivery-orchestration",
@@ -63,7 +63,7 @@
       "interfaceChanges": [],
       "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
-      "rollback": "Revert the four implementation changes and their ticket-024 regression tests"
+      "rollback": "Revert the bounded delivery/bootstrap implementation changes and their ticket-024 regression tests"
     },
     "runtimeDependencies": [],
     "validation": [

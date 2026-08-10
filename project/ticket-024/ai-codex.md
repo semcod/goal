@@ -28,9 +28,20 @@ named `dev` even when verification tools live under `test`.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Made dry-run configuration loading non-persistent and propagated a false
+  legacy Git push result as a Click failure before the success summary.
+- Preserved both declared `dev` and `test` UV dependency sets in direct sync
+  selection and first-time Python bootstrap.
+- Restricted self-update to concrete version strings.
+- Prevented the compatibility `goal.push.commands` module from replacing the
+  canonical registered `goal.cli.push_cmd`; this removed a real workflow side
+  effect exposed by sequential E2E tests.
+- Added seven delivery-integrity regressions and passed 519 full-suite tests
+  with two optional skips, Ruff, governance, Diagit command selection and the
+  isolated Docker smoke checks.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
+- None inside the recorded intent; protected PR delivery remains in progress.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.
