@@ -10,23 +10,22 @@ ticket: ticket-013
 
 Goal still carries immutable governance 0.11.0. Its manifest has no owner for
 the checked-in integration container or Python lockfile. Published standard
-0.14.0 supports target-owned manifest extensions, but the Goal adapter must
-first learn to fetch the prior pinned base revision.
+0.14.1 now migrates directly from the exact legacy target authenticated by the
+installed lock, so Goal does not need to reconstruct or fetch the old default.
 
 ## Execution plan
 
-1. Wait for the upstream legacy-manifest migration patch and verify its exact
-   published SHA.
-2. Adopt published new-project 0.14.0 by full SHA using Goal.
+1. Verify the immutable v0.14.1 tag, Release and full SHA.
+2. Adopt published new-project 0.14.1 by full SHA using Goal.
 3. Extend the integration workstream with `integration/**`, `uv.lock` and
    standard Python lockfile names without removing managed values.
 4. Re-run adoption check and governance validation, then release ticket 012.
 
 ## Actual changes
 
-- Scope and immutable source revision recorded; no implementation yet.
+- Verified published v0.14.1 at full SHA `63a3d56b648da0d338be7cf28cbf9045adbb3e5e`
+  and resumed the bounded adoption ticket autonomously.
 
 ## Blockers
 
-- Blocked on a published upstream `wellmanifest/new-project` migration patch;
-  ticket 014 was cancelled after disproving the Goal-side hypothesis.
+- None; the upstream migration patch is published immutably.

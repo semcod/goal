@@ -1,0 +1,18 @@
+# Decision log
+
+```dsl
+DECISION D-013-0001
+TICKET ticket-013
+HEAD_SHA b88991db1db92416bb7c9fc55d934ab018774905
+CORRELATION_ID goal-ticket-013-resume-v0.14.1
+ACTOR agent:codex
+APPLIED_RULE C-APPROVAL-002
+INPUT user_requested_autonomous_continuation = true
+INPUT immutable_standard_revision = "63a3d56b648da0d338be7cf28cbf9045adbb3e5e"
+INPUT release_tag = "v0.14.1"
+INPUT release_verified = true
+INPUT expected_verdict_from_rule = "ENTER_EDIT"
+VERDICT ENTER_EDIT AUTHORITY DETERMINISTIC
+REJECTED WAIT_FOR_EXTERNAL_RELEASE BECAUSE IMMUTABLE_RELEASE_NOW_EXISTS
+ASSERT SESSION_AUTHORIZATION_IS_NOT_TRUSTED_MERGE_APPROVAL
+```

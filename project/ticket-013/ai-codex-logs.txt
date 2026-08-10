@@ -5,3 +5,8 @@
 - 2026-08-10: Ticket 014's experiment fetched that revision successfully but
   exposed the upstream legacy-base selection defect; Goal transport stays
   unchanged.
+- 2026-08-10: Verified annotated `v0.14.1` peels to
+  `63a3d56b648da0d338be7cf28cbf9045adbb3e5e`; GitHub Release is published,
+  non-draft and non-prerelease.
+- 2026-08-10: Session execution authorization remains valid for the same
+  bounded prerequisite; workflow entered `IN_PROGRESS / EDIT`.
