@@ -30,3 +30,8 @@
 - 2026-08-10: Removed the generated CHANGELOG block to retain the approved
   atomic five-file boundary. `uv lock --check`, the 508-test suite (2 skipped),
   wheel/sdist build, and fresh-base governance gate passed.
+- 2026-08-10: PR #31 passed Python 3.12/3.13 CI and validator-agent review at
+  exact head `e8767fda6890f6b3c7d79984599dcd2f1f823e51`, then merged as
+  `68e69b8d26d3e5ba851bad98351c5e801e17e040`.
+- 2026-08-10: Activated a publish-only slice for the exact merged 2.1.290
+  state; no further bump, source edit or dependency mutation is permitted.

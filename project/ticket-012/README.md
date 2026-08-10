@@ -44,14 +44,13 @@ the transition from `PLAN / WAIT_FOR_APPROVAL` to `IN_PROGRESS / EDIT`.
 
 ## Boundary
 
-The merged first slice changed only `integration/Dockerfile`, `uv.lock` and
-ticket evidence. This second slice is freshly based on merge
-`3c8b1d68313d200cec355e0d4e18510b6e706f04` and may atomically synchronize
-only `VERSION`, `pyproject.toml`, `goal/__init__.py`, `README.md` and `uv.lock`.
-Registry upload and generated release notes follow only after exact-head CI,
-validator approval and merge. It does not authorize speculative source
-refactors, dependency-range changes or edits to dirty downstream repositories.
-Each downstream repository remains subject to its own governance boundary.
+The first slice merged the runtime and lock refresh. The second slice merged
+the atomic five-file version state. This final publication slice is freshly
+based on merge `68e69b8d26d3e5ba851bad98351c5e801e17e040` and may publish only that
+already-reviewed Goal 2.1.290 state. Repository changes are limited to Goal's
+generated `README.md`, `CHANGELOG.md` and ticket evidence; no new version,
+source, dependency-range or public-interface change is authorized. Each
+downstream repository remains subject to its own governance boundary.
 
 ## Validation evidence: runtime and lock slice
 
@@ -74,6 +73,10 @@ ticket to resume without another confirmation.
 PR #30 merged the runtime and lock slice at exact validated head
 `2e0e6202dc5c54582b3d1438c92fb8051ab50e73`. Its merge commit is the accepted
 base for the release-version slice.
+
+PR #31 merged the synchronized Goal 2.1.290 version state at exact validated
+head `e8767fda6890f6b3c7d79984599dcd2f1f823e51`; merge
+`68e69b8d26d3e5ba851bad98351c5e801e17e040` is the accepted publication base.
 
 ## Validation evidence: release-version slice
 

@@ -18,3 +18,5 @@
   then activated the fresh-base five-file release-version slice.
 - Synchronized the five version carriers to 2.1.290 through `goal -a` and
   proved that a second resolution returns `already-bumped` without advancing.
+- Published the five-file version slice through PR #31 after exact-head
+  validation and activated the irreversible registry-publication boundary.
