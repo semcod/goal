@@ -27,6 +27,19 @@ class TestAnalyzePublishableChanges:
         )
         assert report.has_changes is False
 
+    def test_skips_governance_python_helpers(self):
+        report = analyze_publishable_changes(
+            [
+                ".governance/check_required_checks.py",
+                ".governance/decision_record.py",
+                ".governance/governance_check.py",
+            ],
+            ["python"],
+        )
+        assert report.has_changes is False
+        assert report.publishable_files == []
+        assert report.skip_reason == "no_package_source_changes"
+
     def test_detects_node_source_changes(self):
         report = analyze_publishable_changes(
             ["src/index.ts", "package-lock.json"],
