@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-028",
+  "summary": "Publish Goal 2.1.294 with exact-head PR delivery repair",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "README.md",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "project/ticket-028/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-027"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "851e6c0c0fa9b4a8493d6260a442324bcf8df576",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.294 is published from protected merged main and verified from the public index",
+    "nonGoals": [
+      "No package source, dependency, governance or CI change",
+      "No top-level changelog update in the atomic release slice"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the five-file atomic release-carrier slice and publish only after protected merge",
+      "components": [
+        {
+          "name": "goal-release-metadata",
+          "paths": ["VERSION", "README.md", "pyproject.toml", "uv.lock", "goal/__init__.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert before registry publication; registry artifacts are immutable after upload"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["goal check-versions"],
+        "evidence": "One normal bump to 2.1.294, then already-bumped"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q", "python -m build", "./project/governance-check.sh"],
+        "evidence": "Tests, artifacts, Docker and governance pass"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["goal --version"],
+        "evidence": "Fresh public-index install reports 2.1.294"
+      }
+    ]
+  }
+}
