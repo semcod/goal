@@ -26,7 +26,11 @@ version and protected-delivery gates.
   coverage.
 - Passed 10 focused delivery-integrity tests and the full suite with 522 passed
   and 2 skipped; governance passed with no findings.
+- Passed target CI and validator run 31427369125 at exact head `c64c7c4`, then
+  merged PR #53 as `0b8f756`.
+- Confirmed the repaired clean path published Goal 2.1.293 with no release
+  commit or Git push, and verified it from the public index.
 
 ## Blockers
 
-- None.
+- None; all acceptance criteria are complete.
