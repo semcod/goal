@@ -7,3 +7,5 @@
   target-local integration ownership; prior entries were preserved.
 - 2026-08-10: Release ownership assertion PASS; governance gate PASS with zero
   errors and warnings.
+- 2026-08-10: Invoking governed pull-request delivery with `goal -a`; package
+  release metadata remains deferred to the integration-owned ticket 012.
