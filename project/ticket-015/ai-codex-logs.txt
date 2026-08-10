@@ -19,3 +19,11 @@ bootstrap-plan-correction=PASS ticket-013 remains new-project.intent/v2 until at
 governance-check=PASS 0 errors, 0 warnings
 goal-a-pull-request=PASS PR-21
 goal-derived-readme-cost-badge=REVERTED outside ticket-015 allowedPaths
+[2026-08-10 compose follow-up]
+v0.14.1-docker-contract=dockerfile-and-compose
+compose-network-mode=none
+compose-config=PASS
+compose-build=PASS
+compose-run=PASS goal-2.1.289
+compose-post-run-containers=NONE
+compose-post-run-project-networks=NONE

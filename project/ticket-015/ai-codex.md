@@ -21,6 +21,8 @@ governance-adoption PR.
 3. Build it, run `goal --version`, and run the relevant host tests.
 4. Publish one protected PR and merge only after CI and independent exact-head
    approval, then resume ticket 013 from the new main SHA.
+5. Add the Compose declaration required by v0.14.1 without allocating a Docker
+   network and verify the CLI through Compose before adoption.
 
 ## Actual changes
 
@@ -32,6 +34,8 @@ governance-adoption PR.
 - Passed the complete host suite: 506 tests passed and 2 optional tests skipped.
 - Verified that v0.14.1 declares root `Dockerfile` as the required Docker stack
   marker needed by the pending adoption.
+- Added and validated the second required Docker contract marker: a Compose CLI
+  service with no network allocation, ports, secrets or long-running process.
 
 ## Blockers
 
