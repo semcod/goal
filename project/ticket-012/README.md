@@ -74,3 +74,12 @@ ticket to resume without another confirmation.
 PR #30 merged the runtime and lock slice at exact validated head
 `2e0e6202dc5c54582b3d1438c92fb8051ab50e73`. Its merge commit is the accepted
 base for the release-version slice.
+
+## Validation evidence: release-version slice
+
+- `goal -a` selected `normal-bump -> 2.1.290` from the shared tag/registry
+  baseline 2.1.289 and synchronized all five approved version carriers.
+- A subsequent `goal check-versions` selected `already-bumped -> 2.1.290`,
+  proving that the complete local bump is not repeated.
+- The 508-test suite passed (2 skipped), `uv lock --check` passed for the
+  142-package graph, and Goal 2.1.290 wheel and sdist builds succeeded.
