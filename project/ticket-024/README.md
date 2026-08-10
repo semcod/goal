@@ -2,7 +2,7 @@
 
 - **ID**: ticket-024
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
+- **Status**: DONE
 - **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 
@@ -40,6 +40,12 @@ set when Goal synchronizes an UV-managed environment.
 - Governance passes with 0 errors and 0 warnings.
 - Docker image `sha256:6a42109443c1d0f20150aa268396b0c8c1c966264d7cb27b3c06fc8268f3e17d`
   builds successfully and reports Goal 2.1.292 with runtime networking disabled.
+- PR #50 passed target CI on Python 3.12 and 3.13, then validator-agent
+  approved exact head `a1c11f4e3b2a23b2c52f2d53ae07d9f464007f57` in run
+  `31425350829`.
+- The protected exact-head merge completed as
+  `4fae2ec251f6181f15c02c53fe3078ea51c96c9b`; the remote ticket branch was
+  deleted and no pull request remains open.
 
 ## Participants
 
