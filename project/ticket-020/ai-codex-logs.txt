@@ -1,0 +1,4 @@
+- 2026-08-10: Started the dependent publication-evidence slice on release
+  merge `6c31d88fe59134a2a1fe6f51b33329489536b6f0`.
+- 2026-08-10: PyPI exposes Goal 2.1.291 wheel/sdist; clean Python 3.13
+  installation reports CLI/import 2.1.291 from isolated site-packages.

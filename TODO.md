@@ -55,8 +55,11 @@
   version transition after a stale tag so post-publication metadata delivery
   does not select a duplicate patch. State: `DONE / PUBLICATION`;
   classification: `BUG / application`.
-- [ ] Deliver [ticket-019](project/ticket-019/README.md): publish the merged
+- [x] Deliver [ticket-019](project/ticket-019/README.md): publish the merged
   boundary repair as Goal 2.1.291 and verify a fresh public-index install.
+  State: `DONE / PUBLICATION`; classification: `SERVICE / integration`.
+- [ ] Deliver [ticket-020](project/ticket-020/README.md): record Goal 2.1.291
+  release notes and publication evidence without another version change.
   State: `IN_PROGRESS / EDIT`; classification: `SERVICE / integration`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
@@ -68,7 +71,7 @@
 > `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 DONE`;
 > `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`;
 > `ticket-016 DONE`; `ticket-017 DONE`; `ticket-018 DONE`;
-> `ticket-019 IN_PROGRESS`.
+> `ticket-019 DONE`; `ticket-020 IN_PROGRESS`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
