@@ -34,9 +34,9 @@
   test/container matrix and publish through `goal -a`. State: `PLAN`, awaiting
   ticket 013 governance adoption;
   classification: `SERVICE / integration`.
-- [ ] Deliver [ticket-013](project/ticket-013/README.md): adopt immutable
+- [x] Deliver [ticket-013](project/ticket-013/README.md): adopt immutable
   new-project 0.14.1 and assign integration/lockfile ownership. State:
-  `IN_PROGRESS / EDIT`; classification: `SERVICE / governance`.
+  `DONE / PUBLICATION`; classification: `SERVICE / governance`.
 - [x] Deliver [ticket-015](project/ticket-015/README.md): add the required root
   Goal CLI image on Python 3.12 so the v0.14.1 governance adoption can pass.
   State: `DONE / PUBLICATION`; classification: `SERVICE / infrastructure`.
@@ -52,7 +52,7 @@
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
 > `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 PLAN`;
-> `ticket-013 IN_PROGRESS`; `ticket-014 CANCELLED`; `ticket-015 DONE`.
+> `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
