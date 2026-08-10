@@ -27,3 +27,6 @@ compose-build=PASS
 compose-run=PASS goal-2.1.289
 compose-post-run-containers=NONE
 compose-post-run-project-networks=NONE
+goal-a-follow-up=PASS branch goal/ticket-015
+goal-pr-resolution=DEFECT reused merged PR-21 instead of creating a new PR
+goal-derived-readme-and-planfile=REVERTED outside ticket-015 allowedPaths
