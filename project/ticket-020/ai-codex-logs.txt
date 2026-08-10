@@ -6,3 +6,7 @@
   produced by the successful publish-only run.
 - 2026-08-10: Post-publication Goal decision is no-release -> 2.1.291;
   governance passed with zero errors and warnings.
+- 2026-08-10: PR #37 passed Python 3.12/3.13 CI; validator run 31383607730
+  approved exact head 41a1e42f7058395e078c36594d0dbd59f726d0af.
+- 2026-08-10: Protected metadata merge completed as
+  decbee3a5901e87e1abfe708e64cae9fa32f5b1d; ticket moved to DONE/PUBLICATION.
