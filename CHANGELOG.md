@@ -173,20 +173,6 @@
   sync with the real `[project]` table (e.g. version `2.1.221` vs the actual `2.1.266`)
   and could mislead anyone editing dependencies there, believing it had any effect.
 
-## [2.1.294] - 2026-08-11
-
-### Docs
-- Update README.md
-- Update TODO.md
-- Update project/ticket-028/README.md
-- Update project/ticket-028/ai-codex.md
-- Update project/ticket-028/changelog.md
-- Update project/ticket-028/preprompt.md
-
-### Other
-- Update project/ticket-028/ai-codex-logs.txt
-- Update project/ticket-028/intent.json
-
 ## [2.1.291] - 2026-08-10
 
 ### Fixed
