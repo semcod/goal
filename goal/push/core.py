@@ -434,7 +434,13 @@ def execute_push_workflow(
         run_git("add", "-A")
 
     files = get_staged_files()
-    if _handle_no_files(ctx_obj, project_types, dry_run, markdown, files):
+    has_staged_files = bool(files and files != [""])
+    clean_force_publish = bool(
+        force_publish and not no_publish and not has_staged_files
+    )
+    if not clean_force_publish and _handle_no_files(
+        ctx_obj, project_types, dry_run, markdown, files
+    ):
         return
 
     _validate_staged_files(ctx_obj, dry_run, force)
@@ -479,12 +485,17 @@ def execute_push_workflow(
     diff_content = get_diff_content()
     stats = get_diff_stats()
 
-    commit_title, commit_body, detailed_result = get_commit_message(
-        ctx_obj, files, diff_content, message, ticket, abstraction
-    )
+    if clean_force_publish:
+        commit_title = message or "release: publish pre-merged version"
+        commit_body = "Clean publish-only release; no commit was created."
+        detailed_result = {}
+    else:
+        commit_title, commit_body, detailed_result = get_commit_message(
+            ctx_obj, files, diff_content, message, ticket, abstraction
+        )
 
-    if _abort_if_missing_commit_title(commit_title):
-        return
+        if _abort_if_missing_commit_title(commit_title):
+            return
 
     commit_msg = commit_title
 
@@ -532,6 +543,20 @@ def execute_push_workflow(
             click.echo(line)
 
     ctx_obj["version_decision"] = version_decision
+
+    if clean_force_publish:
+        if version_decision is None or version_decision.reason not in {
+            "already-bumped",
+            "explicit-target",
+        }:
+            reason = getattr(version_decision, "reason", "unresolved")
+            raise click.ClickException(
+                "clean --force-publish requires an already synchronized, "
+                f"pre-bumped release version (decision: {reason})"
+            )
+        from goal.cli.version_state import validate_version_sources
+
+        validate_version_sources(version_decision.managed_specs, new_version)
 
     commit_msg = _apply_enhanced_quality_gates(
         ctx_obj, commit_msg, detailed_result, files, stats, message, markdown
@@ -584,7 +609,15 @@ def execute_push_workflow(
         commit_body,
     )
 
-    if skip_release:
+    if clean_force_publish:
+        click.echo(
+            click.style(
+                f"📦 Publishing pre-merged clean release v{new_version}; "
+                "no commit will be created.",
+                fg="yellow",
+            )
+        )
+    elif skip_release:
         click.echo(
             click.style(
                 f"⏭ Skipping version bump and publish (staying on v{current_version}) "

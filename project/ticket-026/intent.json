@@ -1,0 +1,68 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-026",
+  "summary": "Preserve clean publish-only release intent",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/push/core.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-026/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-024"],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-025",
+  "delivery": {
+    "acceptedBaseSha": "5486c6249c27285ffd81595f2c4721d2de50fa14",
+    "targetBranch": "main",
+    "outcome": "A clean pre-bumped protected checkout can publish through governed goal -a publish-only",
+    "nonGoals": [
+      "No relaxation of protected merge or registry credentials",
+      "No version-carrier, dependency, governance or CI changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Represent clean forced publication explicitly inside the existing push orchestrator and require synchronized pre-bumped evidence",
+      "components": [
+        {
+          "name": "goal-push-orchestrator",
+          "paths": ["goal/push/core.py", "tests/test_delivery_integrity.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the application PR before publication"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "Clean forced publish reaches version validation, tests and publisher"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q", "./project/governance-check.sh"],
+        "evidence": "Full tests and governance pass"
+      }
+    ]
+  }
+}

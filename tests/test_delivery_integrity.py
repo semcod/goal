@@ -214,6 +214,89 @@ def test_non_governed_push_failure_aborts_before_success_summary() -> None:
     summary.assert_not_called()
 
 
+def test_clean_force_publish_uses_premerged_version_without_commit() -> None:
+    """A clean publish-only release must not stop at the no-files shortcut."""
+    from goal.push.core import execute_push_workflow
+
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": {},
+        "user_config": {},
+        "delivery_mode": "publish-only",
+    }
+    delivery = type("Delivery", (), {"mode": "publish-only"})()
+    decision = type(
+        "Decision",
+        (),
+        {
+            "reason": "already-bumped",
+            "managed_specs": (
+                "VERSION",
+                "pyproject.toml:version",
+                "goal/__init__.py:__version__",
+            ),
+            "local_drift": False,
+        },
+    )()
+
+    with (
+        patch(
+            "goal.governance.delivery.resolve_delivery_policy",
+            return_value=delivery,
+        ),
+        patch("goal.governance.delivery.validate_delivery_ready"),
+        patch("goal.governance.delivery.record_delivery_event") as delivery_event,
+        patch("goal.push.core.check_pyproject_toml", return_value=None),
+        patch("goal.push.core._initialize_context"),
+        patch("goal.push.core._detect_project_types", return_value=["python"]),
+        patch("goal.push.core._bootstrap_projects"),
+        patch("goal.push.core.run_git"),
+        patch("goal.push.core.get_staged_files", return_value=[]),
+        patch("goal.push.core.get_commit_message") as commit_message,
+        patch(
+            "goal.push.core.get_version_info",
+            return_value=("2.1.292", "2.1.293", decision),
+        ),
+        patch("goal.cli.version_state.format_version_decision", return_value=[]),
+        patch("goal.cli.version_state.validate_version_sources") as validate_versions,
+        patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
+        patch("goal.push.core._handle_commit_phase") as commit_phase,
+        patch("goal.push.core.handle_publish", return_value=(True, None)) as publish,
+        patch("goal.push.core.create_tag", return_value=None) as create_tag,
+        patch("goal.push.core.handle_todo_stage", return_value=True),
+    ):
+        execute_push_workflow(
+            ctx_obj=ctx_obj,
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            no_publish=False,
+            force_publish=True,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket=None,
+            abstraction=None,
+            todo=False,
+        )
+
+    commit_message.assert_not_called()
+    commit_phase.assert_not_called()
+    validate_versions.assert_called_once_with(decision.managed_specs, "2.1.293")
+    publish.assert_called_once()
+    assert publish.call_args.kwargs["staged_files"] == []
+    assert publish.call_args.kwargs["force_publish"] is True
+    create_tag.assert_called_once_with("2.1.293", True)
+    assert [call.args[1] for call in delivery_event.call_args_list] == [
+        "started",
+        "published",
+    ]
+
+
 def test_uv_sync_preserves_test_extra_when_dev_is_not_declared(tmp_path: Path) -> None:
     """A test-only project must never fall back to a destructive plain sync."""
     from goal.package_managers import get_uv_sync_command
