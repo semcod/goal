@@ -8,3 +8,11 @@
 - 2026-08-10: Governance rejected six implementation files under S and the
   schema disallowed M. Removed only generated top-level release notes from this
   slice; a dependent post-publication evidence slice will own that metadata.
+- 2026-08-10: PR #36 CI passed on Python 3.12/3.13; validator run 31382609376
+  approved exact head f65c52d7c6a8d88e4d276dcc50eb20fb9b084dc1.
+- 2026-08-10: Protected merge completed as
+  6c31d88fe59134a2a1fe6f51b33329489536b6f0.
+- 2026-08-10: Governed publish-only uploaded Goal 2.1.291 wheel/sdist; PyPI
+  JSON and Simple API expose two artifacts.
+- 2026-08-10: Fresh public-index Python 3.13 install reported CLI/import
+  version 2.1.291 from isolated site-packages.

@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-020",
+  "summary": "Record Goal 2.1.291 publication evidence",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "CHANGELOG.md",
+    "README.md",
+    "project/ticket-019/README.md",
+    "project/ticket-019/ai-codex-logs.txt",
+    "project/ticket-019/changelog.md",
+    "project/ticket-020/**",
+    "project/TICKETS.md",
+    "TODO.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-019"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6c31d88fe59134a2a1fe6f51b33329489536b6f0",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.291 publication and protected delivery evidence are recorded without another version change",
+    "nonGoals": [
+      "No version carrier or package source change",
+      "No dependency, lockfile, governance or CI change",
+      "No registry mutation",
+      "No downstream repository write"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Deliver post-publication notes and evidence as a metadata-only dependent slice after the five-file atomic release merge",
+      "components": [
+        {
+          "name": "publication-evidence",
+          "paths": ["CHANGELOG.md", "README.md"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Remove only the evidence commit; published immutable artifacts remain unchanged"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [".venv/bin/goal check-versions"],
+        "evidence": "Registry catch-up yields no-release -> 2.1.291"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["curl -fsSL https://pypi.org/pypi/goal/2.1.291/json"],
+        "evidence": "PyPI reports version 2.1.291 and two immutable artifacts"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["goal --version"],
+        "evidence": "Fresh public-index install reports 2.1.291"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "./project/governance-check.sh --base 6c31d88fe59134a2a1fe6f51b33329489536b6f0"
+        ],
+        "evidence": "Governance, target CI and exact-head external validation pass"
+      }
+    ]
+  }
+}

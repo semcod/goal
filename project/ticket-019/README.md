@@ -2,8 +2,8 @@
 
 - **ID**: ticket-019
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
@@ -23,9 +23,9 @@ from the public PyPI index before it is considered complete.
   `README.md` consistently describe 2.1.291.
 - [x] AC-03: The full Python suite and package build pass from the synchronized
   release tree.
-- [ ] AC-04: The release PR passes Python 3.12/3.13 CI and exact-head validator
+- [x] AC-04: The release PR passes Python 3.12/3.13 CI and exact-head validator
   approval before merge.
-- [ ] AC-05: Goal 2.1.291 is visible on PyPI and imports as 2.1.291 in a fresh
+- [x] AC-05: Goal 2.1.291 is visible on PyPI and imports as 2.1.291 in a fresh
   environment installed only from the public index.
 
 ## Session authorization
@@ -58,3 +58,17 @@ policy, GitHub workflow or downstream dirty repository is modified here.
 
 - Human participant: unresolved; no user-* file was created.
 - Agent participant: [ai-codex.md](ai-codex.md)
+
+## Publication
+
+- Release [PR #36](https://github.com/semcod/goal/pull/36) passed Python 3.12
+  and 3.13 CI.
+- `ifuri-validator-agent` approved exact head
+  `f65c52d7c6a8d88e4d276dcc50eb20fb9b084dc1`.
+- The protected PR merged as
+  `6c31d88fe59134a2a1fe6f51b33329489536b6f0`.
+- Governed publish-only selected `already-bumped -> 2.1.291`, uploaded wheel
+  and sdist, skipped remote push/tag, and did not propose 2.1.292.
+- PyPI exposes two 2.1.291 artifacts. A fresh Python 3.13 environment installed
+  from `https://pypi.org/simple`; both CLI and import reported 2.1.291 from its
+  isolated `site-packages`.
