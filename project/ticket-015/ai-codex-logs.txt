@@ -5,3 +5,15 @@ integration-dockerfile-python=3.11
 new-project-v0.14.1-docker-required=true
 session-execution-authorization=GRANTED_WITHIN_INTENT
 trusted-merge-self-approval=FORBIDDEN
+[2026-08-10 implementation]
+dockerfile-base=python:3.12-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+docker-build=PASS
+docker-image-sha=sha256:9ed9f1b4c7b55e98675c764e6e1bdb108922b16b21a1c6d8f4d2f13792191e31
+docker-network=none
+goal-version=2.1.289
+python-version=3.12.13
+pytest=PASS 506 passed, 2 skipped
+v0.14.1-docker-marker=Dockerfile
+legacy-governance-check=EXPECTED_BOOTSTRAP_BLOCK GOV-INTENT-002 ticket-013/new-project.intent/v3
+bootstrap-plan-correction=PASS ticket-013 remains new-project.intent/v2 until atomic adoption
+governance-check=PASS 0 errors, 0 warnings
