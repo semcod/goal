@@ -3,3 +3,8 @@
 2026-08-10 focused tests: 10 passed
 2026-08-10 full tests: 522 passed, 2 skipped
 2026-08-10 governance: 0 errors, 0 warnings
+2026-08-10 target CI: Python 3.12 and 3.13 passed
+2026-08-10 validator: run 31427369125 approved exact head c64c7c4c5411e7760581649e79fd99d3992bfbed
+2026-08-10 merge: PR #53 -> 0b8f7563fe261b402dc9742ae187864261ce7c94
+2026-08-10 publication proof: clean forced path published Goal 2.1.293 without commit or Git push
+2026-08-10 public verification: uvx --python 3.13 --refresh --no-cache --from goal==2.1.293 goal --version

@@ -2,8 +2,8 @@
 
 - **ID**: ticket-026
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 
 ## Goal and scope
@@ -21,10 +21,23 @@ without publishing, blocking Goal 2.1.293.
   validates a pre-bumped synchronized version and runs tests.
 - [x] AC-03: The clean release path never creates a commit and fails closed for
   an unresolved or normal-bump version decision.
-- [ ] AC-04: Regression coverage and the full test/governance/CI/validator chain
+- [x] AC-04: Regression coverage and the full test/governance/CI/validator chain
   pass before protected merge.
-- [ ] AC-05: Ticket-025 can publish Goal 2.1.293 from the resulting clean
+- [x] AC-05: Ticket-025 can publish Goal 2.1.293 from the resulting clean
   protected `main`.
+
+## Completion evidence
+
+- PR #53 was exact-head validated at
+  `c64c7c4c5411e7760581649e79fd99d3992bfbed` by validator run
+  `31427369125` and merged to protected `main` as
+  `0b8f7563fe261b402dc9742ae187864261ce7c94`.
+- The target CI matrix passed on Python 3.12 and 3.13; local validation passed
+  with 522 tests and 2 skips and governance reported no findings.
+- A clean checkout of the merge selected `already-bumped -> 2.1.293`, ran the
+  full tests, skipped commit creation and published both distributions through
+  governed `goal -a --delivery-mode publish-only --force-publish`.
+- A fresh no-cache public-index environment reported Goal 2.1.293.
 
 ## Boundary
 
