@@ -412,6 +412,56 @@ def _version_at_ref(source: VersionSource, ref: str) -> Optional[str]:
     return None if contract or value is None else normalize_version(value)
 
 
+def detect_version_transition_boundary(
+    sources: Iterable[VersionSource], base_ref: str
+) -> Optional[str]:
+    """Find the first commit where all managed carriers reached HEAD's version.
+
+    A publish-only delivery can leave the latest release tag behind the version
+    already present in the registry.  The synchronized version transition then
+    provides a safe lower bound for committed-source analysis.  Ambiguous or
+    incomplete history deliberately returns ``None`` so callers can fall back
+    to the release tag.
+    """
+    managed = tuple(
+        source for source in sources if source.managed and source.value is not None
+    )
+    current_values = {source.value for source in managed}
+    if len(current_values) != 1:
+        return None
+    current = next(iter(current_values))
+
+    if all(_version_at_ref(source, base_ref) == current for source in managed):
+        return None
+
+    paths = tuple(dict.fromkeys(source.path for source in managed))
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "rev-list",
+                "--reverse",
+                "--topo-order",
+                f"{base_ref}..HEAD",
+                "--",
+                *paths,
+            ],
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+    if result.returncode != 0:
+        return None
+
+    for commit in result.stdout.splitlines():
+        if commit and all(
+            _version_at_ref(source, commit) == current for source in managed
+        ):
+            return commit
+    return None
+
+
 def detect_git_history_baseline(sources: Iterable[VersionSource]) -> Optional[str]:
     """Find a lower HEAD/HEAD^ value that proves a local bump already happened."""
     local_values = [source.value for source in sources if source.value is not None]

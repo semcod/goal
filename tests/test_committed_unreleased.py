@@ -26,6 +26,7 @@ def git_repo(tmp_path, monkeypatch):
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "pkg.py").write_text("x = 1\n")
     (tmp_path / "README.md").write_text("readme\n")
+    (tmp_path / "VERSION").write_text("1.0.0\n")
     subprocess.run(["git", "add", "-A"], check=True)
     subprocess.run(["git", "commit", "-qm", "init"], check=True)
     subprocess.run(["git", "tag", "v1.0.0"], check=True)
@@ -76,3 +77,24 @@ class TestCommittedUnreleased:
         _commit(git_repo, "src/pkg.py", "x = 5\n", "feat")
         subprocess.run(["git", "tag", "v1.1.0"], check=True)
         assert _latest_release_tag() == "v1.1.0"
+
+    def test_source_before_synchronized_version_transition_is_released(
+        self, git_repo
+    ):
+        _commit(git_repo, "src/pkg.py", "x = 6\n", "feat: released source")
+        (git_repo / "VERSION").write_text("1.0.1\n")
+        package = git_repo / "src" / "pkg"
+        package.mkdir()
+        (package / "__init__.py").write_text('__version__ = "1.0.1"\n')
+        subprocess.run(["git", "add", "-A"], check=True)
+        subprocess.run(["git", "commit", "-qm", "release: sync 1.0.1"], check=True)
+
+        assert committed_unreleased_source_files(["python"]) == []
+
+    def test_source_after_synchronized_version_transition_is_detected(
+        self, git_repo
+    ):
+        _commit(git_repo, "VERSION", "1.0.1\n", "release: sync 1.0.1")
+        _commit(git_repo, "src/pkg.py", "x = 7\n", "feat: next source")
+
+        assert committed_unreleased_source_files(["python"]) == ["src/pkg.py"]

@@ -1,0 +1,98 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-018",
+  "summary": "Stop post-release duplicate version bumps",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/publish/changes.py",
+    "goal/cli/version_state.py",
+    "tests/test_committed_unreleased.py",
+    "project/ticket-018/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-010", "ticket-012", "ticket-016"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d2523133bc57ef79d8d273a784fe8d97a0b8e89a",
+    "targetBranch": "main",
+    "outcome": "Post-release metadata delivery stays on the published version while source committed after the synchronized version transition still requests a new release",
+    "nonGoals": [
+      "No package version or registry publication",
+      "No tag creation or delivery-policy change",
+      "No dependency, manifest or public CLI change",
+      "No agent self-approval for merge"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Derive a conservative Git boundary from the first commit after the prior tag where all managed version sources equal the current version, then classify only source after that boundary",
+      "components": [
+        {
+          "name": "version-transition-evidence",
+          "paths": ["goal/cli/version_state.py"]
+        },
+        {
+          "name": "committed-source-classifier",
+          "paths": [
+            "goal/publish/changes.py",
+            "tests/test_committed_unreleased.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Remove the inferred transition boundary and return committed-source analysis to the last reachable release tag"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/python -m pytest tests/test_committed_unreleased.py -q"
+        ],
+        "evidence": "Already-published source before a synchronized version transition is not emitted after registry catch-up"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          ".venv/bin/python -m pytest tests/test_committed_unreleased.py tests/test_version_state.py -q"
+        ],
+        "evidence": "Post-transition source and pre-bumped version behavior remain detectable"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [".venv/bin/python -m pytest tests -q"],
+        "evidence": "The complete Python suite passes"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "./project/governance-check.sh --base d2523133bc57ef79d8d273a784fe8d97a0b8e89a"
+        ],
+        "evidence": "Governance reports zero errors and warnings before protected delivery"
+      }
+    ]
+  }
+}
