@@ -46,3 +46,7 @@
   removed dev dependency requires a separate governed lock repair.
 - 2026-08-10: Marked all acceptance criteria complete; the ticket remains
   `IN_PROGRESS / EDIT` until exact-head delivery of publication evidence.
+- 2026-08-10: A post-publication PR invocation incorrectly proposed 2.1.291
+  because the release-version carrier `goal/__init__.py` was classified as
+  new package source after the older v2.1.289 tag. Reverted that generated
+  bump without rewriting history; a dedicated classifier regression follows.
