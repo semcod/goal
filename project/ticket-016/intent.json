@@ -31,7 +31,7 @@
       "No dependency, manifest, CLI, or public interface change",
       "No agent self-approval for merge"
     ],
-    "complexity": "XS",
+    "complexity": "S",
     "estimatedMinutes": 20,
     "budgets": {
       "maxImplementationFiles": 3,

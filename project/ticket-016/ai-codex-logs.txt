@@ -9,3 +9,6 @@
 - 2026-08-10: Focused tests PASS (15); full suite PASS (508 passed, 2 skipped).
 - 2026-08-10: Governance gate against accepted base `c5d706c` PASS with zero
   errors and warnings.
+- 2026-08-10: Corrected the delivery class from `XS` to `S`; the unchanged
+  20-minute estimate is above the standard's 10-minute XS ceiling but remains
+  within the 30-minute S policy limit. Scope and file budgets did not change.
