@@ -350,6 +350,72 @@ def _pr_head(ticket: str | None, root: Path) -> str:
     return f"goal/{slug or 'change'}"
 
 
+def _find_open_pull_request(
+    policy: DeliveryPolicy,
+    head: str,
+    root: Path,
+) -> str | None:
+    """Resolve one open PR and bind it to the currently pushed commit."""
+    expected_head = _git_value("rev-parse", "HEAD", cwd=root)
+    result = _run(
+        [
+            "gh",
+            "pr",
+            "list",
+            "--state",
+            "open",
+            "--head",
+            head,
+            "--base",
+            policy.base_branch,
+            "--limit",
+            "2",
+            "--json",
+            "url,headRefOid",
+        ],
+        cwd=root,
+    )
+    if result.returncode != 0:
+        raise click.ClickException(
+            "could not query open pull requests: "
+            + (result.stderr or "unknown gh error").strip()
+        )
+    try:
+        matches = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise click.ClickException(
+            "could not query open pull requests: gh returned invalid JSON"
+        ) from error
+    if not isinstance(matches, list):
+        raise click.ClickException(
+            "could not query open pull requests: gh returned an invalid result"
+        )
+    if len(matches) > 1:
+        raise click.ClickException(
+            f"multiple open pull requests use governed branch '{head}'"
+        )
+    if not matches:
+        return None
+
+    match = matches[0]
+    if not isinstance(match, dict):
+        raise click.ClickException(
+            "could not query open pull requests: gh returned an invalid entry"
+        )
+    url = str(match.get("url", "")).strip()
+    actual_head = str(match.get("headRefOid", "")).strip()
+    if not url or not actual_head:
+        raise click.ClickException(
+            "open pull request is missing its URL or head commit"
+        )
+    if actual_head != expected_head:
+        raise click.ClickException(
+            f"open pull request for '{head}' targets {actual_head}, "
+            f"not current pushed HEAD {expected_head}"
+        )
+    return url
+
+
 def deliver_pull_request(
     policy: DeliveryPolicy,
     *,
@@ -376,12 +442,9 @@ def deliver_pull_request(
             + (pushed.stderr or "unknown git error").strip()
         )
 
-    view = _run(
-        ["gh", "pr", "view", head, "--json", "url", "--jq", ".url"],
-        cwd=root,
-    )
-    if view.returncode == 0 and view.stdout.strip():
-        return head, view.stdout.strip()
+    existing_url = _find_open_pull_request(policy, head, root)
+    if existing_url is not None:
+        return head, existing_url
 
     created = _run(
         [
@@ -404,7 +467,12 @@ def deliver_pull_request(
             "could not create pull request: "
             + (created.stderr or "unknown gh error").strip()
         )
-    return head, created.stdout.strip()
+    created_url = _find_open_pull_request(policy, head, root)
+    if created_url is None:
+        raise click.ClickException(
+            "gh pr create reported success, but no matching open pull request exists"
+        )
+    return head, created_url
 
 
 def policy_payload(policy: DeliveryPolicy | None) -> dict[str, Any]:

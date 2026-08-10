@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-027",
+  "summary": "Create a fresh PR after a prior branch PR was merged",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "tests/test_governance_delivery.py",
+    "project/ticket-027/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".github/**",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "CHANGELOG.md",
+    "goal.yaml"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-003", "ticket-024"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "98d4ed1390e8c39123aae790f53d01a7591bc512",
+    "targetBranch": "main",
+    "outcome": "Every successful governed pull-request delivery resolves one open PR bound to the current pushed HEAD",
+    "nonGoals": [
+      "No version, dependency, release metadata or CI change",
+      "No relaxation of protected review or validator identity",
+      "No destructive replacement of an existing local branch"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Resolve PR state through an open base/head query and require exact pushed-head identity before returning success",
+      "components": [
+        {
+          "name": "governed-pr-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the application PR before release"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "Historical PRs are excluded from governed delivery lookup"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "A reusable open PR must match the declared base, head branch and current commit"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "A created PR is re-resolved through the same exact-head query"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "pytest -q",
+          "./project/governance-check.sh",
+          "docker build -t goal-ticket027:local .",
+          "docker run --rm --network none goal-ticket027:local --version"
+        ],
+        "evidence": "Full application, governance and production container gates pass"
+      }
+    ]
+  }
+}

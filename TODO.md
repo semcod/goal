@@ -2,6 +2,10 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-027](project/ticket-027/README.md): resolve only open,
+  exact-head PRs after pushing a governed branch, even when that branch had a
+  previously merged PR. State: `IN_PROGRESS / VALIDATION`; classification:
+  `BUG / application`.
 - [x] Deliver [ticket-026](project/ticket-026/README.md): preserve clean
   `publish-only --force-publish` intent without creating a release commit.
   State: `DONE / PUBLICATION`; classification: `BUG / application`.
