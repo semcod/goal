@@ -14,16 +14,19 @@ so that trusted prior object is absent and the upgrade fails before any write.
 
 ## Execution plan
 
-1. Commit this approved plan before source changes.
-2. Add defensive prior-revision discovery from the target lock.
-3. Fetch the validated prior SHA from the same standard remote and test the
-   exact Git interaction plus end-to-end fake upgrade behavior.
-4. Run focused and full suites, governance and the real 0.14.0 adoption check.
+1. Reproduce the upgrade failure without writes.
+2. Test the shallow-history hypothesis in an isolated worktree.
+3. Cancel Goal-side implementation when the experiment disproves it and route
+   the fix to `wellmanifest/new-project`.
 
 ## Actual changes
 
-- Approved plan recorded; implementation follows in an isolated worktree.
+- Built a focused experimental adapter/test diff in an isolated worktree.
+- Proved that making the previous commit available advances the generator but
+  then fails because it compares Goal with the wrong historical base.
+- Removed the uncommitted experimental worktree and branch; Goal source and
+  tests remain unchanged.
 
 ## Blockers
 
-- None.
+- Correct repair depends on a new published `wellmanifest/new-project` patch.

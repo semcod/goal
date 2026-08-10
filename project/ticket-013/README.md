@@ -3,7 +3,7 @@
 - **ID**: ticket-013
 - **Owner**: session user (identity unresolved)
 - **Status**: PLAN
-- **Workflow state**: WAIT_FOR_DEPENDENCY
+- **Workflow state**: WAIT_FOR_EXTERNAL_RELEASE
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / governance`
 
@@ -32,9 +32,10 @@ weakening path enforcement or editing managed files outside the adoption tool.
 
 ## Dependency and approval
 
-The user's instruction to update, test and publish covers this prerequisite,
-but implementation waits for ticket 014 to repair legacy-base fetching in the
-Goal adoption adapter.  Published revision:
+The user's instruction to update, test and publish covers this prerequisite.
+Ticket 014 disproved the Goal-adapter hypothesis; implementation now waits for
+an upstream `wellmanifest/new-project` patch that migrates from the authenticated
+legacy target manifest. Current published revision:
 `a22eb47ca0e7c06ac927d1c0d843eabb798bfadd` (`v0.14.0`).
 
 ## Boundary

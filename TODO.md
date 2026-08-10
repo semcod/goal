@@ -36,10 +36,11 @@
   classification: `SERVICE / integration`.
 - [ ] Deliver [ticket-013](project/ticket-013/README.md): adopt immutable
   new-project 0.14.0 and assign integration/lockfile ownership. State: `PLAN`,
-  awaiting ticket 014; classification: `SERVICE / governance`.
-- [ ] Deliver [ticket-014](project/ticket-014/README.md): fetch the previously
-  installed immutable governance revision during shallow adoption upgrades.
-  State: `IN_PROGRESS`; classification: `BUG / application`.
+  awaiting an upstream migration patch; classification: `SERVICE / governance`.
+- [x] Close [ticket-014](project/ticket-014/README.md): the proposed Goal-side
+  prior-revision fetch was disproved and safely cancelled before implementation;
+  the defect was routed upstream. State: `CANCELLED`; classification:
+  `BUG / application`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
@@ -48,7 +49,7 @@
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
 > `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 PLAN`;
-> `ticket-013 PLAN`; `ticket-014 IN_PROGRESS`.
+> `ticket-013 PLAN`; `ticket-014 CANCELLED`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

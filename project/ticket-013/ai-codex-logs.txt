@@ -2,3 +2,6 @@
   `a22eb47ca0e7c06ac927d1c0d843eabb798bfadd`.
 - 2026-08-10: Read-only adoption check failed because Goal's depth-one checkout
   did not contain the installed 0.11.0 source revision.
+- 2026-08-10: Ticket 014's experiment fetched that revision successfully but
+  exposed the upstream legacy-base selection defect; Goal transport stays
+  unchanged.

@@ -15,7 +15,8 @@ first learn to fetch the prior pinned base revision.
 
 ## Execution plan
 
-1. Wait for ticket 014 and verify its upgrade regression.
+1. Wait for the upstream legacy-manifest migration patch and verify its exact
+   published SHA.
 2. Adopt published new-project 0.14.0 by full SHA using Goal.
 3. Extend the integration workstream with `integration/**`, `uv.lock` and
    standard Python lockfile names without removing managed values.
@@ -27,4 +28,5 @@ first learn to fetch the prior pinned base revision.
 
 ## Blockers
 
-- Blocked on ticket 014's legacy-base fetch correction.
+- Blocked on a published upstream `wellmanifest/new-project` migration patch;
+  ticket 014 was cancelled after disproving the Goal-side hypothesis.

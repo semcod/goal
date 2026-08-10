@@ -6,3 +6,5 @@
 - No human participant identity or content was generated.
 - Defined immutable 0.14.0 adoption and target ownership extension scope.
 - Recorded dependency on the adapter repair in ticket 014.
+- Replaced that dependency with the correctly routed upstream standard patch
+  after the adapter hypothesis was disproved.
