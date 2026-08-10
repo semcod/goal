@@ -15,3 +15,7 @@
 - Added target-owned integration container and Python lockfile ownership while
   preserving every existing workstream.
 - Passed idempotence, managed-hash and governance validation with zero findings.
+- Published the atomic adoption in PR #23 after Python 3.12/3.13 CI and trusted
+  exact-head approval; merge commit:
+  `c1f1305dc71efc7aac1a5bc6b05d3cd8b55275d3`.
+- Closed the ticket as `DONE / PUBLICATION` and unblocked ticket 012.
