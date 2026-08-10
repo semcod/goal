@@ -1,0 +1,8 @@
+2026-08-10 release decision: normal-bump -> 2.1.292, then already-bumped
+2026-08-10 tests: 512 passed, 2 skipped; build and governance passed
+2026-08-10 validator: run 31386832400 approved exact head 11ba5706674bffa620b5bb73c8808a6e4e36519f
+2026-08-10 merge: PR #41 -> 788ae1499c7c95e8e97bcfc017c0ead27eb73515
+2026-08-10 publication: goal -a --delivery-mode publish-only --force-publish
+2026-08-10 public verification: uvx --refresh --no-cache --from goal==2.1.292 goal --version
+2026-08-10 wheel sha256: 001a381085482fe80dacae1ab5fdd519e173d3cc866e1846988bfc7117b71137
+2026-08-10 sdist sha256: 47d8c210e61833b693d1d95fd9600890bfe64b0a1035caa466771388007ce7a5

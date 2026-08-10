@@ -2,8 +2,8 @@
 
 - **ID**: ticket-023
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-10
 
 ## Goal and scope
@@ -17,13 +17,26 @@ public-index installation.
 
 - [x] AC-01: The user explicitly requested autonomous testing, publication and
   dependent-project updates.
-- [ ] AC-02: Goal selects `normal-bump -> 2.1.292` once and all release carriers
+- [x] AC-02: Goal selects `normal-bump -> 2.1.292` once and all release carriers
   are synchronized.
-- [ ] AC-03: Full tests, build, governance, target CI and exact-head validator
+- [x] AC-03: Full tests, build, governance, target CI and exact-head validator
   pass before merge.
-- [ ] AC-04: Clean merged `main` publishes exactly one wheel and one sdist for
+- [x] AC-04: Clean merged `main` publishes exactly one wheel and one sdist for
   2.1.292 through `goal -a --delivery-mode publish-only`.
-- [ ] AC-05: A fresh public-index environment reports Goal 2.1.292.
+- [x] AC-05: A fresh public-index environment reports Goal 2.1.292.
+
+## Completion evidence
+
+- Release PR #41 was exact-head validated at
+  `11ba5706674bffa620b5bb73c8808a6e4e36519f` and merged to protected `main`
+  as `788ae1499c7c95e8e97bcfc017c0ead27eb73515`.
+- Validation completed with 512 passed and 2 skipped tests, a successful wheel
+  and sdist build, and a clean governance report.
+- `goal -a --delivery-mode publish-only --force-publish` published Goal
+  2.1.292; a fresh no-cache `uvx` invocation reported `goal, version 2.1.292`.
+- Published SHA-256: wheel
+  `001a381085482fe80dacae1ab5fdd519e173d3cc866e1846988bfc7117b71137`,
+  sdist `47d8c210e61833b693d1d95fd9600890bfe64b0a1035caa466771388007ce7a5`.
 
 ## Session authorization
 
