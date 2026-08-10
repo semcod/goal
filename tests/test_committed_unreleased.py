@@ -50,6 +50,15 @@ class TestCommittedUnreleased:
         _commit(git_repo, "README.md", "readme v2\n", "docs: update")
         assert committed_unreleased_source_files(["python"]) == []
 
+    def test_governance_python_commit_does_not_trigger_release(self, git_repo):
+        _commit(
+            git_repo,
+            ".governance/governance_check.py",
+            "VALUE = 1\n",
+            "chore: adopt governance",
+        )
+        assert committed_unreleased_source_files(["python"]) == []
+
     def test_clean_head_at_tag_reports_nothing(self, git_repo):
         assert committed_unreleased_source_files(["python"]) == []
 

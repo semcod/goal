@@ -19,11 +19,11 @@ preserving releases for actual Python package modules.
 
 - [x] AC-01: The user's autonomous continuation and publication request covers
   this blocking regression without another confirmation.
-- [ ] AC-02: `.governance/*.py` is non-publishable for staged and committed
+- [x] AC-02: `.governance/*.py` is non-publishable for staged and committed
   change analysis.
-- [ ] AC-03: Real source below `src/`, `goal/`, and top-level package paths
+- [x] AC-03: Real source below `src/`, `goal/`, and top-level package paths
   remains publishable.
-- [ ] AC-04: Focused classifier/version tests and the full Python suite pass.
+- [x] AC-04: Focused classifier/version tests and the full Python suite pass.
 - [ ] AC-05: The governance gate passes and the fix is delivered through a
   protected PR with exact-head validator approval.
 
@@ -38,6 +38,17 @@ adoption reported these files as package source and selected `2.1.290`:
 
 The invalid generated release changes were removed and superseded by clean PR
 #25; no false version was merged or published.
+
+## Validation evidence
+
+- Focused classifier/history tests: `15 passed`.
+- Complete Python suite: `508 passed, 2 skipped`; the governed Goal run later
+  repeated the expanded suite as `508 passed, 2 skipped` before its generated
+  release metadata was rejected from this application workstream.
+- `./project/governance-check.sh --base
+  c5d706c81e77a59b4aec5e03afdfa6cb690e60c0`: PASS; 0 errors, 0 warnings.
+- The positive committed-source and staged-source cases still recognize real
+  package modules.
 
 ## Session authorization
 

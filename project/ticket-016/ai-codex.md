@@ -28,6 +28,10 @@ a false patch bump during documentation-only delivery.
   from the request to execute this work.
 - Reproduced the false classification during ticket-013 closure; no invalid
   bump was merged or published.
+- Added `.governance/` to the shared non-publishable prefix contract and
+  covered staged plus committed-since-tag behavior.
+- Focused tests passed (15); full suite passed (508 with 2 skipped); governance
+  gate passed with zero findings.
 
 ## Blockers
 
