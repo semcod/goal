@@ -44,6 +44,10 @@
   prior-revision fetch was disproved and safely cancelled before implementation;
   the defect was routed upstream. State: `CANCELLED`; classification:
   `BUG / application`.
+- [ ] Deliver [ticket-016](project/ticket-016/README.md): exclude managed
+  governance Python helpers from package release classification before ticket
+  012 publishes. State: `IN_PROGRESS / EDIT`; classification:
+  `BUG / application`.
 - [ ] After governance bootstrap, execute the sequential phases defined in
   [the refactoring plan](docs/GOAL_KORU_SUBACTOR_REFACTORING_PLAN.md), with one
   narrowly scoped ticket active at a time.
@@ -52,7 +56,8 @@
 > `ticket-003 DONE`; `ticket-004 DONE`; `ticket-005 DONE`;
 > `ticket-006 DONE`; `ticket-007 DONE`; `ticket-009 DONE`.
 > `ticket-010 DONE`; `ticket-011 DONE`; `ticket-012 PLAN`;
-> `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`.
+> `ticket-013 DONE`; `ticket-014 CANCELLED`; `ticket-015 DONE`;
+> `ticket-016 IN_PROGRESS`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

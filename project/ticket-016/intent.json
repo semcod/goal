@@ -1,0 +1,93 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-016",
+  "summary": "Ignore governance payload in release classification",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/publish/changes.py",
+    "tests/test_committed_unreleased.py",
+    "tests/test_publish_changes.py",
+    "project/ticket-016/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c5d706c81e77a59b4aec5e03afdfa6cb690e60c0",
+    "targetBranch": "main",
+    "outcome": "Governance-managed Python helpers never trigger a Goal package version bump while real package source remains detectable",
+    "nonGoals": [
+      "No change to version precedence or registry queries",
+      "No change to governance validation policy",
+      "No dependency, manifest, CLI, or public interface change",
+      "No agent self-approval for merge"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend the shared non-publishable prefix set with the reserved .governance directory so staged and Git-history analysis remain consistent",
+      "components": [
+        {
+          "name": "publish-change-classifier",
+          "paths": [
+            "goal/publish/changes.py",
+            "tests/test_committed_unreleased.py",
+            "tests/test_publish_changes.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the single reserved-prefix exclusion and its regression tests"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/python -m pytest tests/test_publish_changes.py tests/test_committed_unreleased.py -q"
+        ],
+        "evidence": "Staged and committed governance Python paths remain non-publishable"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          ".venv/bin/python -m pytest tests/test_publish_changes.py tests/test_committed_unreleased.py -q"
+        ],
+        "evidence": "Existing positive package-source cases continue to pass"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [".venv/bin/python -m pytest tests -q"],
+        "evidence": "Full Python suite passes"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["./project/governance-check.sh"],
+        "evidence": "Governance validation reports zero errors and warnings before protected delivery"
+      }
+    ]
+  }
+}

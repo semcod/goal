@@ -1,0 +1,6 @@
+- 2026-08-10: `goal -a --no-publish --delivery-mode pull-request` selected a
+  false 2.1.290 bump from three managed `.governance/*.py` files.
+- 2026-08-10: Closed invalid PR #24, deleted its branch, and merged clean
+  ticket-013 closure PR #25 after exact-head validation.
+- 2026-08-10: User SESSION_EXECUTION_AUTHORIZATION covers this bounded
+  prerequisite; started ticket 016 in `IN_PROGRESS / EDIT`.
