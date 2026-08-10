@@ -1,0 +1,4 @@
+- 2026-08-10: Verified local and remote `v0.14.0` target
+  `a22eb47ca0e7c06ac927d1c0d843eabb798bfadd`.
+- 2026-08-10: Read-only adoption check failed because Goal's depth-one checkout
+  did not contain the installed 0.11.0 source revision.

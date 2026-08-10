@@ -1,0 +1,5 @@
+- 2026-08-10: Reproduced failure with published new-project 0.14.0:
+  `legacy manifest base revision is unavailable`.
+- 2026-08-10: Confirmed the old 0.11.0 revision does contain
+  `governance/manifest.default.json`; it is absent only from Goal's depth-one
+  temporary checkout.

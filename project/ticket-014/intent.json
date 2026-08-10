@@ -1,0 +1,18 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-014",
+  "summary": "Fetch legacy governance base during upgrade",
+  "workstream": "application",
+  "allowedPaths": [
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_cmd.py",
+    "project/ticket-014/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}

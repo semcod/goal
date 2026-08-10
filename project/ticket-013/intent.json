@@ -1,0 +1,24 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-013",
+  "summary": "Adopt governance ownership extensions",
+  "workstream": "governance",
+  "allowedPaths": [
+    ".governance/**",
+    "AGENTS.md",
+    "project.sh",
+    "project.bat",
+    "project/governance-check.sh",
+    "project/governance-check.bat",
+    "project/new-ticket.sh",
+    "project/readme.sh",
+    "project/ticket-013/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-014"],
+  "conflictsWith": [],
+  "integrationTicket": null
+}
