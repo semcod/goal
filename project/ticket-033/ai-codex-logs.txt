@@ -1,0 +1,3 @@
+2026-08-12 authorization: user requested continued local Goal repair
+2026-08-12 accepted base: d5aa14f80de5394ecf2490975e36390ac5ce744d
+2026-08-12 plan: migrate only exact legacy Goal-generated dev requirements and prove idempotence
