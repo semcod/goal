@@ -146,6 +146,45 @@ def test_governance_check_skips_mutable_interactive_main_setup(
     assert "VALIDATOR_ARGS=" in result.output
 
 
+def test_governance_adopt_skips_mutable_caller_setup(tmp_path, monkeypatch):
+    standard, revision = make_standard(tmp_path)
+    target = tmp_path / "target"
+    caller = tmp_path / "caller"
+    target.mkdir()
+    caller.mkdir()
+    monkeypatch.chdir(caller)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("governance adopt entered mutable main setup")
+
+    monkeypatch.setattr(goal_cli, "_warn_goal_binary_mismatch", forbidden)
+    monkeypatch.setattr(goal_cli, "_warn_wheel_shadows_editable", forbidden)
+    monkeypatch.setattr(goal_cli, "_show_goal_version_banner", forbidden)
+    monkeypatch.setattr(goal_cli, "_maybe_self_update", forbidden)
+    monkeypatch.setattr(goal_cli, "ensure_config", forbidden)
+    monkeypatch.setattr(goal_cli, "get_user_config", forbidden)
+    monkeypatch.setattr(goal_cli, "load_config", lambda *args, **kwargs: {})
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert result.exception is None
+    assert (target / ".fake-adoption.json").is_file()
+    assert not (caller / "goal.yaml").exists()
+
+
 def test_governance_check_fails_closed_for_incomplete_package(tmp_path):
     target = tmp_path / "target"
     target.mkdir()

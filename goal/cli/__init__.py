@@ -544,8 +544,11 @@ class GoalGroup(click.Group):
                 continue
             positionals.append(a)
 
-        ctx.meta["goal_read_only_governance"] = (
-            len(positionals) >= 2 and positionals[:2] == ["governance", "check"]
+        # Governance package commands are headless dispatchers. Subcommands
+        # that need delivery configuration opt in explicitly in their own
+        # callbacks; the main group must not create goal.yaml in the caller.
+        ctx.meta["goal_read_only_governance"] = bool(
+            positionals and positionals[0] == "governance"
         )
 
         # `auto` is a word-form of the -a/--all flag, so `goal auto ...` behaves

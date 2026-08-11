@@ -3,7 +3,7 @@
 - **ID**: ticket-032
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -22,7 +22,7 @@ code and policy data.
   with its manifest, lock and stack profiles.
 - [x] AC-03: Validator arguments, stdout, stderr and nonzero exit status are
   preserved without Goal reimplementing policy decisions.
-- [ ] AC-04: Missing or incomplete adopted governance fails closed with an
+- [x] AC-04: Missing or incomplete adopted governance fails closed with an
   actionable diagnostic, while the governance dispatcher skips Goal's
   interactive user bootstrap, implicit `goal.yaml` writes, update lookup and
   version banner. Callbacks that need delivery configuration opt in explicitly.
@@ -49,6 +49,13 @@ code and policy data.
   `goal governance adopt --target-root <other-repo>` created `goal.yaml` in the
   caller's standard worktree before adoption. Both generated files were
   identified as command artifacts and removed from the pilot worktrees.
+- The group dispatcher now enters read-only context for every
+  `goal governance ...` path. A real fake-standard adoption from a separate
+  caller proves that mutable main setup is never reached, the target is
+  adopted and no caller-side `goal.yaml` appears.
+- The updated branch passes 10 focused and 533 full tests with 2 skips, Ruff,
+  deterministic governance, wheel/sdist build and the digest-pinned production
+  Docker build (`sha256:6772b0ac7d93...`).
 
 ## Boundary
 

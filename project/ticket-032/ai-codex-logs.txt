@@ -19,3 +19,9 @@
 2026-08-11 follow-up reproduction: goal governance adopt --target-root <temporary-fixop> created an untracked goal.yaml in the caller's new-project worktree before dispatch.
 2026-08-11 follow-up cleanup: both generated caller-side goal.yaml artifacts were removed after provenance was verified; neither entered a commit.
 2026-08-11 follow-up boundary: reuse ticket-032; goal/cli/__init__.py and tests/test_governance_cmd.py are already allowed and own this dispatcher behavior.
+2026-08-11 follow-up focused: uv run --frozen pytest -q tests/test_governance_cmd.py -> 10 passed.
+2026-08-11 follow-up Ruff: goal/cli/__init__.py and tests/test_governance_cmd.py -> PASS.
+2026-08-11 follow-up governance: GOV-PASS (0 errors, 0 warnings).
+2026-08-11 follow-up full: uv run --frozen pytest -q -> 533 passed, 2 skipped.
+2026-08-11 follow-up package: goal-2.1.294 wheel and sdist built outside the checkout.
+2026-08-11 follow-up Docker: digest-pinned production image built as sha256:6772b0ac7d938cd71d1633a8019f45cfffd5ace19fb0612bda3856919758cbc5.

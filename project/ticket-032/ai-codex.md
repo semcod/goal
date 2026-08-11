@@ -50,10 +50,16 @@ adapter closes that gap without moving policy ownership into Goal.
   validation: `governance adopt` created `goal.yaml` in the caller even though
   `--target-root` named another repository. Reopened this same-scope ticket and
   recorded the bounded read-only group repair before editing code.
+- Made the complete governance group use the read-only main context; delivery
+  callbacks retain their existing explicit `ensure_config()` calls.
+- Added a real adoption regression from a separate caller that forbids mutable
+  setup and verifies target output plus absence of caller-side `goal.yaml`.
+- Passed 10 focused and 533 full tests (2 skipped), Ruff, governance,
+  wheel/sdist construction and the production Docker build.
 
 ## Blockers
 
-- None inside the recorded intent; proceed with the same bounded session
-  authorization and no second confirmation.
+- None inside the recorded intent; exact-HEAD downstream integration remains
+  before local closure.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.

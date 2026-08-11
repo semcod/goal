@@ -19,3 +19,8 @@
 - Reopened the same adapter scope after exact-SHA adoption created `goal.yaml`
   in the caller despite a different `--target-root`; planned a group-wide
   read-only dispatcher boundary while preserving explicit delivery config.
+- Extended the read-only main context to every governance subcommand and added
+  a separate-caller adoption regression proving that target output is retained
+  without implicit project/user setup.
+- Passed focused/full Python, Ruff, governance, package and Docker validation;
+  moved the ticket back to `IN_PROGRESS / VALIDATION` for exact-HEAD replay.
