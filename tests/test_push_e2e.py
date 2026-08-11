@@ -631,7 +631,8 @@ class TestPushWorkflowE2E:
         mock_execute.assert_called_once()
         assert mock_execute.call_args.kwargs["no_publish"] is True
 
-    def test_push_workflow_aborts_on_auto_test_failure(self):
+    @pytest.mark.parametrize("all_flags", [False, True])
+    def test_push_workflow_aborts_on_auto_test_failure(self, all_flags):
         """Test that --all workflow stops when tests fail."""
         from goal.push.core import execute_push_workflow
 
@@ -640,6 +641,7 @@ class TestPushWorkflowE2E:
             "markdown": False,
             "config": {},
             "user_config": {},
+            "all_flags": all_flags,
         }
 
         with (
@@ -656,7 +658,10 @@ class TestPushWorkflowE2E:
                 "goal.push.core.get_commit_message",
                 return_value=("feat: test", None, {}),
             ),
-            patch("goal.push.core.get_version_info", return_value=("0.1.0", "0.1.1")),
+            patch(
+                "goal.push.core.get_version_info",
+                return_value=("0.1.0", "0.1.1"),
+            ) as mock_version_info,
             patch("goal.push.core.run_test_stage", return_value=("Tests failed", 1)),
             patch("goal.push.core._handle_commit_phase") as mock_commit_phase,
             patch("goal.push.core.create_tag") as mock_create_tag,
@@ -682,6 +687,10 @@ class TestPushWorkflowE2E:
                 )
 
         assert exc.value.code == 1
+        assert (
+            mock_version_info.call_args.kwargs["allow_registry_ahead_repair"]
+            is all_flags
+        )
         mock_commit_phase.assert_not_called()
         mock_create_tag.assert_not_called()
         mock_push_remote.assert_not_called()

@@ -520,6 +520,7 @@ def execute_push_workflow(
             project_types=project_types,
             include_decision=True,
             release_required=not skip_release,
+            allow_registry_ahead_repair=bool(ctx_obj.get("all_flags", False)),
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc

@@ -86,6 +86,7 @@ def get_version_info(
     registry_versions=None,
     include_decision: bool = False,
     release_required: bool = True,
+    allow_registry_ahead_repair: bool = False,
 ) -> tuple:
     """Get current and new version info."""
     get_current_version, bump_version, _ = _get_version_module()
@@ -102,6 +103,7 @@ def get_version_info(
         project_types=project_types,
         registry_versions=registry_versions,
         release_required=release_required,
+        allow_registry_ahead_repair=allow_registry_ahead_repair,
     )
     if include_decision:
         return decision.current_version, decision.target_version, decision

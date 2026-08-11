@@ -632,6 +632,7 @@ def resolve_version_decision(
     project_types: Sequence[str] = (),
     registry_versions: Optional[Mapping[str, str]] = None,
     release_required: bool = True,
+    allow_registry_ahead_repair: bool = False,
 ) -> VersionDecision:
     """Resolve the release target without mutating the project."""
     tag_version = detect_git_tag_version(project_types)
@@ -709,7 +710,26 @@ def resolve_version_decision(
             key=version_key,
         )
         if regressions:
-            if forward or baseline not in local_versions:
+            registry_is_baseline = any(
+                label.startswith("registry:") and value == baseline
+                for label, value in baseline_candidates
+            )
+            uniform_local_version = (
+                next(iter(local_versions)) if len(local_versions) == 1 else None
+            )
+            # ``goal -a`` may recover from an interrupted/accidental adjacent
+            # publication, but must not turn a stale or internally inconsistent
+            # checkout into a new release automatically.
+            repair_registry_ahead = bool(
+                allow_registry_ahead_repair
+                and registry_is_baseline
+                and not forward
+                and uniform_local_version is not None
+                and bump_version(uniform_local_version, "patch") == baseline
+            )
+            if forward or (
+                baseline not in local_versions and not repair_registry_ahead
+            ):
                 raise VersionStateError(
                     "Local version state regresses behind released evidence",
                     [
@@ -720,10 +740,18 @@ def resolve_version_decision(
             current = baseline
             if release_required:
                 target = bump_version(baseline, bump)
-                reason = "normal-bump-with-repair"
+                reason = (
+                    "auto-bump-from-registry"
+                    if repair_registry_ahead
+                    else "normal-bump-with-repair"
+                )
             else:
                 target = baseline
-                reason = "released-partial-repair"
+                reason = (
+                    "auto-sync-to-registry"
+                    if repair_registry_ahead
+                    else "released-partial-repair"
+                )
             forward = []
         if len(forward) > 1:
             raise VersionStateError(

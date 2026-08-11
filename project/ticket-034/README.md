@@ -3,7 +3,7 @@
 - **ID**: ticket-034
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -17,12 +17,19 @@ the auto-mode permission must be forwarded through the real push workflow.
 
 - [x] AC-01: The user's instruction to continue repairing the live Goal/glon
   failure supplies bounded local execution authorization.
-- [ ] AC-02: Auto mode advances from an adjacent registry baseline for release
+- [x] AC-02: Auto mode advances from an adjacent registry baseline for release
   and synchronizes to it when no release is required.
-- [ ] AC-03: Manual mode, non-adjacent gaps and inconsistent local carriers
+- [x] AC-03: Manual mode, non-adjacent gaps and inconsistent local carriers
   remain rejected.
-- [ ] AC-04: The real push workflow enables the repair only for `goal -a`.
+- [x] AC-04: The real push workflow enables the repair only for `goal -a`.
 - [ ] AC-05: Focused/full tests, Ruff, governance, build and Docker pass.
+
+## Validation evidence
+
+- 63 focused resolver and push-workflow tests pass.
+- The push regression runs both `all_flags=False` and `all_flags=True` and
+  observes the exact resolver permission in both cases.
+- Changed-file Ruff and deterministic governance pass.
 
 ## Session authorization
 

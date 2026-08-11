@@ -4,7 +4,8 @@
 
 - [ ] Deliver [ticket-034](project/ticket-034/README.md): let `goal -a`
   recover only a uniform local version exactly one patch behind the registry.
-  State: `IN_PROGRESS / EDIT`; classification: `BUG / application`.
+  State: `IN_PROGRESS / VALIDATION`; 63 focused tests, Ruff and governance
+  pass; classification: `BUG / application`.
 - [x] Deliver [ticket-033](project/ticket-033/README.md): migrate legacy
   unmarked Goal tool requirements to interpreter-compatible markers. State:
   `DONE`; 536 tests, Ruff, governance, package and Docker pass;

@@ -26,6 +26,10 @@ is safe only when explicitly requested by `goal -a` and bounded to one patch.
   from the request to execute this work.
 - Preserved the original ungoverned experimental commit on its pilot branch;
   this branch will apply its patch only after this plan commit.
+- Added the opt-in adjacent-registry decision and forwarded it through the
+  version stage from the real push context.
+- Strengthened the pilot patch with a two-state propagation regression; all 63
+  focused tests, changed-file Ruff and governance pass.
 
 ## Blockers
 

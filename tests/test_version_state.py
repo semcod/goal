@@ -121,6 +121,65 @@ def test_registry_ahead_of_local_state_is_rejected(tmp_path, monkeypatch):
         )
 
 
+def test_auto_mode_bumps_from_adjacent_registry_version(tmp_path, monkeypatch):
+    config = _init_release(tmp_path, "1.2.3", tag=False)
+    monkeypatch.chdir(tmp_path)
+
+    decision = resolve_version_decision(
+        config=config,
+        registry_versions={"pypi:fixture": "1.2.4"},
+        allow_registry_ahead_repair=True,
+    )
+
+    assert decision.current_version == "1.2.4"
+    assert decision.target_version == "1.2.5"
+    assert decision.reason == "auto-bump-from-registry"
+    assert {source.value for source in decision.stale_sources} == {"1.2.3"}
+
+
+def test_auto_mode_syncs_adjacent_registry_version_without_release(
+    tmp_path, monkeypatch
+):
+    config = _init_release(tmp_path, "1.2.3", tag=False)
+    monkeypatch.chdir(tmp_path)
+
+    decision = resolve_version_decision(
+        config=config,
+        registry_versions={"pypi:fixture": "1.2.4"},
+        release_required=False,
+        allow_registry_ahead_repair=True,
+    )
+
+    assert decision.current_version == "1.2.4"
+    assert decision.target_version == "1.2.4"
+    assert decision.reason == "auto-sync-to-registry"
+
+
+def test_auto_mode_rejects_non_adjacent_registry_version(tmp_path, monkeypatch):
+    config = _init_release(tmp_path, "1.2.3", tag=False)
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(VersionStateError, match="regresses behind"):
+        resolve_version_decision(
+            config=config,
+            registry_versions={"pypi:fixture": "1.2.5"},
+            allow_registry_ahead_repair=True,
+        )
+
+
+def test_auto_mode_rejects_inconsistent_local_versions(tmp_path, monkeypatch):
+    config = _init_release(tmp_path, "1.2.3", tag=False)
+    (tmp_path / "VERSION").write_text("1.2.2\n")
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(VersionStateError, match="regresses behind"):
+        resolve_version_decision(
+            config=config,
+            registry_versions={"pypi:fixture": "1.2.4"},
+            allow_registry_ahead_repair=True,
+        )
+
+
 def test_released_partial_state_is_repaired_without_another_release(
     tmp_path, monkeypatch
 ):
