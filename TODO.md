@@ -2,9 +2,36 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-029](project/ticket-029/README.md): keep governed
+- [ ] Deliver [ticket-036](project/ticket-036/README.md): run the immutable
+  adopted workspace lifecycle checker through a headless Goal command. State:
+  `IN_PROGRESS / PUBLICATION`; 12 focused and 547 full tests pass (2 skipped),
+  with Ruff and governance green; classification: `FEATURE / application`;
+  awaiting reviewed integration.
+
+- [x] Deliver [ticket-035](project/ticket-035/README.md): stage generated
+  slow-test tickets before commit and preserve exact safe bootstrap templates.
+  State: `DONE`; 545 tests, Ruff, governance, package and Docker pass;
+  classification: `BUG / application`; no publication.
+- [x] Deliver [ticket-034](project/ticket-034/README.md): let `goal -a`
+  recover only a uniform local version exactly one patch behind the registry.
+  State: `DONE`; 541 tests, Ruff, governance, package and Docker pass;
+  classification: `BUG / application`; no publication.
+- [x] Deliver [ticket-033](project/ticket-033/README.md): migrate legacy
+  unmarked Goal tool requirements to interpreter-compatible markers. State:
+  `DONE`; 536 tests, Ruff, governance, package and Docker pass;
+  classification: `BUG / application`; no publication.
+- [x] Deliver [ticket-032](project/ticket-032/README.md): expose the adopted
+  deterministic governance package through `goal governance check` and keep
+  the whole governance dispatcher headless until a delivery callback explicitly
+  requests configuration. Focused/full tests, package build, governance,
+  Docker and exact-HEAD downstream adoption pass. State: `DONE / DONE`;
+  classification: `FEATURE / application`; no publication.
+- [x] Deliver [ticket-030](project/ticket-030/README.md): bind tag evidence to
+  package identity and preserve target Python support when injecting developer
+  tools. State: `DONE`; classification: `BUG / application`.
+- [x] Deliver [ticket-029](project/ticket-029/README.md): keep governed
   publish-only artifacts on the exact clean remote base and make bootstrap
-  read-only. State: `IN_PROGRESS`; classification: `BUG / application`.
+  read-only. State: `DONE`; classification: `BUG / application`.
 - [ ] Deliver [ticket-028](project/ticket-028/README.md): publish the merged
   exact-head PR lifecycle repair as Goal 2.1.294 and verify a clean public
   install. State: `IN_PROGRESS`; classification: `SERVICE / integration`.
@@ -100,7 +127,9 @@
 > `ticket-016 DONE`; `ticket-017 DONE`; `ticket-018 DONE`;
 > `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 DONE`;
 > `ticket-023 DONE`; `ticket-024 DONE`; `ticket-025 DONE`;
-> `ticket-026 DONE`; `ticket-027 DONE`; `ticket-028 IN_PROGRESS`.
+> `ticket-026 DONE`; `ticket-027 DONE`; `ticket-028 IN_PROGRESS`;
+> `ticket-029 DONE`; `ticket-030 DONE`; `ticket-032 DONE`;
+> `ticket-033 DONE`; `ticket-034 DONE`; `ticket-035 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

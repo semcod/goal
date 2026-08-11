@@ -17,6 +17,8 @@ _SAFE_DOT_FILES = {
     ".github",
     ".gitlab-ci.yml",
     ".pre-commit-config.yaml",
+    # Versioned credential-free template created by the Python bootstrap.
+    ".env.example",
 }
 
 # Default problematic dot folders/files

@@ -23,6 +23,19 @@ from goal.governance.delivery import (
 
 DEFAULT_STANDARD_REPOSITORY = "https://github.com/wellmanifest/new-project.git"
 FULL_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+GOVERNANCE_PACKAGE_FILES = {
+    "validator": ".governance/governance_check.py",
+    "manifest": ".governance/manifest.json",
+    "lock": ".governance/manifest.lock.json",
+    "stack profiles": ".governance/stack-profiles.json",
+}
+WORKSPACE_LIFECYCLE_CHECKER = ".governance/workspace_lifecycle_check.py"
+RESERVED_VALIDATOR_OPTIONS = (
+    "--root",
+    "--manifest",
+    "--lock",
+    "--stack-profiles",
+)
 
 
 def _run_git(arguments, cwd=None):
@@ -72,6 +85,128 @@ def _checkout_standard(repository, revision, destination):
 @main.group()
 def governance():
     """Adopt and verify pinned repository governance."""
+
+
+def _reject_reserved_validator_options(arguments):
+    for argument in arguments:
+        if any(
+            argument == option or argument.startswith(f"{option}=")
+            for option in RESERVED_VALIDATOR_OPTIONS
+        ):
+            raise click.UsageError(
+                f"{argument.split('=', 1)[0]} is managed by Goal and cannot be overridden"
+            )
+
+
+@governance.command(
+    "check",
+    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
+)
+@click.option(
+    "--target-root",
+    default=".",
+    type=click.Path(file_okay=False, path_type=Path),
+    show_default=True,
+    help="Repository containing an adopted .governance package.",
+)
+@click.argument("validator_args", nargs=-1, type=click.UNPROCESSED)
+def governance_check(target_root, validator_args):
+    """Run the deterministic validator from the adopted governance package."""
+    target = target_root.resolve()
+    missing = [
+        relative
+        for relative in GOVERNANCE_PACKAGE_FILES.values()
+        if not (target / relative).is_file()
+    ]
+    if missing:
+        raise click.ClickException(
+            "adopted governance package is incomplete; missing: "
+            + ", ".join(missing)
+            + "; run `goal governance adopt` with a published source revision"
+        )
+
+    _reject_reserved_validator_options(validator_args)
+    command = [
+        sys.executable,
+        str(target / GOVERNANCE_PACKAGE_FILES["validator"]),
+        "--root",
+        str(target),
+        "--manifest",
+        GOVERNANCE_PACKAGE_FILES["manifest"],
+        "--lock",
+        GOVERNANCE_PACKAGE_FILES["lock"],
+        "--stack-profiles",
+        GOVERNANCE_PACKAGE_FILES["stack profiles"],
+        *validator_args,
+    ]
+    result = subprocess.run(
+        command,
+        cwd=target,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.stdout:
+        click.echo(result.stdout, nl=False)
+    if result.stderr:
+        click.echo(result.stderr, err=True, nl=False)
+    if result.returncode != 0:
+        raise click.exceptions.Exit(result.returncode)
+
+
+@governance.command("workspace-check")
+@click.option(
+    "--target-root",
+    default=".",
+    type=click.Path(file_okay=False, path_type=Path),
+    show_default=True,
+    help="Repository containing the adopted workspace lifecycle checker.",
+)
+@click.option(
+    "--workspace-root",
+    required=True,
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Directory whose immediate repository checkouts are audited.",
+)
+@click.option(
+    "--allow",
+    multiple=True,
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Exact active secondary checkout allowed for a non-terminal audit.",
+)
+@click.option("--format", "output_format", type=click.Choice(("text", "json")), default="text")
+def workspace_check(target_root, workspace_root, allow, output_format):
+    """Run the read-only checker from the adopted governance package."""
+    target = target_root.resolve()
+    checker = target / WORKSPACE_LIFECYCLE_CHECKER
+    if not checker.is_file():
+        raise click.ClickException(
+            f"adopted workspace lifecycle checker is missing: {WORKSPACE_LIFECYCLE_CHECKER}; "
+            "run `goal governance adopt` with a published source revision"
+        )
+
+    command = [
+        sys.executable,
+        str(checker),
+        "--workspace-root",
+        str(workspace_root.resolve()),
+    ]
+    for path in allow:
+        command.extend(("--allow", str(path.resolve())))
+    command.extend(("--format", output_format))
+    result = subprocess.run(
+        command,
+        cwd=target,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.stdout:
+        click.echo(result.stdout, nl=False)
+    if result.stderr:
+        click.echo(result.stderr, err=True, nl=False)
+    if result.returncode != 0:
+        raise click.exceptions.Exit(result.returncode)
 
 
 @governance.group("delivery-hook")
@@ -206,4 +341,11 @@ def adopt(standard_repository, source_revision, target_root, check, upgrade):
             raise click.exceptions.Exit(result.returncode)
 
 
-__all__ = ["governance", "adopt", "delivery_hook", "verify_delivery"]
+__all__ = [
+    "governance",
+    "governance_check",
+    "workspace_check",
+    "adopt",
+    "delivery_hook",
+    "verify_delivery",
+]

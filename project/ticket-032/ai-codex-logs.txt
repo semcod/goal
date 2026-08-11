@@ -1,0 +1,31 @@
+2026-08-11 authorization: user directed new-project to use Goal's packaged governance capability
+2026-08-11 evidence: Goal 2.1.294 exposes governance adopt and delivery commands but no standalone governance check
+2026-08-11 architecture: Goal will invoke the target's pinned validator; new-project retains policy ownership
+2026-08-11 base: authoritative origin/main=17b421b78acaa1fb526d5571c8071005eafe8508
+2026-08-11 focused validation: 8 passed; changed-file Ruff PASS
+2026-08-11 full validation: 531 passed, 2 skipped
+2026-08-11 package: uv build produced wheel and source distribution
+2026-08-11 governance: Goal real adopted package returned GOV-PASS with 0 errors and 0 warnings
+2026-08-11 glon: fail-closed missing adopted .governance package with goal governance adopt remediation
+2026-08-11 Docker: production image build PASS; offline governance help exposes check command
+2026-08-11 Docker finding: governance check entered interactive first-run user configuration before dispatch
+2026-08-11 plan amendment: add read-only/headless main CLI context for exact governance check invocation
+2026-08-11 headless regression: exact governance check skips interactive setup, config writes, warnings, version banner and update lookup
+2026-08-11 final focused validation: 9 governance tests and 20 governance/delivery integrity tests passed
+2026-08-11 final full validation: 532 passed, 2 skipped
+2026-08-11 final Ruff and governance: PASS
+2026-08-11 final package: uv build produced wheel and source distribution after the headless change
+2026-08-11 final Docker: clean offline image returned only the intended missing-adoption diagnostic; no first-run wizard or version banner
+2026-08-11 follow-up reproduction: goal governance adopt --target-root <temporary-fixop> created an untracked goal.yaml in the caller's new-project worktree before dispatch.
+2026-08-11 follow-up cleanup: both generated caller-side goal.yaml artifacts were removed after provenance was verified; neither entered a commit.
+2026-08-11 follow-up boundary: reuse ticket-032; goal/cli/__init__.py and tests/test_governance_cmd.py are already allowed and own this dispatcher behavior.
+2026-08-11 follow-up focused: uv run --frozen pytest -q tests/test_governance_cmd.py -> 10 passed.
+2026-08-11 follow-up Ruff: goal/cli/__init__.py and tests/test_governance_cmd.py -> PASS.
+2026-08-11 follow-up governance: GOV-PASS (0 errors, 0 warnings).
+2026-08-11 follow-up full: uv run --frozen pytest -q -> 533 passed, 2 skipped.
+2026-08-11 follow-up package: goal-2.1.294 wheel and sdist built outside the checkout.
+2026-08-11 follow-up Docker: digest-pinned production image built as sha256:6772b0ac7d938cd71d1633a8019f45cfffd5ace19fb0612bda3856919758cbc5.
+2026-08-12 follow-up implementation HEAD: 65e2cffccd086ea9c1b4d2670affb5e1f7737ab2.
+2026-08-12 exact-head integration: empty caller -> Goal preflight exit 1 -> fresh fixop target; managed plan plus missing TODO.md/project/TICKETS.md; caller remained empty.
+2026-08-12 exact-head integration: Goal --upgrade adopted combined standard 365ba23dc36bebaf2dc5cd3d1787d5069e306547; target-owned prerequisites were not created; caller remained empty.
+2026-08-12 external state: no push, pull request, merge, tag or publication.

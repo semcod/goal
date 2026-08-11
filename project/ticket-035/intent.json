@@ -1,0 +1,103 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-035",
+  "summary": "Commit generated workflow artifacts before final summary",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/push/core.py",
+    "goal/validators/dot_folders.py",
+    "goal/validators/gitignore.py",
+    "tests/test_gitignore_validator.py",
+    "tests/test_push_core_refactor.py",
+    "project/ticket-035/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "CHANGELOG.md",
+    ".env"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-034"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "17b421b78acaa1fb526d5571c8071005eafe8508",
+    "targetBranch": "main",
+    "outcome": "Goal commits generated slow-test workflow artifacts before summary and preserves safe environment templates with exact ignore rules",
+    "nonGoals": [
+      "No generic post-summary repository mutation",
+      "No versioning, dependency or publication change",
+      "No secret-file access or weakening of real credential detection"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move deterministic slow-ticket generation before commit and classify only the exact credential-free template and ignore patterns safely",
+      "components": [
+        {
+          "name": "push-workflow-finalization",
+          "paths": ["goal/push/core.py", "tests/test_push_core_refactor.py"]
+        },
+        {
+          "name": "bootstrap-file-safety",
+          "paths": [
+            "goal/validators/dot_folders.py",
+            "goal/validators/gitignore.py",
+            "tests/test_gitignore_validator.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert pre-commit artifact preparation and exact validator rules; prior post-summary dirty-worktree behavior returns"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_push_core_refactor.py"],
+        "evidence": "generated planfile ticket is staged and added to workflow files before commit"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_push_core_refactor.py"],
+        "evidence": "summary leaves the planfile byte-for-byte unchanged"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q tests/test_gitignore_validator.py"],
+        "evidence": "safe template and exact ignore-pattern cases pass"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/push/core.py goal/validators/dot_folders.py goal/validators/gitignore.py tests/test_gitignore_validator.py tests/test_push_core_refactor.py",
+          "./project/governance-check.sh",
+          "uv build",
+          "docker build ."
+        ],
+        "evidence": "focused, full, lint, governance, package and container checks pass"
+      }
+    ]
+  }
+}

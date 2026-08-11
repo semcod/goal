@@ -45,6 +45,25 @@ def run_git_local(*args, **kwargs) -> Any:
     return run_git(*args, **kwargs)
 
 
+def _prepare_slow_test_tickets(
+    ctx_obj: Dict[str, Any], files: List[str]
+) -> List[str]:
+    """Generate and stage slow-test tickets before the workflow commits."""
+    test_details = ctx_obj.get("test_details", {})
+    added_tickets = (
+        add_slow_test_tickets_to_planfile(test_details) if test_details else []
+    )
+    ctx_obj["added_slow_test_tickets"] = added_tickets
+    if not added_tickets:
+        return files
+
+    ticket_path = "project/planfile-tickets.yaml"
+    from goal.cli import stage_paths
+
+    stage_paths([ticket_path])
+    return list(dict.fromkeys([*files, ticket_path]))
+
+
 def output_final_summary(
     ctx_obj: Dict[str, Any],
     markdown: bool,
@@ -68,9 +87,7 @@ def output_final_summary(
     from goal.io.stdio import echo_via_markdown, use_markdown_stdio
 
     test_details = ctx_obj.get("test_details", {})
-    added_tickets = []
-    if test_details:
-        added_tickets = add_slow_test_tickets_to_planfile(test_details)
+    added_tickets = list(ctx_obj.get("added_slow_test_tickets", []))
 
     use_markdown = markdown or ctx_obj.get("markdown")
     is_all_mode = ctx_obj.get("yes") or use_markdown
@@ -520,6 +537,7 @@ def execute_push_workflow(
             project_types=project_types,
             include_decision=True,
             release_required=not skip_release,
+            allow_registry_ahead_repair=bool(ctx_obj.get("all_flags", False)),
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
@@ -621,6 +639,13 @@ def execute_push_workflow(
         commit_msg,
         commit_body,
     )
+
+    if clean_force_publish:
+        # This path intentionally creates no commit, so it must remain clean.
+        ctx_obj["added_slow_test_tickets"] = []
+    else:
+        files = _prepare_slow_test_tickets(ctx_obj, files)
+        stats = get_diff_stats()
 
     if clean_force_publish:
         click.echo(

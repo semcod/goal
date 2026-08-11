@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-030",
+  "summary": "Respect package identity and Python support during Goal bootstrap",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/version_state.py",
+    "goal/bootstrap/pyproject_costs_setup.py",
+    "tests/test_version_state.py",
+    "tests/test_pyproject_costs_setup.py",
+    "project/ticket-030/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "17b421b78acaa1fb526d5571c8071005eafe8508",
+    "targetBranch": "main",
+    "outcome": "Goal preserves the target package identity and supported Python range while resolving release and bootstrap prerequisites",
+    "nonGoals": [
+      "No release version or dependency-manifest change",
+      "No registry publication, push, merge or global installation",
+      "No redesign of non-Python package managers"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Filter Git release evidence at the version boundary using the current primary manifest identity, and encode tool interpreter floors directly in generated optional requirements",
+      "components": [
+        {
+          "name": "version-evidence-resolver",
+          "paths": ["goal/cli/version_state.py", "tests/test_version_state.py"]
+        },
+        {
+          "name": "python-bootstrap-requirements",
+          "paths": ["goal/bootstrap/pyproject_costs_setup.py", "tests/test_pyproject_costs_setup.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the four implementation/test files; Goal 2.1.294 remains published and immutable"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_version_state.py"],
+        "evidence": "renamed-package tags are excluded and matching tags remain authoritative"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_pyproject_costs_setup.py"],
+        "evidence": "generated requirements have compatible Python markers"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q", "ruff check goal/cli/version_state.py goal/bootstrap/pyproject_costs_setup.py tests/test_version_state.py tests/test_pyproject_costs_setup.py", "./project/governance-check.sh", "uv build", "docker build ."],
+        "evidence": "focused, full, changed-file lint, deterministic, package and container validation pass; existing global lint debt is recorded"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["goal check-versions", "goal -a --dry-run"],
+        "evidence": "glon resolves its own release line and broad Python support without side effects"
+      }
+    ]
+  }
+}

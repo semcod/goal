@@ -29,6 +29,9 @@ must validate exact remote source before work and enforce read-only bootstrap.
   merged `main`, while generated README metadata came from local `cf038b8`.
 - Added exact remote-head and clean-tree guards, scoped badge suppression and a
   post-bootstrap mutation gate; all 23 focused and 528 full tests pass.
+- Verified green Python 3.12/3.13 CI and exact-head approval, then merged PR
+  #60 as `17b421b78acaa1fb526d5571c8071005eafe8508` and confirmed remote branch
+  deletion.
 
 ## Blockers
 

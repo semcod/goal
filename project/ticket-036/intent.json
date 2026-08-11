@@ -1,0 +1,61 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-036",
+  "summary": "Run the adopted local workspace lifecycle checker through Goal",
+  "workstream": "application",
+  "classification": {"kind": "FEATURE", "priority": "P1", "origin": "requested"},
+  "allowedPaths": [
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_cmd.py",
+    "project/ticket-036/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "uv.lock",
+    "VERSION",
+    "CHANGELOG.md",
+    ".env"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-035"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8e142c7676875a041f1dba16b29647f28761a473",
+    "targetBranch": "main",
+    "outcome": "Goal exposes a headless read-only adapter for the immutable adopted workspace lifecycle checker",
+    "nonGoals": [
+      "No local policy duplication or destructive cleanup",
+      "No adoption, dependency, version or publication change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add a thin Click command that executes the adopted checker with explicit paths and preserves its process result",
+      "components": [
+        {"name": "governance-cli", "paths": ["goal/cli/governance_cmd.py", "tests/test_governance_cmd.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["goal governance workspace-check"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove the adapter; callers can execute the adopted checker directly"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-02", "commands": ["pytest -q tests/test_governance_cmd.py"], "evidence": "missing adopted checker fails closed"},
+      {"criterion": "AC-03", "commands": ["pytest -q tests/test_governance_cmd.py"], "evidence": "workspace root, allowlist and format reach a fixture checker headlessly"},
+      {"criterion": "AC-04", "commands": ["pytest -q tests/test_governance_cmd.py"], "evidence": "fixture output and nonzero status are preserved"},
+      {"criterion": "AC-05", "commands": ["pytest -q", "ruff check goal/cli/governance_cmd.py tests/test_governance_cmd.py", "./project/governance-check.sh"], "evidence": "focused and complete contracts pass"}
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-033",
+  "summary": "Migrate legacy development dependency markers",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/bootstrap/pyproject_costs_setup.py",
+    "tests/test_pyproject_costs_setup.py",
+    "project/ticket-033/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "CHANGELOG.md"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "17b421b78acaa1fb526d5571c8071005eafe8508",
+    "targetBranch": "main",
+    "outcome": "Goal migrates its legacy unmarked development-tool requirements to interpreter-compatible markers idempotently",
+    "nonGoals": [
+      "No dependency version or project metadata change",
+      "No version-evidence or delivery behavior change",
+      "No push, merge, publication or global installation"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Normalize the exact legacy specifications before the existing dependency-presence and insertion paths run",
+      "components": [
+        {
+          "name": "python-bootstrap-requirements",
+          "paths": [
+            "goal/bootstrap/pyproject_costs_setup.py",
+            "tests/test_pyproject_costs_setup.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the migration helper and focused regression test; newly generated marked dependencies remain unchanged"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_pyproject_costs_setup.py"],
+        "evidence": "legacy tool specifications acquire their declared Python markers"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_pyproject_costs_setup.py"],
+        "evidence": "a second migration pass is unchanged"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/bootstrap/pyproject_costs_setup.py tests/test_pyproject_costs_setup.py",
+          "./project/governance-check.sh",
+          "uv build",
+          "docker build ."
+        ],
+        "evidence": "focused, full, lint, governance, package and container checks pass"
+      }
+    ]
+  }
+}

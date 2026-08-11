@@ -6,6 +6,7 @@ import json
 import os
 import re
 import subprocess
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Mapping, Optional, Sequence
@@ -379,7 +380,91 @@ def collect_version_sources(
     return tuple(selected)
 
 
-def detect_git_tag_version() -> Optional[str]:
+def _normalized_package_identity(kind: str, name: str) -> tuple[str, str]:
+    normalized = name.strip().casefold()
+    if kind == "python":
+        normalized = re.sub(r"[-_.]+", "-", normalized)
+    return kind, normalized
+
+
+def _manifest_package_identity(
+    path: str, content: str
+) -> Optional[tuple[str, str]]:
+    try:
+        if path == "pyproject.toml":
+            document = tomllib.loads(content)
+            project = document.get("project") or {}
+            poetry = (document.get("tool") or {}).get("poetry") or {}
+            name = project.get("name") or poetry.get("name")
+            return (
+                _normalized_package_identity("python", name)
+                if isinstance(name, str) and name.strip()
+                else None
+            )
+        if path == "package.json":
+            name = json.loads(content).get("name")
+            return (
+                _normalized_package_identity("node", name)
+                if isinstance(name, str) and name.strip()
+                else None
+            )
+        if path == "Cargo.toml":
+            name = (tomllib.loads(content).get("package") or {}).get("name")
+            return (
+                _normalized_package_identity("rust", name)
+                if isinstance(name, str) and name.strip()
+                else None
+            )
+    except (json.JSONDecodeError, tomllib.TOMLDecodeError, TypeError, ValueError):
+        return None
+    return None
+
+
+def _current_package_identity(
+    project_types: Sequence[str],
+) -> Optional[tuple[str, str, str]]:
+    manifests = {
+        "python": "pyproject.toml",
+        "node": "package.json",
+        "nodejs": "package.json",
+        "rust": "Cargo.toml",
+    }
+    ordered_paths = [
+        manifests[kind] for kind in project_types if kind in manifests
+    ]
+    ordered_paths.extend(["pyproject.toml", "package.json", "Cargo.toml"])
+    for path in dict.fromkeys(ordered_paths):
+        try:
+            content = Path(path).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        identity = _manifest_package_identity(path, content)
+        if identity is not None:
+            return path, *identity
+    return None
+
+
+def _tag_matches_package_identity(
+    tag: str, current: tuple[str, str, str]
+) -> bool:
+    path, current_kind, current_name = current
+    try:
+        result = subprocess.run(
+            ["git", "show", f"{tag}:{path}"],
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return False
+    if result.returncode != 0:
+        return False
+    identity = _manifest_package_identity(path, result.stdout)
+    return identity == (current_kind, current_name)
+
+
+def detect_git_tag_version(
+    project_types: Sequence[str] = (),
+) -> Optional[str]:
     try:
         result = subprocess.run(
             ["git", "tag", "--merged", "HEAD", "--list"],
@@ -390,10 +475,14 @@ def detect_git_tag_version() -> Optional[str]:
         return None
     if result.returncode != 0:
         return None
+    current_identity = _current_package_identity(project_types)
     versions = []
     for tag in result.stdout.splitlines():
         value = normalize_version(tag)
-        if is_plain_version(value):
+        if is_plain_version(value) and (
+            current_identity is None
+            or _tag_matches_package_identity(tag, current_identity)
+        ):
             versions.append(value)
     return max(versions, key=version_key) if versions else None
 
@@ -543,9 +632,10 @@ def resolve_version_decision(
     project_types: Sequence[str] = (),
     registry_versions: Optional[Mapping[str, str]] = None,
     release_required: bool = True,
+    allow_registry_ahead_repair: bool = False,
 ) -> VersionDecision:
     """Resolve the release target without mutating the project."""
-    tag_version = detect_git_tag_version()
+    tag_version = detect_git_tag_version(project_types)
     initial_sources = collect_version_sources(config, tag_version)
     initial_values = [
         source.value for source in initial_sources if source.value is not None
@@ -620,7 +710,26 @@ def resolve_version_decision(
             key=version_key,
         )
         if regressions:
-            if forward or baseline not in local_versions:
+            registry_is_baseline = any(
+                label.startswith("registry:") and value == baseline
+                for label, value in baseline_candidates
+            )
+            uniform_local_version = (
+                next(iter(local_versions)) if len(local_versions) == 1 else None
+            )
+            # ``goal -a`` may recover from an interrupted/accidental adjacent
+            # publication, but must not turn a stale or internally inconsistent
+            # checkout into a new release automatically.
+            repair_registry_ahead = bool(
+                allow_registry_ahead_repair
+                and registry_is_baseline
+                and not forward
+                and uniform_local_version is not None
+                and bump_version(uniform_local_version, "patch") == baseline
+            )
+            if forward or (
+                baseline not in local_versions and not repair_registry_ahead
+            ):
                 raise VersionStateError(
                     "Local version state regresses behind released evidence",
                     [
@@ -631,10 +740,18 @@ def resolve_version_decision(
             current = baseline
             if release_required:
                 target = bump_version(baseline, bump)
-                reason = "normal-bump-with-repair"
+                reason = (
+                    "auto-bump-from-registry"
+                    if repair_registry_ahead
+                    else "normal-bump-with-repair"
+                )
             else:
                 target = baseline
-                reason = "released-partial-repair"
+                reason = (
+                    "auto-sync-to-registry"
+                    if repair_registry_ahead
+                    else "released-partial-repair"
+                )
             forward = []
         if len(forward) > 1:
             raise VersionStateError(

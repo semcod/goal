@@ -1,0 +1,93 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-032",
+  "summary": "Expose packaged governance check through Goal",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "goal/cli/governance_cmd.py",
+    "goal/cli/__init__.py",
+    "tests/test_governance_cmd.py",
+    "project/ticket-029/**",
+    "project/ticket-032/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".github/**",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "CHANGELOG.md"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "17b421b78acaa1fb526d5571c8071005eafe8508",
+    "targetBranch": "main",
+    "outcome": "Goal provides a headless governance dispatcher for checking and adopting a target repository's pinned new-project governance package",
+    "nonGoals": [
+      "No validator or policy reimplementation inside Goal",
+      "No removal of explicit configuration loading from delivery callbacks",
+      "No canonical new-project repository change in this ticket",
+      "No dependency, release, push, merge or publication change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use a read-only main context for the governance dispatcher and thin process adapters over the target's immutable package; delivery callbacks opt into configuration explicitly",
+      "components": [
+        {
+          "name": "governance-cli-adapter",
+          "paths": ["goal/cli/governance_cmd.py", "tests/test_governance_cmd.py"]
+        },
+        {
+          "name": "main-cli-context",
+          "paths": ["goal/cli/__init__.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the three implementation/test files; existing adoption and delivery commands remain unchanged"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_governance_cmd.py"],
+        "evidence": "CLI fixture verifies canonical invocation of the adopted validator and package paths"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_governance_cmd.py"],
+        "evidence": "CLI fixture verifies argument forwarding, output and exit status"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q tests/test_governance_cmd.py"],
+        "evidence": "CLI fixtures verify fail-closed package discovery and no interactive, mutable or update bootstrap"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["pytest -q", "ruff check goal/cli/__init__.py goal/cli/governance_cmd.py tests/test_governance_cmd.py", "./project/governance-check.sh", "uv build", "docker build ."],
+        "evidence": "focused, full, changed-file lint, governance, package and container checks pass"
+      }
+    ]
+  }
+}
