@@ -4,7 +4,8 @@
 
 - [ ] Deliver [ticket-033](project/ticket-033/README.md): migrate legacy
   unmarked Goal tool requirements to interpreter-compatible markers. State:
-  `IN_PROGRESS / EDIT`; classification: `BUG / application`.
+  `IN_PROGRESS / VALIDATION`; focused tests, Ruff and governance pass;
+  classification: `BUG / application`.
 - [x] Deliver [ticket-032](project/ticket-032/README.md): expose the adopted
   deterministic governance package through `goal governance check` and keep
   the whole governance dispatcher headless until a delivery callback explicitly

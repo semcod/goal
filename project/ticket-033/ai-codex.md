@@ -28,6 +28,9 @@ that the marker change was intended to remove.
   the original ungoverned commit remains unchanged on its pilot branch.
 - Corrected the delivery binding to the current target ref and selected class S
   for the declared 15-minute slice before committing any implementation file.
+- Migrated exact legacy unmarked specifications before existing presence and
+  insertion checks, retaining second-pass idempotence.
+- Passed the two focused tests, changed-file Ruff and governance validation.
 
 ## Blockers
 

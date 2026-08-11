@@ -6,3 +6,5 @@
 - No human participant identity or content was generated.
 - Bounded legacy dependency migration to one bootstrap module and one focused
   test module, with no version, manifest or publication changes.
+- Migrated the three exact historical tool specifications and added a TOML
+  regression proving both the marked result and second-pass idempotence.

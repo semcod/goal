@@ -3,7 +3,7 @@
 - **ID**: ticket-033
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -17,10 +17,17 @@ duplicating dependencies or changing unrelated project metadata.
 
 - [x] AC-01: The user's instruction to continue repairing Goal supplies
   bounded local execution authorization.
-- [ ] AC-02: Legacy unmarked Goal tool requirements are migrated to their
+- [x] AC-02: Legacy unmarked Goal tool requirements are migrated to their
   supported Python floors.
-- [ ] AC-03: Already marked files remain byte-for-byte idempotent.
+- [x] AC-03: Already marked files remain byte-for-byte idempotent.
 - [ ] AC-04: Focused/full tests, Ruff, governance, build and Docker pass.
+
+## Validation evidence
+
+- The focused bootstrap module reports `2 passed`.
+- Changed-file Ruff and deterministic governance pass.
+- Full-suite, package and container evidence is deferred to the combined
+  runtime validation after the remaining governed repairs are integrated.
 
 ## Session authorization
 

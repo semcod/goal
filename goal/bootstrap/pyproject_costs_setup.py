@@ -15,6 +15,10 @@ _REQUIRED_DEV_DEPS = (
     ("costs", '"costs>=0.1.53; python_version >= \'3.9\'"'),
     ("pfix", '"pfix>=0.1.60; python_version >= \'3.10\'"'),
 )
+_LEGACY_DEV_DEP_REPLACEMENTS = tuple(
+    (spec.split(";", 1)[0] + '"', spec)
+    for _, spec in _REQUIRED_DEV_DEPS
+)
 
 
 def _find_dep_list_end(content: str, start_idx: int) -> int:
@@ -102,13 +106,19 @@ def _try_add_deps(content: str) -> tuple[str, bool]:
 
     Returns (updated_content, changed).
     """
+    original = content
+    for legacy_spec, marked_spec in _LEGACY_DEV_DEP_REPLACEMENTS:
+        content = content.replace(legacy_spec, marked_spec)
+    upgraded = content != original
+
     if all(name in content.lower() for name, _ in _REQUIRED_DEV_DEPS):
-        return content, False
+        return content, upgraded
 
     content, changed = _try_merge_optional_dev_deps(content)
     if changed:
         return content, True
-    return _try_merge_hatch_default_deps(content)
+    content, changed = _try_merge_hatch_default_deps(content)
+    return content, changed or upgraded
 
 
 def _add_deps_to_section_match(
