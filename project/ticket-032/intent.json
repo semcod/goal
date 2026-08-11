@@ -32,9 +32,10 @@
   "delivery": {
     "acceptedBaseSha": "17b421b78acaa1fb526d5571c8071005eafe8508",
     "targetBranch": "main",
-    "outcome": "Goal provides the single command used to execute a target repository's pinned new-project governance package",
+    "outcome": "Goal provides a headless governance dispatcher for checking and adopting a target repository's pinned new-project governance package",
     "nonGoals": [
       "No validator or policy reimplementation inside Goal",
+      "No removal of explicit configuration loading from delivery callbacks",
       "No canonical new-project repository change in this ticket",
       "No dependency, release, push, merge or publication change"
     ],
@@ -48,7 +49,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Add a thin Goal CLI process adapter that executes the validator from the target's immutable adopted governance package",
+      "decision": "Use a read-only main context for the governance dispatcher and thin process adapters over the target's immutable package; delivery callbacks opt into configuration explicitly",
       "components": [
         {
           "name": "governance-cli-adapter",

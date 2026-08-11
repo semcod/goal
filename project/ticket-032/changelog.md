@@ -16,3 +16,6 @@
   regression proving mutable, interactive and update setup is never called.
 - Passed 9 focused, 20 governance/delivery and 532 full tests plus Ruff,
   governance, package build and clean offline production-container checks.
+- Reopened the same adapter scope after exact-SHA adoption created `goal.yaml`
+  in the caller despite a different `--target-root`; planned a group-wide
+  read-only dispatcher boundary while preserving explicit delivery config.

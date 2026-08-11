@@ -16,3 +16,6 @@
 2026-08-11 final Ruff and governance: PASS
 2026-08-11 final package: uv build produced wheel and source distribution after the headless change
 2026-08-11 final Docker: clean offline image returned only the intended missing-adoption diagnostic; no first-run wizard or version banner
+2026-08-11 follow-up reproduction: goal governance adopt --target-root <temporary-fixop> created an untracked goal.yaml in the caller's new-project worktree before dispatch.
+2026-08-11 follow-up cleanup: both generated caller-side goal.yaml artifacts were removed after provenance was verified; neither entered a commit.
+2026-08-11 follow-up boundary: reuse ticket-032; goal/cli/__init__.py and tests/test_governance_cmd.py are already allowed and own this dispatcher behavior.

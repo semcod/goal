@@ -22,6 +22,9 @@ adapter closes that gap without moving policy ownership into Goal.
 5. Leave `new-project` wrapper migration to its own governed ticket.
 6. Ensure this gate bypasses Goal's interactive user bootstrap, mutable project
    configuration and network-facing version update path.
+7. Extend the read-only dispatcher boundary to the governance group so
+   `adopt`, its help path and target-root execution cannot create `goal.yaml`
+   in the caller; retain explicit config opt-in in delivery callbacks.
 
 ## Actual changes
 
@@ -43,9 +46,14 @@ adapter closes that gap without moving policy ownership into Goal.
   expected fail-closed adoption result.
 - Removed unused imports exposed by changed-file Ruff while preserving the
   existing public `sync_all_versions` re-export.
+- Reproduced a remaining dispatcher side effect during exact-SHA downstream
+  validation: `governance adopt` created `goal.yaml` in the caller even though
+  `--target-root` named another repository. Reopened this same-scope ticket and
+  recorded the bounded read-only group repair before editing code.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
+- None inside the recorded intent; proceed with the same bounded session
+  authorization and no second confirmation.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.
