@@ -8,3 +8,5 @@
 2026-08-11 governance: Goal real adopted package returned GOV-PASS with 0 errors and 0 warnings
 2026-08-11 glon: fail-closed missing adopted .governance package with goal governance adopt remediation
 2026-08-11 Docker: production image build PASS; offline governance help exposes check command
+2026-08-11 Docker finding: governance check entered interactive first-run user configuration before dispatch
+2026-08-11 plan amendment: add read-only/headless main CLI context for exact governance check invocation

@@ -10,3 +10,5 @@
   argument/output/exit forwarding and fail-closed adoption diagnostics.
 - Added four focused CLI regressions and passed the full test, governance,
   package and production-container validation matrix.
+- Expanded the bounded adapter plan after container validation proved that
+  Goal's main callback still invoked its unrelated interactive first-run path.

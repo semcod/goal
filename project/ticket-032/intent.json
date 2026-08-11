@@ -10,6 +10,7 @@
   },
   "allowedPaths": [
     "goal/cli/governance_cmd.py",
+    "goal/cli/__init__.py",
     "tests/test_governance_cmd.py",
     "project/ticket-029/**",
     "project/ticket-032/**",
@@ -40,8 +41,8 @@
     "complexity": "S",
     "estimatedMinutes": 25,
     "budgets": {
-      "maxImplementationFiles": 2,
-      "maxAffectedComponents": 1,
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
@@ -52,6 +53,10 @@
         {
           "name": "governance-cli-adapter",
           "paths": ["goal/cli/governance_cmd.py", "tests/test_governance_cmd.py"]
+        },
+        {
+          "name": "main-cli-context",
+          "paths": ["goal/cli/__init__.py"]
         }
       ],
       "responsibilityChanges": false,
@@ -75,7 +80,7 @@
       {
         "criterion": "AC-04",
         "commands": ["pytest -q tests/test_governance_cmd.py"],
-        "evidence": "CLI fixture verifies fail-closed package discovery"
+        "evidence": "CLI fixtures verify fail-closed package discovery and no interactive, mutable or update bootstrap"
       },
       {
         "criterion": "AC-05",

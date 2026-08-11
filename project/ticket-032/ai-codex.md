@@ -20,6 +20,8 @@ adapter closes that gap without moving policy ownership into Goal.
 3. Preserve process output and exit status, including fail-closed setup errors.
 4. Add CLI regressions and run the full Goal validation contract.
 5. Leave `new-project` wrapper migration to its own governed ticket.
+6. Ensure this gate bypasses Goal's interactive user bootstrap, mutable project
+   configuration and network-facing version update path.
 
 ## Actual changes
 
@@ -34,6 +36,8 @@ adapter closes that gap without moving policy ownership into Goal.
   focused and 531 full tests, Ruff, governance, build and Docker validation.
 - Verified the real Goal package passes and `glon` reports a precise missing
   adoption error before any mutation.
+- Container validation exposed the first-run Goal wizard before subcommand
+  execution; the bounded plan now includes a read-only main-context bypass.
 
 ## Blockers
 
