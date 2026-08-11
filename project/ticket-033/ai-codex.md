@@ -31,6 +31,8 @@ that the marker change was intended to remove.
 - Migrated exact legacy unmarked specifications before existing presence and
   insertion checks, retaining second-pass idempotence.
 - Passed the two focused tests, changed-file Ruff and governance validation.
+- Passed 536 full tests with 2 skips, wheel/sdist build and the production
+  Docker build, then closed the local ticket without external delivery.
 
 ## Blockers
 

@@ -2,8 +2,8 @@
 
 - **ID**: ticket-033
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -20,14 +20,17 @@ duplicating dependencies or changing unrelated project metadata.
 - [x] AC-02: Legacy unmarked Goal tool requirements are migrated to their
   supported Python floors.
 - [x] AC-03: Already marked files remain byte-for-byte idempotent.
-- [ ] AC-04: Focused/full tests, Ruff, governance, build and Docker pass.
+- [x] AC-04: Focused/full tests, Ruff, governance, build and Docker pass.
 
 ## Validation evidence
 
 - The focused bootstrap module reports `2 passed`.
 - Changed-file Ruff and deterministic governance pass.
-- Full-suite, package and container evidence is deferred to the combined
-  runtime validation after the remaining governed repairs are integrated.
+- The full suite reports `536 passed, 2 skipped`.
+- `uv build` produced wheel and source distribution under
+  `/tmp/goal-ticket033-build.7WoQJP`.
+- The production Docker build passed and produced local image digest
+  `sha256:8d18a624564e...`.
 
 ## Session authorization
 

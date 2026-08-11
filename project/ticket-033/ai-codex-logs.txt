@@ -4,3 +4,7 @@
 2026-08-12 plan correction: delivery class S permits the declared 15 minutes; scope and architecture unchanged
 2026-08-12 implementation: exact legacy Goal/costs/pfix specs gain Python-floor markers
 2026-08-12 focused validation: 2 passed; changed-file Ruff PASS; governance PASS
+2026-08-12 full validation: 536 passed, 2 skipped
+2026-08-12 package: wheel and sdist built under /tmp/goal-ticket033-build.7WoQJP
+2026-08-12 Docker: PASS; local image sha256:8d18a624564e6aab0ea0a0382fc27c742e46e22dd54a0aab8b74beb657d4a545
+2026-08-12 closure: ticket advanced from VALIDATION to DONE; no external delivery

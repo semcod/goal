@@ -2,10 +2,10 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-033](project/ticket-033/README.md): migrate legacy
+- [x] Deliver [ticket-033](project/ticket-033/README.md): migrate legacy
   unmarked Goal tool requirements to interpreter-compatible markers. State:
-  `IN_PROGRESS / VALIDATION`; focused tests, Ruff and governance pass;
-  classification: `BUG / application`.
+  `DONE`; 536 tests, Ruff, governance, package and Docker pass;
+  classification: `BUG / application`; no publication.
 - [x] Deliver [ticket-032](project/ticket-032/README.md): expose the adopted
   deterministic governance package through `goal governance check` and keep
   the whole governance dispatcher headless until a delivery callback explicitly
@@ -115,7 +115,7 @@
 > `ticket-023 DONE`; `ticket-024 DONE`; `ticket-025 DONE`;
 > `ticket-026 DONE`; `ticket-027 DONE`; `ticket-028 IN_PROGRESS`;
 > `ticket-029 DONE`; `ticket-030 DONE`; `ticket-032 DONE`;
-> `ticket-033 IN_PROGRESS`.
+> `ticket-033 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
