@@ -3,3 +3,7 @@
 2026-08-12 plan: pre-commit slow-ticket artifact plus exact environment-template safety rules
 2026-08-12 implementation: stage slow-ticket planfile before commit; summary read-only; exact template safety
 2026-08-12 focused validation: 20 passed; Ruff PASS; governance PASS
+2026-08-12 combined full validation: 545 passed, 2 skipped
+2026-08-12 package: wheel and sdist built under /tmp/goal-ticket035-build.ejlz5P
+2026-08-12 Docker: PASS; local image sha256:46e7c9f31597b359885b9f227d13e67096cbe5122fbd38fa0d8e80cac0cf2d65
+2026-08-12 closure: ticket advanced from VALIDATION to DONE; no external delivery

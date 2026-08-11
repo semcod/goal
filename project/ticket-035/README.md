@@ -2,8 +2,8 @@
 
 - **ID**: ticket-035
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -23,7 +23,7 @@ rather than misleading substrings.
 - [x] AC-03: Final summary rendering cannot mutate the planfile.
 - [x] AC-04: `.env.example` is considered safe and exact `.gitignore` pattern
   comparison is idempotent.
-- [ ] AC-05: Focused/full tests, Ruff, governance, build and Docker pass.
+- [x] AC-05: Focused/full tests, Ruff, governance, build and Docker pass.
 
 ## Validation evidence
 
@@ -31,6 +31,10 @@ rather than misleading substrings.
 - The Git fixture proves the planfile is staged before commit; the summary
   fixture proves byte-for-byte read-only behavior.
 - Changed-file Ruff and deterministic governance pass.
+- The combined runtime suite reports `545 passed, 2 skipped`; wheel and sdist
+  were built under `/tmp/goal-ticket035-build.ejlz5P`.
+- The production Docker build passed with local image digest
+  `sha256:46e7c9f31597...`.
 
 ## Session authorization
 

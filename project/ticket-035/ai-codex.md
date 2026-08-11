@@ -32,6 +32,8 @@ could falsely claim an exact ignore rule already existed.
   execution mutation-free.
 - Added exact environment-template and ignore-pattern safety regressions; 20
   focused tests, changed-file Ruff and governance pass.
+- Passed the combined 545-test suite with 2 skips, changed-surface Ruff,
+  wheel/sdist and production Docker build, then closed the local ticket.
 
 ## Blockers
 
