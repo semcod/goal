@@ -10,3 +10,9 @@
 2026-08-11 Docker: production image build PASS; offline governance help exposes check command
 2026-08-11 Docker finding: governance check entered interactive first-run user configuration before dispatch
 2026-08-11 plan amendment: add read-only/headless main CLI context for exact governance check invocation
+2026-08-11 headless regression: exact governance check skips interactive setup, config writes, warnings, version banner and update lookup
+2026-08-11 final focused validation: 9 governance tests and 20 governance/delivery integrity tests passed
+2026-08-11 final full validation: 532 passed, 2 skipped
+2026-08-11 final Ruff and governance: PASS
+2026-08-11 final package: uv build produced wheel and source distribution after the headless change
+2026-08-11 final Docker: clean offline image returned only the intended missing-adoption diagnostic; no first-run wizard or version banner

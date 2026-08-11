@@ -32,12 +32,17 @@ adapter closes that gap without moving policy ownership into Goal.
 - Reserved manifest, lock, root and stack-profile options to prevent callers
   from escaping the pinned package, while forwarding ordinary validator flags,
   output and exact exit status.
-- Added success, nonzero, missing-package and override regressions; passed 8
-  focused and 531 full tests, Ruff, governance, build and Docker validation.
+- Added success, nonzero, missing-package, override and read-only-context
+  regressions; passed 9 focused, 20 governance/delivery and 532 full tests,
+  Ruff, governance, build and Docker validation.
 - Verified the real Goal package passes and `glon` reports a precise missing
   adoption error before any mutation.
-- Container validation exposed the first-run Goal wizard before subcommand
-  execution; the bounded plan now includes a read-only main-context bypass.
+- Made the exact `governance check` dispatch path read-only and headless: it
+  skips interactive user setup, config creation, binary warnings, the version
+  banner and update lookup. A clean offline container now reaches only the
+  expected fail-closed adoption result.
+- Removed unused imports exposed by changed-file Ruff while preserving the
+  existing public `sync_all_versions` re-export.
 
 ## Blockers
 

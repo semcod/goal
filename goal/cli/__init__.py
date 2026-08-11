@@ -1,12 +1,11 @@
 """Goal CLI package - Split from monolithic cli.py for better maintainability."""
 
 import os
-import re
 import shlex
 import subprocess
 import sys
 from importlib import import_module
-from typing import List, Dict, Any, Optional
+from typing import Any, List, Optional
 
 import click
 import goal
@@ -20,9 +19,9 @@ try:
 except ImportError:
     _HAS_NFO = False
 
-from goal.git_ops import run_git, read_ticket, read_tickert, apply_ticket_prefix
-from goal.config import GoalConfig, ensure_config, init_config, load_config
-from goal.user_config import get_user_config, initialize_user_config, show_user_config
+from goal.git_ops import read_ticket, read_tickert, apply_ticket_prefix
+from goal.config import ensure_config, load_config
+from goal.user_config import get_user_config
 from goal.cli_helpers import split_paths_by_type, stage_paths, confirm, strip_ansi
 from goal.pyenv_health import diagnose as _diagnose_broken_python_env
 from goal.pyenv_health import repair as _repair_broken_python_env
@@ -418,6 +417,7 @@ def _configure_main_context(
     config_path,
     abstraction,
     delivery_mode,
+    read_only_governance=False,
 ) -> None:
     ctx.ensure_object(dict)
     ctx.obj["bump"] = bump
@@ -434,7 +434,9 @@ def _configure_main_context(
     ctx.obj["abstraction"] = abstraction
     ctx.obj["all_flags"] = all_flags
     ctx.obj["delivery_mode"] = delivery_mode
-    if config_path:
+    if read_only_governance:
+        ctx.obj["config"] = load_config(config_path) if config_path else load_config()
+    elif config_path:
         ctx.obj["config"] = load_config(config_path)
     elif dry_run:
         # Dry-run must be observably read-only. ensure_config can create a
@@ -442,7 +444,7 @@ def _configure_main_context(
         ctx.obj["config"] = load_config()
     else:
         ctx.obj["config"] = ensure_config()
-    ctx.obj["user_config"] = get_user_config()
+    ctx.obj["user_config"] = None if read_only_governance else get_user_config()
 
 
 class GoalGroup(click.Group):
@@ -541,6 +543,10 @@ class GoalGroup(click.Group):
                 opts.append(a)
                 continue
             positionals.append(a)
+
+        ctx.meta["goal_read_only_governance"] = (
+            len(positionals) >= 2 and positionals[:2] == ["governance", "check"]
+        )
 
         # `auto` is a word-form of the -a/--all flag, so `goal auto ...` behaves
         # exactly like `goal -a ...` (auto → push, auto ./* → sweep, auto all →
@@ -659,10 +665,11 @@ def main(
     nfo_sink,
 ) -> None:
     """Goal - Automated git push with smart commit messages."""
+    read_only_governance = bool(ctx.meta.get("goal_read_only_governance"))
     # Skip version banner for help requests to avoid blocking help output
     # Check both sys.argv and Click's resilient_parsing (used for --help)
     is_help_request = "--help" in sys.argv or "-h" in sys.argv or ctx.resilient_parsing
-    if not is_help_request:
+    if not is_help_request and not read_only_governance:
         _warn_goal_binary_mismatch()
         _warn_wheel_shadows_editable()
         latest_version = _show_goal_version_banner()
@@ -686,6 +693,7 @@ def main(
         config_path,
         abstraction,
         delivery_mode,
+        read_only_governance,
     )
 
 
@@ -693,7 +701,7 @@ def main(
 load_command_modules()
 
 # Import version functions for external access
-from .version import sync_all_versions
+from .version import sync_all_versions  # noqa: E402
 
 __all__ = [
     "main",

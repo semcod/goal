@@ -63,7 +63,7 @@
       "interfaceChanges": [],
       "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
-      "rollback": "Revert the two implementation/test files; existing adoption and delivery commands remain unchanged"
+      "rollback": "Revert the three implementation/test files; existing adoption and delivery commands remain unchanged"
     },
     "runtimeDependencies": [],
     "validation": [
@@ -84,7 +84,7 @@
       },
       {
         "criterion": "AC-05",
-        "commands": ["pytest -q", "ruff check goal/cli/governance_cmd.py tests/test_governance_cmd.py", "./project/governance-check.sh", "uv build", "docker build ."],
+        "commands": ["pytest -q", "ruff check goal/cli/__init__.py goal/cli/governance_cmd.py tests/test_governance_cmd.py", "./project/governance-check.sh", "uv build", "docker build ."],
         "evidence": "focused, full, changed-file lint, governance, package and container checks pass"
       }
     ]

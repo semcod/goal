@@ -12,3 +12,7 @@
   package and production-container validation matrix.
 - Expanded the bounded adapter plan after container validation proved that
   Goal's main callback still invoked its unrelated interactive first-run path.
+- Added a read-only main context for the exact governance check dispatch and a
+  regression proving mutable, interactive and update setup is never called.
+- Passed 9 focused, 20 governance/delivery and 532 full tests plus Ruff,
+  governance, package build and clean offline production-container checks.
