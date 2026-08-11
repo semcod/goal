@@ -24,3 +24,7 @@
   without implicit project/user setup.
 - Passed focused/full Python, Ruff, governance, package and Docker validation;
   moved the ticket back to `IN_PROGRESS / VALIDATION` for exact-HEAD replay.
+- Passed exact-HEAD Goal preflight/adoption from a separate empty caller into a
+  fresh downstream target using combined standard `365ba23`; no caller config
+  or other artifact was created.
+- Marked the ticket `DONE / DONE`; no external delivery occurred.

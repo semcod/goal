@@ -56,10 +56,15 @@ adapter closes that gap without moving policy ownership into Goal.
   setup and verifies target output plus absence of caller-side `goal.yaml`.
 - Passed 10 focused and 533 full tests (2 skipped), Ruff, governance,
   wheel/sdist construction and the production Docker build.
+- Replayed exact implementation HEAD `65e2cff` from an empty caller against a
+  fresh `fixop` target and combined standard `365ba23`; both preflight and
+  adoption preserved output, target ownership and an empty caller directory.
+- Completed the local adapter ticket without push, merge or publication.
 
 ## Blockers
 
-- None inside the recorded intent; exact-HEAD downstream integration remains
-  before local closure.
+- None inside the recorded intent.
+- New authority remains required for destructive action, secret access, new
+  external coordination, material objective expansion and trusted merge.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.

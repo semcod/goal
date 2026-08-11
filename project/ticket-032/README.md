@@ -2,8 +2,8 @@
 
 - **ID**: ticket-032
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -56,6 +56,10 @@ code and policy data.
 - The updated branch passes 10 focused and 533 full tests with 2 skips, Ruff,
   deterministic governance, wheel/sdist build and the digest-pinned production
   Docker build (`sha256:6772b0ac7d93...`).
+- Exact implementation HEAD `65e2cff` ran the combined standard `365ba23`
+  through Goal from a separate empty caller into a fresh `fixop` target.
+  Preflight/adoption retained managed output and prerequisite reporting while
+  the caller remained completely empty before and after both invocations.
 
 ## Boundary
 

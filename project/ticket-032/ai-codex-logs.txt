@@ -25,3 +25,7 @@
 2026-08-11 follow-up full: uv run --frozen pytest -q -> 533 passed, 2 skipped.
 2026-08-11 follow-up package: goal-2.1.294 wheel and sdist built outside the checkout.
 2026-08-11 follow-up Docker: digest-pinned production image built as sha256:6772b0ac7d938cd71d1633a8019f45cfffd5ace19fb0612bda3856919758cbc5.
+2026-08-12 follow-up implementation HEAD: 65e2cffccd086ea9c1b4d2670affb5e1f7737ab2.
+2026-08-12 exact-head integration: empty caller -> Goal preflight exit 1 -> fresh fixop target; managed plan plus missing TODO.md/project/TICKETS.md; caller remained empty.
+2026-08-12 exact-head integration: Goal --upgrade adopted combined standard 365ba23dc36bebaf2dc5cd3d1787d5069e306547; target-owned prerequisites were not created; caller remained empty.
+2026-08-12 external state: no push, pull request, merge, tag or publication.
