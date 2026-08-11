@@ -5,3 +5,5 @@
 2026-08-11 full validation: 528 passed, 2 skipped; build and governance PASS
 2026-08-11 Docker: production build PASS; offline CLI reports Goal 2.1.294
 2026-08-11 version decision: public baseline 2.1.294, normal-bump -> 2.1.295; carriers deferred to integration
+2026-08-11 merge: PR #60 exact head 0db32811a8c54d79f5c086d7c09e016882e1d1cc approved; Python 3.12/3.13 CI PASS
+2026-08-11 merge: merge commit 17b421b78acaa1fb526d5571c8071005eafe8508; remote ticket branch deleted

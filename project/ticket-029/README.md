@@ -2,8 +2,8 @@
 
 - **ID**: ticket-029
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-10
 
 ## Goal and scope
@@ -22,7 +22,7 @@ the validator-approved Git tree without an intermediate local commit.
 - [x] AC-03: `publish-only` suppresses Goal's bootstrap badge mutation without
   leaking the Goal-only environment switch into project tests.
 - [x] AC-04: A post-bootstrap mutation fails closed before staging or commit.
-- [ ] AC-05: Focused, full, governance and Docker validation pass, followed by
+- [x] AC-05: Focused, full, governance and Docker validation pass, followed by
   target CI and exact-head validator approval.
 
 ## Validation evidence
@@ -33,6 +33,10 @@ the validator-approved Git tree without an intermediate local commit.
 - The production Docker image builds and reports Goal 2.1.294 offline.
 - Goal correctly selects `normal-bump -> 2.1.295`; version carriers remain
   outside this application ticket and are deferred to integration.
+- PR #60 passed Python 3.12 and 3.13 CI, received exact-head approval for
+  `0db32811a8c54d79f5c086d7c09e016882e1d1cc`, and merged as
+  `17b421b78acaa1fb526d5571c8071005eafe8508`.
+- The merged ticket branch was removed from the remote.
 
 ## Session authorization
 
