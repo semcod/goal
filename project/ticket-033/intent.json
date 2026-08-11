@@ -27,7 +27,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "d5aa14f80de5394ecf2490975e36390ac5ce744d",
+    "acceptedBaseSha": "17b421b78acaa1fb526d5571c8071005eafe8508",
     "targetBranch": "main",
     "outcome": "Goal migrates its legacy unmarked development-tool requirements to interpreter-compatible markers idempotently",
     "nonGoals": [
@@ -35,7 +35,7 @@
       "No version-evidence or delivery behavior change",
       "No push, merge, publication or global installation"
     ],
-    "complexity": "XS",
+    "complexity": "S",
     "estimatedMinutes": 15,
     "budgets": {
       "maxImplementationFiles": 2,

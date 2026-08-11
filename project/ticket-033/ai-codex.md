@@ -26,6 +26,8 @@ that the marker change was intended to remove.
   from the request to execute this work.
 - Reconstructed the plan before applying the already tested experimental patch;
   the original ungoverned commit remains unchanged on its pilot branch.
+- Corrected the delivery binding to the current target ref and selected class S
+  for the declared 15-minute slice before committing any implementation file.
 
 ## Blockers
 

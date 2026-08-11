@@ -1,3 +1,4 @@
 2026-08-12 authorization: user requested continued local Goal repair
-2026-08-12 accepted base: d5aa14f80de5394ecf2490975e36390ac5ce744d
+2026-08-12 accepted base correction: origin/main=17b421b78acaa1fb526d5571c8071005eafe8508
 2026-08-12 plan: migrate only exact legacy Goal-generated dev requirements and prove idempotence
+2026-08-12 plan correction: delivery class S permits the declared 15 minutes; scope and architecture unchanged
