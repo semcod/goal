@@ -13,7 +13,6 @@
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md",
-    "pyproject.toml",
     "uv.lock",
     "VERSION",
     "CHANGELOG.md",
@@ -60,4 +59,3 @@
     ]
   }
 }
-

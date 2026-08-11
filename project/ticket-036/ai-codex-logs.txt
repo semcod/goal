@@ -1,3 +1,5 @@
 [2026-08-12] Planned adopted workspace lifecycle checker dispatch.
 [2026-08-12] Added workspace-check command and exact forwarding tests.
 [2026-08-12] PASS: 12 focused; 547 full + 2 skipped; Ruff; governance.
+[2026-08-12] Raw push blocked by governed hook; retained IN_PROGRESS/PUBLICATION for Goal delivery.
+[2026-08-12] Bootstrap proposed Python markers outside ticket ownership; excluded them. GOAL_AUTO_FIX leakage was rejected by its test.

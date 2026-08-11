@@ -2,8 +2,8 @@
 
 - **ID**: ticket-036
 - **Owner**: unresolved:human
-- **Status**: DONE
-- **Workflow state**: DONE
+- **Status**: IN_PROGRESS
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -30,6 +30,8 @@ policy and never deletes a worktree, clone or branch.
 - The full suite reports 547 passed and 2 skipped.
 - Changed-file Ruff and the deterministic governance gate pass.
 - No cleanup, adoption, version change or external publication was performed.
+- Local validation is complete; the ticket remains active until the reviewed
+  branch is integrated and a governance-only closure is recorded on `main`.
 
 ## Boundary
 

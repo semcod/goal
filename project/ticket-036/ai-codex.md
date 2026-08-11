@@ -29,4 +29,5 @@ terminal audit without embedding policy or destructive behavior in Goal.
 
 ## Blockers
 
-- None. Publication of the combined Goal branch remains outside this ticket.
+- Awaiting authorized pull-request delivery, CI and merge before terminal
+  closure on the integrated default branch.

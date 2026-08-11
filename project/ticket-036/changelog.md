@@ -5,3 +5,4 @@
 - Planned a read-only Goal adapter for the adopted workspace checker.
 - Added the headless command, exact argument forwarding and fail-closed tests.
 - Passed focused/full tests, Ruff and deterministic governance.
+- Kept the implementation ticket active in `PUBLICATION` until trusted merge.
