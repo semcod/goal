@@ -2,6 +2,9 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-035](project/ticket-035/README.md): stage generated
+  slow-test tickets before commit and preserve exact safe bootstrap templates.
+  State: `IN_PROGRESS / EDIT`; classification: `BUG / application`.
 - [x] Deliver [ticket-034](project/ticket-034/README.md): let `goal -a`
   recover only a uniform local version exactly one patch behind the registry.
   State: `DONE`; 541 tests, Ruff, governance, package and Docker pass;
@@ -119,7 +122,7 @@
 > `ticket-023 DONE`; `ticket-024 DONE`; `ticket-025 DONE`;
 > `ticket-026 DONE`; `ticket-027 DONE`; `ticket-028 IN_PROGRESS`;
 > `ticket-029 DONE`; `ticket-030 DONE`; `ticket-032 DONE`;
-> `ticket-033 DONE`; `ticket-034 DONE`.
+> `ticket-033 DONE`; `ticket-034 DONE`; `ticket-035 IN_PROGRESS`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

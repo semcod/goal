@@ -1,0 +1,3 @@
+2026-08-12 authorization: user requested continued local Goal repair
+2026-08-12 accepted base: origin/main=17b421b78acaa1fb526d5571c8071005eafe8508
+2026-08-12 plan: pre-commit slow-ticket artifact plus exact environment-template safety rules
