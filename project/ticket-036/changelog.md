@@ -3,4 +3,5 @@
 ## [0.1.0] - 2026-08-12
 
 - Planned a read-only Goal adapter for the adopted workspace checker.
-
+- Added the headless command, exact argument forwarding and fail-closed tests.
+- Passed focused/full tests, Ruff and deterministic governance.

@@ -1,2 +1,3 @@
 [2026-08-12] Planned adopted workspace lifecycle checker dispatch.
-
+[2026-08-12] Added workspace-check command and exact forwarding tests.
+[2026-08-12] PASS: 12 focused; 547 full + 2 skipped; Ruff; governance.

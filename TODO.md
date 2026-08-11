@@ -2,9 +2,10 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-036](project/ticket-036/README.md): run the immutable
+- [x] Deliver [ticket-036](project/ticket-036/README.md): run the immutable
   adopted workspace lifecycle checker through a headless Goal command. State:
-  `IN_PROGRESS / EDIT`; classification: `FEATURE / application`.
+  `DONE / DONE`; 12 focused and 547 full tests pass (2 skipped), with Ruff and
+  governance green; classification: `FEATURE / application`; no publication.
 
 - [x] Deliver [ticket-035](project/ticket-035/README.md): stage generated
   slow-test tickets before commit and preserve exact safe bootstrap templates.

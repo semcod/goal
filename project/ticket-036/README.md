@@ -2,8 +2,8 @@
 
 - **ID**: ticket-036
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -16,16 +16,23 @@ policy and never deletes a worktree, clone or branch.
 ## Acceptance criteria
 
 - [x] AC-01: The user's request authorizes this bounded local Goal adapter.
-- [ ] AC-02: The command requires an adopted checker and fails closed when it
+- [x] AC-02: The command requires an adopted checker and fails closed when it
   is missing.
-- [ ] AC-03: Workspace root, exact allowlisted paths and output format are
+- [x] AC-03: Workspace root, exact allowlisted paths and output format are
   forwarded without entering mutable interactive Goal setup.
-- [ ] AC-04: Checker stdout/stderr and exit status are preserved.
-- [ ] AC-05: Focused/full tests, Ruff and governance pass.
+- [x] AC-04: Checker stdout/stderr and exit status are preserved.
+- [x] AC-05: Focused/full tests, Ruff and governance pass.
+
+## Validation evidence
+
+- 12 focused governance CLI tests pass, including exact forwarding, nonzero
+  status preservation and missing-checker failure.
+- The full suite reports 547 passed and 2 skipped.
+- Changed-file Ruff and the deterministic governance gate pass.
+- No cleanup, adoption, version change or external publication was performed.
 
 ## Boundary
 
 No deletion, adoption, publication, version change or policy implementation is
 performed by this command. The adopted immutable package stays the source of
 truth.
-
