@@ -2,10 +2,10 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-034](project/ticket-034/README.md): let `goal -a`
+- [x] Deliver [ticket-034](project/ticket-034/README.md): let `goal -a`
   recover only a uniform local version exactly one patch behind the registry.
-  State: `IN_PROGRESS / VALIDATION`; 63 focused tests, Ruff and governance
-  pass; classification: `BUG / application`.
+  State: `DONE`; 541 tests, Ruff, governance, package and Docker pass;
+  classification: `BUG / application`; no publication.
 - [x] Deliver [ticket-033](project/ticket-033/README.md): migrate legacy
   unmarked Goal tool requirements to interpreter-compatible markers. State:
   `DONE`; 536 tests, Ruff, governance, package and Docker pass;
@@ -119,7 +119,7 @@
 > `ticket-023 DONE`; `ticket-024 DONE`; `ticket-025 DONE`;
 > `ticket-026 DONE`; `ticket-027 DONE`; `ticket-028 IN_PROGRESS`;
 > `ticket-029 DONE`; `ticket-030 DONE`; `ticket-032 DONE`;
-> `ticket-033 DONE`; `ticket-034 IN_PROGRESS`.
+> `ticket-033 DONE`; `ticket-034 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

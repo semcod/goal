@@ -2,8 +2,8 @@
 
 - **ID**: ticket-034
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -22,7 +22,7 @@ the auto-mode permission must be forwarded through the real push workflow.
 - [x] AC-03: Manual mode, non-adjacent gaps and inconsistent local carriers
   remain rejected.
 - [x] AC-04: The real push workflow enables the repair only for `goal -a`.
-- [ ] AC-05: Focused/full tests, Ruff, governance, build and Docker pass.
+- [x] AC-05: Focused/full tests, Ruff, governance, build and Docker pass.
 
 ## Validation evidence
 
@@ -30,6 +30,10 @@ the auto-mode permission must be forwarded through the real push workflow.
 - The push regression runs both `all_flags=False` and `all_flags=True` and
   observes the exact resolver permission in both cases.
 - Changed-file Ruff and deterministic governance pass.
+- The full suite reports `541 passed, 2 skipped`; wheel and sdist were built
+  under `/tmp/goal-ticket034-build.D7c09A`.
+- The production Docker build passed with local image digest
+  `sha256:cb69e5a48907...`.
 
 ## Session authorization
 

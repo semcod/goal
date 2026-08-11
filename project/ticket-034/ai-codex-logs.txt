@@ -3,3 +3,7 @@
 2026-08-12 plan: strict opt-in adjacent registry repair plus real push propagation regression
 2026-08-12 implementation: adjacent uniform registry repair gated by all_flags
 2026-08-12 focused validation: 63 passed; propagation covers false and true; Ruff PASS; governance PASS
+2026-08-12 full validation: 541 passed, 2 skipped
+2026-08-12 package: wheel and sdist built under /tmp/goal-ticket034-build.D7c09A
+2026-08-12 Docker: PASS; local image sha256:cb69e5a48907817530aae7e57ad17e9718d387000b95b9f5949df44e123ed107
+2026-08-12 closure: ticket advanced from VALIDATION to DONE; no external delivery

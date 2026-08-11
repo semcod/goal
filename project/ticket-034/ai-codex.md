@@ -30,6 +30,8 @@ is safe only when explicitly requested by `goal -a` and bounded to one patch.
   version stage from the real push context.
 - Strengthened the pilot patch with a two-state propagation regression; all 63
   focused tests, changed-file Ruff and governance pass.
+- Passed 541 full tests with 2 skips, wheel/sdist and production Docker build,
+  then closed the local ticket without external delivery.
 
 ## Blockers
 

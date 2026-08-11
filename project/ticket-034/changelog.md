@@ -8,3 +8,5 @@
   uniform local version carriers across two existing components.
 - Added strict positive and negative resolver cases plus real push-workflow
   propagation coverage for both manual and all-flags contexts.
+- Closed after full test, lint, governance, package and production-container
+  validation passed.
