@@ -80,12 +80,87 @@ raise SystemExit({exit_code})
         (package / name).write_text("{}\n", encoding="utf-8")
 
 
+def make_workspace_checker(target, *, exit_code=0):
+    package = target / ".governance"
+    package.mkdir(parents=True, exist_ok=True)
+    (package / "workspace_lifecycle_check.py").write_text(
+        f"""\
+import sys
+
+print("WORKSPACE_ARGS=" + "|".join(sys.argv[1:]))
+print("workspace diagnostic", file=sys.stderr)
+raise SystemExit({exit_code})
+""",
+        encoding="utf-8",
+    )
+
+
 def test_governance_help_exposes_adoption_command():
     result = CliRunner().invoke(main, ["governance", "--help"])
 
     assert result.exit_code == 0
     assert "adopt" in result.output
     assert "check" in result.output
+    assert "workspace-check" in result.output
+
+
+def test_workspace_check_runs_adopted_checker_and_forwards_exact_paths(tmp_path):
+    target = tmp_path / "target"
+    workspace = tmp_path / "workspace"
+    allowed_one = workspace / "active-one"
+    allowed_two = workspace / "active-two"
+    target.mkdir()
+    workspace.mkdir()
+    make_workspace_checker(target, exit_code=9)
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "workspace-check",
+            "--target-root",
+            str(target),
+            "--workspace-root",
+            str(workspace),
+            "--allow",
+            str(allowed_one),
+            "--allow",
+            str(allowed_two),
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 9
+    expected = (
+        f"--workspace-root|{workspace}|--allow|{allowed_one}|"
+        f"--allow|{allowed_two}|--format|json"
+    )
+    assert f"WORKSPACE_ARGS={expected}" in result.output
+    assert "workspace diagnostic" in result.output
+
+
+def test_workspace_check_fails_closed_without_adopted_checker(tmp_path):
+    target = tmp_path / "target"
+    workspace = tmp_path / "workspace"
+    target.mkdir()
+    workspace.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "workspace-check",
+            "--target-root",
+            str(target),
+            "--workspace-root",
+            str(workspace),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "adopted workspace lifecycle checker is missing" in result.output
+    assert ".governance/workspace_lifecycle_check.py" in result.output
 
 
 def test_governance_check_runs_adopted_validator_and_forwards_options(tmp_path):

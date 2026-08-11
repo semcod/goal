@@ -29,6 +29,7 @@ GOVERNANCE_PACKAGE_FILES = {
     "lock": ".governance/manifest.lock.json",
     "stack profiles": ".governance/stack-profiles.json",
 }
+WORKSPACE_LIFECYCLE_CHECKER = ".governance/workspace_lifecycle_check.py"
 RESERVED_VALIDATOR_OPTIONS = (
     "--root",
     "--manifest",
@@ -138,6 +139,61 @@ def governance_check(target_root, validator_args):
         GOVERNANCE_PACKAGE_FILES["stack profiles"],
         *validator_args,
     ]
+    result = subprocess.run(
+        command,
+        cwd=target,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.stdout:
+        click.echo(result.stdout, nl=False)
+    if result.stderr:
+        click.echo(result.stderr, err=True, nl=False)
+    if result.returncode != 0:
+        raise click.exceptions.Exit(result.returncode)
+
+
+@governance.command("workspace-check")
+@click.option(
+    "--target-root",
+    default=".",
+    type=click.Path(file_okay=False, path_type=Path),
+    show_default=True,
+    help="Repository containing the adopted workspace lifecycle checker.",
+)
+@click.option(
+    "--workspace-root",
+    required=True,
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Directory whose immediate repository checkouts are audited.",
+)
+@click.option(
+    "--allow",
+    multiple=True,
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Exact active secondary checkout allowed for a non-terminal audit.",
+)
+@click.option("--format", "output_format", type=click.Choice(("text", "json")), default="text")
+def workspace_check(target_root, workspace_root, allow, output_format):
+    """Run the read-only checker from the adopted governance package."""
+    target = target_root.resolve()
+    checker = target / WORKSPACE_LIFECYCLE_CHECKER
+    if not checker.is_file():
+        raise click.ClickException(
+            f"adopted workspace lifecycle checker is missing: {WORKSPACE_LIFECYCLE_CHECKER}; "
+            "run `goal governance adopt` with a published source revision"
+        )
+
+    command = [
+        sys.executable,
+        str(checker),
+        "--workspace-root",
+        str(workspace_root.resolve()),
+    ]
+    for path in allow:
+        command.extend(("--allow", str(path.resolve())))
+    command.extend(("--format", output_format))
     result = subprocess.run(
         command,
         cwd=target,
@@ -288,6 +344,7 @@ def adopt(standard_repository, source_revision, target_root, check, upgrade):
 __all__ = [
     "governance",
     "governance_check",
+    "workspace_check",
     "adopt",
     "delivery_hook",
     "verify_delivery",
