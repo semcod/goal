@@ -14,3 +14,5 @@
   governance, package and production-container validation matrix.
 - Replayed the failing `glon` checks read-only: version evidence resolves to
   0.1.26 and the marked 235-package dependency graph resolves successfully.
+- Closed the fully validated local ticket without push, merge, publication or
+  release metadata changes.

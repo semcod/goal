@@ -2,9 +2,9 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-030](project/ticket-030/README.md): bind tag evidence to
+- [x] Deliver [ticket-030](project/ticket-030/README.md): bind tag evidence to
   package identity and preserve target Python support when injecting developer
-  tools. State: `IN_PROGRESS`; classification: `BUG / application`.
+  tools. State: `DONE`; classification: `BUG / application`.
 - [x] Deliver [ticket-029](project/ticket-029/README.md): keep governed
   publish-only artifacts on the exact clean remote base and make bootstrap
   read-only. State: `DONE`; classification: `BUG / application`.
@@ -104,7 +104,7 @@
 > `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 DONE`;
 > `ticket-023 DONE`; `ticket-024 DONE`; `ticket-025 DONE`;
 > `ticket-026 DONE`; `ticket-027 DONE`; `ticket-028 IN_PROGRESS`;
-> `ticket-029 DONE`; `ticket-030 IN_PROGRESS`.
+> `ticket-029 DONE`; `ticket-030 DONE`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given

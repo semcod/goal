@@ -13,3 +13,4 @@
 2026-08-11 glon regression: baseline 0.1.26 from git-tag:v0.1.26; normal-bump target 0.1.27
 2026-08-11 glon dependency fixture: uv lock --dry-run resolved 235 packages for requires-python >=3.8
 2026-08-11 glon snapshot: goal -a --dry-run completed without legacy-tag or dependency-resolution failure
+2026-08-12 closure: all acceptance criteria remain satisfied; ticket advanced from VALIDATION to DONE
