@@ -8,7 +8,13 @@ from typing import Dict, List, Any, Optional
 
 import click
 
-from goal.git_ops import run_git, get_staged_files, get_diff_content, get_diff_stats
+from goal.git_ops import (
+    run_git,
+    get_staged_files,
+    get_working_tree_files,
+    get_diff_content,
+    get_diff_stats,
+)
 from goal.project_bootstrap import (
     detect_project_types_deep,
     bootstrap_project,
@@ -414,10 +420,17 @@ def execute_push_workflow(
             )
             sys.exit(1)
 
-    _bootstrap_projects(project_types, dry_run, yes)
+    _bootstrap_projects_for_delivery(
+        project_types,
+        dry_run,
+        yes,
+        delivery.mode if delivery is not None else None,
+    )
 
     if ctx_obj.get("upgrade_deps"):
         refresh_test_dependencies(project_types, yes=yes, dry_run=dry_run)
+
+    _require_publish_bootstrap_read_only(delivery)
 
     # Handle TODO update via prefact
     ctx_obj["todo"] = todo
@@ -887,6 +900,44 @@ def _bootstrap_projects(project_types: List[str], dry_run: bool, yes: bool) -> N
     for ptype, dirs in deep_detected.items():
         for pdir in dirs:
             bootstrap_project(pdir, ptype, yes=yes)
+
+
+def _bootstrap_projects_for_delivery(
+    project_types: List[str],
+    dry_run: bool,
+    yes: bool,
+    delivery_mode: Optional[str],
+) -> None:
+    """Keep Goal-owned badge generation out of publish-only source trees."""
+    if delivery_mode != "publish-only":
+        _bootstrap_projects(project_types, dry_run, yes)
+        return
+
+    marker = "GOAL_SKIP_COSTS_BADGE"
+    previous = os.environ.get(marker)
+    os.environ[marker] = "1"
+    try:
+        _bootstrap_projects(project_types, dry_run, yes)
+    finally:
+        if previous is None:
+            os.environ.pop(marker, None)
+        else:
+            os.environ[marker] = previous
+
+
+def _require_publish_bootstrap_read_only(delivery: Any) -> None:
+    """Abort before staging when publish-only bootstrap changed the source tree."""
+    if delivery is None or delivery.mode != "publish-only":
+        return
+
+    changed = list(dict.fromkeys([*get_staged_files(), *get_working_tree_files()]))
+    if changed:
+        preview = ", ".join(changed[:5])
+        suffix = f" (+{len(changed) - 5} more)" if len(changed) > 5 else ""
+        raise click.ClickException(
+            "publish-only bootstrap modified the trusted source tree: "
+            f"{preview}{suffix}"
+        )
 
 
 def _detect_and_bootstrap_projects(

@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-029",
+  "summary": "Keep publish-only artifacts on exact merged source",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/push/core.py",
+    "goal/governance/delivery.py",
+    "tests/test_delivery_integrity.py",
+    "tests/test_governance_delivery.py",
+    "project/ticket-029/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "051a59aaf4ffe007491fb50c826774871ea73a6b",
+    "targetBranch": "main",
+    "outcome": "publish-only artifacts are built from the exact clean remote base tree",
+    "nonGoals": [
+      "No release metadata or dependency change",
+      "No registry publication in the application slice",
+      "No general bootstrap redesign"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Guard the trusted source at the delivery boundary and make bootstrap read-only for publish-only",
+      "components": [
+        {
+          "name": "publish-source-boundary",
+          "paths": ["goal/governance/delivery.py", "tests/test_governance_delivery.py"]
+        },
+        {
+          "name": "publish-bootstrap-boundary",
+          "paths": ["goal/push/core.py", "tests/test_delivery_integrity.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert before release; 2.1.294 remains public and immutable"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "dirty and remote-head divergence cases fail closed"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "bootstrap badge suppression is enforced without leaking into tests"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "post-bootstrap cleanliness is enforced"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["pytest -q", "./project/governance-check.sh", "docker build ."],
+        "evidence": "full local and protected validation pass"
+      }
+    ]
+  }
+}

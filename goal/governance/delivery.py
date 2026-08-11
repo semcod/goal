@@ -164,6 +164,36 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
     if policy.require_clean_governance:
         _governance_gate(root)
 
+    if policy.mode == "publish-only":
+        status = _git_value("status", "--porcelain", cwd=root)
+        if status:
+            raise click.ClickException(
+                "publish-only requires a clean working tree before bootstrap"
+            )
+
+        remote_ref = f"refs/heads/{policy.base_branch}"
+        remote = _run(
+            ["git", "ls-remote", "--heads", policy.remote, remote_ref],
+            cwd=root,
+        )
+        if remote.returncode != 0:
+            detail = (remote.stderr or "remote base lookup failed").strip()
+            raise click.ClickException(
+                f"publish-only could not resolve authoritative {policy.remote}/{policy.base_branch}: {detail}"
+            )
+        remote_rows = [line.split() for line in remote.stdout.splitlines() if line.strip()]
+        if len(remote_rows) != 1 or len(remote_rows[0]) != 2:
+            raise click.ClickException(
+                f"publish-only requires exactly one authoritative {policy.remote}/{policy.base_branch} head"
+            )
+        local_head = _git_value("rev-parse", "HEAD", cwd=root)
+        remote_head = remote_rows[0][0]
+        if local_head != remote_head:
+            raise click.ClickException(
+                "publish-only requires HEAD to equal the authoritative remote base "
+                f"({local_head[:12]} != {remote_head[:12]})"
+            )
+
     if policy.mode == "direct-main":
         branch = _git_value("branch", "--show-current", cwd=root)
         if branch != policy.base_branch:
