@@ -2,6 +2,9 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-032](project/ticket-032/README.md): expose the adopted
+  deterministic governance package through `goal governance check`. State:
+  `IN_PROGRESS`; classification: `FEATURE / application`.
 - [x] Deliver [ticket-030](project/ticket-030/README.md): bind tag evidence to
   package identity and preserve target Python support when injecting developer
   tools. State: `DONE`; classification: `BUG / application`.
@@ -104,7 +107,7 @@
 > `ticket-019 DONE`; `ticket-020 DONE`; `ticket-021 DONE`;
 > `ticket-023 DONE`; `ticket-024 DONE`; `ticket-025 DONE`;
 > `ticket-026 DONE`; `ticket-027 DONE`; `ticket-028 IN_PROGRESS`;
-> `ticket-029 DONE`; `ticket-030 DONE`.
+> `ticket-029 DONE`; `ticket-030 DONE`; `ticket-032 IN_PROGRESS`.
 
 > **Recently shipped (manual note):** `goal all [PATHS...]` monorepo sweep —
 > runs `goal -a` in every git repo with uncommitted changes under the given
