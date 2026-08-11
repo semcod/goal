@@ -72,8 +72,8 @@
       },
       {
         "criterion": "AC-04",
-        "commands": ["pytest -q", "ruff check goal tests", "./project/governance-check.sh", "docker build ."],
-        "evidence": "focused, full, deterministic and container validation pass"
+        "commands": ["pytest -q", "ruff check goal/cli/version_state.py goal/bootstrap/pyproject_costs_setup.py tests/test_version_state.py tests/test_pyproject_costs_setup.py", "./project/governance-check.sh", "uv build", "docker build ."],
+        "evidence": "focused, full, changed-file lint, deterministic, package and container validation pass; existing global lint debt is recorded"
       },
       {
         "criterion": "AC-05",

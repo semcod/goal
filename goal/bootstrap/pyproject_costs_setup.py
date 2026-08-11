@@ -11,9 +11,9 @@ import click
 logger = logging.getLogger(__name__)
 
 _REQUIRED_DEV_DEPS = (
-    ("goal", '"goal>=2.1.0"'),
-    ("costs", '"costs>=0.1.53"'),
-    ("pfix", '"pfix>=0.1.60"'),
+    ("goal", '"goal>=2.1.0; python_version >= \'3.12\'"'),
+    ("costs", '"costs>=0.1.53; python_version >= \'3.9\'"'),
+    ("pfix", '"pfix>=0.1.60; python_version >= \'3.10\'"'),
 )
 
 
@@ -198,7 +198,7 @@ def _ensure_env_template(project_dir: Path) -> bool:
 # Get your API key from: https://openrouter.ai/keys
 
 # OpenRouter API Key (required for real cost calculation)
-OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_API_KEY=your_openrouter_api_key
 
 # Default AI model for cost analysis
 LLM_MODEL=openrouter/qwen/qwen3-coder-next

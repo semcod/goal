@@ -2,3 +2,14 @@
 2026-08-11 base: origin/main=17b421b78acaa1fb526d5571c8071005eafe8508
 2026-08-11 evidence: glon tag v1.0.1 identity=gc; current identity=glon; PyPI glon=0.1.25; Git glon=v0.1.26
 2026-08-11 evidence: glon requires Python >=3.8; costs >=3.9; pfix >=3.10; goal >=3.12
+2026-08-11 implementation: tag evidence filtered by normalized manifest package identity
+2026-08-11 implementation: injected goal, costs and pfix requirements carry Python floor markers
+2026-08-11 focused validation: 21 passed; changed-file Ruff PASS
+2026-08-11 full validation: 530 passed, 2 skipped
+2026-08-11 lint baseline: repository-wide Ruff reports 100 pre-existing findings outside ticket scope
+2026-08-11 governance: initial placeholder false positive corrected; PASS with 0 errors and 0 warnings
+2026-08-11 package: uv build produced wheel and source distribution
+2026-08-11 Docker: production build PASS; offline CLI reports Goal 2.1.294
+2026-08-11 glon regression: baseline 0.1.26 from git-tag:v0.1.26; normal-bump target 0.1.27
+2026-08-11 glon dependency fixture: uv lock --dry-run resolved 235 packages for requires-python >=3.8
+2026-08-11 glon snapshot: goal -a --dry-run completed without legacy-tag or dependency-resolution failure

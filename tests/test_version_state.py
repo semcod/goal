@@ -48,6 +48,26 @@ def test_normal_bump_uses_released_baseline(tmp_path, monkeypatch):
     assert decision.reason == "normal-bump"
 
 
+def test_tag_baseline_is_scoped_to_current_package_identity(tmp_path, monkeypatch):
+    config = _init_release(tmp_path, "1.0.1")
+    (tmp_path / "VERSION").write_text("0.1.26\n")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "renamed-package"\nversion = "0.1.26"\n'
+    )
+    _git(tmp_path, "add", "VERSION", "pyproject.toml")
+    _git(tmp_path, "commit", "-m", "rename package and restart its release line")
+    _git(tmp_path, "tag", "v0.1.26")
+    monkeypatch.chdir(tmp_path)
+
+    decision = resolve_version_decision(config=config, registry_versions={})
+
+    assert decision.baseline_version == "0.1.26"
+    assert decision.baseline_evidence == ("git-tag:v0.1.26",)
+    assert decision.current_version == "0.1.26"
+    assert decision.target_version == "0.1.27"
+    assert decision.reason == "normal-bump"
+
+
 def test_complete_local_prebump_is_not_bumped_twice(tmp_path, monkeypatch):
     config = _init_release(tmp_path, "1.2.3")
     (tmp_path / "VERSION").write_text("1.2.4\n")

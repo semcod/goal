@@ -3,7 +3,7 @@
 - **ID**: ticket-030
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -18,13 +18,31 @@ release line and Python 3.8 support must remain installable.
 
 - [x] AC-01: The user explicitly requested the Goal repair and authorized
   merging the prerequisite PR #60.
-- [ ] AC-02: Tags for a different historical package identity are excluded
+- [x] AC-02: Tags for a different historical package identity are excluded
   from release baseline evidence without weakening matching-tag protection.
-- [ ] AC-03: Injected `goal`, `costs` and `pfix` dev requirements carry markers
+- [x] AC-03: Injected `goal`, `costs` and `pfix` dev requirements carry markers
   matching their supported Python floors, so a Python 3.8 project resolves.
-- [ ] AC-04: Focused and full Goal tests, Ruff, governance and Docker pass.
-- [ ] AC-05: A read-only regression run against `glon` selects the `glon`
+- [x] AC-04: Focused and full Goal tests, changed-file Ruff, governance,
+  package build and Docker pass; the pre-existing repository-wide lint debt is
+  recorded without expanding this repair.
+- [x] AC-05: A read-only regression run against `glon` selects the `glon`
   release line and no longer reports the legacy `gc` baseline or UV conflict.
+
+## Validation evidence
+
+- 21 focused tests and the full suite of 530 tests with 2 skips pass; Ruff
+  reports no issues in the four implementation/test files.
+- The repository-wide Ruff baseline still contains 100 unrelated findings,
+  so this ticket does not claim a clean global lint baseline.
+- Governance passes with zero errors and warnings. The wheel and source
+  distribution build successfully with `uv build`.
+- The production Docker image builds and reports Goal 2.1.294 with networking
+  disabled.
+- A read-only `glon` check selects `0.1.26` from `git-tag:v0.1.26` and proposes
+  `normal-bump -> 0.1.27`, ignoring the historical `gc` tag `v1.0.1`.
+- A Python 3.8 `glon` fixture resolves all 235 packages with `uv lock
+  --dry-run`, and a snapshot `goal -a --dry-run` completes without the
+  original version-regression or unsatisfiable-dependency error.
 
 ## Session authorization
 
