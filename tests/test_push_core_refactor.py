@@ -246,6 +246,89 @@ def test_slow_test_no_planfile_returns_empty(tmp_path, monkeypatch):
     assert add_slow_test_tickets_to_planfile({"slow_tests": []}) == []
 
 
+def test_slow_test_tickets_are_staged_before_commit(tmp_path, monkeypatch):
+    """Workflow preparation must stage generated tickets, not leave them dirty."""
+    import subprocess
+
+    from goal.push.core import _prepare_slow_test_tickets
+
+    monkeypatch.chdir(tmp_path)
+    planfile = _write_empty_planfile(tmp_path)
+    subprocess.run(["git", "init"], check=True, capture_output=True)
+    subprocess.run(["git", "add", str(planfile)], check=True, capture_output=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Goal Test",
+            "-c",
+            "user.email=goal-test@example.invalid",
+            "commit",
+            "-m",
+            "initial",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    ctx_obj = {
+        "test_details": {
+            "slow_tests": [
+                {"classname": "tests.slow", "name": "test_case", "duration": 2.0}
+            ],
+            "startup_overhead": 0.0,
+        }
+    }
+
+    files = _prepare_slow_test_tickets(ctx_obj, ["goal/feature.py"])
+
+    staged = subprocess.run(
+        ["git", "diff", "--cached", "--name-only"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    assert files == ["goal/feature.py", "project/planfile-tickets.yaml"]
+    assert staged == ["project/planfile-tickets.yaml"]
+    assert ctx_obj["added_slow_test_tickets"] == [
+        "Address slow test: tests.slow.test_case"
+    ]
+
+
+def test_final_summary_does_not_mutate_planfile(tmp_path, monkeypatch):
+    """Rendering after publish must never create new repository changes."""
+    from goal.push.core import output_final_summary
+
+    monkeypatch.chdir(tmp_path)
+    planfile = _write_empty_planfile(tmp_path)
+    before = planfile.read_bytes()
+    ctx_obj = {
+        "markdown": False,
+        "yes": False,
+        "test_details": {
+            "slow_tests": [
+                {"classname": "tests.slow", "name": "test_case", "duration": 2.0}
+            ]
+        },
+    }
+
+    output_final_summary(
+        ctx_obj=ctx_obj,
+        markdown=False,
+        project_types=["python"],
+        files=[],
+        stats={},
+        current_version="1.0.0",
+        new_version="1.0.1",
+        commit_msg="test: summary",
+        commit_body=None,
+        test_exit_code=0,
+        publish_success=True,
+        no_tag=False,
+    )
+
+    assert planfile.read_bytes() == before
+
+
 # ---------------------------------------------------------------------------
 # Re-export contract — core re-exports the extracted submodule symbols
 # ---------------------------------------------------------------------------

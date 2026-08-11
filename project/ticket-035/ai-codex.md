@@ -27,6 +27,11 @@ could falsely claim an exact ignore rule already existed.
   from the request to execute this work.
 - Preserved the experimental source commit on its pilot branch and will apply
   it here only after the governed plan is committed.
+- Moved deterministic slow-ticket generation/staging before the commit phase,
+  retained generated descriptions for the summary, and kept clean publish-only
+  execution mutation-free.
+- Added exact environment-template and ignore-pattern safety regressions; 20
+  focused tests, changed-file Ruff and governance pass.
 
 ## Blockers
 

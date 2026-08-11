@@ -39,9 +39,12 @@ def save_gitignore(ignored: Set[str], gitignore_path: str = ".gitignore") -> Non
             break
 
     # Insert new patterns
-    new_patterns = [
-        p + "\n" for p in sorted(ignored) if p not in "".join(existing_lines)
-    ]
+    existing_patterns = {
+        line.strip()
+        for line in existing_lines
+        if line.strip() and not line.strip().startswith("#")
+    }
+    new_patterns = [p + "\n" for p in sorted(ignored) if p not in existing_patterns]
     if new_patterns:
         existing_lines[insert_idx:insert_idx] = new_patterns
 

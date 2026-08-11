@@ -4,7 +4,8 @@
 
 - [ ] Deliver [ticket-035](project/ticket-035/README.md): stage generated
   slow-test tickets before commit and preserve exact safe bootstrap templates.
-  State: `IN_PROGRESS / EDIT`; classification: `BUG / application`.
+  State: `IN_PROGRESS / VALIDATION`; 20 focused tests, Ruff and governance
+  pass; classification: `BUG / application`.
 - [x] Deliver [ticket-034](project/ticket-034/README.md): let `goal -a`
   recover only a uniform local version exactly one patch behind the registry.
   State: `DONE`; 541 tests, Ruff, governance, package and Docker pass;

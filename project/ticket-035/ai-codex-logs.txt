@@ -1,3 +1,5 @@
 2026-08-12 authorization: user requested continued local Goal repair
 2026-08-12 accepted base: origin/main=17b421b78acaa1fb526d5571c8071005eafe8508
 2026-08-12 plan: pre-commit slow-ticket artifact plus exact environment-template safety rules
+2026-08-12 implementation: stage slow-ticket planfile before commit; summary read-only; exact template safety
+2026-08-12 focused validation: 20 passed; Ruff PASS; governance PASS

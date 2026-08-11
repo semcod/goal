@@ -3,7 +3,7 @@
 - **ID**: ticket-035
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-11
 
 ## Goal and scope
@@ -18,12 +18,19 @@ rather than misleading substrings.
 
 - [x] AC-01: The user's instruction to continue repairing Goal supplies
   bounded local execution authorization.
-- [ ] AC-02: Generated slow-test ticket artifacts are staged before commit and
+- [x] AC-02: Generated slow-test ticket artifacts are staged before commit and
   included in commit statistics.
-- [ ] AC-03: Final summary rendering cannot mutate the planfile.
-- [ ] AC-04: `.env.example` is considered safe and exact `.gitignore` pattern
+- [x] AC-03: Final summary rendering cannot mutate the planfile.
+- [x] AC-04: `.env.example` is considered safe and exact `.gitignore` pattern
   comparison is idempotent.
 - [ ] AC-05: Focused/full tests, Ruff, governance, build and Docker pass.
+
+## Validation evidence
+
+- 20 focused workflow and validator tests pass.
+- The Git fixture proves the planfile is staged before commit; the summary
+  fixture proves byte-for-byte read-only behavior.
+- Changed-file Ruff and deterministic governance pass.
 
 ## Session authorization
 
