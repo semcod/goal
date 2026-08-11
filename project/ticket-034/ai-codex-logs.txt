@@ -1,0 +1,3 @@
+2026-08-12 authorization: user requested continued live Goal/glon repair
+2026-08-12 accepted base: origin/main=17b421b78acaa1fb526d5571c8071005eafe8508
+2026-08-12 plan: strict opt-in adjacent registry repair plus real push propagation regression

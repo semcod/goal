@@ -1,0 +1,102 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-034",
+  "summary": "Recover adjacent registry-ahead versions in auto mode",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/version_state.py",
+    "goal/push/core.py",
+    "goal/push/stages/version.py",
+    "tests/test_version_state.py",
+    "tests/test_push_e2e.py",
+    "project/ticket-034/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "CHANGELOG.md"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-030"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "17b421b78acaa1fb526d5571c8071005eafe8508",
+    "targetBranch": "main",
+    "outcome": "Goal auto mode safely recovers only a uniform local version exactly one patch behind its registry baseline",
+    "nonGoals": [
+      "No recovery for manual execution, non-adjacent gaps or inconsistent local carriers",
+      "No version metadata or dependency change",
+      "No push, merge, publication or global installation"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Gate adjacent registry repair behind an explicit resolver flag supplied only from the all-flags push context",
+      "components": [
+        {
+          "name": "version-evidence-resolver",
+          "paths": ["goal/cli/version_state.py", "tests/test_version_state.py"]
+        },
+        {
+          "name": "auto-push-propagation",
+          "paths": [
+            "goal/push/core.py",
+            "goal/push/stages/version.py",
+            "tests/test_push_e2e.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the resolver flag, push propagation and focused tests; strict registry-ahead rejection remains the baseline"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_version_state.py"],
+        "evidence": "adjacent auto release and no-release decisions select the registry baseline"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_version_state.py"],
+        "evidence": "manual, non-adjacent and inconsistent cases fail closed"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q tests/test_push_e2e.py"],
+        "evidence": "push workflow forwards the repair permission only from all_flags"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/cli/version_state.py goal/push/core.py goal/push/stages/version.py tests/test_version_state.py tests/test_push_e2e.py",
+          "./project/governance-check.sh",
+          "uv build",
+          "docker build ."
+        ],
+        "evidence": "focused, full, lint, governance, package and container checks pass"
+      }
+    ]
+  }
+}
