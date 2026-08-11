@@ -25,6 +25,15 @@ adapter closes that gap without moving policy ownership into Goal.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Added `goal governance check` as a thin process adapter over the target's
+  adopted `.governance` package.
+- Reserved manifest, lock, root and stack-profile options to prevent callers
+  from escaping the pinned package, while forwarding ordinary validator flags,
+  output and exact exit status.
+- Added success, nonzero, missing-package and override regressions; passed 8
+  focused and 531 full tests, Ruff, governance, build and Docker validation.
+- Verified the real Goal package passes and `glon` reports a precise missing
+  adoption error before any mutation.
 
 ## Blockers
 

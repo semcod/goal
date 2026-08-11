@@ -1,7 +1,6 @@
 """Tests for immutable new-project adoption through Goal."""
 
 import json
-from pathlib import Path
 import subprocess
 
 from click.testing import CliRunner
@@ -64,11 +63,94 @@ print(f'adopted fake standard at {args.source_revision}')
     return standard, revision
 
 
+def make_adopted_governance(target, *, exit_code=0):
+    package = target / ".governance"
+    package.mkdir(parents=True)
+    (package / "governance_check.py").write_text(
+        f"""\
+import sys
+
+print("VALIDATOR_ARGS=" + "|".join(sys.argv[1:]))
+print("validator diagnostic", file=sys.stderr)
+raise SystemExit({exit_code})
+""",
+        encoding="utf-8",
+    )
+    for name in ("manifest.json", "manifest.lock.json", "stack-profiles.json"):
+        (package / name).write_text("{}\n", encoding="utf-8")
+
+
 def test_governance_help_exposes_adoption_command():
     result = CliRunner().invoke(main, ["governance", "--help"])
 
     assert result.exit_code == 0
     assert "adopt" in result.output
+    assert "check" in result.output
+
+
+def test_governance_check_runs_adopted_validator_and_forwards_options(tmp_path):
+    target = tmp_path / "target"
+    target.mkdir()
+    make_adopted_governance(target, exit_code=7)
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "check",
+            "--target-root",
+            str(target),
+            "--actor",
+            "agent",
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 7
+    expected = (
+        f"--root|{target}|--manifest|.governance/manifest.json|"
+        "--lock|.governance/manifest.lock.json|"
+        "--stack-profiles|.governance/stack-profiles.json|"
+        "--actor|agent|--format|json"
+    )
+    assert f"VALIDATOR_ARGS={expected}" in result.output
+    assert "validator diagnostic" in result.output
+
+
+def test_governance_check_fails_closed_for_incomplete_package(tmp_path):
+    target = tmp_path / "target"
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        ["governance", "check", "--target-root", str(target)],
+    )
+
+    assert result.exit_code == 1
+    assert "adopted governance package is incomplete" in result.output
+    assert ".governance/governance_check.py" in result.output
+    assert "goal governance adopt" in result.output
+
+
+def test_governance_check_rejects_managed_path_override(tmp_path):
+    target = tmp_path / "target"
+    target.mkdir()
+    make_adopted_governance(target)
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "check",
+            "--target-root",
+            str(target),
+            "--manifest=other.json",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "--manifest is managed by Goal" in result.output
 
 
 def test_adopt_fetches_exact_revision_and_forwards_upgrade(tmp_path):

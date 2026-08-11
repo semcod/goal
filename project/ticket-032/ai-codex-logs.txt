@@ -2,3 +2,9 @@
 2026-08-11 evidence: Goal 2.1.294 exposes governance adopt and delivery commands but no standalone governance check
 2026-08-11 architecture: Goal will invoke the target's pinned validator; new-project retains policy ownership
 2026-08-11 base: authoritative origin/main=17b421b78acaa1fb526d5571c8071005eafe8508
+2026-08-11 focused validation: 8 passed; changed-file Ruff PASS
+2026-08-11 full validation: 531 passed, 2 skipped
+2026-08-11 package: uv build produced wheel and source distribution
+2026-08-11 governance: Goal real adopted package returned GOV-PASS with 0 errors and 0 warnings
+2026-08-11 glon: fail-closed missing adopted .governance package with goal governance adopt remediation
+2026-08-11 Docker: production image build PASS; offline governance help exposes check command
