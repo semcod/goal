@@ -3,3 +3,4 @@
 [2026-08-12] PASS: 12 focused; 547 full + 2 skipped; Ruff; governance.
 [2026-08-12] Raw push blocked by governed hook; retained IN_PROGRESS/PUBLICATION for Goal delivery.
 [2026-08-12] Bootstrap proposed Python markers outside ticket ownership; excluded them. GOAL_AUTO_FIX leakage was rejected by its test.
+[2026-08-12] PR #61 CI PASS (Python 3.12/3.13); merged as 61f34b7; head branch deleted.

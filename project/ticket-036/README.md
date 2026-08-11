@@ -2,8 +2,8 @@
 
 - **ID**: ticket-036
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -32,6 +32,9 @@ policy and never deletes a worktree, clone or branch.
 - No cleanup, adoption, version change or external publication was performed.
 - Local validation is complete; the ticket remains active until the reviewed
   branch is integrated and a governance-only closure is recorded on `main`.
+- PR #61 passed Python 3.12/3.13 CI and was merged as
+  `main@61f34b7400358247e56a7940336e5e43104b9d55`; its remote head branch was
+  deleted automatically.
 
 ## Boundary
 

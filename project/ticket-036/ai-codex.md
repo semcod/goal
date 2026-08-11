@@ -29,5 +29,5 @@ terminal audit without embedding policy or destructive behavior in Goal.
 
 ## Blockers
 
-- Awaiting authorized pull-request delivery, CI and merge before terminal
-  closure on the integrated default branch.
+- None. PR #61 passed both CI jobs, merged to `main`, and its remote branch was
+  removed.
