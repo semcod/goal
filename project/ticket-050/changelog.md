@@ -9,3 +9,5 @@
   all three are unused.
 - Refreshed the accepted base after independent ticket-049 merge and retained
   both ticket records without scope overlap.
+- Synchronized the five declared release carriers to 2.1.298 and entered
+  governed pull-request publication.

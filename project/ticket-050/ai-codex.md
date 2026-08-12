@@ -41,6 +41,8 @@ repair before that downstream publication can be truthfully completed.
 - Refreshed the accepted base after ticket-049 merged independently; retained
   both ticket indexes while keeping ticket-049 source outside this ticket's
   diff.
+- Synchronized only the five declared release carriers to 2.1.298 and entered
+  `PUBLICATION` for Goal-owned test, commit and pull-request delivery.
 
 ## Blockers
 
