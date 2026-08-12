@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-044",
+  "summary": "Retry exact PR head after governed push",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "tests/test_governance_delivery.py",
+    "project/ticket-044/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-027", "ticket-042"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ff4064321427f8b3d8c1c150d86b4532535545a7",
+    "targetBranch": "main",
+    "outcome": "A successfully pushed governed branch can reuse its one open PR across GitHub's bounded stale-head read window without weakening exact-head delivery",
+    "nonGoals": [
+      "No retry for absent, duplicate, malformed or failed pull-request queries",
+      "No weakening of the final exact-head comparison",
+      "No release carrier, package publication, Git tag or GitHub Release change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Repeat only an otherwise valid one-PR query whose head SHA is stale, using a small fixed retry budget and preserving the terminal fail-closed error",
+      "components": [
+        {
+          "name": "governed-pr-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove the bounded stale-head retry and restore the immediate exact-head failure"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "one stale head followed by the current head reuses the existing PR after one bounded wait"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "a persistently stale head exhausts the budget and raises the exact-head diagnostic"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "absence, ambiguity and invalid query results retain fail-closed semantics without stale-head retry expansion"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/governance/delivery.py tests/test_governance_delivery.py",
+          "./project/governance-check.sh --actor agent",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "focused/full tests, lint, governance and package/container builds pass"
+      }
+    ]
+  }
+}

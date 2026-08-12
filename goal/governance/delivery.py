@@ -25,6 +25,8 @@ HOOK_END = "# GOAL-GOVERNANCE-DELIVERY:END"
 TRANSACTION_ENV = "GOAL_DELIVERY_TRANSACTION"
 CAPABILITY_ENV = "GOAL_DELIVERY_CAPABILITY"
 TRANSACTION_TTL_SECONDS = 300
+PULL_REQUEST_HEAD_ATTEMPTS = 4
+PULL_REQUEST_HEAD_RETRY_SECONDS = 1.0
 GOVERNANCE_PACKAGE_FILES = {
     "validator": ".governance/governance_check.py",
     "manifest": ".governance/manifest.json",
@@ -490,63 +492,69 @@ def _find_open_pull_request(
 ) -> str | None:
     """Resolve one open PR and bind it to the currently pushed commit."""
     expected_head = _git_value("rev-parse", "HEAD", cwd=root)
-    result = _run(
-        [
-            "gh",
-            "pr",
-            "list",
-            "--state",
-            "open",
-            "--head",
-            head,
-            "--base",
-            policy.base_branch,
-            "--limit",
-            "2",
-            "--json",
-            "url,headRefOid",
-        ],
-        cwd=root,
-    )
-    if result.returncode != 0:
-        raise click.ClickException(
-            "could not query open pull requests: "
-            + (result.stderr or "unknown gh error").strip()
+    for attempt in range(PULL_REQUEST_HEAD_ATTEMPTS):
+        result = _run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "--state",
+                "open",
+                "--head",
+                head,
+                "--base",
+                policy.base_branch,
+                "--limit",
+                "2",
+                "--json",
+                "url,headRefOid",
+            ],
+            cwd=root,
         )
-    try:
-        matches = json.loads(result.stdout)
-    except json.JSONDecodeError as error:
-        raise click.ClickException(
-            "could not query open pull requests: gh returned invalid JSON"
-        ) from error
-    if not isinstance(matches, list):
-        raise click.ClickException(
-            "could not query open pull requests: gh returned an invalid result"
-        )
-    if len(matches) > 1:
-        raise click.ClickException(
-            f"multiple open pull requests use governed branch '{head}'"
-        )
-    if not matches:
-        return None
+        if result.returncode != 0:
+            raise click.ClickException(
+                "could not query open pull requests: "
+                + (result.stderr or "unknown gh error").strip()
+            )
+        try:
+            matches = json.loads(result.stdout)
+        except json.JSONDecodeError as error:
+            raise click.ClickException(
+                "could not query open pull requests: gh returned invalid JSON"
+            ) from error
+        if not isinstance(matches, list):
+            raise click.ClickException(
+                "could not query open pull requests: gh returned an invalid result"
+            )
+        if len(matches) > 1:
+            raise click.ClickException(
+                f"multiple open pull requests use governed branch '{head}'"
+            )
+        if not matches:
+            return None
 
-    match = matches[0]
-    if not isinstance(match, dict):
-        raise click.ClickException(
-            "could not query open pull requests: gh returned an invalid entry"
-        )
-    url = str(match.get("url", "")).strip()
-    actual_head = str(match.get("headRefOid", "")).strip()
-    if not url or not actual_head:
-        raise click.ClickException(
-            "open pull request is missing its URL or head commit"
-        )
-    if actual_head != expected_head:
+        match = matches[0]
+        if not isinstance(match, dict):
+            raise click.ClickException(
+                "could not query open pull requests: gh returned an invalid entry"
+            )
+        url = str(match.get("url", "")).strip()
+        actual_head = str(match.get("headRefOid", "")).strip()
+        if not url or not actual_head:
+            raise click.ClickException(
+                "open pull request is missing its URL or head commit"
+            )
+        if actual_head == expected_head:
+            return url
+        if attempt + 1 < PULL_REQUEST_HEAD_ATTEMPTS:
+            time.sleep(PULL_REQUEST_HEAD_RETRY_SECONDS)
+            continue
         raise click.ClickException(
             f"open pull request for '{head}' targets {actual_head}, "
             f"not current pushed HEAD {expected_head}"
         )
-    return url
+
+    raise AssertionError("pull-request head retry loop exhausted unexpectedly")
 
 
 def deliver_pull_request(
