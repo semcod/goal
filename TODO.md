@@ -2,12 +2,13 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-044](project/ticket-044/README.md): retry one otherwise
+- [x] Deliver [ticket-044](project/ticket-044/README.md): retry one otherwise
   valid open PR's transiently stale head after a successful governed push,
   while preserving the terminal exact-head failure. State:
-  `IN_PROGRESS / VALIDATION`; 18 focused and 574 full tests pass (2 existing
-  skips), with Ruff, governance, package and Docker builds passing;
-  classification: `BUG / P0 / regression`.
+  `DONE / DONE`; 18 focused and 574 full tests pass (2 existing skips), Ruff,
+  governance, package and Docker builds pass, the real governed flow reused PR
+  #69, and CI plus Validator approved exact head `6837dd2` before merge as
+  `main@000da3c`; classification: `BUG / P0 / regression`.
 
 - [x] Deliver [ticket-043](project/ticket-043/README.md): publish the merged
   source-hub and delivery-coherence repairs as Goal 2.1.296, verify immutable

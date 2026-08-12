@@ -51,9 +51,12 @@ can be left behind.
 - Repeated 18 focused and 574 full tests, Ruff, governance, package build and
   Docker on final-base head `90023bf`; all passed and the temporary image was
   removed.
+- Drove the corrected governed PR path itself: it pushed `6837dd2`, reused PR
+  #69 without duplication and passed 574 tests with 2 existing skips.
+- Confirmed CI and trusted Validator App review `4915244880` approved that
+  exact head, merged it as `main@000da3c`, and passed focused/governance checks
+  on the byte-identical clean merge.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
-- New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+- None. The bounded repair is complete.

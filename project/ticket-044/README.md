@@ -2,8 +2,8 @@
 
 - **ID**: ticket-044
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -62,6 +62,13 @@ authoritative value never converges.
   resulting PR diff contains no ticket-043 release carrier or README change.
   The focused and full suites, Ruff, governance, two-artifact build and Docker
   validation above were repeated on that final base at head `90023bf`.
+- The real governed delivery pushed final head `6837dd2`, reused existing PR
+  #69 without creating a duplicate, and again passed 574 tests with 2 existing
+  skips. Python 3.12/3.13 CI and trusted Validator App review `4915244880`
+  approved that exact head before it merged as
+  `main@000da3cd4250f56cf205594facad19cb42c78218`.
+- The clean merge tree is byte-identical to the approved head; all 18 focused
+  delivery tests and deterministic governance pass on authoritative `main`.
 
 ## Participants
 
