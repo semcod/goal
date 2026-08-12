@@ -1,3 +1,5 @@
 2026-08-12 SOURCE new-project v0.16.1 tag d25151e27a6eeff899caff191993df0559ec333d peel 4e6ba5ec15873346446d67d8787f17f68f57f81e
 2026-08-12 ADOPT-CHECK 23 governance-owned changes required; no .github, Goal runtime, test or version path
 2026-08-12 ADOPT-PLAN CHMOD=1 UPDATE=11 CREATE=10 LOCK-UPDATE=1
+2026-08-12 PLAN-CORRECTION adopted 0.16.1 gate required atomic standardAdoption binding and policy budgets 5 files/2 components/0 public interfaces; discarded uncommitted trial payload before revising intent
+2026-08-12 PREREQUISITE GOV-DOCKER-002 compose.yml:5 image goal:local; local build contract requires image key omission; ticket-053 moved BACKLOG/PLAN

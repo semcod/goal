@@ -41,27 +41,20 @@
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 23,
-      "maxAffectedComponents": 6,
-      "maxPublicInterfaceChanges": 3,
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
       "decision": "Adopt only the remaining governance-owned 0.16.1 plan after checker and workflow prerequisites",
       "components": [
-        {"name": "diagnostic-catalog-and-runbooks", "paths": [".governance/diagnostics*", ".governance/error/**"]},
-        {"name": "remediation-intent-dsl", "paths": [".governance/remediation-intent*", ".governance/remediation_intent.py"]},
-        {"name": "workspace-lifecycle", "paths": [".governance/workspace_lifecycle_check.py"]},
-        {"name": "managed-governance-contract", "paths": [".governance/**", "AGENTS.md", "project/new-ticket.sh"]}
+        {"name": "atomic-managed-standard", "paths": [".governance/**", "AGENTS.md", "project/**", "TODO.md"]}
       ],
       "responsibilityChanges": false,
-      "interfaceChanges": [
-        "new-project.remediation-intent/v1 validation and projection CLI",
-        "workspace lifecycle checker CLI",
-        "diagnostics v2 remediation/runbook mapping"
-      ],
-      "dataChanges": ["manifest lock advances from new-project 0.14.1 to 0.16.1"],
+      "interfaceChanges": [],
+      "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
       "rollback": "Revert the unmerged adoption branch; after merge use a new governed upgrade or revert ticket"
     },

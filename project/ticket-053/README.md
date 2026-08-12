@@ -2,8 +2,8 @@
 
 - **ID**: ticket-053
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: BACKLOG
+- **Workflow state**: PLAN
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -34,6 +34,14 @@ so the remaining 23-path adoption plan is entirely governance-owned.
 - Update `AGENTS.md`, `project/new-ticket.sh` and the managed lock.
 - No `.github/**`, package source, tests, release version or human-owned file
   is in the plan.
+
+## Prerequisite discovered by the adopted gate
+
+The 0.16.1 validator correctly rejects the existing local-build-only
+`compose.yml` image tag as mutable. That infrastructure-owned repair must be
+integrated first in a separate non-overlapping ticket. This ticket releases
+its reservation while waiting and will return to `IN_PROGRESS` before applying
+the atomic managed payload.
 
 ## Participants
 

@@ -26,6 +26,18 @@ reports 23 remaining paths, all owned by governance.
 6. Require Python 3.12/3.13 CI, live remote lifecycle and exact-head trusted
    Validator App approval before merge; close evidence separately.
 
+The first non-published trial was discarded before review because the newly
+adopted gate correctly required the explicit atomic `standardAdoption`
+from/to revision binding and repository policy budgets. The revised intent now
+uses that managed-payload exemption instead of widening ordinary implementation
+limits; all payload hashes still have to match the published lock.
+
+The same gate also surfaced a pre-existing mutable `goal:local` image tag in
+`compose.yml`. Because that path is infrastructure-owned, ticket 053 is now
+`BACKLOG / PLAN` and releases its reservation until a separate prerequisite
+ticket removes the redundant image tag. The atomic adoption binding will be
+added together with the lock-changing payload after that prerequisite merges.
+
 ## Actual changes
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
@@ -33,6 +45,7 @@ reports 23 remaining paths, all owned by governance.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
+- Waiting for a separate infrastructure-owned Compose repair; no governance
+  implementation is active while this ticket is in BACKLOG / PLAN.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.
