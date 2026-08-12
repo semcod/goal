@@ -4,7 +4,7 @@
 
 - [ ] Deliver [ticket-054](project/ticket-054/README.md): remove the redundant
   mutable `goal:local` Compose image tag while retaining the local build. State:
-  `IN_PROGRESS / EDIT`; classification: `BUG / P1 / regression`; prerequisite
+  `IN_PROGRESS / VALIDATION`; classification: `BUG / P1 / regression`; prerequisite
   for ticket-053.
 
 - [ ] Deliver [ticket-053](project/ticket-053/README.md): adopt the complete

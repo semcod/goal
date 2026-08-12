@@ -26,6 +26,10 @@ This path belongs to infrastructure and must not be mixed into ticket 053.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Removed only the redundant `image: goal:local` key; the existing local build,
+  network isolation, mount and command remain unchanged.
+- Verified resolved Compose configuration, absence of an image key and both
+  current and exact published new-project 0.16.1 governance gates.
 
 ## Blockers
 

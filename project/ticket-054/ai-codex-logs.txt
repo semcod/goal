@@ -1,1 +1,4 @@
 2026-08-12 DIAGNOSTIC new-project 0.16.1 GOV-DOCKER-002 compose.yml:5 image goal:local
+2026-08-12 COMPOSE docker compose config PASS; build context/Dockerfile preserved; no image key
+2026-08-12 GOV current package PASS
+2026-08-12 GOV new-project 0.16.1 exact source validator PASS base b5b37b43... head working tree
