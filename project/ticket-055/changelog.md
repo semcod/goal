@@ -11,3 +11,7 @@
   branch alias.
 - Added fail-closed ordering, environment-isolation and local-collision tests;
   full validation and deterministic remediation analysis pass as recorded.
+- PR #89 passed hosted Python 3.12/3.13 CI, remote lifecycle and trusted
+  exact-head Validator review, then merged as `da81ad9b221e...`.
+- Closed the ticket through a separate evidence-only PR while retaining the
+  stale local canonical alias as a live collision test.
