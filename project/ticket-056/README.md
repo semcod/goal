@@ -3,7 +3,7 @@
 - **ID**: ticket-056
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -35,7 +35,7 @@ other delivery modes remain unchanged.
   tickets fail before mutation and name the required corrective option.
 - [x] AC-04: Delivery events are appended below the Git common directory and
   never alter `git status` in a primary or linked worktree.
-- [ ] AC-05: Focused regressions, the full Python suite, Ruff, governance,
+- [x] AC-05: Focused regressions, the full Python suite, Ruff, governance,
   package build and Docker smoke pass before protected PR delivery.
 
 ## Participants

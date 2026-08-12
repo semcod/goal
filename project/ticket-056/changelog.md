@@ -8,3 +8,5 @@
 - Bound the repair to early ticket resolution and Git-common audit storage.
 - Implemented fail-closed active-ticket inference and checkout-neutral audit
   persistence with focused primary/linked worktree regressions.
+- Validated 54 focused and 607 full tests with 2 existing skips, scoped Ruff,
+  deterministic governance, wheel/sdist build and production Docker CLI smoke.
