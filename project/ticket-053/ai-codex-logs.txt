@@ -9,3 +9,4 @@
 2026-08-12 DSL DRAFT validate PASS; DRAFT render rejected GOV-REMEDIATION-001; adopted analyzer byte-identical to source; upstream governance scripts PASS
 2026-08-12 WORKSPACE non-terminal audit rejects unallowlisted ticket worktree and PASS with exact /tmp/goal-ticket053-adoption allowance
 2026-08-12 TEST uv run --frozen pytest -q: 600 passed, 2 skipped
+2026-08-12 DELIVERY-DEFECT Goal 2.1.298 resume ran cost bootstrap before pending-candidate detection and pushed out-of-scope README badge commit db057409... to PR #87; exact README restoration prepared before validation

@@ -49,6 +49,10 @@ adoption binding is recorded together with the lock-changing payload.
 - Verified drift-free adoption, deterministic change validation, explicit
   active-worktree handling, the full upstream DSL/todo2code probes and all 600
   Goal tests (2 existing skips).
+- Detected that Goal's committed-candidate resume still ran cost bootstrap
+  before recognizing the clean candidate and generated an out-of-scope README
+  badge update. Restored README exactly and kept the incident as follow-up
+  evidence instead of admitting it into this adoption.
 
 ## Blockers
 
