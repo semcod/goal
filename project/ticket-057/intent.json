@@ -1,0 +1,120 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-057",
+  "summary": "Publish Goal 2.1.299 with mutation-free PR resume",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "README.md",
+    "project/ticket-057/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "goal/**/*.py",
+    "tests/**",
+    ".github/**",
+    ".env",
+    "**/*.pem",
+    "**/*secret*"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-056"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5ec8fa0af6089ac92a15daa774e2ea2ec26d8abc",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.299 publishes the merged mutation-free pull-request resume repair and proves it on the real new-project candidate",
+    "nonGoals": [
+      "No executable source, dependency-set or top-level CHANGELOG change",
+      "No publication, tag or GitHub Release before protected merge",
+      "No duplicate, replacement or moved registry artifact",
+      "No mutation of unrelated user worktrees"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize the five existing release carriers through governed PR delivery, then publish only from exact validated merged main",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": [
+            "VERSION",
+            "pyproject.toml",
+            "uv.lock",
+            "goal/__init__.py",
+            "README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Never replace immutable artifacts; issue a later patch if public verification fails"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal -a --delivery-mode pull-request --target-version 2.1.299 push --ticket ticket-057 --no-changelog --no-publish"
+        ],
+        "evidence": "The governed flow changes only declared carriers and creates one PR"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q",
+          "ruff check scoped paths",
+          "./project/governance-check.sh",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "Local and protected validation passes on the exact head"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "clean merged-main retest",
+          "goal -a --delivery-mode publish-only --force-publish"
+        ],
+        "evidence": "Registry effects originate only from validated authoritative main"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "fresh public-index goal==2.1.299 install",
+          "goal --delivery-mode pull-request --no-publish -a push --ticket ticket-072"
+        ],
+        "evidence": "Public Goal reports 2.1.299 and resumes the real candidate without checkout mutation"
+      }
+    ]
+  }
+}

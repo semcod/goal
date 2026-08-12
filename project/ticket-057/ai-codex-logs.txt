@@ -1,0 +1,7 @@
+2026-08-12T17:03:03Z ticket-057 allocated on clean accepted base 5ec8fa0.
+2026-08-12T17:05:33Z public Goal 2.1.298 began governed PR delivery.
+2026-08-12T17:06:00Z public Goal 2.1.298 opened PR #94 at c9e88d4 after 607
+passed tests and 2 skips, but reproduced its known checkout-local audit path.
+The exact two-event file and the temporary .git/info/exclude workaround were
+removed. The CLI was then installed editable from merged main so the release
+candidate can prove ticket-056 before 2.1.299 is published.

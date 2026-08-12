@@ -5,7 +5,7 @@
 
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.298-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.299-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/pypi-goal-orange.svg" alt="PyPI">
@@ -23,11 +23,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.298-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.51-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-169.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-2.1.299-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.91-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-176.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fx--ai%2Fgrok--code--fast--1-lightgrey)
 
-- 🤖 **LLM usage:** $0.5120 (502 commits)
-- 👤 **Human dev:** ~$16952 (169.5h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $0.9104 (531 commits)
+- 👤 **Human dev:** ~$17627 (176.3h @ $100/h, 30min dedup)
 
 Generated on 2026-08-12 using [openrouter/x-ai/grok-code-fast-1](https://openrouter.ai/x-ai/grok-code-fast-1)
 
