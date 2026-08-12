@@ -16,7 +16,7 @@ package for the real `wellmanifest/new-project` ticket-065 health and delivery.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The governed high-level PR workflow synchronizes exactly VERSION,
+- [x] AC-01: The governed high-level PR workflow synchronizes exactly VERSION,
   `pyproject.toml`, `goal/__init__.py`, README version badges and `uv.lock` to
   2.1.297, plus this ticket's evidence.
 - [ ] AC-02: Full tests, scoped Ruff, governance, wheel/sdist and Docker pass;
@@ -49,6 +49,18 @@ package for the real `wellmanifest/new-project` ticket-065 health and delivery.
   version write, commit, push, tag or registry action, confirming that the
   high-level workflow requires a declared pending release diff before its
   version stage.
+- The real high-level Goal flow selected `explicit-target -> 2.1.297`, passed
+  581 tests with 2 existing skips, synchronized only the five declared release
+  carriers plus ticket evidence, skipped registry/tag effects and opened PR
+  #71 at candidate head `9c4ff9c`.
+- All carriers agree at 2.1.297; governance and scoped Ruff pass. The candidate
+  build produced exactly `goal-2.1.297-py3-none-any.whl`
+  (`d592c494c0755c174ff90b6017d8b2256d0577fe02a85c06b43e640d386066ea`)
+  and `goal-2.1.297.tar.gz`
+  (`3b2719c5b451106e535f4e697b352b0473b4560f1a2092dda86f3733d8820147`).
+- Docker built candidate image
+  `sha256:fc1f80ed7c532c99e20fb915926beaa624881653e1a3e923e05e6f74e99ba66e`;
+  the image and all build distributions were removed after recording hashes.
 
 ## Participants
 

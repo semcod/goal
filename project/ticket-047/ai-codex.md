@@ -36,6 +36,11 @@ that already-integrated repair without widening its application budget.
 - Confirmed Goal performs no side effects when a clean repository reaches the
   pre-version no-change guard; the recorded publication evidence now supplies
   the declared ticket diff for carrier synchronization.
+- Used the real Goal PR workflow to synchronize the five carriers, run all 581
+  passing tests (2 existing skips), skip premature release effects and create
+  PR #71.
+- Passed governance, scoped Ruff, exact carrier checks, wheel/sdist and Docker
+  builds; recorded the artifact/image hashes and removed temporary outputs.
 
 ## Blockers
 
