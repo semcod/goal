@@ -8,3 +8,5 @@
   workflow after its ticket-051 checker prerequisite was integrated.
 - Added the byte-identical managed workflow and verified its pinned actions,
   YAML structure and checker invocation.
+- Recorded and safely handled the target's broad historical `.github/` ignore
+  rule by force-staging only this ticket's exact allowed workflow path.

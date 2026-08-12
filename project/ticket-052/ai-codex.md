@@ -35,6 +35,10 @@ without crossing ownership boundaries.
   already integrated managed checker.
 - Verified its hash, YAML structure and checker invocation; deterministic
   governance passes.
+- The first Goal delivery pass exposed that Goal's broad historical
+  `.gitignore` entry for `.github/` omits a new managed workflow from ordinary
+  staging. Kept the ticket boundary unchanged and force-staged only the exact
+  allowed workflow before repeating the governed delivery checks.
 
 ## Blockers
 

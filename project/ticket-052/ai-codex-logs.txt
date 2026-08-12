@@ -3,3 +3,4 @@
 2026-08-12 SHA256 source/target 9dd307f48368fea9438bb607e28e48cffcfe0ae4f231d77df86c384745bb68e9 MATCH
 2026-08-12 FOCUSED YAML structure PASS; action commit pins PASS; checker invocation PASS
 2026-08-12 GOV-PASS 0 errors 0 warnings
+2026-08-12 DELIVERY-DIAGNOSTIC .gitignore:228 `.github/` omitted the managed workflow from ordinary staging; exact allowed path force-staged for retry
