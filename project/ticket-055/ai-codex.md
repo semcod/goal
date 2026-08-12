@@ -46,9 +46,18 @@ avoids deleting or overwriting possibly valuable local state.
 - Validated the remediation DSL, recorded todo2code's fail-closed rejection of
   unrelated plans, passed 51 focused and 604 full tests (2 existing skips),
   Ruff, governance, Docker build and container smoke test.
+- Exercised the new committed-candidate path through local Goal itself: it
+  resumed exact head `2ba40a5955fa...` before bootstrap, reran all tests and
+  created PR #89 without a tree mutation.
+- Hosted CI, remote lifecycle and trusted exact-head Validator review passed;
+  implementation PR #89 merged as `da81ad9b221e...`.
+- Rejected and deleted unmerged closure PR #90 after the incomplete flag set
+  correctly exposed a release-preparation path outside closure scope. The
+  replacement retains the stale local `goal/ticket-055` alias to exercise
+  collision-safe publication and uses all four explicit commit-only flags.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
+- None; implementation is integrated and only closure evidence remains.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.

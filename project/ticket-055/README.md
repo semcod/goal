@@ -2,8 +2,8 @@
 
 - **ID**: ticket-055
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -51,3 +51,11 @@ branch name that may legitimately remain from a merged attempt.
   2 existing skips. Scoped Ruff and formatting checks pass.
 - Explicit changed-file governance passes with 0 errors and 0 warnings.
   Docker build and `goal --version` smoke test pass for the validation image.
+- The real mutation-free resume reran 604 tests (2 skips) and published exact
+  head `2ba40a5955fa...` as PR #89 without changing the clean worktree.
+  Hosted Python 3.12/3.13 CI and remote lifecycle passed; trusted Validator App
+  review `4918403955` approved that exact head, and PR #89 merged as
+  `da81ad9b221e...`.
+- Closure attempt PR #90 was closed without merge and its remote branch deleted
+  after incomplete commit-only flags prepared release carriers outside scope.
+  The replacement uses the explicit four-flag commit-only contract.
