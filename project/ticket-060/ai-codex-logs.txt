@@ -3,3 +3,6 @@
 2026-08-12T18:22:00Z scope: one governance-owned goal.yaml scalar; current Python command is stale, while Node npm publish and Rust cargo publish are already correct and must remain unchanged.
 2026-08-12T18:23:00Z implementation: changed exactly strategies.python.publish to twine upload --skip-existing dist/goal-{version}*; git numstat is 1 insertion/1 deletion.
 2026-08-12T18:23:00Z validation: structural YAML assertions PASS for Python, Node and Rust publishers; 618 full PASS/2 SKIP; governance GOV-PASS 0 errors/0 warnings; git diff --check PASS.
+2026-08-12T18:27:26Z protected validation: hosted Python 3.12/3.13 and remote lifecycle PASS; Validator run 31627588707 review 4919864176 deterministically approved exact HEAD 22eed9c006cafc1aadbdd7274073f29ad02b1e55.
+2026-08-12T18:28:11Z merge: PR #100 merged as 48b8e2cee80c0c7a286f86b59eda896c4c00c060; merge second parent and tree equal the approved candidate; remote branch deleted.
+2026-08-12T18:29:20Z post-merge: CI run 31627788882 PASS on Python 3.12 and 3.13 at exact merge SHA; implementation lifecycle complete.
