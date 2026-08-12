@@ -3,7 +3,13 @@
 - **ID**: ticket-043
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
+
+## Pre-PR evidence
+
+- The release plan is a distinct commit on clean accepted base `3fb66ab`.
+- Goal 2.1.295 is the public baseline; PyPI has no 2.1.296 artifact and GitHub
+  has no `v2.1.296` tag or Release before the candidate workflow.
 - **Created**: 2026-08-12
 
 ## Goal and scope

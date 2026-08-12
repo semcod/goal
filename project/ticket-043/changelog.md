@@ -6,3 +6,5 @@
 - No human participant identity or content was generated.
 - Bounded the 2.1.296 release to five established carriers and the already
   merged ticket-041/042 fixes.
+- Verified the 2.1.296 registry, tag and Release namespace is unused before
+  candidate preparation.

@@ -31,6 +31,8 @@ user asked to remove.
 - Confirmed `main@3fb66ab` is clean, equals `origin/main`, has only remote
   `main`, zero open PRs, and contains the clean-merge-validated ticket-041/042
   implementation.
+- Confirmed the 2.1.296 registry/tag/Release namespace is unused before
+  entering `PUBLICATION`; the release plan remains a separate prior commit.
 
 ## Blockers
 

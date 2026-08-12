@@ -5,7 +5,7 @@
 - [ ] Deliver [ticket-043](project/ticket-043/README.md): publish the merged
   source-hub and delivery-coherence repairs as Goal 2.1.296, verify immutable
   public artifacts and use the fresh public CLI for the next `new-project`
-  delivery. State: `IN_PROGRESS / EDIT`; classification:
+  delivery. State: `IN_PROGRESS / PUBLICATION`; classification:
   `SERVICE / P0 / requested`.
 
 - [x] Deliver [ticket-042](project/ticket-042/README.md): keep subcommand help

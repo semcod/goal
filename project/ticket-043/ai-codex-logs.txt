@@ -1,2 +1,3 @@
 2026-08-12 release base: main=origin/main=3fb66abf24b809722dac706a023d4510b21ae286; clean; only remote main; zero open PRs.
 2026-08-12 authorization: user requested repair and continuation; SESSION_EXECUTION_AUTHORIZATION recorded for bounded 2.1.296 PR/release/public verification, trusted merge remains external.
+2026-08-12 namespace preflight: PyPI 2.1.296 absent; refs/tags/v2.1.296 absent; GitHub Release v2.1.296 absent; workflow moved to PUBLICATION.
