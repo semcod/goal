@@ -2,8 +2,8 @@
 
 - **ID**: ticket-039
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -42,6 +42,11 @@ the package runtime contract before staging.
   `costs` and proposes only the legacy dev `pfix` marker.
 - Python wheel/sdist and Docker image builds pass; temporary output and
   generated `goal.egg-info` were removed.
+- PR #64 passed Python 3.12/3.13 CI, received deterministic Validator Agent
+  approval for exact head `8b5e1ad8db92ab1f5bd3232abb9b7f7b0e64a0bc`, and
+  merged as `main@23493d78e345268289d222c972cb05534b25b20e`.
+- GitHub automatically deleted the remote head; after ancestry and clean-tree
+  checks, the complete disposable worktree and local branch were removed.
 
 ## Participants
 

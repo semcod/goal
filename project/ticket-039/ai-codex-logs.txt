@@ -8,3 +8,6 @@ governance=GOV-PASS
 live transform=runtime costs preserved; dev pfix marked
 package build=wheel and sdist PASS; temporary output and goal.egg-info removed
 docker build=sha256:88f045507398e5e5d70f79143bd34d235a96877c7dfd6ab72a89d961c60b294a
+trusted delivery=PR #64 exact head 8b5e1ad8db92ab1f5bd3232abb9b7f7b0e64a0bc APPROVED
+merge=23493d78e345268289d222c972cb05534b25b20e
+cleanup=remote/local branch and complete disposable worktree removed after ancestry proof

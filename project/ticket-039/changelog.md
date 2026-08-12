@@ -8,3 +8,5 @@
   regression contract that preserves runtime dependencies.
 - Passed focused/full tests, real-project dry transformation, lint, governance,
   package and Docker builds without retaining generated artifacts.
+- Merged exact-head PR #64 after CI and deterministic Validator Agent approval,
+  then removed its remote/local branch and disposable worktree.
