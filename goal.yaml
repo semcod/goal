@@ -208,7 +208,7 @@ strategies:
   python:
     test: pytest tests/ -v
     build: python -m build
-    publish: twine upload dist/goal-{version}*
+    publish: twine upload --skip-existing dist/goal-{version}*
     publish_enabled: true
     dependencies:
       file: requirements.txt
