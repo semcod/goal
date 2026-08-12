@@ -510,6 +510,11 @@ class GoalGroup(click.Group):
         ctx.exit(2)
 
     def parse_args(self, ctx, args) -> Any:
+        # Click invokes the parent group callback before rendering subcommand
+        # help. Preserve that invocation as a read-only operation too.
+        ctx.meta["goal_help_request"] = any(
+            argument in {"--help", "-h"} for argument in args
+        )
         # Check if -a or --all is in args without any command.
         # We must skip option *values* (e.g. 'major' in '--bump major') so
         # they are not mistaken for subcommand names.
@@ -671,7 +676,12 @@ def main(
     read_only_governance = bool(ctx.meta.get("goal_read_only_governance"))
     # Skip version banner for help requests to avoid blocking help output
     # Check both sys.argv and Click's resilient_parsing (used for --help)
-    is_help_request = "--help" in sys.argv or "-h" in sys.argv or ctx.resilient_parsing
+    is_help_request = bool(
+        "--help" in sys.argv
+        or "-h" in sys.argv
+        or ctx.resilient_parsing
+        or ctx.meta.get("goal_help_request")
+    )
     if not is_help_request and not read_only_governance:
         _warn_goal_binary_mismatch()
         _warn_wheel_shadows_editable()
@@ -696,7 +706,7 @@ def main(
         config_path,
         abstraction,
         delivery_mode,
-        read_only_governance,
+        read_only_governance or is_help_request,
     )
 
 

@@ -327,6 +327,74 @@ class TestWorkflowOrder:
         mock_create_tag.assert_not_called()
         mock_push.assert_not_called()
 
+    def test_explicit_commit_only_ignores_committed_unreleased_source(self):
+        """All three release suppressions must remain a plain delivery."""
+        from goal.push.core import execute_push_workflow
+
+        ctx_obj = {
+            "yes": True,
+            "markdown": False,
+            "config": {},
+            "user_config": {},
+        }
+        version_info = MagicMock(return_value=("2.1.295", "2.1.296"))
+
+        with (
+            patch("goal.push.core.check_pyproject_toml", return_value=None),
+            patch("goal.push.core._initialize_context"),
+            patch("goal.push.core._detect_project_types", return_value=["python"]),
+            patch("goal.push.core._bootstrap_projects"),
+            patch("goal.push.core.run_git"),
+            patch("goal.push.core.get_staged_files", return_value=["README.md"]),
+            patch(
+                "goal.publish.changes.committed_unreleased_source_files",
+                return_value=["goal/governance/delivery.py"],
+            ) as pending_source,
+            patch("goal.push.core._validate_staged_files"),
+            patch("goal.push.core.get_diff_content", return_value="diff"),
+            patch(
+                "goal.push.core.get_diff_stats", return_value={"README.md": (1, 0)}
+            ),
+            patch(
+                "goal.push.core.get_commit_message",
+                return_value=("docs: close ticket", None, {}),
+            ),
+            patch("goal.push.core.get_version_info", version_info),
+            patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
+            patch("goal.push.core._commit_without_release", return_value=True) as commit,
+            patch("goal.push.core._handle_commit_phase") as release_commit,
+            patch("goal.push.core.handle_publish", return_value=(True, None)) as publish,
+            patch("goal.push.core.create_tag") as create_tag,
+            patch("goal.git_ops.get_remote_branch", return_value="main"),
+            patch("goal.push.core.push_to_remote") as push,
+            patch("goal.push.core.handle_todo_stage"),
+            patch("goal.push.core.output_final_summary"),
+        ):
+            execute_push_workflow(
+                ctx_obj=ctx_obj,
+                bump="patch",
+                no_tag=True,
+                no_changelog=True,
+                no_version_sync=True,
+                no_publish=True,
+                message="docs: close ticket",
+                dry_run=False,
+                yes=True,
+                markdown=False,
+                split=False,
+                ticket="ticket-041",
+                abstraction=None,
+                todo=False,
+            )
+
+        pending_source.assert_not_called()
+        assert version_info.call_args.kwargs["release_required"] is False
+        commit.assert_called_once()
+        release_commit.assert_not_called()
+        publish.assert_called_once()
+        create_tag.assert_called_once_with("2.1.295", True)
+        push.assert_called_once()
+
     @pytest.mark.parametrize("commit_result", [True, False])
     def test_docs_only_commit_helper_propagates_commit_result(self, commit_result):
         """The orchestrator must receive the real plain-commit outcome."""

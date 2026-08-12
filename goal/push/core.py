@@ -45,6 +45,13 @@ def run_git_local(*args, **kwargs) -> Any:
     return run_git(*args, **kwargs)
 
 
+def _commit_only_requested(
+    *, no_version_sync: bool, no_tag: bool, no_publish: bool
+) -> bool:
+    """Return whether every release side effect was explicitly disabled."""
+    return no_version_sync and no_tag and no_publish
+
+
 def _prepare_slow_test_tickets(
     ctx_obj: Dict[str, Any], files: List[str]
 ) -> List[str]:
@@ -484,15 +491,20 @@ def execute_push_workflow(
     # --force-publish overrides to release anyway.
     from goal.publish.changes import analyze_publishable_changes
 
+    commit_only = _commit_only_requested(
+        no_version_sync=no_version_sync,
+        no_tag=no_tag,
+        no_publish=no_publish,
+    )
     early_change_report = (
         None if force_publish else analyze_publishable_changes(files, project_types)
     )
-    skip_release = bool(
+    skip_release = commit_only or bool(
         early_change_report
         and early_change_report.reason
         in {"no_package_source_changes", "no_registry_project_types"}
     )
-    if skip_release:
+    if skip_release and not commit_only:
         # Staged files alone miss source changes that are already committed
         # (agents commit, then a later `goal -a` sees a clean tree and skips
         # while the registry stays behind HEAD). Release when the last v* tag
@@ -551,7 +563,8 @@ def execute_push_workflow(
             new_version = current_version
 
     version_release_intent = bool(
-        skip_release
+        not commit_only
+        and skip_release
         and version_decision is not None
         and version_decision.reason
         in {"already-bumped", "partial-bump", "explicit-target"}
@@ -656,10 +669,15 @@ def execute_push_workflow(
             )
         )
     elif skip_release:
+        skip_reason = (
+            "explicit commit-only flags"
+            if commit_only
+            else "no package source changes"
+        )
         click.echo(
             click.style(
                 f"⏭ Skipping version bump and publish (staying on v{current_version}) "
-                "— no package source changes. Use --force-publish to release anyway.",
+                f"— {skip_reason}. Use --force-publish to release anyway.",
                 fg="yellow",
             )
         )
