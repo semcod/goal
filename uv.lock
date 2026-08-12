@@ -771,7 +771,7 @@ wheels = [
 
 [[package]]
 name = "goal"
-version = "2.1.294"
+version = "2.1.295"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -801,7 +801,7 @@ requires-dist = [
     { name = "clickmd", specifier = ">=0.1.0" },
     { name = "costs", specifier = ">=0.1.53" },
     { name = "nfo", marker = "extra == 'nfo'", specifier = ">=0.2.22" },
-    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
+    { name = "pfix", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = ">=0.1.60" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "tomlkit", specifier = ">=0.12.0" },

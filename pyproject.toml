@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.1.294"
+version = "2.1.295"
 description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
 readme = "README.md"
 authors = [
@@ -35,7 +35,7 @@ dev = [
     "pytest>=7.0.0",
     "build",
     "twine",
-    "pfix>=0.1.60",
+    "pfix>=0.1.60; python_version >= '3.10'",
     "tox>=4.0.0",
 ]
 
