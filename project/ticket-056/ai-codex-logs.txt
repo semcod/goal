@@ -9,3 +9,4 @@
 2026-08-12T17:08:00Z governance: GOV-PASS 0 errors/0 warnings; git diff --check PASS.
 2026-08-12T17:09:00Z package: goal-2.1.298 wheel sha256 a2814477c53ec2dba5ee8192c1254c47ef59e35890e535c9d1256cbfd862b81c; sdist sha256 f5d5fecce8f0d2b1bbc01c296b68945b995b23fc5c704eb0a1c78b363b2c7704; temporary build output removed.
 2026-08-12T17:12:00Z Docker: production image sha256:9e860d872dd9e1575257a043ff729f7d4a33c85125361b30f421ca7c3961f949 built; container goal --help PASS; temporary image removed.
+2026-08-12T16:51:12Z live bare command: PYTHONPATH bound to this worktree; goal -a -y --no-publish --delivery-mode pull-request inferred ticket-056, resumed committed HEAD 95505c6ebc2d637fade5bf50f2207b41da8d5ffa, ran 607 PASS/2 SKIP, left git status clean and created PR #92 with no bootstrap/doctor artifacts.
