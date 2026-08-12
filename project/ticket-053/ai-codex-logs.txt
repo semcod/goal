@@ -10,3 +10,7 @@
 2026-08-12 WORKSPACE non-terminal audit rejects unallowlisted ticket worktree and PASS with exact /tmp/goal-ticket053-adoption allowance
 2026-08-12 TEST uv run --frozen pytest -q: 600 passed, 2 skipped
 2026-08-12 DELIVERY-DEFECT Goal 2.1.298 resume ran cost bootstrap before pending-candidate detection and pushed out-of-scope README badge commit db057409... to PR #87; exact README restoration prepared before validation
+2026-08-12 DELIVERY Goal resume with GOAL_SKIP_COSTS_BADGE=1 retested 600 passed/2 skipped and published corrected PR #87 head 604b044b684441b9b7b8df1e66d7510219c4fac2
+2026-08-12 CI run 31610992424 Python 3.12 PASS, Python 3.13 PASS; remote lifecycle run 31610992428 PASS
+2026-08-12 VALIDATOR run 31611121614 review 4918131711 APPROVED exact head ticket-053 correlation goal-pr-87-ticket-053
+2026-08-12 MERGE PR #87 merged as 8172701786a8baee77f4f02635a881e97a0e6536

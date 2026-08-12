@@ -2,8 +2,8 @@
 
 - **ID**: ticket-053
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -23,7 +23,7 @@ so the remaining 23-path adoption plan is entirely governance-owned.
 - [x] AC-03: The adopted remediation-intent schema, template and analyzer
       validate the DSL, render canonical LLM/todo2code inputs, bind advisory
       todo2code output by digest and reject unsafe/stale plans.
-- [ ] AC-04: Full Goal tests pass before a protected PR; Python 3.12/3.13 CI,
+- [x] AC-04: Full Goal tests pass before a protected PR; Python 3.12/3.13 CI,
       the remote-lifecycle job and exact-head Validator approval are required
       before merge.
 
@@ -54,6 +54,9 @@ managed payload is bound atomically from the old to the new standard revision.
   binding, unsafe-plan rejection and stale-overlay rejection against the exact
   byte-identical adopted analyzer.
 - The complete Goal suite passes: 600 tests, with 2 existing skips.
+- PR #87 exact head `604b044b...` passed hosted Python 3.12/3.13 CI and the
+  live remote-lifecycle job. Validator App review `4918131711` approved that
+  exact head for ticket 053, and the PR merged as `81727017...`.
 
 ## Participants
 

@@ -9,13 +9,14 @@
   `6c7da535...`; classification: `BUG / P1 / regression`; prerequisite for
   ticket-053.
 
-- [ ] Deliver [ticket-053](project/ticket-053/README.md): adopt the complete
+- [x] Deliver [ticket-053](project/ticket-053/README.md): adopt the complete
   published new-project 0.16.1 governance package, including deterministic
   remediation-intent/todo2code analysis and workspace lifecycle checks. State:
-  `IN_PROGRESS / VALIDATION`; the exact managed payload, drift check, DSL
-  probes, workspace audit and 600 tests (2 existing skips) pass locally;
-  classification: `BUG / P1 / regression`; depends on ticket-051, ticket-052
-  and ticket-054.
+  `DONE / DONE`; the exact managed payload, drift check, DSL probes, workspace
+  audit and 600 tests (2 existing skips) pass locally; PR #87 passed Python
+  3.12/3.13 CI, live lifecycle and trusted exact-head Validator approval and
+  merged as `81727017...`; classification: `BUG / P1 / regression`; depends on
+  ticket-051, ticket-052 and ticket-054.
 
 - [x] Deliver [ticket-052](project/ticket-052/README.md): install the exact
   published new-project 0.16.1 remote-lifecycle workflow after its checker
