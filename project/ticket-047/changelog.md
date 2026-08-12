@@ -6,3 +6,5 @@
 - No human participant identity or content was generated.
 - Bounded the release to five existing carriers, immutable publication proof,
   fresh public verification and the downstream source-hub delivery.
+- Confirmed the 2.1.297 namespace is unused and entered `PUBLICATION`; clean
+  no-change probes caused no Git or registry side effects.

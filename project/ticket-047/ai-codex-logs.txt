@@ -1,0 +1,2 @@
+2026-08-12T12:26:00+02:00 accepted main d97ada6; PyPI 2.1.297 404; tag/Release absent
+2026-08-12T12:27:00+02:00 clean Goal target/patch probes: no-change guard, zero delivery side effects

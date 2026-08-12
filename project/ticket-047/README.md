@@ -3,7 +3,7 @@
 - **ID**: ticket-047
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -38,6 +38,17 @@ package for the real `wellmanifest/new-project` ticket-065 health and delivery.
   merge validation. Existing immutable releases are never moved.
 - The user's instruction to repair and continue is bounded
   `SESSION_EXECUTION_AUTHORIZATION`; independent approval remains external.
+
+## Pre-publication evidence
+
+- Accepted base is clean `main@d97ada6`; the ticket plan is a separate prior
+  commit and no implementation source is part of this release diff.
+- PyPI returns 404 for Goal 2.1.297 and neither annotated tag `v2.1.297` nor a
+  GitHub Release exists before entering `PUBLICATION`.
+- A clean-tree Goal probe with explicit target and patch bump performed no
+  version write, commit, push, tag or registry action, confirming that the
+  high-level workflow requires a declared pending release diff before its
+  version stage.
 
 ## Participants
 

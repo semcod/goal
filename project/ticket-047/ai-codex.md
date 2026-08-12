@@ -31,6 +31,11 @@ that already-integrated repair without widening its application budget.
 - Confirmed `main@d97ada6` is clean, equals `origin/main`, has only remote
   `main`, zero open PRs, and contains the clean-merge-validated ticket-046
   implementation.
+- Confirmed the PyPI/tag/Release namespace for 2.1.297 is unused and moved the
+  release ticket to `PUBLICATION`.
+- Confirmed Goal performs no side effects when a clean repository reaches the
+  pre-version no-change guard; the recorded publication evidence now supplies
+  the declared ticket diff for carrier synchronization.
 
 ## Blockers
 
