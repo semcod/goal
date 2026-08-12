@@ -2,8 +2,8 @@
 
 - **ID**: ticket-059
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -24,6 +24,8 @@ runtime boundary needs to repair them.
   retry-safe Twine commands without changing non-Twine managers.
 - [x] AC-04: Focused/full tests, Ruff and governance pass before protected
   exact-head delivery.
+- [x] AC-05: Protected CI and Validator Agent approve the exact final head;
+  the unchanged tree is merged and post-merge CI passes.
 
 ## Non-goals
 
@@ -44,3 +46,10 @@ runtime boundary needs to repair them.
   governance (0 errors/0 warnings) and whitespace checks pass.
 - The touched constants module's existing late import is now explicitly marked
   `noqa: E402`; import order and runtime behavior are unchanged.
+- PR #98 passed Python 3.12/3.13 and remote lifecycle on exact HEAD
+  `7e3a5500317f8f580c3c7b426cb72fbf3dc9c7c0`. Validator run
+  `31626544571` and review `4919749433` deterministically approved that SHA.
+- PR #98 merged as `1895ddef2fad331b56ae3840b70f6f756da24da2`;
+  its second parent and tree equal the approved candidate. Post-merge CI
+  `31626699872` passed both supported Python versions and the remote ticket
+  branch was deleted.

@@ -33,6 +33,9 @@ crossing into governance-owned `goal.yaml`.
 - Passed 3 focused and 618 full tests (2 existing skips), scoped Ruff,
   governance and whitespace validation; moved to PUBLICATION for protected
   exact-head review.
+- Delivered exact candidate `7e3a550...` through hosted CI and deterministic
+  Validator approval, merged it unchanged as `1895dde...`, and confirmed green
+  post-merge CI before closing the lifecycle.
 
 ## Blockers
 
