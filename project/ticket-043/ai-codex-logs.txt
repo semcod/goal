@@ -4,3 +4,8 @@
 2026-08-12 candidate workflow: explicit-target 2.1.296; 573 PASS/2 SKIP; five carriers synchronized; no registry/tag; PR #68; initial head 909eb557fe5e710d44b1720b29c4708811cc995e.
 2026-08-12 build: GOV-PASS 0/0; wheel sha256 5c56b2def98d44271e2f8de8e79247ea39c421455adfb6bf711ef11f2e7c593e; sdist sha256 0925cc776b2eeb406ed6997599055ed59b506f54cda281dd3f328a45a1f9c3a9.
 2026-08-12 Docker: sha256:d53507165c77e8ea170d5570b4454b6229a2b500c1574a92dcaa44a995e8c86a PASS; temporary image removed.
+2026-08-12 protected delivery: CI 3.12/3.13 PASS; Validator review 4915080136 approved exact head b99fdd13075751b9720db4af840056c21e061818; PR #68 merged as c5f3684ed83da71ab312808bfbbf79af80551b50; remote branch deleted.
+2026-08-12 clean merge: 573 PASS/2 SKIP; Ruff PASS; GOV-PASS 0/0; exactly wheel+sdist built; Docker sha256:bd249e98b34893e7c603efabb8701495ec785bb208d7e9a5d61d9c46a99ac769 PASS and removed.
+2026-08-12 publication: governed publish-only PASS; PyPI wheel sha256 c2fd441d0b8afa8f3335248f14021cf48d3ca654772c5ca5311f7fe7826356d4; sdist sha256 0a29b0ee906dd36a1d86f5a53388b22c51e50b16b29640865723288456478cfb.
+2026-08-12 release: annotated v2.1.296 dereferences to c5f3684ed83da71ab312808bfbbf79af80551b50; final GitHub Release assets independently downloaded and hash-identical to PyPI.
+2026-08-12 public verification: no-cache Python 3.12 install reports goal/import 2.1.296; push --help creates zero files in a fresh empty directory.

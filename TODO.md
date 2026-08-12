@@ -2,12 +2,13 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-043](project/ticket-043/README.md): publish the merged
+- [x] Deliver [ticket-043](project/ticket-043/README.md): publish the merged
   source-hub and delivery-coherence repairs as Goal 2.1.296, verify immutable
   public artifacts and use the fresh public CLI for the next `new-project`
-  delivery. State: `IN_PROGRESS / PUBLICATION`; local full tests, governance,
-  package and Docker candidates pass; classification: `SERVICE / P0 /
-  requested`.
+  delivery. State: `DONE / DONE`; 573 tests pass with 2 existing skips on the
+  clean merge, CI and Validator approved exact head `b99fdd1`, PR #68 merged
+  as `main@c5f3684`, and PyPI, annotated tag, final GitHub Release and fresh
+  public install all verify 2.1.296; classification: `SERVICE / P0 / requested`.
 
 - [x] Deliver [ticket-042](project/ticket-042/README.md): keep subcommand help
   read-only and make the explicit no-version/no-tag/no-publish combination a
