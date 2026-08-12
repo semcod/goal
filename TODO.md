@@ -2,9 +2,11 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-052](project/ticket-052/README.md): install the exact
+- [x] Deliver [ticket-052](project/ticket-052/README.md): install the exact
   published new-project 0.16.1 remote-lifecycle workflow after its checker
-  prerequisite. State: `IN_PROGRESS / VALIDATION`; classification:
+  prerequisite. State: `DONE / DONE`; PR #82 passed 600 tests (2 existing
+  skips), Python 3.12/3.13 CI, its live lifecycle check and trusted exact-head
+  Validator approval, then merged as `ac281ed8...`; classification:
   `BUG / P1 / regression`; depends on ticket-051.
 
 - [x] Deliver [ticket-051](project/ticket-051/README.md): install the exact

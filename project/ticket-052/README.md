@@ -2,8 +2,8 @@
 
 - **ID**: ticket-052
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -19,7 +19,7 @@ the workflow plus its own governance evidence.
       to `wellmanifest/new-project@4e6ba5ec...` and its SHA-256 is recorded.
 - [x] AC-02: The workflow is valid YAML, invokes the integrated managed checker
       and uses digest/commit-pinned actions from the published standard.
-- [ ] AC-03: Full Goal tests and deterministic governance pass before a
+- [x] AC-03: Full Goal tests and deterministic governance pass before a
       protected PR; Python 3.12/3.13 CI and exact-head Validator approval are
       required before merge.
 
@@ -42,5 +42,8 @@ the workflow plus its own governance evidence.
   byte comparison passes.
 - YAML structure loads successfully, both GitHub Actions are pinned to exact
   40-character commits, and the workflow invokes the ticket-051 checker.
-- Deterministic governance passes with no errors or warnings. Full and hosted
-  validation remain required before merge.
+- Full Goal validation passed with 600 tests and 2 existing skips. Hosted CI
+  passed on Python 3.12 and 3.13, and the newly installed remote-lifecycle job
+  passed against the live PR state. Trusted Validator App review `4917710881`
+  approved exact head `0276de92c270...` for ticket 052; PR #82 merged as
+  `ac281ed8bbb9...`.
