@@ -186,6 +186,17 @@ if git_common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/de
   trap release_allocation_lock EXIT INT TERM
 fi
 
+# The allocator owns the freshness requirement. Relying on a caller to fetch
+# recreates the same partial view that clone-wide locking is meant to avoid.
+if git rev-parse --git-dir >/dev/null 2>&1 \
+  && git remote get-url origin >/dev/null 2>&1; then
+  if ! git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*' >/dev/null 2>&1; then
+    echo "GOV-TICKET-LOCK-004: remote ticket refs could not be refreshed safely." >&2
+    echo "  remediation: restore origin connectivity and retry; do not allocate a number from stale refs." >&2
+    exit 4
+  fi
+fi
+
 # A ticket number taken on a branch is invisible on disk in another worktree.
 # Consult every local and fetched remote branch known to this clone.
 refs_highest() {

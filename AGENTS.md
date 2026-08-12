@@ -19,8 +19,10 @@ Before any multi-step implementation, an agent must:
 6. Never create or edit `project/ticket-*/user-*.md`; only its human owner or a
    trusted intake boundary may do so.
 7. Keep executable source/tests/scripts outside ticket directories.
-8. Run `./project/governance-check.sh` plus the stack and Docker checks before
-   reporting completion.
+8. Run the managed `./project/governance-check.sh` (or
+   `project\governance-check.bat` on Windows) plus the stack checks before
+   reporting completion. Root `project.sh` / `project.bat` are optional
+   target-owned seed aliases and must not be assumed to contain the gate.
 9. Serialize ticket-ID allocation before branching, then use a separate
    branch/worktree per implementation ticket. Each diff must resolve to exactly
    one active ticket. Shared contract paths are edited only by the declared
@@ -44,6 +46,26 @@ Before any multi-step implementation, an agent must:
    must disappear after merge. A PR closed without merge keeps its branch until
    the owner explicitly discards that unmerged work. When no PR is open, the
    only remote branch is the default branch.
+16. At merge, publication or explicit pilot discard, inventory temporary linked
+   worktrees and duplicate clones. Verify dirty state and HEAD reachability
+   before removal; preserve unknown or unique data. Remove an exact linked
+   worktree through Git, prune its metadata and only then delete its released
+   disposable branch. Prefer recoverable trash for a verified duplicate clone.
+   Run the adopted workspace lifecycle checker through Goal for the terminal
+   audit. CI validates GitHub state separately and cannot inspect a developer
+   filesystem.
+17. Allocate every ticket ID only through `./project/new-ticket.sh` after
+   fetching/pruning. Never create or copy `project/ticket-{NNN}` manually; the
+   clone-wide lock and high-water reservation must exist before commit.
+18. Keep an implementation ticket `IN_PROGRESS / PUBLICATION` through
+   exact-head review and trusted merge. Set `DONE / DONE` only in a
+   governance-only closure based on the integrated default branch.
+19. Resolve `GOV-*` findings through `.governance/diagnostics.json` and its
+   linked `.governance/error/*.md` runbook when present. Ticket logs are
+   historical evidence and never authorize bypassing a fail-closed gate.
+20. Keep each incident-specific `remediation-intent.dsl.json` in its target
+   ticket. Validate it before LLM planning and treat todo2code/LLM results as
+   digest-bound advisory input; never let either expand the accepted intent.
 
 Markdown approval is an audit note, not trusted merge approval. Required
 merge approval comes from the repository's protected review, attestation and

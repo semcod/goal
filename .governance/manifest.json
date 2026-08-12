@@ -119,7 +119,9 @@
     "composeFiles": [
       "compose.yml",
       "docker-compose.yml",
-      "compose.e2e.yml"
+      "compose.e2e.yml",
+      "compose.yaml",
+      "docker-compose.yaml"
     ],
     "dockerfiles": [
       "Dockerfile",
@@ -150,7 +152,7 @@
   ],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.14.1"
+    "version": "0.16.1"
   },
   "ticket": {
     "activeStatuses": [

@@ -44,14 +44,15 @@
   "docker": {
     "composeFiles": [
       "compose.yml",
+      "compose.yaml",
       "docker-compose.yml",
+      "docker-compose.yaml",
       "compose.e2e.yml"
     ],
     "dockerfiles": [
       "Dockerfile",
       "Dockerfile.e2e"
-    ],
-    "required": true
+    ]
   },
   "governancePaths": [
     "TODO.md",
@@ -64,18 +65,15 @@
     "CHANGELOG.md",
     "TODO.md",
     "AGENTS.md",
-    "Dockerfile",
     "project/TICKETS.md",
     "project/new-ticket.sh",
     "project/readme.sh"
   ],
   "schema": "new-project.governance/v2",
-  "stacks": [
-    "docker"
-  ],
+  "stacks": [],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.14.1"
+    "version": "0.16.1"
   },
   "ticket": {
     "activeStatuses": [

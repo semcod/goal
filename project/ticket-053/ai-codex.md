@@ -33,19 +33,24 @@ uses that managed-payload exemption instead of widening ordinary implementation
 limits; all payload hashes still have to match the published lock.
 
 The same gate also surfaced a pre-existing mutable `goal:local` image tag in
-`compose.yml`. Because that path is infrastructure-owned, ticket 053 is now
-`BACKLOG / PLAN` and releases its reservation until a separate prerequisite
-ticket removes the redundant image tag. The atomic adoption binding will be
-added together with the lock-changing payload after that prerequisite merges.
+`compose.yml`. Ticket 054 fixed that infrastructure-owned prerequisite and is
+closed on `main`. Ticket 053 has resumed at `IN_PROGRESS / EDIT`; its atomic
+adoption binding is recorded together with the lock-changing payload.
 
 ## Actual changes
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Resumed after ticket 054 closed and rebound the accepted base to its closure
+  merge on `main`.
+- Adopted the remaining published 0.16.1 managed payload, including the typed
+  diagnostic catalog, reusable error runbooks, remediation-intent schema and
+  analyzer, and workspace lifecycle checker.
+- Verified drift-free adoption, deterministic change validation, explicit
+  active-worktree handling, the full upstream DSL/todo2code probes and all 600
+  Goal tests (2 existing skips).
 
 ## Blockers
 
-- Waiting for a separate infrastructure-owned Compose repair; no governance
-  implementation is active while this ticket is in BACKLOG / PLAN.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.

@@ -9,3 +9,7 @@
 - Released the workstream reservation after the new gate found an existing
   infrastructure-owned mutable local Compose image tag; adoption waits for a
   separate prerequisite ticket.
+- Resumed after ticket 054 closed, recorded the atomic from/to revision binding
+  and installed the exact published new-project 0.16.1 managed payload.
+- Verified drift, governance, remediation DSL projections and todo2code safety
+  analysis, workspace lifecycle behavior and the complete Goal test suite.

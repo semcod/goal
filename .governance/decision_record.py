@@ -231,9 +231,12 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     if record.get("verdictAuthority") != "DETERMINISTIC":
         errors.append("GOV-DECISION-003: VERDICT_AUTHORITY must be DETERMINISTIC")
     for assertion in record.get("assertions") or []:
-        if "VERDICT_AUTHORITY" in assertion and "ADVISORY" in assertion:
-            if record.get("verdictAuthority") == "ADVISORY":
-                errors.append("GOV-DECISION-003: assertion forbids ADVISORY authority")
+        if (
+            "VERDICT_AUTHORITY" in assertion
+            and "ADVISORY" in assertion
+            and record.get("verdictAuthority") == "ADVISORY"
+        ):
+            errors.append("GOV-DECISION-003: assertion forbids ADVISORY authority")
     try:
         recomputed = replay_verdict(record)
     except ValueError as exc:

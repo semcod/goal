@@ -64,7 +64,12 @@
           "required": ["sourceRepository", "fromRevision", "toRevision"],
           "properties": {
             "sourceRepository": { "const": "wellmanifest/new-project" },
-            "fromRevision": { "$ref": "#/$defs/sha" },
+            "fromRevision": {
+              "oneOf": [
+                { "$ref": "#/$defs/sha" },
+                { "type": "null" }
+              ]
+            },
             "toRevision": { "$ref": "#/$defs/sha" }
           }
         },
