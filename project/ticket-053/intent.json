@@ -25,12 +25,17 @@
     "project/ticket-*/user-*.md"
   ],
   "stacks": [],
-  "dependsOn": ["ticket-051", "ticket-052"],
+  "dependsOn": ["ticket-051", "ticket-052", "ticket-054"],
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "abaa09cc5e411931ff62d792318f3c0283bce19b",
+    "acceptedBaseSha": "05f7250cf69aadbd78a186c59d07353de4d57032",
     "targetBranch": "main",
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "63a3d56b648da0d338be7cf28cbf9045adbb3e5e",
+      "toRevision": "4e6ba5ec15873346446d67d8787f17f68f57f81e"
+    },
     "outcome": "Goal adopts the complete published new-project 0.16.1 diagnostics, remediation DSL and workspace lifecycle contract",
     "nonGoals": [
       "No GitHub workflow change",

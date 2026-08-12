@@ -12,9 +12,10 @@ import re
 import stat
 import subprocess
 import sys
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 RUNTIME_VERSION = "0.10.0"
 ACTIVE_DEFAULT = {"IN_PROGRESS"}
@@ -28,6 +29,10 @@ SECRET_RE = re.compile(
 )
 SAFE_SECRET_VALUES = re.compile(r"(?i)^(example|placeholder|changeme|your[_-]|\$\{|<|xxx|test)")
 LOCAL_PATH_RE = re.compile(r"(?:[A-Za-z]:[\\/](?:Users|Documents|Desktop)[\\/]|/(?:home|Users)/[^/\s]+/)")
+IMMUTABLE_IMAGE_RE = re.compile(r"^[^@\s]+@sha256:[a-f0-9]{64}$")
+COMPOSE_IMAGE_RE = re.compile(
+    r"^\s*image\s*:\s*(?:\"([^\"]+)\"|'([^']+)'|([^\s#]+))"
+)
 
 
 @dataclass(order=True)
@@ -135,9 +140,10 @@ def work_classification_header_error(value: Any) -> str | None:
 
 
 def complexity_rule_assignment(when: dict[str, Any]) -> tuple[tuple[str, str] | None, str | None]:
-    if when.get("baseline") == "measured":
-        if when.get("delta") == "increased" or when.get("threshold") == "crossed":
-            return ("BUG", "regression"), "impact"
+    if when.get("baseline") == "measured" and (
+        when.get("delta") == "increased" or when.get("threshold") == "crossed"
+    ):
+        return ("BUG", "regression"), "impact"
     if when == {
         "signal": "cyclomatic-complexity",
         "baseline": "pre-existing",
@@ -210,9 +216,13 @@ def work_classification_error(value: Any) -> str | None:
     return None
 
 
-def load_work_classification(root: Path, report: Report) -> dict[str, Any] | None:
-    path = root / ".governance/work-classification.dsl.json"
+def load_work_classification(
+    root: Path,
+    report: Report,
+    raw_path: str = ".governance/work-classification.dsl.json",
+) -> dict[str, Any] | None:
     try:
+        path = safe_repo_path(root, raw_path)
         value = load_json(path)
         error = work_classification_error(value)
         if error:
@@ -222,7 +232,7 @@ def load_work_classification(root: Path, report: Report) -> dict[str, Any] | Non
             "GOV-MANIFEST-001",
             f"Work classification contract is invalid: {error}",
             "Restore the managed work-classification DSL from the pinned standard release.",
-            [".governance/work-classification.dsl.json"],
+            [raw_path],
         )
         return None
     return value
@@ -455,10 +465,16 @@ def standard_adoption_error(value: Any) -> str | None:
         return "delivery standardAdoption fields are invalid"
     if value.get("sourceRepository") != "wellmanifest/new-project":
         return "delivery standardAdoption sourceRepository is invalid"
-    revisions = [value.get("fromRevision"), value.get("toRevision")]
-    if any(not isinstance(item, str) or re.fullmatch(r"[0-9a-f]{40}", item) is None for item in revisions):
+    from_revision = value.get("fromRevision")
+    to_revision = value.get("toRevision")
+    if from_revision is not None and (
+        not isinstance(from_revision, str)
+        or re.fullmatch(r"[0-9a-f]{40}", from_revision) is None
+    ):
         return "delivery standardAdoption revisions must be full lowercase commit SHAs"
-    if revisions[0] == revisions[1]:
+    if not isinstance(to_revision, str) or re.fullmatch(r"[0-9a-f]{40}", to_revision) is None:
+        return "delivery standardAdoption revisions must be full lowercase commit SHAs"
+    if from_revision == to_revision:
         return "delivery standardAdoption revisions must differ"
     return None
 
@@ -546,11 +562,13 @@ def segments_may_overlap(first: str, second: str) -> bool:
         return False
     first_suffix = segment_literal_suffix(first)
     second_suffix = segment_literal_suffix(second)
-    if first_suffix and second_suffix and not (
-        first_suffix.endswith(second_suffix) or second_suffix.endswith(first_suffix)
-    ):
-        return False
-    return True
+    return not (
+        first_suffix
+        and second_suffix
+        and not (
+            first_suffix.endswith(second_suffix) or second_suffix.endswith(first_suffix)
+        )
+    )
 
 
 def patterns_may_overlap(first: str, second: str) -> bool:
@@ -571,8 +589,6 @@ def patterns_may_overlap(first: str, second: str) -> bool:
             result = remaining_are_globstars(second_parts, second_index)
         elif second_index == len(second_parts):
             result = remaining_are_globstars(first_parts, first_index)
-        elif first_parts[first_index] == "**" and second_parts[second_index] == "**":
-            result = visit(first_index + 1, second_index) or visit(first_index, second_index + 1)
         elif first_parts[first_index] == "**":
             result = visit(first_index + 1, second_index) or visit(first_index, second_index + 1)
         elif second_parts[second_index] == "**":
@@ -630,13 +646,13 @@ def pattern_covered_by(pattern: str, owner_pattern: str) -> bool:
 
 def git_output(root: Path, args: list[str]) -> bytes:
     return subprocess.run(
-        ["git", *args], cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        ["git", *args], cwd=root, check=True, capture_output=True,
     ).stdout
 
 
 def changed_paths(root: Path, base: str | None, head: str, explicit: list[str]) -> list[str]:
     if explicit:
-        normalized = sorted(set(path.replace("\\", "/").removeprefix("./") for path in explicit if path))
+        normalized = sorted({path.replace("\\", "/").removeprefix("./") for path in explicit if path})
         for path in normalized:
             safe_repo_path(root, path)
         return normalized
@@ -648,7 +664,7 @@ def changed_paths(root: Path, base: str | None, head: str, explicit: list[str]) 
             tracked = git_output(root, ["diff", "--name-only", "-z", "HEAD"])
             untracked = git_output(root, ["ls-files", "--others", "--exclude-standard", "-z"])
             paths = (tracked + untracked).decode("utf-8", "surrogateescape").split("\0")
-        return sorted(set(path for path in paths if path))
+        return sorted({path for path in paths if path})
     except (subprocess.CalledProcessError, FileNotFoundError) as error:
         raise RuntimeError("Git could not determine the changed-path set") from error
 
@@ -963,7 +979,7 @@ def check_lock(
         return
     try:
         strategies = package_strategies(package_path.read_bytes())
-    except (OSError, ValueError, json.JSONDecodeError) as error:
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as error:
         report.add(
             "GOV-SYNC-001", f"Governance package manifest is invalid: {error}",
             "Restore the pinned package manifest through an explicit standard upgrade.",
@@ -1126,7 +1142,7 @@ def repository_files(root: Path, changed: list[str]) -> list[str]:
         files = raw.decode("utf-8", "surrogateescape").split("\0")
     except (subprocess.CalledProcessError, FileNotFoundError):
         files = [rel(root, path) for path in root.rglob("*") if path.is_file() and ".git" not in path.parts]
-    return sorted(set([*files, *changed]) - {""})
+    return sorted({*files, *changed} - {""})
 
 
 def valid_active_tickets(
@@ -1325,7 +1341,7 @@ def check_workstream_claims(
             report.add(
                 "GOV-WORKSTREAM-003", f"Ticket {record.directory.name} claims paths outside workstream '{record.intent['workstream']}'.",
                 "Narrow allowedPaths or route the paths to their owning workstream/integration ticket and obtain fresh approval.",
-                sorted(set([*unowned_patterns, *unowned_claims]))[:20],
+                sorted({*unowned_patterns, *unowned_claims})[:20],
                 {
                     "ticket": record.directory.name,
                     "workstream": record.intent["workstream"],
@@ -1470,6 +1486,61 @@ def check_required_files(root: Path, manifest: dict[str, Any], report: Report) -
             )
 
 
+def immutable_image_reference(reference: str) -> bool:
+    return reference == "scratch" or IMMUTABLE_IMAGE_RE.fullmatch(reference) is not None
+
+
+def dockerfile_image_references(path: Path) -> list[tuple[int, str]]:
+    references: list[tuple[int, str]] = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        tokens = line.strip().split()
+        if not tokens or tokens[0].upper() != "FROM":
+            continue
+        image = next((token for token in tokens[1:] if not token.startswith("--")), "")
+        references.append((line_number, image))
+    return references
+
+
+def compose_image_references(path: Path) -> list[tuple[int, str]]:
+    references: list[tuple[int, str]] = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        match = COMPOSE_IMAGE_RE.match(line)
+        if match:
+            references.append((line_number, next(value for value in match.groups() if value is not None)))
+    return references
+
+
+def check_docker_image_references(root: Path, manifest: dict[str, Any], report: Report) -> None:
+    docker = manifest["docker"]
+    if not docker["required"]:
+        return
+    invalid: list[tuple[str, int, str]] = []
+    for raw_path in docker["dockerfiles"]:
+        path = safe_repo_path(root, raw_path)
+        if path.is_file():
+            invalid.extend(
+                (raw_path, line_number, reference)
+                for line_number, reference in dockerfile_image_references(path)
+                if not immutable_image_reference(reference)
+            )
+    for raw_path in docker["composeFiles"]:
+        path = safe_repo_path(root, raw_path)
+        if path.is_file():
+            invalid.extend(
+                (raw_path, line_number, reference)
+                for line_number, reference in compose_image_references(path)
+                if not immutable_image_reference(reference)
+            )
+    if invalid:
+        report.add(
+            "GOV-DOCKER-002",
+            "Docker image references are not pinned to immutable SHA-256 digests.",
+            "Pin external images as name@sha256:<64 lowercase hex>; for a local-only Compose build, omit image so no mutable tag can be pulled.",
+            [f"{path}:{line_number}" for path, line_number, _ in invalid],
+            {"references": [reference for _, _, reference in invalid]},
+        )
+
+
 def check_stacks(root: Path, manifest: dict[str, Any], profiles_path: Path | None, report: Report) -> None:
     stacks = manifest.get("stacks", [])
     if not stacks or profiles_path is None:
@@ -1477,8 +1548,8 @@ def check_stacks(root: Path, manifest: dict[str, Any], profiles_path: Path | Non
     try:
         profiles = load_json(profiles_path)["profiles"]
         if not isinstance(profiles, dict):
-            raise ValueError("profiles must be an object")
-    except (OSError, KeyError, ValueError, json.JSONDecodeError):
+            raise TypeError("profiles must be an object")
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
         report.add("GOV-MANIFEST-001", "Stack profile catalog is unreadable.", "Restore the pinned stack profile catalog.", [])
         return
     for stack in stacks:
@@ -2302,13 +2373,13 @@ def package_entry(item: Any) -> tuple[str, str, str]:
         raise ValueError("package manifest entry fields are invalid")
     source, target = item.get("source"), item.get("target")
     if not isinstance(source, str) or not isinstance(target, str):
-        raise ValueError("package manifest entry is invalid")
+        raise TypeError("package manifest entry is invalid")
     if not relative_pattern(source) or not relative_pattern(target):
         raise ValueError("package manifest entry is invalid")
     if item.get("strategy") not in {"managed", "seed", "extendable"}:
         raise ValueError("package manifest entry is invalid")
     if not isinstance(item.get("executable"), bool):
-        raise ValueError("package manifest entry is invalid")
+        raise TypeError("package manifest entry is invalid")
     if item.get("strategy") == "extendable" and (
         source != "governance/manifest.default.json"
         or target != ".governance/manifest.json"
@@ -2326,7 +2397,7 @@ def package_strategies(content: bytes) -> dict[str, str]:
         raise ValueError("package manifest schema is invalid")
     strategies: dict[str, str] = {}
     for item in document["files"]:
-        source, target, strategy = package_entry(item)
+        _source, target, strategy = package_entry(item)
         if target in strategies:
             raise ValueError("package manifest targets must be unique")
         strategies[target] = strategy
@@ -2388,19 +2459,26 @@ def standard_adoption_records(active: list[TicketRecord]) -> list[TicketRecord]:
 def load_standard_adoption_evidence(
     root: Path,
     base: str,
-    adoption: dict[str, str],
-) -> tuple[dict[str, str], dict[str, str], dict[str, str], dict[str, str]]:
+    adoption: dict[str, Any],
+) -> tuple[dict[str, str], dict[str, str], dict[str, str], dict[str, str], bool]:
     base_package_content = git_revision_file(root, base, ".governance/package-manifest.json")
     base_lock_content = git_revision_file(root, base, ".governance/manifest.lock.json")
-    if base_package_content is None or base_lock_content is None:
-        raise ValueError("base package manifest or lock is missing")
     head_package_path = safe_repo_path(root, ".governance/package-manifest.json")
     head_lock_path = safe_repo_path(root, ".governance/manifest.lock.json")
     if not head_package_path.is_file() or not head_lock_path.is_file():
         raise ValueError("head package manifest or lock is missing")
-    base_strategies = package_strategies(base_package_content)
+    initial = adoption["fromRevision"] is None
+    if initial:
+        if base_package_content is not None or base_lock_content is not None:
+            raise ValueError("initial adoption base already contains a package manifest or lock")
+        base_strategies: dict[str, str] = {}
+        base_hashes: dict[str, str] = {}
+    else:
+        if base_package_content is None or base_lock_content is None:
+            raise ValueError("upgrade base package manifest or lock is missing")
+        base_strategies = package_strategies(base_package_content)
+        base_hashes = adoption_lock(base_lock_content, adoption["fromRevision"])
     head_strategies = package_strategies(head_package_path.read_bytes())
-    base_hashes = adoption_lock(base_lock_content, adoption["fromRevision"])
     head_hashes = adoption_lock(head_lock_path.read_bytes(), adoption["toRevision"])
     base_managed = {path for path, strategy in base_strategies.items() if strategy == "managed"}
     head_managed = {path for path, strategy in head_strategies.items() if strategy == "managed"}
@@ -2408,7 +2486,7 @@ def load_standard_adoption_evidence(
         raise ValueError("base package targets and lock targets differ")
     if set(head_hashes) != head_managed:
         raise ValueError("package targets and lock targets differ")
-    return base_strategies, head_strategies, base_hashes, head_hashes
+    return base_strategies, head_strategies, base_hashes, head_hashes, initial
 
 
 def verify_changed_managed_paths(
@@ -2419,6 +2497,7 @@ def verify_changed_managed_paths(
     head_strategies: dict[str, str],
     base_hashes: dict[str, str],
     head_hashes: dict[str, str],
+    initial: bool,
 ) -> set[str]:
     exempt: set[str] = set()
     for raw_path in changed:
@@ -2434,6 +2513,10 @@ def verify_changed_managed_paths(
             if content_digest(base_content) != base_hashes[raw_path]:
                 raise ValueError(f"base managed hash differs: {raw_path}")
         elif base_content is not None:
+            if initial:
+                # Installing the standard does not erase target ownership.
+                # A replaced path remains an ordinary implementation change.
+                continue
             raise ValueError(f"new managed target already existed at base: {raw_path}")
         exempt.add(raw_path)
     if not exempt:
@@ -2468,14 +2551,14 @@ def atomic_standard_adoption_paths(
         report.add(
             "GOV-SYNC-001",
             f"Atomic standard adoption preconditions are invalid: {error or 'base and changed lock are required'}.",
-            "Declare distinct immutable revisions, compare against the approved Git base and regenerate the complete lock through Goal.",
+            "Declare null-to-SHA bootstrap or distinct immutable upgrade revisions, compare against the approved Git base and regenerate the complete lock through Goal.",
             evidence_paths,
         )
         return set()
     try:
         evidence = load_standard_adoption_evidence(root, base, adoption)
         return verify_changed_managed_paths(root, base, changed, *evidence)
-    except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError) as error:
         report.add(
             "GOV-SYNC-001",
             f"Atomic standard adoption is inconsistent: {error}.",
@@ -2575,6 +2658,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--manifest", default=".governance/manifest.json")
     parser.add_argument("--lock", default=None)
     parser.add_argument("--stack-profiles", default=None)
+    parser.add_argument(
+        "--work-classification",
+        default=".governance/work-classification.dsl.json",
+    )
     parser.add_argument("--base")
     parser.add_argument("--head", default="HEAD")
     parser.add_argument("--changed-file", action="append", default=[])
@@ -2626,16 +2713,38 @@ def optional_repo_path(
         return None
 
 
-def resolve_changed_paths(args: argparse.Namespace, root: Path, report: Report) -> list[str]:
+def resolve_changed_paths(
+    args: argparse.Namespace,
+    root: Path,
+    base: str | None,
+    report: Report,
+) -> list[str]:
     try:
-        return changed_paths(root, args.base, args.head, args.changed_file)
+        return changed_paths(root, base, args.head, args.changed_file)
     except (RuntimeError, ValueError) as error:
         report.add(
             "GOV-DIFF-001", str(error),
             "Use repository-relative changed paths and fetch the complete base/head history before retrying.",
-            evidence={"base": args.base, "head": args.head},
+            evidence={"base": base, "head": args.head},
         )
         return []
+
+
+def resolve_validation_base(
+    supplied_base: str | None,
+    records: list[TicketRecord],
+    config: dict[str, Any],
+) -> str | None:
+    if supplied_base is not None:
+        return supplied_base
+    active_statuses = set(config.get("activeStatuses", ACTIVE_DEFAULT))
+    active = [record for record in records if record.status in active_statuses]
+    adoption_records = standard_adoption_records(active)
+    if len(adoption_records) != 1:
+        return None
+    record = adoption_records[0]
+    assert record.intent is not None
+    return record.intent["delivery"]["acceptedBaseSha"]
 
 
 def run_governance_checks(
@@ -2646,18 +2755,20 @@ def run_governance_checks(
 ) -> str | None:
     lock_path = optional_repo_path(root, args.lock, "GOV-SYNC-001", "governance lock", report)
     profiles_path = optional_repo_path(root, args.stack_profiles, "GOV-MANIFEST-001", "stack-profile", report)
-    changed = resolve_changed_paths(args, root, report)
-    load_work_classification(root, report)
+    directories = ticket_directories(root, manifest["ticket"])
+    records = load_ticket_records(directories, manifest["ticket"])
+    base = resolve_validation_base(args.base, records, manifest["ticket"])
+    changed = resolve_changed_paths(args, root, base, report)
+    load_work_classification(root, report, args.work_classification)
     check_lock(root, lock_path, manifest, report)
     check_required_files(root, manifest, report)
+    check_docker_image_references(root, manifest, report)
     check_stacks(root, manifest, profiles_path, report)
-    directories = ticket_directories(root, manifest["ticket"])
     check_ticket_content(root, directories, manifest["ticket"], report)
-    records = load_ticket_records(directories, manifest["ticket"])
     check_coordination(root, manifest, records, changed, report)
     check_changed_content(root, changed, args.actor, args.trusted_human_change, report)
     return check_change_gate(
-        root, manifest, records, changed, args.base, args.head, args.approval_source,
+        root, manifest, records, changed, base, args.head, args.approval_source,
         args.approved_ticket, args.approval_evidence, args.expected_repository,
         args.expected_pull_request, args.expected_head, args.enforce_approval,
         args.elapsed_minutes, report,

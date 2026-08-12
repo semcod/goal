@@ -1,46 +1,315 @@
 {
-  "schema": "new-project.diagnostics/v1",
+  "schema": "new-project.diagnostics/v2",
   "codes": {
-    "GOV-MANIFEST-001": "Manifest is missing, unreadable or structurally invalid.",
-    "GOV-SYNC-001": "A managed governance file does not match its pinned SHA-256 digest.",
-    "GOV-DIFF-001": "The changed-path set or commit history could not be determined safely.",
-    "GOV-BOOT-001": "A required target-repository file is missing.",
-    "GOV-TICKET-001": "Implementation changed without one active ticket.",
-    "GOV-TICKET-002": "More than one active ticket exists.",
-    "GOV-TICKET-003": "An active ticket is malformed or missing a required governance file.",
-    "GOV-TICKET-004": "Executable source, test or research content is stored in a ticket directory.",
-    "GOV-TICKET-005": "Implementation paths do not resolve to exactly one active ticket.",
-    "GOV-STATUS-001": "A ticket status is missing or not declared by the governance manifest.",
-    "GOV-INTENT-001": "Implementation changed before the ticket entered an implementation state.",
-    "GOV-INTENT-002": "Ticket intent is missing or malformed.",
-    "GOV-INTENT-003": "Ticket intent was not committed before the first implementation commit.",
-    "GOV-APPROVAL-001": "Implementation lacks approval from a trusted external source.",
-    "GOV-APPROVAL-002": "Approval refers to a different ticket.",
-    "GOV-APPROVAL-003": "Approval evidence is missing, repository-controlled or structurally invalid.",
-    "GOV-APPROVAL-004": "Approval evidence is bound to another repository, pull request or commit.",
-    "GOV-APPROVAL-005": "Approval actor or verification method is not trusted for the claimed source.",
-    "GOV-SCOPE-001": "A changed implementation path is outside the approved intent scope.",
-    "GOV-WORKSTREAM-001": "An active v2 ticket declares a missing or unknown workstream.",
-    "GOV-WORKSTREAM-002": "A workstream exceeds its active-ticket limit.",
-    "GOV-WORKSTREAM-003": "A changed path is not owned by the ticket workstream.",
-    "GOV-WORKSTREAM-004": "Active ticket write scopes overlap on a concrete repository path.",
-    "GOV-DEPENDENCY-001": "The ticket dependency graph contains a cycle or invalid self-reference.",
-    "GOV-DEPENDENCY-002": "An active ticket depends on a ticket that is missing or not closed.",
-    "GOV-CONFLICT-001": "Tickets declared as conflicting are active at the same time.",
-    "GOV-INTEGRATION-001": "A shared contract path lacks valid routing through an integration ticket.",
-    "GOV-DELIVERY-001": "The implementation slice lacks or exceeds its approved <=30-minute delivery contract.",
-    "GOV-DELIVERY-002": "The implementation slice reached its pre-stop checkpoint.",
-    "GOV-ARCHITECTURE-001": "Architecture ownership, UI/data impact or component mapping is unresolved.",
-    "GOV-BASE-001": "The target branch or base SHA differs from the approved delivery contract.",
-    "GOV-BUDGET-001": "The actual implementation diff exceeds its approved file, component, interface or dependency budget.",
-    "GOV-OWNER-001": "An untrusted actor changed a human-owned participant file.",
-    "GOV-DOCKER-001": "The required Docker runtime declaration is incomplete.",
-    "GOV-STACK-001": "The declared technology stack lacks its required project marker.",
-    "GOV-SECRET-001": "A changed file contains a probable secret assignment.",
-    "GOV-PATH-001": "A committed governance artifact contains a machine-local absolute path.",
-    "GOV-DECISION-001": "An autonomous decision that changes repository state lacks an append-only decision record, or an earlier record was rewritten.",
-    "GOV-DECISION-002": "A decision record is not recomputable: inputs are summaries or the applied rule cannot be replayed.",
-    "GOV-DECISION-003": "A decision record treats ADVISORY LLM output as the verdict authority.",
-    "GOV-DECISION-004": "Replaying INPUT against APPLIED_RULE diverges from the recorded VERDICT."
+    "GOV-APPROVAL-001": {
+      "message": "Implementation lacks approval from a trusted external source.",
+      "remediation": "Obtain an exact-head approval from an allowlisted human, trusted Validator App or verified signed attestation.",
+      "documentation": null
+    },
+    "GOV-APPROVAL-002": {
+      "message": "Approval refers to a different ticket.",
+      "remediation": "Approve the current ticket after reviewing its latest intent and exact implementation head.",
+      "documentation": null
+    },
+    "GOV-APPROVAL-003": {
+      "message": "Approval evidence is missing, repository-controlled or structurally invalid.",
+      "remediation": "Create v1 approval evidence outside the PR checkout through a protected verifier.",
+      "documentation": null
+    },
+    "GOV-APPROVAL-004": {
+      "message": "Approval evidence is bound to another repository, pull request or commit.",
+      "remediation": "Regenerate protected evidence for the exact repository, PR, HEAD and ticket tuple.",
+      "documentation": null
+    },
+    "GOV-APPROVAL-005": {
+      "message": "Approval actor or verification method is not trusted for the claimed source.",
+      "remediation": "Use the type-specific protected allowlist or verify a signed attestation with a trusted issuer.",
+      "documentation": null
+    },
+    "GOV-ARCHITECTURE-001": {
+      "message": "Architecture ownership, UI/data impact or component mapping is unresolved.",
+      "remediation": "Complete the accepted architecture block in intent.json before implementation.",
+      "documentation": null
+    },
+    "GOV-BASE-001": {
+      "message": "The target branch or base SHA differs from the approved delivery contract.",
+      "remediation": "Rebase or rebuild from the accepted base, then update intent only through an authorized scope review.",
+      "documentation": null
+    },
+    "GOV-BOOT-001": {
+      "message": "A required target-repository file is missing.",
+      "remediation": "Create the target-owned prerequisite or adopt the managed file through the pinned standard package as applicable.",
+      "documentation": null
+    },
+    "GOV-BRANCH-LIFECYCLE-001": {
+      "message": "GitHub is not configured to delete merged head branches.",
+      "remediation": "Set delete_branch_on_merge=true in repository settings.",
+      "documentation": null
+    },
+    "GOV-BRANCH-LIFECYCLE-002": {
+      "message": "The remote branch snapshot is inconsistent with open pull requests.",
+      "remediation": "Acquire one fresh protected snapshot and verify each open PR head branch.",
+      "documentation": null
+    },
+    "GOV-BRANCH-LIFECYCLE-003": {
+      "message": "A quiescent repository has a remote branch other than its default branch.",
+      "remediation": "Preserve unmerged work, then delete only a verified merged or explicitly discarded remote branch.",
+      "documentation": null
+    },
+    "GOV-BUDGET-001": {
+      "message": "The actual implementation diff exceeds its approved budget.",
+      "remediation": "Reduce the slice or obtain fresh authorization for a larger bounded intent.",
+      "documentation": null
+    },
+    "GOV-CLASS-000": {
+      "message": "The work-classification contract is unavailable.",
+      "remediation": "Restore the managed work-classification DSL from the pinned package before allocating a ticket.",
+      "documentation": null
+    },
+    "GOV-CLASS-001": {
+      "message": "A requested work classification value is not declared.",
+      "remediation": "Choose kind, priority and origin values declared by the managed classification contract.",
+      "documentation": null
+    },
+    "GOV-CONFLICT-001": {
+      "message": "Tickets declared as conflicting are active at the same time.",
+      "remediation": "Move one ticket to BACKLOG, PLAN or BLOCKED until the conflicting work reaches a terminal state.",
+      "documentation": null
+    },
+    "GOV-DECISION-001": {
+      "message": "A repository-changing autonomous decision lacks an append-only record or rewrites earlier evidence.",
+      "remediation": "Append a new recomputable decision record; never edit an earlier record.",
+      "documentation": null
+    },
+    "GOV-DECISION-002": {
+      "message": "A decision record is not recomputable.",
+      "remediation": "Store deterministic inputs verbatim and name a replayable applied rule.",
+      "documentation": null
+    },
+    "GOV-DECISION-003": {
+      "message": "A decision record treats advisory LLM output as verdict authority.",
+      "remediation": "Keep LLM output ADVISORY and derive the verdict from deterministic rules and evidence.",
+      "documentation": null
+    },
+    "GOV-DECISION-004": {
+      "message": "Replaying decision inputs diverges from the recorded verdict.",
+      "remediation": "Correct the new decision record or underlying inputs; do not rewrite historical evidence.",
+      "documentation": null
+    },
+    "GOV-DELIVERY-001": {
+      "message": "The implementation slice lacks or exceeds its approved delivery contract.",
+      "remediation": "Declare a valid bounded delivery block or split the work into a smaller authorized slice.",
+      "documentation": null
+    },
+    "GOV-DELIVERY-002": {
+      "message": "The implementation slice reached its pre-stop checkpoint.",
+      "remediation": "Stop, record evidence and replan the remaining bounded work before continuing.",
+      "documentation": null
+    },
+    "GOV-DEPENDENCY-001": {
+      "message": "The ticket dependency graph contains a cycle or self-reference.",
+      "remediation": "Rewrite dependsOn as an acyclic graph with no ticket depending on itself.",
+      "documentation": null
+    },
+    "GOV-DEPENDENCY-002": {
+      "message": "An active ticket depends on a missing or unfinished ticket.",
+      "remediation": "Complete the dependency or move the dependent ticket out of IN_PROGRESS.",
+      "documentation": null
+    },
+    "GOV-DIAGNOSTIC-001": {
+      "message": "The stable diagnostic catalog is malformed or differs from emitted runtime codes.",
+      "remediation": "Register every emitted code exactly once with a non-empty canonical message and remediation, and remove stale entries.",
+      "documentation": null
+    },
+    "GOV-DIAGNOSTIC-002": {
+      "message": "A linked diagnostic runbook is missing, unsafe or structurally incomplete.",
+      "remediation": "Restore the linked error/*.md page with all required fail-closed sections and a relative path.",
+      "documentation": null
+    },
+    "GOV-DIFF-001": {
+      "message": "The changed-path set or commit history could not be determined safely.",
+      "remediation": "Restore valid Git metadata and provide an explicit base and head before evaluating scope.",
+      "documentation": null
+    },
+    "GOV-DOCKER-001": {
+      "message": "The required Docker runtime declaration is incomplete.",
+      "remediation": "Declare the Docker marker and explicit governed Dockerfile/Compose paths, or truthfully disable the stack.",
+      "documentation": null
+    },
+    "GOV-DOCKER-002": {
+      "message": "A Dockerfile or Compose image reference is not pinned to an immutable SHA-256 digest.",
+      "remediation": "Replace every external image tag with registry/image@sha256 followed by 64 lowercase hex characters.",
+      "documentation": null
+    },
+    "GOV-ENV-001": {
+      "message": "Governance environment resolution failed or exposed an undeclared value.",
+      "remediation": "Use governance_env.py with declared variables, relative ENV_FILE paths and redacted required secrets.",
+      "documentation": null
+    },
+    "GOV-INTEGRATION-001": {
+      "message": "A shared contract path lacks valid routing through an integration ticket.",
+      "remediation": "Route the shared path through the manifest-declared integration workstream without transferring path ownership.",
+      "documentation": null
+    },
+    "GOV-INTENT-001": {
+      "message": "Implementation changed before the ticket entered an implementation state.",
+      "remediation": "Record authorization and move the active ticket to EDIT, VALIDATION or PUBLICATION before changing implementation.",
+      "documentation": null
+    },
+    "GOV-INTENT-002": {
+      "message": "Ticket intent is missing or malformed.",
+      "remediation": "Create a schema-valid intent.json with bounded allowedPaths and required delivery evidence.",
+      "documentation": null
+    },
+    "GOV-INTENT-003": {
+      "message": "Ticket intent was not committed before the first implementation commit.",
+      "remediation": "Rebuild the branch so the approved intent commit precedes implementation without rewriting trusted published history.",
+      "documentation": null
+    },
+    "GOV-MANIFEST-001": {
+      "message": "Manifest or managed governance contract is missing, unreadable or structurally invalid.",
+      "remediation": "Restore the complete pinned governance package and validate its JSON contracts.",
+      "documentation": null
+    },
+    "GOV-OWNER-001": {
+      "message": "An untrusted actor changed a human-owned participant file.",
+      "remediation": "Revert the agent-authored human file change and obtain input from the human owner or trusted intake boundary.",
+      "documentation": null
+    },
+    "GOV-PATH-001": {
+      "message": "A committed governance artifact contains a machine-local absolute path.",
+      "remediation": "Replace the local path with a repository-relative reference and sanitize committed logs.",
+      "documentation": null
+    },
+    "GOV-REMEDIATION-001": {
+      "message": "A diagnostic remediation intent is malformed, unresolved or semantically unsafe.",
+      "remediation": "Correct the target-owned remediation-intent DSL and pass deterministic schema and semantic validation before LLM planning.",
+      "documentation": "error/GOV-REMEDIATION-INTENT.md"
+    },
+    "GOV-REMEDIATION-002": {
+      "message": "A todo2code plan conflicts with accepted remediation scope, criteria, priority or user-state safety.",
+      "remediation": "Reject or regenerate the conflicting plan; obtain a fresh bounded intent before any material scope or authority expansion.",
+      "documentation": "error/GOV-REMEDIATION-INTENT.md"
+    },
+    "GOV-REMEDIATION-003": {
+      "message": "The todo2code advisory overlay is stale for the current remediation intent.",
+      "remediation": "Discard the overlay and rerun deterministic todo2code analysis against the current authority-bearing intent digest.",
+      "documentation": "error/GOV-REMEDIATION-INTENT.md"
+    },
+    "GOV-SCOPE-001": {
+      "message": "A changed implementation path is outside approved intent scope.",
+      "remediation": "Remove the unrelated change or obtain a fresh bounded intent before editing that path.",
+      "documentation": null
+    },
+    "GOV-SECRET-001": {
+      "message": "A changed file contains a probable secret assignment.",
+      "remediation": "Stop publication, remove and rotate the secret through a trusted boundary, then rescan the exact diff.",
+      "documentation": null
+    },
+    "GOV-STACK-001": {
+      "message": "The declared technology stack lacks its required project marker.",
+      "remediation": "Add a truthful root marker or remove the incorrect stack declaration; do not create a synthetic marker only to pass the gate.",
+      "documentation": null
+    },
+    "GOV-STATUS-001": {
+      "message": "A ticket status is missing or not declared by the governance manifest.",
+      "remediation": "Use one declared active, non-active or closed status and a compatible workflow state.",
+      "documentation": null
+    },
+    "GOV-SYNC-001": {
+      "message": "A managed governance file does not match its pinned SHA-256 digest.",
+      "remediation": "Adopt or upgrade the complete immutable package through Goal; do not patch managed payload files manually.",
+      "documentation": null
+    },
+    "GOV-TICKET-001": {
+      "message": "Implementation changed without exactly one active ticket.",
+      "remediation": "Keep the owning ticket IN_PROGRESS through implementation publication and use a governance-only closure after trusted merge.",
+      "documentation": "error/GOV-TICKET-001.md"
+    },
+    "GOV-TICKET-002": {
+      "message": "More than one active ticket exists where the manifest permits only one.",
+      "remediation": "Continue the matching ticket and move unrelated waiting work to BACKLOG, PLAN or BLOCKED.",
+      "documentation": null
+    },
+    "GOV-TICKET-003": {
+      "message": "An active ticket is malformed or missing a required governance file.",
+      "remediation": "Restore its README, preprompt, changelog, intent and typed agent participant files before implementation.",
+      "documentation": null
+    },
+    "GOV-TICKET-004": {
+      "message": "Executable source, test or research content is stored in a ticket directory.",
+      "remediation": "Move executable material to its normal source, scripts or tests directory and keep only evidence in the ticket.",
+      "documentation": null
+    },
+    "GOV-TICKET-005": {
+      "message": "Implementation paths do not resolve to exactly one active ticket.",
+      "remediation": "Split unrelated paths or correct non-overlapping allowedPaths and workstream ownership.",
+      "documentation": null
+    },
+    "GOV-TICKET-ALLOCATION-001": {
+      "message": "A ticket claim is outside a valid clone-wide high-water reservation.",
+      "remediation": "Preserve the worktree, classify ownership and allocate a fresh ID only through project/new-ticket.sh.",
+      "documentation": "error/GOV-TICKET-ALLOCATION.md"
+    },
+    "GOV-TICKET-ALLOCATION-002": {
+      "message": "Linked worktrees assign different intents to the same ticket ID.",
+      "remediation": "Stop both writers, preserve both heads and reallocate the later intent through project/new-ticket.sh before rebuilding its branch.",
+      "documentation": "error/GOV-TICKET-ALLOCATION.md"
+    },
+    "GOV-TICKET-LOCK-001": {
+      "message": "Another ticket allocation holds the clone-wide lock.",
+      "remediation": "Wait for the allocator; remove a stale lock only after proving no allocation process is active.",
+      "documentation": "error/GOV-TICKET-ALLOCATION.md"
+    },
+    "GOV-TICKET-LOCK-002": {
+      "message": "The clone-wide ticket high-water state is invalid.",
+      "remediation": "Preserve ticket worktrees and repair the shared numeric reservation before assigning another ID.",
+      "documentation": "error/GOV-TICKET-ALLOCATION.md"
+    },
+    "GOV-TICKET-LOCK-003": {
+      "message": "The ticket directory selected by the allocator already exists.",
+      "remediation": "Stop and classify the existing claim; never overwrite or rename it automatically.",
+      "documentation": "error/GOV-TICKET-ALLOCATION.md"
+    },
+    "GOV-TICKET-LOCK-004": {
+      "message": "Remote ticket refs could not be refreshed before allocation.",
+      "remediation": "Restore origin connectivity and retry; do not allocate from stale refs.",
+      "documentation": "error/GOV-TICKET-ALLOCATION.md"
+    },
+    "GOV-WORKSPACE-LIFECYCLE-001": {
+      "message": "A terminal workspace still contains a linked worktree.",
+      "remediation": "Verify dirty state and HEAD reachability, then remove only the exact disposable worktree through Git.",
+      "documentation": "error/GOV-WORKSPACE-LIFECYCLE.md"
+    },
+    "GOV-WORKSPACE-LIFECYCLE-002": {
+      "message": "A terminal workspace still contains a duplicate clone.",
+      "remediation": "Verify it has no unique data, then move the exact duplicate checkout to recoverable trash.",
+      "documentation": "error/GOV-WORKSPACE-LIFECYCLE.md"
+    },
+    "GOV-WORKSPACE-LIFECYCLE-003": {
+      "message": "The local workspace audit could not be completed safely.",
+      "remediation": "Repair repository metadata or narrow the explicit workspace root before cleanup.",
+      "documentation": "error/GOV-WORKSPACE-LIFECYCLE.md"
+    },
+    "GOV-WORKSTREAM-001": {
+      "message": "An active ticket declares a missing or unknown workstream.",
+      "remediation": "Choose a workstream declared by the current governance manifest.",
+      "documentation": null
+    },
+    "GOV-WORKSTREAM-002": {
+      "message": "A workstream exceeds its active-ticket limit.",
+      "remediation": "Keep one implementation owner active and release waiting reservations.",
+      "documentation": null
+    },
+    "GOV-WORKSTREAM-003": {
+      "message": "A changed path is not owned by the ticket workstream.",
+      "remediation": "Move the path to the owning workstream or correct the manifest through an authorized integration change.",
+      "documentation": null
+    },
+    "GOV-WORKSTREAM-004": {
+      "message": "Active ticket write scopes overlap on a concrete repository path.",
+      "remediation": "Serialize the work or narrow allowedPaths until each changed path has exactly one owner.",
+      "documentation": null
+    }
   }
 }
