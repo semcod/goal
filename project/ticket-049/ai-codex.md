@@ -36,6 +36,20 @@ divergence fails closed.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Added immutable pending-PR evidence resolved from the authoritative remote
+  base, local HEAD, exact ticket-prefixed commit range and changed paths.
+- Kept dirty/equal/behind histories out of resume and made missing-base,
+  unbound, empty and divergent candidates fail closed.
+- Integrated resume before the empty-staging shortcut. It reruns configured
+  tests, revalidates the complete evidence after testing, and delegates only
+  the unchanged candidate to the existing authorized PR delivery path.
+- Passed 47 focused and 600 full tests (2 skipped), scoped Ruff, governance,
+  wheel/sdist and pinned-base Docker validation. Removed all generated build
+  outputs and retained version 2.1.297 with no dependency changes.
+- Corrected the intent from one mistakenly declared public interface change to
+  zero after the deterministic budget gate identified the classifier as an
+  internal contract; no budget was enlarged.
+- Entered `IN_PROGRESS / PUBLICATION` for protected exact-head validation.
 
 ## Blockers
 

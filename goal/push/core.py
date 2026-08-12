@@ -408,6 +408,67 @@ def _handle_no_files(
     return True
 
 
+def _resume_pending_pull_request(
+    ctx_obj: Dict[str, Any],
+    project_types: List[str],
+    markdown: bool,
+    delivery: Any,
+    ticket: str,
+    candidate: Any,
+) -> None:
+    """Retest and deliver an immutable already committed PR candidate."""
+    from goal.cli.version import get_current_version
+    from goal.governance.delivery import (
+        deliver_pull_request,
+        pending_pull_request_delivery,
+        record_delivery_event,
+    )
+
+    short_head = candidate.head_sha[:12]
+    click.echo(
+        click.style(
+            f"Resuming governed pull-request delivery for committed HEAD {short_head}.",
+            fg="yellow",
+        )
+    )
+    current_version = get_current_version()
+    record_delivery_event(
+        delivery,
+        "started",
+        detail="resume already committed pull-request candidate",
+    )
+    _run_test_stage_or_exit(
+        project_types,
+        ctx_obj,
+        markdown,
+        list(candidate.files),
+        {},
+        current_version,
+        current_version,
+        candidate.title,
+        "Already committed candidate; no new commit will be created.",
+    )
+
+    revalidated = pending_pull_request_delivery(delivery, ticket=ticket)
+    if revalidated != candidate:
+        raise click.ClickException(
+            "pull-request resume candidate changed during test execution"
+        )
+
+    head, pr_url = deliver_pull_request(
+        delivery,
+        ticket=ticket,
+        title=candidate.title,
+    )
+    record_delivery_event(
+        delivery,
+        "pull-request",
+        detail=pr_url,
+        head=head,
+    )
+    click.echo(click.style(f"Pull request: {pr_url}", fg="green"))
+
+
 def _abort_if_missing_commit_title(commit_title: Optional[str]) -> bool:
     if commit_title:
         return False
@@ -501,6 +562,7 @@ def execute_push_workflow(
     from goal.governance.delivery import (
         authorized_push,
         deliver_pull_request,
+        pending_pull_request_delivery,
         record_delivery_event,
         resolve_delivery_policy,
         validate_delivery_ready,
@@ -590,6 +652,24 @@ def execute_push_workflow(
 
     files = get_staged_files()
     has_staged_files = bool(files and files != [""])
+    if (
+        not has_staged_files
+        and not dry_run
+        and delivery is not None
+        and delivery.mode == "pull-request"
+        and ticket
+    ):
+        pending_delivery = pending_pull_request_delivery(delivery, ticket=ticket)
+        if pending_delivery is not None:
+            _resume_pending_pull_request(
+                ctx_obj,
+                project_types,
+                markdown,
+                delivery,
+                ticket,
+                pending_delivery,
+            )
+            return
     clean_force_publish = bool(
         force_publish and not no_publish and not has_staged_files
     )

@@ -1,1 +1,5 @@
 2026-08-12T15:20:00+02:00 initialized ticket 049 at accepted base 0c3cd7b after reproducing the committed-candidate PR resume gap twice
+2026-08-12T15:24:00+02:00 focused PASS: 47 tests and scoped Ruff
+2026-08-12T15:25:00+02:00 full PASS: 600 tests, 2 skipped; initial governance run rejected mistaken internal-as-public interface declaration
+2026-08-12T15:26:00+02:00 narrowed public interface budget/declaration to zero; GOV-PASS without enlarging scope
+2026-08-12T15:29:00+02:00 wheel e2cbd5b9, sdist 9eecae69 and Docker 034faf2b PASS; temporary outputs removed; state IN_PROGRESS/PUBLICATION

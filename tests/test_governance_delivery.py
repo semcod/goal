@@ -339,6 +339,88 @@ def _publish_repository(tmp_path: Path) -> Path:
     return root
 
 
+def _commit_ticket_change(root: Path, message: str, content: str = "candidate\n") -> str:
+    (root / "candidate.txt").write_text(content, encoding="utf-8")
+    _git(root, "add", "candidate.txt")
+    _git(root, "commit", "--quiet", "-m", message)
+    return _git(root, "rev-parse", "HEAD").stdout.strip()
+
+
+def test_pending_pr_delivery_accepts_clean_ticket_bound_ahead_range(tmp_path):
+    root = _publish_repository(tmp_path)
+    base_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "switch", "-c", "ticket/049-resume")
+    head_sha = _commit_ticket_change(
+        root, "[ticket-049] fix(delivery): preserve committed candidate"
+    )
+
+    candidate = delivery.pending_pull_request_delivery(
+        _pull_request_policy(), ticket="ticket-049", cwd=root
+    )
+
+    assert candidate == delivery.PendingPullRequestDelivery(
+        base_sha=base_sha,
+        head_sha=head_sha,
+        title="[ticket-049] fix(delivery): preserve committed candidate",
+        files=("candidate.txt",),
+    )
+
+
+def test_pending_pr_delivery_rejects_unbound_ahead_commit(tmp_path):
+    root = _publish_repository(tmp_path)
+    _git(root, "switch", "-c", "ticket/049-resume")
+    _commit_ticket_change(root, "fix: unrelated candidate")
+
+    with pytest.raises(click.ClickException, match="not bound to ticket-049"):
+        delivery.pending_pull_request_delivery(
+            _pull_request_policy(), ticket="ticket-049", cwd=root
+        )
+
+
+def test_pending_pr_delivery_ignores_dirty_equal_and_merged_histories(tmp_path):
+    root = _publish_repository(tmp_path)
+    policy = _pull_request_policy()
+
+    assert delivery.pending_pull_request_delivery(
+        policy, ticket="ticket-049", cwd=root
+    ) is None
+
+    (root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
+    assert delivery.pending_pull_request_delivery(
+        policy, ticket="ticket-049", cwd=root
+    ) is None
+    (root / "dirty.txt").unlink()
+
+    base_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "switch", "-c", "ticket/049-resume")
+    _commit_ticket_change(root, "[ticket-049] fix(delivery): merged candidate")
+    _git(root, "push", "--quiet", "origin", "HEAD:main")
+    _git(root, "checkout", "--quiet", "--detach", base_sha)
+
+    assert delivery.pending_pull_request_delivery(
+        policy, ticket="ticket-049", cwd=root
+    ) is None
+
+
+def test_pending_pr_delivery_fails_closed_on_divergent_remote_base(tmp_path):
+    root = _publish_repository(tmp_path)
+    _git(root, "switch", "-c", "ticket/049-resume")
+    _commit_ticket_change(root, "[ticket-049] fix(delivery): local candidate")
+    _git(root, "switch", "main")
+    _commit_ticket_change(
+        root,
+        "[ticket-049] fix(delivery): conflicting base",
+        content="remote\n",
+    )
+    _git(root, "push", "--quiet", "origin", "main")
+    _git(root, "switch", "ticket/049-resume")
+
+    with pytest.raises(click.ClickException, match="history divergent"):
+        delivery.pending_pull_request_delivery(
+            _pull_request_policy(), ticket="ticket-049", cwd=root
+        )
+
+
 def test_publish_only_requires_clean_exact_remote_base(tmp_path):
     root = _publish_repository(tmp_path)
 
