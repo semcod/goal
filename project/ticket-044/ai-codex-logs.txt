@@ -1,0 +1,1 @@
+2026-08-12 final base refresh: merged main@ff4064321427f8b3d8c1c150d86b4532535545a7 after the verified 2.1.296 closure; retained main's ticket-043 evidence and combined the independent ticket-044 TODO entry without source-scope overlap.

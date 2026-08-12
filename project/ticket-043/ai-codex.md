@@ -39,9 +39,14 @@ user asked to remove.
 - Passed deterministic governance, exact carrier checks, wheel/sdist and
   Docker builds; recorded artifact/image hashes and removed the temporary
   validation image.
+- Obtained trusted Validator App approval for exact head `b99fdd1`, merged PR
+  #68 as `main@c5f3684`, and repeated the complete clean-merge validation.
+- Published exactly one wheel and one sdist through governed `publish-only`,
+  then created annotated `v2.1.296` and the final GitHub Release from the
+  verified merge SHA. PyPI and Release downloads match the recorded hashes.
+- Installed 2.1.296 without cache from the public PyPI index and proved that
+  public `goal push --help` is read-only in a fresh empty directory.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
-- New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+- None. The bounded release is complete.

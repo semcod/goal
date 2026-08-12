@@ -12,3 +12,4 @@
   removed the disposable validation image.
 - Refreshed onto the validated ticket-043 merge without retaining the
   application ticket's accidental generated README cost-badge change.
+- Accepted the terminal ticket-043 release closure as the final delivery base.

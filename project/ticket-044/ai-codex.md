@@ -45,6 +45,9 @@ can be left behind.
   ticket-043 release carriers and README byte-for-byte from `main`, combined
   only the two ticket indexes, and removed Goal's out-of-scope cost-badge
   refresh from this application diff.
+- Refreshed once more to terminal ticket-043 closure `ff40643` after its PyPI,
+  annotated-tag, final-Release and public-install proof completed. The final PR
+  diff remains limited to ticket-044 application code, tests and governance.
 
 ## Blockers
 
