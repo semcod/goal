@@ -53,6 +53,9 @@ adoption binding is recorded together with the lock-changing payload.
   before recognizing the clean candidate and generated an out-of-scope README
   badge update. Restored README exactly and kept the incident as follow-up
   evidence instead of admitting it into this adoption.
+- Published the corrected exact head through PR #87 after hosted CI, live
+  lifecycle and trusted Validator approval; implementation merged as
+  `81727017...`.
 
 ## Blockers
 
