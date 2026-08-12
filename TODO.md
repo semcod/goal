@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-058](project/ticket-058/README.md): make configured Twine
+  publication retries idempotent at runtime and migrate legacy commands
+  through doctor PY013. State: `IN_PROGRESS / PUBLICATION`; configuration producers
+  and governance-owned `goal.yaml` are deferred to dependent bounded tickets;
+  classification: `BUG / P0 / regression`; depends on ticket-057.
+
 - [x] Deliver [ticket-057](project/ticket-057/README.md): publish the merged
   mutation-free PR-resume repair as Goal 2.1.299. State: `DONE / DONE`; PR #94
   passed 607 tests (2 skips), Python 3.12/3.13, Ruff, governance, build, Docker

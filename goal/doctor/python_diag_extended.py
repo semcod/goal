@@ -1,6 +1,7 @@
 """Python project diagnostics — extended checks (PY010–PY014)."""
 
 import re
+import shlex
 from pathlib import Path
 from typing import List, Optional
 
@@ -326,7 +327,9 @@ class PythonDiagnostics(PythonDiagnosticsCore):
         if not publish_pattern:
             return
 
-        expected = f"twine upload dist/{project_name}-{{version}}*"
+        expected = (
+            f"twine upload --skip-existing dist/{project_name}-{{version}}*"
+        )
 
         if self._goal_publish_pattern_is_acceptable(
             project_name, publish_pattern, expected
@@ -354,12 +357,32 @@ class PythonDiagnostics(PythonDiagnosticsCore):
 
     @staticmethod
     def _extract_goal_publish_pattern(goal_content: str) -> Optional[str]:
-        publish_match = re.search(
-            r"publish:\s*(.+?)(?:\s*$|\s+\w+:|\n\w+)", goal_content, re.MULTILINE
-        )
-        if not publish_match:
+        publish_line = PythonDiagnostics._python_publish_line(goal_content)
+        return publish_line[1] if publish_line is not None else None
+
+    @staticmethod
+    def _python_publish_line(goal_content: str) -> Optional[tuple[int, str]]:
+        """Return the Python strategy's publish line without crossing siblings."""
+        lines = goal_content.splitlines(keepends=True)
+        for index, line in enumerate(lines):
+            strategy_match = re.match(r"^(\s*)python:\s*(?:#.*)?(?:\r?\n)?$", line)
+            if strategy_match is None:
+                continue
+            strategy_indent = len(strategy_match.group(1))
+            for child_index in range(index + 1, len(lines)):
+                child = lines[child_index]
+                if not child.strip() or child.lstrip().startswith("#"):
+                    continue
+                child_indent = len(child) - len(child.lstrip())
+                if child_indent <= strategy_indent:
+                    break
+                publish_match = re.match(
+                    r"^\s*publish:\s*([^\r\n]+)", child
+                )
+                if publish_match is not None:
+                    return child_index, publish_match.group(1).strip()
             return None
-        return publish_match.group(1).strip()
+        return None
 
     @staticmethod
     def _goal_publish_pattern_is_acceptable(
@@ -367,16 +390,38 @@ class PythonDiagnostics(PythonDiagnosticsCore):
     ) -> bool:
         if publish_pattern == expected:
             return True
-        return project_name in publish_pattern and "goal-" not in publish_pattern
+        try:
+            arguments = shlex.split(publish_pattern)
+        except ValueError:
+            return False
+        if arguments.count("--skip-existing") != 1:
+            return False
+        if "twine" not in arguments or "upload" not in arguments:
+            return False
+        normalized_names = {
+            project_name,
+            project_name.replace("-", "_"),
+            project_name.replace("_", "-"),
+        }
+        expected_patterns = {
+            f"dist/{name}-{{version}}*" for name in normalized_names
+        }
+        return any(argument in expected_patterns for argument in arguments)
 
     @staticmethod
     def _rewrite_goal_publish_pattern(goal_content: str, expected: str) -> str:
-        return re.sub(
-            r"(publish:\s*)(.+?)(\s*$|\s+\w+:|\n\w+)",
-            rf"\1{expected}\3",
-            goal_content,
-            flags=re.MULTILINE,
-        )
+        publish_line = PythonDiagnostics._python_publish_line(goal_content)
+        if publish_line is None:
+            return goal_content
+        line_index, _current = publish_line
+        lines = goal_content.splitlines(keepends=True)
+        line = lines[line_index]
+        line_ending = "\r\n" if line.endswith("\r\n") else "\n" if line.endswith("\n") else ""
+        prefix_match = re.match(r"^(\s*publish:\s*)", line)
+        if prefix_match is None:
+            return goal_content
+        lines[line_index] = f"{prefix_match.group(1)}{expected}{line_ending}"
+        return "".join(lines)
 
     def check_py014_pypi_token(self) -> None:
         """PY014: Check for PyPI token configuration before publishing."""
@@ -416,10 +461,14 @@ class PythonDiagnostics(PythonDiagnosticsCore):
     def _has_pypi_credentials(self) -> bool:
         import os
 
-        pypi_token = os.environ.get("PYPI_TOKEN") or os.environ.get("TWINE_PASSWORD")
+        pypi_credential = os.environ.get("PYPI_TOKEN") or os.environ.get(
+            "TWINE_PASSWORD"
+        )
         pypirc_project = self.project_dir / ".pypirc"
         pypirc_home = Path.home() / ".pypirc"
-        return bool(pypi_token or pypirc_project.exists() or pypirc_home.exists())
+        return bool(
+            pypi_credential or pypirc_project.exists() or pypirc_home.exists()
+        )
 
     def run_all_checks(self) -> None:
         """Run all registered check methods in order."""

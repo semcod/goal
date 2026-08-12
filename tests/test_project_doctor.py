@@ -235,6 +235,88 @@ class TestDiagnosePython:
         assert 'version = "0.1.35"' in (tmp_path / "pyproject.toml").read_text()
         assert (tmp_path / "VERSION").read_text().strip() == "0.1.36"
 
+    @staticmethod
+    def _py013_project(tmp_path, publish_command):
+        (tmp_path / "pyproject.toml").write_text(
+            '[build-system]\nrequires = ["setuptools"]\n'
+            'build-backend = "setuptools.build_meta"\n\n'
+            '[project]\nname = "demo-pkg"\nversion = "1.2.3"\n'
+            'requires-python = ">=3.10"\nlicense = "MIT"\n'
+        )
+        (tmp_path / "goal.yaml").write_text(
+            "strategies:\n  python:\n    publish: " + publish_command + "\n"
+        )
+
+    def test_py013_rejects_missing_skip_existing_without_fix(self, tmp_path):
+        self._py013_project(
+            tmp_path, "twine upload dist/demo-pkg-{version}*"
+        )
+
+        issues = _diagnose_python(tmp_path, auto_fix=False)
+
+        py013 = [issue for issue in issues if issue.code == "PY013"]
+        assert len(py013) == 1
+        assert py013[0].fixed is False
+        assert "--skip-existing" in py013[0].detail
+
+    def test_py013_adds_skip_existing_during_auto_fix(self, tmp_path):
+        self._py013_project(
+            tmp_path, "twine upload dist/demo-pkg-{version}*"
+        )
+
+        issues = _diagnose_python(tmp_path, auto_fix=True)
+
+        py013 = [issue for issue in issues if issue.code == "PY013"]
+        assert len(py013) == 1
+        assert py013[0].fixed is True
+        assert (
+            "publish: twine upload --skip-existing dist/demo-pkg-{version}*"
+            in (tmp_path / "goal.yaml").read_text()
+        )
+
+    def test_py013_repairs_wrong_package_and_missing_flag(self, tmp_path):
+        self._py013_project(tmp_path, "twine upload dist/goal-{version}*")
+
+        issues = _diagnose_python(tmp_path, auto_fix=True)
+
+        py013 = [issue for issue in issues if issue.code == "PY013"]
+        assert len(py013) == 1
+        assert py013[0].fixed is True
+        assert (
+            "publish: twine upload --skip-existing dist/demo-pkg-{version}*"
+            in (tmp_path / "goal.yaml").read_text()
+        )
+
+    def test_py013_accepts_safe_custom_twine_options(self, tmp_path):
+        self._py013_project(
+            tmp_path,
+            "python -m twine upload --repository testpypi --skip-existing "
+            "dist/demo_pkg-{version}*",
+        )
+
+        issues = _diagnose_python(tmp_path, auto_fix=False)
+
+        assert not any(issue.code == "PY013" for issue in issues)
+
+    def test_py013_auto_fix_preserves_non_python_publishers(self, tmp_path):
+        self._py013_project(
+            tmp_path, "twine upload dist/wrong-{version}*"
+        )
+        goal_yaml = tmp_path / "goal.yaml"
+        goal_yaml.write_text(
+            goal_yaml.read_text()
+            + "  nodejs:\n    publish: npm publish\n"
+            + "  rust:\n    publish: cargo publish\n"
+        )
+
+        issues = _diagnose_python(tmp_path, auto_fix=True)
+
+        assert any(issue.code == "PY013" and issue.fixed for issue in issues)
+        content = goal_yaml.read_text()
+        assert "twine upload --skip-existing dist/demo-pkg-{version}*" in content
+        assert "publish: npm publish" in content
+        assert "publish: cargo publish" in content
+
 
 # ---------------------------------------------------------------------------
 # Node.js diagnostics
