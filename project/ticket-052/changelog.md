@@ -10,3 +10,7 @@
   YAML structure and checker invocation.
 - Recorded and safely handled the target's broad historical `.github/` ignore
   rule by force-staging only this ticket's exact allowed workflow path.
+- PR #82 passed full local validation, hosted Python 3.12/3.13 CI, its own live
+  lifecycle job and trusted exact-head Validator App review, then merged as
+  `ac281ed8bbb9...`.
+- Closed the ticket only after protected merge evidence was verified.
