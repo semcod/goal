@@ -20,3 +20,8 @@
   `main@3ba0aa0` with an identical tree and passed the clean-merge retest.
 - Released the application workstream by blocking only on a dependent,
   separately budgeted 2.1.297 integration release and downstream proof.
+- Published Goal 2.1.297 and verified its fresh public install runs the real
+  new-project candidate health contract without Git-state mutation.
+- Used the repaired public path for governed new-project PR #96, exact-head
+  protected validation and trusted merge, then verified final v0.15.0 against
+  live glon in read-only mode.

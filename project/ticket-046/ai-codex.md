@@ -52,10 +52,16 @@ read-only source-hub runner over the hub's authoritative files and suites.
   `3ba0aa0`. The merge tree is identical and its clean 581-test retest passes.
 - Moved the ticket to `BLOCKED / PUBLICATION` only while a separately budgeted
   integration ticket publishes 2.1.297 and proves the real downstream flow.
+- Installed public Goal 2.1.297 from PyPI and used it to pass the exact real
+  new-project ticket-065 candidate health contract (15 JSON documents and 9
+  shell suites) without changing Git state.
+- Used that public Goal delivery path to create new-project PR #96 at exact
+  head `8e47d559...`; protected Linux/Windows CI and Validator App approval
+  preceded trusted merge `32238076...`.
+- Verified the final new-project v0.15.0 publication proof through the public
+  Goal CLI against live glon in read-only mode.
 
 ## Blockers
 
-- Public Goal 2.1.297 and the downstream source-hub delivery proof are delegated
-  to the dependent integration release ticket before final closure.
-- New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+- None. The dependent public release and real downstream delivery proof are
+  complete.

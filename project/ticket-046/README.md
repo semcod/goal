@@ -2,8 +2,8 @@
 
 - **ID**: ticket-046
 - **Owner**: unresolved:human
-- **Status**: BLOCKED
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -33,7 +33,7 @@ Windows trust boundary stay unchanged.
   unchanged.
 - [x] AC-04: Focused tests, full pytest, Ruff, adopted governance, package and
   Docker checks pass before exact-head external validation and trusted merge.
-- [ ] AC-05: A public Goal release executes the real `new-project` candidate
+- [x] AC-05: A public Goal release executes the real `new-project` candidate
   health gate before that repository's governed PR delivery.
 
 ## Evidence before PR
@@ -56,12 +56,20 @@ Windows trust boundary stay unchanged.
   head as its second parent and an identical tree. The clean merge again passed
   581 tests (2 existing skips), Ruff and governance.
 
-## Publication blocker
+## Downstream publication proof
 
-The implementation is merged and locally complete. AC-05 remains blocked only
-on a separately budgeted integration ticket publishing Goal 2.1.297 and using
-that fresh public package for the real `new-project` ticket-065 delivery. The
-application workstream and its implementation paths are released meanwhile.
+- Public Goal 2.1.297 was installed from PyPI in a fresh Python 3.13
+  environment and reported its exact public version.
+- That public CLI ran the real ticket-065 new-project source hub at candidate
+  head `1bfe1510e9375243aedf527205eb7e1d77d399c1`; 15 JSON documents, the
+  required-check comparator and all 9 shell suites passed as `GOV-HUB-PASS`,
+  with an unchanged clean Git status hash.
+- The same public Goal delivery path committed and opened governed PR #96 at
+  final head `8e47d5594ddd014c87de25d02950db303c8caca8` instead of stopping at
+  `GOV-MANIFEST-001`. Linux/Windows CI and Validator App approved that exact
+  head before trusted merge `32238076db1e95ed60dbc878b71fab1588ff53d6`.
+- Published new-project v0.15.0 was subsequently accepted by public Goal for a
+  read-only live glon pilot, proving the repaired path through final release.
 
 ## Participants
 
