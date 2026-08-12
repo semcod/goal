@@ -15,3 +15,9 @@
   on the refreshed candidate and recorded immutable candidate hashes.
 - Refreshed to the independent ticket-049 closure base and retained its closed
   evidence without adding its paths to this ticket's diff.
+- Recorded protected Python 3.12/3.13 CI, exact-head Validator approval and the
+  trusted merge of PR #77.
+- Published Goal 2.1.298 to PyPI, annotated Git tag and final GitHub Release;
+  verified public wheel and sdist hashes across both channels.
+- Installed the release from the public index and completed the missing
+  assetless `new-project v0.16.1` Release without moving its tag or `main`.
