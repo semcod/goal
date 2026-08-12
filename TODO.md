@@ -2,6 +2,13 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-053](project/ticket-053/README.md): adopt the complete
+  published new-project 0.16.1 governance package, including deterministic
+  remediation-intent/todo2code analysis and workspace lifecycle checks. State:
+  `BACKLOG / PLAN` while the separately owned Compose prerequisite is repaired;
+  classification: `BUG / P1 / regression`; depends on ticket-051 and
+  ticket-052.
+
 - [x] Deliver [ticket-052](project/ticket-052/README.md): install the exact
   published new-project 0.16.1 remote-lifecycle workflow after its checker
   prerequisite. State: `DONE / DONE`; PR #82 passed 600 tests (2 existing

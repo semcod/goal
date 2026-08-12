@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-053",
+  "summary": "Adopt the complete new-project 0.16.1 governance package",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    ".governance/**",
+    "AGENTS.md",
+    "project/new-ticket.sh",
+    "project/ticket-053/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".github/**",
+    "goal/**",
+    "tests/**",
+    "VERSION",
+    "pyproject.toml",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": ["ticket-051", "ticket-052"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "abaa09cc5e411931ff62d792318f3c0283bce19b",
+    "targetBranch": "main",
+    "outcome": "Goal adopts the complete published new-project 0.16.1 diagnostics, remediation DSL and workspace lifecycle contract",
+    "nonGoals": [
+      "No GitHub workflow change",
+      "No Goal runtime or test-source change",
+      "No Goal version bump, tag or registry publication",
+      "No cleanup of dirty or unclassified user worktrees"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Adopt only the remaining governance-owned 0.16.1 plan after checker and workflow prerequisites",
+      "components": [
+        {"name": "atomic-managed-standard", "paths": [".governance/**", "AGENTS.md", "project/**", "TODO.md"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the unmerged adoption branch; after merge use a new governed upgrade or revert ticket"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["goal governance adopt --check", "inspect manifest.lock.json and changed paths"],
+        "evidence": "project/ticket-053/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["goal governance check", "goal governance workspace-check"],
+        "evidence": "project/ticket-053/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["remediation_intent.py validate/render-llm/render-todo2code/analyze-todo2code probes"],
+        "evidence": "project/ticket-053/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q", "./project/governance-check.sh"],
+        "evidence": "project/ticket-053/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
