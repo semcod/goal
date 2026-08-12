@@ -13,3 +13,5 @@
 - Refreshed onto the validated ticket-043 merge without retaining the
   application ticket's accidental generated README cost-badge change.
 - Accepted the terminal ticket-043 release closure as the final delivery base.
+- Repeated the complete validation chain on that final base and recorded the
+  2.1.296 package-candidate and Docker hashes without publishing them.

@@ -48,6 +48,9 @@ can be left behind.
 - Refreshed once more to terminal ticket-043 closure `ff40643` after its PyPI,
   annotated-tag, final-Release and public-install proof completed. The final PR
   diff remains limited to ticket-044 application code, tests and governance.
+- Repeated 18 focused and 574 full tests, Ruff, governance, package build and
+  Docker on final-base head `90023bf`; all passed and the temporary image was
+  removed.
 
 ## Blockers
 

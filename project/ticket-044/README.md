@@ -49,17 +49,19 @@ authoritative value never converges.
   delay.
 - Full validation passes: 574 tests with 2 existing skips, scoped Ruff,
   `GOV-PASS`, wheel/sdist build and Docker image
-  `sha256:a74fbd23c2dacd225b4c28ffe03a2cc823442a264a3de4d6bd6615b8960fffe0`.
+  `sha256:9bb5fae62a211e56792d3bc36b169c30b939a85b244520b7d9497e300bc97b0e`.
   The temporary Docker image was removed immediately after its immutable ID
   was recorded.
 - Local build artifacts were
-  `goal-2.1.295-py3-none-any.whl@da34f53045f1cff7217b3b6b94e3c3db282a591afd9e289f684059df4fac01b0`
+  `goal-2.1.296-py3-none-any.whl@876ce54dcf1e979be48bcc46aee9953c078ab78d1168c3c3f5c70af47ed6e3c7`
   and
-  `goal-2.1.295.tar.gz@3c912763d437edb83dbaab0089aad2b096d42617f2560930fcc831d50361addc`;
+  `goal-2.1.296.tar.gz@c383ee3b99f430493e1f9936838fb8fccf7260bdff1fd2b00b142164890982d8`;
   they are validation-only and are not published by this ticket.
 - After terminal Goal 2.1.296 closure, the branch was refreshed to exact
   `main@ff4064321427f8b3d8c1c150d86b4532535545a7`. Governance passes and the
   resulting PR diff contains no ticket-043 release carrier or README change.
+  The focused and full suites, Ruff, governance, two-artifact build and Docker
+  validation above were repeated on that final base at head `90023bf`.
 
 ## Participants
 
