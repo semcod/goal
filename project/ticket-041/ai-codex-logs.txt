@@ -36,3 +36,13 @@
 - rebased plan commit=88cf7a9af6241b06983b243621365b4576902e9c
 - rebased implementation commit=ebb022252b26bd573c9238759974dbf5f0e23362
 - post-rebase: 570 passed, 2 skipped; scoped Ruff PASS; GOV-PASS 0/0
+
+2026-08-12 protected delivery
+- pull request=https://github.com/semcod/goal/pull/66
+- exact head=0e0f5a0aed12f3df7e3c7e1a03988b32b24ecc49
+- CI test (3.12)=PASS; test (3.13)=PASS
+- validator run=https://github.com/subactor/validator-agent/actions/runs/31581912965
+- validator review=4914877493 APPROVED by ifuri-validator-agent[bot]
+- review binding: ticket-041 / exact head 0e0f5a0 / correlation goal-ticket-041-0e0f5a0
+- merge commit=f6f7653eba118c8ab5ad2a1645704050a6b33e5d
+- remote branch goal/ticket-041=deleted; only refs/heads/main remains

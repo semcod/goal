@@ -2,12 +2,13 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-041](project/ticket-041/README.md): distinguish adopted
+- [x] Deliver [ticket-041](project/ticket-041/README.md): distinguish adopted
   `new-project` targets from the source hub, keep governance verification
   read-only, and surface canonical diagnostics v2 remediation/runbooks. State:
-  `IN_PROGRESS / VALIDATION`; 46 focused and 570 full tests pass (2 skipped),
-  governance, Ruff, package and Docker builds pass, and the real hub probe is
-  read-only; classification: `BUG / P2 / regression`.
+  `DONE / DONE`; 46 focused and 570 full tests pass (2 skipped), governance,
+  Ruff, package and Docker builds pass, the real hub probe is read-only, and
+  CI plus Validator App approved exact head `0e0f5a0` before PR #66 merged as
+  `main@f6f7653`; classification: `BUG / P2 / regression`.
 
 - [x] Deliver [ticket-040](project/ticket-040/README.md): publish Goal 2.1.295
   from the merged adoption-proof and scoped bootstrap repairs, then verify a

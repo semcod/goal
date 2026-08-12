@@ -42,10 +42,14 @@ and selected managed runbooks, but Goal does not surface them.
   its already-dirty status and file hashes unchanged.
 - Passed 46 focused tests, 570 full tests (2 skipped), scoped Ruff, governance,
   wheel/sdist and the final Docker build.
+- Delivered PR #66 at exact head `0e0f5a0`, received deterministic Validator
+  App approval after both hosted checks passed, and merged as `main@f6f7653`.
+- Verified automatic deletion of the remote ticket branch; the disposable
+  local worktree and branch are removed after this closure commit.
 
 ## Blockers
 
 - None inside the recorded intent; proceed without a second confirmation.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.
-- Protected CI, exact-head review and merge remain delivery-stage work.
+- No blocker remains for this completed ticket.

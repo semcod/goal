@@ -12,3 +12,5 @@
 - Surfaced safe canonical diagnostics v2 remediation and managed runbook paths
   while preserving diagnostics v1 behavior.
 - Passed the complete local validation chain and the real source-hub probe.
+- Merged exact-head validated PR #66 and verified automatic remote branch
+  deletion.

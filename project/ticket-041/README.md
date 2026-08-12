@@ -2,8 +2,8 @@
 
 - **ID**: ticket-041
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -55,6 +55,11 @@ runbooks when diagnostics v2 provides them.
 - When `main` advanced through the unrelated ticket-040 closure, the gate
   stopped publication with `GOV-BASE-001`; the branch was refreshed to
   `d898d3f` without changing scope or architecture and revalidated.
+- PR #66 passed Python 3.12/3.13 CI. The independent
+  `ifuri-validator-agent[bot]` approved exact head `0e0f5a0` for ticket-041 in
+  review `4914877493`, and GitHub merged it as `main@f6f7653`.
+- GitHub deleted the remote head automatically; the remote now exposes only
+  `main`.
 
 ## Participants
 
