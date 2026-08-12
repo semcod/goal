@@ -1,0 +1,3 @@
+2026-08-12 BASE main 72aad3cd116c680c1c7607fa25748db05e8767f3; only remote branch main; no open PR; workspace lifecycle PASS
+2026-08-12 REPRO PR #87 resume generated out-of-scope README badge commit before candidate classification
+2026-08-12 REPRO closure commit passed 600 tests then canonical local branch collision blocked PR creation
