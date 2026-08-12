@@ -47,8 +47,12 @@ retested merge SHA. Prove the public package by resuming the already committed
   PR, issue, worktree or non-main branch.
 - PyPI, the Git remote and GitHub Releases are checked for absence of 2.1.299
   before publication begins.
-- The release candidate must prove that delivery events are written below the
-  Git common directory and never appear in the governed checkout.
+- Public Goal 2.1.298 reproduced the pre-ticket-056 behavior while opening PR
+  #94: it wrote two events to the checkout. The exact generated file and its
+  temporary local ignore were removed; neither was committed or pushed.
+- The editable runtime now resolves to clean merged `main@5ec8fa0`; resuming
+  the exact candidate must write events below the Git common directory and
+  leave no checkout file, including when no ignore masks that path.
 
 ## Participants
 
