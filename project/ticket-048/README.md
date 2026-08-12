@@ -3,7 +3,7 @@
 - **ID**: ticket-048
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Workflow state**: EDIT
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -59,6 +59,11 @@ and peels to the clean current HEAD.
   gate and committed that out-of-scope file. The same PR was corrected to a
   zero-net README diff before validation; the guarded retry disables cost
   badge mutation explicitly.
+- PR #72 merged the first repair as `main@320ad3d`, but AC-04's real clean
+  retry failed before tag recovery: version resolution selected
+  `normal-bump -> 0.16.1` from the existing v0.16.0 baseline. No repository,
+  tag or Release mutation occurred. The same active ticket returns to `EDIT`
+  to bind the already-released generic version before the normal bump guard.
 
 ## Participants
 
