@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-042](project/ticket-042/README.md): keep subcommand help
+  read-only and make the explicit no-version/no-tag/no-publish combination a
+  coherent plain delivery even with committed-unreleased package source.
+  State: `IN_PROGRESS / EDIT`; classification: `BUG / P0 / regression`.
+
 - [x] Deliver [ticket-041](project/ticket-041/README.md): distinguish adopted
   `new-project` targets from the source hub, keep governance verification
   read-only, and surface canonical diagnostics v2 remediation/runbooks. State:

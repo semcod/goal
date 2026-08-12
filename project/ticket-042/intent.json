@@ -1,0 +1,91 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-042",
+  "summary": "Keep help and no-version-sync delivery coherent",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/__init__.py",
+    "goal/push/core.py",
+    "tests/test_delivery_integrity.py",
+    "tests/test_push_e2e.py",
+    "project/ticket-042/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ea934601a56a152ab2091d5266c1ffb11d970581",
+    "targetBranch": "main",
+    "outcome": "Goal help is read-only and explicit commit-only delivery cannot enter contradictory release version validation",
+    "nonGoals": [
+      "No release carrier, package publication, Git tag or GitHub Release change",
+      "No weakening of normal committed-unreleased package source detection",
+      "No new CLI flag, command or runtime dependency"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the existing read-only context path for help and derive one explicit commit-only predicate before committed-unreleased release resolution",
+      "components": [
+        {
+          "name": "cli-context",
+          "paths": ["goal/cli/__init__.py", "tests/test_delivery_integrity.py"]
+        },
+        {
+          "name": "push-orchestration",
+          "paths": ["goal/push/core.py", "tests/test_push_e2e.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore mutable help initialization and allow explicit commit-only flags to re-enter release resolution"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "subcommand help does not create or rewrite goal.yaml"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_push_e2e.py"],
+        "evidence": "committed source plus explicit commit-only flags stays on the released version and performs no release side effect"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_push_e2e.py tests/test_version_state.py"],
+        "evidence": "ordinary committed-unreleased source still enters release resolution"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/cli/__init__.py goal/push/core.py tests/test_delivery_integrity.py tests/test_push_e2e.py",
+          "./project/governance-check.sh --actor agent",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "focused/full tests, lint, governance and package/container builds pass"
+      }
+    ]
+  }
+}
