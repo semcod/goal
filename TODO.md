@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-051](project/ticket-051/README.md): install the exact
+  published new-project 0.16.1 branch lifecycle checker as the
+  governance-owned prerequisite for the separately owned remote-lifecycle
+  workflow and final package adoption. State: `IN_PROGRESS / VALIDATION`;
+  classification: `BUG / P1 / regression`.
+
 - [x] Deliver [ticket-050](project/ticket-050/README.md): publish the merged
   artifactless GitHub Release repair as Goal 2.1.298, verify immutable public
   artifacts and use the fresh public CLI to complete `new-project v0.16.1`.
