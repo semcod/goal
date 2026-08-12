@@ -40,9 +40,11 @@
 - [x] Deliver [ticket-029](project/ticket-029/README.md): keep governed
   publish-only artifacts on the exact clean remote base and make bootstrap
   read-only. State: `DONE`; classification: `BUG / application`.
-- [ ] Deliver [ticket-028](project/ticket-028/README.md): publish the merged
+- [x] Deliver [ticket-028](project/ticket-028/README.md): publish the merged
   exact-head PR lifecycle repair as Goal 2.1.294 and verify a clean public
-  install. State: `IN_PROGRESS`; classification: `SERVICE / integration`.
+  install. State: `DONE / DONE`; release carriers merged through validated PR
+  #59, and PyPI wheel/sdist plus a fresh wheel import were verified;
+  classification: `SERVICE / integration`.
 - [x] Deliver [ticket-027](project/ticket-027/README.md): resolve only open,
   exact-head PRs after pushing a governed branch, even when that branch had a
   previously merged PR. State: `DONE`; classification:
