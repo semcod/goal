@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-037](project/ticket-037/README.md): require exact
+  annotated-tag evidence before Goal executes a `new-project` adoption
+  generator, with an explicit non-production candidate test path. A dependent
+  ticket will verify GitHub Release metadata. State: `IN_PROGRESS / VALIDATION`; classification:
+  `BUG / P0 / regression`.
+
 - [x] Deliver [ticket-036](project/ticket-036/README.md): run the immutable
   adopted workspace lifecycle checker through a headless Goal command. State:
   `DONE / DONE`; 12 focused and 547 full tests pass (2 skipped), Python
