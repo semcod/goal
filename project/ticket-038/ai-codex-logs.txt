@@ -14,3 +14,12 @@ live release pilot=v0.14.1@63a3d56b648da0d338be7cf28cbf9045adbb3e5e PASS
 package build=goal-2.1.294 wheel and sdist PASS; temporary output removed
 docker build=sha256:6aa0fe834471671d994a1c3aa6c834125a7fff5261a870ee0df15ff44cbaf3a9
 generated goal.egg-info=removed
+
+2026-08-12 trusted delivery and cleanup
+pr=semcod/goal#63
+exact_head=35047d61703859d32667f36c26c88ba5781189e5
+ci=PASS: Python 3.12 and 3.13
+validator=APPROVED by ifuri-validator-agent[bot] for exact head
+merge=2d9873cdd8d1180b42ab0461c548dbe327b66ee2
+remote_head=deleted automatically
+local_cleanup=ancestry verified; branch, worktree, caches and local delivery log removed

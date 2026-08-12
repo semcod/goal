@@ -10,3 +10,5 @@
   regression coverage without adding runtime dependencies.
 - Passed focused/full validation plus a live released-standard pilot and both
   package and Docker builds; removed generated local artifacts.
+- Merged exact-head PR #63 after CI and deterministic Validator Agent approval,
+  then removed its remote/local branch and complete disposable worktree.

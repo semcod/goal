@@ -2,8 +2,8 @@
 
 - **ID**: ticket-038
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -43,6 +43,12 @@ testing path remains network-free and unchanged.
   published GitHub Release, then removed the temporary target.
 - Python wheel/sdist and Docker image builds pass; temporary build output and
   generated `goal.egg-info` were removed after verification.
+- PR #63 passed Python 3.12/3.13 CI, received deterministic Validator Agent
+  approval for exact head `35047d61703859d32667f36c26c88ba5781189e5`, and
+  merged as `main@2d9873cdd8d1180b42ab0461c548dbe327b66ee2`.
+- GitHub automatically deleted the merged remote head. After ancestry and
+  tracked-tree checks, the disposable branch and complete worktree were
+  removed together with all ignored test caches and its local delivery log.
 
 ## Participants
 

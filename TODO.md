@@ -2,11 +2,11 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-038](project/ticket-038/README.md): require canonical
+- [x] Deliver [ticket-038](project/ticket-038/README.md): require canonical
   GitHub Release metadata in addition to the exact annotated tag before Goal
-  executes a `new-project` production adoption. State:
-  `IN_PROGRESS / VALIDATION`; 24 focused and 559 full tests pass (2 skipped),
-  with Ruff, governance, package build, live release pilot and Docker green;
+  executes a `new-project` production adoption. State: `DONE / DONE`; 24
+  focused and 559 full tests pass (2 skipped), CI and Validator Agent approved
+  exact head `35047d6`, and PR #63 merged as `main@2d9873c`;
   classification: `BUG / P0 / regression`.
 
 - [x] Deliver [ticket-037](project/ticket-037/README.md): require exact
