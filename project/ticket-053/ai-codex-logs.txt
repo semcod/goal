@@ -1,0 +1,3 @@
+2026-08-12 SOURCE new-project v0.16.1 tag d25151e27a6eeff899caff191993df0559ec333d peel 4e6ba5ec15873346446d67d8787f17f68f57f81e
+2026-08-12 ADOPT-CHECK 23 governance-owned changes required; no .github, Goal runtime, test or version path
+2026-08-12 ADOPT-PLAN CHMOD=1 UPDATE=11 CREATE=10 LOCK-UPDATE=1
