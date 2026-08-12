@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-046](project/ticket-046/README.md): run the maintained
+  `new-project` source-hub health contract through Goal's headless check and
+  governed delivery paths without installing the target package into the hub.
+  State: `IN_PROGRESS / EDIT`; classification: `BUG / P0 / regression`.
+
 - [x] Deliver [ticket-044](project/ticket-044/README.md): retry one otherwise
   valid open PR's transiently stale head after a successful governed push,
   while preserving the terminal exact-head failure. State:

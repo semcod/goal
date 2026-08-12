@@ -1,0 +1,115 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-046",
+  "summary": "Run new-project source-hub health through Goal",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/source_hub.py",
+    "goal/governance/delivery.py",
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_source_hub.py",
+    "tests/test_governance_delivery.py",
+    "project/ticket-046/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "pyproject.toml",
+    "VERSION",
+    "CHANGELOG.md",
+    "goal/__init__.py",
+    ".github/**",
+    "goal.yaml",
+    ".env",
+    "**/*.pem",
+    "**/*secret*"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "24715849459a4e2e755f2871e29b661e0608bcc0",
+    "targetBranch": "main",
+    "outcome": "Goal runs the maintained new-project source hub's deterministic Linux health contract for headless checks and governed delivery without treating the hub as an adopted target",
+    "nonGoals": [
+      "No installation of a target .governance package into the source hub",
+      "No replacement of hosted Windows CI or exact-head external validation",
+      "No changes to adopted-target governance semantics",
+      "No dependency or release-carrier changes in this implementation ticket"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use one Goal-owned read-only source-hub runner from the headless command and delivery gate; discover canonical JSON and shell suites from the checked-out hub and require CI wiring before execution",
+      "components": [
+        {
+          "name": "source-hub-health",
+          "paths": [
+            "goal/governance/source_hub.py",
+            "tests/test_governance_source_hub.py"
+          ]
+        },
+        {
+          "name": "governance-dispatch",
+          "paths": [
+            "goal/governance/delivery.py",
+            "goal/cli/governance_cmd.py",
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the fail-closed source-hub diagnostic while retaining adopted-target checks"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_governance_source_hub.py tests/test_governance_delivery.py tests/test_governance_cmd.py"
+        ],
+        "evidence": "Source-hub success and failure paths are deterministic"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check changed Python files",
+          "./project/governance-check.sh",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "Repository and distribution contracts remain green"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "goal governance check --target-root /path/to/wellmanifest/new-project",
+          "goal --delivery-mode pull-request --no-publish -a push --ticket ticket-065"
+        ],
+        "evidence": "Fresh public Goal validates and delivers the real source-hub candidate"
+      }
+    ]
+  }
+}
