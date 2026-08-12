@@ -2,8 +2,8 @@
 
 - **ID**: ticket-040
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -22,11 +22,11 @@ expected legacy `pfix` dev marker, then publish only from the exact clean merged
 - [x] AC-02: VERSION, `pyproject.toml`, `goal/__init__.py`, README badges and
   `uv.lock` synchronize exactly to 2.1.295; the runtime `costs` requirement is
   unchanged and only dev `pfix` gains its compatibility marker.
-- [ ] AC-03: Full tests, governance, package, Docker, protected CI and exact-head
+- [x] AC-03: Full tests, governance, package, Docker, protected CI and exact-head
   Validator Agent approval pass before merge.
-- [ ] AC-04: Clean merged `main` publishes exactly one wheel and one sdist for
+- [x] AC-04: Clean merged `main` publishes exactly one wheel and one sdist for
   2.1.295 and creates an annotated tag plus final GitHub Release.
-- [ ] AC-05: A fresh public-index environment reports Goal 2.1.295 and the
+- [x] AC-05: A fresh public-index environment reports Goal 2.1.295 and the
   installed CLI enforces both standard tag and GitHub Release proof.
 
 ## Boundary
@@ -51,6 +51,31 @@ expected legacy `pfix` dev marker, then publish only from the exact clean merged
 - The first CLI attempt rejected misplaced `--ticket` before side effects. A
   second attempt stopped at an invalid empty component path in the ticket DSL,
   also before bootstrap; the intent was corrected and the gate passed.
+
+## Terminal evidence
+
+- PR #65 passed Python 3.12/3.13 CI and received deterministic Validator Agent
+  approval for exact head `c37252d75035e6abb20b75fd23b156d68869aa7e`.
+  GitHub merged it as `main@11561fd3eed757eb2a0143c206b38577490389ba`.
+- Governance passed with zero errors/warnings, package build produced one wheel
+  and one sdist, and Docker built image
+  `sha256:4db175432191215939a40b5337df78b8b49c2c5244a425714d68f535ee0c383e`.
+- Governed `publish-only` ran from clean `main`, repeated all 560 passing tests
+  (2 skipped), and published exactly the two 2.1.295 artifacts. Their public
+  PyPI SHA-256 values are `477d8bc960787d6c74c79a5c2707b9cbd06d47449c85216a04e3d7a63d1c51e8`
+  (wheel) and `f2bb0bb03d76140d8231af70649abbcde61c8db332a8e4d3e0c4e35275075529`
+  (sdist).
+- Annotated tag `v2.1.295` peels exactly to the merge commit. The final,
+  non-draft, non-prerelease GitHub Release was published with both artifacts.
+- A fresh Python 3.13 environment installed `goal==2.1.295` with
+  `--no-cache-dir` from `https://pypi.org/simple` and reported that exact CLI
+  version. Against live glon, the installed CLI rejected unpublished
+  `new-project` main because the release tag identified another revision, then
+  accepted v0.14.1 tag/Release proof and reached the expected read-only drift
+  report without modifying the project.
+- GitHub removed the remote PR head automatically. The complete disposable
+  worktree, local branch and validation image were removed after ancestry
+  proof; the source tree remained clean and equal to `origin/main`.
 
 ## Participants
 

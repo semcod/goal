@@ -2,11 +2,12 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-040](project/ticket-040/README.md): publish Goal 2.1.295
+- [x] Deliver [ticket-040](project/ticket-040/README.md): publish Goal 2.1.295
   from the merged adoption-proof and scoped bootstrap repairs, then verify a
-  clean public install. State: `IN_PROGRESS / VALIDATION`; real `goal -a`
-  selected `normal-bump`, passed 560 tests (2 skipped) and created PR #65 with
-  only five release carriers plus governance; classification:
+  clean public install. State: `DONE / DONE`; real `goal -a` passed 560 tests
+  (2 skipped), CI and Validator Agent approved exact head `c37252d`, PR #65
+  merged as `main@11561fd`, and PyPI/tag/final GitHub Release evidence matches
+  2.1.295; classification:
   `SERVICE / P0 / requested`.
 
 - [x] Deliver [ticket-039](project/ticket-039/README.md): keep legacy Goal tool

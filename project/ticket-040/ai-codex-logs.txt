@@ -7,8 +7,16 @@ second high-level attempt=governance rejected empty component path before bootst
 corrected high-level command=goal --ascii -a --delivery-mode pull-request push --ticket ticket-040 --no-changelog
 version decision=normal-bump -> 2.1.295
 tests=560 passed, 2 skipped
-pull request=semcod/goal#65 head bd452fea2186ad9e4df6c484a84d089e6c6d30de
+pull request=semcod/goal#65 final head c37252d75035e6abb20b75fd23b156d68869aa7e
 committed scope=five release carriers plus ticket governance
 runtime costs=unchanged
 dev pfix=python_version >= 3.10 marker added
 ignored local artifacts=.env,.venv,goal.egg-info; retained until terminal worktree cleanup
+governance=GOV-PASS; package and Docker builds=PASS
+trusted delivery=exact head c37252d75035e6abb20b75fd23b156d68869aa7e APPROVED
+merge=11561fd3eed757eb2a0143c206b38577490389ba
+publication=PyPI wheel+sdist 2.1.295 PASS from clean authoritative main
+release=annotated v2.1.295 plus final GitHub Release with two assets
+public install=fresh Python 3.13, no cache, PyPI simple index, goal 2.1.295 PASS
+installed adoption proof=unpublished main rejected; published v0.14.1 reached glon drift check
+cleanup=remote/local branch, complete worktree and temporary Docker image removed
