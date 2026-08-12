@@ -3,7 +3,7 @@
 - **ID**: ticket-042
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -25,7 +25,7 @@ version carriers.
   unreleased package source.
 - [x] AC-03: Normal release behavior remains unchanged when any commit-only
   condition is absent.
-- [ ] AC-04: Focused/full tests, scoped Ruff, governance, package and Docker
+- [x] AC-04: Focused/full tests, scoped Ruff, governance, package and Docker
   builds pass before exact-head protected delivery.
 
 ## Boundary
@@ -46,6 +46,10 @@ version carriers.
 - Scoped Ruff and `git diff --check` pass.
 - A real source invocation in an isolated directory rendered
   `python -m goal push --help` without creating `goal.yaml`.
+- Full validation passes: 573 tests with 2 existing skips, scoped Ruff,
+  `GOV-PASS`, wheel/sdist build and Docker image
+  `sha256:284242e79a0d28db725429c5b3aef6e1f270b529552ca89aabaa018cc18fbc63`.
+  The temporary tagged image was removed immediately after the build.
 
 ## Participants
 

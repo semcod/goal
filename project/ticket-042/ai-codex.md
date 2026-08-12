@@ -38,6 +38,9 @@ before Click rendered subcommand help.
   promotion and pre-bumped release intent while retaining test/commit/push.
 - Passed 53 focused tests, scoped Ruff, diff hygiene and a real isolated help
   invocation with no filesystem mutation.
+- Passed 573 full tests (2 existing skips), deterministic governance,
+  wheel/sdist and the final Docker build; removed the temporary validation
+  image after recording its immutable image ID.
 
 ## Blockers
 

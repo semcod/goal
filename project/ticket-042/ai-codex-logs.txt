@@ -3,3 +3,4 @@
 2026-08-12 cleanup: removed the generated new-project goal.yaml and the failed run's staged README cost-badge drift; ticket-041 worktree and local branch are absent after verified merge reachability.
 2026-08-12 implementation: parent/subcommand help shares the read-only context path; exact three-flag commit-only intent cannot be promoted by committed-unreleased source or pre-bumped state.
 2026-08-12 focused validation: 53 delivery/push tests PASS; scoped Ruff PASS; git diff --check PASS; isolated `python -m goal push --help` leaves no goal.yaml.
+2026-08-12 full validation: 573 PASS, 2 SKIP; scoped Ruff PASS; GOV-PASS 0/0; wheel/sdist PASS; Docker sha256:284242e79a0d28db725429c5b3aef6e1f270b529552ca89aabaa018cc18fbc63 PASS and temporary tag removed.
