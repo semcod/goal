@@ -12,3 +12,5 @@
   deterministic governance, wheel/sdist build and production Docker CLI smoke.
 - Proved the real bare `goal -a` path inferred ticket-056, resumed the committed
   candidate and opened PR #92 without changing the checkout.
+- Recorded exact-head Validator approval and the protected PR #92 squash merge;
+  moved the completed ticket to `DONE / DONE` for closure review.

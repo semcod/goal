@@ -2,8 +2,8 @@
 
 - **ID**: ticket-056
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -64,3 +64,11 @@ merge approval. Exact-head Validator evidence remains mandatory.
 - No automatic selection when more than one active ticket exists.
 - No change to doctor/bootstrap for genuine uncommitted delivery work.
 - No version, dependency, public API or release change.
+
+## Delivery evidence
+
+- Implementation PR #92 passed Python 3.12/3.13 CI and the remote lifecycle
+  gate on exact HEAD `2565eaae4d8dd23cc987b65d0ff7c206320dbc4f`.
+- Trusted Validator review `4919030999` approved that exact HEAD.
+- PR #92 was squash-merged as
+  `a05b2f984511d74e2f5c6dd45048746882473fb7`; its remote branch was deleted.
