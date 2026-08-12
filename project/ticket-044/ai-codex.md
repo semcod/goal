@@ -40,6 +40,11 @@ can be left behind.
 - Passed 18 focused and 574 full tests (2 existing skips), scoped Ruff,
   governance, wheel/sdist build and Docker build; removed the disposable
   Docker image after recording its ID.
+- Refreshed the accepted base to the independently validated ticket-043 merge
+  `c5f3684` after it landed while this ticket was in validation. Kept the
+  ticket-043 release carriers and README byte-for-byte from `main`, combined
+  only the two ticket indexes, and removed Goal's out-of-scope cost-badge
+  refresh from this application diff.
 
 ## Blockers
 

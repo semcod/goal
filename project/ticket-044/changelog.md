@@ -10,3 +10,5 @@
   exact-head rejection and immediate behavior for non-stale query outcomes.
 - Passed focused/full tests, lint, governance, package and container builds;
   removed the disposable validation image.
+- Refreshed onto the validated ticket-043 merge without retaining the
+  application ticket's accidental generated README cost-badge change.

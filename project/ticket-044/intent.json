@@ -21,7 +21,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "3fb66abf24b809722dac706a023d4510b21ae286",
+    "acceptedBaseSha": "c5f3684ed83da71ab312808bfbbf79af80551b50",
     "targetBranch": "main",
     "outcome": "A successfully pushed governed branch can reuse its one open PR across GitHub's bounded stale-head read window without weakening exact-head delivery",
     "nonGoals": [
