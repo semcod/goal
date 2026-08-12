@@ -3,3 +3,8 @@
 2026-08-12T15:25:00+02:00 full PASS: 600 tests, 2 skipped; initial governance run rejected mistaken internal-as-public interface declaration
 2026-08-12T15:26:00+02:00 narrowed public interface budget/declaration to zero; GOV-PASS without enlarging scope
 2026-08-12T15:29:00+02:00 wheel e2cbd5b9, sdist 9eecae69 and Docker 034faf2b PASS; temporary outputs removed; state IN_PROGRESS/PUBLICATION
+2026-08-12T15:33:58+02:00 Validator App run 31601902913 review 4917056332 APPROVED exact HEAD a297cf96 after protected Python 3.12/3.13 PASS
+2026-08-12T15:34:49+02:00 PR 76 MERGED as 7534d1ab; approved HEAD is exact second parent and merge tree is identical
+2026-08-12T15:38:00+02:00 clean merge PASS: 600 tests, 2 skipped; scoped Ruff PASS; GOV-PASS; temporary worktree removed
+2026-08-12T15:38:00+02:00 diagnostic only: repository-wide Ruff reports 87 pre-existing findings outside ticket-049 paths; no scope expansion
+2026-08-12T15:39:00+02:00 all acceptance criteria complete; state DONE/DONE
