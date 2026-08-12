@@ -1,0 +1,3 @@
+2026-08-12T18:22:00Z ticket-060 allocated on clean accepted base 506551111e1deae82d5fad2801a88930081118d5 after ticket-059 closure and workspace cleanup.
+2026-08-12T18:22:00Z SESSION_EXECUTION_AUTHORIZATION recorded from the user's repeated instruction to repair and continue.
+2026-08-12T18:22:00Z scope: one governance-owned goal.yaml scalar; current Python command is stale, while Node npm publish and Rust cargo publish are already correct and must remain unchanged.

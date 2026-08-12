@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-060",
+  "summary": "Repair Goal publish strategy configuration",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal.yaml",
+    "project/ticket-060/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "goal/**",
+    "tests/**",
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    ".github/**"
+  ],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-059"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "506551111e1deae82d5fad2801a88930081118d5",
+    "targetBranch": "main",
+    "outcome": "Goal's tracked Python strategy is retry-safe without altering sibling publishers",
+    "nonGoals": [
+      "Do not change application source or tests",
+      "Do not change Node or Rust strategies",
+      "Do not change package versions or dependencies"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Change only the Python publish scalar and verify all three parsed strategy values",
+      "components": [
+        {"name": "goal-configuration", "paths": ["goal.yaml"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the one-line configuration PR; runtime normalization still protects Twine execution"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -c structural goal.yaml strategy assertion"],
+        "evidence": "project/ticket-060/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["git diff --word-diff=porcelain -- goal.yaml"],
+        "evidence": "project/ticket-060/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q", "./project/governance-check.sh"],
+        "evidence": "project/ticket-060/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

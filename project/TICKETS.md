@@ -62,4 +62,5 @@ This file indexes governance tickets without taking ownership of
 | **ticket-057** | [`README.md`](./ticket-057/README.md) | [`preprompt.md`](./ticket-057/preprompt.md) | - |  [`ai-codex.md`](./ticket-057/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-057/ai-codex-logs.txt) | [`changelog.md`](./ticket-057/changelog.md) |
 | **ticket-058** | [`README.md`](./ticket-058/README.md) | [`preprompt.md`](./ticket-058/preprompt.md) | - |  [`ai-codex.md`](./ticket-058/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-058/ai-codex-logs.txt) | [`changelog.md`](./ticket-058/changelog.md) |
 | **ticket-059** | [`README.md`](./ticket-059/README.md) | [`preprompt.md`](./ticket-059/preprompt.md) | - |  [`ai-codex.md`](./ticket-059/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-059/ai-codex-logs.txt) | [`changelog.md`](./ticket-059/changelog.md) |
+| **ticket-060** | [`README.md`](./ticket-060/README.md) | [`preprompt.md`](./ticket-060/preprompt.md) | - |  [`ai-codex.md`](./ticket-060/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-060/ai-codex-logs.txt) | [`changelog.md`](./ticket-060/changelog.md) |
 <!-- AUTO:TICKET_INDEX:END -->
