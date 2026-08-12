@@ -28,6 +28,13 @@ without crossing ownership boundaries.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Bound the source to annotated published new-project v0.16.1 at exact commit
+  `4e6ba5ec15873346446d67d8787f17f68f57f81e`.
+- Added only the infrastructure-owned workflow, byte-identical to its
+  published source; its actions remain commit-pinned and it executes the
+  already integrated managed checker.
+- Verified its hash, YAML structure and checker invocation; deterministic
+  governance passes.
 
 ## Blockers
 

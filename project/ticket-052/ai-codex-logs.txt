@@ -1,2 +1,5 @@
 2026-08-12 SOURCE new-project v0.16.1 tag d25151e27a6eeff899caff191993df0559ec333d peel 4e6ba5ec15873346446d67d8787f17f68f57f81e
 2026-08-12 SOURCE SHA256 workflow 9dd307f48368fea9438bb607e28e48cffcfe0ae4f231d77df86c384745bb68e9
+2026-08-12 SHA256 source/target 9dd307f48368fea9438bb607e28e48cffcfe0ae4f231d77df86c384745bb68e9 MATCH
+2026-08-12 FOCUSED YAML structure PASS; action commit pins PASS; checker invocation PASS
+2026-08-12 GOV-PASS 0 errors 0 warnings

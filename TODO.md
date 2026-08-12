@@ -4,7 +4,7 @@
 
 - [ ] Deliver [ticket-052](project/ticket-052/README.md): install the exact
   published new-project 0.16.1 remote-lifecycle workflow after its checker
-  prerequisite. State: `IN_PROGRESS / EDIT`; classification:
+  prerequisite. State: `IN_PROGRESS / VALIDATION`; classification:
   `BUG / P1 / regression`; depends on ticket-051.
 
 - [x] Deliver [ticket-051](project/ticket-051/README.md): install the exact
