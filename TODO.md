@@ -2,6 +2,13 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-039](project/ticket-039/README.md): keep legacy Goal tool
+  marker migration inside declared development dependency sections so
+  bootstrap cannot rewrite runtime requirements. State:
+  `IN_PROGRESS / VALIDATION`; 3 focused and 560 full tests pass (2 skipped),
+  with Ruff, governance, package and Docker builds green; classification:
+  `BUG / P0 / regression`.
+
 - [x] Deliver [ticket-038](project/ticket-038/README.md): require canonical
   GitHub Release metadata in addition to the exact annotated tag before Goal
   executes a `new-project` production adoption. State: `DONE / DONE`; 24

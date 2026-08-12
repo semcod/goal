@@ -56,7 +56,9 @@ def _find_dep_list_end(content: str, start_idx: int) -> int:
     return -1
 
 
-def _try_merge_optional_dev_deps(content: str) -> tuple[str, bool]:
+def _try_merge_optional_dev_deps(
+    content: str, required_deps=_REQUIRED_DEV_DEPS
+) -> tuple[str, bool]:
     """Strategy 1: [project.optional-dependencies] dev = [...]"""
     if (
         "[project.optional-dependencies]" not in content
@@ -73,14 +75,18 @@ def _try_merge_optional_dev_deps(content: str) -> tuple[str, bool]:
         return content, False
     section_start = dev_match.group(1)
     existing = content[start:end]
-    new_content = _add_deps_to_section_match(section_start, existing)
+    new_content = _add_deps_to_section_match(
+        section_start, existing, required_deps
+    )
     old_content = content[match_start : end + 1]
     if new_content == old_content:
         return content, False
     return content[:match_start] + new_content + content[end + 1 :], True
 
 
-def _try_merge_hatch_default_deps(content: str) -> tuple[str, bool]:
+def _try_merge_hatch_default_deps(
+    content: str, required_deps=_REQUIRED_DEV_DEPS
+) -> tuple[str, bool]:
     """Strategy 2: [tool.hatch.envs.default] dependencies = [...]"""
     if "[tool.hatch.envs.default]" not in content or "dependencies = [" not in content:
         return content, False
@@ -94,7 +100,9 @@ def _try_merge_hatch_default_deps(content: str) -> tuple[str, bool]:
         return content, False
     section_start = dep_match.group(1)
     existing = content[start:end]
-    new_content = _add_deps_to_section_match(section_start, existing)
+    new_content = _add_deps_to_section_match(
+        section_start, existing, required_deps
+    )
     old_content = content[match_start : end + 1]
     if new_content == old_content:
         return content, False
@@ -106,25 +114,23 @@ def _try_add_deps(content: str) -> tuple[str, bool]:
 
     Returns (updated_content, changed).
     """
-    original = content
-    for legacy_spec, marked_spec in _LEGACY_DEV_DEP_REPLACEMENTS:
-        content = content.replace(legacy_spec, marked_spec)
-    upgraded = content != original
-
-    if all(name in content.lower() for name, _ in _REQUIRED_DEV_DEPS):
-        return content, upgraded
-
-    content, changed = _try_merge_optional_dev_deps(content)
+    required_deps = tuple(
+        (name, spec)
+        for name, spec in _REQUIRED_DEV_DEPS
+        if name not in content.lower()
+    )
+    content, changed = _try_merge_optional_dev_deps(content, required_deps)
     if changed:
         return content, True
-    content, changed = _try_merge_hatch_default_deps(content)
-    return content, changed or upgraded
+    return _try_merge_hatch_default_deps(content, required_deps)
 
 
 def _add_deps_to_section_match(
     section_start: str, existing: str, required_deps=_REQUIRED_DEV_DEPS
 ) -> str:
     """Add missing deps to a TOML section."""
+    for legacy_spec, marked_spec in _LEGACY_DEV_DEP_REPLACEMENTS:
+        existing = existing.replace(legacy_spec, marked_spec)
     to_add = [spec for name, spec in required_deps if name not in existing.lower()]
     if not to_add:
         return f"{section_start}{existing}]"
