@@ -2,3 +2,13 @@
 SESSION_EXECUTION_AUTHORIZATION=recorded
 accepted_base=cf2baffaafffe50a16a4a392615a0cfbc42b05b2
 release_target=2.1.295
+first high-level attempt=CLI rejected misplaced --ticket before side effects
+second high-level attempt=governance rejected empty component path before bootstrap
+corrected high-level command=goal --ascii -a --delivery-mode pull-request push --ticket ticket-040 --no-changelog
+version decision=normal-bump -> 2.1.295
+tests=560 passed, 2 skipped
+pull request=semcod/goal#65 head bd452fea2186ad9e4df6c484a84d089e6c6d30de
+committed scope=five release carriers plus ticket governance
+runtime costs=unchanged
+dev pfix=python_version >= 3.10 marker added
+ignored local artifacts=.env,.venv,goal.egg-info; retained until terminal worktree cleanup

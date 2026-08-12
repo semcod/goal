@@ -28,6 +28,13 @@ high-level PR workflow, then publish from the exact merged commit only.
   from the request to execute this work.
 - Bound release 2.1.295 to merged tickets 037, 038 and 039 and exactly five
   release carrier files.
+- Exercised the actual high-level Goal flow. It diagnosed a healthy project,
+  created a disposable environment, scoped the legacy dev marker correctly,
+  selected `normal-bump -> 2.1.295`, passed 560 tests (2 skipped), synchronized
+  the five carriers and created PR #65 without publishing or tagging.
+- Inspected the exact commit: runtime `costs` is unchanged, only dev `pfix` is
+  marked, no top-level CHANGELOG or local environment artifact entered the PR.
+- Retained ignored bootstrap state only until terminal worktree cleanup.
 
 ## Blockers
 
