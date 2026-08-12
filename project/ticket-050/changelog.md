@@ -13,3 +13,5 @@
   governed pull-request publication.
 - Passed full tests, Ruff, governance, package inspection and Docker validation
   on the refreshed candidate and recorded immutable candidate hashes.
+- Refreshed to the independent ticket-049 closure base and retained its closed
+  evidence without adding its paths to this ticket's diff.

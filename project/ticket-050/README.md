@@ -47,8 +47,9 @@ artifactless `wellmanifest/new-project v0.16.1` tag into a final Release.
 
 ## Pre-publication evidence
 
-- Accepted base was refreshed to clean `main@7534d1a` after the independently
-  validated ticket-049 merged; ticket-048 is complete there and its
+- Accepted base was refreshed to clean `main@355d49f` after the independently
+  validated ticket-049 implementation and closure merged; ticket-048 is
+  complete there and its
   generic assetless Release code is absent from public wheel 2.1.297.
 - PyPI returns 404 for Goal 2.1.298 and neither annotated tag `v2.1.298` nor a
   GitHub Release exists before entering publication.

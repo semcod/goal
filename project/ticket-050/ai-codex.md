@@ -46,6 +46,9 @@ repair before that downstream publication can be truthfully completed.
 - Passed 600 tests with 2 existing skips, scoped Ruff, governance, exact
   carrier checks, wheel/sdist inspection and a pinned-base Docker build on the
   refreshed candidate; recorded hashes and removed every generated resource.
+- Refreshed once more after ticket-049's independent closure merge and retained
+  its `DONE / DONE` evidence while keeping its paths outside this ticket's
+  final diff.
 
 ## Blockers
 

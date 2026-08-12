@@ -38,7 +38,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "7534d1ab275f578de27801dce83c2b8d59ff91a6",
+    "acceptedBaseSha": "355d49f7c228dc760c11e38b74d477eeda4972e2",
     "targetBranch": "main",
     "outcome": "Goal 2.1.298 publishes the merged artifactless Release repair and truthfully completes new-project v0.16.1",
     "nonGoals": [
