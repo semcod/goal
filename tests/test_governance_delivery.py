@@ -421,6 +421,47 @@ def test_open_pr_is_reused_only_at_current_pushed_head(tmp_path, monkeypatch):
     assert not any(call[:3] == ["gh", "pr", "create"] for call in calls)
 
 
+def test_open_pr_stale_head_is_retried_until_current_pushed_head(
+    tmp_path, monkeypatch
+):
+    root = _repository(tmp_path)
+    head = "goal/ticket-044"
+    _git(root, "switch", "-c", head)
+    expected_head = _git(root, "rev-parse", "HEAD").stdout.strip()
+    original_run = delivery._run
+    open_queries = 0
+    sleeps = []
+
+    def fake_run(arguments, *, cwd=None):
+        nonlocal open_queries
+        if arguments[:2] == ["git", "push"]:
+            return subprocess.CompletedProcess(arguments, 0, "", "")
+        if arguments[:3] == ["gh", "pr", "list"]:
+            open_queries += 1
+            payload = [
+                {
+                    "url": "https://github.com/example/repo/pull/44",
+                    "headRefOid": "0" * 40 if open_queries == 1 else expected_head,
+                }
+            ]
+            return subprocess.CompletedProcess(arguments, 0, json.dumps(payload), "")
+        return original_run(arguments, cwd=cwd)
+
+    monkeypatch.setattr(delivery, "_run", fake_run)
+    monkeypatch.setattr(delivery.time, "sleep", sleeps.append)
+
+    _, url = delivery.deliver_pull_request(
+        _pull_request_policy(),
+        ticket="ticket-044",
+        title="fix: retry stale PR head",
+        cwd=root,
+    )
+
+    assert url == "https://github.com/example/repo/pull/44"
+    assert open_queries == 2
+    assert sleeps == [delivery.PULL_REQUEST_HEAD_RETRY_SECONDS]
+
+
 def test_open_pr_with_stale_head_fails_closed(tmp_path, monkeypatch):
     root = _repository(tmp_path)
     head = "goal/ticket-027"
@@ -440,7 +481,9 @@ def test_open_pr_with_stale_head_fails_closed(tmp_path, monkeypatch):
             return subprocess.CompletedProcess(arguments, 0, json.dumps(payload), "")
         return original_run(arguments, cwd=cwd)
 
+    sleeps = []
     monkeypatch.setattr(delivery, "_run", fake_run)
+    monkeypatch.setattr(delivery.time, "sleep", sleeps.append)
 
     with pytest.raises(click.ClickException, match="not current pushed HEAD"):
         delivery.deliver_pull_request(
@@ -449,3 +492,7 @@ def test_open_pr_with_stale_head_fails_closed(tmp_path, monkeypatch):
             title="fix: bind open PR",
             cwd=root,
         )
+
+    assert sleeps == [delivery.PULL_REQUEST_HEAD_RETRY_SECONDS] * (
+        delivery.PULL_REQUEST_HEAD_ATTEMPTS - 1
+    )
