@@ -2,17 +2,26 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-047](project/ticket-047/README.md): publish the merged
+- [ ] Deliver [ticket-048](project/ticket-048/README.md): let generic governed
+  direct-main publication create or repair a GitHub Release without package
+  assets, while keeping registry fallback artifact-strict and requiring an
+  existing recovery tag to be annotated and exact-HEAD. State:
+  `IN_PROGRESS / PUBLICATION`; 30 focused and 588 full tests pass (2 existing
+  skips), Ruff, governance, package and Docker builds pass; waiting only for
+  exact-head protected validation and trusted merge. Classification:
+  `BUG / P0 / regression`.
+
+- [x] Deliver [ticket-047](project/ticket-047/README.md): publish the merged
   source-hub health repair as Goal 2.1.297, verify immutable public artifacts
   and use the fresh public CLI for the real `new-project` ticket-065 flow.
-  State: `IN_PROGRESS / PUBLICATION`; classification: `SERVICE / P0 / requested`.
+  State: `DONE / DONE`; classification: `SERVICE / P0 / requested`.
 
-- [ ] Deliver [ticket-046](project/ticket-046/README.md): run the maintained
+- [x] Deliver [ticket-046](project/ticket-046/README.md): run the maintained
   `new-project` source-hub health contract through Goal's headless check and
   governed delivery paths without installing the target package into the hub.
-  State: `BLOCKED / PUBLICATION`; implementation merged as `main@3ba0aa0` after
-  exact-head CI and Validator approval; awaiting the separately budgeted public
-  2.1.297 release and real source-hub delivery proof; classification:
+  State: `DONE / DONE`; implementation merged as `main@3ba0aa0` after
+  exact-head CI and Validator approval; public 2.1.297 and the real source-hub
+  delivery proof are complete; classification:
   `BUG / P0 / regression`.
 
 - [x] Deliver [ticket-044](project/ticket-044/README.md): retry one otherwise

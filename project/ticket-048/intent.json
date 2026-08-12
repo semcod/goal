@@ -1,0 +1,109 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-048",
+  "summary": "Allow artifactless GitHub Releases for generic repositories",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/publish/github_fallback.py",
+    "goal/push/core.py",
+    "goal/push/stages/tag.py",
+    "tests/test_github_fallback.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-048/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f35c7d0b76cb08363caaeaa6bb82c502e181679e",
+    "targetBranch": "main",
+    "outcome": "Goal creates and repairs the configured GitHub Release for a generic repository without requiring package artifacts, while package fallback remains artifact-bound",
+    "nonGoals": [
+      "No weakening of artifact requirements for Python or other registry-package fallback",
+      "No moving, replacing or deleting an existing tag or Release",
+      "No automatic publication of Goal itself in this application ticket",
+      "No raw GitHub Release command outside governed Goal delivery"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep registry fallback artifact-strict, let the create-on-tag path explicitly allow an assetless release only for a detected generic project, and recover an existing annotated exact-HEAD tag after a previously incomplete direct-main run",
+      "components": [
+        {
+          "name": "github-release-channel",
+          "paths": [
+            "goal/publish/github_fallback.py",
+            "tests/test_github_fallback.py"
+          ]
+        },
+        {
+          "name": "governed-release-recovery",
+          "paths": [
+            "goal/push/core.py",
+            "goal/push/stages/tag.py",
+            "tests/test_delivery_integrity.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the unmerged ticket branch; new-project keeps its valid immutable tag and records the still-missing Release until a later Goal repair"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_github_fallback.py"
+        ],
+        "evidence": "Generic create-on-tag creates an assetless Release; registry fallback still rejects missing dist files"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_delivery_integrity.py"
+        ],
+        "evidence": "A clean direct-main retry reuses only an annotated local tag peeled to exact HEAD and fails closed otherwise"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/publish/github_fallback.py goal/push/core.py goal/push/stages/tag.py tests/test_github_fallback.py tests/test_delivery_integrity.py",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "Focused, full, governance, static and container contracts pass without dependency changes"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "goal -a --delivery-mode direct-main --force-publish"
+        ],
+        "evidence": "The corrected Goal merge repairs new-project v0.16.0 Release from its existing exact annotated tag"
+      }
+    ]
+  }
+}

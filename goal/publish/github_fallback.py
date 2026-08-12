@@ -204,8 +204,9 @@ def publish_github_release(
     package_name: str = "",
     gh_config: GitHubReleaseConfig,
     artifacts: list[Path] | None = None,
+    allow_empty_assets: bool = False,
 ) -> bool:
-    """Create or update a GitHub release and upload wheel/sdist assets."""
+    """Create or update a GitHub release and optionally upload package assets."""
     if not _gh_available():
         click.echo(
             click.style(
@@ -235,8 +236,12 @@ def publish_github_release(
         )
         return False
 
-    files = artifacts or _dist_assets(version, package_name, gh_config.asset_glob)
-    if not files:
+    files = (
+        list(artifacts)
+        if artifacts is not None
+        else _dist_assets(version, package_name, gh_config.asset_glob)
+    )
+    if not files and not allow_empty_assets:
         click.echo(
             click.style(
                 f"  ⚠ GitHub fallback skipped: no dist artifacts for version {version}",
@@ -257,10 +262,15 @@ def publish_github_release(
     view_cmd = f"gh release view {tag} -R {remote}"
     view = subprocess.run(view_cmd, shell=True, capture_output=True, text=True)
     if view.returncode != 0:
+        release_notes = (
+            f"Automated release {tag}"
+            if allow_empty_assets
+            else f"Automated release {tag} (PyPI blocked — parallel GitHub channel)"
+        )
         create_cmd = (
             f"gh release create {tag} -R {remote} "
             f"--title '{package_name or repo} {tag}' "
-            f"--notes 'Automated release {tag} (PyPI blocked — parallel GitHub channel)'"
+            f"--notes '{release_notes}'"
         )
         create = run_command_tee(create_cmd)
         if create.returncode != 0:
@@ -269,26 +279,31 @@ def publish_github_release(
             )
             return False
 
-    upload_paths = " ".join(str(p) for p in files)
-    upload_cmd = f"gh release upload {tag} -R {remote} {upload_paths} --clobber"
-    upload = run_command_tee(upload_cmd)
-    if upload.returncode != 0:
-        click.echo(click.style("  ✗ GitHub release upload failed", fg="red"), err=True)
-        return False
+    if files:
+        upload_paths = " ".join(str(p) for p in files)
+        upload_cmd = f"gh release upload {tag} -R {remote} {upload_paths} --clobber"
+        upload = run_command_tee(upload_cmd)
+        if upload.returncode != 0:
+            click.echo(
+                click.style("  ✗ GitHub release upload failed", fg="red"),
+                err=True,
+            )
+            return False
 
-    wheel = next((p for p in files if p.suffix == ".whl"), files[0])
     click.echo(
         click.style(
             f"  ✓ GitHub release OK: https://github.com/{remote}/releases/tag/{tag}",
             fg="green",
         )
     )
-    click.echo(
-        click.style(
-            f"  → pip install: https://github.com/{remote}/releases/download/{tag}/{wheel.name}",
-            fg="cyan",
+    if files:
+        wheel = next((p for p in files if p.suffix == ".whl"), files[0])
+        click.echo(
+            click.style(
+                f"  → pip install: https://github.com/{remote}/releases/download/{tag}/{wheel.name}",
+                fg="cyan",
+            )
         )
-    )
     return True
 
 
@@ -327,6 +342,7 @@ def try_github_release_on_tag(
     package_name: str = "",
     config: Any = None,
     artifacts: list[Path] | None = None,
+    allow_empty_assets: bool = False,
 ) -> bool:
     """Create a GitHub Release for *version* when ``create_on_tag`` is enabled.
 
@@ -348,4 +364,5 @@ def try_github_release_on_tag(
         package_name=package_name,
         gh_config=gh_config,
         artifacts=artifacts,
+        allow_empty_assets=allow_empty_assets,
     )
