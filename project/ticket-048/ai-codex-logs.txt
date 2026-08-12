@@ -19,3 +19,5 @@
 2026-08-12T14:54:00+02:00 observed noncanonical Release title from temporary clone dirname; returned to IN_PROGRESS/EDIT
 2026-08-12T14:57:00+02:00 accepted base refreshed to trusted PR 73 merge b214711; intent scope and architecture unchanged
 2026-08-12T15:01:00+02:00 metadata correction PASS: 36 focused, 594 full with 2 skips, Ruff, GOV-PASS and Docker ecdc4e79; state IN_PROGRESS/PUBLICATION
+2026-08-12T15:03:00+02:00 public Goal candidate commit 0caa40d created; PR branch creation blocked by stale local goal/ticket-048 alias
+2026-08-12T15:03:00+02:00 verified stale alias commit f4435f2 is merged into origin/main, deleted local ref only; guarded retry pending

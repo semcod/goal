@@ -85,6 +85,10 @@ configured Release side effect fails.
   argument in this path.
 - Passed 36 focused and 594 full tests (2 skipped), scoped Ruff, governance and
   pinned-base Docker; removed the temporary image and re-entered `PUBLICATION`.
+- Public Goal committed the validated candidate but found the old local
+  `goal/ticket-048` alias from already merged PR #73. Verified that alias was
+  an ancestor of `origin/main`, deleted only the local ref, and retained the
+  candidate commit for a guarded delivery retry.
 
 ## Blockers
 
