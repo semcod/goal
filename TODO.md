@@ -2,6 +2,13 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-061](project/ticket-061/README.md): publish the merged
+  retry-safe runtime, doctor, producer and tracked configuration fixes as Goal
+  2.1.300, then prove the public package on a disposable Glon checkout. State:
+  `IN_PROGRESS / PUBLICATION`; 618 tests (2 skips), scoped Ruff, governance
+  and isolated wheel/sdist validation pass; classification:
+  `SERVICE / P0 / requested`; depends on ticket-060.
+
 - [x] Deliver [ticket-060](project/ticket-060/README.md): align Goal's own
   tracked Python strategy with the retry-safe Twine contract while preserving
   Node and Rust publishers. State: `DONE / DONE`; 618 tests (2 skips),
