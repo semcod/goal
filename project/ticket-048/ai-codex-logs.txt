@@ -5,3 +5,11 @@
 2026-08-12T14:26:00+02:00 implementation complete; workflow state IN_PROGRESS/PUBLICATION pending independent exact-head validation
 2026-08-12T14:29:00+02:00 public Goal opened PR 72 but committed out-of-scope README badge drift after its gate
 2026-08-12T14:31:00+02:00 local correction c6c7d48 restored zero-net README diff; guarded Goal retry pending
+2026-08-12T14:34:00+02:00 PR 72 exact head ef0414d passed CI and Validator run 31596882004; merged as 320ad3d
+2026-08-12T14:36:00+02:00 clean merge PASS: 588 tests, 2 skipped, GOV-PASS
+2026-08-12T14:39:00+02:00 real new-project retry failed closed before mutation: normal-bump 0.16.0 -> 0.16.1 precedes tag recovery
+2026-08-12T14:40:00+02:00 ticket returned to IN_PROGRESS/EDIT for full-workflow regression and ordering repair
+2026-08-12T14:43:00+02:00 accepted base refreshed to trusted PR 72 merge 320ad3d; intent scope and architecture unchanged
+2026-08-12T14:44:00+02:00 follow-up focused PASS: 34 tests, scoped Ruff and GOV-PASS
+2026-08-12T14:44:00+02:00 follow-up full PASS: 592 passed, 2 skipped
+2026-08-12T14:46:00+02:00 follow-up wheel/sdist and Docker PASS; temporary outputs removed; state IN_PROGRESS/PUBLICATION

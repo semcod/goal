@@ -51,10 +51,28 @@ configured Release side effect fails.
   after its governance gate. Reverted that out-of-scope drift as a second
   local commit and kept it unpushed until a guarded Goal retry could deliver a
   zero-net README diff through the same PR.
+- PR #72 exact head `ef0414d...` passed Python 3.12/3.13 CI and Validator App
+  run `31596882004`, then merged as `main@320ad3d` with an identical tree.
+- The clean merge passed 588 tests (2 skipped) and governance, but the real
+  new-project retry stopped fail-closed at `normal-bump -> 0.16.1`. The version
+  decision guard runs before the exact-tag recovery added by PR #72.
+- Returned the same active ticket to `EDIT`: recognize only a clean, governed,
+  generic create-on-tag repair with a `normal-bump` decision and an existing
+  annotated current-version tag at exact HEAD, then retain normal first-release
+  and package behavior.
+- Refreshed the accepted base from the original ticket allocation SHA to the
+  trusted PR #72 merge `320ad3d`; scope, architecture and budgets are unchanged.
+- Added a full-workflow regression for the observed normal-bump ordering and
+  narrowed recovery to clean generic direct-main with configured create-on-tag.
+  The decision becomes `existing-tag-release-repair -> 0.16.0` only after
+  exact annotated current-version tag verification.
+- Passed 34 focused and 592 full tests (2 skipped), scoped Ruff, governance,
+  wheel/sdist and pinned-base Docker validation; temporary outputs were removed.
+- Moved the active ticket back to `PUBLICATION` for a protected follow-up PR.
 
 ## Blockers
 
-- The implementation is complete; the ticket stays active until protected
-  exact-head CI, trusted review and merge complete.
+- AC-04 remains incomplete until the protected follow-up merge is used for the
+  real v0.16.0 repair; implementation is ready for exact-head validation.
 - New authority remains required for destructive action, secret access, new
   external coordination or material objective expansion.

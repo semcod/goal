@@ -59,6 +59,26 @@ and peels to the clean current HEAD.
   gate and committed that out-of-scope file. The same PR was corrected to a
   zero-net README diff before validation; the guarded retry disables cost
   badge mutation explicitly.
+- PR #72 merged the first repair as `main@320ad3d`, but AC-04's real clean
+  retry failed before tag recovery: version resolution selected
+  `normal-bump -> 0.16.1` from the existing v0.16.0 baseline. No repository,
+  tag or Release mutation occurred. The same active ticket returns to `EDIT`
+  to bind the already-released generic version before the normal bump guard.
+
+## Follow-up evidence before PR
+
+- A full-workflow regression starts from `normal-bump: 0.16.0 -> 0.16.1` and
+  proves the guarded retry publishes, pushes and mirrors exactly v0.16.0.
+- Three negative cases prove disabled `create_on_tag`, registry/package
+  projects and normal `already-bumped` first publication do not enter repair.
+- 34 focused tests and the complete suite (`592 passed, 2 skipped`) pass with
+  scoped Ruff and `GOV-PASS` on refreshed base `main@320ad3d`.
+- Candidate wheel and sdist SHA-256 are
+  `7f90cfd7214ec72db7e3d513b1550c2543e2410933becb48998f5edc39d2b41b`
+  and `4a9d53992ead0b534711f6db0806619b267ee3866ea7b3816e14ad282396d9b2`;
+  pinned-base Docker image
+  `sha256:3f5b44dd485de8a49afd96376c7575c344c498bef00a80d69c510df7ef278590`
+  built successfully. Temporary outputs and image were removed.
 
 ## Participants
 

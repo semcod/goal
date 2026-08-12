@@ -2,6 +2,7 @@
 
 import importlib
 import os
+from contextlib import ExitStack, nullcontext
 from pathlib import Path
 from unittest.mock import patch
 
@@ -392,6 +393,210 @@ def test_direct_main_retry_recovers_exact_existing_tag() -> None:
 
     assert resolved == "v0.16.0"
     reuse.assert_called_once_with("0.16.0")
+
+
+def test_clean_generic_direct_main_retry_keeps_existing_release_version() -> None:
+    """The full retry must repair v0.16.0 instead of proposing v0.16.1."""
+    from goal.cli.version_state import VersionDecision, VersionSource
+    from goal.push.core import execute_push_workflow
+
+    config = {
+        "publishing": {
+            "fallback": {
+                "github_release": {
+                    "enabled": True,
+                    "owner": "wellmanifest",
+                    "repo": "new-project",
+                    "create_on_tag": True,
+                }
+            }
+        }
+    }
+    delivery = type(
+        "Delivery",
+        (),
+        {"mode": "direct-main", "base_branch": "main", "remote": "origin"},
+    )()
+    source = VersionSource(
+        spec="VERSION",
+        path="VERSION",
+        selector="",
+        value="0.16.0",
+        origin="configured",
+    )
+    decision = VersionDecision(
+        current_version="0.16.0",
+        target_version="0.16.1",
+        reason="normal-bump",
+        sources=(source,),
+        baseline_version="0.16.0",
+        baseline_evidence=("git-tag:v0.16.0",),
+        registry_versions=(),
+        unavailable_registries=(),
+        derived_paths=(),
+    )
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": config,
+        "user_config": {},
+        "delivery_mode": "direct-main",
+    }
+
+    with ExitStack() as stack:
+        stack.enter_context(
+            patch(
+                "goal.governance.delivery.resolve_delivery_policy",
+                return_value=delivery,
+            )
+        )
+        stack.enter_context(
+            patch("goal.governance.delivery.validate_delivery_ready")
+        )
+        stack.enter_context(patch("goal.governance.delivery.record_delivery_event"))
+        stack.enter_context(
+            patch(
+                "goal.governance.delivery.authorized_push",
+                return_value=nullcontext(),
+            )
+        )
+        stack.enter_context(
+            patch("goal.push.core.check_pyproject_toml", return_value=None)
+        )
+        stack.enter_context(patch("goal.push.core._initialize_context"))
+        stack.enter_context(
+            patch("goal.push.core._detect_project_types", return_value=[])
+        )
+        stack.enter_context(patch("goal.push.core._bootstrap_projects"))
+        stack.enter_context(
+            patch("goal.push.core._require_publish_bootstrap_read_only")
+        )
+        stack.enter_context(patch("goal.push.core.run_git"))
+        stack.enter_context(
+            patch("goal.push.core.get_staged_files", return_value=[])
+        )
+        stack.enter_context(
+            patch("goal.push.core.get_diff_content", return_value="")
+        )
+        stack.enter_context(patch("goal.push.core.get_diff_stats", return_value={}))
+        stack.enter_context(
+            patch(
+                "goal.push.core.get_version_info",
+                return_value=("0.16.0", "0.16.1", decision),
+            )
+        )
+        validate_versions = stack.enter_context(
+            patch("goal.cli.version_state.validate_version_sources")
+        )
+        stack.enter_context(
+            patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0))
+        )
+        stack.enter_context(
+            patch("goal.push.core.handle_todo_stage", return_value=True)
+        )
+        publish = stack.enter_context(
+            patch("goal.push.core.handle_publish", return_value=(True, None))
+        )
+        create_tag = stack.enter_context(
+            patch("goal.push.core.create_tag", return_value=None)
+        )
+        push = stack.enter_context(
+            patch("goal.push.core.push_to_remote", return_value=True)
+        )
+        reuse = stack.enter_context(
+            patch(
+                "goal.push.core.reuse_exact_annotated_tag",
+                return_value="v0.16.0",
+            )
+        )
+        mirror = stack.enter_context(
+            patch(
+                "goal.publish.github_fallback.try_github_release_on_tag",
+                return_value=True,
+            )
+        )
+        stack.enter_context(patch("goal.push.core.output_final_summary"))
+        execute_push_workflow(
+            ctx_obj=ctx_obj,
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            no_publish=False,
+            force_publish=True,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket=None,
+            abstraction=None,
+            todo=False,
+        )
+
+    assert reuse.call_count == 2
+    validate_versions.assert_called_once_with(("VERSION",), "0.16.0")
+    publish.assert_called_once()
+    assert publish.call_args.args[1] == "0.16.0"
+    create_tag.assert_called_once_with("0.16.0", False)
+    assert push.call_args.args[1] == "v0.16.0"
+    assert mirror.call_args.kwargs["version"] == "0.16.0"
+    assert mirror.call_args.kwargs["allow_empty_assets"] is True
+
+
+@pytest.mark.parametrize(
+    ("reason", "project_types", "create_on_tag"),
+    [
+        ("normal-bump", [], False),
+        ("normal-bump", ["python"], True),
+        ("already-bumped", [], True),
+    ],
+)
+def test_existing_release_version_recovery_is_narrow(
+    reason: str, project_types: list[str], create_on_tag: bool
+) -> None:
+    """Normal publication and package paths must not enter Release repair."""
+    from goal.cli.version_state import VersionDecision
+    from goal.push.core import _recover_existing_generic_release_decision
+
+    decision = VersionDecision(
+        current_version="0.16.0",
+        target_version="0.16.1",
+        reason=reason,
+        sources=(),
+        baseline_version="0.16.0",
+        baseline_evidence=("git-tag:v0.16.0",),
+        registry_versions=(),
+        unavailable_registries=(),
+        derived_paths=(),
+    )
+    delivery = type("Delivery", (), {"mode": "direct-main"})()
+    config = {
+        "publishing": {
+            "fallback": {
+                "github_release": {
+                    "enabled": True,
+                    "owner": "wellmanifest",
+                    "repo": "new-project",
+                    "create_on_tag": create_on_tag,
+                }
+            }
+        }
+    }
+
+    with patch("goal.push.core.reuse_exact_annotated_tag") as reuse:
+        resolved, repaired = _recover_existing_generic_release_decision(
+            "0.16.0",
+            decision,
+            clean_force_publish=True,
+            delivery=delivery,
+            project_types=project_types,
+            publish_config=config,
+        )
+
+    assert resolved is decision
+    assert repaired is False
+    reuse.assert_not_called()
 
 
 def test_governed_generic_release_failure_is_terminal() -> None:

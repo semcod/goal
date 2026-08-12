@@ -24,7 +24,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "f35c7d0b76cb08363caaeaa6bb82c502e181679e",
+    "acceptedBaseSha": "320ad3d45d53653697c59f970b1ce862699f859a",
     "targetBranch": "main",
     "outcome": "Goal creates and repairs the configured GitHub Release for a generic repository without requiring package artifacts, while package fallback remains artifact-bound",
     "nonGoals": [
