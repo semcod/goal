@@ -30,3 +30,33 @@ def create_tag(new_version: str, no_tag: bool) -> Optional[str]:
 
     click.echo(click.style(f"✓ Created tag: {tag_name}", fg="green"))
     return tag_name
+
+
+def reuse_exact_annotated_tag(new_version: str) -> str:
+    """Return an existing release tag only when it is annotated at exact HEAD."""
+    tag_name = f"v{new_version}"
+    reference = f"refs/tags/{tag_name}"
+    object_type = run_git("cat-file", "-t", reference)
+    if object_type.returncode != 0 or object_type.stdout.strip() != "tag":
+        raise click.ClickException(
+            f"existing release tag {tag_name} is missing or is not annotated"
+        )
+
+    tagged_commit = run_git("rev-parse", f"{reference}^{{commit}}")
+    current_commit = run_git("rev-parse", "HEAD^{commit}")
+    if tagged_commit.returncode != 0 or current_commit.returncode != 0:
+        raise click.ClickException(
+            f"cannot resolve existing release tag {tag_name} against HEAD"
+        )
+    if tagged_commit.stdout.strip() != current_commit.stdout.strip():
+        raise click.ClickException(
+            f"existing release tag {tag_name} does not point to current HEAD"
+        )
+
+    click.echo(
+        click.style(
+            f"✓ Reusing exact annotated tag for Release repair: {tag_name}",
+            fg="green",
+        )
+    )
+    return tag_name

@@ -333,6 +333,126 @@ def test_clean_force_publish_uses_premerged_version_without_commit(
     ]
 
 
+def test_existing_release_tag_must_be_annotated_and_match_head() -> None:
+    """A release repair may reuse only the reviewed immutable tag at HEAD."""
+    from goal.push.stages.tag import reuse_exact_annotated_tag
+
+    def result(returncode: int = 0, stdout: str = ""):
+        return type("Result", (), {"returncode": returncode, "stdout": stdout})()
+
+    with patch(
+        "goal.push.stages.tag.run_git",
+        side_effect=[
+            result(stdout="tag\n"),
+            result(stdout="abc\n"),
+            result(stdout="abc\n"),
+        ],
+    ):
+        assert reuse_exact_annotated_tag("0.16.0") == "v0.16.0"
+
+    with (
+        patch(
+            "goal.push.stages.tag.run_git",
+            return_value=result(stdout="commit\n"),
+        ),
+        pytest.raises(click.ClickException, match="is not annotated"),
+    ):
+        reuse_exact_annotated_tag("0.16.0")
+
+    with (
+        patch(
+            "goal.push.stages.tag.run_git",
+            side_effect=[
+                result(stdout="tag\n"),
+                result(stdout="old\n"),
+                result(stdout="head\n"),
+            ],
+        ),
+        pytest.raises(click.ClickException, match="does not point to current HEAD"),
+    ):
+        reuse_exact_annotated_tag("0.16.0")
+
+
+def test_direct_main_retry_recovers_exact_existing_tag() -> None:
+    """A clean direct-main retry routes an exact existing tag to Release repair."""
+    from goal.push.core import _resolve_release_tag
+
+    delivery = type("Delivery", (), {"mode": "direct-main"})()
+    with patch(
+        "goal.push.core.reuse_exact_annotated_tag",
+        return_value="v0.16.0",
+    ) as reuse:
+        resolved = _resolve_release_tag(
+            "0.16.0",
+            None,
+            effective_no_tag=False,
+            delivery=delivery,
+            clean_force_publish=True,
+        )
+
+    assert resolved == "v0.16.0"
+    reuse.assert_called_once_with("0.16.0")
+
+
+def test_governed_generic_release_failure_is_terminal() -> None:
+    """Configured direct-main GitHub Release failure must not report success."""
+    from goal.push.core import _mirror_github_release
+
+    delivery = type("Delivery", (), {"mode": "direct-main"})()
+    release_config = type("ReleaseConfig", (), {"create_on_tag": True})()
+    with (
+        patch(
+            "goal.publish.github_fallback.get_github_release_config",
+            return_value=release_config,
+        ),
+        patch(
+            "goal.publish.github_fallback.try_github_release_on_tag",
+            return_value=False,
+        ) as mirror,
+        pytest.raises(click.ClickException, match="GitHub Release creation failed"),
+    ):
+        _mirror_github_release(
+            tag_name="v0.16.0",
+            effective_no_tag=False,
+            delivery=delivery,
+            project_types=[],
+            new_version="0.16.0",
+            publish_config={},
+        )
+
+    assert mirror.call_args.kwargs["allow_empty_assets"] is True
+    assert mirror.call_args.kwargs["artifacts"] == []
+
+
+def test_package_release_does_not_allow_empty_assets() -> None:
+    """Package create-on-tag calls retain the artifact requirement."""
+    from goal.push.core import _mirror_github_release
+
+    delivery = type("Delivery", (), {"mode": "direct-main"})()
+    release_config = type("ReleaseConfig", (), {"create_on_tag": True})()
+    with (
+        patch(
+            "goal.publish.github_fallback.get_github_release_config",
+            return_value=release_config,
+        ),
+        patch(
+            "goal.publish.github_fallback.try_github_release_on_tag",
+            return_value=True,
+        ) as mirror,
+    ):
+        _mirror_github_release(
+            tag_name="v2.1.298",
+            effective_no_tag=False,
+            delivery=delivery,
+            project_types=["python"],
+            new_version="2.1.298",
+            publish_config={},
+        )
+
+    assert mirror.call_args.kwargs["allow_empty_assets"] is False
+    assert mirror.call_args.kwargs["artifacts"] is None
+
+
 def test_publish_only_aborts_when_bootstrap_mutates_source() -> None:
     """Bootstrap mutations must fail before staging, tests, commit or publish."""
     from goal.push.core import execute_push_workflow

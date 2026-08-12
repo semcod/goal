@@ -1,0 +1,5 @@
+2026-08-12T14:00:00+02:00 ticket plan committed at 4c27a7d before implementation edits
+2026-08-12T14:19:00+02:00 focused validation PASS: 30 tests, scoped Ruff and GOV-PASS
+2026-08-12T14:22:00+02:00 full validation PASS: 588 passed, 2 skipped
+2026-08-12T14:26:00+02:00 wheel/sdist and Docker validation PASS; temporary image removed
+2026-08-12T14:26:00+02:00 implementation complete; workflow state IN_PROGRESS/PUBLICATION pending independent exact-head validation

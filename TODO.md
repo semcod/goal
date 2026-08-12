@@ -6,7 +6,10 @@
   direct-main publication create or repair a GitHub Release without package
   assets, while keeping registry fallback artifact-strict and requiring an
   existing recovery tag to be annotated and exact-HEAD. State:
-  `IN_PROGRESS / EDIT`; classification: `BUG / P0 / regression`.
+  `IN_PROGRESS / PUBLICATION`; 30 focused and 588 full tests pass (2 existing
+  skips), Ruff, governance, package and Docker builds pass; waiting only for
+  exact-head protected validation and trusted merge. Classification:
+  `BUG / P0 / regression`.
 
 - [x] Deliver [ticket-047](project/ticket-047/README.md): publish the merged
   source-hub health repair as Goal 2.1.297, verify immutable public artifacts

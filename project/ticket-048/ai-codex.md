@@ -38,9 +38,19 @@ configured Release side effect fails.
 - Captured the real failure: new-project annotated `v0.16.0` peels to clean
   merge `6800f013...`, while GitHub Release is absent because Goal logged
   `no dist artifacts for version 0.16.0` and still returned success.
+- Added an explicit internal assetless mode while keeping the package fallback
+  default artifact-strict; generic create-on-tag is its only caller.
+- Added exact annotated-tag recovery for clean direct-main retries and made a
+  configured Release failure terminal in governed direct-main mode.
+- Passed 30 focused tests, 588 full tests with 2 existing skips, scoped Ruff,
+  governance, wheel/sdist and pinned-base Docker validation. No dependency or
+  version carrier changed, and generated validation outputs were removed.
+- Moved the active ticket to `IN_PROGRESS / PUBLICATION` for independent
+  exact-head hosted validation and trusted merge.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
+- The implementation is complete; the ticket stays active until protected
+  exact-head CI, trusted review and merge complete.
 - New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+  external coordination or material objective expansion.

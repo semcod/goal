@@ -37,6 +37,7 @@ from goal.push.stages import (
     handle_todo_stage,
 )
 from goal.push.preview import show_workflow_preview
+from goal.push.stages.tag import reuse_exact_annotated_tag
 from goal.push.tickets import add_slow_test_tickets_to_planfile
 
 
@@ -50,6 +51,71 @@ def _commit_only_requested(
 ) -> bool:
     """Return whether every release side effect was explicitly disabled."""
     return no_version_sync and no_tag and no_publish
+
+
+def _resolve_release_tag(
+    new_version: str,
+    tag_name: str | None,
+    *,
+    effective_no_tag: bool,
+    delivery: Any,
+    clean_force_publish: bool,
+) -> str | None:
+    """Recover only an exact annotated tag after an incomplete direct-main run."""
+    if tag_name or effective_no_tag:
+        return tag_name
+    if clean_force_publish and delivery is not None and delivery.mode == "direct-main":
+        return reuse_exact_annotated_tag(new_version)
+    return None
+
+
+def _mirror_github_release(
+    *,
+    tag_name: str | None,
+    effective_no_tag: bool,
+    delivery: Any,
+    project_types: List[str],
+    new_version: str,
+    publish_config: Any,
+) -> None:
+    """Mirror a release tag and fail governed direct-main when required."""
+    if not tag_name or effective_no_tag:
+        return
+    from goal.publish.github_fallback import (
+        get_github_release_config,
+        try_github_release_on_tag,
+    )
+
+    release_config = get_github_release_config(publish_config)
+    release_required = bool(release_config and release_config.create_on_tag)
+    if not release_required:
+        return
+
+    package_name = Path.cwd().name or "package"
+    governed_direct_main = delivery is not None and delivery.mode == "direct-main"
+    generic_project = not project_types
+    try:
+        mirrored = try_github_release_on_tag(
+            version=new_version,
+            package_name=package_name,
+            config=publish_config,
+            artifacts=[] if generic_project else None,
+            allow_empty_assets=generic_project,
+        )
+    except Exception as exc:
+        if governed_direct_main:
+            raise click.ClickException(
+                f"governed GitHub Release creation failed: {exc}"
+            ) from exc
+        click.echo(
+            click.style(
+                f"  ⚠ GitHub release-on-tag skipped: {exc}",
+                fg="yellow",
+            )
+        )
+        return
+    if governed_direct_main and not mirrored:
+        raise click.ClickException("governed GitHub Release creation failed")
 
 
 def _prepare_slow_test_tickets(
@@ -789,6 +855,13 @@ def execute_push_workflow(
             )
         )
     tag_name = create_tag(new_version, effective_no_tag)
+    tag_name = _resolve_release_tag(
+        new_version,
+        tag_name,
+        effective_no_tag=effective_no_tag,
+        delivery=delivery,
+        clean_force_publish=clean_force_publish,
+    )
 
     if delivery is None:
         from goal.git_ops import get_remote_branch
@@ -837,29 +910,14 @@ def execute_push_workflow(
     # Optionally mirror the git tag as a GitHub Release (Releases page ≠ tags).
     # Without this, tags advance while /releases/latest stays frozen until PyPI
     # is blocked and the fallback path runs.
-    if tag_name and not effective_no_tag:
-        try:
-            from goal.publish.github_fallback import try_github_release_on_tag
-
-            package_name = ""
-            if isinstance(project_types, (list, tuple)) and project_types:
-                package_name = str(getattr(project_types[0], "name", "") or "")
-            if not package_name:
-                package_name = str(
-                    Path.cwd().name or ""
-                )
-            try_github_release_on_tag(
-                version=new_version,
-                package_name=package_name or "package",
-                config=publish_config,
-            )
-        except Exception as exc:  # pragma: no cover - non-fatal side channel
-            click.echo(
-                click.style(
-                    f"  ⚠ GitHub release-on-tag skipped: {exc}",
-                    fg="yellow",
-                )
-            )
+    _mirror_github_release(
+        tag_name=tag_name,
+        effective_no_tag=effective_no_tag,
+        delivery=delivery,
+        project_types=project_types,
+        new_version=new_version,
+        publish_config=publish_config,
+    )
 
     elapsed = time.time() - start_time
     ctx_obj["_elapsed_time"] = elapsed
