@@ -13,3 +13,7 @@
 2026-08-12T14:44:00+02:00 follow-up focused PASS: 34 tests, scoped Ruff and GOV-PASS
 2026-08-12T14:44:00+02:00 follow-up full PASS: 592 passed, 2 skipped
 2026-08-12T14:46:00+02:00 follow-up wheel/sdist and Docker PASS; temporary outputs removed; state IN_PROGRESS/PUBLICATION
+2026-08-12T14:51:00+02:00 PR 73 exact head f4435f2 passed CI and Validator run 31598288598; merged as b214711
+2026-08-12T14:52:00+02:00 clean merge PASS: 592 tests, 2 skipped, GOV-PASS
+2026-08-12T14:53:00+02:00 real Goal retry created assetless v0.16.0 with exact existing tag and no Git mutation
+2026-08-12T14:54:00+02:00 observed noncanonical Release title from temporary clone dirname; returned to IN_PROGRESS/EDIT

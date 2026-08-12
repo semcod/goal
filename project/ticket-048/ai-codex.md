@@ -69,10 +69,19 @@ configured Release side effect fails.
 - Passed 34 focused and 592 full tests (2 skipped), scoped Ruff, governance,
   wheel/sdist and pinned-base Docker validation; temporary outputs were removed.
 - Moved the active ticket back to `PUBLICATION` for a protected follow-up PR.
+- PR #73 exact head `f4435f2...` passed Python 3.12/3.13 CI and Validator run
+  `31598288598`, then merged as `main@b214711`; its clean merge passed 592
+  tests (2 skipped) and governance.
+- The real flow then created final, assetless v0.16.0 with no Git/tag change,
+  proving version recovery. It also exposed a metadata leak: the Release title
+  used temporary checkout name `new-project-v0160-release-repair` instead of
+  configured project name `new-project`.
+- Returned the same active ticket to `EDIT` to resolve the canonical project
+  name from Goal config and reconcile title/notes when the Release exists.
 
 ## Blockers
 
-- AC-04 remains incomplete until the protected follow-up merge is used for the
-  real v0.16.0 repair; implementation is ready for exact-head validation.
+- AC-04's Release exists, but closure waits for canonical metadata and a clean
+  idempotent re-run through protected code.
 - New authority remains required for destructive action, secret access, new
   external coordination or material objective expansion.

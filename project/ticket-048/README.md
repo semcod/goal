@@ -3,7 +3,7 @@
 - **ID**: ticket-048
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Workflow state**: EDIT
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -79,6 +79,11 @@ and peels to the clean current HEAD.
   pinned-base Docker image
   `sha256:3f5b44dd485de8a49afd96376c7575c344c498bef00a80d69c510df7ef278590`
   built successfully. Temporary outputs and image were removed.
+- PR #73 merged as `main@b214711` after exact-head CI and Validator approval.
+  The real retry created final v0.16.0 without assets and without changing the
+  immutable tag or main, but its title exposed the temporary clone directory
+  instead of configured `project.name`. The same ticket returns to `EDIT` to
+  make Release metadata canonical and reconcilable on an existing Release.
 
 ## Participants
 
