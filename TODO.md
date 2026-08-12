@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-055](project/ticket-055/README.md): make governed
+  pull-request resume mutation-free and independent of colliding merged local
+  branch aliases. State: `IN_PROGRESS / PUBLICATION`; 51 focused and 604 full
+  tests (2 existing skips), Ruff, explicit governance, remediation DSL and
+  Docker validation pass; classification: `BUG / P1 / regression`.
+
 - [x] Deliver [ticket-054](project/ticket-054/README.md): remove the redundant
   mutable `goal:local` Compose image tag while retaining the local build. State:
   `DONE / DONE`; PR #85 passed 600 tests (2 existing skips), hosted CI, live

@@ -1,0 +1,7 @@
+# TODO for RI-GOAL-PR-RESUME-BOUNDARY
+
+Intent-Digest: e014ecda829f580300a76714916d2968d7b63f0b57a769b5ffaf0f115f74da1a
+
+- [ ] [A-RESUME-BOUNDARY] Implement Move exact committed-candidate classification ahead of bootstrap and isolate Goal-owned badge mutation in pull-request mode. Findings: F-RESUME-MUTATION/GOAL_PR_RESUME_MUTATES_WORKTREE/P1. Paths: `goal/push/core.py`. Acceptance: [AC-01] Committed-candidate resume and ordinary pull-request preparation cannot create an unrelated badge change or bypass post-bootstrap governance.
+- [ ] [A-REMOTE-REFSPEC] Implement Replace local canonical branch creation with a non-forced explicit HEAD-to-remote refspec. Findings: F-LOCAL-BRANCH-COLLISION/GOAL_PR_LOCAL_BRANCH_COLLISION/P1. Paths: `goal/governance/delivery.py`. Acceptance: [AC-02] Canonical remote PR publication succeeds without modifying a colliding local branch and without using force.
+- [ ] [A-REGRESSION-COVERAGE] Implement Add regression coverage for ordering, badge isolation, candidate revalidation, local alias preservation and explicit remote ref publication. Findings: F-RESUME-MUTATION/GOAL_PR_RESUME_MUTATES_WORKTREE/P1, F-LOCAL-BRANCH-COLLISION/GOAL_PR_LOCAL_BRANCH_COLLISION/P1. Paths: `tests/test_delivery_integrity.py`, `tests/test_governance_delivery.py`. Acceptance: [AC-01] Committed-candidate resume and ordinary pull-request preparation cannot create an unrelated badge change or bypass post-bootstrap governance.; [AC-02] Canonical remote PR publication succeeds without modifying a colliding local branch and without using force.

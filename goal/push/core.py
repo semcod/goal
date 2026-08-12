@@ -170,9 +170,7 @@ def _mirror_github_release(
         raise click.ClickException("governed GitHub Release creation failed")
 
 
-def _prepare_slow_test_tickets(
-    ctx_obj: Dict[str, Any], files: List[str]
-) -> List[str]:
+def _prepare_slow_test_tickets(ctx_obj: Dict[str, Any], files: List[str]) -> List[str]:
     """Generate and stage slow-test tickets before the workflow commits."""
     test_details = ctx_obj.get("test_details", {})
     added_tickets = (
@@ -217,9 +215,7 @@ def output_final_summary(
     use_markdown = markdown or ctx_obj.get("markdown")
     is_all_mode = ctx_obj.get("yes") or use_markdown
 
-    workflow_success = test_exit_code == 0 and (
-        publish_success or not publish_required
-    )
+    workflow_success = test_exit_code == 0 and (publish_success or not publish_required)
 
     if use_markdown and is_all_mode:
         from goal.formatter import format_goal_all_summary
@@ -264,28 +260,26 @@ def output_final_summary(
             "goal_summary": {
                 "timestamp": datetime.now().isoformat(),
                 "status": "SUCCESS" if workflow_success else "FAILED",
-                "version_update": {
-                    "from": current_version,
-                    "to": new_version
-                },
-                "git": {
-                    "commit_message": commit_msg,
-                    "files_changed": len(files)
-                },
+                "version_update": {"from": current_version, "to": new_version},
+                "git": {"commit_message": commit_msg, "files_changed": len(files)},
                 "test_execution": {
                     "status": "passed" if test_exit_code == 0 else "failed",
-                    "total_wall_time_seconds": round(test_details.get("wall_time", 0.0), 2),
-                    "sum_individual_test_time_seconds": round(test_details.get("total_test_time", 0.0), 2),
-                    "startup_and_collection_overhead_seconds": round(test_details.get("startup_overhead", 0.0), 2),
+                    "total_wall_time_seconds": round(
+                        test_details.get("wall_time", 0.0), 2
+                    ),
+                    "sum_individual_test_time_seconds": round(
+                        test_details.get("total_test_time", 0.0), 2
+                    ),
+                    "startup_and_collection_overhead_seconds": round(
+                        test_details.get("startup_overhead", 0.0), 2
+                    ),
                     "slowest_tests_top_5": slowest,
                     "tests_requiring_improvement": needs_improvement,
                 },
-                "planfile_updates": {
-                    "tickets_added": added_tickets
-                },
+                "planfile_updates": {"tickets_added": added_tickets},
                 "publish": _build_publish_summary(
                     publish_success, publish_required, publish_skip_reason
-                )
+                ),
             }
         }
 
@@ -298,9 +292,7 @@ def output_final_summary(
 
     from goal.formatter import format_push_result
 
-    workflow_success = test_exit_code == 0 and (
-        publish_success or not publish_required
-    )
+    workflow_success = test_exit_code == 0 and (publish_success or not publish_required)
     success_emoji = "🎉" if workflow_success else "⚠"
     click.echo(
         click.style(
@@ -577,9 +569,7 @@ def execute_push_workflow(
         if delivery.mode == "publish-only" and (
             no_publish or ctx_obj.get("no_publish", False)
         ):
-            raise click.ClickException(
-                "publish-only conflicts with --no-publish"
-            )
+            raise click.ClickException("publish-only conflicts with --no-publish")
         validate_delivery_ready(delivery)
         ctx_obj["delivery_mode"] = delivery.mode
 
@@ -594,6 +584,7 @@ def execute_push_workflow(
     force_publish = force_publish or ctx_obj.get("force_publish", False)
     if delivery is not None and delivery.mode == "pull-request":
         no_publish = True
+        ctx_obj["_suppress_goal_owned_cost_badge"] = True
         click.echo(
             click.style(
                 "Governed pull-request mode: registry publish waits for merge.",
@@ -602,6 +593,24 @@ def execute_push_workflow(
         )
 
     project_types = _detect_project_types()
+
+    if (
+        not dry_run
+        and delivery is not None
+        and delivery.mode == "pull-request"
+        and ticket
+    ):
+        pending_delivery = pending_pull_request_delivery(delivery, ticket=ticket)
+        if pending_delivery is not None:
+            _resume_pending_pull_request(
+                ctx_obj,
+                project_types,
+                markdown,
+                delivery,
+                ticket,
+                pending_delivery,
+            )
+            return
 
     # Run dependency updates before bootstrap: uv sync removes packages (like goal)
     # that are not listed in the project lockfile.
@@ -647,29 +656,14 @@ def execute_push_workflow(
         )
         sys.exit(2)
 
+    if delivery is not None and delivery.mode == "pull-request":
+        validate_delivery_ready(delivery)
+
     if not dry_run:
         run_git("add", "-A")
 
     files = get_staged_files()
     has_staged_files = bool(files and files != [""])
-    if (
-        not has_staged_files
-        and not dry_run
-        and delivery is not None
-        and delivery.mode == "pull-request"
-        and ticket
-    ):
-        pending_delivery = pending_pull_request_delivery(delivery, ticket=ticket)
-        if pending_delivery is not None:
-            _resume_pending_pull_request(
-                ctx_obj,
-                project_types,
-                markdown,
-                delivery,
-                ticket,
-                pending_delivery,
-            )
-            return
     clean_force_publish = bool(
         force_publish and not no_publish and not has_staged_files
     )
@@ -712,7 +706,11 @@ def execute_push_workflow(
         pending_committed = committed_unreleased_source_files(project_types)
         if pending_committed:
             preview = ", ".join(pending_committed[:3])
-            more = f" (+{len(pending_committed) - 3} more)" if len(pending_committed) > 3 else ""
+            more = (
+                f" (+{len(pending_committed) - 3} more)"
+                if len(pending_committed) > 3
+                else ""
+            )
             click.echo(
                 click.style(
                     f"📦 {len(pending_committed)} package source file(s) committed since the "
@@ -884,9 +882,7 @@ def execute_push_workflow(
         )
     elif skip_release:
         skip_reason = (
-            "explicit commit-only flags"
-            if commit_only
-            else "no package source changes"
+            "explicit commit-only flags" if commit_only else "no package source changes"
         )
         click.echo(
             click.style(
@@ -953,11 +949,7 @@ def execute_push_workflow(
     publish_skip_reason = (
         publish_change_report.skip_reason if publish_change_report else None
     )
-    publish_required = (
-        ctx_obj["yes"]
-        and not no_publish
-        and not publish_skip_reason
-    )
+    publish_required = ctx_obj["yes"] and not no_publish and not publish_skip_reason
     if publish_required and not publish_success:
         elapsed = time.time() - start_time
         ctx_obj["_elapsed_time"] = elapsed
@@ -991,8 +983,7 @@ def execute_push_workflow(
             )
         )
     governed_no_tag = bool(
-        delivery is not None
-        and delivery.mode in {"publish-only", "pull-request"}
+        delivery is not None and delivery.mode in {"publish-only", "pull-request"}
     )
     effective_no_tag = no_tag or skip_tag_no_source or governed_no_tag
     if governed_no_tag and not no_tag:
@@ -1039,9 +1030,7 @@ def execute_push_workflow(
                 ctx_obj["yes"],
                 remote=delivery.remote,
             )
-        record_delivery_event(
-            delivery, "pushed" if pushed else "push-failed"
-        )
+        record_delivery_event(delivery, "pushed" if pushed else "push-failed")
         if not pushed:
             raise click.ClickException("governed direct-main push failed")
     else:
@@ -1050,9 +1039,7 @@ def execute_push_workflow(
             ticket=ticket,
             title=commit_title,
         )
-        record_delivery_event(
-            delivery, "pull-request", detail=pr_url, head=head
-        )
+        record_delivery_event(delivery, "pull-request", detail=pr_url, head=head)
         click.echo(click.style(f"Pull request: {pr_url}", fg="green"))
 
     # Optionally mirror the git tag as a GitHub Release (Releases page ≠ tags).
@@ -1157,8 +1144,8 @@ def _bootstrap_projects_for_delivery(
     yes: bool,
     delivery_mode: Optional[str],
 ) -> None:
-    """Keep Goal-owned badge generation out of publish-only source trees."""
-    if delivery_mode != "publish-only":
+    """Keep Goal-owned badge generation out of governed delivery trees."""
+    if delivery_mode not in {"publish-only", "pull-request"}:
         _bootstrap_projects(project_types, dry_run, yes)
         return
 
@@ -1354,9 +1341,11 @@ def _handle_commit_phase(
         handle_changelog(new_version, files, commit_msg, config_dict, no_changelog)
 
         # Refresh costs README content before committing so the update is included.
-        if not os.getenv("GOAL_SKIP_COSTS_BADGE") and _update_cost_badges(
-            ctx_obj, new_version
-        ):
+        suppress_cost_badge = bool(
+            os.getenv("GOAL_SKIP_COSTS_BADGE")
+            or ctx_obj.get("_suppress_goal_owned_cost_badge")
+        )
+        if not suppress_cost_badge and _update_cost_badges(ctx_obj, new_version):
             run_git_local("add", "README.md")
 
         # Single commit

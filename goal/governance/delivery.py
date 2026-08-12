@@ -162,7 +162,9 @@ def resolve_delivery_policy(
     )
 
 
-def _run(arguments: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess:
+def _run(
+    arguments: list[str], *, cwd: Path | None = None
+) -> subprocess.CompletedProcess:
     return subprocess.run(
         arguments,
         cwd=cwd,
@@ -175,9 +177,7 @@ def _run(arguments: list[str], *, cwd: Path | None = None) -> subprocess.Complet
 def _git_value(*arguments: str, cwd: Path | None = None) -> str:
     result = _run(["git", *arguments], cwd=cwd)
     if result.returncode != 0:
-        raise click.ClickException(
-            (result.stderr or "git command failed").strip()
-        )
+        raise click.ClickException((result.stderr or "git command failed").strip())
     return result.stdout.strip()
 
 
@@ -231,9 +231,7 @@ def _source_hub_contract(
     json_files = sorted((root / SOURCE_HUB_JSON_DIRECTORY).glob("*.json"))
     suites = sorted((root / SOURCE_HUB_TEST_DIRECTORY).glob("*.test.sh"))
     if not json_files:
-        return _source_hub_failure(
-            "no canonical governance JSON documents were found"
-        )
+        return _source_hub_failure("no canonical governance JSON documents were found")
     if not suites:
         return _source_hub_failure("no source-hub shell test suites were found")
 
@@ -292,9 +290,7 @@ def run_source_hub_health(
                 json.load(stream)
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
             relative = document.relative_to(target).as_posix()
-            return _source_hub_failure(
-                f"invalid canonical JSON {relative}: {error}"
-            )
+            return _source_hub_failure(f"invalid canonical JSON {relative}: {error}")
 
     stdout_parts: list[str] = []
     stderr_parts: list[str] = []
@@ -375,7 +371,8 @@ def governance_diagnostic_guidance(root: Path, output: str) -> list[str]:
         return []
     if (
         not isinstance(catalog, dict)
-        or catalog.get("schema") not in {
+        or catalog.get("schema")
+        not in {
             "new-project.diagnostics/v1",
             "new-project.diagnostics/v2",
         }
@@ -395,9 +392,7 @@ def governance_diagnostic_guidance(root: Path, output: str) -> list[str]:
             continue
         remediation = entry.get("remediation")
         if isinstance(remediation, str) and remediation.strip():
-            guidance.append(
-                f"canonical remediation for {code}: {remediation.strip()}"
-            )
+            guidance.append(f"canonical remediation for {code}: {remediation.strip()}")
         runbook = _safe_runbook(root, entry.get("documentation"))
         if runbook is not None:
             guidance.append(f"runbook for {code}: {runbook}")
@@ -411,11 +406,14 @@ def _governance_gate(root: Path) -> None:
             result = run_source_hub_health(root)
             if result.returncode == 0:
                 return
-            detail = "\n".join(
-                part.strip()
-                for part in (result.stdout, result.stderr)
-                if part.strip()
-            ) or "source-hub health failed"
+            detail = (
+                "\n".join(
+                    part.strip()
+                    for part in (result.stdout, result.stderr)
+                    if part.strip()
+                )
+                or "source-hub health failed"
+            )
             raise click.ClickException(detail)
         raise click.ClickException(
             "GOV-MANIFEST-001: governance delivery requires a complete adopted "
@@ -431,9 +429,12 @@ def _governance_gate(root: Path) -> None:
         )
     result = _run([str(gate)], cwd=root)
     if result.returncode != 0:
-        detail = "\n".join(
-            part.strip() for part in (result.stdout, result.stderr) if part.strip()
-        ) or "governance gate failed"
+        detail = (
+            "\n".join(
+                part.strip() for part in (result.stdout, result.stderr) if part.strip()
+            )
+            or "governance gate failed"
+        )
         guidance = governance_diagnostic_guidance(root, detail)
         if guidance:
             detail += "\n" + "\n".join(guidance)
@@ -463,7 +464,9 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
             raise click.ClickException(
                 f"publish-only could not resolve authoritative {policy.remote}/{policy.base_branch}: {detail}"
             )
-        remote_rows = [line.split() for line in remote.stdout.splitlines() if line.strip()]
+        remote_rows = [
+            line.split() for line in remote.stdout.splitlines() if line.strip()
+        ]
         if len(remote_rows) != 1 or len(remote_rows[0]) != 2:
             raise click.ClickException(
                 f"publish-only requires exactly one authoritative {policy.remote}/{policy.base_branch} head"
@@ -490,9 +493,7 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
             )
         auth = _run(["gh", "auth", "status"], cwd=root)
         if auth.returncode != 0:
-            raise click.ClickException(
-                "pull-request delivery requires `gh auth login`"
-            )
+            raise click.ClickException("pull-request delivery requires `gh auth login`")
 
 
 def _audit_path(root: Path) -> Path:
@@ -579,9 +580,7 @@ def authorize_hook_push(
     raw_path = os.environ.get(TRANSACTION_ENV, "")
     capability = os.environ.get(CAPABILITY_ENV, "")
     if not raw_path or not capability:
-        raise click.ClickException(
-            "governance blocks raw git push; run `goal -a`"
-        )
+        raise click.ClickException("governance blocks raw git push; run `goal -a`")
     transaction = Path(raw_path).resolve()
     allowed_directory = (_git_dir(root) / "goal-delivery").resolve()
     if not transaction.is_relative_to(allowed_directory) or not transaction.is_file():
@@ -614,7 +613,7 @@ def _managed_hook_block() -> str:
         "  echo 'governance requires Goal, but goal is not on PATH' >&2\n"
         "  exit 1\n"
         "fi\n"
-        "goal governance authorize-push \"$@\" || exit $?\n"
+        'goal governance authorize-push "$@" || exit $?\n'
         f"{HOOK_END}\n"
     )
 
@@ -741,8 +740,7 @@ def pending_pull_request_delivery(
     unbound = [subject for subject in subjects if not subject.startswith(prefix)]
     if unbound:
         raise click.ClickException(
-            "pull-request resume refuses commits not bound to "
-            f"{ticket}: {unbound[0]}"
+            f"pull-request resume refuses commits not bound to {ticket}: {unbound[0]}"
         )
 
     files_result = _run(
@@ -852,15 +850,12 @@ def deliver_pull_request(
     root = _repository_root(cwd)
     head = _pr_head(ticket, root)
     current = _git_value("branch", "--show-current", cwd=root)
-    if current != head:
-        switch = _run(["git", "switch", "-c", head], cwd=root)
-        if switch.returncode != 0:
-            raise click.ClickException(
-                f"could not create controlled PR branch '{head}': "
-                + (switch.stderr or "unknown git error").strip()
-            )
+    push_arguments = ["git", "push"]
+    if current:
+        push_arguments.append("-u")
+    push_arguments.extend([policy.remote, f"HEAD:refs/heads/{head}"])
     with authorized_push(policy, cwd=root):
-        pushed = _run(["git", "push", "-u", policy.remote, head], cwd=root)
+        pushed = _run(push_arguments, cwd=root)
     if pushed.returncode != 0:
         raise click.ClickException(
             f"could not push PR branch '{head}': "

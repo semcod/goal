@@ -1,0 +1,9 @@
+2026-08-12 BASE main 72aad3cd116c680c1c7607fa25748db05e8767f3; only remote branch main; no open PR; workspace lifecycle PASS
+2026-08-12 REPRO PR #87 resume generated out-of-scope README badge commit before candidate classification
+2026-08-12 REPRO closure commit passed 600 tests then canonical local branch collision blocked PR creation
+2026-08-12 DSL READY digest e014ecda829f580300a76714916d2968d7b63f0b57a769b5ffaf0f115f74da1a; 2 findings; 3 actions; 0 errors; 0 warnings
+2026-08-12 TODO2CODE deterministic 0.5.0 run 20260812T153009Z-1be2ffb2; analyzer rejected 20 unrelated historical plans with 22 blocking scope findings and added review hints for finding/criterion gaps
+2026-08-12 FOCUSED 51 passed; scoped Ruff and format checks PASS
+2026-08-12 FULL-TEST 604 passed, 2 skipped
+2026-08-12 GOV explicit 16-path ticket diff PASS; 0 errors; 0 warnings
+2026-08-12 DOCKER image 361bf1612170... build PASS; container reports goal 2.1.298

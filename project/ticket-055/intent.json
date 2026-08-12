@@ -1,0 +1,98 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-055",
+  "summary": "Make governed pull-request resume mutation-free and collision-safe",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_governance_delivery.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-055/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "README.md",
+    "VERSION",
+    "CHANGELOG.md",
+    "pyproject.toml",
+    "uv.lock",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "72aad3cd116c680c1c7607fa25748db05e8767f3",
+    "targetBranch": "main",
+    "outcome": "Governed pull-request resume is mutation-free and canonical remote branch publication is independent of stale local branch aliases",
+    "nonGoals": [
+      "No raw push bypass or weakening of exact-ticket candidate validation",
+      "No automatic deletion, force-reset or overwrite of local branches or worktrees",
+      "No change to direct-main, publish-only, release, tag or registry semantics",
+      "No version, dependency, README badge or changelog mutation"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Classify a committed candidate before mutation-capable bootstrap, isolate Goal-owned PR metadata refresh, and push immutable HEAD through an explicit canonical remote refspec",
+      "components": [
+        {
+          "name": "push-orchestrator-resume",
+          "paths": ["goal/push/core.py", "tests/test_delivery_integrity.py"]
+        },
+        {
+          "name": "canonical-pr-ref-publisher",
+          "paths": ["goal/governance/delivery.py", "tests/test_governance_delivery.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the unmerged ticket branch; callers retain the existing manual merged-branch cleanup and GOAL_SKIP_COSTS_BADGE workaround"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "Committed-candidate resume bypasses bootstrap and unrelated mutation while preserving tests and revalidation"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "PR bootstrap and commit suppress cost badge changes without exposing Goal controls to project tests"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "Explicit HEAD-to-remote refspec succeeds despite local alias collision and remains non-forced"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/governance/delivery.py goal/push/core.py tests/test_governance_delivery.py tests/test_delivery_integrity.py",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "Focused/full/static/governance/container checks pass"
+      }
+    ]
+  }
+}
