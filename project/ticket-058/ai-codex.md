@@ -34,6 +34,9 @@ doctor and immutable retry must not depend on a prior config rewrite.
   rewrite that cannot alter sibling Node/Rust publish commands.
 - Proved the safe retry on exact Glon 0.1.28 public artifacts from a disposable
   clone and removed the clone after source-diff verification.
+- Delivered exact candidate `21af56d...` through hosted CI and deterministic
+  Validator approval, merged it unchanged as `f1e5c0e...`, and confirmed
+  green post-merge CI before closing the lifecycle.
 
 ## Blockers
 
