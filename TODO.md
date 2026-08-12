@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-050](project/ticket-050/README.md): publish the merged
+  artifactless GitHub Release repair as Goal 2.1.298, verify immutable public
+  artifacts and use the fresh public CLI to complete `new-project v0.16.1`.
+  State: `IN_PROGRESS / PUBLICATION`; classification:
+  `SERVICE / P0 / requested`.
+
 - [x] Deliver [ticket-049](project/ticket-049/README.md): safely resume governed
   pull-request delivery when an authorized ticket commit exists ahead of the
   remote base but the original run stopped before branch/PR creation. State:
