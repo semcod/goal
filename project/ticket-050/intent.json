@@ -1,0 +1,121 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-050",
+  "summary": "Publish Goal 2.1.298 with artifactless Release support",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "README.md",
+    "project/ticket-050/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "goal/publish/**",
+    "goal/push/**",
+    "tests/**",
+    ".github/**",
+    ".env",
+    "**/*.pem",
+    "**/*secret*"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-048"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0c3cd7b784d8889704d3a0fdb3f4f532df4c9164",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.298 publishes the merged artifactless Release repair and truthfully completes new-project v0.16.1",
+    "nonGoals": [
+      "No executable source, dependency-set or top-level CHANGELOG change",
+      "No inclusion or mutation of independent ticket-049 work",
+      "No publication, tag or GitHub Release before protected merge",
+      "No duplicate or replacement registry artifact"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize the five existing release carriers through governed PR delivery, then publish only from exact validated merged main",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": [
+            "VERSION",
+            "pyproject.toml",
+            "uv.lock",
+            "goal/__init__.py",
+            "README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Never replace immutable artifacts; issue a later patch if public verification fails"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal -a --delivery-mode pull-request --target-version 2.1.298 push --ticket ticket-050 --no-changelog --no-publish"
+        ],
+        "evidence": "The governed flow changes only declared carriers and creates one PR"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q",
+          "ruff check scoped paths",
+          "./project/governance-check.sh",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "Local and protected validation passes on the exact head"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "clean merge retest",
+          "goal -a --delivery-mode publish-only --force-publish"
+        ],
+        "evidence": "Registry effects originate only from validated authoritative main"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "fresh public-index goal==2.1.298 install",
+          "goal -a --delivery-mode direct-main --force-publish in clean new-project main"
+        ],
+        "evidence": "Public 2.1.298 creates the missing assetless Release for exact existing tag"
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+2026-08-12 BASE origin/main 0c3cd7b784d8889704d3a0fdb3f4f532df4c9164 clean
+2026-08-12 ALLOCATOR ticket-049 reserved independently; allocated ticket-050
+2026-08-12 PYPI goal 2.1.298 HTTP 404
+2026-08-12 TAG v2.1.298 absent
+2026-08-12 RELEASE v2.1.298 absent
+2026-08-12 REPRO public Goal 2.1.297 lacks artifactless Release implementation
+2026-08-12 SOURCE main includes completed ticket-048 artifactless Release implementation

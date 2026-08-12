@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-050](project/ticket-050/README.md): publish the merged
+  artifactless GitHub Release repair as Goal 2.1.298, verify immutable public
+  artifacts and use the fresh public CLI to complete `new-project v0.16.1`.
+  State: `IN_PROGRESS / EDIT`; classification:
+  `SERVICE / P0 / requested`.
+
 - [x] Deliver [ticket-048](project/ticket-048/README.md): let generic governed
   direct-main publication create or repair a GitHub Release without package
   assets, while keeping registry fallback artifact-strict and requiring an
