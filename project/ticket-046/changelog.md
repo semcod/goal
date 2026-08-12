@@ -14,3 +14,5 @@
   execution over 15 JSON documents and 9 Linux shell suites.
 - Passed 581 full tests (2 existing skips), wheel/sdist and Docker builds, then
   removed their local artifacts.
+- Entered governed pull-request publication after implementation commit
+  `fec3d73` passed the complete local contract.

@@ -45,6 +45,8 @@ read-only source-hub runner over the hub's authoritative files and suites.
   status change; governed delivery dry-run reached normal Goal processing.
 - Passed the full 581-test suite with 2 existing skips plus wheel, sdist and
   Docker builds, then removed every generated build artifact and image.
+- Committed the validated implementation as `fec3d73` and moved the owning
+  ticket to `PUBLICATION` for governed exact-head pull-request delivery.
 
 ## Blockers
 
