@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-041",
+  "summary": "Make governed delivery diagnose new-project layouts",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_delivery.py",
+    "tests/test_governance_cmd.py",
+    "project/ticket-041/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "11561fd3eed757eb2a0143c206b38577490389ba",
+    "targetBranch": "main",
+    "outcome": "Goal recognizes adopted new-project targets versus the source hub, keeps governance verification read-only, and surfaces canonical diagnostic remediation",
+    "nonGoals": [
+      "No change to adoption generation, release metadata or dependencies",
+      "No attempt to emulate the source hub validator when its own target wrapper is inapplicable",
+      "No new CLI command or automatic opening of runbook files"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Centralize package-layout preflight and v1/v2 diagnostic lookup in the existing delivery adapter, then reuse it from the existing governance CLI",
+      "components": [
+        {
+          "name": "governed-delivery-preflight",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        },
+        {
+          "name": "governance-cli-dispatch",
+          "paths": [
+            "goal/cli/governance_cmd.py",
+            "tests/test_governance_cmd.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore wrapper-only gate dispatch and mutable callback configuration loading"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "layout preflight rejects incomplete targets and source hubs before executing a target wrapper"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_governance_cmd.py"],
+        "evidence": "governance verification and hook authorization never create or rewrite goal.yaml"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_governance_delivery.py tests/test_governance_cmd.py"],
+        "evidence": "v2 remediation and linked .governance/error runbooks are surfaced while v1 remains compatible"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/governance/delivery.py goal/cli/governance_cmd.py tests/test_governance_delivery.py tests/test_governance_cmd.py",
+          "./project/governance-check.sh --actor agent",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "focused/full tests, lint, governance and package/container builds pass"
+      }
+    ]
+  }
+}

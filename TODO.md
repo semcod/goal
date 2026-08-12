@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-041](project/ticket-041/README.md): distinguish adopted
+  `new-project` targets from the source hub, keep governance verification
+  read-only, and surface canonical diagnostics v2 remediation/runbooks. State:
+  `IN_PROGRESS / EDIT`; classification: `BUG / P2 / regression`.
+
 - [x] Deliver [ticket-040](project/ticket-040/README.md): publish Goal 2.1.295
   from the merged adoption-proof and scoped bootstrap repairs, then verify a
   clean public install. State: `DONE / DONE`; real `goal -a` passed 560 tests
