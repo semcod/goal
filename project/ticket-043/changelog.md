@@ -8,3 +8,5 @@
   merged ticket-041/042 fixes.
 - Verified the 2.1.296 registry, tag and Release namespace is unused before
   candidate preparation.
+- Synchronized five carriers through Goal, passed full tests/governance and
+  built reproducible package and container candidates without publication.

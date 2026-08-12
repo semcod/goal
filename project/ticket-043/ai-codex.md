@@ -33,6 +33,12 @@ user asked to remove.
   implementation.
 - Confirmed the 2.1.296 registry/tag/Release namespace is unused before
   entering `PUBLICATION`; the release plan remains a separate prior commit.
+- Used the real Goal PR workflow to synchronize the five carriers, run all 573
+  passing tests (2 existing skips), skip premature release side effects and
+  create PR #68.
+- Passed deterministic governance, exact carrier checks, wheel/sdist and
+  Docker builds; recorded artifact/image hashes and removed the temporary
+  validation image.
 
 ## Blockers
 
