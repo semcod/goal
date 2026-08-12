@@ -2,18 +2,50 @@
 
 import json
 import subprocess
+from urllib.error import URLError
 
 from click.testing import CliRunner
 import pytest
 
 import goal.cli as goal_cli
+import goal.cli.governance_cmd as governance_cmd
 from goal.cli import main
+
+
+class FakeReleaseResponse:
+    def __init__(self, payload):
+        self.payload = (
+            payload
+            if isinstance(payload, bytes)
+            else json.dumps(payload).encode("utf-8")
+        )
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+    def read(self, limit=-1):
+        return self.payload if limit < 0 else self.payload[:limit]
 
 
 @pytest.fixture(autouse=True)
 def disable_version_network(monkeypatch):
     monkeypatch.setattr(goal_cli, "_show_goal_version_banner", lambda: None)
     monkeypatch.setattr(goal_cli, "_maybe_self_update", lambda latest, yes: None)
+    monkeypatch.setattr(
+        governance_cmd,
+        "urlopen",
+        lambda request, timeout: FakeReleaseResponse(
+            {
+                "tag_name": "v0.1.0",
+                "draft": False,
+                "prerelease": False,
+                "published_at": "2026-08-12T00:00:00Z",
+            }
+        ),
+    )
 
 
 def _git(root, *arguments):
@@ -405,11 +437,161 @@ def test_adopt_rejects_release_tag_for_another_revision(tmp_path):
     assert not (target / ".fake-adoption.json").exists()
 
 
-def test_explicit_candidate_mode_skips_release_proof_and_is_forwarded(tmp_path):
+def test_adopt_rejects_missing_github_release(tmp_path, monkeypatch):
+    standard, revision = make_standard(tmp_path)
+    target = tmp_path / "target"
+    target.mkdir()
+
+    def unavailable(request, timeout):
+        raise URLError("release not found")
+
+    monkeypatch.setattr(governance_cmd, "urlopen", unavailable)
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "has no verifiable published GitHub Release v0.1.0" in result.output
+    assert not (target / ".fake-adoption.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("raw", "message"),
+    [
+        (b"{", "metadata for v0.1.0 is invalid"),
+        (b"[]", "metadata for v0.1.0 is invalid"),
+        (
+            b"x" * (governance_cmd.MAX_RELEASE_METADATA_BYTES + 1),
+            "metadata for v0.1.0 is unexpectedly large",
+        ),
+    ],
+    ids=("malformed-json", "non-object", "oversized"),
+)
+def test_adopt_rejects_invalid_github_release_metadata(
+    tmp_path, monkeypatch, raw, message
+):
+    standard, revision = make_standard(tmp_path)
+    target = tmp_path / "target"
+    target.mkdir()
+    monkeypatch.setattr(
+        governance_cmd,
+        "urlopen",
+        lambda request, timeout: FakeReleaseResponse(raw),
+    )
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert message in result.output
+    assert not (target / ".fake-adoption.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("release", "message"),
+    [
+        (
+            {
+                "tag_name": "v9.9.9",
+                "draft": False,
+                "prerelease": False,
+                "published_at": "2026-08-12T00:00:00Z",
+            },
+            "does not identify standard tag v0.1.0",
+        ),
+        (
+            {
+                "tag_name": "v0.1.0",
+                "draft": True,
+                "prerelease": False,
+                "published_at": "2026-08-12T00:00:00Z",
+            },
+            "is not a final published release",
+        ),
+        (
+            {
+                "tag_name": "v0.1.0",
+                "draft": False,
+                "prerelease": True,
+                "published_at": "2026-08-12T00:00:00Z",
+            },
+            "is not a final published release",
+        ),
+        (
+            {
+                "tag_name": "v0.1.0",
+                "draft": False,
+                "prerelease": False,
+                "published_at": None,
+            },
+            "is not a final published release",
+        ),
+    ],
+)
+def test_adopt_rejects_nonfinal_github_release(
+    tmp_path, monkeypatch, release, message
+):
+    standard, revision = make_standard(tmp_path)
+    target = tmp_path / "target"
+    target.mkdir()
+    monkeypatch.setattr(
+        governance_cmd,
+        "urlopen",
+        lambda request, timeout: FakeReleaseResponse(release),
+    )
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert message in result.output
+    assert not (target / ".fake-adoption.json").exists()
+
+
+def test_explicit_candidate_mode_skips_release_proof_and_is_forwarded(
+    tmp_path, monkeypatch
+):
     standard, revision = make_standard(tmp_path)
     _git(standard, "tag", "-d", "v0.1.0")
     target = tmp_path / "target"
     target.mkdir()
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("candidate testing attempted GitHub Release lookup")
+
+    monkeypatch.setattr(governance_cmd, "urlopen", forbidden)
 
     result = CliRunner().invoke(
         main,
