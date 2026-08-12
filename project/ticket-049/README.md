@@ -2,8 +2,8 @@
 
 - **ID**: ticket-049
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -56,6 +56,23 @@ remote base, rerun tests, and then use the existing governed PR delivery path.
   `sha256:034faf2bd3fac4a8520464156df142d67878d0e5b45ec1f290a508f87edb0e29`
   built successfully; temporary distributions, build outputs and image were
   removed.
+
+## Closure evidence
+
+- PR #76 froze candidate HEAD
+  `a297cf96b075853ca0de9fb7baa4ee7ac5d85308`; protected Python 3.12 and
+  Python 3.13 checks passed.
+- Validator GitHub App run `31601902913` approved that exact HEAD in review
+  `4917056332`; the advisory LLM verdict was not the approval trust root.
+- GitHub created merge commit
+  `7534d1ab275f578de27801dce83c2b8d59ff91a6` with the approved candidate as
+  its exact second parent and an identical resulting tree.
+- A fresh detached worktree at the merge passed the complete suite
+  (`600 passed, 2 skipped`), scoped Ruff and `GOV-PASS`; the worktree was
+  removed afterward.
+- A repository-wide Ruff diagnostic still reports 87 pre-existing findings
+  outside ticket 049's changed paths. The four changed source/test files pass
+  Ruff and no out-of-scope cleanup was folded into this regression repair.
 
 ## Participants
 

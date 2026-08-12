@@ -50,9 +50,18 @@ divergence fails closed.
   zero after the deterministic budget gate identified the classifier as an
   internal contract; no budget was enlarged.
 - Entered `IN_PROGRESS / PUBLICATION` for protected exact-head validation.
+- Delivered candidate `a297cf96b075853ca0de9fb7baa4ee7ac5d85308`
+  through PR #76 after both protected Python checks and Validator App run
+  `31601902913` approved that exact commit.
+- Verified merge `7534d1ab275f578de27801dce83c2b8d59ff91a6`
+  preserves the approved tree and passed 600 tests (2 skipped), scoped Ruff
+  and governance in a fresh detached worktree; marked the ticket `DONE / DONE`.
+- Kept the independently active ticket-050 release worktree and its release
+  carriers untouched. A full-repository Ruff diagnostic found 87 historical
+  findings outside this ticket; the scoped changed-file lint remains clean.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
+- None; all acceptance criteria are complete.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.

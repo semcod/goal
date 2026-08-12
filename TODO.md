@@ -2,12 +2,13 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-049](project/ticket-049/README.md): safely resume governed
+- [x] Deliver [ticket-049](project/ticket-049/README.md): safely resume governed
   pull-request delivery when an authorized ticket commit exists ahead of the
   remote base but the original run stopped before branch/PR creation. State:
-  `IN_PROGRESS / PUBLICATION`; 47 focused and 600 full tests (2 skipped), Ruff,
-  governance, package and Docker validation pass; classification:
-  `BUG / P1 / regression`.
+  `DONE / DONE`; PR #76 passed protected CI and exact-head Validator approval,
+  then merge `7534d1ab...` passed 600 tests (2 skipped), scoped Ruff and
+  governance in a clean worktree. Package and Docker validation also pass;
+  classification: `BUG / P1 / regression`.
 
 - [x] Deliver [ticket-048](project/ticket-048/README.md): let generic governed
   direct-main publication create or repair a GitHub Release without package
