@@ -16,7 +16,7 @@ from goal.cli.version import PROJECT_TYPES
 from goal.toml_validation import validate_project_toml_files
 from goal.publish.github_fallback import (
     get_github_release_config,
-    github_fallback_actionable,
+    github_fallback_actionable,  # noqa: F401 - retained compatibility patch point
     is_pypi_blocked,
     try_github_fallback,
 )
@@ -267,6 +267,23 @@ def _format_artifact_args(artifacts: list[Path]) -> str:
     return " ".join(shlex.quote(str(path)) for path in artifacts)
 
 
+def _ensure_twine_skip_existing(publish_cmd: str) -> str:
+    """Make a Twine upload retry-safe without changing other publishers."""
+    try:
+        arguments = shlex.split(publish_cmd)
+    except ValueError:
+        return publish_cmd
+    if "twine" not in arguments or "upload" not in arguments:
+        return publish_cmd
+    if "--skip-existing" in arguments:
+        return publish_cmd
+
+    upload = re.search(r"\btwine\s+upload\b", publish_cmd)
+    if upload is None:
+        return publish_cmd
+    return f"{publish_cmd[: upload.end()]} --skip-existing{publish_cmd[upload.end() :]}"
+
+
 def _resolve_python_publish_cmd(publish_cmd: str, version: str) -> str:
     """Use exact built artifacts for the requested version.
 
@@ -274,6 +291,7 @@ def _resolve_python_publish_cmd(publish_cmd: str, version: str) -> str:
     globs such as ``dist/oldname-{version}*`` when the current metadata produces
     a different distribution name.
     """
+    publish_cmd = _ensure_twine_skip_existing(publish_cmd)
     publish_cmd = publish_cmd.replace("{version}", version)
     # Capture the full artifact path token, including any directory prefix such
     # as ``adapters/python/dist/...`` so monorepo subdir paths survive intact.

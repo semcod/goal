@@ -1,0 +1,111 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-058",
+  "summary": "Make Python publish retries idempotent",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/publish.py",
+    "goal/doctor/python_diag_extended.py",
+    "tests/test_project_doctor.py",
+    "tests/test_publish_pattern.py",
+    "project/ticket-058/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    ".github/**"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [
+    "ticket-057"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9c56f79165fe421b61a17deafbc0fcabdbfa9ba0",
+    "targetBranch": "main",
+    "outcome": "Configured Twine uploads are retry-safe even when a repository carries legacy Goal configuration",
+    "nonGoals": [
+      "Do not treat generic registry HTTP failures as success",
+      "Do not change non-Twine publisher commands",
+      "Do not weaken exact-version artifact selection",
+      "Do not change package version or dependencies"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Normalize legacy Twine commands at the final runtime boundary and migrate project configuration through doctor with the same explicit flag",
+      "components": [
+        {
+          "name": "publish-runtime",
+          "paths": [
+            "goal/cli/publish.py",
+            "tests/test_publish_pattern.py"
+          ]
+        },
+        {
+          "name": "doctor-migration",
+          "paths": [
+            "goal/doctor/python_diag_extended.py",
+            "tests/test_project_doctor.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded implementation PR; callers can still add --skip-existing manually"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_publish_pattern.py"
+        ],
+        "evidence": "project/ticket-058/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_project_doctor.py -k py013"
+        ],
+        "evidence": "project/ticket-058/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check scoped paths",
+          "./project/governance-check.sh",
+          "bounded Glon retry reproduction"
+        ],
+        "evidence": "project/ticket-058/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

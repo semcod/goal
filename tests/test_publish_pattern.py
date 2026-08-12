@@ -24,7 +24,8 @@ def test_resolve_python_publish_cmd_uses_pyproject_name(
     resolved = _resolve_python_publish_cmd(publish_cmd, "1.2.3")
 
     assert resolved == (
-        "twine upload dist/cllm-1.2.3-py3-none-any.whl dist/cllm-1.2.3.tar.gz"
+        "twine upload --skip-existing dist/cllm-1.2.3-py3-none-any.whl "
+        "dist/cllm-1.2.3.tar.gz"
     )
 
 
@@ -46,7 +47,8 @@ def test_resolve_python_publish_cmd_uses_setup_py_name(
     resolved = _resolve_python_publish_cmd(publish_cmd, "4.0.1")
 
     assert resolved == (
-        "twine upload dist/tellm-4.0.1-py3-none-any.whl dist/tellm-4.0.1.tar.gz"
+        "twine upload --skip-existing dist/tellm-4.0.1-py3-none-any.whl "
+        "dist/tellm-4.0.1.tar.gz"
     )
 
 
@@ -67,8 +69,50 @@ def test_resolve_python_publish_cmd_filters_broad_dist_glob(
     resolved = _resolve_python_publish_cmd("twine upload dist/*", "4.0.1")
 
     assert resolved == (
-        "twine upload dist/tellm-4.0.1-py3-none-any.whl dist/tellm-4.0.1.tar.gz"
+        "twine upload --skip-existing dist/tellm-4.0.1-py3-none-any.whl "
+        "dist/tellm-4.0.1.tar.gz"
     )
+
+
+def test_resolve_python_publish_cmd_preserves_custom_twine_options(
+    tmp_path: Path, monkeypatch
+) -> None:
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "demo-1.2.3.tar.gz").write_text("sdist")
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "demo"\n')
+    monkeypatch.chdir(tmp_path)
+
+    resolved = _resolve_python_publish_cmd(
+        "python -m twine upload --repository testpypi dist/*", "1.2.3"
+    )
+
+    assert resolved == (
+        "python -m twine upload --skip-existing --repository testpypi "
+        "dist/*"
+    )
+
+
+def test_resolve_python_publish_cmd_does_not_duplicate_skip_existing(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    command = "twine upload --skip-existing dist/demo-{version}*"
+
+    resolved = _resolve_python_publish_cmd(command, "1.2.3")
+
+    assert resolved == "twine upload --skip-existing dist/demo-1.2.3*"
+    assert resolved.count("--skip-existing") == 1
+
+
+def test_resolve_python_publish_cmd_leaves_non_twine_publishers_unchanged(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    resolved = _resolve_python_publish_cmd("uv publish dist/*", "1.2.3")
+
+    assert resolved == "uv publish dist/*"
 
 
 def test_ensure_python_artifacts_resyncs_setup_py_and_rebuilds(
