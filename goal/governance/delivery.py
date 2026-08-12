@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import secrets
 import shutil
@@ -25,6 +25,19 @@ HOOK_END = "# GOAL-GOVERNANCE-DELIVERY:END"
 TRANSACTION_ENV = "GOAL_DELIVERY_TRANSACTION"
 CAPABILITY_ENV = "GOAL_DELIVERY_CAPABILITY"
 TRANSACTION_TTL_SECONDS = 300
+GOVERNANCE_PACKAGE_FILES = {
+    "validator": ".governance/governance_check.py",
+    "manifest": ".governance/manifest.json",
+    "lock": ".governance/manifest.lock.json",
+    "stack profiles": ".governance/stack-profiles.json",
+}
+GOVERNANCE_DIAGNOSTICS = ".governance/diagnostics.json"
+SOURCE_HUB_FILES = (
+    "governance/package-manifest.json",
+    "governance/manifest.default.json",
+    "scripts/governance_check.py",
+)
+DIAGNOSTIC_CODE_PATTERN = re.compile(r"\bGOV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b")
 
 
 @dataclass(frozen=True)
@@ -146,7 +159,92 @@ def _git_dir(root: Path) -> Path:
     return (raw if raw.is_absolute() else root / raw).resolve()
 
 
+def missing_governance_package_files(root: Path) -> list[str]:
+    """Return missing files from the adopted target package contract."""
+    return [
+        relative
+        for relative in GOVERNANCE_PACKAGE_FILES.values()
+        if not (root / relative).is_file()
+    ]
+
+
+def is_new_project_source_hub(root: Path) -> bool:
+    return all((root / relative).is_file() for relative in SOURCE_HUB_FILES)
+
+
+def _safe_runbook(root: Path, raw_path: Any) -> str | None:
+    if not isinstance(raw_path, str) or not raw_path.strip() or "\\" in raw_path:
+        return None
+    relative = PurePosixPath(raw_path)
+    if relative.is_absolute() or ".." in relative.parts:
+        return None
+    try:
+        package = (root / ".governance").resolve()
+        candidate = (package / Path(*relative.parts)).resolve()
+        valid = candidate.is_relative_to(package) and candidate.is_file()
+    except (OSError, RuntimeError, ValueError):
+        return None
+    if not valid:
+        return None
+    return (Path(".governance") / Path(*relative.parts)).as_posix()
+
+
+def governance_diagnostic_guidance(root: Path, output: str) -> list[str]:
+    """Resolve safe canonical v2 guidance for codes emitted by a validator."""
+    catalog_path = root / GOVERNANCE_DIAGNOSTICS
+    try:
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return []
+    if (
+        not isinstance(catalog, dict)
+        or catalog.get("schema") not in {
+            "new-project.diagnostics/v1",
+            "new-project.diagnostics/v2",
+        }
+        or not isinstance(catalog.get("codes"), dict)
+    ):
+        return []
+
+    codes = list(dict.fromkeys(DIAGNOSTIC_CODE_PATTERN.findall(output)))
+    guidance: list[str] = []
+    for code in codes:
+        entry = catalog["codes"].get(code)
+        # v1 intentionally contains messages only. Preserve compatibility but
+        # do not invent a remediation that the pinned standard did not publish.
+        if catalog["schema"] == "new-project.diagnostics/v1":
+            continue
+        if not isinstance(entry, dict):
+            continue
+        remediation = entry.get("remediation")
+        if isinstance(remediation, str) and remediation.strip():
+            guidance.append(
+                f"canonical remediation for {code}: {remediation.strip()}"
+            )
+        runbook = _safe_runbook(root, entry.get("documentation"))
+        if runbook is not None:
+            guidance.append(f"runbook for {code}: {runbook}")
+    return guidance
+
+
 def _governance_gate(root: Path) -> None:
+    missing = missing_governance_package_files(root)
+    if missing:
+        if is_new_project_source_hub(root):
+            raise click.ClickException(
+                "GOV-MANIFEST-001: governed delivery found the maintained "
+                "wellmanifest/new-project source hub, not an adopted target; "
+                "its project/governance-check.sh wrapper is target-only. Run "
+                "the source-hub checks declared in .github/workflows/ci.yml "
+                "and do not install a target .governance package into the hub."
+            )
+        raise click.ClickException(
+            "GOV-MANIFEST-001: governance delivery requires a complete adopted "
+            "package; missing: "
+            + ", ".join(missing)
+            + "; run `goal governance adopt` with a published source revision"
+        )
+
     gate = root / "project" / "governance-check.sh"
     if not gate.is_file():
         raise click.ClickException(
@@ -154,7 +252,12 @@ def _governance_gate(root: Path) -> None:
         )
     result = _run([str(gate)], cwd=root)
     if result.returncode != 0:
-        detail = (result.stdout or result.stderr or "governance gate failed").strip()
+        detail = "\n".join(
+            part.strip() for part in (result.stdout, result.stderr) if part.strip()
+        ) or "governance gate failed"
+        guidance = governance_diagnostic_guidance(root, detail)
+        if guidance:
+            detail += "\n" + "\n".join(guidance)
         raise click.ClickException(detail)
 
 

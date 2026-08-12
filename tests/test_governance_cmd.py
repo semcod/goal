@@ -312,6 +312,109 @@ def test_governance_check_fails_closed_for_incomplete_package(tmp_path):
     assert "goal governance adopt" in result.output
 
 
+def test_governance_check_routes_source_hub_without_recommending_adoption(tmp_path):
+    target = tmp_path / "new-project"
+    for relative in (
+        "governance/package-manifest.json",
+        "governance/manifest.default.json",
+        "scripts/governance_check.py",
+    ):
+        path = target / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        main,
+        ["governance", "check", "--target-root", str(target)],
+    )
+
+    assert result.exit_code == 1
+    assert "source hub, not an adopted repository" in result.output
+    assert "do not adopt" in result.output
+
+
+def test_governance_check_surfaces_v2_remediation_and_runbook(tmp_path):
+    target = tmp_path / "target"
+    target.mkdir()
+    make_adopted_governance(target, exit_code=7)
+    package = target / ".governance"
+    (package / "governance_check.py").write_text(
+        "print('GOV-TICKET-001: failed')\nraise SystemExit(7)\n",
+        encoding="utf-8",
+    )
+    (package / "diagnostics.json").write_text(
+        json.dumps(
+            {
+                "schema": "new-project.diagnostics/v2",
+                "codes": {
+                    "GOV-TICKET-001": {
+                        "message": "Ticket is missing.",
+                        "remediation": "Create exactly one bounded ticket.",
+                        "documentation": "error/GOV-TICKET-001.md",
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    runbook = package / "error" / "GOV-TICKET-001.md"
+    runbook.parent.mkdir()
+    runbook.write_text("# Runbook\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        main,
+        ["governance", "check", "--target-root", str(target)],
+    )
+
+    assert result.exit_code == 7
+    assert "canonical remediation for GOV-TICKET-001" in result.output
+    assert "Create exactly one bounded ticket." in result.output
+    assert ".governance/error/GOV-TICKET-001.md" in result.output
+
+
+def test_verify_delivery_does_not_create_missing_goal_yaml():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        root = governance_cmd.Path.cwd()
+        _git(root, "init", "--quiet")
+        result = runner.invoke(main, ["governance", "verify-delivery"])
+
+        assert result.exit_code == 0, result.output
+        assert json.loads(result.output)["enabled"] is False
+        assert not (root / "goal.yaml").exists()
+
+
+def test_verify_delivery_does_not_rewrite_existing_goal_yaml():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        root = governance_cmd.Path.cwd()
+        _git(root, "init", "--quiet")
+        config = root / "goal.yaml"
+        config.write_text(
+            "project:\n  name: deliberately-stale\n"
+            "advanced:\n  auto_update_config: true\n",
+            encoding="utf-8",
+        )
+        before = config.read_bytes()
+
+        result = runner.invoke(main, ["governance", "verify-delivery"])
+
+        assert result.exit_code == 0, result.output
+        assert config.read_bytes() == before
+
+
+def test_authorize_push_fails_closed_without_goal_yaml():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            main, ["governance", "authorize-push", "origin"]
+        )
+
+        assert result.exit_code == 1
+        assert "requires an existing goal.yaml" in result.output
+        assert not governance_cmd.Path("goal.yaml").exists()
+
+
 def test_governance_check_rejects_managed_path_override(tmp_path):
     target = tmp_path / "target"
     target.mkdir()
