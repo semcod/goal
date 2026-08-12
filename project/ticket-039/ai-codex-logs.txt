@@ -1,0 +1,10 @@
+2026-08-12 ticket initialization
+SESSION_EXECUTION_AUTHORIZATION=recorded
+accepted_base=2076473df21b56a01eeca80a66294dad9a2b6b0c
+reproduction=global replacement proposed runtime costs marker and dev pfix marker
+focused=3 passed; Ruff PASS
+full=560 passed, 2 skipped
+governance=GOV-PASS
+live transform=runtime costs preserved; dev pfix marked
+package build=wheel and sdist PASS; temporary output and goal.egg-info removed
+docker build=sha256:88f045507398e5e5d70f79143bd34d235a96877c7dfd6ab72a89d961c60b294a

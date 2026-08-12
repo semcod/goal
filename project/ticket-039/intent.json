@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-039",
+  "summary": "Keep dependency marker migration inside dev sections",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/bootstrap/pyproject_costs_setup.py",
+    "tests/test_pyproject_costs_setup.py",
+    "project/ticket-039/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-038"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2076473df21b56a01eeca80a66294dad9a2b6b0c",
+    "targetBranch": "main",
+    "outcome": "Goal migrates legacy tool markers only in development dependency sections",
+    "nonGoals": [
+      "No pyproject, lockfile, version or release-carrier changes",
+      "No new dependencies or bootstrap orchestration changes",
+      "No weakening of Python compatibility markers"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move legacy requirement replacement from the whole TOML document into the selected development-list slice",
+      "components": [
+        {
+          "name": "python-bootstrap-dependency-transform",
+          "paths": [
+            "goal/bootstrap/pyproject_costs_setup.py",
+            "tests/test_pyproject_costs_setup.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore global replacement; runtime requirements may again be rewritten"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest -q tests/test_pyproject_costs_setup.py"],
+        "evidence": "legacy dev marker migration is scoped and idempotent"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_pyproject_costs_setup.py"],
+        "evidence": "runtime costs requirement remains unchanged"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/bootstrap/pyproject_costs_setup.py tests/test_pyproject_costs_setup.py",
+          "./project/governance-check.sh --actor agent",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "focused/full tests, lint, governance and builds pass"
+      }
+    ]
+  }
+}
