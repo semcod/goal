@@ -1,0 +1,122 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-056",
+  "summary": "Keep committed pull-request resume mutation-free",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_governance_delivery.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-056/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "goal/project_bootstrap.py",
+    "goal/doctor/**",
+    "goal/cli/**",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-055"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0d34014f04ea3a0edfecdd17bf7ea03af0c7b2ef",
+    "targetBranch": "main",
+    "outcome": "Bare governed pull-request delivery resumes one committed ticket candidate without changing the reviewed checkout",
+    "nonGoals": [
+      "Do not weaken exact candidate, remote base or ticket binding",
+      "Do not guess among multiple active tickets",
+      "Do not change normal doctor or bootstrap semantics",
+      "Do not change package version, dependencies or public APIs"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Resolve an omitted pull-request ticket from exactly one active governance ticket before bootstrap and persist local delivery audit events under the Git common directory",
+      "components": [
+        {
+          "name": "delivery-policy",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        },
+        {
+          "name": "push-resume-orchestration",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_delivery_integrity.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "Move credential-free local delivery events from the checkout to git-common-dir/goal-delivery/delivery-events.jsonl"
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; callers must again pass an explicit ticket and locally exclude delivery-events during resume"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_delivery_integrity.py -k pull_request"
+        ],
+        "evidence": "project/ticket-056/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_governance_delivery.py -k ticket"
+        ],
+        "evidence": "project/ticket-056/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q tests/test_governance_delivery.py -k delivery_event"
+        ],
+        "evidence": "project/ticket-056/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/governance/delivery.py goal/push/core.py tests/test_governance_delivery.py tests/test_delivery_integrity.py",
+          "./project/governance-check.sh",
+          "make package",
+          "make docker-smoke"
+        ],
+        "evidence": "project/ticket-056/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

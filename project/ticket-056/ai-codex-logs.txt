@@ -1,0 +1,4 @@
+2026-08-12T16:41:07Z ticket-056 allocated through clone-wide new-ticket.sh at base 0d34014f04ea3a0edfecdd17bf7ea03af0c7b2ef.
+2026-08-12T16:42:00Z SESSION_EXECUTION_AUTHORIZATION recorded from the user's continued implementation, test and push request.
+2026-08-12T16:42:00Z reproduction: bare governed goal -a on todo2code ticket-075 skipped committed resume, entered mutating doctor/bootstrap and created root/nested environments and project files before interruption; artifacts were removed without push.
+2026-08-12T16:42:00Z reproduction: explicit-ticket resume writes .governance/delivery-events.jsonl before exact candidate revalidation, requiring an unsafe local ignore workaround.
