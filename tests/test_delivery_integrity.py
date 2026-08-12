@@ -156,6 +156,31 @@ advanced:
     assert after == before
 
 
+@pytest.mark.parametrize("existing_config", [False, True])
+def test_subcommand_help_does_not_create_or_rewrite_goal_yaml(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing_config: bool
+) -> None:
+    """Rendering push help must not initialize mutable project state."""
+    from click.testing import CliRunner
+
+    from goal.cli import main
+
+    monkeypatch.chdir(tmp_path)
+    config_path = tmp_path / "goal.yaml"
+    if existing_config:
+        config_path.write_text(
+            "advanced:\n  auto_update_config: true\nproject:\n  name: retained\n",
+            encoding="utf-8",
+        )
+    before = config_path.read_bytes() if config_path.exists() else None
+
+    result = CliRunner().invoke(main, ["push", "--help"])
+
+    assert result.exit_code == 0, result.output
+    after = config_path.read_bytes() if config_path.exists() else None
+    assert after == before
+
+
 def test_non_governed_push_failure_aborts_before_success_summary() -> None:
     """The legacy delivery path must propagate an unsuccessful remote push."""
     from goal.push.core import execute_push_workflow

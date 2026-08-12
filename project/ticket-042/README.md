@@ -3,7 +3,7 @@
 - **ID**: ticket-042
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -18,12 +18,12 @@ version carriers.
 
 ## Acceptance criteria
 
-- [ ] AC-01: `goal push --help` is observably read-only with both missing and
+- [x] AC-01: `goal push --help` is observably read-only with both missing and
   existing configuration.
-- [ ] AC-02: Explicit commit-only flags keep the released version unchanged,
+- [x] AC-02: Explicit commit-only flags keep the released version unchanged,
   make one plain commit/push, and do not publish or tag despite committed
   unreleased package source.
-- [ ] AC-03: Normal release behavior remains unchanged when any commit-only
+- [x] AC-03: Normal release behavior remains unchanged when any commit-only
   condition is absent.
 - [ ] AC-04: Focused/full tests, scoped Ruff, governance, package and Docker
   builds pass before exact-head protected delivery.
@@ -37,6 +37,15 @@ version carriers.
 - The user's instruction to repair and continue is recorded as bounded
   `SESSION_EXECUTION_AUTHORIZATION`; trusted merge still requires external
   exact-head evidence.
+
+## Validation evidence
+
+- 53 focused delivery/push tests pass. The regression asserts that committed
+  unreleased source is not even queried in explicit commit-only mode, while
+  existing normal release tests retain that detection.
+- Scoped Ruff and `git diff --check` pass.
+- A real source invocation in an isolated directory rendered
+  `python -m goal push --help` without creating `goal.yaml`.
 
 ## Participants
 

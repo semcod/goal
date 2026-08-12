@@ -1,3 +1,5 @@
 2026-08-12 observed help regression: `goal push --help` created an untracked default goal.yaml in the clean new-project ticket worktree.
 2026-08-12 observed commit-only regression: explicit --no-version-sync --no-tag --no-publish selected 2.1.296, passed 570 tests, committed and pushed the ticket-041 closure, then failed version validation because carriers correctly remained 2.1.295.
 2026-08-12 cleanup: removed the generated new-project goal.yaml and the failed run's staged README cost-badge drift; ticket-041 worktree and local branch are absent after verified merge reachability.
+2026-08-12 implementation: parent/subcommand help shares the read-only context path; exact three-flag commit-only intent cannot be promoted by committed-unreleased source or pre-bumped state.
+2026-08-12 focused validation: 53 delivery/push tests PASS; scoped Ruff PASS; git diff --check PASS; isolated `python -m goal push --help` leaves no goal.yaml.

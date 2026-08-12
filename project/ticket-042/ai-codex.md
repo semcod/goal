@@ -31,6 +31,13 @@ before Click rendered subcommand help.
 - Reused the observed failed transaction as evidence: all 570 tests passed,
   the ticket-041 closure commit reached `origin/main`, release side effects did
   not occur, and the generated README badge drift was removed.
+- Marked every help request as read-only before the main Click callback can
+  initialize configuration.
+- Added a single exact commit-only predicate for simultaneous no-version,
+  no-tag and no-publish flags; it bypasses committed-unreleased release
+  promotion and pre-bumped release intent while retaining test/commit/push.
+- Passed 53 focused tests, scoped Ruff, diff hygiene and a real isolated help
+  invocation with no filesystem mutation.
 
 ## Blockers
 
