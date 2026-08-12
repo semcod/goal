@@ -8,3 +8,5 @@
   declared sibling publisher preservation as acceptance evidence.
 - Made the Python publisher retry-safe, preserved Node/Rust values, and passed
   structural, full-suite and governance validation.
+- Recorded exact-head Validator approval, unchanged-tree merge and green
+  post-merge Python 3.12/3.13; closed the implementation lifecycle.

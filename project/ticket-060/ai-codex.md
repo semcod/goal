@@ -31,6 +31,9 @@ code or the already-correct Node/Rust publishers.
   strategy values.
 - Passed 618 full tests (2 existing skips), governance and whitespace
   validation; moved to PUBLICATION for protected exact-head review.
+- Delivered exact candidate `22eed9c...` through hosted CI and deterministic
+  Validator approval, merged it unchanged as `48b8e2c...`, and confirmed green
+  post-merge CI before closing the lifecycle.
 
 ## Blockers
 

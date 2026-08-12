@@ -2,10 +2,11 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-060](project/ticket-060/README.md): align Goal's own
+- [x] Deliver [ticket-060](project/ticket-060/README.md): align Goal's own
   tracked Python strategy with the retry-safe Twine contract while preserving
-  Node and Rust publishers. State: `IN_PROGRESS / PUBLICATION`; 618 tests
-  (2 skips), structural checks and governance pass; classification:
+  Node and Rust publishers. State: `DONE / DONE`; 618 tests (2 skips),
+  structural checks, governance, protected CI and exact-head Validator
+  approval pass; PR #100 merged unchanged as `48b8e2c...`; classification:
   `BUG / P1 / regression`; depends on ticket-059.
 
 - [x] Deliver [ticket-059](project/ticket-059/README.md): align the default

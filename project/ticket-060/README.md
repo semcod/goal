@@ -2,8 +2,8 @@
 
 - **ID**: ticket-060
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -23,6 +23,8 @@ strategies must remain byte-for-byte unchanged.
   `cargo publish` respectively.
 - [x] AC-04: Structural parsing, full tests and governance pass before
   protected exact-head delivery.
+- [x] AC-05: Protected CI and Validator Agent approve the exact final head;
+  the unchanged tree is merged and post-merge CI passes.
 
 ## Non-goals
 
@@ -43,3 +45,10 @@ strategies must remain byte-for-byte unchanged.
   `goal.yaml`.
 - The full suite passes 618 tests with 2 existing skips; governance reports
   0 errors/0 warnings and whitespace validation passes.
+- PR #100 passed Python 3.12/3.13 and remote lifecycle on exact HEAD
+  `22eed9c006cafc1aadbdd7274073f29ad02b1e55`. Validator run
+  `31627588707` and review `4919864176` deterministically approved that SHA.
+- PR #100 merged as `48b8e2cee80c0c7a286f86b59eda896c4c00c060`;
+  its second parent and tree equal the approved candidate. Post-merge CI
+  `31627788882` passed both supported Python versions and the remote ticket
+  branch was deleted.
