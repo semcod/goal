@@ -1,0 +1,34 @@
+2026-08-12 ticket initialization
+SESSION_EXECUTION_AUTHORIZATION=recorded
+accepted_base=1e028551c638628b09da825871c1740ee176a537
+
+2026-08-12 focused validation
+$ python -m pytest -q tests/test_governance_cmd.py
+................                                                         [100%]
+16 passed in 1.37s
+$ ruff check goal/cli/governance_cmd.py tests/test_governance_cmd.py
+All checks passed!
+$ ./project/governance-check.sh --actor agent
+GOV-PASS: passed (0 errors, 0 warnings)
+
+2026-08-12 full validation
+$ python -m pytest -q
+551 passed, 2 skipped in 6.16s
+$ python -m build
+Successfully built goal-2.1.294.tar.gz and goal-2.1.294-py3-none-any.whl
+$ docker info --format docker={{.ServerVersion}}
+docker=29.1.3
+$ docker build -q .
+exit=0
+
+2026-08-12 released/unreleased pilot
+released_revision=63a3d56b648da0d338be7cf28cbf9045adbb3e5e
+released_result=adoption plan produced; exit=1 because target requires CREATE operations
+unreleased_revision=e88a6d2ab65489818011a6f40ff6d14885805a6c
+unreleased_result=REJECTED: v0.14.1 does not identify requested revision
+temporary_pilot_workspace=removed
+
+2026-08-12 first governed delivery attempt
+result=STOPPED before push after Goal committed ticket changes and bootstrap created local environment state
+unexpected_diff=pyproject dependency markers
+repair=removed exact generated environment; amended unpublished commit to exclude pyproject; remote unchanged

@@ -41,8 +41,11 @@ parser.add_argument('--target-root', required=True)
 parser.add_argument('--source-revision', required=True)
 parser.add_argument('--check', action='store_true')
 parser.add_argument('--upgrade', action='store_true')
+parser.add_argument('--allow-unpublished-for-testing', action='store_true')
 args = parser.parse_args()
 target = Path(args.target_root)
+if args.allow_unpublished_for_testing:
+    (target / '.candidate-testing').write_text('explicit\\n', encoding='utf-8')
 if args.check:
     print('CREATE .governance/manifest.lock.json')
     raise SystemExit(1)
@@ -54,12 +57,14 @@ print(f'adopted fake standard at {args.source_revision}')
 """,
         encoding="utf-8",
     )
+    (standard / "VERSION").write_text("0.1.0\n", encoding="utf-8")
     _git(standard, "init", "--quiet")
     _git(standard, "config", "user.email", "goal-governance@example.invalid")
     _git(standard, "config", "user.name", "goal-governance-test")
     _git(standard, "add", ".")
     _git(standard, "commit", "--quiet", "-m", "publish fake standard")
     revision = _git(standard, "rev-parse", "HEAD").stdout.strip()
+    _git(standard, "tag", "-a", "v0.1.0", "-m", "fake release")
     return standard, revision
 
 
@@ -319,6 +324,111 @@ def test_adopt_fetches_exact_revision_and_forwards_upgrade(tmp_path):
     marker = json.loads((target / ".fake-adoption.json").read_text(encoding="utf-8"))
     assert marker == {"revision": revision, "upgrade": True}
     assert revision in result.output
+
+
+def test_adopt_rejects_revision_without_release_tag(tmp_path):
+    standard, revision = make_standard(tmp_path)
+    _git(standard, "tag", "-d", "v0.1.0")
+    target = tmp_path / "target"
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "has no published release tag v0.1.0" in result.output
+    assert not (target / ".fake-adoption.json").exists()
+
+
+def test_adopt_rejects_lightweight_release_tag(tmp_path):
+    standard, revision = make_standard(tmp_path)
+    _git(standard, "tag", "-d", "v0.1.0")
+    _git(standard, "tag", "v0.1.0", revision)
+    target = tmp_path / "target"
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "must be an annotated Git tag" in result.output
+    assert not (target / ".fake-adoption.json").exists()
+
+
+def test_adopt_rejects_release_tag_for_another_revision(tmp_path):
+    standard, _released_revision = make_standard(tmp_path)
+    (standard / "candidate.txt").write_text("candidate\n", encoding="utf-8")
+    _git(standard, "add", "candidate.txt")
+    _git(standard, "commit", "--quiet", "-m", "unreleased candidate")
+    revision = _git(standard, "rev-parse", "HEAD").stdout.strip()
+    target = tmp_path / "target"
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "does not identify requested revision" in result.output
+    assert not (target / ".fake-adoption.json").exists()
+
+
+def test_explicit_candidate_mode_skips_release_proof_and_is_forwarded(tmp_path):
+    standard, revision = make_standard(tmp_path)
+    _git(standard, "tag", "-d", "v0.1.0")
+    target = tmp_path / "target"
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+            "--allow-unpublished-for-testing",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (target / ".candidate-testing").read_text(encoding="utf-8") == "explicit\n"
+    assert (target / ".fake-adoption.json").is_file()
 
 
 def test_check_forwards_exit_code_without_writing(tmp_path):

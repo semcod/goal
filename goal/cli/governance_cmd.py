@@ -23,6 +23,7 @@ from goal.governance.delivery import (
 
 DEFAULT_STANDARD_REPOSITORY = "https://github.com/wellmanifest/new-project.git"
 FULL_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
 GOVERNANCE_PACKAGE_FILES = {
     "validator": ".governance/governance_check.py",
     "manifest": ".governance/manifest.json",
@@ -48,7 +49,52 @@ def _run_git(arguments, cwd=None):
     )
 
 
-def _checkout_standard(repository, revision, destination):
+def _verify_published_standard(revision, standard):
+    version_path = standard / "VERSION"
+    try:
+        version = version_path.read_text(encoding="utf-8").strip()
+    except OSError as error:
+        raise click.ClickException(
+            "the requested standard revision does not publish VERSION"
+        ) from error
+    if VERSION_PATTERN.fullmatch(version) is None:
+        raise click.ClickException(
+            f"the requested standard VERSION is invalid: {version!r}"
+        )
+    tag = f"v{version}"
+    fetched = _run_git(
+        [
+            "fetch",
+            "--quiet",
+            "--depth",
+            "1",
+            "origin",
+            f"refs/tags/{tag}:refs/tags/{tag}",
+        ],
+        cwd=standard,
+    )
+    if fetched.returncode != 0:
+        raise click.ClickException(
+            f"the requested standard revision has no published release tag {tag}"
+        )
+    tag_type = _run_git(["cat-file", "-t", f"refs/tags/{tag}"], cwd=standard)
+    if tag_type.returncode != 0 or tag_type.stdout.strip() != "tag":
+        raise click.ClickException(
+            f"the standard release tag {tag} must be an annotated Git tag"
+        )
+    peeled = _run_git(["rev-parse", f"refs/tags/{tag}^{{commit}}"], cwd=standard)
+    if peeled.returncode != 0 or peeled.stdout.strip() != revision:
+        raise click.ClickException(
+            f"the standard release tag {tag} does not identify requested revision {revision}"
+        )
+
+def _checkout_standard(
+    repository,
+    revision,
+    destination,
+    *,
+    allow_unpublished_for_testing=False,
+):
     init = _run_git(["init", "--quiet", str(destination)])
     if init.returncode != 0:
         raise click.ClickException(
@@ -80,6 +126,8 @@ def _checkout_standard(repository, revision, destination):
         raise click.ClickException(
             "checked-out standard revision does not match the requested SHA"
         )
+    if not allow_unpublished_for_testing:
+        _verify_published_standard(revision, destination)
 
 
 @main.group()
@@ -294,7 +342,22 @@ def verify_delivery(delivery_mode):
     is_flag=True,
     help="Replace reviewed standard-managed drift.",
 )
-def adopt(standard_repository, source_revision, target_root, check, upgrade):
+@click.option(
+    "--allow-unpublished-for-testing",
+    is_flag=True,
+    help=(
+        "Allow an unpublished candidate only for bounded tests; the pinned "
+        "generator must record non-production provenance."
+    ),
+)
+def adopt(
+    standard_repository,
+    source_revision,
+    target_root,
+    check,
+    upgrade,
+    allow_unpublished_for_testing,
+):
     """Adopt an immutable new-project revision into an existing project."""
     if FULL_SHA_PATTERN.fullmatch(source_revision) is None:
         raise click.BadParameter(
@@ -312,7 +375,12 @@ def adopt(standard_repository, source_revision, target_root, check, upgrade):
 
     with tempfile.TemporaryDirectory(prefix="goal-governance-") as temporary:
         standard = Path(temporary) / "standard"
-        _checkout_standard(standard_repository, source_revision, standard)
+        _checkout_standard(
+            standard_repository,
+            source_revision,
+            standard,
+            allow_unpublished_for_testing=allow_unpublished_for_testing,
+        )
         generator = standard / "scripts" / "create_adoption_lock.py"
         if not generator.is_file():
             raise click.ClickException(
@@ -331,6 +399,8 @@ def adopt(standard_repository, source_revision, target_root, check, upgrade):
             command.append("--check")
         if upgrade:
             command.append("--upgrade")
+        if allow_unpublished_for_testing:
+            command.append("--allow-unpublished-for-testing")
 
         result = subprocess.run(command, capture_output=True, text=True, check=False)
         if result.stdout:

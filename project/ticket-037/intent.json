@@ -1,0 +1,101 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-037",
+  "summary": "Fetch immutable new-project release evidence during adoption",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_cmd.py",
+    "project/ticket-037/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1e028551c638628b09da825871c1740ee176a537",
+    "targetBranch": "main",
+    "outcome": "Goal verifies immutable new-project annotated-tag evidence before executing a production adoption generator",
+    "nonGoals": [
+      "No new runtime dependency, version bump or package publication",
+      "No weakening of exact-SHA checkout or generator exit-code forwarding",
+      "No production trust claim for unpublished candidate tests"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend Goal's existing acquisition boundary with version-matched annotated-tag verification before dispatching the pinned generator",
+      "components": [
+        {
+          "name": "governance-adoption-cli",
+          "paths": [
+            "goal/cli/governance_cmd.py",
+            "tests/test_governance_cmd.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the tag verifier and candidate option; exact-SHA checkout remains but no longer proves immutable tag publication"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_governance_cmd.py"
+        ],
+        "evidence": "untagged, lightweight and mismatched release-tag fixtures fail before generator execution"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_governance_cmd.py"
+        ],
+        "evidence": "annotated exact tag fixture preserves adoption, check and upgrade forwarding"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_governance_cmd.py"
+        ],
+        "evidence": "explicit candidate flag is forwarded while normal mode remains strict"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/cli/governance_cmd.py tests/test_governance_cmd.py",
+          "./project/governance-check.sh --actor agent",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "focused/full tests, scoped lint, governance and package build pass"
+      }
+    ]
+  }
+}
