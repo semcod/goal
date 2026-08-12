@@ -5,3 +5,12 @@ passed tests and 2 skips, but reproduced its known checkout-local audit path.
 The exact two-event file and the temporary .git/info/exclude workaround were
 removed. The CLI was then installed editable from merged main so the release
 candidate can prove ticket-056 before 2.1.299 is published.
+2026-08-12T17:10:00Z candidate: PR #94 exact HEAD 61695d9ce9ea65081ca7c3753d29687033ca6cae; 607 tests PASS/2 SKIP twice; scoped Ruff, governance, wheel/sdist build and Docker smoke PASS; Docker image sha256:ffd9adc8765af4bdd590006d949b6ec392005cf4f9a048809ad7accec5912b2b removed.
+2026-08-12T17:12:00Z protected validation: Python 3.12/3.13 and remote lifecycle PASS; trusted Validator review 4919198753 approved exact PR HEAD without findings.
+2026-08-12T17:13:00Z merge: PR #94 merged as 4db0b042688385684dcd8d536c0b4128d1905e0a; merge parent2 and tree equal approved candidate; remote branch deleted; post-merge run 31621738849 PASS.
+2026-08-12T17:18:00Z publication: clean merged main retested 607 PASS/2 SKIP; PyPI 2.1.299 wheel sha256 836b75f04a656772736fd18072c2a7f495c18a124e47c07b47bc948be44658d4 size 338730; sdist sha256 de60a91480afc4cfd20f1f7ff1719a61d2f39b7d35eaafaf47766832f00d284f size 384097.
+2026-08-12T17:23:40Z immutable tag: annotated object 525741c32e0f707aafd3292d015f2ae0be8f8e34 peels to exact merge 4db0b042688385684dcd8d536c0b4128d1905e0a.
+2026-08-12T17:24:39Z final Release: https://github.com/semcod/goal/releases/tag/v2.1.299; downloaded GitHub assets are byte-identical to the two public PyPI files.
+2026-08-12T17:30:00Z public probe: isolated public-index install reports 2.1.299, imports from its temporary site-packages and resolves delivery audit to .git/goal-delivery/delivery-events.jsonl; temporary environment removed.
+2026-08-12T17:33:20Z AC-05 public replay: isolated public Goal 2.1.299 resumed exact real ticket-072 candidate d212d9d9ed7a1a708faadff2b6ce990d0f7949be against local authoritative base 3a997d6b022faab5f6f6915eacad3cc02ac76c57, pushed exact goal/ticket-072 to a local bare remote, completed through a local gh contract double, wrote started/pull-request events only below .git/goal-delivery and left the checkout clean; actual wellmanifest/new-project retained zero open PRs.
+2026-08-12T17:32:00Z cleanup: temporary release config, public verification environments, downloaded assets, build, dist and Docker image absent; Goal main remains exact and clean.

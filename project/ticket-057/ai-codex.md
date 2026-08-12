@@ -26,6 +26,14 @@ release carriers and proves the public package on the failing real candidate.
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
 - Declared a metadata-only release boundary; ticket-056 owns all source code.
+- Synchronized the five release carriers, ran the complete local/build/Docker
+  validation and delivered PR #94 through exact-head Validator approval.
+- Published immutable PyPI artifacts, an annotated tag and a final GitHub
+  Release exclusively from clean merge `4db0b042...`.
+- Installed 2.1.299 from the public index and replayed the exact historical
+  new-project ticket-072 candidate against a bounded local remote/PR contract.
+  Full resume completed with Git-common audit storage and a clean checkout,
+  without reopening the already completed GitHub ticket.
 
 ## Blockers
 
