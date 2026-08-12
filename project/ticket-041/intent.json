@@ -23,7 +23,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "11561fd3eed757eb2a0143c206b38577490389ba",
+    "acceptedBaseSha": "d898d3f699b4a7930397a59b5c81a1ac46e09171",
     "targetBranch": "main",
     "outcome": "Goal recognizes adopted new-project targets versus the source hub, keeps governance verification read-only, and surfaces canonical diagnostic remediation",
     "nonGoals": [

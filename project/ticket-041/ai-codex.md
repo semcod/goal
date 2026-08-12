@@ -28,9 +28,24 @@ and selected managed runbooks, but Goal does not surface them.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Moved the adopted-package file contract into the delivery adapter and made
+  both delivery and `governance check` distinguish target packages from the
+  maintained source hub before executing any target wrapper.
+- Added compatible diagnostics v1/v2 parsing. V2 failure codes now emit their
+  canonical remediation and only link a runbook that resolves inside the
+  adopted `.governance` directory and exists on disk.
+- Replaced callback-level `ensure_config()` calls with the already loaded
+  read-only governance context. A missing or policy-free pre-push
+  authorization now fails closed instead of creating a default config and
+  allowing the push.
+- Proved the real prior hub command now reports the layout contract and leaves
+  its already-dirty status and file hashes unchanged.
+- Passed 46 focused tests, 570 full tests (2 skipped), scoped Ruff, governance,
+  wheel/sdist and the final Docker build.
 
 ## Blockers
 
 - None inside the recorded intent; proceed without a second confirmation.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.
+- Protected CI, exact-head review and merge remain delivery-stage work.

@@ -1,0 +1,38 @@
+2026-08-12 plan
+- ticket-041 allocated through project/new-ticket.sh in application workstream
+- initial acceptedBaseSha=11561fd3eed757eb2a0143c206b38577490389ba
+- initial plan commit=95a35208142267ec4ac519e9f0677130b7fae0bc
+
+2026-08-12 focused validation
+- uv run --frozen pytest -q tests/test_governance_delivery.py tests/test_governance_cmd.py
+- result: 46 passed
+- uv run --frozen ruff check <four scoped implementation/test files>
+- result: PASS
+
+2026-08-12 full validation
+- uv run --frozen pytest -q
+- result: 570 passed, 2 skipped
+- ./project/governance-check.sh --actor agent --base 11561fd3eed757eb2a0143c206b38577490389ba
+- result: GOV-PASS (0 errors, 0 warnings)
+- python3 -m build
+- result: wheel and sdist PASS
+- uv-run environment note: python -m build was unavailable there; system Python build backend succeeded
+- docker build -t goal:ticket-041 .
+- result: sha256:64b4c1eb67a8f579b919f302811b9f1c897a341749419146c7d787f257b061f3
+
+2026-08-12 real new-project source-hub probe
+- repeated governed pull-request dry-run with Goal 2.1.295 editable candidate
+- result: GOV-MANIFEST-001 identifies maintained source hub before target wrapper
+- before/after Git status and sha256(.gitignore, goal.yaml): unchanged
+- direct governance check routes to .github/workflows/ci.yml and rejects target adoption
+
+2026-08-12 implementation
+- initial implementation commit=83cdf267838a4be05188a7a6a38d8e162bd4dda3
+
+2026-08-12 base refresh
+- target main advanced to d898d3f699b4a7930397a59b5c81a1ac46e09171 through ticket-040 closure
+- governance correctly stopped with GOV-BASE-001 before publication
+- scope and architecture unchanged; acceptedBaseSha refreshed before rebase/revalidation
+- rebased plan commit=88cf7a9af6241b06983b243621365b4576902e9c
+- rebased implementation commit=ebb022252b26bd573c9238759974dbf5f0e23362
+- post-rebase: 570 passed, 2 skipped; scoped Ruff PASS; GOV-PASS 0/0
