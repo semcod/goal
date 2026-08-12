@@ -6,3 +6,5 @@
 - No human participant identity or content was generated.
 - Bounded the retry-safe producer alignment to default configuration and the
   package-manager registry; retained `goal.yaml` as separate governance work.
+- Added explicit retry safety to all three built-in Twine command producers and
+  exact regressions; full tests, Ruff and governance pass.

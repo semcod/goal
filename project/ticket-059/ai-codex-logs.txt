@@ -1,3 +1,5 @@
 2026-08-12T18:08:51Z ticket-059 allocated on clean accepted base d26817b4132d5a110ec0c4c9e3dc3672f94e2508 after ticket-058 closure and workspace cleanup.
 2026-08-12T18:08:51Z SESSION_EXECUTION_AUTHORIZATION recorded from the user's repeated instruction to repair and continue.
 2026-08-12T18:08:51Z scope: one built-in publish-configuration component containing the default Python strategy, pip/pipenv descriptors and one focused test module; governance-owned goal.yaml deferred to a dependent ticket.
+2026-08-12T18:11:08Z implementation: DEFAULT_CONFIG, pip and pipenv now emit exactly one --skip-existing in their Twine upload command; non-Twine descriptors are byte-unchanged. Added three exact regression cases.
+2026-08-12T18:11:08Z validation: 3 focused PASS; 618 full PASS/2 SKIP; scoped Ruff PASS; governance GOV-PASS 0 errors/0 warnings; git diff --check PASS. Existing late constants import received an explicit E402 exemption with no runtime change.

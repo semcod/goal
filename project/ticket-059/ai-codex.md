@@ -28,6 +28,11 @@ crossing into governance-owned `goal.yaml`.
   from the request to execute this work.
 - Kept `goal.yaml` in a separate dependent governance ticket so ownership and
   implementation budgets remain enforceable.
+- Updated the default Python strategy and both Twine package-manager
+  descriptors, with exact regressions for every producer.
+- Passed 3 focused and 618 full tests (2 existing skips), scoped Ruff,
+  governance and whitespace validation; moved to PUBLICATION for protected
+  exact-head review.
 
 ## Blockers
 
