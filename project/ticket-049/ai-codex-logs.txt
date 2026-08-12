@@ -1,0 +1,1 @@
+2026-08-12T15:20:00+02:00 initialized ticket 049 at accepted base 0c3cd7b after reproducing the committed-candidate PR resume gap twice

@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-049](project/ticket-049/README.md): safely resume governed
+  pull-request delivery when an authorized ticket commit exists ahead of the
+  remote base but the original run stopped before branch/PR creation. State:
+  `IN_PROGRESS / EDIT`; classification: `BUG / P1 / regression`.
+
 - [x] Deliver [ticket-048](project/ticket-048/README.md): let generic governed
   direct-main publication create or repair a GitHub Release without package
   assets, while keeping registry fallback artifact-strict and requiring an
