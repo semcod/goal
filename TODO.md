@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-047](project/ticket-047/README.md): publish the merged
+  source-hub health repair as Goal 2.1.297, verify immutable public artifacts
+  and use the fresh public CLI for the real `new-project` ticket-065 flow.
+  State: `IN_PROGRESS / EDIT`; classification: `SERVICE / P0 / requested`.
+
 - [ ] Deliver [ticket-046](project/ticket-046/README.md): run the maintained
   `new-project` source-hub health contract through Goal's headless check and
   governed delivery paths without installing the target package into the hub.

@@ -1,0 +1,110 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-047",
+  "summary": "Publish Goal 2.1.297 source-hub health",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "README.md",
+    "project/ticket-047/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "tests/**",
+    ".github/**",
+    ".env",
+    "**/*.pem",
+    "**/*secret*"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d97ada6f429b09b2024cafce002424126eb1de0f",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.297 is published from the exact clean merged source-hub health repair and proves the real new-project source-hub flow",
+    "nonGoals": [
+      "No executable source, dependency-set or top-level CHANGELOG change",
+      "No publication, tag or GitHub Release before protected merge",
+      "No duplicate or replacement registry artifact"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize the five existing release carriers through governed PR delivery, then publish from exact validated merged main",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": [
+            "VERSION",
+            "pyproject.toml",
+            "uv.lock",
+            "goal/__init__.py",
+            "README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Never replace immutable artifacts; issue a later patch if public verification fails"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal -a --delivery-mode pull-request --target-version 2.1.297 push --ticket ticket-047 --no-changelog"
+        ],
+        "evidence": "Real governed flow changes only declared carriers and creates one PR"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q",
+          "ruff check scoped paths",
+          "./project/governance-check.sh",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "Local and protected validation passes on the exact head"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "clean detached merge retest",
+          "goal -a --delivery-mode publish-only --force-publish"
+        ],
+        "evidence": "Registry effects originate only from validated authoritative main"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "fresh public-index goal==2.1.297 install",
+          "goal governance check --target-root /path/to/new-project",
+          "goal --delivery-mode pull-request --no-publish -a push --ticket ticket-065"
+        ],
+        "evidence": "Public CLI reports 2.1.297 and drives the real source-hub flow"
+      }
+    ]
+  }
+}
