@@ -41,9 +41,19 @@ that already-integrated repair without widening its application budget.
   PR #71.
 - Passed governance, scoped Ruff, exact carrier checks, wheel/sdist and Docker
   builds; recorded the artifact/image hashes and removed temporary outputs.
+- Bound protected CI and Validator App review to exact PR head `354121923...`,
+  then verified merge `866bebee...` parentage, tree equality and clean-merge
+  tests before any public release effect.
+- Published 2.1.297 to PyPI, an annotated tag and a final GitHub Release;
+  independently downloaded PyPI and Release assets share the recorded wheel
+  and sdist hashes.
+- Verified a fresh public Python 3.13 install and used that CLI to pass the real
+  new-project source-hub health contract and deliver ticket-065 PR #96.
+- Verified published new-project v0.15.0 through Goal against live glon; the
+  expected 33-change read-only plan preserved Git status and both user-owned
+  file hashes.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
-- New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+- None. Release, immutable evidence, fresh public install and downstream pilot
+  are complete.

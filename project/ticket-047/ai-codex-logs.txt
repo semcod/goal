@@ -2,3 +2,8 @@
 2026-08-12T12:27:00+02:00 clean Goal target/patch probes: no-change guard, zero delivery side effects
 2026-08-12T12:28:00+02:00 Goal explicit-target 2.1.297; 581 passed, 2 skipped; PR 71 candidate 9c4ff9c
 2026-08-12T12:30:00+02:00 wheel d592c494..., sdist 3b2719c5..., Docker fc1f80ed...; artifacts removed
+2026-08-12T12:32:00+02:00 PR 71 exact head 354121923c7ceb186dc6378e75686347dd3a3c09; Python 3.12/3.13 CI PASS; Validator run 31587897149 review 4915531453 APPROVED; merge 866bebee75b118f2285bb90a70284925f8d89d68
+2026-08-12T12:36:00+02:00 clean merge: 581 passed, 2 skipped; Ruff/governance/wheel/sdist/Docker PASS before release effects
+2026-08-12T12:41:16+02:00 PyPI/tag/Release: v2.1.297 peels to 866bebee; final Release published; wheel 01876c5b..., sdist 7e4172b7... independently matched both channels
+2026-08-12T12:44:00+02:00 fresh public Python 3.13 install reports 2.1.297; public source-hub health PASS (15 JSON, 9 shell suites)
+2026-08-12T12:53:00+02:00 downstream: public Goal delivered new-project PR 96; published new-project v0.15.0 production check reports 33 read-only glon changes with user files unchanged

@@ -12,3 +12,9 @@
   skipped premature publication/tagging and opened PR #71.
 - Governance, Ruff, exact two-artifact build and Docker validation pass; hashes
   are recorded and all generated validation outputs were removed.
+- Protected CI and Validator App approved exact PR head `354121923`; trusted
+  merge `866bebee` retained an identical tree and passed clean-merge validation.
+- Published Goal 2.1.297 to PyPI, annotated tag and final GitHub Release; both
+  independently downloaded channels match the recorded immutable hashes.
+- Verified a fresh public install, native new-project source-hub health,
+  governed ticket-065 delivery and a no-write published-standard glon pilot.
