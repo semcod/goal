@@ -2,7 +2,6 @@ services:
   goal:
     build:
       context: .
-    image: goal:local
     network_mode: none
     working_dir: /workspace
     volumes:

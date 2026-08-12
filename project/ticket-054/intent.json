@@ -1,0 +1,42 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-054",
+  "summary": "Remove the mutable local Compose image tag",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": ["compose.yml", "project/ticket-054/**", "TODO.md", "project/TICKETS.md"],
+  "forbiddenPaths": [".governance/**", ".github/**", "project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": ["ticket-052"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b5b37b43d036acb86032a17901c3f8bae4ce7dcf",
+    "targetBranch": "main",
+    "outcome": "Compose keeps a local build without a mutable external image tag",
+    "nonGoals": ["No Dockerfile change", "No managed governance payload change", "No registry publication"],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {"maxImplementationFiles": 1, "maxAffectedComponents": 1, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Omit image for the existing local-only Compose build as prescribed by GOV-DOCKER-002",
+      "components": [{"name": "local-compose", "paths": ["compose.yml"]}],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore the unmerged line only if a deterministic consumer proves it is required, then pin an external image by digest"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["inspect compose.yml"], "evidence": "project/ticket-054/ai-codex-logs.txt"},
+      {"criterion": "AC-02", "commands": ["docker compose config", "new-project 0.16.1 governance probe"], "evidence": "project/ticket-054/ai-codex-logs.txt"},
+      {"criterion": "AC-03", "commands": ["pytest -q", "./project/governance-check.sh"], "evidence": "project/ticket-054/ai-codex-logs.txt"}
+    ]
+  }
+}
