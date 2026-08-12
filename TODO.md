@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-052](project/ticket-052/README.md): install the exact
+  published new-project 0.16.1 remote-lifecycle workflow after its checker
+  prerequisite. State: `IN_PROGRESS / EDIT`; classification:
+  `BUG / P1 / regression`; depends on ticket-051.
+
 - [x] Deliver [ticket-051](project/ticket-051/README.md): install the exact
   published new-project 0.16.1 branch lifecycle checker as the
   governance-owned prerequisite for the separately owned remote-lifecycle

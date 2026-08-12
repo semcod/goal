@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-052",
+  "summary": "Install the managed new-project remote lifecycle workflow",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    ".github/workflows/new-project-governance.yml",
+    "project/ticket-052/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".governance/**",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": ["ticket-051"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3ce958efebd906a28d06aa36726d47912f8be516",
+    "targetBranch": "main",
+    "outcome": "Goal runs the published managed remote branch lifecycle workflow",
+    "nonGoals": [
+      "No governance package or manifest lock upgrade",
+      "No Goal runtime or release-version change",
+      "No change to the already integrated checker"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Install only the infrastructure-owned workflow after its governance-owned executable prerequisite",
+      "components": [
+        {
+          "name": "remote-lifecycle-workflow",
+          "paths": [".github/workflows/new-project-governance.yml"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the unmerged workflow branch; after merge retain the workflow as managed new-project payload"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["sha256sum .github/workflows/new-project-governance.yml"],
+        "evidence": "project/ticket-052/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["focused workflow structure and checker invocation probes"],
+        "evidence": "project/ticket-052/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q", "./project/governance-check.sh"],
+        "evidence": "project/ticket-052/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
