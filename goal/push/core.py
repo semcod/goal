@@ -69,6 +69,44 @@ def _resolve_release_tag(
     return None
 
 
+def _recover_existing_generic_release_decision(
+    current_version: str,
+    version_decision: Any,
+    *,
+    clean_force_publish: bool,
+    delivery: Any,
+    project_types: List[str],
+    publish_config: Any,
+) -> tuple[Any, bool]:
+    """Bind a clean generic Release repair to its exact current-version tag."""
+    if (
+        not clean_force_publish
+        or delivery is None
+        or delivery.mode != "direct-main"
+        or project_types
+        or getattr(version_decision, "reason", None) != "normal-bump"
+    ):
+        return version_decision, False
+
+    from dataclasses import replace
+
+    from goal.publish.github_fallback import get_github_release_config
+
+    release_config = get_github_release_config(publish_config)
+    if not (release_config and release_config.create_on_tag):
+        return version_decision, False
+
+    reuse_exact_annotated_tag(current_version)
+    return (
+        replace(
+            version_decision,
+            target_version=current_version,
+            reason="existing-tag-release-repair",
+        ),
+        True,
+    )
+
+
 def _mirror_github_release(
     *,
     tag_name: str | None,
@@ -628,6 +666,21 @@ def execute_push_workflow(
         if skip_release:
             new_version = current_version
 
+    existing_release_repair = False
+    if version_decision is not None:
+        version_decision, existing_release_repair = (
+            _recover_existing_generic_release_decision(
+                current_version,
+                version_decision,
+                clean_force_publish=clean_force_publish,
+                delivery=delivery,
+                project_types=project_types,
+                publish_config=ctx_obj.get("config"),
+            )
+        )
+        if existing_release_repair:
+            new_version = current_version
+
     version_release_intent = bool(
         not commit_only
         and skip_release
@@ -658,6 +711,7 @@ def execute_push_workflow(
         if version_decision is None or version_decision.reason not in {
             "already-bumped",
             "explicit-target",
+            "existing-tag-release-repair",
         }:
             reason = getattr(version_decision, "reason", "unresolved")
             raise click.ClickException(

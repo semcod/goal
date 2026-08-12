@@ -18,3 +18,7 @@
   new-project retry exposed an earlier normal-bump guard before tag recovery.
 - Returned ticket 048 to `EDIT`; no mutation occurred during the failed real
   attempt and v0.16.0 remains the immutable repair target.
+- Bound the normal-bump decision back to the current version only for exact
+  generic create-on-tag repair, with full-workflow and negative regressions.
+- Passed 34 focused and 592 full tests (2 skipped), Ruff, governance,
+  wheel/sdist and Docker validation, then re-entered `PUBLICATION`.

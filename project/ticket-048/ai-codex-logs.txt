@@ -9,3 +9,7 @@
 2026-08-12T14:36:00+02:00 clean merge PASS: 588 tests, 2 skipped, GOV-PASS
 2026-08-12T14:39:00+02:00 real new-project retry failed closed before mutation: normal-bump 0.16.0 -> 0.16.1 precedes tag recovery
 2026-08-12T14:40:00+02:00 ticket returned to IN_PROGRESS/EDIT for full-workflow regression and ordering repair
+2026-08-12T14:43:00+02:00 accepted base refreshed to trusted PR 72 merge 320ad3d; intent scope and architecture unchanged
+2026-08-12T14:44:00+02:00 follow-up focused PASS: 34 tests, scoped Ruff and GOV-PASS
+2026-08-12T14:44:00+02:00 follow-up full PASS: 592 passed, 2 skipped
+2026-08-12T14:46:00+02:00 follow-up wheel/sdist and Docker PASS; temporary outputs removed; state IN_PROGRESS/PUBLICATION

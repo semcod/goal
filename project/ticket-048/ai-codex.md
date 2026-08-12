@@ -60,10 +60,19 @@ configured Release side effect fails.
   generic create-on-tag repair with a `normal-bump` decision and an existing
   annotated current-version tag at exact HEAD, then retain normal first-release
   and package behavior.
+- Refreshed the accepted base from the original ticket allocation SHA to the
+  trusted PR #72 merge `320ad3d`; scope, architecture and budgets are unchanged.
+- Added a full-workflow regression for the observed normal-bump ordering and
+  narrowed recovery to clean generic direct-main with configured create-on-tag.
+  The decision becomes `existing-tag-release-repair -> 0.16.0` only after
+  exact annotated current-version tag verification.
+- Passed 34 focused and 592 full tests (2 skipped), scoped Ruff, governance,
+  wheel/sdist and pinned-base Docker validation; temporary outputs were removed.
+- Moved the active ticket back to `PUBLICATION` for a protected follow-up PR.
 
 ## Blockers
 
-- AC-04 remains incomplete until the end-to-end retry binds v0.16.0 instead of
-  proposing 0.16.1; implementation continues within the existing scope.
+- AC-04 remains incomplete until the protected follow-up merge is used for the
+  real v0.16.0 repair; implementation is ready for exact-head validation.
 - New authority remains required for destructive action, secret access, new
   external coordination or material objective expansion.
