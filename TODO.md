@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-059](project/ticket-059/README.md): align the default
+  Python strategy and pip/pipenv descriptors with ticket-058's retry-safe
+  Twine contract. State: `IN_PROGRESS / PUBLICATION`; 618 tests (2 skips),
+  scoped Ruff and governance pass; classification:
+  `BUG / P1 / regression`; depends on ticket-058.
+
 - [x] Deliver [ticket-058](project/ticket-058/README.md): make configured Twine
   publication retries idempotent at runtime and migrate legacy commands
   through doctor PY013. State: `DONE / DONE`; configuration producers and

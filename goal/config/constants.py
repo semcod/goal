@@ -232,7 +232,7 @@ DEFAULT_CONFIG = {
         "python": {
             "test": "pytest tests/ -v",
             "build": "python -m build",
-            "publish": "twine upload dist/{project_name}-{version}*",  # placeholder, replaced on init
+            "publish": "twine upload --skip-existing dist/{project_name}-{version}*",  # placeholder, replaced on init
             "publish_enabled": True,
             "dependencies": {
                 "file": "requirements.txt",
@@ -477,7 +477,7 @@ DEFAULT_CONFIG = {
     },
 }
 
-from goal.validators.tokens import get_default_token_patterns
+from goal.validators.tokens import get_default_token_patterns  # noqa: E402
 
 DEFAULT_CONFIG["advanced"]["file_validation"]["token_patterns"] = (
     get_default_token_patterns()
