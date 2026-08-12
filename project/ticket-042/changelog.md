@@ -10,3 +10,5 @@
   no-publish flags a coherent tested plain delivery.
 - Passed focused/full tests, lint, governance, package and container builds;
   removed the disposable validation image.
+- Delivered exact-head-approved PR #67, revalidated its clean merge and
+  removed every ticket-owned branch, worktree and image artifact.

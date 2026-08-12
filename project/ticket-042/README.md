@@ -2,8 +2,8 @@
 
 - **ID**: ticket-042
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -50,6 +50,14 @@ version carriers.
   `GOV-PASS`, wheel/sdist build and Docker image
   `sha256:284242e79a0d28db725429c5b3aef6e1f270b529552ca89aabaa018cc18fbc63`.
   The temporary tagged image was removed immediately after the build.
+- Goal's repaired commit-only path itself passed 573 tests (2 skips), kept
+  2.1.295 unchanged, created only PR #67, and performed no publish/tag action.
+  GitHub CI passed on Python 3.12/3.13; Validator App review `4914980609`
+  approved exact head `910fcc685127198fbe798cad178c483feb096308`.
+- PR #67 merged as `main@f31e07b1b23a30807b92e6b76ac6b3418ea459fc`.
+  A detached clean-merge retest passed 53 focused tests and `GOV-PASS`.
+  The remote branch disappeared automatically; the local worktree, branch and
+  Docker validation image were removed after reachability proof.
 
 ## Participants
 

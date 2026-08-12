@@ -41,9 +41,13 @@ before Click rendered subcommand help.
 - Passed 573 full tests (2 existing skips), deterministic governance,
   wheel/sdist and the final Docker build; removed the temporary validation
   image after recording its immutable image ID.
+- Used the repaired full Goal workflow for exact commit-only PR delivery.
+  Python 3.12/3.13 CI and the trusted Validator App approved exact head
+  `910fcc6`; PR #67 merged as `main@f31e07b`.
+- Revalidated the clean merge in a detached worktree, then removed the remote
+  ticket branch, local worktree and branch only after ancestry proof.
 
 ## Blockers
 
 - None inside the recorded intent; proceed without a second confirmation.
-- New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+- No blocker remains for this completed ticket.

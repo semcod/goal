@@ -2,11 +2,12 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-042](project/ticket-042/README.md): keep subcommand help
+- [x] Deliver [ticket-042](project/ticket-042/README.md): keep subcommand help
   read-only and make the explicit no-version/no-tag/no-publish combination a
   coherent plain delivery even with committed-unreleased package source.
-  State: `IN_PROGRESS / PUBLICATION`; 573 tests pass (2 existing skips), plus
-  scoped Ruff, governance, package/Docker builds and the isolated help probe;
+  State: `DONE / DONE`; 573 tests pass (2 existing skips), CI and Validator
+  approved exact head `910fcc6`, PR #67 merged as `main@f31e07b`, clean-merge
+  focused/governance checks pass and all ticket resources are removed;
   classification: `BUG / P0 / regression`.
 
 - [x] Deliver [ticket-041](project/ticket-041/README.md): distinguish adopted
