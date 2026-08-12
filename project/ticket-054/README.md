@@ -2,8 +2,8 @@
 
 - **ID**: ticket-054
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -19,7 +19,7 @@ prerequisite for ticket 053's new-project 0.16.1 adoption.
 - [x] AC-01: `compose.yml` contains the local build and no mutable `image` key.
 - [x] AC-02: `docker compose config` resolves a valid local-build-only service
       and the adopted 0.16.1 governance Docker rule passes in a bounded probe.
-- [ ] AC-03: Full Goal tests and current governance pass before protected PR;
+- [x] AC-03: Full Goal tests and current governance pass before protected PR;
       hosted Python 3.12/3.13 CI, remote lifecycle and exact-head Validator
       approval are required before merge.
 
@@ -34,3 +34,7 @@ prerequisite for ticket 053's new-project 0.16.1 adoption.
   isolated network and bind mount, without an `image` key.
 - The exact published new-project 0.16.1 validator passes against this bounded
   diff; current deterministic governance also passes.
+- Full Goal validation passed with 600 tests and 2 existing skips. Hosted
+  Python 3.12/3.13 CI and live remote lifecycle passed; trusted Validator App
+  review `4917953527` approved exact head `d986ea6db39c...`, and PR #85 merged
+  as `6c7da53595bf...`.

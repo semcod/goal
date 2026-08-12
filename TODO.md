@@ -2,10 +2,12 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-054](project/ticket-054/README.md): remove the redundant
+- [x] Deliver [ticket-054](project/ticket-054/README.md): remove the redundant
   mutable `goal:local` Compose image tag while retaining the local build. State:
-  `IN_PROGRESS / VALIDATION`; classification: `BUG / P1 / regression`; prerequisite
-  for ticket-053.
+  `DONE / DONE`; PR #85 passed 600 tests (2 existing skips), hosted CI, live
+  lifecycle and trusted exact-head Validator approval, then merged as
+  `6c7da535...`; classification: `BUG / P1 / regression`; prerequisite for
+  ticket-053.
 
 - [ ] Deliver [ticket-053](project/ticket-053/README.md): adopt the complete
   published new-project 0.16.1 governance package, including deterministic
