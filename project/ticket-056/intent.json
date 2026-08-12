@@ -73,9 +73,7 @@
       ],
       "responsibilityChanges": false,
       "interfaceChanges": [],
-      "dataChanges": [
-        "Move credential-free local delivery events from the checkout to git-common-dir/goal-delivery/delivery-events.jsonl"
-      ],
+      "dataChanges": [],
       "ui": {
         "impact": "none",
         "states": [],
@@ -112,8 +110,9 @@
           "pytest -q",
           "ruff check goal/governance/delivery.py goal/push/core.py tests/test_governance_delivery.py tests/test_delivery_integrity.py",
           "./project/governance-check.sh",
-          "make package",
-          "make docker-smoke"
+          "make build",
+          "docker build -t goal:ticket-056 .",
+          "docker run --rm goal:ticket-056 --help"
         ],
         "evidence": "project/ticket-056/ai-codex-logs.txt"
       }

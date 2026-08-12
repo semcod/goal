@@ -6,3 +6,5 @@
 - No human participant identity or content was generated.
 - Recorded the real bare-goal and checkout-audit mutation reproductions.
 - Bound the repair to early ticket resolution and Git-common audit storage.
+- Implemented fail-closed active-ticket inference and checkout-neutral audit
+  persistence with focused primary/linked worktree regressions.

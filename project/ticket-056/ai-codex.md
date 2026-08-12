@@ -37,6 +37,14 @@ not in the candidate checkout.
   from the request to execute this work.
 - Captured the real todo2code delivery reproduction and bounded the repair to
   four implementation files in two existing components.
+- Added deterministic ticket inference before project detection/bootstrap:
+  explicit `--ticket` wins, exactly one `IN_PROGRESS` ticket is inferred, and
+  zero/multiple candidates fail closed before mutation.
+- Moved credential-free delivery events to
+  `<git-common-dir>/goal-delivery/delivery-events.jsonl`, keeping primary and
+  linked worktrees clean while preserving clone-local audit history.
+- Added focused regressions for resolution, linked-worktree audit placement,
+  unchanged candidate revalidation and the bare `goal -a` resume path.
 
 ## Blockers
 

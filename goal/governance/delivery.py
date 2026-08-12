@@ -190,6 +190,11 @@ def _git_dir(root: Path) -> Path:
     return (raw if raw.is_absolute() else root / raw).resolve()
 
 
+def _git_common_dir(root: Path) -> Path:
+    raw = Path(_git_value("rev-parse", "--git-common-dir", cwd=root))
+    return (raw if raw.is_absolute() else root / raw).resolve()
+
+
 def missing_governance_package_files(root: Path) -> list[str]:
     """Return missing files from the adopted target package contract."""
     return [
@@ -497,7 +502,7 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
 
 
 def _audit_path(root: Path) -> Path:
-    directory = root / ".governance"
+    directory = _git_common_dir(root) / "goal-delivery"
     directory.mkdir(parents=True, exist_ok=True)
     return directory / "delivery-events.jsonl"
 
@@ -527,6 +532,50 @@ def record_delivery_event(
     }
     with _audit_path(root).open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(event, sort_keys=True) + "\n")
+
+
+def resolve_pull_request_ticket(
+    policy: DeliveryPolicy,
+    ticket: str | None,
+    *,
+    cwd: Path | None = None,
+) -> str | None:
+    """Resolve one governed ticket before pull-request workflow mutations."""
+    if policy.mode != "pull-request" or ticket:
+        return ticket
+
+    root = _repository_root(cwd)
+    active: list[str] = []
+    for directory in sorted((root / "project").glob("ticket-*")):
+        if not directory.is_dir() or re.fullmatch(r"ticket-[0-9]+", directory.name) is None:
+            continue
+        readme = directory / "README.md"
+        try:
+            content = readme.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            continue
+        except (OSError, UnicodeDecodeError) as error:
+            raise click.ClickException(
+                f"cannot inspect governed ticket {directory.name}: {error}"
+            ) from error
+        if re.search(
+            r"^-\s+\*\*Status\*\*:\s*IN_PROGRESS(?:\s|$)",
+            content,
+            flags=re.IGNORECASE | re.MULTILINE,
+        ):
+            active.append(directory.name)
+
+    if len(active) == 1:
+        return active[0]
+    if not active:
+        raise click.ClickException(
+            "pull-request delivery requires `--ticket` or exactly one "
+            "IN_PROGRESS governance ticket; none was found"
+        )
+    raise click.ClickException(
+        "pull-request delivery requires explicit `--ticket` when multiple "
+        "IN_PROGRESS governance tickets exist: " + ", ".join(active)
+    )
 
 
 @contextmanager

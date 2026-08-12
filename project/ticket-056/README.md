@@ -3,7 +3,7 @@
 - **ID**: ticket-056
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -28,12 +28,12 @@ other delivery modes remain unchanged.
 
 - [x] AC-01: The user's request to continue implementation and fix Goal records
   `SESSION_EXECUTION_AUTHORIZATION` for this bounded repair.
-- [ ] AC-02: Bare governed `goal -a` resolves exactly one active ticket and
+- [x] AC-02: Bare governed `goal -a` resolves exactly one active ticket and
   resumes a clean committed candidate before bootstrap, doctor, TODO handling,
   staging, versioning or commit generation.
-- [ ] AC-03: An explicit `--ticket` keeps precedence; zero or multiple active
+- [x] AC-03: An explicit `--ticket` keeps precedence; zero or multiple active
   tickets fail before mutation and name the required corrective option.
-- [ ] AC-04: Delivery events are appended below the Git common directory and
+- [x] AC-04: Delivery events are appended below the Git common directory and
   never alter `git status` in a primary or linked worktree.
 - [ ] AC-05: Focused regressions, the full Python suite, Ruff, governance,
   package build and Docker smoke pass before protected PR delivery.

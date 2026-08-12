@@ -2,3 +2,7 @@
 2026-08-12T16:42:00Z SESSION_EXECUTION_AUTHORIZATION recorded from the user's continued implementation, test and push request.
 2026-08-12T16:42:00Z reproduction: bare governed goal -a on todo2code ticket-075 skipped committed resume, entered mutating doctor/bootstrap and created root/nested environments and project files before interruption; artifacts were removed without push.
 2026-08-12T16:42:00Z reproduction: explicit-ticket resume writes .governance/delivery-events.jsonl before exact candidate revalidation, requiring an unsafe local ignore workaround.
+2026-08-12T16:46:30Z implementation: four bounded files changed; audit events now use git rev-parse --git-common-dir and pull-request ticket resolution occurs before project type detection/bootstrap.
+2026-08-12T16:46:30Z focused: 7 governance-delivery tests PASS; 3 delivery-integrity resume tests PASS; Ruff and compileall PASS; file hashes stayed stable during verification.
+2026-08-12T16:48:00Z gate preflight: GOV-ARCHITECTURE-001 exposed an overdeclared persistent data migration. The repair moves no existing data and changes no data contract, so architecture.dataChanges was corrected to [] without implementation change.
+2026-08-12T17:03:00Z validation: focused combined suites 54 PASS; full Python suite 607 PASS/2 SKIP; scoped Ruff PASS; intent commands corrected to the repository's actual make build and Docker build/run interfaces before their execution.
