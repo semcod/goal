@@ -2,10 +2,12 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-037](project/ticket-037/README.md): require exact
+- [x] Deliver [ticket-037](project/ticket-037/README.md): require exact
   annotated-tag evidence before Goal executes a `new-project` adoption
   generator, with an explicit non-production candidate test path. A dependent
-  ticket will verify GitHub Release metadata. State: `IN_PROGRESS / VALIDATION`; classification:
+  ticket will verify GitHub Release metadata. State: `DONE / DONE`; 551 tests
+  passed (2 skipped), Python 3.12/3.13 CI passed, Validator Agent approved the
+  exact head, and PR #62 merged as `main@069b678`; classification:
   `BUG / P0 / regression`.
 
 - [x] Deliver [ticket-036](project/ticket-036/README.md): run the immutable

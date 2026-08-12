@@ -2,8 +2,8 @@
 
 - **ID**: ticket-037
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -42,6 +42,11 @@ follow-up slice after this bounded repair merges.
 - Scoped Ruff, deterministic governance, package build and Docker build pass.
 - A live local-mirror pilot accepts released `v0.14.1@63a3d56` and rejects
   unpublished `main@e88a6d2` because the tag resolves to a different commit.
+- PR #62 passed Python 3.12/3.13 CI, received deterministic Validator Agent
+  approval for exact head `4032e04d706f75c0ce8f3ab2c9129d78d6c2b7f7`, and
+  merged as `main@069b678d056a9b4ace9b731fd62716fc4aa7172d`.
+- GitHub automatically deleted the merged remote head; the clean local
+  worktree and its disposable branch were removed after ancestry verification.
 
 ## Participants
 

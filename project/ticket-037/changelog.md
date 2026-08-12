@@ -11,3 +11,5 @@
   default production path.
 - Added fail-closed regression tests and live released/unreleased pilot
   evidence.
+- Merged exact-head PR #62 after CI and deterministic Validator Agent approval,
+  then removed its remote head and clean local worktree/branch.
