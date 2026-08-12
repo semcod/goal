@@ -57,6 +57,9 @@ authoritative value never converges.
   and
   `goal-2.1.295.tar.gz@3c912763d437edb83dbaab0089aad2b096d42617f2560930fcc831d50361addc`;
   they are validation-only and are not published by this ticket.
+- After terminal Goal 2.1.296 closure, the branch was refreshed to exact
+  `main@ff4064321427f8b3d8c1c150d86b4532535545a7`. Governance passes and the
+  resulting PR diff contains no ticket-043 release carrier or README change.
 
 ## Participants
 
