@@ -21,3 +21,8 @@
 2026-08-12T15:01:00+02:00 metadata correction PASS: 36 focused, 594 full with 2 skips, Ruff, GOV-PASS and Docker ecdc4e79; state IN_PROGRESS/PUBLICATION
 2026-08-12T15:03:00+02:00 public Goal candidate commit 0caa40d created; PR branch creation blocked by stale local goal/ticket-048 alias
 2026-08-12T15:03:00+02:00 verified stale alias commit f4435f2 is merged into origin/main, deleted local ref only; guarded retry pending
+2026-08-12T15:04:00+02:00 PR 74 exact head c65916f passed CI and Validator run 31599336116 review 4916776878; merged as db2da6e
+2026-08-12T15:05:00+02:00 clean merge PASS: 594 tests, 2 skipped, GOV-PASS
+2026-08-12T15:05:34+02:00 production repair SUCCESS: zero files changed; canonical assetless new-project v0.16.0 Release; annotated tag and remote main unchanged at 6800f013
+2026-08-12T15:06:00+02:00 all acceptance criteria complete; ticket state DONE/DONE
+2026-08-12T15:08:00+02:00 governed closure commit faa5418 created; first PR handoff stopped on the already-merged local alias, which was verified and removed before retry

@@ -2,8 +2,8 @@
 
 - **ID**: ticket-048
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -17,14 +17,14 @@ and peels to the clean current HEAD.
 
 ## Acceptance criteria
 
-- [ ] AC-01: A configured generic `create_on_tag` release succeeds without
+- [x] AC-01: A configured generic `create_on_tag` release succeeds without
   assets, while PyPI/registry fallback still requires matching artifacts.
-- [ ] AC-02: Clean governed `direct-main --force-publish` repairs a missing
+- [x] AC-02: Clean governed `direct-main --force-publish` repairs a missing
   Release only from an existing annotated version tag peeled to exact HEAD;
   mismatched or lightweight tags fail closed.
-- [ ] AC-03: Focused/full tests, Ruff, governance and Docker pass without new
+- [x] AC-03: Focused/full tests, Ruff, governance and Docker pass without new
   dependencies or package-version changes.
-- [ ] AC-04: After exact-head approval and merge, the corrected Goal code
+- [x] AC-04: After exact-head approval and merge, the corrected Goal code
   completes the already-tagged `new-project` v0.16.0 GitHub Release.
 
 ## Risks
@@ -97,6 +97,22 @@ and peels to the clean current HEAD.
   scoped Ruff and `GOV-PASS`; pinned-base Docker image
   `sha256:ecdc4e79bd5c1d51a487cc3c2bcf312a832ad56651e99c5b4b3aef34d5b25fd1`
   built successfully and was removed.
+
+## Completion evidence
+
+- PR #74 exact head `c65916ff11180115e482e2d5604166683e9ede62`
+  passed protected Python 3.12/3.13 CI. Validator App run `31599336116`
+  produced exact-head approval review `4916776878`; trusted merge
+  `db2da6e7e4176f078d1e2a1bcec790db79f9c62a` has an identical PR tree.
+- The clean merge passed 594 tests with 2 existing skips and `GOV-PASS`.
+- The merged Goal flow selected
+  `existing-tag-release-repair -> 0.16.0`, changed zero files and reconciled
+  the existing Release to canonical title `new-project v0.16.0` and notes
+  `Automated release v0.16.0` without creating package assets.
+- The final Release is non-draft and non-prerelease at
+  `https://github.com/wellmanifest/new-project/releases/tag/v0.16.0`.
+  Annotated `v0.16.0`, local HEAD and remote `main` all resolve to unchanged
+  `6800f0138bc9063eb2dacb0a8b797dedcafb7952`.
 
 ## Participants
 

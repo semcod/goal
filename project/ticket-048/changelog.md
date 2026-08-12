@@ -30,3 +30,10 @@
   assetless Release title/notes and quoted all mutable `gh release` arguments.
 - Passed 36 focused and 594 full tests (2 skipped), Ruff, governance and Docker,
   then re-entered `PUBLICATION` for exact-head validation.
+- PR #74 passed protected CI and exact-head Validator App approval, merged as
+  `main@db2da6e`, and its clean merge passed 594 tests (2 skipped) plus
+  governance.
+- The merged code reconciled the real assetless `new-project` v0.16.0 Release
+  to canonical configured metadata with zero repository changes; annotated
+  tag and remote main remain at `6800f013...`.
+- Completed all acceptance criteria and closed ticket 048 as `DONE / DONE`.

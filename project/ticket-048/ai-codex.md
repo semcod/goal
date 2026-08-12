@@ -89,10 +89,16 @@ configured Release side effect fails.
   `goal/ticket-048` alias from already merged PR #73. Verified that alias was
   an ancestor of `origin/main`, deleted only the local ref, and retained the
   candidate commit for a guarded delivery retry.
+- PR #74 exact head `c65916f...` passed Python 3.12/3.13 CI and Validator App
+  run `31599336116` with approval review `4916776878`, then merged as
+  `main@db2da6e`; the clean merge passed 594 tests (2 skipped) and governance.
+- Re-ran the real clean `new-project` repair from merged Goal. It reused exact
+  annotated `v0.16.0`, changed zero files, edited the existing assetless
+  Release to canonical title `new-project v0.16.0`, and left both remote main
+  and the peeled tag at `6800f013...`.
+- Marked all acceptance criteria and the ticket `DONE / DONE` after recording
+  immutable production evidence.
 
 ## Blockers
 
-- AC-04's Release exists, but closure waits for protected merge and the clean
-  canonical-metadata re-run.
-- New authority remains required for destructive action, secret access, new
-  external coordination or material objective expansion.
+- None.

@@ -2,16 +2,15 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-048](project/ticket-048/README.md): let generic governed
+- [x] Deliver [ticket-048](project/ticket-048/README.md): let generic governed
   direct-main publication create or repair a GitHub Release without package
   assets, while keeping registry fallback artifact-strict and requiring an
-  existing recovery tag to be annotated and exact-HEAD. State:
-  `IN_PROGRESS / PUBLICATION`; PR #72 and #73 merged the release and exact-version
-  repairs. The real v0.16.0 Release now exists without assets and with its
-  original tag/main unchanged, but its title leaked the temporary checkout
-  directory. Canonical project-name reconciliation passes 36 focused and 594
-  full tests (2 skipped), Ruff, governance and Docker; exact-head validation
-  is pending.
+  existing recovery tag to be annotated and exact-HEAD. State: `DONE / DONE`;
+  PR #72, #73 and #74 merged the release, version-recovery and canonical
+  metadata repairs after protected CI and exact-head Validator approvals. The
+  clean final merge passes 594 tests (2 skipped) and governance; the real
+  assetless `new-project v0.16.0` Release is canonical while its annotated tag
+  and remote main remain unchanged at `6800f013...`.
   Classification:
   `BUG / P0 / regression`.
 
