@@ -5,7 +5,9 @@
 - [ ] Deliver [ticket-044](project/ticket-044/README.md): retry one otherwise
   valid open PR's transiently stale head after a successful governed push,
   while preserving the terminal exact-head failure. State:
-  `IN_PROGRESS / EDIT`; classification: `BUG / P0 / regression`.
+  `IN_PROGRESS / VALIDATION`; 18 focused and 574 full tests pass (2 existing
+  skips), with Ruff, governance, package and Docker builds passing;
+  classification: `BUG / P0 / regression`.
 
 - [x] Deliver [ticket-042](project/ticket-042/README.md): keep subcommand help
   read-only and make the explicit no-version/no-tag/no-publish combination a

@@ -32,6 +32,14 @@ can be left behind.
 - Recorded the live ticket-043 failure as evidence: the controlled push
   succeeded, the first PR API view returned the prior SHA, and a subsequent
   read resolved the current SHA without another write.
+- Added a four-attempt, one-second fixed retry that repeats only an otherwise
+  valid single-PR result with a stale head. Absence, ambiguity, invalid JSON,
+  invalid entries and query failures still return or fail immediately.
+- Added zero-wall-clock regression coverage for both stale-then-current
+  convergence and persistent-stale exhaustion.
+- Passed 18 focused and 574 full tests (2 existing skips), scoped Ruff,
+  governance, wheel/sdist build and Docker build; removed the disposable
+  Docker image after recording its ID.
 
 ## Blockers
 
