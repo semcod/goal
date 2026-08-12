@@ -12,3 +12,5 @@
   checkout or sibling publisher commands.
 - Passed 615 full tests (2 existing skips), scoped Ruff and deterministic
   governance before protected publication.
+- Recorded exact-head Validator approval, unchanged-tree merge and green
+  post-merge Python 3.12/3.13; closed the implementation lifecycle.

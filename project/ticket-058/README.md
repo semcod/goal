@@ -2,8 +2,8 @@
 
 - **ID**: ticket-058
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -30,7 +30,7 @@ reported both artifacts as already present. No registry object was replaced.
   pattern and auto-fixes either defect to the safe canonical command.
 - [x] AC-04: Focused and full tests, Ruff, governance and a bounded live Glon
   reproduction prove a retry succeeds without modifying the source checkout.
-- [ ] AC-05: Protected CI and Validator Agent approve the exact final PR head
+- [x] AC-05: Protected CI and Validator Agent approve the exact final PR head
   before merge.
 
 ## Non-goals
@@ -65,3 +65,9 @@ reported both artifacts as already present. No registry object was replaced.
   skipped both existing immutable files. The bounded clone was removed.
 - The full suite passes 615 tests with 2 existing skips; scoped Ruff,
   governance and whitespace validation also pass on the final candidate.
+- PR #96 passed Python 3.12/3.13 and remote lifecycle on exact HEAD
+  `21af56d709b0802b8bdac4bb66ce8a2e4e6f3d51`. Validator run
+  `31625243552` and review `4919597743` deterministically approved that SHA.
+- PR #96 merged as `f1e5c0e79741e032214d6ec88cdf52e347a40c22`; its second parent and
+  tree equal the approved candidate. Post-merge CI `31625465011` passed both
+  supported Python versions and the remote ticket branch was deleted.
