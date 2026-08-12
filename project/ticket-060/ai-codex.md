@@ -27,6 +27,10 @@ code or the already-correct Node/Rust publishers.
   from the request to execute this work.
 - Preserved the existing Node and Rust strategy values as explicit acceptance
   evidence rather than widening the change.
+- Changed only the Python publish scalar and structurally verified all three
+  strategy values.
+- Passed 618 full tests (2 existing skips), governance and whitespace
+  validation; moved to PUBLICATION for protected exact-head review.
 
 ## Blockers
 

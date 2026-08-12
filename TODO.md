@@ -4,7 +4,8 @@
 
 - [ ] Deliver [ticket-060](project/ticket-060/README.md): align Goal's own
   tracked Python strategy with the retry-safe Twine contract while preserving
-  Node and Rust publishers. State: `IN_PROGRESS / EDIT`; classification:
+  Node and Rust publishers. State: `IN_PROGRESS / PUBLICATION`; 618 tests
+  (2 skips), structural checks and governance pass; classification:
   `BUG / P1 / regression`; depends on ticket-059.
 
 - [x] Deliver [ticket-059](project/ticket-059/README.md): align the default
