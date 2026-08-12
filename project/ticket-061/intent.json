@@ -20,7 +20,6 @@
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md",
-    "goal/**/*.py",
     "tests/**",
     ".github/**",
     ".env",

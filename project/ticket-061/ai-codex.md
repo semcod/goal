@@ -28,6 +28,11 @@ Glon copy so existing user work remains untouched.
   from the request to execute this work.
 - Declared a metadata-only release boundary; tickets 058-060 own all source
   and configuration implementation.
+- Used Goal's version command to synchronize exactly the five declared release
+  carriers, then passed full tests, Ruff, governance and isolated artifact
+  validation.
+- Removed the disposable candidate artifacts and generated package metadata;
+  moved to PUBLICATION for the updated exact PR head.
 
 ## Blockers
 

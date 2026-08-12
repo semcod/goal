@@ -3,7 +3,7 @@
 - **ID**: ticket-061
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -19,7 +19,7 @@ live checkout.
 
 - [x] AC-01: The user's instruction to repair and continue records
   `SESSION_EXECUTION_AUTHORIZATION` for the bounded release.
-- [ ] AC-02: The governed PR synchronizes exactly VERSION, `pyproject.toml`,
+- [x] AC-02: The governed PR synchronizes exactly VERSION, `pyproject.toml`,
   `goal/__init__.py`, README version badges and `uv.lock` to 2.1.300, plus
   this ticket's governance evidence.
 - [ ] AC-03: Full tests, scoped Ruff, governance and wheel/sdist pass;
@@ -52,3 +52,15 @@ live checkout.
   one worktree, zero open PRs and zero open issues.
 - PyPI returned HTTP 404 for 2.1.300; neither local/remote `v2.1.300` nor a
   GitHub Release exists before publication.
+
+## Candidate evidence
+
+- Goal's own `goal version patch` synchronized exactly the five declared
+  release carriers to 2.1.300; dependency versions and non-carrier files did
+  not change.
+- 618 tests pass with 2 existing skips; scoped Ruff, governance (0 errors / 0
+  warnings) and whitespace validation pass.
+- An isolated package build produced exactly
+  `goal-2.1.300-py3-none-any.whl` and `goal-2.1.300.tar.gz`; both metadata
+  records declare version 2.1.300. Candidate build output and generated
+  metadata were removed after verification.
