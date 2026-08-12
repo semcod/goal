@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-043",
+  "summary": "Publish Goal 2.1.296 delivery coherence fixes",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "README.md",
+    "project/ticket-043/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-041", "ticket-042"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3fb66abf24b809722dac706a023d4510b21ae286",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.296 is published from the exact clean merged source-hub and delivery-coherence fixes",
+    "nonGoals": [
+      "No executable source, dependency-set or top-level CHANGELOG change",
+      "No publication, tag or GitHub Release before protected merge",
+      "No duplicate or replacement registry artifact"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize the five existing release carriers through governed PR delivery, then publish from exact validated merged main",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": ["VERSION", "pyproject.toml", "uv.lock", "goal/__init__.py", "README.md"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Never replace immutable artifacts; issue a later patch if public verification fails"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["goal -a --delivery-mode pull-request --ticket ticket-043 --no-changelog"],
+        "evidence": "real governed flow changes only declared carriers and creates one PR"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q", "ruff check scoped paths", "./project/governance-check.sh --actor agent", "python -m build", "docker build ."],
+        "evidence": "local and protected validation passes on the exact head"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["clean detached merge retest", "goal -a --delivery-mode publish-only --force-publish"],
+        "evidence": "registry effects originate only from validated authoritative main"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["fresh public-index goal==2.1.296 install", "goal push --help"],
+        "evidence": "public CLI reports 2.1.296 and help creates no project state"
+      }
+    ]
+  }
+}

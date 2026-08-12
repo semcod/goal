@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-043](project/ticket-043/README.md): publish the merged
+  source-hub and delivery-coherence repairs as Goal 2.1.296, verify immutable
+  public artifacts and use the fresh public CLI for the next `new-project`
+  delivery. State: `IN_PROGRESS / EDIT`; classification:
+  `SERVICE / P0 / requested`.
+
 - [x] Deliver [ticket-042](project/ticket-042/README.md): keep subcommand help
   read-only and make the explicit no-version/no-tag/no-publish combination a
   coherent plain delivery even with committed-unreleased package source.
