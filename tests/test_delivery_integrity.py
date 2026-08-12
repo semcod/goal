@@ -71,6 +71,63 @@ def test_cost_badge_skip_applies_to_commit_phase(
     single_commit.assert_called_once()
 
 
+def test_pull_request_context_suppresses_cost_badge_at_commit() -> None:
+    """Governed PR delivery must not append an unrelated README badge change."""
+    from goal.push.core import _handle_commit_phase
+
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": None,
+        "user_config": {},
+        "_suppress_goal_owned_cost_badge": True,
+    }
+    with (
+        patch("goal.push.core.handle_version_sync"),
+        patch("goal.push.core.handle_changelog"),
+        patch("goal.push.core._update_cost_badges") as update_badges,
+        patch("goal.push.core.run_git_local") as run_git_local,
+        patch("goal.push.core.handle_single_commit") as single_commit,
+    ):
+        _handle_commit_phase(
+            ctx_obj=ctx_obj,
+            split=False,
+            message=None,
+            commit_title="fix: preserve PR scope",
+            commit_body=None,
+            commit_msg="fix: preserve PR scope",
+            files=["goal/push/core.py"],
+            ticket="ticket-055",
+            new_version="2.1.298",
+            current_version="2.1.298",
+            no_version_sync=False,
+            no_changelog=False,
+        )
+
+    update_badges.assert_not_called()
+    run_git_local.assert_not_called()
+    single_commit.assert_called_once()
+
+
+def test_pull_request_bootstrap_uses_private_badge_control(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """PR bootstrap suppresses Goal's badge while restoring the environment."""
+    from goal.push.core import _bootstrap_projects_for_delivery
+
+    observed: list[str | None] = []
+    monkeypatch.delenv("GOAL_SKIP_COSTS_BADGE", raising=False)
+
+    def observe_bootstrap(*_args: object, **_kwargs: object) -> None:
+        observed.append(os.getenv("GOAL_SKIP_COSTS_BADGE"))
+
+    with patch("goal.push.core._bootstrap_projects", side_effect=observe_bootstrap):
+        _bootstrap_projects_for_delivery(["python"], False, True, "pull-request")
+
+    assert observed == ["1"]
+    assert os.getenv("GOAL_SKIP_COSTS_BADGE") is None
+
+
 def test_goal_cost_badge_control_does_not_leak_into_project_tests(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -450,9 +507,7 @@ def test_clean_generic_direct_main_retry_keeps_existing_release_version() -> Non
                 return_value=delivery,
             )
         )
-        stack.enter_context(
-            patch("goal.governance.delivery.validate_delivery_ready")
-        )
+        stack.enter_context(patch("goal.governance.delivery.validate_delivery_ready"))
         stack.enter_context(patch("goal.governance.delivery.record_delivery_event"))
         stack.enter_context(
             patch(
@@ -472,12 +527,8 @@ def test_clean_generic_direct_main_retry_keeps_existing_release_version() -> Non
             patch("goal.push.core._require_publish_bootstrap_read_only")
         )
         stack.enter_context(patch("goal.push.core.run_git"))
-        stack.enter_context(
-            patch("goal.push.core.get_staged_files", return_value=[])
-        )
-        stack.enter_context(
-            patch("goal.push.core.get_diff_content", return_value="")
-        )
+        stack.enter_context(patch("goal.push.core.get_staged_files", return_value=[]))
+        stack.enter_context(patch("goal.push.core.get_diff_content", return_value=""))
         stack.enter_context(patch("goal.push.core.get_diff_stats", return_value={}))
         stack.enter_context(
             patch(
@@ -707,7 +758,9 @@ def test_publish_only_aborts_when_bootstrap_mutates_source() -> None:
     delivery = type("Delivery", (), {"mode": "publish-only"})()
 
     with (
-        patch("goal.governance.delivery.resolve_delivery_policy", return_value=delivery),
+        patch(
+            "goal.governance.delivery.resolve_delivery_policy", return_value=delivery
+        ),
         patch("goal.governance.delivery.validate_delivery_ready"),
         patch("goal.push.core.check_pyproject_toml", return_value=None),
         patch("goal.push.core._initialize_context"),
@@ -745,6 +798,63 @@ def test_publish_only_aborts_when_bootstrap_mutates_source() -> None:
     publish.assert_not_called()
 
 
+def test_pull_request_revalidates_governance_before_staging() -> None:
+    """Bootstrap or TODO drift must be rejected before Goal stages any file."""
+    from goal.push.core import execute_push_workflow
+
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": {},
+        "user_config": {},
+        "delivery_mode": "pull-request",
+    }
+    policy = type("Delivery", (), {"mode": "pull-request"})()
+
+    with (
+        patch(
+            "goal.governance.delivery.resolve_delivery_policy",
+            return_value=policy,
+        ),
+        patch(
+            "goal.governance.delivery.validate_delivery_ready",
+            side_effect=[None, click.ClickException("post-bootstrap governance drift")],
+        ) as validate,
+        patch(
+            "goal.governance.delivery.pending_pull_request_delivery",
+            return_value=None,
+        ) as classify,
+        patch("goal.push.core.check_pyproject_toml", return_value=None),
+        patch("goal.push.core._initialize_context"),
+        patch("goal.push.core._detect_project_types", return_value=["python"]),
+        patch("goal.push.core._bootstrap_projects"),
+        patch("goal.push.core.handle_todo_stage", return_value=True),
+        patch("goal.push.core.run_git") as run_git,
+        pytest.raises(click.ClickException, match="post-bootstrap governance drift"),
+    ):
+        execute_push_workflow(
+            ctx_obj=ctx_obj,
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            no_publish=False,
+            force_publish=False,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket="ticket-055",
+            abstraction=None,
+            todo=False,
+        )
+
+    assert validate.call_count == 2
+    classify.assert_called_once_with(policy, ticket="ticket-055")
+    run_git.assert_not_called()
+
+
 def test_pull_request_retry_retests_and_delivers_already_committed_candidate() -> None:
     """An interrupted PR run must resume without manufacturing another commit."""
     from goal.governance.delivery import PendingPullRequestDelivery
@@ -770,7 +880,7 @@ def test_pull_request_retry_retests_and_delivers_already_committed_candidate() -
             "goal.governance.delivery.resolve_delivery_policy",
             return_value=policy,
         ),
-        patch("goal.governance.delivery.validate_delivery_ready"),
+        patch("goal.governance.delivery.validate_delivery_ready") as validate,
         patch(
             "goal.governance.delivery.pending_pull_request_delivery",
             side_effect=[candidate, candidate],
@@ -782,10 +892,10 @@ def test_pull_request_retry_retests_and_delivers_already_committed_candidate() -
         patch("goal.governance.delivery.record_delivery_event") as event,
         patch("goal.push.core.check_pyproject_toml", return_value=None),
         patch("goal.push.core._detect_project_types", return_value=["python"]),
-        patch("goal.push.core._bootstrap_projects"),
-        patch("goal.push.core.handle_todo_stage", return_value=True),
-        patch("goal.push.core.run_git"),
-        patch("goal.push.core.get_staged_files", return_value=[]),
+        patch("goal.push.core._bootstrap_projects") as bootstrap,
+        patch("goal.push.core.handle_todo_stage", return_value=True) as todo_stage,
+        patch("goal.push.core.run_git") as run_git,
+        patch("goal.push.core.get_staged_files", return_value=[]) as staged_files,
         patch("goal.cli.version.get_current_version", return_value="2.1.297"),
         patch(
             "goal.push.core.run_test_stage",
@@ -815,6 +925,11 @@ def test_pull_request_retry_retests_and_delivers_already_committed_candidate() -
         )
 
     assert classify.call_count == 2
+    validate.assert_called_once_with(policy)
+    bootstrap.assert_not_called()
+    todo_stage.assert_not_called()
+    run_git.assert_not_called()
+    staged_files.assert_not_called()
     tests.assert_called_once()
     assert tests.call_args.args[4] == list(candidate.files)
     deliver.assert_called_once_with(
@@ -903,7 +1018,7 @@ def test_python_bootstrap_requests_dev_and_test_dependency_sets(
     monkeypatch.setattr(
         project_bootstrap,
         "_install_python_deps_broker",
-        lambda _path, extras: (requested.extend(extras) or True),
+        lambda _path, extras: requested.extend(extras) or True,
     )
     monkeypatch.setattr(
         project_bootstrap,

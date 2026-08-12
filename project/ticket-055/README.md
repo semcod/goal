@@ -3,7 +3,7 @@
 - **ID**: ticket-055
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -16,15 +16,15 @@ branch name that may legitimately remain from a merged attempt.
 
 ## Acceptance criteria
 
-- [ ] AC-01: A clean exact-ticket committed candidate resumes before bootstrap,
+- [x] AC-01: A clean exact-ticket committed candidate resumes before bootstrap,
       TODO generation, staging or any Goal-owned metadata mutation, while still
       rerunning tests and revalidating the immutable candidate before delivery.
-- [ ] AC-02: Pull-request bootstrap and commit phases suppress Goal-owned cost
+- [x] AC-02: Pull-request bootstrap and commit phases suppress Goal-owned cost
       badge refreshes without leaking that private control into project tests.
-- [ ] AC-03: Delivery pushes the current reviewed HEAD to the canonical remote
+- [x] AC-03: Delivery pushes the current reviewed HEAD to the canonical remote
       `goal/ticket-NNN` ref without deleting, overwriting or checking out a
       colliding local branch; remote non-fast-forward safety remains intact.
-- [ ] AC-04: Focused tests, full tests, scoped Ruff, governance and Docker
+- [x] AC-04: Focused tests, full tests, scoped Ruff, governance and Docker
       validation pass with no release/version/dependency changes.
 
 ## Reproduced incidents
@@ -39,3 +39,15 @@ branch name that may legitimately remain from a merged attempt.
 
 - Human participant: unresolved; no user-* file was created by this script.
 - Agent participant: [ai-codex.md](ai-codex.md)
+
+## Validation evidence
+
+- Remediation intent validation reports 2 findings, 3 actions, 0 errors and
+  0 warnings at digest `e014ecda829f...`.
+- Deterministic todo2code 0.5.0 analysis was rejected safely: the analyzer
+  recorded 22 blocking scope expansions plus review hints for missing finding
+  and acceptance links instead of allowing unrelated historical plans.
+- Focused delivery tests pass: 51 passed. Full tests pass: 604 passed with
+  2 existing skips. Scoped Ruff and formatting checks pass.
+- Explicit changed-file governance passes with 0 errors and 0 warnings.
+  Docker build and `goal --version` smoke test pass for the validation image.

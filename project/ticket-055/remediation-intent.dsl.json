@@ -1,0 +1,285 @@
+{
+  "schema": "new-project.remediation-intent/v1",
+  "intentId": "RI-GOAL-PR-RESUME-BOUNDARY",
+  "ticket": "ticket-055",
+  "repository": "semcod/goal",
+  "ownerRoute": "agent:codex",
+  "status": "READY",
+  "source": {
+    "producer": {
+      "name": "goal-live-delivery-observation",
+      "version": "2.1.298"
+    },
+    "observedAt": "2026-08-12T15:10:00Z",
+    "reportDigest": "60211c542dab1c49e7ab932016711a9096d0ae8ff428c43883f38060c8dd5672"
+  },
+  "objective": {
+    "outcome": "Governed pull-request resume publishes the already reviewed ticket HEAD without mutating unrelated files or depending on a free local canonical branch name.",
+    "nonGoals": [
+      "Do not weaken exact-ticket, clean-tree, ancestry or post-test revalidation checks.",
+      "Do not delete, reset or overwrite local branches or worktrees.",
+      "Do not change version, release, registry, direct-main or publish-only behavior."
+    ],
+    "constraints": [
+      "Keep the repair within two internal delivery components and four implementation/test files.",
+      "Preserve README.md, dependency carriers and every human-owned ticket file.",
+      "Use a non-forced explicit remote refspec for the canonical PR head."
+    ]
+  },
+  "scope": {
+    "allowedPaths": [
+      "goal/governance/delivery.py",
+      "goal/push/core.py",
+      "tests/test_governance_delivery.py",
+      "tests/test_delivery_integrity.py",
+      "project/ticket-055/**"
+    ],
+    "forbiddenPaths": [
+      "README.md",
+      "VERSION",
+      "CHANGELOG.md",
+      "pyproject.toml",
+      "uv.lock",
+      "project/ticket-*/user-*.md"
+    ],
+    "preservePaths": [
+      "README.md",
+      "project/ticket-*/user-*.md"
+    ]
+  },
+  "findings": [
+    {
+      "id": "F-RESUME-MUTATION",
+      "category": "CONTRACT_DRIFT",
+      "status": "CONFIRMED",
+      "priority": "P1",
+      "summary": "Committed-candidate resume runs mutation-capable bootstrap before candidate classification and can admit an unrelated README badge commit.",
+      "diagnostic": {
+        "code": "GOAL_PR_RESUME_MUTATES_WORKTREE",
+        "current": "EMITTED",
+        "required": "SUPPRESS"
+      },
+      "evidence": [
+        {
+          "ref": "project/ticket-053/ai-codex-logs.txt",
+          "observation": "PR #87 first published commit db057409 after bootstrap refreshed README.md outside ticket-053 allowedPaths."
+        }
+      ],
+      "applicability": {
+        "requiredSignals": [
+          "Delivery mode is pull-request and clean HEAD is ahead of the authoritative base in an exact-ticket commit range."
+        ],
+        "excludedSignals": [
+          "The working tree already contains uncommitted user or implementation changes."
+        ],
+        "unknownOutcome": "BLOCK"
+      },
+      "desiredOutcome": "Classify and retest the immutable committed candidate before bootstrap, and suppress Goal-owned cost badge refresh in ordinary PR delivery.",
+      "affectedPaths": [
+        "goal/push/core.py",
+        "tests/test_delivery_integrity.py"
+      ],
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "AC-01"
+      ]
+    },
+    {
+      "id": "F-LOCAL-BRANCH-COLLISION",
+      "category": "CONTRACT_DRIFT",
+      "status": "CONFIRMED",
+      "priority": "P1",
+      "summary": "PR publication fails after tests when a merged local canonical branch alias still exists.",
+      "diagnostic": {
+        "code": "GOAL_PR_LOCAL_BRANCH_COLLISION",
+        "current": "EMITTED",
+        "required": "REFINE"
+      },
+      "evidence": [
+        {
+          "ref": "project/ticket-053/ai-codex-logs.txt",
+          "observation": "Ticket-053 closure commit 1a2e262 passed 600 tests, then git switch -c failed because goal/ticket-053 already existed locally."
+        }
+      ],
+      "applicability": {
+        "requiredSignals": [
+          "Current reviewed HEAD must be published to a canonical remote goal/ticket-NNN branch."
+        ],
+        "excludedSignals": [
+          "The remote canonical branch requires a non-fast-forward update."
+        ],
+        "unknownOutcome": "BLOCK"
+      },
+      "desiredOutcome": "Push current HEAD to the canonical remote ref without changing or deleting any local branch alias.",
+      "affectedPaths": [
+        "goal/governance/delivery.py",
+        "tests/test_governance_delivery.py"
+      ],
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "AC-02"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "A-RESUME-BOUNDARY",
+      "findingIds": [
+        "F-RESUME-MUTATION"
+      ],
+      "operation": "IMPLEMENT",
+      "description": "Move exact committed-candidate classification ahead of bootstrap and isolate Goal-owned badge mutation in pull-request mode.",
+      "paths": [
+        "goal/push/core.py"
+      ],
+      "dependsOn": [],
+      "verificationIds": [
+        "V-RESUME-BOUNDARY"
+      ],
+      "risk": {
+        "level": "REVERSIBLE_WRITE",
+        "authorization": "SESSION_EXECUTION_AUTHORIZATION",
+        "automation": "ALLOWED",
+        "preservesUserData": true
+      }
+    },
+    {
+      "id": "A-REMOTE-REFSPEC",
+      "findingIds": [
+        "F-LOCAL-BRANCH-COLLISION"
+      ],
+      "operation": "IMPLEMENT",
+      "description": "Replace local canonical branch creation with a non-forced explicit HEAD-to-remote refspec.",
+      "paths": [
+        "goal/governance/delivery.py"
+      ],
+      "dependsOn": [],
+      "verificationIds": [
+        "V-REMOTE-REFSPEC"
+      ],
+      "risk": {
+        "level": "REVERSIBLE_WRITE",
+        "authorization": "SESSION_EXECUTION_AUTHORIZATION",
+        "automation": "ALLOWED",
+        "preservesUserData": true
+      }
+    },
+    {
+      "id": "A-REGRESSION-COVERAGE",
+      "findingIds": [
+        "F-RESUME-MUTATION",
+        "F-LOCAL-BRANCH-COLLISION"
+      ],
+      "operation": "TEST",
+      "description": "Add regression coverage for ordering, badge isolation, candidate revalidation, local alias preservation and explicit remote ref publication.",
+      "paths": [
+        "tests/test_delivery_integrity.py",
+        "tests/test_governance_delivery.py"
+      ],
+      "dependsOn": [
+        "A-RESUME-BOUNDARY",
+        "A-REMOTE-REFSPEC"
+      ],
+      "verificationIds": [
+        "V-FOCUSED-SUITE"
+      ],
+      "risk": {
+        "level": "REVERSIBLE_WRITE",
+        "authorization": "SESSION_EXECUTION_AUTHORIZATION",
+        "automation": "ALLOWED",
+        "preservesUserData": true
+      }
+    }
+  ],
+  "verifications": [
+    {
+      "id": "V-RESUME-BOUNDARY",
+      "type": "COMMAND",
+      "command": "uv run --frozen pytest -q tests/test_delivery_integrity.py",
+      "expected": "A committed candidate resumes before bootstrap; ordinary PR delivery suppresses cost badge refresh and revalidates governance before staging.",
+      "deterministic": true,
+      "covers": [
+        "F-RESUME-MUTATION",
+        "A-RESUME-BOUNDARY"
+      ]
+    },
+    {
+      "id": "V-REMOTE-REFSPEC",
+      "type": "COMMAND",
+      "command": "uv run --frozen pytest -q tests/test_governance_delivery.py",
+      "expected": "A colliding local branch is preserved while reviewed HEAD is pushed non-forced to the canonical remote ref.",
+      "deterministic": true,
+      "covers": [
+        "F-LOCAL-BRANCH-COLLISION",
+        "A-REMOTE-REFSPEC"
+      ]
+    },
+    {
+      "id": "V-FOCUSED-SUITE",
+      "type": "COMMAND",
+      "command": "uv run --frozen pytest -q tests/test_governance_delivery.py tests/test_delivery_integrity.py",
+      "expected": "All ordering, scope, branch-collision and fail-closed regressions pass.",
+      "deterministic": true,
+      "covers": [
+        "F-RESUME-MUTATION",
+        "F-LOCAL-BRANCH-COLLISION",
+        "A-REGRESSION-COVERAGE"
+      ]
+    }
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "AC-01",
+      "statement": "Committed-candidate resume and ordinary pull-request preparation cannot create an unrelated badge change or bypass post-bootstrap governance.",
+      "findingIds": [
+        "F-RESUME-MUTATION"
+      ],
+      "verificationIds": [
+        "V-RESUME-BOUNDARY",
+        "V-FOCUSED-SUITE"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "statement": "Canonical remote PR publication succeeds without modifying a colliding local branch and without using force.",
+      "findingIds": [
+        "F-LOCAL-BRANCH-COLLISION"
+      ],
+      "verificationIds": [
+        "V-REMOTE-REFSPEC",
+        "V-FOCUSED-SUITE"
+      ]
+    }
+  ],
+  "llmGuidance": {
+    "role": "Plan a bounded internal refactoring; do not implement, widen scope or approve it.",
+    "mustPreserve": [
+      "Exact-ticket candidate binding, authoritative base ancestry and post-test revalidation.",
+      "Non-forced remote updates and all local branches/worktrees.",
+      "README.md and human-owned ticket files."
+    ],
+    "forbiddenAssumptions": [
+      "Do not assume a local canonical branch is disposable because its PR was merged.",
+      "Do not assume bootstrap-generated changes are inside the active ticket scope.",
+      "Do not treat LLM or todo2code output as merge authority."
+    ],
+    "planningOrder": [
+      "A-RESUME-BOUNDARY",
+      "A-REMOTE-REFSPEC",
+      "A-REGRESSION-COVERAGE"
+    ],
+    "openQuestions": []
+  },
+  "todo2code": {
+    "enabled": true,
+    "taskPath": "project/ticket-055/REMEDIATION.task.md",
+    "todoPath": "project/ticket-055/REMEDIATION.todo.md",
+    "planSchema": "t2c.code-change-plan/v1",
+    "requiredDiagnosticCodes": [
+      "AMBIGUOUS_REQUIREMENT",
+      "HUMAN_AGENT_CONFLICT",
+      "HUMAN_COMMUNICATION_CONFLICT",
+      "PLANNED_NOT_IMPLEMENTED"
+    ]
+  }
+}

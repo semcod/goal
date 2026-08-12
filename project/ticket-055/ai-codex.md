@@ -35,6 +35,17 @@ avoids deleting or overwriting possibly valuable local state.
   from the request to execute this work.
 - Recorded the two real ticket-053 delivery failures and bounded the repair to
   two internal implementation components and four implementation/test files.
+- Moved committed-candidate classification ahead of bootstrap, dependency and
+  TODO mutation, while preserving post-test candidate revalidation.
+- Suppressed Goal-owned cost badge refresh in PR bootstrap and commit without
+  exposing the private environment control to project tests, and added a
+  second governance gate before staging ordinary PR changes.
+- Replaced local canonical branch creation with a non-forced explicit
+  `HEAD:refs/heads/goal/ticket-NNN` push; a regression preserves a colliding
+  local branch at its original SHA.
+- Validated the remediation DSL, recorded todo2code's fail-closed rejection of
+  unrelated plans, passed 51 focused and 604 full tests (2 existing skips),
+  Ruff, governance, Docker build and container smoke test.
 
 ## Blockers
 

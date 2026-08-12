@@ -1,0 +1,706 @@
+{
+  "schema": "new-project.remediation-intent/v1",
+  "intentId": "RI-GOAL-PR-RESUME-BOUNDARY",
+  "ticket": "ticket-055",
+  "repository": "semcod/goal",
+  "ownerRoute": "agent:codex",
+  "status": "ANALYZED",
+  "source": {
+    "producer": {
+      "name": "goal-live-delivery-observation",
+      "version": "2.1.298"
+    },
+    "observedAt": "2026-08-12T15:10:00Z",
+    "reportDigest": "60211c542dab1c49e7ab932016711a9096d0ae8ff428c43883f38060c8dd5672"
+  },
+  "objective": {
+    "outcome": "Governed pull-request resume publishes the already reviewed ticket HEAD without mutating unrelated files or depending on a free local canonical branch name.",
+    "nonGoals": [
+      "Do not weaken exact-ticket, clean-tree, ancestry or post-test revalidation checks.",
+      "Do not delete, reset or overwrite local branches or worktrees.",
+      "Do not change version, release, registry, direct-main or publish-only behavior."
+    ],
+    "constraints": [
+      "Keep the repair within two internal delivery components and four implementation/test files.",
+      "Preserve README.md, dependency carriers and every human-owned ticket file.",
+      "Use a non-forced explicit remote refspec for the canonical PR head."
+    ]
+  },
+  "scope": {
+    "allowedPaths": [
+      "goal/governance/delivery.py",
+      "goal/push/core.py",
+      "tests/test_governance_delivery.py",
+      "tests/test_delivery_integrity.py",
+      "project/ticket-055/**"
+    ],
+    "forbiddenPaths": [
+      "README.md",
+      "VERSION",
+      "CHANGELOG.md",
+      "pyproject.toml",
+      "uv.lock",
+      "project/ticket-*/user-*.md"
+    ],
+    "preservePaths": [
+      "README.md",
+      "project/ticket-*/user-*.md"
+    ]
+  },
+  "findings": [
+    {
+      "id": "F-RESUME-MUTATION",
+      "category": "CONTRACT_DRIFT",
+      "status": "CONFIRMED",
+      "priority": "P1",
+      "summary": "Committed-candidate resume runs mutation-capable bootstrap before candidate classification and can admit an unrelated README badge commit.",
+      "diagnostic": {
+        "code": "GOAL_PR_RESUME_MUTATES_WORKTREE",
+        "current": "EMITTED",
+        "required": "SUPPRESS"
+      },
+      "evidence": [
+        {
+          "ref": "project/ticket-053/ai-codex-logs.txt",
+          "observation": "PR #87 first published commit db057409 after bootstrap refreshed README.md outside ticket-053 allowedPaths."
+        }
+      ],
+      "applicability": {
+        "requiredSignals": [
+          "Delivery mode is pull-request and clean HEAD is ahead of the authoritative base in an exact-ticket commit range."
+        ],
+        "excludedSignals": [
+          "The working tree already contains uncommitted user or implementation changes."
+        ],
+        "unknownOutcome": "BLOCK"
+      },
+      "desiredOutcome": "Classify and retest the immutable committed candidate before bootstrap, and suppress Goal-owned cost badge refresh in ordinary PR delivery.",
+      "affectedPaths": [
+        "goal/push/core.py",
+        "tests/test_delivery_integrity.py"
+      ],
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "AC-01"
+      ]
+    },
+    {
+      "id": "F-LOCAL-BRANCH-COLLISION",
+      "category": "CONTRACT_DRIFT",
+      "status": "CONFIRMED",
+      "priority": "P1",
+      "summary": "PR publication fails after tests when a merged local canonical branch alias still exists.",
+      "diagnostic": {
+        "code": "GOAL_PR_LOCAL_BRANCH_COLLISION",
+        "current": "EMITTED",
+        "required": "REFINE"
+      },
+      "evidence": [
+        {
+          "ref": "project/ticket-053/ai-codex-logs.txt",
+          "observation": "Ticket-053 closure commit 1a2e262 passed 600 tests, then git switch -c failed because goal/ticket-053 already existed locally."
+        }
+      ],
+      "applicability": {
+        "requiredSignals": [
+          "Current reviewed HEAD must be published to a canonical remote goal/ticket-NNN branch."
+        ],
+        "excludedSignals": [
+          "The remote canonical branch requires a non-fast-forward update."
+        ],
+        "unknownOutcome": "BLOCK"
+      },
+      "desiredOutcome": "Push current HEAD to the canonical remote ref without changing or deleting any local branch alias.",
+      "affectedPaths": [
+        "goal/governance/delivery.py",
+        "tests/test_governance_delivery.py"
+      ],
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "AC-02"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "A-RESUME-BOUNDARY",
+      "findingIds": [
+        "F-RESUME-MUTATION"
+      ],
+      "operation": "IMPLEMENT",
+      "description": "Move exact committed-candidate classification ahead of bootstrap and isolate Goal-owned badge mutation in pull-request mode.",
+      "paths": [
+        "goal/push/core.py"
+      ],
+      "dependsOn": [],
+      "verificationIds": [
+        "V-RESUME-BOUNDARY"
+      ],
+      "risk": {
+        "level": "REVERSIBLE_WRITE",
+        "authorization": "SESSION_EXECUTION_AUTHORIZATION",
+        "automation": "ALLOWED",
+        "preservesUserData": true
+      }
+    },
+    {
+      "id": "A-REMOTE-REFSPEC",
+      "findingIds": [
+        "F-LOCAL-BRANCH-COLLISION"
+      ],
+      "operation": "IMPLEMENT",
+      "description": "Replace local canonical branch creation with a non-forced explicit HEAD-to-remote refspec.",
+      "paths": [
+        "goal/governance/delivery.py"
+      ],
+      "dependsOn": [],
+      "verificationIds": [
+        "V-REMOTE-REFSPEC"
+      ],
+      "risk": {
+        "level": "REVERSIBLE_WRITE",
+        "authorization": "SESSION_EXECUTION_AUTHORIZATION",
+        "automation": "ALLOWED",
+        "preservesUserData": true
+      }
+    },
+    {
+      "id": "A-REGRESSION-COVERAGE",
+      "findingIds": [
+        "F-RESUME-MUTATION",
+        "F-LOCAL-BRANCH-COLLISION"
+      ],
+      "operation": "TEST",
+      "description": "Add regression coverage for ordering, badge isolation, candidate revalidation, local alias preservation and explicit remote ref publication.",
+      "paths": [
+        "tests/test_delivery_integrity.py",
+        "tests/test_governance_delivery.py"
+      ],
+      "dependsOn": [
+        "A-RESUME-BOUNDARY",
+        "A-REMOTE-REFSPEC"
+      ],
+      "verificationIds": [
+        "V-FOCUSED-SUITE"
+      ],
+      "risk": {
+        "level": "REVERSIBLE_WRITE",
+        "authorization": "SESSION_EXECUTION_AUTHORIZATION",
+        "automation": "ALLOWED",
+        "preservesUserData": true
+      }
+    }
+  ],
+  "verifications": [
+    {
+      "id": "V-RESUME-BOUNDARY",
+      "type": "COMMAND",
+      "command": "uv run --frozen pytest -q tests/test_delivery_integrity.py",
+      "expected": "A committed candidate resumes before bootstrap; ordinary PR delivery suppresses cost badge refresh and revalidates governance before staging.",
+      "deterministic": true,
+      "covers": [
+        "F-RESUME-MUTATION",
+        "A-RESUME-BOUNDARY"
+      ]
+    },
+    {
+      "id": "V-REMOTE-REFSPEC",
+      "type": "COMMAND",
+      "command": "uv run --frozen pytest -q tests/test_governance_delivery.py",
+      "expected": "A colliding local branch is preserved while reviewed HEAD is pushed non-forced to the canonical remote ref.",
+      "deterministic": true,
+      "covers": [
+        "F-LOCAL-BRANCH-COLLISION",
+        "A-REMOTE-REFSPEC"
+      ]
+    },
+    {
+      "id": "V-FOCUSED-SUITE",
+      "type": "COMMAND",
+      "command": "uv run --frozen pytest -q tests/test_governance_delivery.py tests/test_delivery_integrity.py",
+      "expected": "All ordering, scope, branch-collision and fail-closed regressions pass.",
+      "deterministic": true,
+      "covers": [
+        "F-RESUME-MUTATION",
+        "F-LOCAL-BRANCH-COLLISION",
+        "A-REGRESSION-COVERAGE"
+      ]
+    }
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "AC-01",
+      "statement": "Committed-candidate resume and ordinary pull-request preparation cannot create an unrelated badge change or bypass post-bootstrap governance.",
+      "findingIds": [
+        "F-RESUME-MUTATION"
+      ],
+      "verificationIds": [
+        "V-RESUME-BOUNDARY",
+        "V-FOCUSED-SUITE"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "statement": "Canonical remote PR publication succeeds without modifying a colliding local branch and without using force.",
+      "findingIds": [
+        "F-LOCAL-BRANCH-COLLISION"
+      ],
+      "verificationIds": [
+        "V-REMOTE-REFSPEC",
+        "V-FOCUSED-SUITE"
+      ]
+    }
+  ],
+  "llmGuidance": {
+    "role": "Plan a bounded internal refactoring; do not implement, widen scope or approve it.",
+    "mustPreserve": [
+      "Exact-ticket candidate binding, authoritative base ancestry and post-test revalidation.",
+      "Non-forced remote updates and all local branches/worktrees.",
+      "README.md and human-owned ticket files."
+    ],
+    "forbiddenAssumptions": [
+      "Do not assume a local canonical branch is disposable because its PR was merged.",
+      "Do not assume bootstrap-generated changes are inside the active ticket scope.",
+      "Do not treat LLM or todo2code output as merge authority."
+    ],
+    "planningOrder": [
+      "A-RESUME-BOUNDARY",
+      "A-REMOTE-REFSPEC",
+      "A-REGRESSION-COVERAGE"
+    ],
+    "openQuestions": []
+  },
+  "todo2code": {
+    "enabled": true,
+    "taskPath": "project/ticket-055/REMEDIATION.task.md",
+    "todoPath": "project/ticket-055/REMEDIATION.todo.md",
+    "planSchema": "t2c.code-change-plan/v1",
+    "requiredDiagnosticCodes": [
+      "AMBIGUOUS_REQUIREMENT",
+      "HUMAN_AGENT_CONFLICT",
+      "HUMAN_COMMUNICATION_CONFLICT",
+      "PLANNED_NOT_IMPLEMENTED"
+    ]
+  },
+  "advisoryAnalysis": {
+    "authority": "ADVISORY",
+    "producer": {
+      "name": "todo2code",
+      "version": "0.5.0",
+      "mode": "deterministic"
+    },
+    "analyzedAt": "2026-08-12T15:30:55.039085Z",
+    "intentDigest": "e014ecda829f580300a76714916d2968d7b63f0b57a769b5ffaf0f115f74da1a",
+    "diagnosticsDigest": "7925e1287c4931cbfc3b9aee5f8056e6384e6bacabb916deccd2990184f71fea",
+    "plansDigest": "50c5fc218025d3e9b7797bce599b00ec17a35e7c45d058d80768a9a7d41fc31d",
+    "planIds": [
+      "CPLAN-944e2f550b8761802d2e",
+      "CPLAN-8fb0f63dd24846a10bd1",
+      "CPLAN-3078934014bf907fb1b8",
+      "CPLAN-c587c9013b1aafd06797",
+      "CPLAN-3e1d183ce016b16aa38d",
+      "CPLAN-36bb4fca73a1ff9747ef",
+      "CPLAN-0bdb57b3c176d69dc681",
+      "CPLAN-b01374f9bbb3aef6a500",
+      "CPLAN-d169bff20c31a225b572",
+      "CPLAN-c107b5997042275b3564",
+      "CPLAN-0c26e884325c1c126029",
+      "CPLAN-b496a1828bb7f8f4e539",
+      "CPLAN-ae8dd0029cfd36d7ac52",
+      "CPLAN-be5be4fea028678d9277",
+      "CPLAN-abf57fc53592e0b6cc82",
+      "CPLAN-d39f84d851c1e81f9174",
+      "CPLAN-f39bdf8926e87d0fc334",
+      "CPLAN-d602456d0fde6fbff1c8",
+      "CPLAN-d71b44da7fd4f2364446",
+      "CPLAN-c5ab7148fa9c7a8e3a9f"
+    ],
+    "findings": [
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-944e2f550b8761802d2e targets path outside accepted scope: local.dev.txt",
+        "references": [
+          "CPLAN-944e2f550b8761802d2e",
+          "local.dev.txt"
+        ],
+        "llmHint": "Remove `local.dev.txt` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-8fb0f63dd24846a10bd1 targets path outside accepted scope: TODO.md",
+        "references": [
+          "CPLAN-8fb0f63dd24846a10bd1",
+          "TODO.md"
+        ],
+        "llmHint": "Remove `TODO.md` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-3078934014bf907fb1b8 targets path outside accepted scope: TODO.md",
+        "references": [
+          "CPLAN-3078934014bf907fb1b8",
+          "TODO.md"
+        ],
+        "llmHint": "Remove `TODO.md` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-c587c9013b1aafd06797 targets path outside accepted scope: TODO.md",
+        "references": [
+          "CPLAN-c587c9013b1aafd06797",
+          "TODO.md"
+        ],
+        "llmHint": "Remove `TODO.md` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-3e1d183ce016b16aa38d targets path outside accepted scope: TODO.md",
+        "references": [
+          "CPLAN-3e1d183ce016b16aa38d",
+          "TODO.md"
+        ],
+        "llmHint": "Remove `TODO.md` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-36bb4fca73a1ff9747ef targets path outside accepted scope: goal.yaml",
+        "references": [
+          "CPLAN-36bb4fca73a1ff9747ef",
+          "goal.yaml"
+        ],
+        "llmHint": "Remove `goal.yaml` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-0bdb57b3c176d69dc681 targets path outside accepted scope: goal/project_bootstrap.py",
+        "references": [
+          "CPLAN-0bdb57b3c176d69dc681",
+          "goal/project_bootstrap.py"
+        ],
+        "llmHint": "Remove `goal/project_bootstrap.py` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-b01374f9bbb3aef6a500 targets path outside accepted scope: goal/cli.py",
+        "references": [
+          "CPLAN-b01374f9bbb3aef6a500",
+          "goal/cli.py"
+        ],
+        "llmHint": "Remove `goal/cli.py` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-d169bff20c31a225b572 targets path outside accepted scope: TODO.md",
+        "references": [
+          "CPLAN-d169bff20c31a225b572",
+          "TODO.md"
+        ],
+        "llmHint": "Remove `TODO.md` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-c107b5997042275b3564 targets path outside accepted scope: goal.yaml",
+        "references": [
+          "CPLAN-c107b5997042275b3564",
+          "goal.yaml"
+        ],
+        "llmHint": "Remove `goal.yaml` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-0c26e884325c1c126029 targets path outside accepted scope: TODO.md",
+        "references": [
+          "CPLAN-0c26e884325c1c126029",
+          "TODO.md"
+        ],
+        "llmHint": "Remove `TODO.md` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-b496a1828bb7f8f4e539 targets path outside accepted scope: integration/run_matrix.sh",
+        "references": [
+          "CPLAN-b496a1828bb7f8f4e539",
+          "integration/run_matrix.sh"
+        ],
+        "llmHint": "Remove `integration/run_matrix.sh` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-ae8dd0029cfd36d7ac52 targets path outside accepted scope: pdm.lock",
+        "references": [
+          "CPLAN-ae8dd0029cfd36d7ac52",
+          "pdm.lock"
+        ],
+        "llmHint": "Remove `pdm.lock` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-ae8dd0029cfd36d7ac52 targets path outside accepted scope: poetry.lock",
+        "references": [
+          "CPLAN-ae8dd0029cfd36d7ac52",
+          "poetry.lock"
+        ],
+        "llmHint": "Remove `poetry.lock` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-ae8dd0029cfd36d7ac52 targets path outside accepted scope: uv.lock",
+        "references": [
+          "CPLAN-ae8dd0029cfd36d7ac52",
+          "uv.lock"
+        ],
+        "llmHint": "Remove `uv.lock` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-be5be4fea028678d9277 targets path outside accepted scope: .pre-commit-config.yaml",
+        "references": [
+          "CPLAN-be5be4fea028678d9277",
+          ".pre-commit-config.yaml"
+        ],
+        "llmHint": "Remove `.pre-commit-config.yaml` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-abf57fc53592e0b6cc82 targets path outside accepted scope: project.sh",
+        "references": [
+          "CPLAN-abf57fc53592e0b6cc82",
+          "project.sh"
+        ],
+        "llmHint": "Remove `project.sh` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-d39f84d851c1e81f9174 targets path outside accepted scope: goal/cli.py",
+        "references": [
+          "CPLAN-d39f84d851c1e81f9174",
+          "goal/cli.py"
+        ],
+        "llmHint": "Remove `goal/cli.py` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-f39bdf8926e87d0fc334 targets path outside accepted scope: goal.yaml",
+        "references": [
+          "CPLAN-f39bdf8926e87d0fc334",
+          "goal.yaml"
+        ],
+        "llmHint": "Remove `goal.yaml` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-d602456d0fde6fbff1c8 targets path outside accepted scope: goal.yaml",
+        "references": [
+          "CPLAN-d602456d0fde6fbff1c8",
+          "goal.yaml"
+        ],
+        "llmHint": "Remove `goal.yaml` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-d71b44da7fd4f2364446 targets path outside accepted scope: TODO.md",
+        "references": [
+          "CPLAN-d71b44da7fd4f2364446",
+          "TODO.md"
+        ],
+        "llmHint": "Remove `TODO.md` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_SCOPE_EXPANSION",
+        "severity": "BLOCKING",
+        "message": "todo2code plan CPLAN-c5ab7148fa9c7a8e3a9f targets path outside accepted scope: goal.yaml",
+        "references": [
+          "CPLAN-c5ab7148fa9c7a8e3a9f",
+          "goal.yaml"
+        ],
+        "llmHint": "Remove `goal.yaml` from the refactoring plan or obtain a fresh bounded intent before implementation."
+      },
+      {
+        "code": "T2C_PLAN_GAP",
+        "severity": "REVIEW",
+        "message": "no todo2code plan is grounded in active finding F-RESUME-MUTATION",
+        "references": [
+          "F-RESUME-MUTATION",
+          "GOAL_PR_RESUME_MUTATES_WORKTREE"
+        ],
+        "llmHint": "Add an explicit action/path link for F-RESUME-MUTATION; do not guess a path from the diagnostic name."
+      },
+      {
+        "code": "T2C_PLAN_GAP",
+        "severity": "REVIEW",
+        "message": "no todo2code plan is grounded in active finding F-LOCAL-BRANCH-COLLISION",
+        "references": [
+          "F-LOCAL-BRANCH-COLLISION",
+          "GOAL_PR_LOCAL_BRANCH_COLLISION"
+        ],
+        "llmHint": "Add an explicit action/path link for F-LOCAL-BRANCH-COLLISION; do not guess a path from the diagnostic name."
+      },
+      {
+        "code": "T2C_CRITERION_GAP",
+        "severity": "REVIEW",
+        "message": "todo2code plans do not preserve acceptance criterion AC-01",
+        "references": [
+          "AC-01"
+        ],
+        "llmHint": "Add `AC-01` and its deterministic verification to the implementation plan."
+      },
+      {
+        "code": "T2C_CRITERION_GAP",
+        "severity": "REVIEW",
+        "message": "todo2code plans do not preserve acceptance criterion AC-02",
+        "references": [
+          "AC-02"
+        ],
+        "llmHint": "Add `AC-02` and its deterministic verification to the implementation plan."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: action. Treść: Governed pull-request resume publishes the already reviewed ticket HEAD without mutating unrelated files or depending on a free local canonical branch name.",
+        "references": [
+          "DIAG-1e38ca91de181d58a6dd"
+        ],
+        "llmHint": "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: acceptance_evidence, action. Treść: Ticket: ticket-055",
+        "references": [
+          "DIAG-258cf8dea85e4809e353"
+        ],
+        "llmHint": "Dodać mierzalne kryterium akceptacji, test albo oczekiwany wynik. Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: action. Treść: Intent-Digest: e014ecda829f580300a76714916d2968d7b63f0b57a769b5ffaf0f115f74da1a",
+        "references": [
+          "DIAG-3179ff9ee7935211449a"
+        ],
+        "llmHint": "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: action. Treść: Findings: F-LOCAL-BRANCH-COLLISION/GOAL_PR_LOCAL_BRANCH_COLLISION/P1.",
+        "references": [
+          "DIAG-3bb4e845c4549ba4556f"
+        ],
+        "llmHint": "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: action. Treść: Findings: F-RESUME-MUTATION/GOAL_PR_RESUME_MUTATES_WORKTREE/P1, F-LOCAL-BRANCH-COLLISION/GOAL_PR_LOCAL_BRANCH_COLLISION/P1.",
+        "references": [
+          "DIAG-5706eb2861eeb8ab98cf"
+        ],
+        "llmHint": "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: action. Treść: Use a non-forced explicit remote refspec for the canonical PR head.",
+        "references": [
+          "DIAG-6f1925ffe2bb68b54138"
+        ],
+        "llmHint": "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: acceptance_evidence, action. Treść: Repository: semcod/goal",
+        "references": [
+          "DIAG-740fd6fb43e7d5ec48c6"
+        ],
+        "llmHint": "Dodać mierzalne kryterium akceptacji, test albo oczekiwany wynik. Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: action. Treść: Acceptance: [AC-02] Canonical remote PR publication succeeds without modifying a colliding local branch and without using force.",
+        "references": [
+          "DIAG-84c38d4cb3c42f2a37d3"
+        ],
+        "llmHint": "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: acceptance_evidence, action. Treść: Paths: `goal/governance/delivery.py`.",
+        "references": [
+          "DIAG-b720d13ec9fee173bcc3"
+        ],
+        "llmHint": "Dodać mierzalne kryterium akceptacji, test albo oczekiwany wynik. Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: action. Treść: Paths: `tests/test_delivery_integrity.py`, `tests/test_governance_delivery.py`.",
+        "references": [
+          "DIAG-c204759da745f8653b95"
+        ],
+        "llmHint": "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: action. Treść: Findings: F-RESUME-MUTATION/GOAL_PR_RESUME_MUTATES_WORKTREE/P1.",
+        "references": [
+          "DIAG-f279c6d7fac2c9c40613"
+        ],
+        "llmHint": "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      },
+      {
+        "code": "T2C_AMBIGUOUS_INTENT",
+        "severity": "REVIEW",
+        "message": "Brakujące pola: acceptance_evidence, action. Treść: Paths: `goal/push/core.py`.",
+        "references": [
+          "DIAG-fabecb1d15e8cf389026"
+        ],
+        "llmHint": "Dodać mierzalne kryterium akceptacji, test albo oczekiwany wynik. Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+      }
+    ],
+    "llmHints": [
+      "Remove `local.dev.txt` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `TODO.md` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `goal.yaml` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `goal/project_bootstrap.py` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `goal/cli.py` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `integration/run_matrix.sh` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `pdm.lock` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `poetry.lock` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `uv.lock` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `.pre-commit-config.yaml` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Remove `project.sh` from the refactoring plan or obtain a fresh bounded intent before implementation.",
+      "Add an explicit action/path link for F-RESUME-MUTATION; do not guess a path from the diagnostic name.",
+      "Add an explicit action/path link for F-LOCAL-BRANCH-COLLISION; do not guess a path from the diagnostic name.",
+      "Add `AC-01` and its deterministic verification to the implementation plan.",
+      "Add `AC-02` and its deterministic verification to the implementation plan.",
+      "Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować.",
+      "Dodać mierzalne kryterium akceptacji, test albo oczekiwany wynik. Dodać jednoznaczny czasownik działania, np. dodać, usunąć albo zweryfikować."
+    ]
+  }
+}

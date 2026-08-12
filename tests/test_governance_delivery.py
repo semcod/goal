@@ -49,9 +49,7 @@ def test_policy_requires_goal_all_and_rejects_disallowed_mode():
     with pytest.raises(click.ClickException, match="goal -a"):
         delivery.resolve_delivery_policy(config, None, all_flags=False)
     with pytest.raises(click.ClickException, match="forbidden"):
-        delivery.resolve_delivery_policy(
-            config, "direct-main", all_flags=True
-        )
+        delivery.resolve_delivery_policy(config, "direct-main", all_flags=True)
 
 
 def test_install_and_remove_preserve_project_hook(tmp_path):
@@ -105,9 +103,9 @@ def test_file_backed_transaction_authorizes_matching_remote(tmp_path):
         transaction = Path(delivery.os.environ[delivery.TRANSACTION_ENV])
         payload = json.loads(transaction.read_text(encoding="utf-8"))
         assert "tokenHash" in payload
-        assert delivery.os.environ[delivery.CAPABILITY_ENV] not in transaction.read_text(
-            encoding="utf-8"
-        )
+        assert delivery.os.environ[
+            delivery.CAPABILITY_ENV
+        ] not in transaction.read_text(encoding="utf-8")
 
 
 def test_hook_accepts_an_explicit_allowed_mode_when_default_differs(tmp_path):
@@ -123,9 +121,7 @@ def test_hook_accepts_an_explicit_allowed_mode_when_default_differs(tmp_path):
     )
 
     with delivery.authorized_push(direct_policy, cwd=root):
-        assert delivery.authorize_hook_push(
-            hook_policy, "origin", cwd=root
-        ) is True
+        assert delivery.authorize_hook_push(hook_policy, "origin", cwd=root) is True
 
 
 def test_policy_payload_marks_server_enforcement_as_required():
@@ -158,8 +154,10 @@ def test_delivery_runs_source_hub_health_before_target_wrapper(tmp_path, monkeyp
     monkeypatch.setattr(
         delivery,
         "run_source_hub_health",
-        lambda candidate: calls.append(candidate)
-        or delivery.SourceHubHealthResult(0, "GOV-HUB-PASS\n", "", 3),
+        lambda candidate: (
+            calls.append(candidate)
+            or delivery.SourceHubHealthResult(0, "GOV-HUB-PASS\n", "", 3)
+        ),
     )
 
     delivery._governance_gate(root)
@@ -275,13 +273,9 @@ def test_diagnostic_guidance_rejects_escaping_runbook(tmp_path):
     )
     (root / "outside.md").write_text("not a managed runbook\n", encoding="utf-8")
 
-    guidance = delivery.governance_diagnostic_guidance(
-        root, "GOV-PATH-001: failed"
-    )
+    guidance = delivery.governance_diagnostic_guidance(root, "GOV-PATH-001: failed")
 
-    assert guidance == [
-        "canonical remediation for GOV-PATH-001: Keep paths relative."
-    ]
+    assert guidance == ["canonical remediation for GOV-PATH-001: Keep paths relative."]
 
 
 def test_diagnostic_guidance_preserves_v1_message_only_catalog(tmp_path):
@@ -298,9 +292,7 @@ def test_diagnostic_guidance_preserves_v1_message_only_catalog(tmp_path):
         encoding="utf-8",
     )
 
-    assert delivery.governance_diagnostic_guidance(
-        root, "GOV-TICKET-001: failed"
-    ) == []
+    assert delivery.governance_diagnostic_guidance(root, "GOV-TICKET-001: failed") == []
 
 
 def _pull_request_policy():
@@ -339,7 +331,9 @@ def _publish_repository(tmp_path: Path) -> Path:
     return root
 
 
-def _commit_ticket_change(root: Path, message: str, content: str = "candidate\n") -> str:
+def _commit_ticket_change(
+    root: Path, message: str, content: str = "candidate\n"
+) -> str:
     (root / "candidate.txt").write_text(content, encoding="utf-8")
     _git(root, "add", "candidate.txt")
     _git(root, "commit", "--quiet", "-m", message)
@@ -381,14 +375,16 @@ def test_pending_pr_delivery_ignores_dirty_equal_and_merged_histories(tmp_path):
     root = _publish_repository(tmp_path)
     policy = _pull_request_policy()
 
-    assert delivery.pending_pull_request_delivery(
-        policy, ticket="ticket-049", cwd=root
-    ) is None
+    assert (
+        delivery.pending_pull_request_delivery(policy, ticket="ticket-049", cwd=root)
+        is None
+    )
 
     (root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
-    assert delivery.pending_pull_request_delivery(
-        policy, ticket="ticket-049", cwd=root
-    ) is None
+    assert (
+        delivery.pending_pull_request_delivery(policy, ticket="ticket-049", cwd=root)
+        is None
+    )
     (root / "dirty.txt").unlink()
 
     base_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
@@ -397,9 +393,10 @@ def test_pending_pr_delivery_ignores_dirty_equal_and_merged_histories(tmp_path):
     _git(root, "push", "--quiet", "origin", "HEAD:main")
     _git(root, "checkout", "--quiet", "--detach", base_sha)
 
-    assert delivery.pending_pull_request_delivery(
-        policy, ticket="ticket-049", cwd=root
-    ) is None
+    assert (
+        delivery.pending_pull_request_delivery(policy, ticket="ticket-049", cwd=root)
+        is None
+    )
 
 
 def test_pending_pr_delivery_fails_closed_on_divergent_remote_base(tmp_path):
@@ -494,6 +491,58 @@ def test_merged_branch_pr_is_not_reused_for_a_new_delivery(tmp_path, monkeypatch
     assert first_query[first_query.index("--head") + 1] == head
 
 
+def test_pull_request_push_preserves_colliding_local_branch(tmp_path, monkeypatch):
+    """Canonical remote publication must not create or rewrite a local alias."""
+    root = _repository(tmp_path)
+    canonical = "goal/ticket-055"
+    stale_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "branch", canonical)
+    _git(root, "switch", "-c", "ticket/055-close")
+    expected_head = _commit_ticket_change(
+        root, "[ticket-055] close governed delivery evidence"
+    )
+    original_run = delivery._run
+    calls = []
+
+    def fake_run(arguments, *, cwd=None):
+        calls.append(arguments)
+        if arguments[:2] == ["git", "push"]:
+            return subprocess.CompletedProcess(arguments, 0, "", "")
+        if arguments[:3] == ["gh", "pr", "list"]:
+            payload = [
+                {
+                    "url": "https://github.com/example/repo/pull/55",
+                    "headRefOid": expected_head,
+                }
+            ]
+            return subprocess.CompletedProcess(arguments, 0, json.dumps(payload), "")
+        return original_run(arguments, cwd=cwd)
+
+    monkeypatch.setattr(delivery, "_run", fake_run)
+
+    resolved_head, url = delivery.deliver_pull_request(
+        _pull_request_policy(),
+        ticket="ticket-055",
+        title="[ticket-055] close governed delivery evidence",
+        cwd=root,
+    )
+
+    assert resolved_head == canonical
+    assert url == "https://github.com/example/repo/pull/55"
+    assert _git(root, "branch", "--show-current").stdout.strip() == "ticket/055-close"
+    assert _git(root, "rev-parse", canonical).stdout.strip() == stale_sha
+    push = next(call for call in calls if call[:2] == ["git", "push"])
+    assert push == [
+        "git",
+        "push",
+        "-u",
+        "origin",
+        "HEAD:refs/heads/goal/ticket-055",
+    ]
+    assert "--force" not in push
+    assert not any(call[:2] == ["git", "switch"] for call in calls)
+
+
 def test_open_pr_is_reused_only_at_current_pushed_head(tmp_path, monkeypatch):
     root = _repository(tmp_path)
     head = "goal/ticket-027"
@@ -529,9 +578,7 @@ def test_open_pr_is_reused_only_at_current_pushed_head(tmp_path, monkeypatch):
     assert not any(call[:3] == ["gh", "pr", "create"] for call in calls)
 
 
-def test_open_pr_stale_head_is_retried_until_current_pushed_head(
-    tmp_path, monkeypatch
-):
+def test_open_pr_stale_head_is_retried_until_current_pushed_head(tmp_path, monkeypatch):
     root = _repository(tmp_path)
     head = "goal/ticket-044"
     _git(root, "switch", "-c", head)
