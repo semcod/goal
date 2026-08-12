@@ -2,11 +2,13 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-056](project/ticket-056/README.md): make canonical bare
+- [x] Deliver [ticket-056](project/ticket-056/README.md): make canonical bare
   `goal -a` infer exactly one active governed ticket before bootstrap and keep
-  committed PR resume plus delivery audit mutation-free. State:
-  `IN_PROGRESS / EDIT`; classification: `BUG / P0 / regression`; depends on
-  ticket-055.
+  committed PR resume plus delivery audit mutation-free. State: `DONE / DONE`;
+  54 focused and 607 full tests (2 existing skips), Ruff, governance, package
+  and Docker validation passed; exact-head Validator approval `4919030999`;
+  PR #92 merged as `a05b2f984511d...`; classification: `BUG / P0 / regression`;
+  depends on ticket-055.
 
 - [x] Deliver [ticket-055](project/ticket-055/README.md): make governed
   pull-request resume mutation-free and independent of colliding merged local
