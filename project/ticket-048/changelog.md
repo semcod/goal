@@ -12,3 +12,5 @@
   wheel/sdist and Docker checks without changing dependencies or version.
 - Entered active `IN_PROGRESS / PUBLICATION` for exact-head protected
   validation and trusted merge.
+- Removed Goal-generated root README badge drift before final PR validation;
+  the corrected branch has no README diff from `main`.

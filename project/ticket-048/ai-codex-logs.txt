@@ -3,3 +3,5 @@
 2026-08-12T14:22:00+02:00 full validation PASS: 588 passed, 2 skipped
 2026-08-12T14:26:00+02:00 wheel/sdist and Docker validation PASS; temporary image removed
 2026-08-12T14:26:00+02:00 implementation complete; workflow state IN_PROGRESS/PUBLICATION pending independent exact-head validation
+2026-08-12T14:29:00+02:00 public Goal opened PR 72 but committed out-of-scope README badge drift after its gate
+2026-08-12T14:31:00+02:00 local correction c6c7d48 restored zero-net README diff; guarded Goal retry pending

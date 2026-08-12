@@ -47,6 +47,10 @@ configured Release side effect fails.
   version carrier changed, and generated validation outputs were removed.
 - Moved the active ticket to `IN_PROGRESS / PUBLICATION` for independent
   exact-head hosted validation and trusted merge.
+- Detected that public Goal refreshed and committed the root AI-cost badge
+  after its governance gate. Reverted that out-of-scope drift as a second
+  local commit and kept it unpushed until a guarded Goal retry could deliver a
+  zero-net README diff through the same PR.
 
 ## Blockers
 

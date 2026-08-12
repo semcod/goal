@@ -55,6 +55,10 @@ and peels to the clean current HEAD.
   the validation image was removed.
 - The ticket remains active through protected exact-head PR validation and
   trusted merge, before the downstream `new-project` Release repair.
+- Public Goal initially refreshed the root AI-cost badge after its governance
+  gate and committed that out-of-scope file. The same PR was corrected to a
+  zero-net README diff before validation; the guarded retry disables cost
+  badge mutation explicitly.
 
 ## Participants
 
