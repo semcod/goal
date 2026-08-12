@@ -26,3 +26,7 @@
   retry created v0.16.0 without assets or Git mutation.
 - Returned to `EDIT` after observing that the Release title used a temporary
   checkout directory rather than configured `project.name`.
+- Resolved canonical display identity from Goal config, reconciled existing
+  assetless Release title/notes and quoted all mutable `gh release` arguments.
+- Passed 36 focused and 594 full tests (2 skipped), Ruff, governance and Docker,
+  then re-entered `PUBLICATION` for exact-head validation.

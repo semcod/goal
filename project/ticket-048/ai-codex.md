@@ -78,10 +78,17 @@ configured Release side effect fails.
   configured project name `new-project`.
 - Returned the same active ticket to `EDIT` to resolve the canonical project
   name from Goal config and reconcile title/notes when the Release exists.
+- Refreshed accepted base to trusted PR #73 merge `b214711`; ticket scope,
+  architecture and budgets remain unchanged.
+- Resolved Release display identity from `project.name`, reconciled title and
+  notes for existing assetless Releases, and shell-quoted every mutable `gh`
+  argument in this path.
+- Passed 36 focused and 594 full tests (2 skipped), scoped Ruff, governance and
+  pinned-base Docker; removed the temporary image and re-entered `PUBLICATION`.
 
 ## Blockers
 
-- AC-04's Release exists, but closure waits for canonical metadata and a clean
-  idempotent re-run through protected code.
+- AC-04's Release exists, but closure waits for protected merge and the clean
+  canonical-metadata re-run.
 - New authority remains required for destructive action, secret access, new
   external coordination or material objective expansion.

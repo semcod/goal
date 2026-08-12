@@ -658,6 +658,41 @@ def test_package_release_does_not_allow_empty_assets() -> None:
     assert mirror.call_args.kwargs["artifacts"] is None
 
 
+def test_generic_release_uses_configured_project_name() -> None:
+    """Release metadata must not expose an arbitrary checkout directory name."""
+    from goal.push.core import _mirror_github_release
+
+    config = {
+        "project": {"name": "new-project"},
+        "publishing": {
+            "fallback": {
+                "github_release": {
+                    "enabled": True,
+                    "owner": "wellmanifest",
+                    "repo": "new-project",
+                    "create_on_tag": True,
+                }
+            }
+        },
+    }
+    delivery = type("Delivery", (), {"mode": "direct-main"})()
+
+    with patch(
+        "goal.publish.github_fallback.try_github_release_on_tag",
+        return_value=True,
+    ) as mirror:
+        _mirror_github_release(
+            tag_name="v0.16.0",
+            effective_no_tag=False,
+            delivery=delivery,
+            project_types=[],
+            new_version="0.16.0",
+            publish_config=config,
+        )
+
+    assert mirror.call_args.kwargs["package_name"] == "new-project"
+
+
 def test_publish_only_aborts_when_bootstrap_mutates_source() -> None:
     """Bootstrap mutations must fail before staging, tests, commit or publish."""
     from goal.push.core import execute_push_workflow

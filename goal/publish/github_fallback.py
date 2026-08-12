@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -259,18 +260,22 @@ def publish_github_release(
         )
     )
 
-    view_cmd = f"gh release view {tag} -R {remote}"
-    view = subprocess.run(view_cmd, shell=True, capture_output=True, text=True)
+    release_title = f"{package_name or repo} {tag}"
+    release_notes = (
+        f"Automated release {tag}"
+        if allow_empty_assets
+        else f"Automated release {tag} (PyPI blocked — parallel GitHub channel)"
+    )
+    view = subprocess.run(
+        ["gh", "release", "view", tag, "-R", remote],
+        capture_output=True,
+        text=True,
+    )
     if view.returncode != 0:
-        release_notes = (
-            f"Automated release {tag}"
-            if allow_empty_assets
-            else f"Automated release {tag} (PyPI blocked — parallel GitHub channel)"
-        )
         create_cmd = (
-            f"gh release create {tag} -R {remote} "
-            f"--title '{package_name or repo} {tag}' "
-            f"--notes '{release_notes}'"
+            f"gh release create {shlex.quote(tag)} -R {shlex.quote(remote)} "
+            f"--title {shlex.quote(release_title)} "
+            f"--notes {shlex.quote(release_notes)}"
         )
         create = run_command_tee(create_cmd)
         if create.returncode != 0:
@@ -278,10 +283,26 @@ def publish_github_release(
                 click.style("  ✗ GitHub release create failed", fg="red"), err=True
             )
             return False
+    elif allow_empty_assets:
+        edit_cmd = (
+            f"gh release edit {shlex.quote(tag)} -R {shlex.quote(remote)} "
+            f"--title {shlex.quote(release_title)} "
+            f"--notes {shlex.quote(release_notes)}"
+        )
+        edit = run_command_tee(edit_cmd)
+        if edit.returncode != 0:
+            click.echo(
+                click.style("  ✗ GitHub release metadata update failed", fg="red"),
+                err=True,
+            )
+            return False
 
     if files:
-        upload_paths = " ".join(str(p) for p in files)
-        upload_cmd = f"gh release upload {tag} -R {remote} {upload_paths} --clobber"
+        upload_paths = " ".join(shlex.quote(str(p)) for p in files)
+        upload_cmd = (
+            f"gh release upload {shlex.quote(tag)} -R {shlex.quote(remote)} "
+            f"{upload_paths} --clobber"
+        )
         upload = run_command_tee(upload_cmd)
         if upload.returncode != 0:
             click.echo(
