@@ -2,11 +2,15 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-050](project/ticket-050/README.md): publish the merged
+- [x] Deliver [ticket-050](project/ticket-050/README.md): publish the merged
   artifactless GitHub Release repair as Goal 2.1.298, verify immutable public
   artifacts and use the fresh public CLI to complete `new-project v0.16.1`.
-  State: `IN_PROGRESS / PUBLICATION`; classification:
-  `SERVICE / P0 / requested`.
+  State: `DONE / DONE`; PR #77 passed Python 3.12/3.13 CI and exact-head
+  Validator approval, then merge `4388d1e...` passed 600 tests (2 skipped),
+  scoped Ruff, governance, package and Docker checks. Public PyPI, annotated
+  tag and final Release are immutable and the fresh public CLI completed the
+  assetless `new-project v0.16.1` Release without moving its tag or `main`;
+  classification: `SERVICE / P0 / requested`.
 
 - [x] Deliver [ticket-049](project/ticket-049/README.md): safely resume governed
   pull-request delivery when an authorized ticket commit exists ahead of the

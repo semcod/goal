@@ -49,8 +49,19 @@ repair before that downstream publication can be truthfully completed.
 - Refreshed once more after ticket-049's independent closure merge and retained
   its `DONE / DONE` evidence while keeping its paths outside this ticket's
   final diff.
+- Published PR #77 only after Python 3.12/3.13 CI and the trusted Validator App
+  approved exact head `c5a24e2`; the approved tree was merged as `4388d1e`.
+- Retested the clean merge with 600 passing tests and 2 existing skips, scoped
+  Ruff, governance, carrier checks, package inspection and a pinned-base Docker
+  build before any immutable publication effect.
+- Published one wheel and one sdist to PyPI, pushed annotated `v2.1.298` through
+  Goal's governed direct-main authorization, and created the final GitHub
+  Release with byte-identical copies of both public artifacts.
+- Installed public Goal 2.1.298 without cache in an isolated environment and
+  used that installed CLI in a fresh `new-project` clone. It recovered exact
+  annotated `v0.16.1`, left its tag and `main` unchanged at `4e6ba5e`, created
+  no source commit and completed the missing final assetless Release.
 
 ## Blockers
 
-- None within the bounded release. Trusted exact-head merge approval remains an
-  external protected-boundary decision.
+- None. The bounded release and downstream proof are complete.

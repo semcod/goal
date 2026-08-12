@@ -13,3 +13,17 @@
 2026-08-12 SDIST 86e558e0f1e86b04f20882c924a93523b19736f85655529fedbe0d6a10cc4b34
 2026-08-12 DOCKER sha256:0d1b1ea750f9b006d868d88f46e24f34f784a202e30a8897fdfc280e520344dc PASS
 2026-08-12 BASE refreshed origin/main 355d49f7c228dc760c11e38b74d477eeda4972e2 after ticket-049 closure
+2026-08-12 PR 77 exact head c5a24e236535f72a25bc016baf45cbb99d26d39d
+2026-08-12 CI Python 3.12 PASS; Python 3.13 PASS
+2026-08-12 VALIDATOR run 31603358900 review 4917221672 exact-head APPROVED
+2026-08-12 MERGE 4388d1e4c7b7547ee93b42fddbb9947f358e444e tree equals approved head
+2026-08-12 CLEAN_MERGE pytest 600 passed 2 skipped; Ruff PASS; GOV-PASS; carriers PASS
+2026-08-12 CLEAN_MERGE_DOCKER sha256:1f61048c4c2c541b0ed8e630f6e7ac8e0dee16eccd21325cdd12829adfb28e0e PASS
+2026-08-12 PYPI goal-2.1.298-py3-none-any.whl sha256:1b098106e261cb5cd9ff9623dcdff3b6509810af349eec7f7ec55868ddee393d size:338270
+2026-08-12 PYPI goal-2.1.298.tar.gz sha256:0ccc78efd216da200abdf75d8d372aacfe4e625fa2c40eb687f5dfc625bd9099 size:379882
+2026-08-12 TAG v2.1.298 object 507f21edc76f0d76a040ded9242cd44b23d59be8 peeled 4388d1e4c7b7547ee93b42fddbb9947f358e444e
+2026-08-12 RELEASE https://github.com/semcod/goal/releases/tag/v2.1.298 final; two assets match PyPI hashes
+2026-08-12 PUBLIC_INSTALL goal 2.1.298 loaded from isolated site-packages; exact-tag recovery present
+2026-08-12 NEW_PROJECT before main 4e6ba5ec15873346446d67d8787f17f68f57f81e tag-object d25151e27a6eeff899caff191993df0559ec333d peel 4e6ba5ec15873346446d67d8787f17f68f57f81e release absent
+2026-08-12 NEW_PROJECT direct-main force-publish PASS; no commit; main/tag unchanged
+2026-08-12 NEW_PROJECT_RELEASE https://github.com/wellmanifest/new-project/releases/tag/v0.16.1 final assetless
