@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-038",
+  "summary": "Require GitHub Release evidence before standard adoption",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P0",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_cmd.py",
+    "project/ticket-038/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-037"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a44bf722ac63218fe38b3fdf555de5d6f298a39e",
+    "targetBranch": "main",
+    "outcome": "Goal requires canonical published GitHub Release metadata before production new-project adoption",
+    "nonGoals": [
+      "No runtime dependency, version bump or package publication",
+      "No generator lock or provenance change",
+      "No weakening of annotated-tag or exact-SHA verification"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend the existing standard acquisition verifier with a bounded canonical GitHub Release API proof",
+      "components": [
+        {
+          "name": "governance-adoption-cli",
+          "paths": ["goal/cli/governance_cmd.py", "tests/test_governance_cmd.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove the Release API verifier; annotated-tag proof remains"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest -q tests/test_governance_cmd.py"],
+        "evidence": "missing and non-published release fixtures fail before generator execution"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_governance_cmd.py"],
+        "evidence": "canonical release fixture preserves released adoption flows"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_governance_cmd.py"],
+        "evidence": "explicit candidate mode remains network-free and forwarded"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/cli/governance_cmd.py tests/test_governance_cmd.py",
+          "./project/governance-check.sh --actor agent",
+          "python -m build",
+          "docker build ."
+        ],
+        "evidence": "focused/full tests, lint, governance and builds pass"
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+2026-08-12 ticket initialization
+SESSION_EXECUTION_AUTHORIZATION=recorded
+accepted_base=a44bf722ac63218fe38b3fdf555de5d6f298a39e
+dependency=ticket-037 DONE; ticket-028 reconciled DONE
+
+2026-08-12 focused validation
+pytest tests/test_governance_cmd.py=24 passed
+ruff changed files=PASS
+governance=GOV-PASS
+
+2026-08-12 full validation
+pytest=559 passed, 2 skipped
+live release pilot=v0.14.1@63a3d56b648da0d338be7cf28cbf9045adbb3e5e PASS
+package build=goal-2.1.294 wheel and sdist PASS; temporary output removed
+docker build=sha256:6aa0fe834471671d994a1c3aa6c834125a7fff5261a870ee0df15ff44cbaf3a9
+generated goal.egg-info=removed

@@ -6,6 +6,9 @@ import re
 import subprocess
 import sys
 import tempfile
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 import click
 
@@ -22,6 +25,10 @@ from goal.governance.delivery import (
 
 
 DEFAULT_STANDARD_REPOSITORY = "https://github.com/wellmanifest/new-project.git"
+CANONICAL_STANDARD_RELEASES_API = (
+    "https://api.github.com/repos/wellmanifest/new-project/releases/tags"
+)
+MAX_RELEASE_METADATA_BYTES = 1024 * 1024
 FULL_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
 GOVERNANCE_PACKAGE_FILES = {
@@ -47,6 +54,39 @@ def _run_git(arguments, cwd=None):
         text=True,
         check=False,
     )
+
+
+def _load_github_release(tag):
+    request = Request(
+        f"{CANONICAL_STANDARD_RELEASES_API}/{quote(tag, safe='')}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "goal-governance-adoption",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            raw = response.read(MAX_RELEASE_METADATA_BYTES + 1)
+    except (HTTPError, URLError, TimeoutError, OSError) as error:
+        raise click.ClickException(
+            f"the canonical standard has no verifiable published GitHub Release {tag}"
+        ) from error
+    if len(raw) > MAX_RELEASE_METADATA_BYTES:
+        raise click.ClickException(
+            f"the canonical GitHub Release metadata for {tag} is unexpectedly large"
+        )
+    try:
+        release = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise click.ClickException(
+            f"the canonical GitHub Release metadata for {tag} is invalid"
+        ) from error
+    if not isinstance(release, dict):
+        raise click.ClickException(
+            f"the canonical GitHub Release metadata for {tag} is invalid"
+        )
+    return release
 
 
 def _verify_published_standard(revision, standard):
@@ -87,6 +127,23 @@ def _verify_published_standard(revision, standard):
         raise click.ClickException(
             f"the standard release tag {tag} does not identify requested revision {revision}"
         )
+
+    release = _load_github_release(tag)
+    if release.get("tag_name") != tag:
+        raise click.ClickException(
+            f"the canonical GitHub Release does not identify standard tag {tag}"
+        )
+    published_at = release.get("published_at")
+    if (
+        release.get("draft") is not False
+        or release.get("prerelease") is not False
+        or not isinstance(published_at, str)
+        or not published_at.strip()
+    ):
+        raise click.ClickException(
+            f"the canonical GitHub Release {tag} is not a final published release"
+        )
+
 
 def _checkout_standard(
     repository,
