@@ -13,11 +13,15 @@ from urllib.request import Request, urlopen
 import click
 
 from goal.cli import main
-from goal.config import ensure_config
+from goal.config import load_config
 from goal.governance.delivery import (
+    GOVERNANCE_PACKAGE_FILES,
     authorize_hook_push,
     check_delivery_hook,
+    governance_diagnostic_guidance,
     install_delivery_hook,
+    is_new_project_source_hub,
+    missing_governance_package_files,
     policy_payload,
     remove_delivery_hook,
     resolve_delivery_policy,
@@ -31,12 +35,6 @@ CANONICAL_STANDARD_RELEASES_API = (
 MAX_RELEASE_METADATA_BYTES = 1024 * 1024
 FULL_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
-GOVERNANCE_PACKAGE_FILES = {
-    "validator": ".governance/governance_check.py",
-    "manifest": ".governance/manifest.json",
-    "lock": ".governance/manifest.lock.json",
-    "stack profiles": ".governance/stack-profiles.json",
-}
 WORKSPACE_LIFECYCLE_CHECKER = ".governance/workspace_lifecycle_check.py"
 RESERVED_VALIDATOR_OPTIONS = (
     "--root",
@@ -218,12 +216,15 @@ def _reject_reserved_validator_options(arguments):
 def governance_check(target_root, validator_args):
     """Run the deterministic validator from the adopted governance package."""
     target = target_root.resolve()
-    missing = [
-        relative
-        for relative in GOVERNANCE_PACKAGE_FILES.values()
-        if not (target / relative).is_file()
-    ]
+    missing = missing_governance_package_files(target)
     if missing:
+        if is_new_project_source_hub(target):
+            raise click.ClickException(
+                "the target is the maintained wellmanifest/new-project source "
+                "hub, not an adopted repository; run the source-hub checks "
+                "declared in .github/workflows/ci.yml and do not adopt a "
+                "target .governance package into the hub"
+            )
         raise click.ClickException(
             "adopted governance package is incomplete; missing: "
             + ", ".join(missing)
@@ -256,6 +257,11 @@ def governance_check(target_root, validator_args):
     if result.stderr:
         click.echo(result.stderr, err=True, nl=False)
     if result.returncode != 0:
+        output = "\n".join(
+            part.strip() for part in (result.stdout, result.stderr) if part.strip()
+        )
+        for line in governance_diagnostic_guidance(target, output):
+            click.echo(line, err=True)
         raise click.exceptions.Exit(result.returncode)
 
 
@@ -343,9 +349,20 @@ def delivery_hook_remove():
 @governance.command("authorize-push", hidden=True)
 @click.argument("remote_name")
 @click.argument("remote_url", required=False)
-def authorize_push(remote_name, remote_url):
-    config = ensure_config()
+@click.pass_context
+def authorize_push(ctx, remote_name, remote_url):
+    config = (ctx.find_root().obj or {}).get("config") or load_config()
+    if hasattr(config, "exists") and not config.exists():
+        raise click.ClickException(
+            "governed pre-push authorization requires an existing goal.yaml "
+            "with governance.delivery configuration"
+        )
     policy = resolve_delivery_policy(config, None, all_flags=True)
+    if policy is None:
+        raise click.ClickException(
+            "governed pre-push authorization requires governance.delivery "
+            "configuration in goal.yaml"
+        )
     authorize_hook_push(policy, remote_name)
 
 
@@ -355,10 +372,12 @@ def authorize_push(remote_name, remote_url):
     type=click.Choice(["direct-main", "publish-only", "pull-request"]),
     default=None,
 )
-def verify_delivery(delivery_mode):
+@click.pass_context
+def verify_delivery(ctx, delivery_mode):
     """Print the resolved policy and local/server enforcement boundary."""
+    config = (ctx.find_root().obj or {}).get("config") or load_config()
     policy = resolve_delivery_policy(
-        ensure_config(), delivery_mode, all_flags=True
+        config, delivery_mode, all_flags=True
     )
     payload = policy_payload(policy)
     payload["hookInstalled"] = check_delivery_hook()

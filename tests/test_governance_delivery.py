@@ -139,6 +139,144 @@ def test_policy_payload_marks_server_enforcement_as_required():
     assert payload["serverEnforcementRequired"] is True
 
 
+def test_delivery_rejects_source_hub_before_target_wrapper(tmp_path, monkeypatch):
+    root = tmp_path / "new-project"
+    for relative in delivery.SOURCE_HUB_FILES:
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+    gate = root / "project" / "governance-check.sh"
+    gate.parent.mkdir(parents=True)
+    gate.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        delivery,
+        "_run",
+        lambda *_args, **_kwargs: pytest.fail("target wrapper was executed"),
+    )
+
+    with pytest.raises(click.ClickException, match="source hub, not an adopted target"):
+        delivery._governance_gate(root)
+
+
+def test_delivery_rejects_incomplete_adopted_package_before_wrapper(
+    tmp_path, monkeypatch
+):
+    root = tmp_path / "target"
+    gate = root / "project" / "governance-check.sh"
+    gate.parent.mkdir(parents=True)
+    gate.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+    manifest = root / delivery.GOVERNANCE_PACKAGE_FILES["manifest"]
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text("{}\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        delivery,
+        "_run",
+        lambda *_args, **_kwargs: pytest.fail("incomplete wrapper was executed"),
+    )
+
+    with pytest.raises(click.ClickException, match="complete adopted package"):
+        delivery._governance_gate(root)
+
+
+def test_delivery_failure_surfaces_v2_remediation_and_safe_runbook(
+    tmp_path, monkeypatch
+):
+    root = tmp_path / "target"
+    for relative in delivery.GOVERNANCE_PACKAGE_FILES.values():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+    gate = root / "project" / "governance-check.sh"
+    gate.parent.mkdir(parents=True)
+    gate.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    catalog = root / delivery.GOVERNANCE_DIAGNOSTICS
+    catalog.write_text(
+        json.dumps(
+            {
+                "schema": "new-project.diagnostics/v2",
+                "codes": {
+                    "GOV-TICKET-001": {
+                        "message": "Ticket is missing.",
+                        "remediation": "Create exactly one bounded ticket.",
+                        "documentation": "error/GOV-TICKET-001.md",
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    runbook = root / ".governance" / "error" / "GOV-TICKET-001.md"
+    runbook.parent.mkdir()
+    runbook.write_text("# Runbook\n", encoding="utf-8")
+    monkeypatch.setattr(
+        delivery,
+        "_run",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(
+            [], 1, "GOV-TICKET-001: failed\n", "validator detail\n"
+        ),
+    )
+
+    with pytest.raises(click.ClickException) as error:
+        delivery._governance_gate(root)
+
+    assert "canonical remediation for GOV-TICKET-001" in error.value.message
+    assert "Create exactly one bounded ticket." in error.value.message
+    assert "runbook for GOV-TICKET-001: .governance/error/GOV-TICKET-001.md" in (
+        error.value.message
+    )
+
+
+def test_diagnostic_guidance_rejects_escaping_runbook(tmp_path):
+    root = tmp_path / "target"
+    catalog = root / delivery.GOVERNANCE_DIAGNOSTICS
+    catalog.parent.mkdir(parents=True)
+    catalog.write_text(
+        json.dumps(
+            {
+                "schema": "new-project.diagnostics/v2",
+                "codes": {
+                    "GOV-PATH-001": {
+                        "message": "Unsafe path.",
+                        "remediation": "Keep paths relative.",
+                        "documentation": "../outside.md",
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (root / "outside.md").write_text("not a managed runbook\n", encoding="utf-8")
+
+    guidance = delivery.governance_diagnostic_guidance(
+        root, "GOV-PATH-001: failed"
+    )
+
+    assert guidance == [
+        "canonical remediation for GOV-PATH-001: Keep paths relative."
+    ]
+
+
+def test_diagnostic_guidance_preserves_v1_message_only_catalog(tmp_path):
+    root = tmp_path / "target"
+    catalog = root / delivery.GOVERNANCE_DIAGNOSTICS
+    catalog.parent.mkdir(parents=True)
+    catalog.write_text(
+        json.dumps(
+            {
+                "schema": "new-project.diagnostics/v1",
+                "codes": {"GOV-TICKET-001": "Ticket is missing."},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert delivery.governance_diagnostic_guidance(
+        root, "GOV-TICKET-001: failed"
+    ) == []
+
+
 def _pull_request_policy():
     return delivery.resolve_delivery_policy(
         _config(
