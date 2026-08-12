@@ -70,6 +70,16 @@ class SourceHubHealthResult:
     completed_checks: int
 
 
+@dataclass(frozen=True)
+class PendingPullRequestDelivery:
+    """Immutable evidence for resuming an already committed PR candidate."""
+
+    base_sha: str
+    head_sha: str
+    title: str
+    files: tuple[str, ...]
+
+
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -650,6 +660,113 @@ def _pr_head(ticket: str | None, root: Path) -> str:
     identity = ticket or _git_value("rev-parse", "--short=12", "HEAD", cwd=root)
     slug = re.sub(r"[^a-z0-9-]+", "-", identity.lower()).strip("-")
     return f"goal/{slug or 'change'}"
+
+
+def pending_pull_request_delivery(
+    policy: DeliveryPolicy,
+    *,
+    ticket: str | None,
+    cwd: Path | None = None,
+) -> PendingPullRequestDelivery | None:
+    """Classify one clean, ticket-bound commit range ahead of remote base."""
+    if policy.mode != "pull-request" or not ticket:
+        return None
+
+    root = _repository_root(cwd)
+    if _git_value("status", "--porcelain=v1", "--untracked-files=all", cwd=root):
+        return None
+
+    remote_ref = f"refs/heads/{policy.base_branch}"
+    remote = _run(
+        ["git", "ls-remote", "--heads", policy.remote, remote_ref],
+        cwd=root,
+    )
+    if remote.returncode != 0:
+        detail = (remote.stderr or "remote base lookup failed").strip()
+        raise click.ClickException(
+            "pull-request resume could not resolve authoritative "
+            f"{policy.remote}/{policy.base_branch}: {detail}"
+        )
+    rows = [line.split() for line in remote.stdout.splitlines() if line.strip()]
+    if len(rows) != 1 or len(rows[0]) != 2:
+        raise click.ClickException(
+            "pull-request resume requires exactly one authoritative "
+            f"{policy.remote}/{policy.base_branch} head"
+        )
+
+    base_sha = rows[0][0]
+    head_sha = _git_value("rev-parse", "HEAD", cwd=root)
+    if head_sha == base_sha:
+        return None
+
+    known_base = _run(
+        ["git", "cat-file", "-e", f"{base_sha}^{{commit}}"],
+        cwd=root,
+    )
+    if known_base.returncode != 0:
+        raise click.ClickException(
+            "pull-request resume cannot verify the authoritative base locally; "
+            f"fetch {policy.remote}/{policy.base_branch} and retry"
+        )
+
+    head_is_merged = _run(
+        ["git", "merge-base", "--is-ancestor", head_sha, base_sha],
+        cwd=root,
+    )
+    if head_is_merged.returncode == 0:
+        return None
+    if head_is_merged.returncode not in {0, 1}:
+        raise click.ClickException("pull-request resume could not compare Git history")
+
+    base_is_ancestor = _run(
+        ["git", "merge-base", "--is-ancestor", base_sha, head_sha],
+        cwd=root,
+    )
+    if base_is_ancestor.returncode != 0:
+        if base_is_ancestor.returncode == 1:
+            raise click.ClickException(
+                "pull-request resume refuses a history divergent from the "
+                f"authoritative {policy.remote}/{policy.base_branch}"
+            )
+        raise click.ClickException("pull-request resume could not compare Git history")
+
+    subjects_result = _run(
+        ["git", "log", "--format=%s", f"{base_sha}..{head_sha}"],
+        cwd=root,
+    )
+    subjects = [line for line in subjects_result.stdout.splitlines() if line]
+    if subjects_result.returncode != 0 or not subjects:
+        raise click.ClickException("pull-request resume found no committed candidate")
+    prefix = f"[{ticket}] "
+    unbound = [subject for subject in subjects if not subject.startswith(prefix)]
+    if unbound:
+        raise click.ClickException(
+            "pull-request resume refuses commits not bound to "
+            f"{ticket}: {unbound[0]}"
+        )
+
+    files_result = _run(
+        [
+            "git",
+            "diff",
+            "--name-only",
+            "--diff-filter=ACDMRTUXB",
+            f"{base_sha}..{head_sha}",
+        ],
+        cwd=root,
+    )
+    files = tuple(line for line in files_result.stdout.splitlines() if line)
+    if files_result.returncode != 0 or not files:
+        raise click.ClickException(
+            "pull-request resume found no file changes in the committed candidate"
+        )
+
+    return PendingPullRequestDelivery(
+        base_sha=base_sha,
+        head_sha=head_sha,
+        title=subjects[0],
+        files=files,
+    )
 
 
 def _find_open_pull_request(

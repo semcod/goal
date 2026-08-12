@@ -745,6 +745,129 @@ def test_publish_only_aborts_when_bootstrap_mutates_source() -> None:
     publish.assert_not_called()
 
 
+def test_pull_request_retry_retests_and_delivers_already_committed_candidate() -> None:
+    """An interrupted PR run must resume without manufacturing another commit."""
+    from goal.governance.delivery import PendingPullRequestDelivery
+    from goal.push.core import execute_push_workflow
+
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": {},
+        "user_config": {},
+        "delivery_mode": "pull-request",
+    }
+    policy = type("Delivery", (), {"mode": "pull-request"})()
+    candidate = PendingPullRequestDelivery(
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        title="[ticket-049] fix(delivery): resume committed candidate",
+        files=("goal/push/core.py", "tests/test_delivery_integrity.py"),
+    )
+
+    with (
+        patch(
+            "goal.governance.delivery.resolve_delivery_policy",
+            return_value=policy,
+        ),
+        patch("goal.governance.delivery.validate_delivery_ready"),
+        patch(
+            "goal.governance.delivery.pending_pull_request_delivery",
+            side_effect=[candidate, candidate],
+        ) as classify,
+        patch(
+            "goal.governance.delivery.deliver_pull_request",
+            return_value=("goal/ticket-049", "https://example.test/pr/49"),
+        ) as deliver,
+        patch("goal.governance.delivery.record_delivery_event") as event,
+        patch("goal.push.core.check_pyproject_toml", return_value=None),
+        patch("goal.push.core._detect_project_types", return_value=["python"]),
+        patch("goal.push.core._bootstrap_projects"),
+        patch("goal.push.core.handle_todo_stage", return_value=True),
+        patch("goal.push.core.run_git"),
+        patch("goal.push.core.get_staged_files", return_value=[]),
+        patch("goal.cli.version.get_current_version", return_value="2.1.297"),
+        patch(
+            "goal.push.core.run_test_stage",
+            return_value=("Tests passed", 0),
+        ) as tests,
+        patch("goal.push.core.get_version_info") as versions,
+        patch("goal.push.core._handle_commit_phase") as commit_phase,
+        patch("goal.push.core.handle_publish") as publish,
+        patch("goal.push.core.create_tag") as tag,
+    ):
+        execute_push_workflow(
+            ctx_obj=ctx_obj,
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            no_publish=False,
+            force_publish=False,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket="ticket-049",
+            abstraction=None,
+            todo=False,
+        )
+
+    assert classify.call_count == 2
+    tests.assert_called_once()
+    assert tests.call_args.args[4] == list(candidate.files)
+    deliver.assert_called_once_with(
+        policy,
+        ticket="ticket-049",
+        title=candidate.title,
+    )
+    assert [call.args[1] for call in event.call_args_list] == [
+        "started",
+        "pull-request",
+    ]
+    versions.assert_not_called()
+    commit_phase.assert_not_called()
+    publish.assert_not_called()
+    tag.assert_not_called()
+
+
+def test_pull_request_retry_fails_if_candidate_changes_during_tests() -> None:
+    """The exact candidate and remote base must survive the test interval."""
+    from goal.governance.delivery import PendingPullRequestDelivery
+    from goal.push.core import _resume_pending_pull_request
+
+    policy = type("Delivery", (), {"mode": "pull-request"})()
+    candidate = PendingPullRequestDelivery(
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        title="[ticket-049] fix(delivery): resume committed candidate",
+        files=("goal/push/core.py",),
+    )
+
+    with (
+        patch("goal.cli.version.get_current_version", return_value="2.1.297"),
+        patch("goal.governance.delivery.record_delivery_event"),
+        patch("goal.push.core.run_test_stage", return_value=("Tests passed", 0)),
+        patch(
+            "goal.governance.delivery.pending_pull_request_delivery",
+            return_value=None,
+        ),
+        patch("goal.governance.delivery.deliver_pull_request") as deliver,
+        pytest.raises(click.ClickException, match="changed during test execution"),
+    ):
+        _resume_pending_pull_request(
+            {"yes": True, "markdown": False, "config": {}},
+            ["python"],
+            False,
+            policy,
+            "ticket-049",
+            candidate,
+        )
+
+    deliver.assert_not_called()
+
+
 def test_uv_sync_preserves_test_extra_when_dev_is_not_declared(tmp_path: Path) -> None:
     """A test-only project must never fall back to a destructive plain sync."""
     from goal.package_managers import get_uv_sync_command

@@ -1,0 +1,101 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-049",
+  "summary": "Resume governed PR delivery after pre-PR interruption",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_governance_delivery.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-049/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0c3cd7b784d8889704d3a0fdb3f4f532df4c9164",
+    "targetBranch": "main",
+    "outcome": "A governed pull-request retry safely resumes an already committed exact-ticket candidate after a pre-PR interruption",
+    "nonGoals": [
+      "No raw push bypass or weakening of the governed delivery hook",
+      "No resume from dirty, divergent, unbound, behind or unknown histories",
+      "No version, changelog, tag, registry or GitHub Release mutation",
+      "No change to direct-main or publish-only retry semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Classify pending committed PR work at the governed delivery boundary, then let the orchestrator rerun tests and call the existing authorized PR delivery function",
+      "components": [
+        {
+          "name": "governed-delivery-classifier",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        },
+        {
+          "name": "push-orchestrator-resume",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_delivery_integrity.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the unmerged ticket branch; interrupted delivery continues to require a new staged evidence commit before Goal can retry"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest -q tests/test_governance_delivery.py"],
+        "evidence": "Only a clean exact-ticket fast-forward range is classified as resumable"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_delivery_integrity.py"],
+        "evidence": "The no-files path reruns tests and delegates exact HEAD to governed PR delivery"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_governance_delivery.py tests/test_delivery_integrity.py"],
+        "evidence": "Unsafe histories do not push and divergence fails closed"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "ruff check goal/governance/delivery.py goal/push/core.py tests/test_governance_delivery.py tests/test_delivery_integrity.py",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "Focused, full, static, governance, package and container checks pass"
+      }
+    ]
+  }
+}
