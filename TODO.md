@@ -2,11 +2,13 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-051](project/ticket-051/README.md): install the exact
+- [x] Deliver [ticket-051](project/ticket-051/README.md): install the exact
   published new-project 0.16.1 branch lifecycle checker as the
   governance-owned prerequisite for the separately owned remote-lifecycle
-  workflow and final package adoption. State: `IN_PROGRESS / VALIDATION`;
-  classification: `BUG / P1 / regression`.
+  workflow and final package adoption. State: `DONE / DONE`; PR #80 passed
+  600 tests (2 existing skips), Python 3.12/3.13 CI and trusted exact-head
+  Validator approval, then merged as `25f66fae...`; classification:
+  `BUG / P1 / regression`.
 
 - [x] Deliver [ticket-050](project/ticket-050/README.md): publish the merged
   artifactless GitHub Release repair as Goal 2.1.298, verify immutable public
