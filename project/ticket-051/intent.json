@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-051",
+  "summary": "Prepare the managed branch lifecycle checker for new-project 0.16.1 adoption",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    ".governance/branch_lifecycle_check.py",
+    "project/ticket-051/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".github/**",
+    ".governance/manifest.lock.json",
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9340e819c620001dccf4dc009825544b3974cddf",
+    "targetBranch": "main",
+    "outcome": "Goal contains the exact published branch lifecycle checker before the infrastructure workflow is installed",
+    "nonGoals": [
+      "No GitHub workflow change",
+      "No full governance package or lock upgrade",
+      "No Goal runtime or release-version change"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Install the governance-owned executable prerequisite before the separately owned workflow and final package adoption",
+      "components": [
+        {
+          "name": "branch-lifecycle-checker",
+          "paths": [
+            ".governance/branch_lifecycle_check.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the unmerged prerequisite branch; after merge retain it until the full published adoption makes the file lock-managed"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "sha256sum .governance/branch_lifecycle_check.py"
+        ],
+        "evidence": "project/ticket-051/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "focused deterministic snapshot probes"
+        ],
+        "evidence": "project/ticket-051/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-051/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
