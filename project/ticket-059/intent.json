@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-059",
+  "summary": "Align built-in Python publish commands",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/config/constants.py",
+    "goal/package_managers.py",
+    "tests/test_package_managers.py",
+    "project/ticket-059/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "goal.yaml",
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    ".github/**"
+  ],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-058"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d26817b4132d5a110ec0c4c9e3dc3672f94e2508",
+    "targetBranch": "main",
+    "outcome": "Every built-in Goal producer emits retry-safe Twine upload commands",
+    "nonGoals": [
+      "Do not change runtime or doctor behavior",
+      "Do not edit governance-owned Goal configuration",
+      "Do not change package versions or dependencies"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Make retry safety explicit at each built-in configuration source while retaining ticket-058 as the final runtime defense",
+      "components": [
+        {
+          "name": "built-in-publish-configuration",
+          "paths": [
+            "goal/config/constants.py",
+            "goal/package_managers.py",
+            "tests/test_package_managers.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the bounded implementation PR; ticket-058 runtime normalization still protects execution"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest -q tests/test_package_managers.py"],
+        "evidence": "project/ticket-059/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q tests/test_package_managers.py"],
+        "evidence": "project/ticket-059/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["pytest -q", "ruff check scoped paths", "./project/governance-check.sh"],
+        "evidence": "project/ticket-059/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
