@@ -43,6 +43,9 @@ repair before that downstream publication can be truthfully completed.
   diff.
 - Synchronized only the five declared release carriers to 2.1.298 and entered
   `PUBLICATION` for Goal-owned test, commit and pull-request delivery.
+- Passed 600 tests with 2 existing skips, scoped Ruff, governance, exact
+  carrier checks, wheel/sdist inspection and a pinned-base Docker build on the
+  refreshed candidate; recorded hashes and removed every generated resource.
 
 ## Blockers
 

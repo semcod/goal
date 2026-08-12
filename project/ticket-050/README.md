@@ -55,6 +55,16 @@ artifactless `wellmanifest/new-project v0.16.1` tag into a final Release.
 - `new-project v0.16.1` is an annotated tag peeled to exact clean merge
   `4e6ba5e`, but public Goal 2.1.297 skipped its required Release because that
   wheel predates ticket-048.
+- The refreshed candidate passes 600 tests with 2 existing skips, scoped Ruff,
+  governance and exact carrier checks. Wheel SHA-256 is
+  `b8890061bb87c2abdc59d2558416c5b18243704e3e07bea6229050912b8e74e2`;
+  sdist SHA-256 is
+  `86e558e0f1e86b04f20882c924a93523b19736f85655529fedbe0d6a10cc4b34`.
+  The wheel contains the artifactless Release and exact-tag recovery paths.
+- The pinned-base Docker candidate built successfully as
+  `sha256:0d1b1ea750f9b006d868d88f46e24f34f784a202e30a8897fdfc280e520344dc`;
+  all candidate distributions, build outputs, virtual environments and the
+  validation image were removed after evidence capture.
 
 ## Participants
 
