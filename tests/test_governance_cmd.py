@@ -10,6 +10,7 @@ import pytest
 import goal.cli as goal_cli
 import goal.cli.governance_cmd as governance_cmd
 from goal.cli import main
+from goal.governance.delivery import SourceHubHealthResult
 
 
 class FakeReleaseResponse:
@@ -312,7 +313,39 @@ def test_governance_check_fails_closed_for_incomplete_package(tmp_path):
     assert "goal governance adopt" in result.output
 
 
-def test_governance_check_routes_source_hub_without_recommending_adoption(tmp_path):
+def test_governance_check_runs_source_hub_health_without_recommending_adoption(
+    tmp_path, monkeypatch
+):
+    target = tmp_path / "new-project"
+    for relative in (
+        "governance/package-manifest.json",
+        "governance/manifest.default.json",
+        "scripts/governance_check.py",
+    ):
+        path = target / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(
+        governance_cmd,
+        "run_source_hub_health",
+        lambda candidate: SourceHubHealthResult(
+            0, f"GOV-HUB-PASS: {candidate.name}\n", "", 3
+        ),
+    )
+
+    result = CliRunner().invoke(
+        main,
+        ["governance", "check", "--target-root", str(target)],
+    )
+
+    assert result.exit_code == 0
+    assert "GOV-HUB-PASS: new-project" in result.output
+    assert "do not adopt" not in result.output
+
+
+def test_governance_check_rejects_target_validator_arguments_for_source_hub(
+    tmp_path,
+):
     target = tmp_path / "new-project"
     for relative in (
         "governance/package-manifest.json",
@@ -325,12 +358,18 @@ def test_governance_check_routes_source_hub_without_recommending_adoption(tmp_pa
 
     result = CliRunner().invoke(
         main,
-        ["governance", "check", "--target-root", str(target)],
+        [
+            "governance",
+            "check",
+            "--target-root",
+            str(target),
+            "--changed-file",
+            "README.md",
+        ],
     )
 
-    assert result.exit_code == 1
-    assert "source hub, not an adopted repository" in result.output
-    assert "do not adopt" in result.output
+    assert result.exit_code == 2
+    assert "does not accept target-validator arguments" in result.output
 
 
 def test_governance_check_surfaces_v2_remediation_and_runbook(tmp_path):
