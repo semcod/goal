@@ -2,6 +2,14 @@
 
 ## Governed architecture roadmap
 
+- [x] Deliver [ticket-057](project/ticket-057/README.md): publish the merged
+  mutation-free PR-resume repair as Goal 2.1.299. State: `DONE / DONE`; PR #94
+  passed 607 tests (2 skips), Python 3.12/3.13, Ruff, governance, build, Docker
+  and exact-head Validator approval, then merged as `4db0b042...`. PyPI,
+  annotated `v2.1.299` and the final GitHub Release are bound to that merge;
+  a fresh public-index install proved Git-common audit storage; classification:
+  `SERVICE / P0 / requested`; depends on ticket-056.
+
 - [x] Deliver [ticket-056](project/ticket-056/README.md): make canonical bare
   `goal -a` infer exactly one active governed ticket before bootstrap and keep
   committed PR resume plus delivery audit mutation-free. State: `DONE / DONE`;
