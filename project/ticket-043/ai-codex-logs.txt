@@ -1,0 +1,6 @@
+2026-08-12 release base: main=origin/main=3fb66abf24b809722dac706a023d4510b21ae286; clean; only remote main; zero open PRs.
+2026-08-12 authorization: user requested repair and continuation; SESSION_EXECUTION_AUTHORIZATION recorded for bounded 2.1.296 PR/release/public verification, trusted merge remains external.
+2026-08-12 namespace preflight: PyPI 2.1.296 absent; refs/tags/v2.1.296 absent; GitHub Release v2.1.296 absent; workflow moved to PUBLICATION.
+2026-08-12 candidate workflow: explicit-target 2.1.296; 573 PASS/2 SKIP; five carriers synchronized; no registry/tag; PR #68; initial head 909eb557fe5e710d44b1720b29c4708811cc995e.
+2026-08-12 build: GOV-PASS 0/0; wheel sha256 5c56b2def98d44271e2f8de8e79247ea39c421455adfb6bf711ef11f2e7c593e; sdist sha256 0925cc776b2eeb406ed6997599055ed59b506f54cda281dd3f328a45a1f9c3a9.
+2026-08-12 Docker: sha256:d53507165c77e8ea170d5570b4454b6229a2b500c1574a92dcaa44a995e8c86a PASS; temporary image removed.
