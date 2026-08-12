@@ -556,6 +556,7 @@ def execute_push_workflow(
         deliver_pull_request,
         pending_pull_request_delivery,
         record_delivery_event,
+        resolve_pull_request_ticket,
         resolve_delivery_policy,
         validate_delivery_ready,
     )
@@ -591,6 +592,9 @@ def execute_push_workflow(
                 fg="yellow",
             )
         )
+
+    if delivery is not None:
+        ticket = resolve_pull_request_ticket(delivery, ticket)
 
     project_types = _detect_project_types()
 

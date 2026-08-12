@@ -135,6 +135,63 @@ def test_policy_payload_marks_server_enforcement_as_required():
     assert payload["serverEnforcementRequired"] is True
 
 
+def _ticket(root: Path, ticket: str, status: str) -> None:
+    directory = root / "project" / ticket
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "README.md").write_text(
+        f"# {ticket}\n\n- **Status**: {status}\n",
+        encoding="utf-8",
+    )
+
+
+def test_pull_request_ticket_resolution_is_unique_and_explicit_wins(tmp_path):
+    root = _repository(tmp_path)
+    policy = _pull_request_policy()
+    _ticket(root, "ticket-041", "DONE")
+    _ticket(root, "ticket-056", "IN_PROGRESS")
+
+    assert delivery.resolve_pull_request_ticket(policy, None, cwd=root) == "ticket-056"
+
+    _ticket(root, "ticket-057", "IN_PROGRESS")
+    assert (
+        delivery.resolve_pull_request_ticket(policy, "ticket-056", cwd=root)
+        == "ticket-056"
+    )
+    with pytest.raises(click.ClickException, match="explicit `--ticket`.*ticket-056, ticket-057"):
+        delivery.resolve_pull_request_ticket(policy, None, cwd=root)
+
+
+def test_pull_request_ticket_resolution_fails_closed_without_active_ticket(tmp_path):
+    root = _repository(tmp_path)
+    with pytest.raises(click.ClickException, match="none was found"):
+        delivery.resolve_pull_request_ticket(_pull_request_policy(), None, cwd=root)
+
+
+def test_delivery_event_is_outside_primary_and_linked_worktrees(tmp_path):
+    root = _repository(tmp_path)
+    linked = tmp_path / "linked"
+    _git(root, "worktree", "add", "--detach", str(linked))
+    policy = delivery.resolve_delivery_policy(
+        _config(
+            default_mode="direct-main",
+            allowed_modes=["direct-main"],
+            require_clean_governance=False,
+        ),
+        None,
+        all_flags=True,
+    )
+
+    delivery.record_delivery_event(policy, "started", cwd=linked)
+
+    audit = root / ".git" / "goal-delivery" / "delivery-events.jsonl"
+    assert audit.is_file()
+    assert json.loads(audit.read_text(encoding="utf-8"))["result"] == "started"
+    assert not (root / ".governance" / "delivery-events.jsonl").exists()
+    assert not (linked / ".governance" / "delivery-events.jsonl").exists()
+    assert _git(root, "status", "--porcelain").stdout == ""
+    assert _git(linked, "status", "--porcelain").stdout == ""
+
+
 def test_delivery_runs_source_hub_health_before_target_wrapper(tmp_path, monkeypatch):
     root = tmp_path / "new-project"
     for relative in delivery.SOURCE_HUB_FILES:
@@ -348,8 +405,9 @@ def test_pending_pr_delivery_accepts_clean_ticket_bound_ahead_range(tmp_path):
         root, "[ticket-049] fix(delivery): preserve committed candidate"
     )
 
+    policy = _pull_request_policy()
     candidate = delivery.pending_pull_request_delivery(
-        _pull_request_policy(), ticket="ticket-049", cwd=root
+        policy, ticket="ticket-049", cwd=root
     )
 
     assert candidate == delivery.PendingPullRequestDelivery(
@@ -357,6 +415,13 @@ def test_pending_pr_delivery_accepts_clean_ticket_bound_ahead_range(tmp_path):
         head_sha=head_sha,
         title="[ticket-049] fix(delivery): preserve committed candidate",
         files=("candidate.txt",),
+    )
+    delivery.record_delivery_event(policy, "started", cwd=root)
+    assert (
+        delivery.pending_pull_request_delivery(
+            policy, ticket="ticket-049", cwd=root
+        )
+        == candidate
     )
 
 

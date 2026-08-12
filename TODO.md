@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-056](project/ticket-056/README.md): make canonical bare
+  `goal -a` infer exactly one active governed ticket before bootstrap and keep
+  committed PR resume plus delivery audit mutation-free. State:
+  `IN_PROGRESS / EDIT`; classification: `BUG / P0 / regression`; depends on
+  ticket-055.
+
 - [x] Deliver [ticket-055](project/ticket-055/README.md): make governed
   pull-request resume mutation-free and independent of colliding merged local
   branch aliases. State: `DONE / DONE`; 51 focused and 604 full

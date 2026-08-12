@@ -856,7 +856,7 @@ def test_pull_request_revalidates_governance_before_staging() -> None:
 
 
 def test_pull_request_retry_retests_and_delivers_already_committed_candidate() -> None:
-    """An interrupted PR run must resume without manufacturing another commit."""
+    """Bare goal -a must infer one ticket and resume without bootstrap mutation."""
     from goal.governance.delivery import PendingPullRequestDelivery
     from goal.push.core import execute_push_workflow
 
@@ -880,6 +880,10 @@ def test_pull_request_retry_retests_and_delivers_already_committed_candidate() -
             "goal.governance.delivery.resolve_delivery_policy",
             return_value=policy,
         ),
+        patch(
+            "goal.governance.delivery.resolve_pull_request_ticket",
+            return_value="ticket-049",
+        ) as resolve_ticket,
         patch("goal.governance.delivery.validate_delivery_ready") as validate,
         patch(
             "goal.governance.delivery.pending_pull_request_delivery",
@@ -919,11 +923,12 @@ def test_pull_request_retry_retests_and_delivers_already_committed_candidate() -
             yes=True,
             markdown=False,
             split=False,
-            ticket="ticket-049",
+            ticket=None,
             abstraction=None,
             todo=False,
         )
 
+    resolve_ticket.assert_called_once_with(policy, None)
     assert classify.call_count == 2
     validate.assert_called_once_with(policy)
     bootstrap.assert_not_called()
