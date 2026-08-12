@@ -212,7 +212,10 @@ class TestPublishFallbackOnBlock:
 
         with (
             patch("goal.publish.github_fallback._gh_available", return_value=True),
-            patch("goal.publish.github_fallback.run_command_tee") as run_tee,
+            patch(
+                "goal.publish.github_fallback.run_command_tee",
+                return_value=MagicMock(returncode=0),
+            ) as run_tee,
         ):
             ok = publish_github_release(
                 "2.0.0",
@@ -292,7 +295,10 @@ class TestPublishFallbackOnBlock:
                 "goal.publish.github_fallback.subprocess.run",
                 return_value=MagicMock(returncode=0),
             ),
-            patch("goal.publish.github_fallback.run_command_tee") as run_tee,
+            patch(
+                "goal.publish.github_fallback.run_command_tee",
+                return_value=MagicMock(returncode=0),
+            ) as run_tee,
         ):
             ok = publish_github_release(
                 "0.16.0",
@@ -302,7 +308,47 @@ class TestPublishFallbackOnBlock:
             )
 
         assert ok is True
-        run_tee.assert_not_called()
+        run_tee.assert_called_once()
+        command = run_tee.call_args.args[0]
+        assert "gh release edit v0.16.0" in command
+        assert "--title 'new-project v0.16.0'" in command
+        assert "--notes 'Automated release v0.16.0'" in command
+
+    def test_assetless_release_metadata_update_failure_is_terminal(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("GITHUB_TOKEN", "test-token")
+        gh_config = GitHubReleaseConfig(
+            enabled=True,
+            owner="wellmanifest",
+            repo="new-project",
+            token_env="GITHUB_TOKEN",
+            skip_pypi_retries_on_block=True,
+            asset_glob="dist/*",
+            repo_map={},
+            create_on_tag=True,
+        )
+
+        with (
+            patch("goal.publish.github_fallback._gh_available", return_value=True),
+            patch(
+                "goal.publish.github_fallback.subprocess.run",
+                return_value=MagicMock(returncode=0),
+            ),
+            patch(
+                "goal.publish.github_fallback.run_command_tee",
+                return_value=MagicMock(returncode=1),
+            ),
+        ):
+            ok = publish_github_release(
+                "0.16.0",
+                package_name="new-project",
+                gh_config=gh_config,
+                allow_empty_assets=True,
+            )
+
+        assert ok is False
 
     def test_try_github_fallback_noop_when_not_blocked(self):
         result = MagicMock(stderr="network timeout")

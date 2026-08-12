@@ -6,11 +6,13 @@
   direct-main publication create or repair a GitHub Release without package
   assets, while keeping registry fallback artifact-strict and requiring an
   existing recovery tag to be annotated and exact-HEAD. State:
-  `IN_PROGRESS / PUBLICATION`; PR #72 merged the first repair as `main@320ad3d`, but
-  the real clean retry exposed an earlier `normal-bump` guard before exact-tag
-  recovery. The guarded full-workflow fix now passes 34 focused and 592 full
-  tests (2 skipped), Ruff, governance, package and Docker builds; exact-head
-  follow-up validation is pending. Classification:
+  `IN_PROGRESS / PUBLICATION`; PR #72 and #73 merged the release and exact-version
+  repairs. The real v0.16.0 Release now exists without assets and with its
+  original tag/main unchanged, but its title leaked the temporary checkout
+  directory. Canonical project-name reconciliation passes 36 focused and 594
+  full tests (2 skipped), Ruff, governance and Docker; exact-head validation
+  is pending.
+  Classification:
   `BUG / P0 / regression`.
 
 - [x] Deliver [ticket-047](project/ticket-047/README.md): publish the merged

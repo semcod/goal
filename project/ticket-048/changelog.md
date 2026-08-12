@@ -22,3 +22,11 @@
   generic create-on-tag repair, with full-workflow and negative regressions.
 - Passed 34 focused and 592 full tests (2 skipped), Ruff, governance,
   wheel/sdist and Docker validation, then re-entered `PUBLICATION`.
+- PR #73 merged after exact-head CI and Validator approval; the real clean
+  retry created v0.16.0 without assets or Git mutation.
+- Returned to `EDIT` after observing that the Release title used a temporary
+  checkout directory rather than configured `project.name`.
+- Resolved canonical display identity from Goal config, reconciled existing
+  assetless Release title/notes and quoted all mutable `gh release` arguments.
+- Passed 36 focused and 594 full tests (2 skipped), Ruff, governance and Docker,
+  then re-entered `PUBLICATION` for exact-head validation.

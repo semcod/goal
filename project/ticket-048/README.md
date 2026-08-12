@@ -79,6 +79,24 @@ and peels to the clean current HEAD.
   pinned-base Docker image
   `sha256:3f5b44dd485de8a49afd96376c7575c344c498bef00a80d69c510df7ef278590`
   built successfully. Temporary outputs and image were removed.
+- PR #73 merged as `main@b214711` after exact-head CI and Validator approval.
+  The real retry created final v0.16.0 without assets and without changing the
+  immutable tag or main, but its title exposed the temporary clone directory
+  instead of configured `project.name`. The same ticket returns to `EDIT` to
+  make Release metadata canonical and reconcilable on an existing Release.
+
+## Metadata-correction evidence before PR
+
+- The release identity resolves from configured `project.name` with checkout
+  directory only as a legacy fallback; `new-project` is stable across clones.
+- Existing assetless Releases reconcile canonical title and notes, and any
+  metadata edit failure remains terminal in governed direct-main.
+- All interpolated `gh release` arguments are shell-quoted and the read-only
+  Release probe now uses an argument vector without a shell.
+- 36 focused tests and the full suite (`594 passed, 2 skipped`) pass with
+  scoped Ruff and `GOV-PASS`; pinned-base Docker image
+  `sha256:ecdc4e79bd5c1d51a487cc3c2bcf312a832ad56651e99c5b4b3aef34d5b25fd1`
+  built successfully and was removed.
 
 ## Participants
 

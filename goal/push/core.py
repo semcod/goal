@@ -107,6 +107,20 @@ def _recover_existing_generic_release_decision(
     )
 
 
+def _configured_project_name(config: Any) -> str:
+    """Return the stable project identity instead of the checkout directory."""
+    value: Any = ""
+    if isinstance(config, dict):
+        project = config.get("project", {})
+        value = project.get("name", "") if isinstance(project, dict) else ""
+    elif hasattr(config, "get"):
+        try:
+            value = config.get("project.name", "")
+        except Exception:
+            value = ""
+    return str(value or "").strip() or (Path.cwd().name or "package")
+
+
 def _mirror_github_release(
     *,
     tag_name: str | None,
@@ -129,7 +143,7 @@ def _mirror_github_release(
     if not release_required:
         return
 
-    package_name = Path.cwd().name or "package"
+    package_name = _configured_project_name(publish_config)
     governed_direct_main = delivery is not None and delivery.mode == "direct-main"
     generic_project = not project_types
     try:
