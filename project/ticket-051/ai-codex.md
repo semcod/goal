@@ -29,6 +29,12 @@ either ticket's ownership.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Bound the prerequisite to annotated published new-project v0.16.1 at exact
+  commit `4e6ba5ec15873346446d67d8787f17f68f57f81e`.
+- Added only the governance-owned branch lifecycle checker, byte-identical to
+  its published source and executable without new dependencies.
+- Verified the success path and stable failures for an orphan branch and a
+  malformed snapshot; focused Ruff and governance pass.
 
 ## Blockers
 

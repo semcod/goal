@@ -32,7 +32,7 @@
       "No full governance package or lock upgrade",
       "No Goal runtime or release-version change"
     ],
-    "complexity": "XS",
+    "complexity": "S",
     "estimatedMinutes": 20,
     "budgets": {
       "maxImplementationFiles": 1,
