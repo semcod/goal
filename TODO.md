@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-040](project/ticket-040/README.md): publish Goal 2.1.295
+  from the merged adoption-proof and scoped bootstrap repairs, then verify a
+  clean public install. State: `IN_PROGRESS / EDIT`; classification:
+  `SERVICE / P0 / requested`.
+
 - [x] Deliver [ticket-039](project/ticket-039/README.md): keep legacy Goal tool
   marker migration inside declared development dependency sections so
   bootstrap cannot rewrite runtime requirements. State: `DONE / DONE`; 3

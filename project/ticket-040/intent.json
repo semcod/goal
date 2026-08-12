@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-040",
+  "summary": "Publish Goal 2.1.295 with adoption proof repairs",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "README.md",
+    "project/ticket-040/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-037", "ticket-038", "ticket-039"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "cf2baffaafffe50a16a4a392615a0cfbc42b05b2",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.295 is published from exact merged source with complete standard publication proof and scoped bootstrap markers",
+    "nonGoals": [
+      "No source-code, dependency-set or top-level CHANGELOG changes",
+      "No direct publication before protected merge",
+      "No duplicate registry artifacts"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize the five existing release carriers through governed PR delivery, then publish from exact merged main",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": ["VERSION", "pyproject.toml", "uv.lock", "goal/__init__.py", "README.md"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Do not republish immutable artifacts; issue a later patch release if verification fails"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["goal -a --delivery-mode pull-request --ticket ticket-040 --no-changelog"],
+        "evidence": "real governed flow changes only declared carriers and creates one PR"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m pytest -q tests/test_pyproject_costs_setup.py"],
+        "evidence": "five carriers agree at 2.1.295 and runtime costs remains unmarked"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q", "./project/governance-check.sh --actor agent", "python -m build", "docker build ."],
+        "evidence": "local and protected validation chain passes"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["goal --version"],
+        "evidence": "fresh public install reports 2.1.295 and public adoption pilot passes"
+      }
+    ]
+  }
+}
