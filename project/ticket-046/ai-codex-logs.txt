@@ -3,3 +3,5 @@
 2026-08-12T12:15:00+02:00 live new-project ticket-065 health: 15 JSON, 9 shell suites, unchanged Git status
 2026-08-12T12:19:00+02:00 full validation: 581 passed, 2 skipped; wheel/sdist/Docker PASS; generated artifacts removed
 2026-08-12T12:21:00+02:00 implementation commit fec3d73; workflow state PUBLICATION
+2026-08-12T12:23:00+02:00 PR 70 exact head f15b687; CI and Validator run 31586899563 PASS; merge 3ba0aa0
+2026-08-12T12:24:00+02:00 clean merge: 581 passed, 2 skipped; Ruff/governance PASS; ticket BLOCKED on release proof

@@ -47,10 +47,15 @@ read-only source-hub runner over the hub's authoritative files and suites.
   Docker builds, then removed every generated build artifact and image.
 - Committed the validated implementation as `fec3d73` and moved the owning
   ticket to `PUBLICATION` for governed exact-head pull-request delivery.
+- Goal opened PR #70 at exact head `f15b687`; Python 3.12/3.13 CI and Validator
+  Agent run `31586899563` approved that same head before trusted merge
+  `3ba0aa0`. The merge tree is identical and its clean 581-test retest passes.
+- Moved the ticket to `BLOCKED / PUBLICATION` only while a separately budgeted
+  integration ticket publishes 2.1.297 and proves the real downstream flow.
 
 ## Blockers
 
-- None inside the recorded intent; external validation and release remain
-  later publication gates.
+- Public Goal 2.1.297 and the downstream source-hub delivery proof are delegated
+  to the dependent integration release ticket before final closure.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.

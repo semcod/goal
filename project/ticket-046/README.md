@@ -2,7 +2,7 @@
 
 - **ID**: ticket-046
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
+- **Status**: BLOCKED
 - **Workflow state**: PUBLICATION
 - **Created**: 2026-08-12
 
@@ -31,7 +31,7 @@ Windows trust boundary stay unchanged.
 - [x] AC-03: Missing/malformed hub inputs, unwired suites and failed suites
   fail closed with bounded diagnostics; target package validation is
   unchanged.
-- [ ] AC-04: Focused tests, full pytest, Ruff, adopted governance, package and
+- [x] AC-04: Focused tests, full pytest, Ruff, adopted governance, package and
   Docker checks pass before exact-head external validation and trusted merge.
 - [ ] AC-05: A public Goal release executes the real `new-project` candidate
   health gate before that repository's governed PR delivery.
@@ -49,8 +49,19 @@ Windows trust boundary stay unchanged.
 - The complete suite passes with 581 tests and 2 existing skips; wheel, sdist
   and pinned-base Docker image builds pass.  All generated build environments,
   distributions and the temporary image were removed immediately afterward.
+- Goal delivered exact head `f15b6878ec4358ade902e883c7a5f6107d1b315c`
+  as PR #70. CI passed on Python 3.12/3.13 and Validator Agent run
+  `31586899563` submitted App approval for that exact head and ticket.
+- Trusted merge `3ba0aa004a5fb090cbd442e7c22bf2cd3274b38b` has the approved
+  head as its second parent and an identical tree. The clean merge again passed
+  581 tests (2 existing skips), Ruff and governance.
 
-## Participants
+## Publication blocker
+
+The implementation is merged and locally complete. AC-05 remains blocked only
+on a separately budgeted integration ticket publishing Goal 2.1.297 and using
+that fresh public package for the real `new-project` ticket-065 delivery. The
+application workstream and its implementation paths are released meanwhile.
 
 ## Participants
 
