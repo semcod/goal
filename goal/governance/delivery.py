@@ -13,8 +13,9 @@ import re
 import secrets
 import shutil
 import subprocess
+import sys
 import time
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 
 import click
 
@@ -39,6 +40,11 @@ SOURCE_HUB_FILES = (
     "governance/manifest.default.json",
     "scripts/governance_check.py",
 )
+SOURCE_HUB_WORKFLOW = ".github/workflows/ci.yml"
+SOURCE_HUB_REQUIRED_CHECKS = "scripts/check_required_checks.py"
+SOURCE_HUB_JSON_DIRECTORY = "governance"
+SOURCE_HUB_TEST_DIRECTORY = "tests"
+SOURCE_HUB_DIAGNOSTIC = "GOV-HUB-001"
 DIAGNOSTIC_CODE_PATTERN = re.compile(r"\bGOV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b")
 
 
@@ -52,6 +58,19 @@ class DeliveryPolicy:
     remote: str
     base_branch: str
     require_clean_governance: bool
+
+
+@dataclass(frozen=True)
+class SourceHubHealthResult:
+    """Bounded output from one source-hub health execution."""
+
+    returncode: int
+    stdout: str
+    stderr: str
+    completed_checks: int
+
+
+Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
 def _delivery_section(config: Any) -> Any:
@@ -174,6 +193,152 @@ def is_new_project_source_hub(root: Path) -> bool:
     return all((root / relative).is_file() for relative in SOURCE_HUB_FILES)
 
 
+def _source_hub_failure(
+    message: str, *, stdout: str = "", completed: int = 0
+) -> SourceHubHealthResult:
+    return SourceHubHealthResult(
+        returncode=1,
+        stdout=stdout,
+        stderr=f"{SOURCE_HUB_DIAGNOSTIC}: {message}\n",
+        completed_checks=completed,
+    )
+
+
+def _source_hub_contract(
+    root: Path,
+) -> tuple[list[Path], list[list[str]]] | SourceHubHealthResult:
+    workflow = root / SOURCE_HUB_WORKFLOW
+    required_checks = root / SOURCE_HUB_REQUIRED_CHECKS
+    if not workflow.is_file():
+        return _source_hub_failure(
+            f"missing authoritative workflow {SOURCE_HUB_WORKFLOW}"
+        )
+    if not required_checks.is_file():
+        return _source_hub_failure(
+            f"missing required-check comparison {SOURCE_HUB_REQUIRED_CHECKS}"
+        )
+
+    json_files = sorted((root / SOURCE_HUB_JSON_DIRECTORY).glob("*.json"))
+    suites = sorted((root / SOURCE_HUB_TEST_DIRECTORY).glob("*.test.sh"))
+    if not json_files:
+        return _source_hub_failure(
+            "no canonical governance JSON documents were found"
+        )
+    if not suites:
+        return _source_hub_failure("no source-hub shell test suites were found")
+
+    try:
+        workflow_text = workflow.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        return _source_hub_failure(f"cannot read {SOURCE_HUB_WORKFLOW}: {error}")
+
+    unwired = [
+        suite.relative_to(root).as_posix()
+        for suite in suites
+        if f"bash {suite.relative_to(root).as_posix()}" not in workflow_text
+    ]
+    if unwired:
+        return _source_hub_failure(
+            "CI does not execute source-hub suite(s): " + ", ".join(unwired)
+        )
+
+    bash = shutil.which("bash")
+    if bash is None:
+        return _source_hub_failure(
+            "bash is required to execute source-hub Linux suites"
+        )
+    commands = [[sys.executable, str(required_checks)]]
+    commands.extend([bash, str(suite)] for suite in suites)
+    return json_files, commands
+
+
+def _source_hub_git_status(root: Path) -> str | None:
+    result = subprocess.run(
+        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.stdout if result.returncode == 0 else None
+
+
+def run_source_hub_health(
+    root: Path,
+    *,
+    runner: Runner = subprocess.run,
+) -> SourceHubHealthResult:
+    """Execute the canonical source-hub Linux contract without repository writes."""
+    target = root.resolve()
+    contract = _source_hub_contract(target)
+    if isinstance(contract, SourceHubHealthResult):
+        return contract
+    json_files, commands = contract
+    initial_status = _source_hub_git_status(target)
+
+    for document in json_files:
+        try:
+            with document.open(encoding="utf-8") as stream:
+                json.load(stream)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            relative = document.relative_to(target).as_posix()
+            return _source_hub_failure(
+                f"invalid canonical JSON {relative}: {error}"
+            )
+
+    stdout_parts: list[str] = []
+    stderr_parts: list[str] = []
+    completed = 0
+    for command in commands:
+        try:
+            result = runner(
+                command,
+                cwd=target,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except OSError as error:
+            return _source_hub_failure(
+                f"cannot execute source-hub check {Path(command[-1]).name}: {error}",
+                stdout="".join(stdout_parts),
+                completed=completed,
+            )
+        stdout_parts.append(result.stdout or "")
+        if result.returncode != 0:
+            stderr_parts.append(result.stderr or "")
+            label = Path(command[-1]).relative_to(target).as_posix()
+            stderr_parts.append(
+                f"{SOURCE_HUB_DIAGNOSTIC}: source-hub check failed: {label}\n"
+            )
+            return SourceHubHealthResult(
+                returncode=result.returncode,
+                stdout="".join(stdout_parts),
+                stderr="".join(stderr_parts),
+                completed_checks=completed,
+            )
+        completed += 1
+
+    final_status = _source_hub_git_status(target)
+    if initial_status is not None and final_status != initial_status:
+        return _source_hub_failure(
+            "source-hub health changed the repository working tree",
+            stdout="".join(stdout_parts),
+            completed=completed,
+        )
+
+    stdout_parts.append(
+        "GOV-HUB-PASS: source-hub health passed "
+        f"({len(json_files)} JSON documents, {len(commands) - 1} shell suites)\n"
+    )
+    return SourceHubHealthResult(
+        returncode=0,
+        stdout="".join(stdout_parts),
+        stderr="".join(stderr_parts),
+        completed_checks=completed,
+    )
+
+
 def _safe_runbook(root: Path, raw_path: Any) -> str | None:
     if not isinstance(raw_path, str) or not raw_path.strip() or "\\" in raw_path:
         return None
@@ -233,13 +398,15 @@ def _governance_gate(root: Path) -> None:
     missing = missing_governance_package_files(root)
     if missing:
         if is_new_project_source_hub(root):
-            raise click.ClickException(
-                "GOV-MANIFEST-001: governed delivery found the maintained "
-                "wellmanifest/new-project source hub, not an adopted target; "
-                "its project/governance-check.sh wrapper is target-only. Run "
-                "the source-hub checks declared in .github/workflows/ci.yml "
-                "and do not install a target .governance package into the hub."
-            )
+            result = run_source_hub_health(root)
+            if result.returncode == 0:
+                return
+            detail = "\n".join(
+                part.strip()
+                for part in (result.stdout, result.stderr)
+                if part.strip()
+            ) or "source-hub health failed"
+            raise click.ClickException(detail)
         raise click.ClickException(
             "GOV-MANIFEST-001: governance delivery requires a complete adopted "
             "package; missing: "

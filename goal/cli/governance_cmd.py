@@ -25,6 +25,7 @@ from goal.governance.delivery import (
     policy_payload,
     remove_delivery_hook,
     resolve_delivery_policy,
+    run_source_hub_health,
 )
 
 
@@ -219,12 +220,18 @@ def governance_check(target_root, validator_args):
     missing = missing_governance_package_files(target)
     if missing:
         if is_new_project_source_hub(target):
-            raise click.ClickException(
-                "the target is the maintained wellmanifest/new-project source "
-                "hub, not an adopted repository; run the source-hub checks "
-                "declared in .github/workflows/ci.yml and do not adopt a "
-                "target .governance package into the hub"
-            )
+            if validator_args:
+                raise click.UsageError(
+                    "source-hub health does not accept target-validator arguments"
+                )
+            result = run_source_hub_health(target)
+            if result.stdout:
+                click.echo(result.stdout, nl=False)
+            if result.stderr:
+                click.echo(result.stderr, err=True, nl=False)
+            if result.returncode != 0:
+                raise click.exceptions.Exit(result.returncode)
+            return
         raise click.ClickException(
             "adopted governance package is incomplete; missing: "
             + ", ".join(missing)

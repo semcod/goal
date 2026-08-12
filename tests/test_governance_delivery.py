@@ -139,7 +139,7 @@ def test_policy_payload_marks_server_enforcement_as_required():
     assert payload["serverEnforcementRequired"] is True
 
 
-def test_delivery_rejects_source_hub_before_target_wrapper(tmp_path, monkeypatch):
+def test_delivery_runs_source_hub_health_before_target_wrapper(tmp_path, monkeypatch):
     root = tmp_path / "new-project"
     for relative in delivery.SOURCE_HUB_FILES:
         path = root / relative
@@ -154,8 +154,34 @@ def test_delivery_rejects_source_hub_before_target_wrapper(tmp_path, monkeypatch
         "_run",
         lambda *_args, **_kwargs: pytest.fail("target wrapper was executed"),
     )
+    calls = []
+    monkeypatch.setattr(
+        delivery,
+        "run_source_hub_health",
+        lambda candidate: calls.append(candidate)
+        or delivery.SourceHubHealthResult(0, "GOV-HUB-PASS\n", "", 3),
+    )
 
-    with pytest.raises(click.ClickException, match="source hub, not an adopted target"):
+    delivery._governance_gate(root)
+
+    assert calls == [root]
+
+
+def test_delivery_surfaces_failed_source_hub_health(tmp_path, monkeypatch):
+    root = tmp_path / "new-project"
+    for relative in delivery.SOURCE_HUB_FILES:
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(
+        delivery,
+        "run_source_hub_health",
+        lambda _candidate: delivery.SourceHubHealthResult(
+            9, "suite output\n", "GOV-HUB-001: failed\n", 1
+        ),
+    )
+
+    with pytest.raises(click.ClickException, match="GOV-HUB-001: failed"):
         delivery._governance_gate(root)
 
 

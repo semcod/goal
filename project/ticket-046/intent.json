@@ -9,11 +9,11 @@
     "origin": "regression"
   },
   "allowedPaths": [
-    "goal/governance/source_hub.py",
     "goal/governance/delivery.py",
     "goal/cli/governance_cmd.py",
     "tests/test_governance_source_hub.py",
     "tests/test_governance_delivery.py",
+    "tests/test_governance_cmd.py",
     "project/ticket-046/**",
     "TODO.md",
     "project/TICKETS.md"
@@ -59,16 +59,16 @@
         {
           "name": "source-hub-health",
           "paths": [
-            "goal/governance/source_hub.py",
+            "goal/governance/delivery.py",
             "tests/test_governance_source_hub.py"
           ]
         },
         {
           "name": "governance-dispatch",
           "paths": [
-            "goal/governance/delivery.py",
             "goal/cli/governance_cmd.py",
-            "tests/test_governance_delivery.py"
+            "tests/test_governance_delivery.py",
+            "tests/test_governance_cmd.py"
           ]
         }
       ],

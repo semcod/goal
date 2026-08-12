@@ -34,9 +34,21 @@ read-only source-hub runner over the hub's authoritative files and suites.
   from the request to execute this work.
 - Confirmed public Goal 2.1.296 rejects both the headless source-hub check and
   dry-run governed source-hub delivery before executing any health suite.
+- Implemented one shared source-hub health runner in the existing delivery
+  module and routed both headless check and delivery through it.
+- Made the runner validate every canonical top-level governance JSON document,
+  require every shell suite to be declared by CI, execute the required-check
+  comparator and each suite without shell interpolation, and fail if a
+  successful run changes Git state.
+- Passed 54 focused tests, focused Ruff and adopted governance.  The real
+  ticket-065 source hub passed 15 JSON documents and 9 shell suites without a
+  status change; governed delivery dry-run reached normal Goal processing.
+- Passed the full 581-test suite with 2 existing skips plus wheel, sdist and
+  Docker builds, then removed every generated build artifact and image.
 
 ## Blockers
 
-- None inside the recorded intent; proceed without a second confirmation.
+- None inside the recorded intent; external validation and release remain
+  later publication gates.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.
