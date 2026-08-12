@@ -8,3 +8,6 @@
   key while preserving the local build contract.
 - Removed the mutable image key and verified Compose resolution plus the exact
   published 0.16.1 Docker policy.
+- PR #85 passed local/full validation, hosted CI, live lifecycle and trusted
+  exact-head Validator review, then merged as `6c7da53595bf...`.
+- Closed the ticket after protected merge evidence was verified.

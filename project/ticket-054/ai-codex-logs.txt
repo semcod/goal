@@ -2,3 +2,8 @@
 2026-08-12 COMPOSE docker compose config PASS; build context/Dockerfile preserved; no image key
 2026-08-12 GOV current package PASS
 2026-08-12 GOV new-project 0.16.1 exact source validator PASS base b5b37b43... head working tree
+2026-08-12 FULL-TEST 600 passed, 2 skipped
+2026-08-12 PR #85 exact head d986ea6db39cc6b106bd09c8a6e154a439a1ec26
+2026-08-12 CI run 31609481586 Python 3.12 PASS Python 3.13 PASS; remote lifecycle run 31609481508 PASS
+2026-08-12 VALIDATOR run 31609584838 review 4917953527 APPROVED exact head ticket-054 correlation goal-pr-85-ticket-054
+2026-08-12 MERGE PR #85 6c7da53595bfb2e889cc27ecc90d48e1e7845ea9
