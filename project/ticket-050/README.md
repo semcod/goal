@@ -3,7 +3,7 @@
 - **ID**: ticket-050
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-12
 
 ## Goal and scope
@@ -17,7 +17,7 @@ artifactless `wellmanifest/new-project v0.16.1` tag into a final Release.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The governed PR synchronizes exactly VERSION, `pyproject.toml`,
+- [x] AC-01: The governed PR synchronizes exactly VERSION, `pyproject.toml`,
       `goal/__init__.py`, README version badges and `uv.lock` to 2.1.298, plus
       this ticket's governance evidence.
 - [ ] AC-02: Full tests, scoped Ruff, governance, wheel/sdist and Docker pass;

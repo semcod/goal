@@ -38,6 +38,8 @@ repair before that downstream publication can be truthfully completed.
 - Confirmed PyPI, tag and Release namespaces for 2.1.298 are unused.
 - Confirmed public 2.1.297 lacks the ticket-048 code while clean main includes
   it, reproducing the release-ordering cause of the downstream failure.
+- Synchronized only the five declared release carriers to 2.1.298 and entered
+  `PUBLICATION` for Goal-owned test, commit and pull-request delivery.
 
 ## Blockers
 

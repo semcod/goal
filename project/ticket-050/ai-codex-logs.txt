@@ -5,3 +5,4 @@
 2026-08-12 RELEASE v2.1.298 absent
 2026-08-12 REPRO public Goal 2.1.297 lacks artifactless Release implementation
 2026-08-12 SOURCE main includes completed ticket-048 artifactless Release implementation
+2026-08-12 CARRIERS VERSION pyproject goal/__init__ README uv.lock -> 2.1.298

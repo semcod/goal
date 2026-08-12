@@ -7,3 +7,5 @@
 - Recorded the release-ordering defect and bounded Goal 2.1.298 publication.
 - Reserved public registry, tag and Release namespaces only after confirming
   all three are unused.
+- Synchronized the five declared release carriers to 2.1.298 and entered
+  governed pull-request publication.
