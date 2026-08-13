@@ -2,12 +2,12 @@
 
 ## Governed architecture roadmap
 
-- [ ] Deliver [ticket-062](project/ticket-062/README.md): read and safely
+- [x] Deliver [ticket-062](project/ticket-062/README.md): read and safely
   synchronize literal versions passed to imported setuptools setup calls
   without executing setup.py or touching unrelated keyword arguments. State:
-  `IN_PROGRESS / PUBLICATION`; 55 focused and 619 full tests (2 skips), Ruff,
-  governance and Docker validation pass; classification:
-  `BUG / P1 / regression`.
+  `DONE / DONE`; 55 focused and 619 full tests (2 skips), Ruff, governance,
+  Docker, protected CI and exact-head Validator approval pass; PR #103 merged
+  unchanged as `af08932...`; classification: `BUG / P1 / regression`.
 
 - [ ] Deliver [ticket-061](project/ticket-061/README.md): publish the merged
   retry-safe runtime, doctor, producer and tracked configuration fixes as Goal

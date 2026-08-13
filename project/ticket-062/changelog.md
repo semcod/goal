@@ -10,3 +10,7 @@
   setuptools/distutils setup calls.
 - Routed legacy setup.py synchronization through the strict writer and added
   regressions for aliases, multiline calls and unrelated version keywords.
+- Passed protected Python 3.12/3.13 CI and deterministic exact-head Validator
+  approval on PR #103.
+- Merged the approved tree unchanged, passed post-merge CI and removed the
+  remote ticket branch before the governance-only closure.

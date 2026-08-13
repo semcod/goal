@@ -2,8 +2,8 @@
 
 - **ID**: ticket-062
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-13
 
 ## Goal and scope
@@ -23,6 +23,8 @@ Keep discovery, reading and synchronization aligned without executing
   leaves unrelated `version=` keywords unchanged.
 - [x] AC-04: Focused and full Python tests, scoped Ruff, governance and the
   repository Docker build pass.
+- [x] AC-05: Protected CI and the Validator App approve the exact final head;
+  the unchanged tree is merged and post-merge CI passes.
 
 ## Boundary
 
@@ -41,6 +43,14 @@ Keep discovery, reading and synchronization aligned without executing
   disposable image was removed. No Docker network was removed or modified.
 - Immutable new-project v0.16.1 drift check reports `up-to-date`; governed
   commit-only delivery opened PR #103 without version or publication effects.
+- PR #103 passed Python 3.12/3.13 and remote lifecycle on exact HEAD
+  `d2a17c7d2890277e94e037c488ede01d77488550`. Validator review `4926535167`
+  deterministically approved that SHA and bound it to ticket-062; its LLM
+  findings remained explicitly advisory.
+- PR #103 merged as `af0893268811cc7d811aa80b07149fdd5d88a259`; its second
+  parent and tree equal the approved candidate. Post-merge CI run
+  `31697677780` passed both supported Python versions and the remote ticket
+  branch was deleted.
 
 ## Participants
 

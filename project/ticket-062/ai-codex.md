@@ -38,9 +38,11 @@ therefore fails before synchronization begins.
 - Verified zero drift from immutable new-project v0.16.1, then used Goal's
   governed commit-only delivery to open PR #103 at candidate `d811356`; no
   package, version, tag or release effect occurred.
+- Delivered exact candidate `d2a17c7...` through protected CI and deterministic
+  Validator approval, merged it unchanged as `af08932...`, and confirmed green
+  post-merge CI before closing the lifecycle.
 
 ## Blockers
 
 - None inside the recorded intent; proceed without a second confirmation.
-- New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+- None; the bounded repair and governed lifecycle are complete.
