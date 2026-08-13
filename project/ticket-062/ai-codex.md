@@ -34,7 +34,10 @@ therefore fails before synchronization begins.
 - Added resolution/write and end-to-end sync regressions; 55 focused and 619
   full tests (2 skips), Ruff, governance and Docker validation pass.
 - Moved the locally complete ticket to PUBLICATION; no commit, push, PR or
-  release action was performed.
+  release action had yet been performed.
+- Verified zero drift from immutable new-project v0.16.1, then used Goal's
+  governed commit-only delivery to open PR #103 at candidate `d811356`; no
+  package, version, tag or release effect occurred.
 
 ## Blockers
 

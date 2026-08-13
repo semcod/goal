@@ -39,6 +39,8 @@ Keep discovery, reading and synchronization aligned without executing
 - Docker build passed with host networking to avoid allocating a bridge
   subnet; the resulting CLI passed with `--network none`, then the exact
   disposable image was removed. No Docker network was removed or modified.
+- Immutable new-project v0.16.1 drift check reports `up-to-date`; governed
+  commit-only delivery opened PR #103 without version or publication effects.
 
 ## Participants
 
