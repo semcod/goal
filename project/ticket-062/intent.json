@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-062",
+  "summary": "Read setuptools setup() version declarations",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/version_state.py",
+    "goal/cli/version_sync.py",
+    "tests/test_version_state.py",
+    "tests/test_version_sync.py",
+    "project/ticket-062/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".github/**",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "goal/__init__.py",
+    ".env",
+    "**/*.pem",
+    "**/*secret*"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e972ff21dbb58f64603f0efe233b98dba24e4bfc",
+    "targetBranch": "main",
+    "outcome": "Goal reads and safely synchronizes standard setuptools setup() version literals",
+    "nonGoals": [
+      "No setup.py execution or import",
+      "No support for dynamically computed setup() versions",
+      "No dependency, release metadata or publication change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use Python AST locations to identify and rewrite only literal version keywords on imported setuptools or distutils setup calls",
+      "components": [
+        {
+          "name": "version-state",
+          "paths": [
+            "goal/cli/version_state.py",
+            "goal/cli/version_sync.py",
+            "tests/test_version_state.py",
+            "tests/test_version_sync.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the bounded parser/writer changes; module-level declarations remain the prior workaround"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_version_state.py tests/test_version_sync.py",
+          "ruff check goal/cli/version_state.py goal/cli/version_sync.py tests/test_version_state.py tests/test_version_sync.py"
+        ],
+        "evidence": "project/ticket-062/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_version_state.py tests/test_version_sync.py"
+        ],
+        "evidence": "project/ticket-062/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "./project/governance-check.sh",
+          "docker build --network none ."
+        ],
+        "evidence": "project/ticket-062/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

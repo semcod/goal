@@ -135,7 +135,12 @@ def test_sync_updates_setup_py_version(tmp_path, monkeypatch):
     (tmp_path / "VERSION").write_text("4.0.0\n")
     (tmp_path / "setup.py").write_text(
         'from setuptools import setup\n'
-        'setup(name="tellm", version="4.0.0", packages=["tellm"])\n'
+        'configure(version="9.9.9")\n'
+        "setup(\n"
+        '    name="tellm",\n'
+        '    version="4.0.0",\n'
+        '    packages=["tellm"],\n'
+        ")\n"
     )
 
     func = sync_all_versions
@@ -145,7 +150,9 @@ def test_sync_updates_setup_py_version(tmp_path, monkeypatch):
     updated = func("4.0.1")
 
     assert "setup.py" in updated
-    assert 'version="4.0.1"' in (tmp_path / "setup.py").read_text()
+    content = (tmp_path / "setup.py").read_text()
+    assert 'configure(version="9.9.9")' in content
+    assert 'version="4.0.1"' in content
 
 
 def test_sync_updates_uv_lock_after_pyproject_version_change(tmp_path, monkeypatch):

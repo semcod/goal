@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import re
@@ -166,6 +167,96 @@ def _normalized_spec(spec: str) -> str:
     return f"{normalized}:{selector}" if selector else normalized
 
 
+def _dotted_python_name(node: ast.expr) -> tuple[str, ...]:
+    """Return the dotted name represented by a simple Name/Attribute node."""
+    if isinstance(node, ast.Name):
+        return (node.id,)
+    if isinstance(node, ast.Attribute):
+        parent = _dotted_python_name(node.value)
+        return (*parent, node.attr) if parent else ()
+    return ()
+
+
+def _setup_version_literal(content: str) -> Optional[ast.Constant]:
+    """Locate a literal version passed to an imported package setup function."""
+    try:
+        module = ast.parse(content)
+    except SyntaxError:
+        return None
+
+    setup_names: set[str] = set()
+    module_names: set[tuple[str, ...]] = set()
+    setup_modules = {"setuptools", "distutils.core"}
+    for statement in module.body:
+        if isinstance(statement, ast.ImportFrom) and statement.module in setup_modules:
+            setup_names.update(
+                alias.asname or alias.name
+                for alias in statement.names
+                if alias.name == "setup"
+            )
+        elif isinstance(statement, ast.Import):
+            for alias in statement.names:
+                if alias.name not in setup_modules:
+                    continue
+                module_names.add(
+                    (alias.asname,) if alias.asname else tuple(alias.name.split("."))
+                )
+
+    setup_calls = {(name,) for name in setup_names}
+    setup_calls.update((*name, "setup") for name in module_names)
+    candidates: list[ast.Constant] = []
+    for node in ast.walk(module):
+        if not isinstance(node, ast.Call):
+            continue
+        if _dotted_python_name(node.func) not in setup_calls:
+            continue
+        candidates.extend(
+            keyword.value
+            for keyword in node.keywords
+            if keyword.arg == "version"
+            and isinstance(keyword.value, ast.Constant)
+            and isinstance(keyword.value.value, str)
+        )
+    return min(
+        candidates,
+        key=lambda node: (node.lineno, node.col_offset),
+        default=None,
+    )
+
+
+def _replace_setup_version_literal(
+    content: str, node: ast.Constant, target: str
+) -> Optional[str]:
+    """Replace one AST-located string literal while preserving its quote style."""
+    if node.end_lineno is None or node.end_col_offset is None:
+        return None
+    lines = content.splitlines(keepends=True)
+
+    def offset(lineno: int, byte_column: int) -> int:
+        line = lines[lineno - 1]
+        char_column = len(line.encode("utf-8")[:byte_column].decode("utf-8"))
+        return sum(len(item) for item in lines[: lineno - 1]) + char_column
+
+    try:
+        start = offset(node.lineno, node.col_offset)
+        end = offset(node.end_lineno, node.end_col_offset)
+    except (IndexError, UnicodeDecodeError):
+        return None
+    literal = content[start:end]
+    match = re.fullmatch(
+        r"(?P<prefix>(?i:[rub]*))(?P<quote>\"\"\"|'''|\"|').*(?P=quote)",
+        literal,
+        re.DOTALL,
+    )
+    replacement = (
+        f"{match.group('prefix')}{match.group('quote')}"
+        f"{target}{match.group('quote')}"
+        if match
+        else repr(target)
+    )
+    return f"{content[:start]}{replacement}{content[end:]}"
+
+
 def _extract_version(path: Path, selector: str, content: str) -> tuple[Optional[str], bool]:
     if path.name == "VERSION" and not selector:
         value = content.strip()
@@ -200,6 +291,11 @@ def _extract_version(path: Path, selector: str, content: str) -> tuple[Optional[
                 return normalize_version(str(value)), False
         except (TypeError, ValueError):
             pass
+
+    if path.name == "setup.py" and selector in {"", "version"}:
+        literal = _setup_version_literal(content)
+        if literal is not None:
+            return normalize_version(literal.value), False
 
     patterns = (
         r'(?m)^version\s*=\s*["\']([^"\']+)["\']',
@@ -870,6 +966,27 @@ def write_version_source(spec: str, target_version: str) -> bool:
                 "Cannot synchronize configured version source",
                 [f"{normalized_spec}: {exc}"],
             ) from exc
+    elif path.name == "setup.py":
+        literal = _setup_version_literal(content)
+        replacement = (
+            _replace_setup_version_literal(content, literal, target)
+            if literal is not None
+            else None
+        )
+        if replacement is not None:
+            new_content = replacement
+        else:
+            new_content, count = re.subn(
+                r'(?m)^(version\s*=\s*["\'])[^"\']+(["\'])',
+                rf"\g<1>{target}\g<2>",
+                content,
+                count=1,
+            )
+            if count != 1:
+                raise VersionStateError(
+                    "Cannot synchronize configured version source",
+                    [f"{normalized_spec}: no supported writable selector"],
+                )
     else:
         substitutions = (
             (r'(?m)^(version\s*=\s*["\'])[^"\']+(["\'])', rf"\g<1>{target}\g<2>"),

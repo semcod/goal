@@ -8,6 +8,7 @@ from click.testing import CliRunner
 from goal.cli.version_state import (
     VersionStateError,
     collect_version_sources,
+    read_version_source,
     resolve_version_decision,
     validate_version_sources,
     write_version_source,
@@ -82,6 +83,33 @@ def test_complete_local_prebump_is_not_bumped_twice(tmp_path, monkeypatch):
     assert decision.target_version == "1.2.4"
     assert decision.reason == "already-bumped"
     assert decision.stale_sources == ()
+
+
+def test_setup_py_keyword_version_is_resolved_and_written_safely(
+    tmp_path, monkeypatch
+):
+    config = _init_release(tmp_path, "1.2.3")
+    (tmp_path / "setup.py").write_text(
+        "import setuptools as packaging\n"
+        'configure(version="9.9.9")\n'
+        "packaging.setup(\n"
+        '    name="fixture",\n'
+        "    version='1.2.3',\n"
+        ")\n"
+    )
+    config["versioning"]["files"].append("setup.py:version")
+    monkeypatch.chdir(tmp_path)
+
+    decision = resolve_version_decision(config=config, registry_versions={})
+
+    setup_source = read_version_source("setup.py:version")
+    assert setup_source.value == "1.2.3"
+    assert setup_source.error is None
+    assert decision.target_version == "1.2.4"
+    assert write_version_source("setup.py:version", "1.2.4")
+    content = (tmp_path / "setup.py").read_text()
+    assert 'configure(version="9.9.9")' in content
+    assert "version='1.2.4'" in content
 
 
 def test_partial_local_prebump_repairs_forward(tmp_path, monkeypatch):

@@ -168,16 +168,7 @@ def _update_setup_py_version(new_version: str, user_config, updated: List[str]) 
         return
 
     try:
-        content = path.read_text()
-        new_content = re.sub(
-            r"(version\s*=\s*['\"])[^'\"]+(['\"])",
-            rf"\g<1>{new_version}\g<2>",
-            content,
-            count=1,
-            flags=re.MULTILINE,
-        )
-        if new_content != content:
-            path.write_text(new_content)
+        if write_version_source("setup.py:version", new_version):
             updated.append("setup.py")
 
         if user_config and update_project_metadata(path, user_config):
