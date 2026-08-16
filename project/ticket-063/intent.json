@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-063",
+  "summary": "Re-exec CLI after pip self-update to avoid mixed-version runs",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/__init__.py",
+    "tests/test_cli_options.py",
+    "project/ticket-063/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".github/**",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "goal/__init__.py",
+    ".env",
+    "**/*.pem",
+    "**/*secret*"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "45cdcba3201481565a5b3c56832ed9df0c3c8086",
+    "targetBranch": "main",
+    "outcome": "Self-update re-exec prevents mixed-version CLI imports after pip rewrite",
+    "nonGoals": [
+      "No Goal 2.1.300 publication",
+      "No ticket-061 release carrier changes",
+      "No dependency or public API change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "After a successful pip self-update, re-exec via python -m goal with a one-shot GOAL_SELF_UPDATED guard so the refreshed package tree is loaded before further CLI work",
+      "components": [
+        {
+          "name": "cli-self-update-reexec",
+          "paths": [
+            "goal/cli/__init__.py",
+            "tests/test_cli_options.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the re-exec guard and tests; prior mixed-version risk returns after pip self-update"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_cli_options.py",
+          "ruff check goal/cli/__init__.py tests/test_cli_options.py"
+        ],
+        "evidence": "project/ticket-063/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_cli_options.py"
+        ],
+        "evidence": "project/ticket-063/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "pytest -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-063/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

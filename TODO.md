@@ -9,6 +9,10 @@
   Docker, protected CI and exact-head Validator approval pass; PR #103 merged
   unchanged as `af08932...`; classification: `BUG / P1 / regression`.
 
+- [ ] Deliver [ticket-063](project/ticket-063/README.md): re-exec the CLI after
+  a successful pip self-update so lazy imports cannot mix package versions.
+  State: `IN_PROGRESS / PUBLICATION`; classification: `BUG / P1 / regression`.
+
 - [ ] Deliver [ticket-061](project/ticket-061/README.md): publish the merged
   retry-safe runtime, doctor, producer and tracked configuration fixes as Goal
   2.1.300, then prove the public package on a disposable Glon checkout. State:

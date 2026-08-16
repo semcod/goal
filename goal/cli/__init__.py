@@ -29,6 +29,10 @@ from goal.pyenv_health import repair as _repair_broken_python_env
 
 DOCS_URL = "https://github.com/wronai/goal#readme"
 
+# Set on the child process after a self-update re-exec so a botched install
+# (new files on PyPI, old ones still first on sys.path) cannot loop forever.
+SELF_UPDATE_REEXEC_ENV = "GOAL_SELF_UPDATED"
+
 
 def _has_cli_flag(args: List[str], short: str, long: str) -> bool:
     """Detect a short or long CLI flag, including combined forms like -au."""
@@ -360,15 +364,49 @@ def _show_goal_version_banner() -> Optional[str]:
         return None
 
 
+def _reexec_after_self_update() -> None:
+    """Restart the current invocation on the freshly installed goal.
+
+    pip rewrites the package files underneath the running process, so modules
+    imported lazily afterwards (``goal.push.core``, ``goal.governance.*``) come
+    from the new release while ``goal.cli`` is still the old one. Any contract
+    that changed between the two versions then breaks in a way that looks like a
+    bug in the new code — e.g. new push code reading a ``ctx.obj`` key that the
+    old group callback never set, so ``goal -a`` reports that it needs `goal -a`.
+    Re-exec so a single version serves the whole run.
+    """
+    click.echo(click.style("  ↻ Restarting with the updated goal...", fg="cyan"))
+    os.environ[SELF_UPDATE_REEXEC_ENV] = "1"
+    try:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.execv(sys.executable, [sys.executable, "-m", "goal", *sys.argv[1:]])
+    except OSError as exc:
+        # Never fall through into the mixed-version state the re-exec exists to
+        # avoid; the user only has to run the same command again.
+        raise click.ClickException(
+            f"updated goal but could not restart automatically ({exc}); "
+            "re-run your command"
+        )
+
+
 def _maybe_self_update(latest_version: Optional[str], yes: bool) -> None:
     """Offer (or, under -y, perform) the self-update `_show_goal_version_banner`
     only ever suggested before. Skips entirely for non-interactive runs
     without -y so scripted/CI invocations never block on a prompt or silently
     start a network install mid-command.
+
+    A successful update re-execs the command, so this function does not return
+    in that case.
     """
     if not isinstance(latest_version, str) or not latest_version:
         return
     if not yes and not sys.stdin.isatty():
+        return
+    if os.environ.get(SELF_UPDATE_REEXEC_ENV):
+        # Already restarted once and the version still looks stale: the install
+        # landed somewhere that isn't first on sys.path. Keep running the old
+        # code rather than re-updating and re-exec'ing forever.
         return
 
     from goal import __version__
@@ -382,7 +420,8 @@ def _maybe_self_update(latest_version: Optional[str], yes: bool) -> None:
         ):
             return
 
-    _auto_update_goal(__version__, latest_version)
+    if _auto_update_goal(__version__, latest_version):
+        _reexec_after_self_update()
 
 
 def _explicit_ascii_flag(argv: list[str] | None = None) -> bool:
