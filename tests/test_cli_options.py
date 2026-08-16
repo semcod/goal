@@ -1,6 +1,10 @@
+import os
 import subprocess
 import sys
 from unittest import mock
+
+import click
+import pytest
 from click.testing import CliRunner
 
 import goal.cli as goal_cli
@@ -298,6 +302,46 @@ def test_maybe_self_update_runs_without_prompt_when_yes(monkeypatch) -> None:
     goal_cli._maybe_self_update("9.9.9", yes=True)
 
     assert len(called) == 1
+
+
+def test_maybe_self_update_reexecs_after_successful_update(monkeypatch) -> None:
+    # pip rewrites the package under the running process, so the run must
+    # restart instead of mixing old goal.cli with new lazily-imported modules.
+    monkeypatch.delenv(goal_cli.SELF_UPDATE_REEXEC_ENV, raising=False)
+    monkeypatch.setattr(goal_cli, "_auto_update_goal", lambda *a: True)
+    monkeypatch.setattr(sys, "argv", ["goal", "-a"])
+    execs = []
+    monkeypatch.setattr(goal_cli.os, "execv", lambda *a: execs.append(a))
+
+    goal_cli._maybe_self_update("9.9.9", yes=True)
+
+    assert execs == [(sys.executable, [sys.executable, "-m", "goal", "-a"])]
+    assert os.environ[goal_cli.SELF_UPDATE_REEXEC_ENV] == "1"
+
+
+def test_maybe_self_update_does_not_update_again_after_reexec(monkeypatch) -> None:
+    monkeypatch.setenv(goal_cli.SELF_UPDATE_REEXEC_ENV, "1")
+    called = []
+    monkeypatch.setattr(goal_cli, "_auto_update_goal", lambda *a: called.append(a))
+
+    goal_cli._maybe_self_update("9.9.9", yes=True)
+
+    assert called == []
+
+
+def test_maybe_self_update_fails_loudly_when_reexec_is_impossible(monkeypatch) -> None:
+    monkeypatch.delenv(goal_cli.SELF_UPDATE_REEXEC_ENV, raising=False)
+    monkeypatch.setattr(goal_cli, "_auto_update_goal", lambda *a: True)
+    monkeypatch.setattr(
+        goal_cli.os,
+        "execv",
+        lambda *a: (_ for _ in ()).throw(OSError("exec failed")),
+    )
+
+    with pytest.raises(click.ClickException) as excinfo:
+        goal_cli._maybe_self_update("9.9.9", yes=True)
+
+    assert "re-run your command" in str(excinfo.value)
 
 
 def test_diagnose_broken_python_env_detects_version_mismatch(monkeypatch, tmp_path) -> None:
