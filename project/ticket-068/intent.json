@@ -1,0 +1,70 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-068",
+  "summary": "Emit actionable standard-update diagnostics",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_cmd.py",
+    "project/ticket-068/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e45440a2d41fb0379f66bbec1ee5d04088e8bc00",
+    "targetBranch": "main",
+    "outcome": "Goal emits a stable target-published diagnostic for every fail-closed pre-commit standard-update authorization refusal so Koru can route the repair without weakening exact staged intent checks.",
+    "nonGoals": [
+      "Do not create or modify tickets automatically",
+      "Do not weaken exact staged pin, status, workstream or revision bindings",
+      "Do not change the current-standard no-op or prepare-and-abort behavior"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Prefix only pre-commit adoption authorization failures with the standard diagnostic already published by new-project 0.20.4; keep successful and non-pre-commit paths unchanged.",
+      "components": [
+        {
+          "name": "precommit-standard-update-diagnostic",
+          "paths": ["goal/cli/governance_cmd.py", "tests/test_governance_cmd.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the diagnostic prefixes while retaining the underlying staged authorization checks."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_governance_cmd.py",
+          "python -m ruff check goal/cli/governance_cmd.py tests/test_governance_cmd.py",
+          "./project/governance-check.sh",
+          "python -m pytest -q",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Focused and repository-wide regression gates"
+      }
+    ]
+  }
+}

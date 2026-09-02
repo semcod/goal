@@ -191,7 +191,8 @@ def _staged_text(target, relative_path):
     staged = _run_git(["show", f":{relative_path}"], cwd=target)
     if staged.returncode != 0:
         raise click.ClickException(
-            f"pre-commit standard update requires staged {relative_path}"
+            "GOV-STANDARD-UPDATE-001: pre-commit standard update requires "
+            f"staged {relative_path}"
         )
     return staged.stdout
 
@@ -201,11 +202,13 @@ def _staged_json(target, relative_path):
         value = json.loads(_staged_text(target, relative_path))
     except json.JSONDecodeError as error:
         raise click.ClickException(
-            f"pre-commit standard update found invalid staged {relative_path}"
+            "GOV-STANDARD-UPDATE-001: pre-commit standard update found invalid "
+            f"staged {relative_path}"
         ) from error
     if not isinstance(value, dict):
         raise click.ClickException(
-            f"pre-commit standard update requires an object in staged {relative_path}"
+            "GOV-STANDARD-UPDATE-001: pre-commit standard update requires an "
+            f"object in staged {relative_path}"
         )
     return value
 
@@ -214,12 +217,15 @@ def _authorize_precommit_adoption(target, ticket, current_revision, revision):
     """Bind mutation to the staged ticket snapshot, never worktree-only prose."""
     if re.fullmatch(r"ticket-[0-9]{3,}", ticket) is None:
         raise click.BadParameter(
-            "must use the canonical ticket-NNN identifier", param_hint="--ticket"
+            "GOV-STANDARD-UPDATE-001: must use the canonical ticket-NNN "
+            "identifier",
+            param_hint="--ticket",
         )
     readme = _staged_text(target, f"project/{ticket}/README.md")
     if "- **Status**: IN_PROGRESS" not in readme:
         raise click.ClickException(
-            f"pre-commit standard update requires staged {ticket} status IN_PROGRESS"
+            "GOV-STANDARD-UPDATE-001: pre-commit standard update requires "
+            f"staged {ticket} status IN_PROGRESS"
         )
     intent = _staged_json(target, f"project/{ticket}/intent.json")
     delivery = intent.get("delivery")
@@ -238,8 +244,9 @@ def _authorize_precommit_adoption(target, ticket, current_revision, revision):
         or any(adoption.get(key) != value for key, value in expected.items())
     ):
         raise click.ClickException(
-            "pre-commit standard update requires a staged governance adoption "
-            f"intent binding {current_revision} to {revision} in {ticket}"
+            "GOV-STANDARD-UPDATE-001: pre-commit standard update requires a "
+            "staged governance adoption intent binding "
+            f"{current_revision} to {revision} in {ticket}"
         )
 
 
