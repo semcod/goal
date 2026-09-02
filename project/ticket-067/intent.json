@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-067",
+  "summary": "Publish Goal 2.1.301 standard update protocol",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "README.md",
+    "project/ticket-067/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "goal/cli/**",
+    "tests/**",
+    ".github/**",
+    ".env",
+    "**/*.pem",
+    "**/*secret*"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-064"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0fa5b4ca83c2cec915461ce415b7f46ed7e66dea",
+    "targetBranch": "main",
+    "outcome": "Goal 2.1.301 publicly delivers the authenticated latest-release and staged pre-commit standard-update protocol.",
+    "nonGoals": [
+      "No executable source or dependency-set change",
+      "No publication before protected merge",
+      "No replacement or movement of an immutable release"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize only the established release carriers, validate them through a protected PR, then publish exclusively from exact clean merged main.",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": ["VERSION", "pyproject.toml", "uv.lock", "goal/__init__.py", "README.md"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Never replace immutable artifacts; publish a later patch if verification fails."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": ["pytest -q", "ruff check", "./project/governance-check.sh", "python -m build", "docker build"],
+        "evidence": "protected CI and exact-head Validator review"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["fresh public-index install of goal==2.1.301", "goal governance adopt --help"],
+        "evidence": "public package verification"
+      }
+    ]
+  }
+}

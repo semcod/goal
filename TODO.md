@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-067](project/ticket-067/README.md): publish the merged
+  authenticated latest-release and pre-commit standard-update protocol as Goal
+  2.1.301. State: `IN_PROGRESS / PUBLICATION`; classification:
+  `SERVICE / P0 / requested`; depends on ticket-064.
+
 - [x] Deliver [ticket-062](project/ticket-062/README.md): read and safely
   synchronize literal versions passed to imported setuptools setup calls
   without executing setup.py or touching unrelated keyword arguments. State:
