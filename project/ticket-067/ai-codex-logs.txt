@@ -1,0 +1,3 @@
+2026-09-02 SESSION_EXECUTION_AUTHORIZATION recorded for the bounded Goal 2.1.301 release.
+2026-09-02 synchronized exactly five established release carriers from 2.1.300 to 2.1.301.
+2026-09-02 validation: 627 tests passed with 2 skips; scoped Ruff and governance passed; wheel, sdist and Docker image goal:ticket-067-validation built successfully.
