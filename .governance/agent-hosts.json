@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.agent-hosts/v1",
+  "note": "Single source of truth for the host-agnostic agent contract (AGENTS.md rule 22). scripts/agent_host_check.py proves these files are present, that the fail-closed hook is installed and active, and that the packaging metadata a repository already carries actually runs the gate. Instruction files are advisory to a model; the hook, the CI job and the packaging lifecycle bindings declared here are the parts that are not. Adding a host here without adding it to governance/package-manifest.json makes the requirement unshippable, so both change together.",
+  "hook": {
+    "path": ".githooks/pre-commit",
+    "hooksPathConfig": ".githooks",
+    "runtimeFiles": [
+      ".governance/worktree_guard.py",
+      ".governance/worktree_overlap_check.py",
+      "worktree-guard.yaml"
+    ]
+  },
+  "hosts": [
+    {
+      "id": "generic",
+      "file": "AGENTS.md",
+      "readers": [
+        "Codex",
+        "aider (via .aider.conf.yml read)",
+        "any AGENTS.md-aware host"
+      ]
+    },
+    {
+      "id": "claude",
+      "file": "CLAUDE.md",
+      "readers": [
+        "Claude Code"
+      ]
+    },
+    {
+      "id": "gemini",
+      "file": "GEMINI.md",
+      "readers": [
+        "Gemini CLI",
+        "Antigravity"
+      ]
+    },
+    {
+      "id": "cursor",
+      "file": ".cursor/rules/new-project-standard.mdc",
+      "readers": [
+        "Cursor"
+      ]
+    },
+    {
+      "id": "aider",
+      "file": ".aider.conf.yml",
+      "readers": [
+        "aider"
+      ]
+    },
+    {
+      "id": "copilot",
+      "file": ".github/copilot-instructions.md",
+      "readers": [
+        "GitHub Copilot",
+        "Copilot Chat in VS Code and JetBrains"
+      ]
+    }
+  ],
+  "packaging": {
+    "python": {
+      "marker": "pyproject.toml",
+      "declaration": "tool.wellmanifest",
+      "lifecycle": {
+        "kind": "pytest-plugin",
+        "field": "tool.pytest.ini_options.addopts",
+        "mustContain": "-p wellmanifest_governance"
+      }
+    },
+    "node": {
+      "marker": "package.json",
+      "declaration": "wellmanifest",
+      "lifecycle": {
+        "kind": "npm-script",
+        "field": "scripts.prepare",
+        "mustContain": "install-agent-hosts"
+      }
+    }
+  },
+  "declarationFields": {
+    "standard": "must equal .governance/manifest.lock.json standard.version",
+    "revision": "must equal .governance/manifest.lock.json standard.sourceRevision",
+    "gate": "repository-relative path of the managed governance gate"
+  }
+}

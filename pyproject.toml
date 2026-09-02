@@ -68,6 +68,12 @@ badge_color_thresholds = { low = 1.0, medium = 5.0, high = 10.0, critical = 50.0
 testpaths = ["tests"]
 norecursedirs = ["venv", ".venv", "build", "dist", "*.egg-info"]
 python_files = ["test_*.py"]
+addopts = "-p wellmanifest_governance"
+
+[tool.wellmanifest]
+standard = "0.19.18"
+revision = "7dd68589340bfd4b18b94f3141f41833280c2985"
+gate = "project/governance-check.sh"
 
 [tool.pfix]
 # Self-healing Python configuration

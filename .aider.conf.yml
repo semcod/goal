@@ -1,0 +1,10 @@
+# wellmanifest/new-project — fail-closed contract for aider.
+# aider loads these files into every session, so the same rules apply here as
+# in Cursor, Claude Code or Gemini. The pre-commit hook enforces them.
+read:
+  - AGENTS.md
+  - CLAUDE.md
+
+# Never let the tool create commits the governance hook has not seen.
+auto-commits: false
+attribute-commit-message-author: true

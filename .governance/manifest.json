@@ -10,7 +10,7 @@
     ],
     "reviewVerificationMethod": "github-api-allowlist",
     "schema": "new-project.approval-evidence/v1",
-    "signedAttestationPredicateType": "https://wellmanifest.dev/attestations/validator/v1"
+    "signedAttestationPredicateType": "https://wellmanifest.com/attestations/validator/v1"
   },
   "coordination": {
     "integration": {
@@ -23,7 +23,7 @@
       ],
       "workstream": "integration"
     },
-    "maxActiveTicketsPerWorkstream": 1,
+    "maxActiveTicketsPerWorkstream": 4,
     "mode": "workstreams",
     "rejectActiveScopeOverlap": true,
     "workstreams": {
@@ -34,7 +34,12 @@
           "app/**",
           "lib/**",
           "test/**",
-          "tests/**"
+          "tests/**",
+          ".gitignore",
+          ".governance/manifest.json",
+          ".governance/manifest.lock.json",
+          ".governance/ticket-allocation.json",
+          ".governance/required-checks.json"
         ]
       },
       "governance": {
@@ -90,9 +95,11 @@
   "delivery": {
     "allowedComplexityClasses": [
       "XS",
-      "S"
+      "S",
+      "M",
+      "L"
     ],
-    "checkpointMinutes": 25,
+    "checkpointMinutes": 30,
     "dependencyManifestPaths": [
       "package.json",
       "pyproject.toml",
@@ -100,11 +107,37 @@
       "Cargo.toml",
       "pom.xml"
     ],
-    "maxActiveMinutes": 30,
-    "maxAffectedComponents": 2,
-    "maxImplementationFiles": 5,
-    "maxPublicInterfaceChanges": 0,
-    "maxRuntimeDependencies": 0,
+    "maxActiveMinutes": 120,
+    "maxAffectedComponents": 5,
+    "maxImplementationFiles": 15,
+    "maxPublicInterfaceChanges": 3,
+    "maxRuntimeDependencies": 3,
+    "profiles": {
+      "L": {
+        "maxAffectedComponents": 5,
+        "maxImplementationFiles": 15,
+        "maxPublicInterfaceChanges": 3,
+        "maxRuntimeDependencies": 3
+      },
+      "M": {
+        "maxAffectedComponents": 3,
+        "maxImplementationFiles": 9,
+        "maxPublicInterfaceChanges": 2,
+        "maxRuntimeDependencies": 2
+      },
+      "S": {
+        "maxAffectedComponents": 2,
+        "maxImplementationFiles": 5,
+        "maxPublicInterfaceChanges": 1,
+        "maxRuntimeDependencies": 1
+      },
+      "XS": {
+        "maxAffectedComponents": 1,
+        "maxImplementationFiles": 2,
+        "maxPublicInterfaceChanges": 0,
+        "maxRuntimeDependencies": 0
+      }
+    },
     "publicInterfacePaths": [
       "api/**",
       "sdk/**",
@@ -129,11 +162,20 @@
     ],
     "required": true
   },
+  "domainContracts": {
+    "mode": "none"
+  },
   "governancePaths": [
     "TODO.md",
     "project/TICKETS.md",
-    "project/ticket-*/**"
+    "project/ticket-*/**",
+    ".governance/standard-adoption.json",
+    "config/artifact-registry.json"
   ],
+  "repository": {
+    "componentRoots": [],
+    "mode": "standalone"
+  },
   "requiredFiles": [
     "README.md",
     "VERSION",
@@ -152,7 +194,7 @@
   ],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.16.1"
+    "version": "0.19.18"
   },
   "ticket": {
     "activeStatuses": [

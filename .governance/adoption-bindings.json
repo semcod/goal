@@ -1,0 +1,6 @@
+{
+  "schema": "new-project.adoption-bindings/v1",
+  "revisionBoundWorkflowPaths": [
+    ".github/workflows/governance.yml"
+  ]
+}

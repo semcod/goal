@@ -4,12 +4,11 @@ import json
 import subprocess
 from urllib.error import URLError
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
 import goal.cli as goal_cli
-import goal.cli.governance_cmd as governance_cmd
-from goal.cli import main
+from goal.cli import governance_cmd, main
 from goal.governance.delivery import SourceHubHealthResult
 
 
@@ -116,6 +115,41 @@ raise SystemExit({exit_code})
     )
     for name in ("manifest.json", "manifest.lock.json", "stack-profiles.json"):
         (package / name).write_text("{}\n", encoding="utf-8")
+
+
+def make_precommit_target(target, current_revision, next_revision):
+    ticket = "ticket-900"
+    governance = target / ".governance"
+    ticket_root = target / "project" / ticket
+    governance.mkdir(parents=True)
+    ticket_root.mkdir(parents=True)
+    (governance / "manifest.lock.json").write_text(
+        json.dumps({"standard": {"sourceRevision": current_revision}}),
+        encoding="utf-8",
+    )
+    (ticket_root / "README.md").write_text(
+        "# Standard adoption\n\n- **Status**: IN_PROGRESS\n",
+        encoding="utf-8",
+    )
+    (ticket_root / "intent.json").write_text(
+        json.dumps(
+            {
+                "ticket": ticket,
+                "workstream": "governance",
+                "delivery": {
+                    "standardAdoption": {
+                        "sourceRepository": "wellmanifest/new-project",
+                        "fromRevision": current_revision,
+                        "toRevision": next_revision,
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    _git(target, "init", "--quiet")
+    _git(target, "add", ".governance/manifest.lock.json", f"project/{ticket}")
+    return ticket
 
 
 def make_workspace_checker(target, *, exit_code=0):
@@ -231,9 +265,7 @@ def test_governance_check_runs_adopted_validator_and_forwards_options(tmp_path):
     assert "validator diagnostic" in result.output
 
 
-def test_governance_check_skips_mutable_interactive_main_setup(
-    tmp_path, monkeypatch
-):
+def test_governance_check_skips_mutable_interactive_main_setup(tmp_path, monkeypatch):
     target = tmp_path / "target"
     target.mkdir()
     make_adopted_governance(target)
@@ -296,6 +328,140 @@ def test_governance_adopt_skips_mutable_caller_setup(tmp_path, monkeypatch):
     assert result.exception is None
     assert (target / ".fake-adoption.json").is_file()
     assert not (caller / "goal.yaml").exists()
+
+
+def test_governance_adopt_latest_accepts_only_peeled_annotated_tag(monkeypatch):
+    revision = "b" * 40
+    tag_object = "a" * 40
+    monkeypatch.setattr(
+        governance_cmd,
+        "_load_latest_github_release",
+        lambda: {"tag_name": "v2.3.4"},
+    )
+    monkeypatch.setattr(
+        governance_cmd,
+        "_run_git",
+        lambda arguments, cwd=None: subprocess.CompletedProcess(
+            arguments,
+            0,
+            stdout=(
+                f"{tag_object}\trefs/tags/v2.3.4\n{revision}\trefs/tags/v2.3.4^{{}}\n"
+            ),
+            stderr="",
+        ),
+    )
+
+    assert (
+        governance_cmd._resolve_latest_published_revision(
+            governance_cmd.DEFAULT_STANDARD_REPOSITORY
+        )
+        == revision
+    )
+
+
+def test_governance_adopt_precommit_is_noop_when_staged_pin_is_current(
+    tmp_path, monkeypatch
+):
+    standard, revision = make_standard(tmp_path)
+    target = tmp_path / "target"
+    target.mkdir()
+    ticket = make_precommit_target(target, revision, revision)
+    monkeypatch.setattr(
+        governance_cmd,
+        "_resolve_latest_published_revision",
+        lambda repository: revision,
+    )
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--latest",
+            "--pre-commit",
+            "--target-root",
+            str(target),
+            "--ticket",
+            ticket,
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "standard is current" in result.output
+    assert not (target / ".fake-adoption.json").exists()
+
+
+def test_governance_adopt_precommit_prepares_only_exact_staged_intent(
+    tmp_path, monkeypatch
+):
+    standard, revision = make_standard(tmp_path)
+    target = tmp_path / "target"
+    target.mkdir()
+    current_revision = "b" * 40
+    ticket = make_precommit_target(target, current_revision, revision)
+    monkeypatch.setattr(
+        governance_cmd,
+        "_resolve_latest_published_revision",
+        lambda repository: revision,
+    )
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--latest",
+            "--pre-commit",
+            "--target-root",
+            str(target),
+            "--ticket",
+            ticket,
+        ],
+    )
+
+    assert result.exit_code == 3, result.output
+    marker = json.loads((target / ".fake-adoption.json").read_text(encoding="utf-8"))
+    assert marker == {"revision": revision, "upgrade": True}
+    assert "review and stage the generated changes" in result.output
+
+
+def test_governance_adopt_precommit_rejects_mismatched_staged_intent(
+    tmp_path, monkeypatch
+):
+    standard, revision = make_standard(tmp_path)
+    target = tmp_path / "target"
+    target.mkdir()
+    current_revision = "b" * 40
+    ticket = make_precommit_target(target, current_revision, "c" * 40)
+    monkeypatch.setattr(
+        governance_cmd,
+        "_resolve_latest_published_revision",
+        lambda repository: revision,
+    )
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--latest",
+            "--pre-commit",
+            "--target-root",
+            str(target),
+            "--ticket",
+            ticket,
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "requires a staged governance adoption intent" in result.output
+    assert not (target / ".fake-adoption.json").exists()
 
 
 def test_governance_check_fails_closed_for_incomplete_package(tmp_path):
@@ -445,9 +611,7 @@ def test_verify_delivery_does_not_rewrite_existing_goal_yaml():
 def test_authorize_push_fails_closed_without_goal_yaml():
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            main, ["governance", "authorize-push", "origin"]
-        )
+        result = runner.invoke(main, ["governance", "authorize-push", "origin"])
 
         assert result.exit_code == 1
         assert "requires an existing goal.yaml" in result.output
@@ -607,6 +771,25 @@ def test_adopt_rejects_missing_github_release(tmp_path, monkeypatch):
     assert not (target / ".fake-adoption.json").exists()
 
 
+def test_release_lookup_uses_existing_github_cli_credential(monkeypatch):
+    observed = {}
+
+    def fake_run(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 0, stdout="test-token\n")
+
+    def capture(request, timeout):
+        observed["authorization"] = request.get_header("Authorization")
+        return FakeReleaseResponse({"tag_name": "v0.1.0"})
+
+    monkeypatch.delenv("GH_TOKEN", raising=False)
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.setattr(governance_cmd.subprocess, "run", fake_run)
+    monkeypatch.setattr(governance_cmd, "urlopen", capture)
+
+    assert governance_cmd._load_github_release("v0.1.0") == {"tag_name": "v0.1.0"}
+    assert observed["authorization"] == "Bearer test-token"
+
+
 @pytest.mark.parametrize(
     ("raw", "message"),
     [
@@ -691,9 +874,7 @@ def test_adopt_rejects_invalid_github_release_metadata(
         ),
     ],
 )
-def test_adopt_rejects_nonfinal_github_release(
-    tmp_path, monkeypatch, release, message
-):
+def test_adopt_rejects_nonfinal_github_release(tmp_path, monkeypatch, release, message):
     standard, revision = make_standard(tmp_path)
     target = tmp_path / "target"
     target.mkdir()

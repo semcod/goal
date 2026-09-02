@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wellmanifest.com/schemas/new-project/agent-hosts/v1",
+  "title": "new-project host-agnostic agent contract",
+  "description": "Declares the instruction files every LLM host loads, the fail-closed git hook, and the packaging touchpoints that make the contract executable rather than advisory.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "hook", "hosts", "packaging", "declarationFields"],
+  "properties": {
+    "schema": { "const": "new-project.agent-hosts/v1" },
+    "note": { "type": "string" },
+    "hook": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "hooksPathConfig", "runtimeFiles"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^[^/][^\\\\]*$" },
+        "hooksPathConfig": { "type": "string", "minLength": 1 },
+        "runtimeFiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[^/][^\\\\]*$" }
+        }
+      }
+    },
+    "hosts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "file", "readers"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "file": { "type": "string", "pattern": "^[^/][^\\\\]*$" },
+          "readers": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "packaging": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["marker", "declaration", "lifecycle"],
+        "properties": {
+          "marker": { "type": "string", "minLength": 1 },
+          "declaration": { "type": "string", "minLength": 1 },
+          "lifecycle": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "field", "mustContain"],
+            "properties": {
+              "kind": { "enum": ["npm-script", "pytest-plugin"] },
+              "field": { "type": "string", "minLength": 1 },
+              "mustContain": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "declarationFields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["standard", "revision", "gate"],
+      "properties": {
+        "standard": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "minLength": 1 },
+        "gate": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

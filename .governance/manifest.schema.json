@@ -17,6 +17,53 @@
         "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
       }
     },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "componentRoots"],
+      "properties": {
+        "mode": { "enum": ["standalone", "monorepo"] },
+        "componentRoots": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/glob" },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "standalone" } }, "required": ["mode"] },
+          "then": { "properties": { "componentRoots": { "maxItems": 0 } } }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "monorepo" } }, "required": ["mode"] },
+          "then": { "properties": { "componentRoots": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "domainContracts": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": { "const": "none" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "commandsAndQueries", "events", "errors", "models"],
+          "properties": {
+            "mode": { "const": "cqrs" },
+            "commandsAndQueries": { "const": "operations/index.json" },
+            "events": { "const": "events/index.json" },
+            "errors": { "const": "error/index.json" },
+            "models": { "const": "operations/index.json#/models" }
+          }
+        }
+      ]
+    },
     "requiredFiles": { "type": "array", "items": { "$ref": "#/$defs/path" }, "uniqueItems": true },
     "governancePaths": { "type": "array", "items": { "$ref": "#/$defs/glob" }, "uniqueItems": true },
     "trustedApprovalSources": {
@@ -46,7 +93,7 @@
         },
         "reviewVerificationMethod": { "const": "github-api-allowlist" },
         "signedAttestationPredicateType": {
-          "const": "https://wellmanifest.dev/attestations/validator/v1"
+          "const": "https://wellmanifest.com/attestations/validator/v1"
         }
       }
     },
@@ -126,11 +173,11 @@
       ],
       "properties": {
         "requiredForImplementation": { "type": "boolean" },
-        "maxActiveMinutes": { "type": "integer", "minimum": 1, "maximum": 30 },
-        "checkpointMinutes": { "type": "integer", "minimum": 1, "maximum": 29 },
+        "maxActiveMinutes": { "type": "integer", "minimum": 1, "maximum": 240 },
+        "checkpointMinutes": { "type": "integer", "minimum": 1, "maximum": 239 },
         "allowedComplexityClasses": {
           "type": "array",
-          "items": { "enum": ["XS", "S"] },
+          "items": { "enum": ["XS", "S", "M", "L"] },
           "minItems": 1,
           "uniqueItems": true
         },
@@ -138,6 +185,16 @@
         "maxAffectedComponents": { "type": "integer", "minimum": 1 },
         "maxPublicInterfaceChanges": { "type": "integer", "minimum": 0 },
         "maxRuntimeDependencies": { "type": "integer", "minimum": 0 },
+        "profiles": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "XS": { "$ref": "#/$defs/deliveryProfile" },
+            "S": { "$ref": "#/$defs/deliveryProfile" },
+            "M": { "$ref": "#/$defs/deliveryProfile" },
+            "L": { "$ref": "#/$defs/deliveryProfile" }
+          }
+        },
         "targetBranches": {
           "type": "array",
           "items": { "$ref": "#/$defs/branch" },
@@ -164,6 +221,17 @@
     }
   },
   "$defs": {
+    "deliveryProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxImplementationFiles", "maxAffectedComponents", "maxPublicInterfaceChanges", "maxRuntimeDependencies"],
+      "properties": {
+        "maxImplementationFiles": { "type": "integer", "minimum": 1 },
+        "maxAffectedComponents": { "type": "integer", "minimum": 1 },
+        "maxPublicInterfaceChanges": { "type": "integer", "minimum": 0 },
+        "maxRuntimeDependencies": { "type": "integer", "minimum": 0 }
+      }
+    },
     "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" },
     "glob": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" },
     "branch": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:\\.\\.|//|@\\{|[~^:?*\\[\\\\])).+$" }
