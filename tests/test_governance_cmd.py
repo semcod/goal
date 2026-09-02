@@ -460,8 +460,42 @@ def test_governance_adopt_precommit_rejects_mismatched_staged_intent(
     )
 
     assert result.exit_code == 1
+    assert "GOV-STANDARD-UPDATE-001" in result.output
     assert "requires a staged governance adoption intent" in result.output
     assert not (target / ".fake-adoption.json").exists()
+
+
+def test_governance_adopt_precommit_publishes_diagnostic_for_missing_staged_pin(
+    tmp_path, monkeypatch
+):
+    standard, revision = make_standard(tmp_path)
+    target = tmp_path / "target"
+    target.mkdir()
+    monkeypatch.setattr(
+        governance_cmd,
+        "_resolve_latest_published_revision",
+        lambda repository: revision,
+    )
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--latest",
+            "--pre-commit",
+            "--target-root",
+            str(target),
+            "--ticket",
+            "ticket-999",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "GOV-STANDARD-UPDATE-001" in result.output
+    assert "requires staged .governance/manifest.lock.json" in result.output
 
 
 def test_governance_check_fails_closed_for_incomplete_package(tmp_path):

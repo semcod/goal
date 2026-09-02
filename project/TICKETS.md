@@ -68,4 +68,5 @@ This file indexes governance tickets without taking ownership of
 | **ticket-063** | [`README.md`](./ticket-063/README.md) | [`preprompt.md`](./ticket-063/preprompt.md) | - |  [`ai-codex.md`](./ticket-063/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-063/ai-codex-logs.txt) | [`changelog.md`](./ticket-063/changelog.md) |
 | **ticket-064** | [`README.md`](./ticket-064/README.md) | [`preprompt.md`](./ticket-064/preprompt.md) | - |  [`ai-codex.md`](./ticket-064/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-064/ai-codex-logs.txt) | [`changelog.md`](./ticket-064/changelog.md) |
 | **ticket-067** | [`README.md`](./ticket-067/README.md) | [`preprompt.md`](./ticket-067/preprompt.md) | - |  [`ai-codex.md`](./ticket-067/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-067/ai-codex-logs.txt) | [`changelog.md`](./ticket-067/changelog.md) |
+| **ticket-068** | [`README.md`](./ticket-068/README.md) | [`preprompt.md`](./ticket-068/preprompt.md) | - |  [`ai-gpt-5.6-sol.md`](./ticket-068/ai-gpt-5.6-sol.md) |  [`ai-gpt-5.6-sol-logs.txt`](./ticket-068/ai-gpt-5.6-sol-logs.txt) | [`changelog.md`](./ticket-068/changelog.md) |
 <!-- AUTO:TICKET_INDEX:END -->

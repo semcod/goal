@@ -2,6 +2,12 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-068](project/ticket-068/README.md): emit the published
+  `GOV-STANDARD-UPDATE-001` code for fail-closed pre-commit adoption
+  authorization refusals so Koru can route a bounded repair. State:
+  `IN_PROGRESS / PUBLICATION`; 36 focused and 628 full tests (2 skips), Ruff,
+  governance and Docker Compose pass; classification: `BUG / P1 / requested`.
+
 - [ ] Deliver [ticket-067](project/ticket-067/README.md): publish the merged
   authenticated latest-release and pre-commit standard-update protocol as Goal
   2.1.301. State: `IN_PROGRESS / PUBLICATION`; classification:
