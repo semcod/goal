@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wellmanifest.dev/schemas/new-project/ticket-activity.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schema", "registry", "terminalOutcomes", "unsupportedOutcomePolicy"],
+  "properties": {
+    "$schema": {"const": "./ticket-activity.schema.json"},
+    "schema": {"const": "new-project.ticket-activity/v1"},
+    "registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["location", "path", "missingPolicy"],
+      "properties": {
+        "location": {"const": "git-common-dir"},
+        "path": {"type": "string", "pattern": "^[A-Za-z0-9._/-]+$"},
+        "missingPolicy": {"const": "status-projection"}
+      }
+    },
+    "terminalOutcomes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["verification", "releasesReservation"],
+        "properties": {
+          "verification": {"const": "git-ancestry"},
+          "releasesReservation": {"const": true}
+        }
+      }
+    },
+    "unsupportedOutcomePolicy": {"const": "remain-active"}
+  }
+}

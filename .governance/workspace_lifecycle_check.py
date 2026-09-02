@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit a workspace root for temporary worktrees and duplicate repository clones."""
+"""Audit a workspace root for temporary checkouts and orphan local branches."""
 
 from __future__ import annotations
 
@@ -35,6 +35,12 @@ class TicketClaim:
     summary: str | None
     workstream: str | None
     path: str
+
+
+@dataclass(frozen=True)
+class LocalBranch:
+    name: str
+    head: str
 
 
 @dataclass(frozen=True)
@@ -290,6 +296,49 @@ def registered_worktrees(path: Path) -> list[Path]:
     return worktrees
 
 
+def local_branches(path: Path) -> tuple[LocalBranch, ...]:
+    branches: list[LocalBranch] = []
+    output = run_git(
+        path,
+        "for-each-ref",
+        "--format=%(refname:short)\t%(objectname)",
+        "refs/heads",
+    )
+    for line in output.splitlines():
+        name, separator, head = line.partition("\t")
+        if not separator or not name or not head:
+            raise AuditError(f"local branch inventory is malformed for {path}")
+        branches.append(LocalBranch(name=name, head=head))
+    return tuple(sorted(branches, key=lambda item: item.name))
+
+
+def default_branch(path: Path, branches: tuple[LocalBranch, ...]) -> str | None:
+    if not branches:
+        return None
+    try:
+        remote_head = run_git(
+            path,
+            "symbolic-ref",
+            "--quiet",
+            "--short",
+            "refs/remotes/origin/HEAD",
+        )
+    except AuditError:
+        remote_head = ""
+    if remote_head.startswith("origin/"):
+        return remote_head.removeprefix("origin/")
+
+    names = {branch.name for branch in branches}
+    for conventional in ("main", "master"):
+        if conventional in names:
+            return conventional
+    if len(branches) == 1:
+        return branches[0].name
+    raise AuditError(
+        f"default branch cannot be resolved without origin/HEAD for {path}"
+    )
+
+
 def choose_primary(checkouts: list[Checkout]) -> Checkout:
     slug = checkouts[0].identity.rsplit("/", 1)[-1]
     named = [checkout for checkout in checkouts if checkout.path.name.lower() == slug]
@@ -304,6 +353,54 @@ def choose_primary(checkouts: list[Checkout]) -> Checkout:
         common_owners or checkouts,
         key=lambda item: (len(item.path.parts), str(item.path)),
     )
+
+
+def local_branch_findings(
+    checkouts: list[Checkout], allowed: set[Path]
+) -> list[Finding]:
+    findings: list[Finding] = []
+    clone_groups: dict[Path, list[Checkout]] = {}
+    for checkout in checkouts:
+        clone_groups.setdefault(checkout.common_git_dir, []).append(checkout)
+
+    for _, group in sorted(clone_groups.items(), key=lambda item: str(item[0])):
+        primary = choose_primary(group)
+        branches = local_branches(primary.path)
+        default = default_branch(primary.path, branches)
+        checkout_by_branch = {
+            checkout.branch: checkout
+            for checkout in group
+            if checkout.branch is not None
+        }
+        for branch in branches:
+            if branch.name == default:
+                continue
+            active_checkout = checkout_by_branch.get(branch.name)
+            if active_checkout is not None and active_checkout.path in allowed:
+                continue
+            findings.append(Finding(
+                code="GOV-WORKSPACE-LIFECYCLE-004",
+                severity="error",
+                message="A terminal workspace still contains a non-default local branch.",
+                remediation=(
+                    "Classify the branch HEAD and preserve unique history. After releasing "
+                    "its worktree, delete only this exact disposable local ref; never let "
+                    "the checker delete it automatically."
+                ),
+                evidence={
+                    "branch": branch.name,
+                    "checkout": (
+                        str(active_checkout.path)
+                        if active_checkout is not None
+                        else None
+                    ),
+                    "defaultBranch": default,
+                    "head": branch.head,
+                    "identity": primary.identity,
+                    "primary": str(primary.path),
+                },
+            ))
+    return findings
 
 
 def evaluate(workspace_root: Path, allowed: set[Path]) -> list[Finding]:
@@ -350,6 +447,7 @@ def evaluate(workspace_root: Path, allowed: set[Path]) -> list[Finding]:
 
     findings: list[Finding] = []
     findings.extend(allocation_findings(checkouts))
+    findings.extend(local_branch_findings(checkouts, allowed))
     for identity in sorted(groups):
         group = groups[identity]
         if len(group) < 2:

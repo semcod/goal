@@ -1,0 +1,17 @@
+---
+description: wellmanifest/new-project fail-closed ticket contract for every Cursor session
+alwaysApply: true
+---
+
+# new-project standard (host-agnostic)
+
+Before writing code in this repository:
+
+1. Read `AGENTS.md` and the active ticket. Reuse an `IN_PROGRESS` ticket only when workstream and scope match.
+2. Otherwise run `./project/new-ticket.sh --title "..." --agent "..." --workstream "..."`.
+3. Work in a dedicated worktree/branch whose name contains `ticket-NNN`. Do not commit on `main` or a dirty primary checkout.
+4. Stay inside `intent.json` `allowedPaths`. Commercial SSOT / offer / brand facades need the integration workstream.
+5. Run `./scripts/install-agent-hosts.sh` once per clone so `.githooks/pre-commit` is active.
+6. Run `./project/governance-check.sh` before claiming done.
+
+The pre-commit hook rejects commits that are not bound to an `IN_PROGRESS` ticket. Do not invent ticket numbers. Do not ask the human to approve a merge; invoke validator-agent when publication needs trusted approval.

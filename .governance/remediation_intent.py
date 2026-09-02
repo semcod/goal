@@ -9,9 +9,11 @@ from datetime import datetime, timezone
 from fnmatch import fnmatchcase
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import sys
+import tempfile
 from typing import Any
 
 
@@ -20,9 +22,11 @@ VALIDATION_SCHEMA = "new-project.remediation-validation/v1"
 T2C_DIAGNOSTICS_SCHEMA = "t2c.diagnostics/v1"
 T2C_PLAN_SET_SCHEMA = "t2c.code-change-plan-set/v1"
 T2C_PLAN_SCHEMA = "t2c.code-change-plan/v1"
+T2C_GRAPH_SCHEMA = "t2c.graph/v1"
 MALFORMED_CODE = "GOV-REMEDIATION-001"
 T2C_CODE = "GOV-REMEDIATION-002"
 STALE_CODE = "GOV-REMEDIATION-003"
+PROJECTION_CODE = "GOV-REMEDIATION-004"
 
 INTENT_ID = re.compile(r"RI-[A-Z0-9][A-Z0-9-]*")
 TICKET_ID = re.compile(r"ticket-[0-9]{3}")
@@ -940,8 +944,10 @@ def _validate_analysis(
             "producer",
             "analyzedAt",
             "intentDigest",
+            "graphDigest",
             "diagnosticsDigest",
             "plansDigest",
+            "projectionRecordIds",
             "planIds",
             "findings",
             "llmHints",
@@ -965,7 +971,7 @@ def _validate_analysis(
         )
     _nonempty_text(producer.get("version"), "advisoryAnalysis.producer.version", errors)
     _nonempty_text(analysis.get("analyzedAt"), "advisoryAnalysis.analyzedAt", errors)
-    for field in ("intentDigest", "diagnosticsDigest", "plansDigest"):
+    for field in ("intentDigest", "graphDigest", "diagnosticsDigest", "plansDigest"):
         value = _nonempty_text(analysis.get(field), f"advisoryAnalysis.{field}", errors)
         if value and DIGEST.fullmatch(value) is None:
             errors.append(
@@ -979,6 +985,12 @@ def _validate_analysis(
                 "analysis is stale for the authority-bearing intent projection",
             )
         )
+    _string_list(
+        analysis.get("projectionRecordIds"),
+        "advisoryAnalysis.projectionRecordIds",
+        errors,
+        minimum=1,
+    )
     _string_list(analysis.get("planIds"), "advisoryAnalysis.planIds", errors)
     _string_list(analysis.get("llmHints"), "advisoryAnalysis.llmHints", errors)
     findings = analysis.get("findings")
@@ -1156,6 +1168,115 @@ def _criterion_map(document: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def _atomic_fragment(value: Any) -> str:
+    """Keep prose readable without creating a second todo2code statement."""
+    text = re.sub(r"\s+", " ", str(value)).strip()
+    text = re.sub(r"[.!?;]+(?=\s|$)", ",", text)
+    return text.strip(" ,")
+
+
+def _atomic_json_string(value: Any) -> str:
+    """Encode an exact scalar while preventing sentence-boundary splitting."""
+    encoded = json.dumps(str(value), ensure_ascii=True)
+    return re.sub(r"(?<=[.!?;]) (?=[A-Z0-9])", r"\\u0020", encoded)
+
+
+def _action_prefix(operation: str) -> str:
+    return {
+        "TEST": "test(remediation)",
+        "DOCUMENT": "docs(remediation)",
+        "RELEASE": "build(remediation)",
+        "TRIAGE": "chore(remediation)",
+        "PRESERVE": "chore(remediation)",
+    }.get(operation, "fix(remediation)")
+
+
+def _todo2code_action_line(
+    document: dict[str, Any],
+    action: dict[str, Any],
+    findings: dict[str, dict[str, Any]],
+    criteria: dict[str, dict[str, Any]],
+    verifications: dict[str, dict[str, Any]],
+    digest: str,
+) -> str:
+    finding_items = [findings[finding_id] for finding_id in action["findingIds"]]
+    finding_labels = ", ".join(
+        f"{item['id']}/{item['diagnostic']['code']}/{item['priority']}"
+        for item in finding_items
+    )
+    criterion_ids = list(
+        dict.fromkeys(
+            criterion_id
+            for finding in finding_items
+            for criterion_id in finding["acceptanceCriteria"]
+        )
+    )
+    criterion_text = ", ".join(
+        f"{criterion_id} {_atomic_fragment(criteria[criterion_id]['statement'])}"
+        for criterion_id in criterion_ids
+        if criterion_id in criteria
+    )
+    verification_text = ", ".join(
+        " ".join(
+            [
+                verification_id,
+                verification["type"].lower(),
+                (
+                    f"command-json={_atomic_json_string(verification['command'])}"
+                    if verification.get("command")
+                    else "command-json=null"
+                ),
+                f"expected={_atomic_fragment(verification['expected'])}",
+                f"deterministic={str(verification['deterministic']).lower()}",
+            ]
+        )
+        for verification_id in action["verificationIds"]
+        for verification in [verifications[verification_id]]
+    )
+    paths = ", ".join(f"`{path}`" for path in action["paths"])
+    dependencies = ", ".join(action["dependsOn"]) or "none"
+    risk = action["risk"]
+    return (
+        f"{_action_prefix(action['operation'])}: action {action['id']} must "
+        f"{_atomic_fragment(action['description'])} | intent {document['intentId']} "
+        f"ticket {document['ticket']} digest {digest} | findings {finding_labels} | "
+        f"paths {paths} | dependencies {dependencies} | acceptance {criterion_text} | "
+        f"verification {verification_text} when executed and failure must block the action | "
+        f"risk {risk['level'].lower()} authorization {risk['authorization'].lower()} "
+        f"automation {risk['automation'].lower()} preserves-user-data "
+        f"{str(risk['preservesUserData']).lower()} | evidence result must pass."
+    )
+
+
+def _projection_headings(document: dict[str, Any], digest: str) -> list[str]:
+    lines = [
+        f"## ticket: {document['ticket']}",
+        f"## repository: {document['repository']}",
+        f"## intent digest: {digest}",
+        "## authority: accepted remediation intent; todo2code and LLM output are advisory",
+        f"## outcome: {_atomic_fragment(document['objective']['outcome'])}",
+    ]
+    lines.extend(
+        f"### non-goal {index}: {_atomic_fragment(item)}"
+        for index, item in enumerate(document["objective"]["nonGoals"], start=1)
+    )
+    lines.extend(
+        f"### constraint {index}: {_atomic_fragment(item)}"
+        for index, item in enumerate(document["objective"]["constraints"], start=1)
+    )
+    lines.extend(
+        f"### must preserve {index}: {_atomic_fragment(item)}"
+        for index, item in enumerate(document["llmGuidance"]["mustPreserve"], start=1)
+    )
+    lines.extend(
+        f"### forbidden assumption {index}: {_atomic_fragment(item)}"
+        for index, item in enumerate(
+            document["llmGuidance"]["forbiddenAssumptions"], start=1
+        )
+    )
+    return lines
+
+
 def render_llm(document: dict[str, Any]) -> str:
     report = _require_valid(document, ready=True)
     criteria = _criterion_map(document)
@@ -1236,56 +1357,93 @@ def render_todo2code(document: dict[str, Any]) -> tuple[str, str]:
     if document["todo2code"]["enabled"] is not True:
         raise ValueError("todo2code projection is disabled by the accepted intent")
     criteria = _criterion_map(document)
+    findings = {item["id"]: item for item in document["findings"]}
+    actions = {item["id"]: item for item in document["actions"]}
+    verifications = {item["id"]: item for item in document["verifications"]}
     task_lines = [
         f"# Refactoring task {document['intentId']}",
         "",
-        f"Ticket: {document['ticket']}",
-        f"Repository: {document['repository']}",
-        f"Intent-Digest: {report['intentDigest']}",
-        "",
-        "## Outcome",
-        "",
-        document["objective"]["outcome"],
-        "",
-        "## Required changes",
-        "",
+        *_projection_headings(document, report["intentDigest"]),
+        "## required changes",
     ]
-    finding_by_id = {item["id"]: item for item in document["findings"]}
-    action_by_id = {item["id"]: item for item in document["actions"]}
     todo_lines = [
         f"# TODO for {document['intentId']}",
         "",
-        f"Intent-Digest: {report['intentDigest']}",
-        "",
+        *_projection_headings(document, report["intentDigest"]),
+        "## required changes",
     ]
     for action_id in document["llmGuidance"]["planningOrder"]:
-        action = action_by_id[action_id]
-        finding_labels = []
-        criterion_labels: list[str] = []
-        for finding_id in action["findingIds"]:
-            finding = finding_by_id[finding_id]
-            finding_labels.append(
-                f"{finding_id}/{finding['diagnostic']['code']}/{finding['priority']}"
-            )
-            criterion_labels.extend(finding["acceptanceCriteria"])
-        paths = ", ".join(f"`{path}`" for path in action["paths"])
-        criterion_text = "; ".join(
-            f"[{criterion_id}] {criteria[criterion_id]['statement']}"
-            for criterion_id in dict.fromkeys(criterion_labels)
-            if criterion_id in criteria
+        line = _todo2code_action_line(
+            document,
+            actions[action_id],
+            findings,
+            criteria,
+            verifications,
+            report["intentDigest"],
         )
-        line = (
-            f"[{action_id}] Implement {action['description']} "
-            f"Findings: {', '.join(finding_labels)}. Paths: {paths}. "
-            f"Acceptance: {criterion_text}"
-        )
-        task_lines.extend([f"### {action_id}", "", line, ""])
+        task_lines.extend([f"### action: {action_id}", line])
         todo_lines.append(f"- [ ] {line}")
-    task_lines.extend(["## Constraints", ""])
-    task_lines.extend(f"- {item}" for item in document["objective"]["constraints"])
-    task_lines.extend(["", "## Non-goals", ""])
-    task_lines.extend(f"- {item}" for item in document["objective"]["nonGoals"])
     return "\n".join(task_lines).rstrip() + "\n", "\n".join(todo_lines).rstrip() + "\n"
+
+
+class ProjectionError(ValueError):
+    """A declared todo2code projection is unsafe, missing or stale."""
+
+
+def _declared_projection_paths(
+    document: dict[str, Any], root: Path
+) -> tuple[Path, Path]:
+    root = root.resolve()
+    if not root.is_dir():
+        raise ProjectionError(f"repository root is not a directory: {root}")
+    paths: list[Path] = []
+    for field in ("taskPath", "todoPath"):
+        relative = document["todo2code"][field]
+        candidate = (root / relative).resolve()
+        try:
+            candidate.relative_to(root)
+        except ValueError as error:
+            raise ProjectionError(
+                f"todo2code.{field} escapes repository root: {relative}"
+            ) from error
+        paths.append(candidate)
+    return paths[0], paths[1]
+
+
+def verify_todo2code(document: dict[str, Any], root: Path) -> dict[str, Any]:
+    task, todo = render_todo2code(document)
+    task_path, todo_path = _declared_projection_paths(document, root)
+    issues: list[dict[str, str]] = []
+    for field, path, expected in (
+        ("todo2code.taskPath", task_path, task),
+        ("todo2code.todoPath", todo_path, todo),
+    ):
+        if not path.is_file():
+            issues.append(_issue(PROJECTION_CODE, field, f"projection is missing: {path}"))
+            continue
+        try:
+            actual = path.read_bytes()
+        except OSError as error:
+            issues.append(_issue(PROJECTION_CODE, field, f"cannot read projection: {error}"))
+            continue
+        expected_bytes = expected.encode("utf-8")
+        if actual != expected_bytes:
+            issues.append(
+                _issue(
+                    PROJECTION_CODE,
+                    field,
+                    "projection bytes differ from accepted intent "
+                    f"(expected sha256={hashlib.sha256(expected_bytes).hexdigest()}, "
+                    f"actual sha256={hashlib.sha256(actual).hexdigest()})",
+                )
+            )
+    return {
+        "schema": "new-project.remediation-projection-verification/v1",
+        "intentId": document["intentId"],
+        "intentDigest": intent_digest(document),
+        "ok": not issues,
+        "issues": issues,
+    }
 
 
 def _analysis_finding(
@@ -1315,12 +1473,50 @@ def _plan_paths(plan: dict[str, Any]) -> list[str]:
     return [path for path in target["paths"] if isinstance(path, str)]
 
 
+def _record_ids(value: Any) -> set[str]:
+    if not isinstance(value, list):
+        return set()
+    return {item for item in value if isinstance(item, str) and item}
+
+
+def _projection_record_ids(
+    document: dict[str, Any], graph: dict[str, Any]
+) -> set[str]:
+    if graph.get("schemaVersion") != T2C_GRAPH_SCHEMA or not isinstance(
+        graph.get("records"), list
+    ):
+        raise ValueError(f"graph must use {T2C_GRAPH_SCHEMA}")
+    expected_paths = {
+        str(PurePosixPath(document["todo2code"]["taskPath"])),
+        str(PurePosixPath(document["todo2code"]["todoPath"])),
+    }
+    ids_by_path: dict[str, set[str]] = {path: set() for path in expected_paths}
+    for record in graph["records"]:
+        if not isinstance(record, dict) or not isinstance(record.get("id"), str):
+            continue
+        source = record.get("source")
+        if not isinstance(source, dict) or not isinstance(source.get("path"), str):
+            continue
+        source_path = str(PurePosixPath(source["path"]))
+        if source_path in ids_by_path:
+            ids_by_path[source_path].add(record["id"])
+    missing = sorted(path for path, record_ids in ids_by_path.items() if not record_ids)
+    if missing:
+        raise ValueError(
+            "todo2code graph has no records for declared projection(s): "
+            + ", ".join(missing)
+        )
+    return set().union(*ids_by_path.values())
+
+
 def analyze_todo2code(
     document: dict[str, Any],
+    graph: dict[str, Any],
     diagnostics: dict[str, Any],
     plans: dict[str, Any],
 ) -> tuple[dict[str, Any], bool]:
     _require_valid(document, ready=True)
+    projection_record_ids = _projection_record_ids(document, graph)
     if diagnostics.get("schemaVersion") != T2C_DIAGNOSTICS_SCHEMA or not isinstance(
         diagnostics.get("diagnostics"), list
     ):
@@ -1329,10 +1525,20 @@ def analyze_todo2code(
         plans.get("plans"), list
     ):
         raise ValueError(f"plans must use {T2C_PLAN_SET_SCHEMA}")
-    plan_items = [item for item in plans["plans"] if isinstance(item, dict)]
-    for index, plan in enumerate(plan_items):
+    all_plan_items = [item for item in plans["plans"] if isinstance(item, dict)]
+    for index, plan in enumerate(all_plan_items):
         if plan.get("schemaVersion") != T2C_PLAN_SCHEMA:
             raise ValueError(f"plans[{index}] must use {T2C_PLAN_SCHEMA}")
+    plan_items = [
+        plan
+        for plan in all_plan_items
+        if _record_ids(
+            plan.get("evidence", {}).get("recordIds")
+            if isinstance(plan.get("evidence"), dict)
+            else None
+        )
+        & projection_record_ids
+    ]
 
     scope = document["scope"]
     allowed = scope["allowedPaths"]
@@ -1434,6 +1640,8 @@ def analyze_todo2code(
     for diagnostic in diagnostics["diagnostics"]:
         if not isinstance(diagnostic, dict):
             continue
+        if not (_record_ids(diagnostic.get("recordIds")) & projection_record_ids):
+            continue
         code = diagnostic.get("code")
         diagnostic_id = str(diagnostic.get("id", "unknown-diagnostic"))
         action = str(diagnostic.get("suggestedAction", "Review the todo2code diagnostic."))
@@ -1482,8 +1690,10 @@ def analyze_todo2code(
         },
         "analyzedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "intentDigest": intent_digest(document),
+        "graphDigest": _digest(graph),
         "diagnosticsDigest": _digest(diagnostics),
         "plansDigest": _digest(plans),
+        "projectionRecordIds": sorted(projection_record_ids),
         "planIds": [str(plan.get("id")) for plan in plan_items if plan.get("id")],
         "findings": unique_findings,
         "llmHints": llm_hints,
@@ -1497,7 +1707,21 @@ def analyze_todo2code(
 
 def _write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
+        os.chmod(temporary, mode)
+        os.replace(temporary, path)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def _print_validation(report: dict[str, Any], output_format: str) -> None:
@@ -1532,13 +1756,22 @@ def main() -> int:
         "render-todo2code", help="render deterministic todo2code task and TODO inputs"
     )
     todo_parser.add_argument("intent", type=Path)
-    todo_parser.add_argument("--task-out", type=Path, required=True)
-    todo_parser.add_argument("--todo-out", type=Path, required=True)
+    todo_parser.add_argument("--root", type=Path, default=Path("."))
+    todo_parser.add_argument("--task-out", type=Path)
+    todo_parser.add_argument("--todo-out", type=Path)
+
+    verify_parser = subparsers.add_parser(
+        "verify-todo2code", help="verify declared todo2code projections byte-for-byte"
+    )
+    verify_parser.add_argument("intent", type=Path)
+    verify_parser.add_argument("--root", type=Path, default=Path("."))
+    verify_parser.add_argument("--format", choices=("text", "json"), default="text")
 
     analyze_parser = subparsers.add_parser(
         "analyze-todo2code", help="bind todo2code diagnostics/plans as an advisory overlay"
     )
     analyze_parser.add_argument("intent", type=Path)
+    analyze_parser.add_argument("--graph", type=Path, required=True)
     analyze_parser.add_argument("--diagnostics", type=Path, required=True)
     analyze_parser.add_argument("--plans", type=Path, required=True)
     analyze_parser.add_argument("--out", type=Path, required=True)
@@ -1563,12 +1796,35 @@ def main() -> int:
             return 0
         if args.command == "render-todo2code":
             task, todo = render_todo2code(document)
-            _write(args.task_out, task)
-            _write(args.todo_out, todo)
+            if (args.task_out is None) != (args.todo_out is None):
+                raise ProjectionError(
+                    "--task-out and --todo-out must be supplied together or omitted together"
+                )
+            task_path, todo_path = (
+                (args.task_out, args.todo_out)
+                if args.task_out is not None
+                else _declared_projection_paths(document, args.root)
+            )
+            _write(task_path, task)
+            _write(todo_path, todo)
             return 0
+        if args.command == "verify-todo2code":
+            report = verify_todo2code(document, args.root)
+            if args.format == "json":
+                print(json.dumps(report, ensure_ascii=False, indent=2))
+            else:
+                state = "PASS" if report["ok"] else "FAIL"
+                print(
+                    f"remediation-todo2code-projection: {state}; "
+                    f"{len(report['issues'])} issue(s)"
+                )
+                for issue in report["issues"]:
+                    print(f"{issue['code']}: {issue['path']}: {issue['message']}")
+            return 0 if report["ok"] else 1
         if args.command == "analyze-todo2code":
             result, blocking = analyze_todo2code(
                 document,
+                _load_json(args.graph),
                 _load_json(args.diagnostics),
                 _load_json(args.plans),
             )
@@ -1579,6 +1835,9 @@ def main() -> int:
                     file=sys.stderr,
                 )
             return 1 if blocking else 0
+    except ProjectionError as error:
+        print(f"{PROJECTION_CODE}: {error}", file=sys.stderr)
+        return 2
     except ValueError as error:
         print(f"{MALFORMED_CODE}: {error}", file=sys.stderr)
         return 2

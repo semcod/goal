@@ -222,10 +222,15 @@ __marimo__/
 .planfile/.koru/
 .koru/
 .cursor/
+!.cursor/
+!.cursor/rules/
+!.cursor/rules/new-project-standard.mdc
 .nlp2dsl/
 deps.json
 .aider/
 .github/
+!.github/
+!.github/copilot-instructions.md
 .planfile/
 .taskill/
 .intent/cache/

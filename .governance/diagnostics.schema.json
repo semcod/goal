@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wellmanifest.dev/schemas/new-project-diagnostics-v2.json",
+  "$id": "https://wellmanifest.com/schemas/new-project-diagnostics-v2.json",
   "title": "new-project stable diagnostic catalog",
   "type": "object",
   "additionalProperties": false,

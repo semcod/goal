@@ -1,0 +1,43 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-064",
+  "summary": "Authenticate Release verification and prepare exact pre-commit standard updates",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-064/**",
+    "project/TICKETS.md",
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_cmd.py",
+    ".gitignore",
+    ".cursor/rules/new-project-standard.mdc",
+    ".github/copilot-instructions.md",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    ".governance/ticket-allocation.json",
+    ".governance/required-checks.json",
+    "pyproject.toml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": ["ticket-065"],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a422886e10105d36d38d1451ef1d8a2a219ed39e",
+    "targetBranch": "main",
+    "outcome": "Goal authenticates canonical GitHub Release metadata, resolves latest final standards immutably, prepares only staged-ticket-authorized pre-commit updates, and atomically adopts wellmanifest/new-project without weakening fail-closed validation.",
+    "nonGoals": ["Do not bypass tag, revision, draft, prerelease or publication-time checks", "Do not expose credentials in output", "Do not stage, commit or publish a prepared update automatically", "Do not alter the historical ticket-063 lifecycle prose; its protected merge receipt remains terminal truth"],
+    "complexity": "M",
+    "estimatedMinutes": 25,
+    "budgets": {"maxImplementationFiles": 9, "maxAffectedComponents": 3, "maxPublicInterfaceChanges": 2, "maxRuntimeDependencies": 0},
+    "architecture": {"status": "accepted", "decision": "Resolve an existing GitHub CLI credential only for canonical Release HTTPS requests, bind latest to a peeled annotated tag, require exact staged adoption evidence before pre-commit mutation, then apply the published generator and abort for review.", "components": [{"name": "governance-adoption-preflight", "paths": ["goal/cli/governance_cmd.py", "tests/test_governance_cmd.py"]}, {"name": "new-project-adoption", "paths": [".governance/**", ".cursor/rules/new-project-standard.mdc", ".github/copilot-instructions.md"]}, {"name": "target-host-bindings", "paths": [".gitignore", "pyproject.toml", "project/ticket-064/**"]}], "responsibilityChanges": false, "interfaceChanges": ["goal governance adopt --latest", "goal governance adopt --pre-commit --ticket ticket-NNN"], "dataChanges": [], "ui": {"impact": "none", "states": [], "evidence": []}, "rollback": "Revert the credential resolver and pre-commit protocol together; explicit pinned adoption remains available."},
+    "runtimeDependencies": [],
+    "validation": [{"criterion": "AC-01", "commands": ["python -m pytest -q tests/test_governance_cmd.py"], "evidence": "Focused test verifies an Authorization header without printing its value."}, {"criterion": "AC-02", "commands": ["python -m pytest -q tests/test_governance_cmd.py"], "evidence": "Existing unavailable and invalid metadata tests remain green."}, {"criterion": "AC-03", "commands": ["./project/governance-check.sh --actor agent --base a422886e10105d36d38d1451ef1d8a2a219ed39e"], "evidence": "The exact published lock, generated required-check declaration and host bindings validate together."}],
+    "standardAdoption": {"sourceRepository": "wellmanifest/new-project", "fromRevision": "4e6ba5ec15873346446d67d8787f17f68f57f81e", "toRevision": "7dd68589340bfd4b18b94f3141f41833280c2985", "managedTargetTakeovers": [{"path": ".github/workflows/new-project-governance.yml", "baseDigest": "0856da49ef39e4c4a0c04de22ddb639b3316ebf3d288e7656b07b6b4afddeb51"}]}
+  }
+}

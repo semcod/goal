@@ -1,11 +1,12 @@
 """Adopt pinned wellmanifest/new-project governance into existing projects."""
 
-from pathlib import Path
 import json
+import os
 import re
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -28,10 +29,12 @@ from goal.governance.delivery import (
     run_source_hub_health,
 )
 
-
 DEFAULT_STANDARD_REPOSITORY = "https://github.com/wellmanifest/new-project.git"
 CANONICAL_STANDARD_RELEASES_API = (
     "https://api.github.com/repos/wellmanifest/new-project/releases/tags"
+)
+CANONICAL_STANDARD_LATEST_RELEASE_API = (
+    "https://api.github.com/repos/wellmanifest/new-project/releases/latest"
 )
 MAX_RELEASE_METADATA_BYTES = 1024 * 1024
 FULL_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
@@ -55,14 +58,34 @@ def _run_git(arguments, cwd=None):
     )
 
 
+def _github_api_headers():
+    credential = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if not credential:
+        try:
+            result = subprocess.run(
+                ["gh", "auth", "token"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+            credential = result.stdout.strip() if result.returncode == 0 else ""
+        except (OSError, subprocess.SubprocessError):
+            credential = ""
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "goal-governance-adoption",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    if credential:
+        headers["Authorization"] = f"Bearer {credential}"
+    return headers
+
+
 def _load_github_release(tag):
     request = Request(
         f"{CANONICAL_STANDARD_RELEASES_API}/{quote(tag, safe='')}",
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "goal-governance-adoption",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers=_github_api_headers(),
     )
     try:
         with urlopen(request, timeout=10) as response:
@@ -86,6 +109,149 @@ def _load_github_release(tag):
             f"the canonical GitHub Release metadata for {tag} is invalid"
         )
     return release
+
+
+def _load_latest_github_release():
+    request = Request(
+        CANONICAL_STANDARD_LATEST_RELEASE_API,
+        headers=_github_api_headers(),
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            raw = response.read(MAX_RELEASE_METADATA_BYTES + 1)
+    except (HTTPError, URLError, TimeoutError, OSError) as error:
+        raise click.ClickException(
+            "the canonical standard has no verifiable latest GitHub Release"
+        ) from error
+    if len(raw) > MAX_RELEASE_METADATA_BYTES:
+        raise click.ClickException(
+            "the canonical latest GitHub Release metadata is unexpectedly large"
+        )
+    try:
+        release = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise click.ClickException(
+            "the canonical latest GitHub Release metadata is invalid"
+        ) from error
+    if not isinstance(release, dict):
+        raise click.ClickException(
+            "the canonical latest GitHub Release metadata is invalid"
+        )
+    tag = release.get("tag_name")
+    published_at = release.get("published_at")
+    if (
+        not isinstance(tag, str)
+        or re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) is None
+        or release.get("draft") is not False
+        or release.get("prerelease") is not False
+        or not isinstance(published_at, str)
+        or not published_at.strip()
+    ):
+        raise click.ClickException(
+            "the canonical latest GitHub Release is not a final semantic release"
+        )
+    return release
+
+
+def _resolve_latest_published_revision(repository):
+    """Resolve the latest final Release through its peeled annotated tag."""
+    if repository != DEFAULT_STANDARD_REPOSITORY:
+        raise click.UsageError(
+            "--latest is restricted to the canonical wellmanifest/new-project repository"
+        )
+    tag = _load_latest_github_release()["tag_name"]
+    refs = _run_git(
+        [
+            "ls-remote",
+            "--tags",
+            repository,
+            f"refs/tags/{tag}",
+            f"refs/tags/{tag}^{{}}",
+        ]
+    )
+    if refs.returncode != 0:
+        raise click.ClickException(
+            f"could not resolve the canonical standard release tag {tag}"
+        )
+    resolved = {}
+    for line in refs.stdout.splitlines():
+        fields = line.split("\t", 1)
+        if len(fields) == 2 and FULL_SHA_PATTERN.fullmatch(fields[0]):
+            resolved[fields[1]] = fields[0]
+    tag_ref = f"refs/tags/{tag}"
+    peeled_ref = f"{tag_ref}^{{}}"
+    if tag_ref not in resolved or peeled_ref not in resolved:
+        raise click.ClickException(
+            f"the canonical standard release tag {tag} must be annotated"
+        )
+    return resolved[peeled_ref]
+
+
+def _staged_text(target, relative_path):
+    staged = _run_git(["show", f":{relative_path}"], cwd=target)
+    if staged.returncode != 0:
+        raise click.ClickException(
+            f"pre-commit standard update requires staged {relative_path}"
+        )
+    return staged.stdout
+
+
+def _staged_json(target, relative_path):
+    try:
+        value = json.loads(_staged_text(target, relative_path))
+    except json.JSONDecodeError as error:
+        raise click.ClickException(
+            f"pre-commit standard update found invalid staged {relative_path}"
+        ) from error
+    if not isinstance(value, dict):
+        raise click.ClickException(
+            f"pre-commit standard update requires an object in staged {relative_path}"
+        )
+    return value
+
+
+def _authorize_precommit_adoption(target, ticket, current_revision, revision):
+    """Bind mutation to the staged ticket snapshot, never worktree-only prose."""
+    if re.fullmatch(r"ticket-[0-9]{3,}", ticket) is None:
+        raise click.BadParameter(
+            "must use the canonical ticket-NNN identifier", param_hint="--ticket"
+        )
+    readme = _staged_text(target, f"project/{ticket}/README.md")
+    if "- **Status**: IN_PROGRESS" not in readme:
+        raise click.ClickException(
+            f"pre-commit standard update requires staged {ticket} status IN_PROGRESS"
+        )
+    intent = _staged_json(target, f"project/{ticket}/intent.json")
+    delivery = intent.get("delivery")
+    adoption = (
+        delivery.get("standardAdoption", {}) if isinstance(delivery, dict) else {}
+    )
+    expected = {
+        "sourceRepository": "wellmanifest/new-project",
+        "fromRevision": current_revision,
+        "toRevision": revision,
+    }
+    if (
+        intent.get("ticket") != ticket
+        or intent.get("workstream") != "governance"
+        or not isinstance(adoption, dict)
+        or any(adoption.get(key) != value for key, value in expected.items())
+    ):
+        raise click.ClickException(
+            "pre-commit standard update requires a staged governance adoption "
+            f"intent binding {current_revision} to {revision} in {ticket}"
+        )
+
+
+def _staged_standard_revision(target):
+    lock = _staged_json(target, ".governance/manifest.lock.json")
+    standard = lock.get("standard")
+    revision = standard.get("sourceRevision") if isinstance(standard, dict) else None
+    if not isinstance(revision, str) or FULL_SHA_PATTERN.fullmatch(revision) is None:
+        raise click.ClickException(
+            "pre-commit standard update requires a valid staged standard sourceRevision"
+        )
+    return revision
 
 
 def _verify_published_standard(revision, standard):
@@ -292,7 +458,9 @@ def governance_check(target_root, validator_args):
     type=click.Path(file_okay=False, path_type=Path),
     help="Exact active secondary checkout allowed for a non-terminal audit.",
 )
-@click.option("--format", "output_format", type=click.Choice(("text", "json")), default="text")
+@click.option(
+    "--format", "output_format", type=click.Choice(("text", "json")), default="text"
+)
 def workspace_check(target_root, workspace_root, allow, output_format):
     """Run the read-only checker from the adopted governance package."""
     target = target_root.resolve()
@@ -383,9 +551,7 @@ def authorize_push(ctx, remote_name, remote_url):
 def verify_delivery(ctx, delivery_mode):
     """Print the resolved policy and local/server enforcement boundary."""
     config = (ctx.find_root().obj or {}).get("config") or load_config()
-    policy = resolve_delivery_policy(
-        config, delivery_mode, all_flags=True
-    )
+    policy = resolve_delivery_policy(config, delivery_mode, all_flags=True)
     payload = policy_payload(policy)
     payload["hookInstalled"] = check_delivery_hook()
     payload["serverGuidance"] = (
@@ -405,8 +571,12 @@ def verify_delivery(ctx, delivery_mode):
 )
 @click.option(
     "--source-revision",
-    required=True,
     help="Published lowercase 40-character standard commit SHA.",
+)
+@click.option(
+    "--latest",
+    is_flag=True,
+    help="Resolve the latest final canonical release to its immutable commit SHA.",
 )
 @click.option(
     "--target-root",
@@ -433,28 +603,62 @@ def verify_delivery(ctx, delivery_mode):
         "generator must record non-production provenance."
     ),
 )
+@click.option(
+    "--pre-commit",
+    is_flag=True,
+    help="Prepare an authorized stale standard adoption and stop the commit.",
+)
+@click.option(
+    "--ticket",
+    help="Active governance adoption ticket used by --pre-commit.",
+)
 def adopt(
     standard_repository,
     source_revision,
+    latest,
     target_root,
     check,
     upgrade,
     allow_unpublished_for_testing,
+    pre_commit,
+    ticket,
 ):
     """Adopt an immutable new-project revision into an existing project."""
-    if FULL_SHA_PATTERN.fullmatch(source_revision) is None:
+    if bool(source_revision) == bool(latest):
+        raise click.UsageError("provide exactly one of --source-revision or --latest")
+    if source_revision and FULL_SHA_PATTERN.fullmatch(source_revision) is None:
         raise click.BadParameter(
             "must be a full lowercase 40-character commit SHA",
             param_hint="--source-revision",
         )
     if check and upgrade:
         raise click.UsageError("--check and --upgrade are mutually exclusive")
+    if pre_commit and (not latest or not ticket):
+        raise click.UsageError("--pre-commit requires --latest and --ticket")
+    if pre_commit and (check or upgrade or allow_unpublished_for_testing):
+        raise click.UsageError(
+            "--pre-commit cannot be combined with --check, --upgrade, or "
+            "--allow-unpublished-for-testing"
+        )
 
     target = target_root.resolve()
     if not target.is_dir():
         raise click.BadParameter(
             "must identify an existing directory", param_hint="--target-root"
         )
+
+    if latest:
+        source_revision = _resolve_latest_published_revision(standard_repository)
+
+    if pre_commit:
+        current_revision = _staged_standard_revision(target)
+        if current_revision == source_revision:
+            click.echo(
+                f"standard is current at {source_revision}; no pre-commit update needed"
+            )
+            return
+        _authorize_precommit_adoption(target, ticket, current_revision, source_revision)
+        upgrade = True
 
     with tempfile.TemporaryDirectory(prefix="goal-governance-") as temporary:
         standard = Path(temporary) / "standard"
@@ -492,13 +696,19 @@ def adopt(
             click.echo(result.stderr, err=True, nl=False)
         if result.returncode != 0:
             raise click.exceptions.Exit(result.returncode)
+        if pre_commit:
+            click.echo(
+                f"prepared standard update {current_revision}..{source_revision} "
+                f"for {ticket}; review and stage the generated changes"
+            )
+            raise click.exceptions.Exit(3)
 
 
 __all__ = [
-    "governance",
-    "governance_check",
-    "workspace_check",
     "adopt",
     "delivery_hook",
+    "governance",
+    "governance_check",
     "verify_delivery",
+    "workspace_check",
 ]

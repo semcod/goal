@@ -1,4 +1,4 @@
-# GOV-REMEDIATION-001/002/003 — invalid or inconsistent remediation intent
+# GOV-REMEDIATION-001/002/003/004 — invalid or inconsistent remediation intent
 
 ## Situation
 
@@ -6,7 +6,9 @@
 semantically unsafe. `GOV-REMEDIATION-002` means a todo2code plan conflicts with
 accepted scope, criteria, priority or preservation constraints.
 `GOV-REMEDIATION-003` means the advisory overlay no longer matches the
-authority-bearing intent digest.
+authority-bearing intent digest. `GOV-REMEDIATION-004` means a declared task or
+TODO projection is missing, differs byte-for-byte from the accepted intent, or
+resolves outside the selected repository root.
 
 ## Meaning
 
@@ -24,15 +26,22 @@ advisory and cannot repair that authority gap by assertion.
    If the objective truly changed, record a fresh bounded intent and authority.
 4. For `GOV-REMEDIATION-003`, discard the stale advisory overlay and rerun
    todo2code analysis against the current intent.
-5. Keep unknown ownership explicit and preserve dirty worktrees or other user
+5. For `GOV-REMEDIATION-004`, render both declared projections atomically,
+   verify them before extraction and reject any path/symlink escape.
+6. Give `analyze-todo2code` the exact graph, diagnostics and plan set from the
+   same run. It correlates `source.path` to projection record IDs and ignores
+   repository history that does not cite those IDs.
+7. Keep unknown ownership explicit and preserve dirty worktrees or other user
    state until a human classifies them.
 
 ## Verification
 
-Run `python3 .governance/remediation_intent.py validate <intent>` and require a
-zero exit status. Regenerated analyzed intents must bind current intent,
-diagnostics and plan digests and must contain no blocking todo2code finding
-before implementation proceeds.
+Run `validate`, then `render-todo2code <intent> --root .`, then
+`verify-todo2code <intent> --root .`, and require zero exit statuses. Run
+todo2code deterministically on those exact task/TODO files. Regenerated
+analyzed intents must bind current intent, graph, diagnostics and plan digests,
+list projection record IDs, and contain no blocking todo2code finding before
+implementation proceeds.
 
 ## Do not
 
@@ -45,4 +54,4 @@ runbook.
 
 `C-DIAGNOSTIC-001`, `C-DIAGNOSTIC-002`, `C-DIAGNOSTIC-003`,
 `C-REMEDIATION-001`, `C-REMEDIATION-002`, `C-REMEDIATION-003`,
-`C-REMEDIATION-004`, `P-CORE-008`, `P-CORE-020`.
+`C-REMEDIATION-004`, `C-REMEDIATION-005`, `P-CORE-008`, `P-CORE-020`.
