@@ -8,7 +8,7 @@
   },
   "terminalOutcomes": {
     "merged": {
-      "verification": "git-ancestry",
+      "verification": "git-ancestry-or-rewritten-patch-series",
       "releasesReservation": true
     },
     "no-change": {

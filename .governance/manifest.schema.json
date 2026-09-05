@@ -104,8 +104,8 @@
       "properties": {
         "root": { "$ref": "#/$defs/path" },
         "directoryPattern": { "type": "string", "minLength": 1 },
-        "requiredFiles": { "type": "array", "items": { "$ref": "#/$defs/path" }, "uniqueItems": true },
-        "requiredAgentFiles": { "type": "array", "items": { "$ref": "#/$defs/glob" }, "uniqueItems": true },
+        "requiredFiles": { "const": ["README.md", "intent.json"] },
+        "requiredAgentFiles": { "const": [] },
         "activeStatuses": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true },
         "nonActiveStatuses": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true },
         "closedStatuses": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true },

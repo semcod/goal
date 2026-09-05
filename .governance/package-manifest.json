@@ -8,6 +8,24 @@
       "executable": false
     },
     {
+      "source": ".subactor/.gitignore",
+      "target": ".subactor/.gitignore",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": ".subactor/manifest.json",
+      "target": ".subactor/manifest.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "template/files/tests/conftest-worktree-bootstrap.template.py",
+      "target": ".governance/templates/conftest-worktree-bootstrap.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "project.sh",
       "target": "project.sh",
       "strategy": "seed",
@@ -98,6 +116,12 @@
       "executable": false
     },
     {
+      "source": "governance/work-continuity.schema.json",
+      "target": ".governance/work-continuity.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "governance/remediation-intent.schema.json",
       "target": ".governance/remediation-intent.schema.json",
       "strategy": "managed",
@@ -136,6 +160,12 @@
     {
       "source": "error/GOV-TICKET-ACTIVITY.md",
       "target": ".governance/error/GOV-TICKET-ACTIVITY.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "error/GOV-WORK-CONTINUITY.md",
+      "target": ".governance/error/GOV-WORK-CONTINUITY.md",
       "strategy": "managed",
       "executable": false
     },
@@ -202,6 +232,12 @@
     {
       "source": "scripts/ticket_activity.py",
       "target": ".governance/ticket_activity.py",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "scripts/work_continuity.py",
+      "target": ".governance/work_continuity.py",
       "strategy": "managed",
       "executable": true
     },
@@ -374,6 +410,12 @@
       "executable": false
     },
     {
+      "source": "error/GOV-STANDARD-UPDATE.md",
+      "target": ".governance/error/GOV-STANDARD-UPDATE.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "error/GOV-PACKAGING.md",
       "target": ".governance/error/GOV-PACKAGING.md",
       "strategy": "managed",
@@ -400,6 +442,12 @@
     {
       "source": "template/files/pre-commit.template.sh",
       "target": ".githooks/pre-commit",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "scripts/precommit_standard_update.py",
+      "target": ".governance/precommit_standard_update.py",
       "strategy": "managed",
       "executable": true
     },

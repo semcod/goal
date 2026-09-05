@@ -21,6 +21,43 @@ run_worktree_guard() {
   return 1
 }
 
+run_local_standard_pin_check() {
+  local runner="$root/.governance/work_continuity.py"
+  if [[ ! -f "$runner" ]]; then
+    # A host-files-only bootstrap predates full standard adoption and has no
+    # local pin to check. Once either pin file exists, the runtime is required.
+    if [[ ! -e "$root/.subactor/manifest.json" && ! -e "$root/.governance/manifest.lock.json" ]]; then
+      return 0
+    fi
+    echo "GOV-CONTINUITY-001: the managed pre-commit hook cannot validate the local standard pin." >&2
+    echo "  Restore the managed package with the explicit standard updater; the hook never fetches." >&2
+    return 1
+  fi
+
+  # This first boundary reads only staged local manifests and managed digests.
+  # The separately managed controller may then ask Goal to verify freshness.
+  python3 "$runner" verify-pin --root "$root" --staged >/dev/null
+}
+
+run_standard_update_controller() {
+  local runner="$root/.governance/precommit_standard_update.py"
+  if [[ ! -f "$runner" ]]; then
+    if [[ ! -e "$root/.governance/standard-adoption.json" ]]; then
+      return 0
+    fi
+    echo "GOV-STANDARD-UPDATE-001: the managed standard update controller is missing." >&2
+    echo "  Restore the pinned package; never bypass the pre-commit freshness boundary." >&2
+    return 1
+  fi
+  python3 "$runner" --root "$root" --ticket "$ticket"
+}
+
+run_commit_guards() {
+  run_local_standard_pin_check
+  run_standard_update_controller
+  run_worktree_guard
+}
+
 if [[ -z "$branch" || "$branch" == "HEAD" ]]; then
   echo "GOV-AGENT-HOST-001: detached HEAD is not bound to ticket-NNN." >&2
   exit 1
@@ -61,7 +98,7 @@ if grep -Eiq '^-[[:space:]]+\*\*Status\*\*:[[:space:]]*IN_PROGRESS([[:space:]]|$
   head_readme="$(git show "HEAD:$readme_rel" 2>/dev/null || true)"
   if grep -Eiq '^-[[:space:]]+\*\*Status\*\*:[[:space:]]*(BACKLOG|PLAN|BLOCKED)([[:space:]]|$)' <<<"$head_readme" \
     && governance_only_transition; then
-    run_worktree_guard
+    run_commit_guards
     exit 0
   fi
 
@@ -77,13 +114,13 @@ if grep -Eiq '^-[[:space:]]+\*\*Status\*\*:[[:space:]]*IN_PROGRESS([[:space:]]|$
     echo "  Add a material deliverable, or emit an external no-change receipt without committing." >&2
     exit 1
   fi
-  run_worktree_guard
+  run_commit_guards
   exit 0
 fi
 
 if grep -Eiq '^-[[:space:]]+\*\*Status\*\*:[[:space:]]*(BACKLOG|PLAN|BLOCKED)([[:space:]]|$)' <<<"$staged_readme"; then
   if governance_only_transition; then
-    run_worktree_guard
+    run_commit_guards
     exit 0
   fi
   echo "GOV-AGENT-HOST-003: $ticket non-active transition is not governance-only." >&2

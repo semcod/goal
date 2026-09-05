@@ -1,0 +1,123 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-066",
+  "summary": "Adopt new-project v0.20.4 automatic updates",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".githooks/pre-commit",
+    ".governance/adoption-bindings.json",
+    ".governance/adoption-bindings.schema.json",
+    ".governance/diagnostics.json",
+    ".governance/error/GOV-STANDARD-UPDATE.md",
+    ".governance/error/GOV-TICKET-ACTIVITY.md",
+    ".governance/error/GOV-WORK-CONTINUITY.md",
+    ".governance/governance_check.py",
+    ".governance/intent.schema.json",
+    ".governance/manifest.base.json",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    ".governance/manifest.schema.json",
+    ".governance/package-manifest.json",
+    ".governance/precommit_standard_update.py",
+    ".governance/standard-adoption.schema.json",
+    ".governance/templates/conftest-worktree-bootstrap.py",
+    ".governance/ticket-activity.json",
+    ".governance/ticket-activity.schema.json",
+    ".governance/ticket_activity.py",
+    ".governance/work-continuity.schema.json",
+    ".governance/work_continuity.py",
+    ".governance/workspace_lifecycle_check.py",
+    ".governance/worktree_overlap_check.py",
+    ".governance/worktree_path_check.py",
+    ".governance/worktrees.lock.json",
+    ".governance/worktrees.schema.json",
+    ".subactor/.gitignore",
+    ".subactor/manifest.json",
+    "AGENTS.md",
+    "TODO.md",
+    "project/TICKETS.md",
+    "project/new-ticket.sh",
+    "project/ticket-066/**",
+    "pyproject.toml",
+    "worktree-guard.yaml"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b21f8bedd5965669f0c59d3f126077408390ddaf",
+    "targetBranch": "main",
+    "outcome": "Goal adopts the published automatic Wellmanifest update controller before it is used as the fleet rollout reference.",
+    "nonGoals": [
+      "No Goal runtime or version change",
+      "No dependency-set change",
+      "Only immutable managed adoption and its mandatory packaging declaration"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "7dd68589340bfd4b18b94f3141f41833280c2985",
+      "toRevision": "779665724e2c84372b4cbb5b9d225972a2aa4496"
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Apply only the immutable v0.20.4 managed package through Goal's authenticated adoption path.",
+      "components": [
+        {
+          "name": "governance-package",
+          "paths": [
+            ".governance/**",
+            ".githooks/pre-commit",
+            "project/**"
+          ]
+        },
+        {
+          "name": "standard-packaging-declaration",
+          "paths": [
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the adoption commit before merge; never hand-edit managed payload files."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh",
+          "python -m pytest -q",
+          "docker compose config --quiet"
+        ],
+        "evidence": "managed governance and repository regression gates"
+      }
+    ]
+  }
+}

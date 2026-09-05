@@ -25,7 +25,12 @@
         "additionalProperties": false,
         "required": ["verification", "releasesReservation"],
         "properties": {
-          "verification": {"const": "git-ancestry"},
+          "verification": {
+            "enum": [
+              "git-ancestry",
+              "git-ancestry-or-rewritten-patch-series"
+            ]
+          },
           "releasesReservation": {"const": true}
         }
       }

@@ -136,6 +136,21 @@
       "remediation": "Move one ticket to BACKLOG, PLAN or BLOCKED until the conflicting work reaches a terminal state.",
       "documentation": null
     },
+    "GOV-CONTINUITY-001": {
+      "message": "A work-continuity checkpoint is malformed, unsafe or cannot preserve a dirty workspace.",
+      "remediation": "Rebuild the bounded checkpoint from observable state; commit authorized work or provide a content-addressed, secret-scanned external snapshot.",
+      "documentation": "error/GOV-WORK-CONTINUITY.md"
+    },
+    "GOV-CONTINUITY-002": {
+      "message": "The work-continuity receipt chain is stale, rebound or non-monotonic.",
+      "remediation": "Recover the complete append-only chain from the protected receipt store and extend only its latest valid checkpoint.",
+      "documentation": "error/GOV-WORK-CONTINUITY.md"
+    },
+    "GOV-CONTINUITY-003": {
+      "message": "A continuity checkpoint diverges from current repository observation.",
+      "remediation": "Preserve both states and route to reconciliation or BLOCKED; do not reset, overwrite, restore or reuse a stale fencing token.",
+      "documentation": "error/GOV-WORK-CONTINUITY.md"
+    },
     "GOV-DECISION-001": {
       "message": "A repository-changing autonomous decision lacks an append-only record or rewrites earlier evidence.",
       "remediation": "Append a new recomputable decision record; never edit an earlier record.",
@@ -266,6 +281,11 @@
       "remediation": "Restore the managed Policy DSL files or correct the selected dsl fences, then rerun the governance gate.",
       "documentation": null
     },
+    "GOV-PULL-REQUEST-STATE-001": {
+      "message": "The protected workflow cannot bind a live pull-request state to its event.",
+      "remediation": "Re-acquire the pull request through the GitHub API and retry the workflow; do not skip open-PR ticket, scope or approval enforcement.",
+      "documentation": null
+    },
     "GOV-REMEDIATION-001": {
       "message": "A diagnostic remediation intent is malformed, unresolved or semantically unsafe.",
       "remediation": "Correct the target-owned remediation-intent DSL and pass deterministic schema and semantic validation before LLM planning.",
@@ -305,6 +325,11 @@
       "message": "A ticket status is missing or not declared by the governance manifest.",
       "remediation": "Use one declared active, non-active or closed status and a compatible workflow state.",
       "documentation": null
+    },
+    "GOV-STANDARD-UPDATE-001": {
+      "message": "The pinned Wellmanifest standard cannot be verified or safely prepared during pre-commit.",
+      "remediation": "Install a compatible Goal release and use one active standard-adoption ticket to prepare, review and restage the immutable update.",
+      "documentation": "error/GOV-STANDARD-UPDATE.md"
     },
     "GOV-SYNC-001": {
       "message": "A managed governance file does not match its pinned SHA-256 digest.",

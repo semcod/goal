@@ -4,14 +4,16 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
+import os
 import re
 import subprocess
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
-
 
 REPORT_SCHEMA = "new-project.workspace-lifecycle-report/v1"
 MAX_REPOSITORIES = 10_000
@@ -56,6 +58,33 @@ class Checkout:
 
 class AuditError(RuntimeError):
     """The local workspace could not be audited safely."""
+
+
+def load_worktrees_contract():
+    """Load the pinned owner inventory without creating bytecode in the checkout."""
+    script = Path(__file__).resolve()
+    candidates = (
+        script.with_name("worktree_path_check.py"),
+        script.parent.parent / "subprojects" / "worktrees" / "conformance.py",
+    )
+    source = next((candidate for candidate in candidates if candidate.is_file()), None)
+    if source is None:
+        raise AuditError("the managed Worktrees v4 conformance module is missing")
+    spec = importlib.util.spec_from_file_location("workspace_worktrees_v4", source)
+    if spec is None or spec.loader is None:
+        raise AuditError(f"cannot load Worktrees v4 conformance from {source}")
+    module = importlib.util.module_from_spec(spec)
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+    except (ImportError, OSError, ValueError) as error:
+        raise AuditError(f"cannot load Worktrees v4 conformance: {error}") from error
+    finally:
+        sys.dont_write_bytecode = previous
+        sys.modules.pop(spec.name, None)
+    return module
 
 
 def run_git(root: Path, *arguments: str) -> str:
@@ -355,6 +384,71 @@ def choose_primary(checkouts: list[Checkout]) -> Checkout:
     )
 
 
+def workspace_inventory(checkouts: list[Checkout]) -> dict[str, Any]:
+    """Compose owner layout classes with adopter-owned duplicate-clone evidence."""
+    contract = load_worktrees_contract()
+    path_style = "windows" if os.name == "nt" else "posix"
+    clone_groups: dict[Path, list[Checkout]] = {}
+    identity_groups: dict[str, list[Checkout]] = {}
+    for checkout in checkouts:
+        clone_groups.setdefault(checkout.common_git_dir, []).append(checkout)
+        identity_groups.setdefault(checkout.identity, []).append(checkout)
+
+    layout_entries: dict[Path, dict[str, Any]] = {}
+    for _, group in sorted(clone_groups.items(), key=lambda item: str(item[0])):
+        primary = choose_primary(group)
+        try:
+            observed = contract.inventory(
+                repository=primary.identity,
+                repository_name=primary.path.name,
+                primary_checkout=str(primary.path),
+                registered=[
+                    {
+                        "path": str(checkout.path),
+                        "head": checkout.head,
+                        "branch": checkout.branch,
+                        "detached": checkout.branch is None,
+                    }
+                    for checkout in group
+                ],
+                path_style=path_style,
+            )
+        except (TypeError, ValueError) as error:
+            raise AuditError(f"Worktrees v4 inventory failed: {error}") from error
+        if observed.get("readOnly") is not True:
+            raise AuditError("Worktrees v4 inventory did not declare readOnly=true")
+        for entry in observed["entries"]:
+            layout_entries[Path(entry["path"])] = entry
+
+    authoritative_clone: dict[str, Path] = {
+        identity: choose_primary(group).common_git_dir
+        for identity, group in identity_groups.items()
+    }
+    entries: list[dict[str, Any]] = []
+    for checkout in sorted(checkouts, key=lambda item: str(item.path)):
+        layout = layout_entries.get(checkout.path)
+        if layout is None:
+            raise AuditError(f"Worktrees v4 inventory omitted {checkout.path}")
+        duplicate = checkout.common_git_dir != authoritative_clone[checkout.identity]
+        anomalies = list(layout["anomalies"])
+        if duplicate:
+            anomalies.append("duplicate-clone")
+        entries.append({
+            "path": str(checkout.path),
+            "identity": checkout.identity,
+            "branch": checkout.branch,
+            "head": checkout.head,
+            "dirty": checkout.dirty,
+            "classification": layout["classification"],
+            "layoutVersion": layout["layoutVersion"],
+            "ticket": layout["ticket"],
+            "slug": layout["slug"],
+            "cloneClassification": "duplicate-clone" if duplicate else "registered",
+            "anomalies": sorted(set(anomalies)),
+        })
+    return {"schema": "wellmanifest.worktrees/v4", "readOnly": True, "entries": entries}
+
+
 def local_branch_findings(
     checkouts: list[Checkout], allowed: set[Path]
 ) -> list[Finding]:
@@ -403,7 +497,9 @@ def local_branch_findings(
     return findings
 
 
-def evaluate(workspace_root: Path, allowed: set[Path]) -> list[Finding]:
+def evaluate(
+    workspace_root: Path, allowed: set[Path]
+) -> tuple[list[Finding], dict[str, Any]]:
     if not workspace_root.is_dir():
         raise AuditError(f"workspace root is not a directory: {workspace_root}")
     candidates: list[Path] = []
@@ -441,6 +537,10 @@ def evaluate(workspace_root: Path, allowed: set[Path]) -> list[Finding]:
     checkouts = [
         inspect_checkout(candidate) for candidate in sorted(candidate_paths, key=str)
     ]
+    inventory = workspace_inventory(checkouts)
+    inventory_by_path = {
+        Path(entry["path"]): entry for entry in inventory["entries"]
+    }
     groups: dict[str, list[Checkout]] = {}
     for checkout in checkouts:
         groups.setdefault(checkout.identity, []).append(checkout)
@@ -477,6 +577,7 @@ def evaluate(workspace_root: Path, allowed: set[Path]) -> list[Finding]:
                     "identity": identity,
                     "path": str(checkout.path),
                     "primary": str(primary.path),
+                    "workspaceClassification": inventory_by_path[checkout.path],
                 },
             ))
     return sorted(
@@ -485,14 +586,17 @@ def evaluate(workspace_root: Path, allowed: set[Path]) -> list[Finding]:
             item.code,
             json.dumps(item.evidence, ensure_ascii=False, sort_keys=True),
         ),
-    )
+    ), inventory
 
 
-def report_payload(findings: list[Finding]) -> dict[str, Any]:
+def report_payload(
+    findings: list[Finding], inventory: dict[str, Any]
+) -> dict[str, Any]:
     return {
         "schema": REPORT_SCHEMA,
         "status": "passed" if not findings else "failed",
         "summary": {"errors": len(findings), "warnings": 0, "findings": len(findings)},
+        "inventory": inventory,
         "findings": [asdict(item) for item in findings],
     }
 
@@ -531,9 +635,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     findings: list[Finding]
+    inventory: dict[str, Any]
     try:
         allowed = {path.expanduser().resolve() for path in args.allow}
-        findings = evaluate(args.workspace_root.expanduser().resolve(), allowed)
+        findings, inventory = evaluate(
+            args.workspace_root.expanduser().resolve(), allowed
+        )
     except AuditError as error:
         findings = [Finding(
             code="GOV-WORKSPACE-LIFECYCLE-003",
@@ -542,8 +649,13 @@ def main(argv: list[str] | None = None) -> int:
             remediation="Repair repository metadata or narrow the explicit workspace root.",
             evidence={"reason": str(error)},
         )]
+        inventory = {
+            "schema": "wellmanifest.worktrees/v4",
+            "readOnly": True,
+            "entries": [],
+        }
 
-    payload = report_payload(findings)
+    payload = report_payload(findings, inventory)
     if args.format == "json":
         print(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
     else:

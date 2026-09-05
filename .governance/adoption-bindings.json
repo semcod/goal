@@ -1,6 +1,10 @@
 {
-  "schema": "new-project.adoption-bindings/v1",
+  "schema": "new-project.adoption-bindings/v2",
   "revisionBoundWorkflowPaths": [
     ".github/workflows/governance.yml"
+  ],
+  "digestBoundTargetPatterns": [
+    ".github/workflows/*.yml",
+    ".github/workflows/*.yaml"
   ]
 }

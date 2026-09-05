@@ -20,7 +20,8 @@ cache za terminalne authority.
    odzyskiwalne miejsce. Brak opcjonalnego cache bezpiecznie wraca do projekcji
    statusu.
 3. Dodaj receipt przez `ticket_activity.py record --receipt <plik>`; komenda
-   zapisuje atomowo i odrzuca wpis, który nie zgadza się z lokalnym ancestry.
+   zapisuje atomowo i odrzuca wpis, który nie zgadza się z lokalnym ancestry
+   ani z dokładnym dowodem patch-id chronionego rebase lub squash.
 4. Gdy zdarzenie terminalne nie istnieje lub jego typ nie jest jeszcze
    wspierany, skieruj pracę do `BLOCKED` lub `PLAN` przez autoryzowany lifecycle.
    Taki stan zwalnia rezerwację bez fałszowania historii.
@@ -29,7 +30,11 @@ cache za terminalne authority.
 
 - `ticket_activity.py validate` zwraca `status=valid`.
 - `ticket_activity.py resolve` wskazuje `terminal-receipt` wyłącznie dla SHA
-  zintegrowanych z zadeklarowaną gałęzią docelową.
+  zintegrowanych z zadeklarowaną gałęzią docelową. Zwykły merge wymaga
+  ancestry; rebase wymaga istniejącego liniowego head, równolicznej liniowej
+  serii kończącej się terminalnym SHA i identycznych uporządkowanych patch-id.
+  Squash wymaga pojedynczego terminalnego commita, którego patch-id jest
+  identyczny z agregatem pełnego zakresu od wspólnej bazy do chronionego head.
 - Allocator, governance gate i overlap checker zwracają ten sam wynik.
 
 ## Do not
@@ -38,6 +43,7 @@ cache za terminalne authority.
 - Nie dodawaj wyjątku dla ticketu, brancha, repozytorium ani statusu w kodzie.
 - Nie wyłączaj bramki i nie usuwaj unmerged branchy lub evidence jako remediacji.
 - Nie traktuj mutable ref, URL, opisu PR ani samego istnienia receipt jako dowodu.
+- Nie deklaruj metody merge w receipt jako zamiennika lokalnej weryfikacji Git.
 
 ## Related rules
 

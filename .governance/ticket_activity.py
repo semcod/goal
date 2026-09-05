@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve ticket reservations from status projections and external receipts."""
+"""Resolve reservations through ancestry or verified rewritten Git patches."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ TARGET_BRANCH_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
 OCCURRED_AT_RE = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
 )
+REWRITE_VERIFICATION = "git-ancestry-or-rewritten-patch-series"
 
 
 class ActivityError(RuntimeError):
@@ -82,8 +83,16 @@ def load_policy(root: Path) -> dict[str, Any]:
     outcomes = value.get("terminalOutcomes")
     if not isinstance(outcomes, dict) or not outcomes:
         raise ActivityError("managed terminal outcomes are missing")
+    supported_verification = {"git-ancestry", REWRITE_VERIFICATION}
     for name, rule in outcomes.items():
-        if not isinstance(name, str) or not name or rule != {"verification": "git-ancestry", "releasesReservation": True}:
+        if (
+            not isinstance(name, str)
+            or not name
+            or not isinstance(rule, dict)
+            or set(rule) != {"verification", "releasesReservation"}
+            or rule.get("verification") not in supported_verification
+            or rule.get("releasesReservation") is not True
+        ):
             raise ActivityError("managed terminal outcome rule is unsupported")
     if value.get("unsupportedOutcomePolicy") != "remain-active":
         raise ActivityError("unsupported outcome policy must remain-active")
@@ -159,6 +168,142 @@ def _ancestor(root: Path, older: str, newer: str) -> bool:
     return result.returncode == 0
 
 
+def _linear_series(root: Path, base: str, head: str) -> list[str] | None:
+    """Return the exact single-parent chain from base to head, or fail closed."""
+    raw = _git(root, "rev-list", "--reverse", "--ancestry-path", f"{base}..{head}", check=False)
+    commits = raw.splitlines() if raw else []
+    if not commits:
+        return None
+    previous = base
+    for commit in commits:
+        parents = _git(root, "show", "-s", "--format=%P", commit, check=False).split()
+        if parents != [previous]:
+            return None
+        previous = commit
+    return commits if previous == head else None
+
+
+def _stable_patch_id(payload: bytes, env: dict[str, str]) -> str | None:
+    """Return Git's stable patch identity for one non-empty diff payload."""
+    identified = subprocess.run(
+        ["git", "patch-id", "--stable"],
+        input=payload,
+        capture_output=True,
+        check=False,
+        timeout=20,
+        env=env,
+    )
+    if identified.returncode:
+        return None
+    fields = identified.stdout.decode("utf-8", errors="strict").split()
+    return fields[0] if len(fields) >= 2 and SHA_RE.fullmatch(fields[0]) else None
+
+
+def _patch_id(root: Path, commit: str) -> str | None:
+    """Return Git's stable patch identity for one non-empty commit."""
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    shown = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "show",
+            "--no-ext-diff",
+            "--pretty=format:%H",
+            "--binary",
+            "--full-index",
+            commit,
+        ],
+        capture_output=True,
+        check=False,
+        timeout=20,
+        env=env,
+    )
+    if shown.returncode:
+        return None
+    return _stable_patch_id(shown.stdout, env)
+
+
+def _range_patch_id(root: Path, base: str, head: str) -> str | None:
+    """Return the stable identity of the aggregate tree change in one range."""
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    diff = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "diff",
+            "--no-ext-diff",
+            "--binary",
+            "--full-index",
+            base,
+            head,
+        ],
+        capture_output=True,
+        check=False,
+        timeout=20,
+        env=env,
+    )
+    if diff.returncode:
+        return None
+    return _stable_patch_id(diff.stdout, env)
+
+
+def _rebased_patch_series(root: Path, head_sha: str, terminal_sha: str) -> bool:
+    """Verify a GitHub-style linear rebase without trusting an asserted method."""
+    base = _git(root, "merge-base", head_sha, terminal_sha, check=False)
+    if not SHA_RE.fullmatch(base):
+        return False
+    original = _linear_series(root, base, head_sha)
+    if original is None:
+        return False
+    terminal_base = _git(root, "rev-parse", f"{terminal_sha}~{len(original)}", check=False)
+    if not SHA_RE.fullmatch(terminal_base):
+        return False
+    rebased = _linear_series(root, terminal_base, terminal_sha)
+    if rebased is None or len(rebased) != len(original):
+        return False
+    original_ids = [_patch_id(root, commit) for commit in original]
+    rebased_ids = [_patch_id(root, commit) for commit in rebased]
+    return None not in original_ids and original_ids == rebased_ids
+
+
+def _squashed_patch(root: Path, head_sha: str, terminal_sha: str) -> bool:
+    """Verify one squash commit against the aggregate protected-head change."""
+    base = _git(root, "merge-base", head_sha, terminal_sha, check=False)
+    parents = _git(root, "show", "-s", "--format=%P", terminal_sha, check=False).split()
+    if not SHA_RE.fullmatch(base) or len(parents) != 1:
+        return False
+    original_id = _range_patch_id(root, base, head_sha)
+    terminal_id = _range_patch_id(root, parents[0], terminal_sha)
+    return original_id is not None and original_id == terminal_id
+
+
+def _rewritten_patch(root: Path, head_sha: str, terminal_sha: str) -> bool:
+    return _rebased_patch_series(root, head_sha, terminal_sha) or _squashed_patch(
+        root, head_sha, terminal_sha
+    )
+
+
+def _terminal_verified(
+    root: Path,
+    receipt: dict[str, str],
+    rule: dict[str, Any] | None,
+    target: str | None,
+) -> bool:
+    if rule is None or target is None:
+        return False
+    head_sha, terminal_sha = receipt["headSha"], receipt["terminalSha"]
+    if not _ancestor(root, terminal_sha, target):
+        return False
+    integrated = _ancestor(root, head_sha, terminal_sha)
+    if not integrated and rule.get("verification") == REWRITE_VERIFICATION:
+        integrated = _rewritten_patch(root, head_sha, terminal_sha)
+    return integrated and not _advanced_ticket_branch(
+        root, receipt["ticket"], head_sha, terminal_sha
+    )
+
+
 def _target_ref(root: Path, branch: str) -> str | None:
     for ref in (f"refs/remotes/origin/{branch}", f"refs/heads/{branch}"):
         if _git(root, "rev-parse", "--verify", ref, check=False):
@@ -169,7 +314,7 @@ def _target_ref(root: Path, branch: str) -> str | None:
 def _advanced_ticket_branch(root: Path, ticket: str, head_sha: str, terminal_sha: str) -> bool:
     branch = _git(root, "branch", "--show-current", check=False)
     number = str(int(ticket.removeprefix("ticket-")))
-    if not branch or re.search(rf"(?:^|[^0-9a-z])ticket[-_/]?0*{number}(?:[^0-9]|$)", branch, re.I) is None:
+    if not branch or re.search(rf"(?:^|[^0-9a-z])ticket[-_/]?0*{number}(?:[^0-9]|$)", branch, re.IGNORECASE) is None:
         return False
     current = _git(root, "rev-parse", "HEAD", check=False)
     return bool(current and current != head_sha and _ancestor(root, head_sha, current) and not _ancestor(root, current, terminal_sha))
@@ -196,13 +341,7 @@ def resolve(root: Path, ticket_dir: Path, active_statuses: set[str]) -> Activity
         if rule is None:
             continue
         target = _target_ref(root, receipt["targetBranch"])
-        if target is None:
-            continue
-        if not _ancestor(root, receipt["headSha"], receipt["terminalSha"]):
-            continue
-        if not _ancestor(root, receipt["terminalSha"], target):
-            continue
-        if _advanced_ticket_branch(root, ticket, receipt["headSha"], receipt["terminalSha"]):
+        if not _terminal_verified(root, receipt, rule, target):
             continue
         return ActivityResolution(ticket, False, status, "terminal-receipt", receipt["receiptRef"], "verified-terminal")
     return ActivityResolution(ticket, True, status, "status-projection", reason="no-verifiable-terminal-receipt")
@@ -230,15 +369,7 @@ def record(root: Path, receipt: dict[str, str]) -> Path:
     _validate_registry(candidate, repository_ref(root))
     rule = policy["terminalOutcomes"].get(receipt["outcome"])
     target = _target_ref(root, receipt["targetBranch"])
-    if (
-        rule is None
-        or target is None
-        or not _ancestor(root, receipt["headSha"], receipt["terminalSha"])
-        or not _ancestor(root, receipt["terminalSha"], target)
-        or _advanced_ticket_branch(
-            root, receipt["ticket"], receipt["headSha"], receipt["terminalSha"]
-        )
-    ):
+    if not _terminal_verified(root, receipt, rule, target):
         raise ActivityError("receipt does not verify against the managed outcome policy and current Git ancestry")
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix="terminal-receipts.", suffix=".json", dir=path.parent)
@@ -262,7 +393,7 @@ def main() -> int:
     resolver = sub.add_parser("resolve")
     resolver.add_argument("--ticket-dir", type=Path, required=True)
     resolver.add_argument("--active-status", action="append", required=True)
-    validator = sub.add_parser("validate")
+    sub.add_parser("validate")
     recorder = sub.add_parser("record")
     recorder.add_argument("--receipt", type=Path, required=True)
     args = parser.parse_args()

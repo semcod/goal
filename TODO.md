@@ -2,6 +2,11 @@
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-066](project/ticket-066/README.md): adopt the immutable
+  new-project v0.20.4 package and its managed pre-commit automatic standard
+  update controller. State: `IN_PROGRESS / EDIT`; classification:
+  `SERVICE / P1 / requested`.
+
 - [ ] Deliver [ticket-068](project/ticket-068/README.md): emit the published
   `GOV-STANDARD-UPDATE-001` code for fail-closed pre-commit adoption
   authorization refusals so Koru can route a bounded repair. State:

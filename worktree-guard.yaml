@@ -12,6 +12,7 @@ pipeline:
     same_identity: true
     workspace_roots:
       - .
+      - worktrees
       - .worktrees
       - ../.worktrees
 
