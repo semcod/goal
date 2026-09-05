@@ -203,7 +203,10 @@ def repository_identity(root: Path, seen: set[Path] | None = None) -> str:
     except AuditError as error:
         if "No such remote" not in str(error):
             raise
-        return f"local-repository:{resolved}"
+        # Linked checkouts before remote creation still share a repository.
+        # Their different working directories must not hide competing writes.
+        common = Path(run_git(resolved, "rev-parse", "--path-format=absolute", "--git-common-dir")).resolve()
+        return f"local-repository:{common}"
     local = local_remote_path(resolved, remote)
     if local is not None and (local / ".git").exists():
         return repository_identity(local, visited)
@@ -442,15 +445,25 @@ def contested_paths(
 ) -> tuple[str, ...]:
     """Paths these two checkouts genuinely contend for.
 
-    Uncommitted work is invisible to any merge, so a path dirty on one side and
-    touched on the other is contested by definition. Committed work is settled
-    by asking git to merge the two heads.
+    Compare each dirty delta with the peer's contribution since their shared
+    history, not with everything inherited from the default branch. An inert
+    snapshot at the same HEAD contributes no competing committed change.
+    Unknown ancestry retains the conservative path-intersection fallback.
     """
-    dirty_overlap = {
-        name
-        for name in set(first.dirty_paths) | set(second.dirty_paths)
-        if name in set(first.changed_paths) and name in set(second.changed_paths)
-    }
+    first_changes, second_changes = set(first.changed_paths), set(second.changed_paths)
+    if first.head and second.head:
+        base = first.head if first.head == second.head else merge_base(first.path, first.head, second.head)
+        if base:
+            # Use strict reads here: committed_against's best-effort empty
+            # result must not turn an unreadable peer into permission to write.
+            try:
+                first_committed = set(run_git(first.path, "diff", "--name-only", base, first.head).splitlines())
+                second_committed = set(run_git(second.path, "diff", "--name-only", base, second.head).splitlines())
+                first_changes = first_committed | set(first.dirty_paths)
+                second_changes = second_committed | set(second.dirty_paths)
+            except AuditError:
+                pass
+    dirty_overlap = (set(first.dirty_paths) & second_changes) | (set(second.dirty_paths) & first_changes)
     conflicts: set[str] = set()
     if first.head and second.head and first.head != second.head:
         if not is_ancestor(first.path, first.head, second.head) and not is_ancestor(

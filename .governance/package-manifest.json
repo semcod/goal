@@ -8,6 +8,12 @@
       "executable": false
     },
     {
+      "source": "docs/AGENT_DECISIONS.md",
+      "target": ".governance/AGENT_DECISIONS.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": ".subactor/.gitignore",
       "target": ".subactor/.gitignore",
       "strategy": "managed",

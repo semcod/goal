@@ -40,6 +40,12 @@ Before any multi-step implementation, an agent must:
 5. Move to `EDIT` without a second confirmation and stay inside `intent.json`
    `allowedPaths`. Ask for new authority only for destructive action, secret
    access, new external coordination, or material objective expansion.
+   Before escalating, follow [.governance/AGENT_DECISIONS.md](.governance/AGENT_DECISIONS.md):
+   inspect the exact effect and current evidence, reuse existing authorization,
+   and prefer a bounded route that preserves unknown work. Continue disjoint
+   authorized work while a dependent effect waits. Shared Git history or a
+   quarantine label alone does not prove a competing writer or require cleanup.
+   A necessary question names the exact target, effect and applicable rule.
    When the recorded outcome includes publication, this authorization also
    permits invoking the repository's declared protected delivery process and
    that process's merge after exact-head trusted approval. Do not ask for a
