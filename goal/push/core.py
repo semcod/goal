@@ -1208,24 +1208,10 @@ def _handle_no_changes(
 ) -> None:
     """Handle case when no changes are staged."""
     if markdown or ctx_obj.get("markdown"):
-        from goal.cli.version import get_current_version
-        from goal.formatter import format_push_result
-
-        current_version = get_current_version()
-        md_output = format_push_result(
-            project_types=project_types or [],
-            files=[],
-            stats={},
-            current_version=current_version,
-            new_version=current_version,
-            commit_msg="(none)",
-            commit_body="No staged changes detected.",
-            test_result="Not executed",
-            test_exit_code=0,
-            actions=["Detected project types"],
-            error="No changes to commit",
+        click.echo(
+            "# Goal Push Result\n\n"
+            "No changes to commit. No commit was created and the version was unchanged."
         )
-        click.echo(md_output)
     else:
         click.echo(click.style("No changes to commit.", fg="yellow"))
 
