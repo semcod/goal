@@ -221,6 +221,7 @@ def load_command_modules() -> None:
         ".postcommit_cmd",
         ".validation_cmd",
         ".governance_cmd",
+        ".dependencies_cmd",
     ):
         import_module(module_name, __name__)
 
@@ -573,8 +574,9 @@ class GoalGroup(click.Group):
         # positional tokens so we can tell "goal -a" from "goal -a ./foo ./bar".
         opts: List[str] = []
         positionals: List[str] = []
+        positional_indices: List[int] = []
         skip_next = False
-        for a in args:
+        for index, a in enumerate(args):
             if skip_next:
                 opts.append(a)
                 skip_next = False
@@ -587,12 +589,17 @@ class GoalGroup(click.Group):
                 opts.append(a)
                 continue
             positionals.append(a)
+            positional_indices.append(index)
 
-        # Governance package commands are headless dispatchers. Subcommands
+        # Governance and dependency commands are headless dispatchers. Subcommands
         # that need delivery configuration opt in explicitly in their own
         # callbacks; the main group must not create goal.yaml in the caller.
+        dispatcher_positionals = (
+            positionals[1:] if positionals and positionals[0] == "auto" else positionals
+        )
         ctx.meta["goal_read_only_governance"] = bool(
-            positionals and positionals[0] == "governance"
+            dispatcher_positionals
+            and dispatcher_positionals[0] in {"governance", "dependencies"}
         )
 
         # `auto` is a word-form of the -a/--all flag, so `goal auto ...` behaves
@@ -622,9 +629,10 @@ class GoalGroup(click.Group):
                 if push_cmd is not None:
                     args = (opts + ["push"]) if auto_used else (args + ["push"])
         elif auto_used:
-            # `goal auto all [...]` → the -a we injected into `opts` must reach
-            # Click, so rebuild argv from the split tokens.
-            args = opts + positionals
+            # Preserve subcommand option order: --catalog belongs after
+            # dependencies, just as options to other explicit commands do.
+            auto_index = positional_indices[0]
+            args = args[:auto_index] + ["-a"] + args[auto_index + 1 :]
 
         return super().parse_args(ctx, args)
 
