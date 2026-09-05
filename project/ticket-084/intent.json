@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-084",
+  "summary": "Route durable documentation to the owning repository through published docs instructions",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "README.md",
+    "docs/README.md",
+    "docs/AGENTS.md",
+    "TODO.md",
+    "project/ticket-084/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f7890d5d60745e73c4d3712b7649cafbb2bd398a",
+    "targetBranch": "main",
+    "outcome": "Make agent instructions and repository navigation require repository-owned, indexed reports with versioned metadata; preserve raw logs and recovery archives privately. Publish this bounded documentation change.",
+    "nonGoals": [
+      "No runtime or dependency changes",
+      "No claim of CI adoption or enforcement",
+      "No migration of historical documents or private backups"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use repository-owned documentation entrypoints referencing immutable wellmanifest/docs 0.1.0 without editing managed host files.",
+      "components": [
+        {
+          "name": "documentation-instructions",
+          "paths": [
+            "README.md",
+            "docs/README.md",
+            "docs/AGENTS.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert this documentation commit; keep private recovery data."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh --base f7890d5d60745e73c4d3712b7649cafbb2bd398a",
+          "python -m pytest -q",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Local validation and protected exact-head review"
+      }
+    ]
+  }
+}
