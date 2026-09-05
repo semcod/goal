@@ -2,48 +2,44 @@ name: Dependency Update Check
 
 on:
   schedule:
-    # Run every Monday at 9:00 AM
-    - cron: '0 9 * * 1'
-  workflow_dispatch:  # Manual trigger
+    - cron: "19 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   check-updates:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
-
-      - name: Check for outdated dependencies
-        id: check
+          python-version: "3.12"
+      - name: Install committed dependency versions
         run: |
-          pip install pip-tools
-          pip list --outdated --format=json > outdated.json
-          echo "outdated=$(cat outdated.json)" >> $GITHUB_OUTPUT
-          cat outdated.json | python3 -c "import json,sys; deps=json.load(sys.stdin); [print(f'{d[\"name\"]}=={d[\"version\"]} -> {d[\"latest_version\"]}') for d in deps[:20]]" || true
-
-      - name: Install and test with latest deps
+          python -m pip install uv
+          uv sync --locked --extra dev --python 3.12
+      - name: Audit registry dependencies from the lockfile
         run: |
-          pip install -e ".[dev]" --upgrade
-          pip install --upgrade costs pfix click pyyaml
-          python -m pytest tests/ -v --tb=short -x
+          python - <<'PYTHON'
+          import json
+          import os
+          from pathlib import Path
 
-      - name: Create PR if tests pass
-        if: success() && github.event_name == 'schedule'
-        uses: peter-evans/create-pull-request@v8
+          catalog = json.loads(Path("integration/internal-dependencies.json").read_text())
+          # The current repository is an editable source, not its own registry dependency.
+          catalog["packages"] = [p for p in catalog["packages"] if p["name"] != "goal"]
+          Path(os.environ["RUNNER_TEMP"], "goal-external-dependencies.json").write_text(json.dumps(catalog))
+          PYTHON
+          uv run --no-sync python -m goal dependencies \
+            --catalog "$RUNNER_TEMP/goal-external-dependencies.json" \
+            --check > dependency-freshness.json
+      - name: Retain freshness evidence
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: deps/auto-update
-          title: 'deps: Automated dependency updates'
-          body: |
-            ## Automated Dependency Update
-
-            This PR contains automated updates for:
-            - Python packages
-
-            Tests passed with latest versions.
-          labels: dependencies, automated
-          delete-branch: true
+          name: goal-dependency-freshness
+          path: dependency-freshness.json
+          if-no-files-found: ignore
