@@ -1289,3 +1289,7 @@ pytest
 | `examples` | Usage examples and code samples | [View](./examples) |
 
 <!-- code2docs:end -->
+
+## Documentation ownership
+
+Before writing durable information, analyses, reports or plans, follow [documentation placement instructions](AGENTS.md). Add links to delivered documents in this index; preserve generated sections above.
