@@ -1,13 +1,19 @@
 """Regression coverage for ticket-024 delivery integrity boundaries."""
 
 import importlib
+import json
+import shutil
+import subprocess
 import os
 from contextlib import ExitStack, nullcontext
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import click
 import pytest
+
+from goal.governance import delivery
+from goal.push import core
 
 
 def test_legacy_push_import_does_not_replace_canonical_cli_command() -> None:
@@ -250,6 +256,7 @@ def test_non_governed_push_failure_aborts_before_success_summary() -> None:
         "user_config": {},
     }
     with (
+        patch("goal.governance.delivery.validate_legacy_governance"),
         patch("goal.push.core.check_pyproject_toml", return_value=None),
         patch("goal.push.core._initialize_context"),
         patch("goal.push.core._detect_project_types", return_value=["python"]),
@@ -1035,3 +1042,194 @@ def test_python_bootstrap_requests_dev_and_test_dependency_sets(
         tmp_path, project_bootstrap.PROJECT_BOOTSTRAP["python"], yes=True
     )
     assert requested == ["dev", "test"]
+
+
+def repository(tmp_path, *, adopted=True, failure=True):
+    root = tmp_path / "repository"
+    root.mkdir()
+    subprocess.run(["git", "init", "--quiet", str(root)], check=True)
+    if adopted:
+        for relative in delivery.GOVERNANCE_PACKAGE_FILES.values():
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{}\n")
+        gate = root / "project/governance-check.sh"
+        gate.parent.mkdir()
+        gate.write_text(
+            "#!/bin/sh\n"
+            "echo checked > gate-ran\n"
+            + (
+                'echo "GOV-SCOPE-001: outside ticket scope"\nexit 1\n'
+                if failure
+                else "exit 0\n"
+            )
+        )
+        gate.chmod(0o755)
+        (root / delivery.GOVERNANCE_DIAGNOSTICS).write_text(
+            json.dumps(
+                {
+                    "schema": "new-project.diagnostics/v2",
+                    "codes": {
+                        "GOV-SCOPE-001": {"remediation": "Create a bounded ticket."}
+                    },
+                }
+            )
+        )
+    return root
+
+
+def test_invalid_adoption_stops_push_before_initialization(tmp_path, monkeypatch):
+    root = repository(tmp_path)
+    monkeypatch.chdir(root)
+    (root / "VERSION").write_text("1.0.0\n")
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("workflow side effects started before governance passed")
+
+    monkeypatch.setattr(core, "_initialize_context", unexpected)
+    monkeypatch.setattr(core, "_bootstrap_projects_for_delivery", unexpected)
+    with pytest.raises(click.ClickException, match="GOV-SCOPE-001") as error:
+        core.execute_push_workflow(
+            ctx_obj={"config": {}, "all_flags": True},
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket=None,
+            abstraction=None,
+            todo=False,
+        )
+    assert "Create a bounded ticket." in str(error.value)
+    assert (root / "gate-ran").exists()
+    assert (root / "VERSION").read_text() == "1.0.0\n"
+
+
+def test_valid_adoption_checked_from_subdirectory(tmp_path):
+    root = repository(tmp_path, failure=False)
+    nested = root / "src"
+    nested.mkdir()
+    delivery.validate_legacy_governance(cwd=nested)
+    assert (root / "gate-ran").exists()
+
+
+def test_incomplete_adoption_fails_closed(tmp_path):
+    root = repository(tmp_path)
+    (root / delivery.GOVERNANCE_PACKAGE_FILES["lock"]).unlink()
+    with pytest.raises(click.ClickException, match="GOV-MANIFEST-001"):
+        delivery.validate_legacy_governance(cwd=root)
+    assert not (root / "gate-ran").exists()
+
+
+@pytest.mark.parametrize("git_repository", [True, False])
+def test_unadopted_project_preserves_legacy_flow(tmp_path, monkeypatch, git_repository):
+    root = repository(tmp_path, adopted=False) if git_repository else tmp_path
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("unadopted project must not run a governance gate")
+
+    monkeypatch.setattr(delivery, "_governance_gate", unexpected)
+    delivery.validate_legacy_governance(cwd=root)
+
+
+def git(root, *args):
+    return subprocess.check_output(['git', '-C', str(root), *args], text=True).strip()
+
+
+@pytest.fixture
+def activity_repo(tmp_path):
+    root = tmp_path / 'repo'
+    root.mkdir()
+    git(root, 'init', '-q', '-b', 'main')
+    git(root, 'config', 'user.email', 'test@example.test')
+    git(root, 'config', 'user.name', 'Test')
+    managed = root / '.governance'
+    managed.mkdir()
+    source = Path(__file__).resolve().parents[1] / '.governance'
+    for name in ('ticket_activity.py', 'ticket-activity.json'):
+        shutil.copyfile(source / name, managed / name)
+    for ticket in ('ticket-001', 'ticket-002'):
+        directory = root / 'project' / ticket
+        directory.mkdir(parents=True)
+        (directory / 'README.md').write_text('- **Status**: IN_PROGRESS\n')
+    git(root, 'add', '.')
+    git(root, 'commit', '-qm', 'fixture')
+    remote = tmp_path / 'remote.git'
+    git(root, 'clone', '-q', '--bare', str(root), str(remote))
+    git(root, 'remote', 'add', 'origin', str(remote))
+    sha = git(root, 'rev-parse', 'HEAD')
+    registry = root / '.git/new-project/terminal-receipts.json'
+    registry.parent.mkdir()
+    value = {
+        'schema': 'new-project.terminal-receipt-registry/v1',
+        'repositoryRef': str(remote).removesuffix('.git').lower(),
+        'receipts': [
+            {'receiptRef': f'receipt:test:{number}', 'ticket': f'ticket-{number:03}',
+             'outcome': 'merged', 'headSha': sha, 'terminalSha': sha,
+             'targetBranch': 'main', 'occurredAt': '2026-09-05T00:00:00Z'}
+            for number in (1, 2)
+        ],
+    }
+    registry.write_text(json.dumps(value))
+    return root, registry, value
+
+
+def policy():
+    return delivery.resolve_delivery_policy({}, 'pull-request', all_flags=True)
+
+
+def test_verified_terminal_receipts_allow_clean_base_noop(activity_repo):
+    root, _, _ = activity_repo
+    assert delivery.resolve_pull_request_ticket(policy(), None, cwd=root) is None
+    assert git(root, 'status', '--porcelain') == ''
+
+
+def test_one_unfinished_ticket_is_inferred(activity_repo):
+    root, registry, value = activity_repo
+    value['receipts'].pop()
+    registry.write_text(json.dumps(value))
+    assert delivery.resolve_pull_request_ticket(policy(), None, cwd=root) == 'ticket-002'
+
+
+def test_invalid_registry_fails_closed(activity_repo):
+    root, registry, _ = activity_repo
+    registry.write_text('{}')
+    with pytest.raises(click.ClickException, match='GOV-TICKET-ACTIVITY-001'):
+        delivery.resolve_pull_request_ticket(policy(), None, cwd=root)
+
+
+@pytest.mark.parametrize('state', ['dirty', 'ahead', 'branch'])
+def test_terminal_receipts_do_not_hide_undelivered_work(activity_repo, state):
+    root, _, _ = activity_repo
+    if state == 'dirty':
+        (root / 'new.py').write_text('pending = True\n')
+    elif state == 'ahead':
+        git(root, 'commit', '--allow-empty', '-qm', 'unpublished')
+    else:
+        git(root, 'checkout', '-qb', 'pending')
+    with pytest.raises(click.ClickException, match='none was found'):
+        delivery.resolve_pull_request_ticket(policy(), None, cwd=root)
+
+
+def test_noop_exits_before_bootstrap_and_publication(activity_repo, monkeypatch, capsys):
+    root, _, _ = activity_repo
+    monkeypatch.chdir(root)
+    monkeypatch.setattr(delivery, 'validate_delivery_ready', Mock())
+    monkeypatch.setattr(core, '_validate_toml_or_exit', Mock())
+    def unexpected(*args, **kwargs):
+        pytest.fail('no-change delivery started workflow mutations')
+    for name in ('_detect_project_types', '_bootstrap_projects_for_delivery',
+                 '_handle_commit_phase', 'handle_publish', 'create_tag'):
+        monkeypatch.setattr(core, name, unexpected)
+    core.execute_push_workflow(
+        ctx_obj={'config': {}, 'delivery_mode': 'pull-request', 'all_flags': True},
+        bump='patch', no_tag=False, no_changelog=False, no_version_sync=False,
+        message=None, dry_run=False, yes=True, markdown=False, split=False,
+        ticket=None, abstraction=None, todo=False,
+    )
+    assert 'No changes to deliver' in capsys.readouterr().out
+    assert git(root, 'status', '--porcelain') == ''

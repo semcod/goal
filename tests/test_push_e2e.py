@@ -107,7 +107,7 @@ class TestPublishRetry:
 def isolated_legacy_governance():
     """Workflow ordering uses mocked services, independent of the host checkout.
 
-    The real preflight boundary is covered in test_legacy_governance_preflight.
+    The real preflight boundary is covered in test_delivery_integrity.
     """
     with patch("goal.governance.delivery.validate_legacy_governance"):
         yield

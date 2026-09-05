@@ -11,11 +11,11 @@
   "allowedPaths": [
     "goal/governance/delivery.py",
     "goal/push/core.py",
-    "tests/test_legacy_governance_preflight.py",
+    "tests/test_delivery_integrity.py",
     "project/ticket-069/**",
     "TODO.md",
     "project/TICKETS.md",
-    "tests/test_ticket_activity_delivery.py",
+    "tests/test_dependency_update.py",
     "tests/test_push_e2e.py"
   ],
   "forbiddenPaths": [
@@ -55,8 +55,8 @@
           "name": "governance-preflight",
           "paths": [
             "goal/governance/delivery.py",
-            "tests/test_legacy_governance_preflight.py",
-            "tests/test_ticket_activity_delivery.py"
+            "tests/test_delivery_integrity.py",
+            "tests/test_dependency_update.py"
           ]
         },
         {
@@ -82,7 +82,7 @@
       {
         "criterion": "AC-01",
         "commands": [
-          "pytest -q tests/test_legacy_governance_preflight.py",
+          "pytest -q tests/test_delivery_integrity.py",
           "pytest -q",
           "./project/governance-check.sh",
           "docker build ."
