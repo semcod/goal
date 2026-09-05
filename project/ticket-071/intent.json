@@ -1,0 +1,96 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-071",
+  "summary": "Publish Goal 2.1.302 governed preflight repair",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/__init__.py",
+    "README.md",
+    "project/ticket-071/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-069"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9346326db3a7b2a68c164461ed5a4618fa3db015",
+    "targetBranch": "main",
+    "outcome": "Publish Goal 2.1.302 with early governance validation, terminal ticket resolution and safe clean-base no-change handling.",
+    "nonGoals": [
+      "No additional runtime changes",
+      "No dependency-set change",
+      "No registry/tag publication before protected merge"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize the five existing release carriers and publish immutable artifacts only from validated merged main.",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": [
+            "VERSION",
+            "pyproject.toml",
+            "uv.lock",
+            "goal/__init__.py",
+            "README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Never replace immutable artifacts; publish a later patch if verification fails."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q",
+          "ruff check",
+          "./project/governance-check.sh",
+          "python -m build",
+          "docker build"
+        ],
+        "evidence": "protected CI and exact-head Validator review"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "fresh public-index install of goal==2.1.302",
+          "goal governance adopt --help"
+        ],
+        "evidence": "public package verification"
+      }
+    ]
+  }
+}
