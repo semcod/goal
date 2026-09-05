@@ -463,7 +463,15 @@ def validate_legacy_governance(
 
 def _legacy_clean_default_base(root: Path) -> bool:
     """Recognize an empty legacy delivery without granting publication authority."""
-    if _git_value("status", "--porcelain", "--untracked-files=all", cwd=root):
+    status = _run(
+        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"], cwd=root
+    )
+    if status.returncode:
+        raise click.ClickException("Could not inspect legacy delivery working tree")
+    # The existing ticket index is a tracking carrier, never a release outcome.
+    # Preserve both its working bytes and staging; all other changes remain pending.
+    allowed = {" M project/TICKETS.md", "M  project/TICKETS.md", "MM project/TICKETS.md"}
+    if any(row not in allowed for row in status.stdout.split("\0") if row):
         return False
     branch = _git_value("branch", "--show-current", cwd=root)
     if not branch or "origin" not in _git_value("remote", cwd=root).splitlines():
@@ -479,7 +487,7 @@ def _legacy_clean_default_base(root: Path) -> bool:
     event = {
         "mode": "legacy", "result": "no-change", "remote": "origin",
         "base": branch, "branch": branch, "commit": head,
-        "detail": "clean synchronized remote default branch",
+        "detail": "synchronized remote default branch with no implementation changes",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     with _audit_path(root).open("a", encoding="utf-8") as handle:
