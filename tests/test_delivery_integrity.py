@@ -1242,6 +1242,7 @@ def legacy_clean_repo(activity_repo):
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text('{}\n')
+    (root / 'project/TICKETS.md').write_text('# Tickets\n')
     gate = root / 'project/governance-check.sh'
     gate.write_text('#!/bin/sh\necho checked > .git/gate-ran\n')
     gate.chmod(0o755)
@@ -1320,3 +1321,45 @@ def test_explicit_legacy_operations_continue_after_gate(legacy_clean_repo, monke
             abstraction=None, todo=False, force=operation == 'force',
             force_publish=operation == 'force_publish',
         )
+
+
+@pytest.mark.parametrize("state", ["unstaged", "staged", "both"])
+def test_legacy_tracking_index_is_preserved_without_bootstrap(
+    legacy_clean_repo, monkeypatch, state
+):
+    root = legacy_clean_repo
+    path = root / "project/TICKETS.md"
+    path.write_text("# Tickets\nUpdated index\n")
+    if state in {"staged", "both"}:
+        git(root, "add", "project/TICKETS.md")
+    if state == "both":
+        path.write_text(path.read_text() + "Local addition\n")
+    before = (path.read_bytes(), git(root, "diff"), git(root, "diff", "--cached"))
+    monkeypatch.chdir(root)
+    def unexpected(*args, **kwargs):
+        pytest.fail("tracking-only delivery started bootstrap")
+    monkeypatch.setattr(core, "_initialize_context", unexpected)
+    core.execute_push_workflow(
+        ctx_obj={"config": {}, "all_flags": True},
+        bump="patch", no_tag=False, no_changelog=False, no_version_sync=False,
+        message=None, dry_run=False, yes=True, markdown=False, split=False,
+        ticket=None, abstraction=None, todo=False,
+    )
+    assert (root / ".git/gate-ran").exists()
+    assert before == (path.read_bytes(), git(root, "diff"), git(root, "diff", "--cached"))
+
+
+@pytest.mark.parametrize("state", ["deleted", "renamed", "untracked", "mixed"])
+def test_legacy_index_exception_rejects_other_changes(legacy_clean_repo, state):
+    root = legacy_clean_repo
+    path = root / "project/TICKETS.md"
+    if state == "deleted":
+        path.unlink()
+    elif state == "renamed":
+        git(root, "mv", "project/TICKETS.md", "project/RENAMED.md")
+    elif state == "untracked":
+        git(root, "rm", "--cached", "project/TICKETS.md")
+    else:
+        path.write_text("updated\n")
+        (root / "implementation.py").write_text("changed = True\n")
+    assert delivery._legacy_clean_default_base(root) is False
