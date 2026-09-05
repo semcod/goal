@@ -1,7 +1,7 @@
 {
   "schema": "new-project.intent/v3",
   "ticket": "ticket-069",
-  "summary": "Check adopted governance before legacy push side effects",
+  "summary": "Validate governance and resolve terminal ticket activity before push side effects",
   "workstream": "application",
   "classification": {
     "kind": "BUG",
@@ -14,7 +14,8 @@
     "tests/test_legacy_governance_preflight.py",
     "project/ticket-069/**",
     "TODO.md",
-    "project/TICKETS.md"
+    "project/TICKETS.md",
+    "tests/test_ticket_activity_delivery.py"
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md"
@@ -31,7 +32,7 @@
   "delivery": {
     "acceptedBaseSha": "b21f8bedd5965669f0c59d3f126077408390ddaf",
     "targetBranch": "main",
-    "outcome": "Publish Goal preflight that reports adopted governance failures before dependency installation, version changes or tests even when governance.delivery is absent.",
+    "outcome": "Publish Goal preflight that reports adopted governance failures before dependency installation, version changes or tests even when governance.delivery is absent. Resolve ticket activity through managed terminal receipts and return without mutation on a clean synchronized base with no active ticket.",
     "nonGoals": [
       "No Koru source or configuration changes",
       "No automatic expansion of ticket authority",
@@ -40,7 +41,7 @@
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 3,
+      "maxImplementationFiles": 4,
       "maxAffectedComponents": 2,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
@@ -53,7 +54,8 @@
           "name": "governance-preflight",
           "paths": [
             "goal/governance/delivery.py",
-            "tests/test_legacy_governance_preflight.py"
+            "tests/test_legacy_governance_preflight.py",
+            "tests/test_ticket_activity_delivery.py"
           ]
         },
         {

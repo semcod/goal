@@ -598,6 +598,10 @@ def execute_push_workflow(
 
     if delivery is not None:
         ticket = resolve_pull_request_ticket(delivery, ticket)
+        if delivery.mode == "pull-request" and ticket is None:
+            record_delivery_event(delivery, "no-change", detail="clean synchronized base")
+            click.echo("No changes to deliver; base is synchronized and no ticket is active.")
+            return
 
     project_types = _detect_project_types()
 
