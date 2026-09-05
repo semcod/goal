@@ -460,6 +460,11 @@
       "message": "The worktree overlap audit could not be completed safely.",
       "remediation": "Repair repository metadata or narrow the explicit workspace root before relying on the guard.",
       "documentation": "error/GOV-WORKTREE-OVERLAP.md"
+    },
+    "GOV-BRANCH-INTENT-001": {
+      "message": "Branch intent reconciliation is incomplete, stale or invalid.",
+      "remediation": "Preserve history, reacquire the complete accepted criterion inventory and independently verified receipts at the exact source/target SHA; retain unknown work for review. Report conformance never authorizes deletion.",
+      "documentation": null
     }
   }
 }

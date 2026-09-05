@@ -746,6 +746,10 @@ def overlap_findings(
     }
     for checkout in checkouts:
         for error in checkout.activity_errors:
+            # A repository-level gate must not fail on someone else's policy
+            # drift (same contract as the identity-scoped overlap groups below).
+            if only_identity is not None and checkout.identity != only_identity:
+                continue
             findings.append(Finding(
                 code="GOV-TICKET-ACTIVITY-001",
                 severity="error",

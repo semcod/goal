@@ -165,7 +165,9 @@ def evaluate(snapshot: dict[str, Any]) -> list[Finding]:
             message="Remote branches exist without ownership by an open pull request.",
             remediation=(
                 "Open a bounded ticket pull request for each branch or obtain an explicit owner "
-                "decision to discard the unmerged branch."
+                "decision to discard the unmerged branch after preserving history and reconciling "
+                "every accepted criterion with branch_intent_reconciliation.py. "
+                "Unknown evidence is not permission to discard."
             ),
             evidence={"repository": repository, "orphanedBranches": orphaned},
         ))

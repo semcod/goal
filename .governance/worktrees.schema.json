@@ -11,6 +11,12 @@
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
+    "observedRepositoryName": {
+      "type": "string",
+      "minLength": 1,
+      "not": {"enum": [".", ".."]},
+      "pattern": "^[^/\\\\\\u0000]+$"
+    },
     "ticket": {
       "type": "string",
       "pattern": "^ticket-[0-9]{3,}$"
@@ -157,7 +163,7 @@
         "schema": {"const": "wellmanifest.worktrees/v4"},
         "kind": {"const": "inventory-record"},
         "repository": {"type": "string", "minLength": 1},
-        "repositoryName": {"$ref": "#/$defs/repositoryName"},
+        "repositoryName": {"$ref": "#/$defs/observedRepositoryName"},
         "pathStyle": {"$ref": "#/$defs/pathStyle"},
         "primaryCheckout": {"type": "string", "minLength": 1},
         "readOnly": {"const": true},
