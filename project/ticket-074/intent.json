@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-074",
+  "summary": "Avoid legacy bootstrap mutations on a clean synchronized governed base",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-074/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c13dc91341a1b722ed5a54ce3bb950e20d3c5d99",
+    "targetBranch": "main",
+    "outcome": "Publish a mutation-free no-change result for bare goal -a in adopted legacy targets whose clean default branch equals the authoritative remote HEAD.",
+    "nonGoals": [
+      "No gate bypass",
+      "No changes to Koru configuration or staged user data",
+      "No implicit release or change of delivery mode"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Run the existing managed preflight first, then verify clean Git state and authoritative remote default HEAD before any legacy bootstrap; preserve explicit version, ticket and forced publication flows.",
+      "components": [
+        {
+          "name": "governance-preflight",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_delivery_integrity.py"
+          ]
+        },
+        {
+          "name": "push-entry",
+          "paths": [
+            "goal/push/core.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded preflight change; existing late test/commit gates remain."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_delivery_integrity.py",
+          "pytest -q",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "Focused regression suite, full Python tests, managed gate and Docker validation"
+      }
+    ]
+  }
+}

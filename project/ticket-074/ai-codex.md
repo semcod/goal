@@ -1,0 +1,3 @@
+SESSION_EXECUTION_AUTHORIZATION: user requested execute, test, repair and deploy goal -a, then repeatedly said kontynuuj. This authorizes this bounded implementation and protected publication; it is not trusted merge approval.
+
+Validation: 52 focused tests and 653 full tests passed, 2 existing skips; Ruff, managed governance and Docker Compose pass. The candidate ran goal -a against cleaned synchronized Koru, returned exit 0 and left tracked files unchanged. Original Koru changes remain in an external recovery directory and stash; ticket-075 receipt restored through protected validator dispatch.
