@@ -1,0 +1,94 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-069",
+  "summary": "Validate governance and resolve terminal ticket activity before push side effects",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-069/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_dependency_update.py",
+    "tests/test_push_e2e.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-066"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b754227e3128acb79b8da9dbdcee60529a7147c9",
+    "targetBranch": "main",
+    "outcome": "Publish Goal preflight that reports adopted governance failures before dependency installation, version changes or tests even when governance.delivery is absent. Resolve ticket activity through managed terminal receipts and return without mutation on a clean synchronized base with no active ticket.",
+    "nonGoals": [
+      "No Koru source or configuration changes",
+      "No automatic expansion of ticket authority",
+      "No delivery mode selection or gate bypass"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the managed governance gate for adopted repositories without an explicit delivery policy before the push workflow initializes or bootstraps.",
+      "components": [
+        {
+          "name": "governance-preflight",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_delivery_integrity.py",
+            "tests/test_dependency_update.py"
+          ]
+        },
+        {
+          "name": "push-entry",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_push_e2e.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded preflight change; existing late test/commit gates remain."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_delivery_integrity.py",
+          "pytest -q",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "project/ticket-069/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

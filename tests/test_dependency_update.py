@@ -436,6 +436,7 @@ def test_upgrade_deps_runs_before_bootstrap(monkeypatch) -> None:
     }
 
     with (
+        patch("goal.governance.delivery.validate_legacy_governance"),
         patch("goal.push.core._validate_toml_or_exit"),
         patch("goal.push.core._initialize_context"),
         patch("goal.push.core.handle_todo_stage", return_value=True),

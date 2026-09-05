@@ -103,6 +103,17 @@ class TestPublishRetry:
         assert _is_rate_limited(not_limited) is False
 
 
+@pytest.fixture
+def isolated_legacy_governance():
+    """Workflow ordering uses mocked services, independent of the host checkout.
+
+    The real preflight boundary is covered in test_delivery_integrity.
+    """
+    with patch("goal.governance.delivery.validate_legacy_governance"):
+        yield
+
+
+@pytest.mark.usefixtures("isolated_legacy_governance")
 class TestWorkflowOrder:
     """Tests that publish happens before tag+push in the workflow."""
 
@@ -650,6 +661,7 @@ class TestPushWorkflowIntegration:
         assert "python" in content
 
 
+@pytest.mark.usefixtures("isolated_legacy_governance")
 class TestPushWorkflowE2E:
     """End-to-end tests for the complete push workflow."""
 

@@ -446,6 +446,16 @@ def _governance_gate(root: Path) -> None:
         raise click.ClickException(detail)
 
 
+def validate_legacy_governance(*, cwd: Path | None = None) -> None:
+    """Check adopted repositories even without a configured delivery policy."""
+    result = _run(["git", "rev-parse", "--show-toplevel"], cwd=cwd)
+    if result.returncode != 0:
+        return
+    root = Path(result.stdout.strip()).resolve()
+    if (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
+        _governance_gate(root)
+
+
 def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) -> None:
     """Fail before workflow side effects when delivery prerequisites are unmet."""
     root = _repository_root(cwd)
@@ -534,6 +544,66 @@ def record_delivery_event(
         handle.write(json.dumps(event, sort_keys=True) + "\n")
 
 
+def _ticket_is_active(root: Path, directory: Path) -> bool:
+    """Use adopted activity authority, retaining legacy status-only support."""
+    try:
+        content = (directory / "README.md").read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return False
+    except (OSError, UnicodeDecodeError) as error:
+        raise click.ClickException(
+            f"cannot inspect governed ticket {directory.name}: {error}"
+        ) from error
+    projected_active = re.search(
+        r"^-\s+\*\*Status\*\*:\s*IN_PROGRESS(?:\s|$)", content,
+        flags=re.IGNORECASE | re.MULTILINE,
+    ) is not None
+    if not projected_active:
+        return False
+
+    policy = root / ".governance/ticket-activity.json"
+    runtime = root / ".governance/ticket_activity.py"
+    if policy.exists():
+        if not runtime.is_file():
+            raise click.ClickException("GOV-TICKET-ACTIVITY-001: managed resolver is missing")
+        result = _run(
+            [sys.executable, str(runtime), "--root", str(root), "resolve",
+             "--ticket-dir", str(directory), "--active-status", "IN_PROGRESS"],
+            cwd=root,
+        )
+        try:
+            value = json.loads(result.stdout)
+            active = value["active"]
+            if (type(active) is not bool or value.get("ticket") != directory.name
+                    or result.returncode != (0 if active else 1)):
+                raise ValueError("inconsistent activity response")
+        except (ValueError, KeyError, TypeError) as error:
+            detail = result.stderr.strip() or "invalid managed activity response"
+            raise click.ClickException(f"GOV-TICKET-ACTIVITY-001: {detail}") from error
+        return active
+
+    return True
+
+
+
+def _clean_synchronized_base(policy: DeliveryPolicy, root: Path) -> bool:
+    if _git_value("status", "--porcelain", "--untracked-files=all", cwd=root):
+        return False
+    if _git_value("branch", "--show-current", cwd=root) != policy.base_branch:
+        return False
+    remote = _run(
+        ["git", "ls-remote", "--heads", policy.remote, f"refs/heads/{policy.base_branch}"],
+        cwd=root,
+    )
+    if remote.returncode:
+        raise click.ClickException(
+            "pull-request delivery requires a ticket; none was found and "
+            "the remote base could not be verified for no-change delivery"
+        )
+    rows = [line.split() for line in remote.stdout.splitlines() if line.strip()]
+    return rows == [[_git_value("rev-parse", "HEAD", cwd=root), f"refs/heads/{policy.base_branch}"]]
+
+
 def resolve_pull_request_ticket(
     policy: DeliveryPolicy,
     ticket: str | None,
@@ -549,25 +619,14 @@ def resolve_pull_request_ticket(
     for directory in sorted((root / "project").glob("ticket-*")):
         if not directory.is_dir() or re.fullmatch(r"ticket-[0-9]+", directory.name) is None:
             continue
-        readme = directory / "README.md"
-        try:
-            content = readme.read_text(encoding="utf-8")
-        except FileNotFoundError:
-            continue
-        except (OSError, UnicodeDecodeError) as error:
-            raise click.ClickException(
-                f"cannot inspect governed ticket {directory.name}: {error}"
-            ) from error
-        if re.search(
-            r"^-\s+\*\*Status\*\*:\s*IN_PROGRESS(?:\s|$)",
-            content,
-            flags=re.IGNORECASE | re.MULTILINE,
-        ):
+        if _ticket_is_active(root, directory):
             active.append(directory.name)
 
     if len(active) == 1:
         return active[0]
     if not active:
+        if _clean_synchronized_base(policy, root):
+            return None
         raise click.ClickException(
             "pull-request delivery requires `--ticket` or exactly one "
             "IN_PROGRESS governance ticket; none was found"
