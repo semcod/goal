@@ -478,9 +478,9 @@ def _configure_main_context(
         ctx.obj["config"] = load_config(config_path) if config_path else load_config()
     elif config_path:
         ctx.obj["config"] = load_config(config_path)
-    elif dry_run:
-        # Dry-run must be observably read-only. ensure_config can create a
-        # missing goal.yaml or rewrite an existing one after auto-detection.
+    elif dry_run or (all_flags and os.path.isfile(".governance/manifest.json")):
+        # Governed -a must reach its gate/no-change check before any mutation.
+        # ensure_config can create or rewrite goal.yaml during auto-detection.
         ctx.obj["config"] = load_config()
     else:
         ctx.obj["config"] = ensure_config()
