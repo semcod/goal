@@ -446,6 +446,16 @@ def _governance_gate(root: Path) -> None:
         raise click.ClickException(detail)
 
 
+def validate_legacy_governance(*, cwd: Path | None = None) -> None:
+    """Check adopted repositories even without a configured delivery policy."""
+    result = _run(["git", "rev-parse", "--show-toplevel"], cwd=cwd)
+    if result.returncode != 0:
+        return
+    root = Path(result.stdout.strip()).resolve()
+    if (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
+        _governance_gate(root)
+
+
 def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) -> None:
     """Fail before workflow side effects when delivery prerequisites are unmet."""
     root = _repository_root(cwd)

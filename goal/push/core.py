@@ -559,6 +559,7 @@ def execute_push_workflow(
         resolve_pull_request_ticket,
         resolve_delivery_policy,
         validate_delivery_ready,
+        validate_legacy_governance,
     )
 
     delivery = resolve_delivery_policy(
@@ -573,6 +574,8 @@ def execute_push_workflow(
             raise click.ClickException("publish-only conflicts with --no-publish")
         validate_delivery_ready(delivery)
         ctx_obj["delivery_mode"] = delivery.mode
+    else:
+        validate_legacy_governance()
 
     _validate_toml_or_exit(dry_run)
 

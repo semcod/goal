@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-069",
+  "summary": "Check adopted governance before legacy push side effects",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_legacy_governance_preflight.py",
+    "project/ticket-069/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-066"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b21f8bedd5965669f0c59d3f126077408390ddaf",
+    "targetBranch": "main",
+    "outcome": "Publish Goal preflight that reports adopted governance failures before dependency installation, version changes or tests even when governance.delivery is absent.",
+    "nonGoals": [
+      "No Koru source or configuration changes",
+      "No automatic expansion of ticket authority",
+      "No delivery mode selection or gate bypass"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the managed governance gate for adopted repositories without an explicit delivery policy before the push workflow initializes or bootstraps.",
+      "components": [
+        {
+          "name": "governance-preflight",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_legacy_governance_preflight.py"
+          ]
+        },
+        {
+          "name": "push-entry",
+          "paths": [
+            "goal/push/core.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded preflight change; existing late test/commit gates remain."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_legacy_governance_preflight.py",
+          "pytest -q",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "project/ticket-069/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
