@@ -114,6 +114,15 @@ Before any multi-step implementation, an agent must:
    must disappear after merge. A PR closed without merge keeps its branch until
    the owner explicitly discards that unmerged work. When no PR is open, the
    only remote branch is the default branch.
+15a. Before proposing unmerged branch discard, follow
+   `.governance/docs/BRANCH_INTENT_RECONCILIATION.md`. Preserve restorable
+   history and reconcile every accepted criterion against the current target
+   SHA. Record implementation, partial, superseded, missing or unknown with
+   evidence; preserve remaining work in a linked ticket or an explicit owner
+   decision. Run `.governance/branch_intent_reconciliation.py` with an
+   independently acquired observation. Report validity never grants deletion
+   authority; unknown evidence blocks automatic resolution. Recheck exact refs,
+   digests and authority immediately before any separately authorized effect.
 16. At merge, publication or explicit pilot discard, inventory temporary linked
    worktrees, duplicate clones and non-default local branches. Verify dirty state and HEAD reachability
    before removal; preserve unknown or unique data. Remove an exact linked

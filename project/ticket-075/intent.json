@@ -1,0 +1,116 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-075",
+  "summary": "Adopt workspace inventory repository-name repair",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "AGENTS.md",
+    ".governance/diagnostics.json",
+    ".governance/worktrees.schema.json",
+    ".governance/worktree_path_check.py",
+    ".governance/worktrees.lock.json",
+    ".governance/worktree_overlap_check.py",
+    ".governance/branch_lifecycle_check.py",
+    ".governance/package-manifest.json",
+    ".governance/manifest.base.json",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    ".governance/branch_intent_reconciliation.py",
+    ".governance/branch-intent-reconciliation.schema.json",
+    ".governance/docs/BRANCH_INTENT_RECONCILIATION.md",
+    "pyproject.toml",
+    "project/ticket-075/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6bafc3ced778c36fbf650610cfa051ac7b50a1b2",
+    "targetBranch": "main",
+    "outcome": "Adopt published new-project 0.20.5 so Goal workspace audit handles the existing .github repository and reports actual lifecycle findings.",
+    "nonGoals": [
+      "No Goal runtime/version changes",
+      "No cleanup of unknown or unmerged work",
+      "No edits to parallel Goal ticket-072"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use Goal immutable standard adoption plus its required pyproject declaration; managed payload changes remain digest-bound to the approved release.",
+      "components": [
+        {
+          "name": "governance-package",
+          "paths": [
+            "AGENTS.md",
+            ".governance/diagnostics.json",
+            ".governance/worktrees.schema.json",
+            ".governance/worktree_path_check.py",
+            ".governance/worktrees.lock.json",
+            ".governance/worktree_overlap_check.py",
+            ".governance/branch_lifecycle_check.py",
+            ".governance/package-manifest.json",
+            ".governance/manifest.base.json",
+            ".governance/manifest.json",
+            ".governance/manifest.lock.json",
+            ".governance/branch_intent_reconciliation.py",
+            ".governance/branch-intent-reconciliation.schema.json",
+            ".governance/docs/BRANCH_INTENT_RECONCILIATION.md"
+          ]
+        },
+        {
+          "name": "standard-packaging-declaration",
+          "paths": [
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert adoption before merge; do not hand-edit managed payloads."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal governance adopt --check",
+          "goal governance workspace-check",
+          "./project/governance-check.sh",
+          "pytest -q",
+          "docker compose config --quiet"
+        ],
+        "evidence": "immutable package check, repository regression tests and real workspace audit"
+      }
+    ],
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "779665724e2c84372b4cbb5b9d225972a2aa4496",
+      "toRevision": "fd5dc4210eaf50bb96d02ddfea625bf46a85263f"
+    }
+  }
+}

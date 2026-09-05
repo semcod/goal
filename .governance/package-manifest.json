@@ -522,6 +522,24 @@
       "target": ".governance/standard_pack_check.py",
       "strategy": "managed",
       "executable": true
+    },
+    {
+      "source": "scripts/branch_intent_reconciliation.py",
+      "target": ".governance/branch_intent_reconciliation.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "governance/branch-intent-reconciliation.schema.json",
+      "target": ".governance/branch-intent-reconciliation.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "docs/BRANCH_INTENT_RECONCILIATION.md",
+      "target": ".governance/docs/BRANCH_INTENT_RECONCILIATION.md",
+      "strategy": "managed",
+      "executable": false
     }
   ]
 }
