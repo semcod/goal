@@ -1,0 +1,1 @@
+SESSION_EXECUTION_AUTHORIZATION: User requested continuing implementation after the branch-intent standard merged (2026-09-05). Build and publish the bounded runtime entry point; prior session push authorization persists. Adopting an unreleased standard or deleting branches is outside this intent.
