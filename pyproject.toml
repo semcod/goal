@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.1.302"
+version = "2.2.0"
 description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
 readme = "README.md"
 authors = [
@@ -21,7 +21,7 @@ dependencies = [
     "typer>=0.24",
     "PyYAML>=6.0",
     "clickmd>=0.1.0",
-    "costs>=0.1.53",
+    "costs>=0.2.0",
     "tomlkit>=0.12.0",
 ]
 license = "Apache-2.0"
@@ -43,9 +43,9 @@ dev = [
 goal = "goal.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/wronai/goal"
-Repository = "https://github.com/wronai/goal"
-Issues = "https://github.com/wronai/goal/issues"
+Homepage = "https://github.com/semcod/goal"
+Repository = "https://github.com/semcod/goal"
+Issues = "https://github.com/semcod/goal/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
