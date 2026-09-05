@@ -16,4 +16,6 @@ Fail-closed. Do not write code until this contract is followed.
 5. Run `./scripts/install-agent-hosts.sh` once per clone so the git hook is active.
 6. Run `./project/governance-check.sh` before claiming done.
 
-If any step is unclear: STOP. Do not invent a ticket number.
+If authority or ownership remains unclear, pause the dependent effect and
+follow [.governance/AGENT_DECISIONS.md](.governance/AGENT_DECISIONS.md) to inspect evidence and existing authorization.
+Continue disjoint authorized work. Do not invent a ticket number.

@@ -12,8 +12,10 @@ równoległe worktree są dozwolone, nachodzące zmiany nie.
 
 ## Meaning
 
-`001` — przecięcie brudnych albo niezmergowanych ścieżek (`git status` +
-`git diff` względem merge-base).
+`001` — rzeczywisty konkurencyjny wkład: brudne zmiany wobec brudnych zmian
+lub nowych commitów drugiej strony od wspólnego przodka; dla rozbieżnych
+commitów sprawdzany jest merge. Wspólna historia nie jest drugim wkładem.
+Brak możliwości ustalenia przodka zachowuje konserwatywne sprawdzanie.
 `002` — dwa `IN_PROGRESS` intent.json w różnych worktree deklarują nachodzące
 `allowedPaths` i żadne nie wymienia drugiego w `conflictsWith`.
 `003` — audyt nie dał się bezpiecznie dokończyć.
@@ -29,6 +31,15 @@ Ticket liczy się tylko w tym worktree, którego **branch** jest jego branchem �
 scalona kopia katalogu ticketu w innym worktree nie jest drugim pisarzem.
 
 ## Safe resolution
+
+Najpierw porównaj dokładne HEAD-y, wspólnego przodka i rzeczywiste brudne
+ścieżki. Snapshot tego samego HEAD-a z samymi plikami śledzenia ticketu nie
+jest drugim writerem kodu. Zachowaj go; sama kwarantanna nie wymaga usunięcia
+ani nowego pytania do użytkownika. Błąd klasyfikacji napraw w standardzie z
+testem regresji i adoptuj zweryfikowany pakiet, bez obchodzenia hooka.
+Procedura poniżej dotyczy potwierdzonej konkurencyjnej zmiany. Zasady decyzji:
+`docs/AGENT_DECISIONS.md` w HOME, a u adoptera
+`.governance/AGENT_DECISIONS.md`.
 
 1. Zatrzymaj jednego writera albo przenieś nachodzące ścieżki do jednego
    ticketu / workstreamu integracyjnego.

@@ -1,0 +1,106 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-080",
+  "summary": "Adopt immutable standard 0.20.7 release prerequisite",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    ".governance/AGENT_DECISIONS.md",
+    ".governance/error/GOV-WORKTREE-OVERLAP.md",
+    ".governance/manifest.base.json",
+    ".governance/manifest.json",
+    ".governance/package-manifest.json",
+    ".governance/worktree_overlap_check.py",
+    "AGENTS.md",
+    "GEMINI.md",
+    ".governance/manifest.lock.json",
+    "pyproject.toml",
+    "project/ticket-080/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "36da27fe76c61de9cd621ae45fded7f99e3e6fc0",
+    "targetBranch": "main",
+    "outcome": "Adopt published new-project 0.20.7 to satisfy the managed freshness boundary before Goal repair publication.",
+    "nonGoals": [
+      "No Goal runtime/version changes",
+      "No changes to unknown local work",
+      "No hand-editing managed package payload"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use Goal immutable standard adoption plus its required pyproject declaration; managed payload changes remain digest-bound to the approved release.",
+      "components": [
+        {
+          "name": "governance-package",
+          "paths": [
+            ".governance/AGENT_DECISIONS.md",
+            ".governance/error/GOV-WORKTREE-OVERLAP.md",
+            ".governance/manifest.base.json",
+            ".governance/manifest.json",
+            ".governance/package-manifest.json",
+            ".governance/worktree_overlap_check.py",
+            "AGENTS.md",
+            "GEMINI.md",
+            ".governance/manifest.lock.json"
+          ]
+        },
+        {
+          "name": "standard-packaging-declaration",
+          "paths": [
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert adoption before merge; do not hand-edit managed payloads."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal governance adopt --check",
+          "goal governance workspace-check",
+          "./project/governance-check.sh",
+          "pytest -q",
+          "docker compose config --quiet"
+        ],
+        "evidence": "immutable package check, repository regression tests and real workspace audit"
+      }
+    ],
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "fd5dc4210eaf50bb96d02ddfea625bf46a85263f",
+      "toRevision": "9d7af1e63d46e0277da407286699ee50de726d17"
+    }
+  }
+}
