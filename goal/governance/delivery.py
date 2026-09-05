@@ -546,6 +546,21 @@ def record_delivery_event(
 
 def _ticket_is_active(root: Path, directory: Path) -> bool:
     """Use adopted activity authority, retaining legacy status-only support."""
+    try:
+        content = (directory / "README.md").read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return False
+    except (OSError, UnicodeDecodeError) as error:
+        raise click.ClickException(
+            f"cannot inspect governed ticket {directory.name}: {error}"
+        ) from error
+    projected_active = re.search(
+        r"^-\s+\*\*Status\*\*:\s*IN_PROGRESS(?:\s|$)", content,
+        flags=re.IGNORECASE | re.MULTILINE,
+    ) is not None
+    if not projected_active:
+        return False
+
     policy = root / ".governance/ticket-activity.json"
     runtime = root / ".governance/ticket_activity.py"
     if policy.exists():
@@ -567,18 +582,8 @@ def _ticket_is_active(root: Path, directory: Path) -> bool:
             raise click.ClickException(f"GOV-TICKET-ACTIVITY-001: {detail}") from error
         return active
 
-    try:
-        content = (directory / "README.md").read_text(encoding="utf-8")
-    except FileNotFoundError:
-        return False
-    except (OSError, UnicodeDecodeError) as error:
-        raise click.ClickException(
-            f"cannot inspect governed ticket {directory.name}: {error}"
-        ) from error
-    return re.search(
-        r"^-\s+\*\*Status\*\*:\s*IN_PROGRESS(?:\s|$)", content,
-        flags=re.IGNORECASE | re.MULTILINE,
-    ) is not None
+    return True
+
 
 
 def _clean_synchronized_base(policy: DeliveryPolicy, root: Path) -> bool:

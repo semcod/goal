@@ -30,7 +30,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "b21f8bedd5965669f0c59d3f126077408390ddaf",
+    "acceptedBaseSha": "b754227e3128acb79b8da9dbdcee60529a7147c9",
     "targetBranch": "main",
     "outcome": "Publish Goal preflight that reports adopted governance failures before dependency installation, version changes or tests even when governance.delivery is absent. Resolve ticket activity through managed terminal receipts and return without mutation on a clean synchronized base with no active ticket.",
     "nonGoals": [

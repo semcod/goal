@@ -6,3 +6,5 @@ Read-only ticket-066 gate also reports GOV-PACKAGING-002 (pyproject standard dec
 Publication stopped before commit, push, tag or registry effects. Candidate stays staged on ticket/069-early-governance-preflight.
 
 Terminal activity continuation: 66 focused / 640 full passed, 2 skips; Ruff passed. The managed gate passes after committing the removal of the generated Planfile delta. Original frozen validator ended with outcome=failure before any new push.
+
+CI diagnosed GOV-BASE-001 because the shallow test checkout could not resolve the pre-adoption base. Refreshed acceptedBaseSha to b754227 (current remote main already integrated into the candidate); no workflow or gate change. Avoid managed subprocess startup for non-active status projections.
