@@ -196,7 +196,7 @@ if [[ ! "$WORKSTREAM" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
   echo "Workstream id must match [a-z0-9][a-z0-9-]*" >&2
   exit 2
 fi
-if ! printf '%s\n' "$WORKSTREAM_REGISTRY" | grep -Fxq -- "$WORKSTREAM"; then
+if ! grep -Fxq -- "$WORKSTREAM" <<< "$WORKSTREAM_REGISTRY"; then
   echo "GOV-WORKSTREAM-001: workstream '$WORKSTREAM' is not declared in $GOVERNANCE_MANIFEST." >&2
   echo "  accepted: $(printf '%s' "$WORKSTREAM_REGISTRY" | tr '\n' ' ')" >&2
   exit 1
@@ -253,7 +253,7 @@ require_classification_value() {
   allowed="$(python3 -c 'import json,sys
 data = json.load(open(sys.argv[1]))
 print("\n".join(data["dimensions"][sys.argv[2]]))' "$dsl" "$dimension")"
-  if ! printf '%s\n' "$allowed" | grep -Fxq -- "$value"; then
+  if ! grep -Fxq -- "$value" <<< "$allowed"; then
     echo "GOV-CLASS-001: '$value' is not a declared $dimension in $dsl." >&2
     echo "  accepted: $(printf '%s' "$allowed" | tr '\n' ' ')" >&2
     exit 1

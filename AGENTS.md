@@ -54,11 +54,23 @@ Before any multi-step implementation, an agent must:
    target-owned seed aliases and must not be assumed to contain the gate.
 9. Serialize ticket-ID allocation before branching, then use a separate
    branch/worktree per implementation ticket. Resolve its location with the
-   managed `wellmanifest/worktrees` checker. The canonical linked worktree is
-   `<workspace>/.worktrees/<repo>--ticket-NNN--<slug>` with its lease under
-   `<workspace>/.worktrees/.leases`; never create publishable ticket work in a
-   repo-local `.worktrees`, parallel `<organization>-worktrees`, nested
-   `.worktrees/.worktrees`, system temporary directory or duplicate clone.
+   managed `wellmanifest/worktrees` checker. Resolve the primary checkout from
+   Git even when allocation starts inside a linked checkout. The only
+   publishable linked worktree is
+   `<primaryCheckout>/worktrees/<ticket-NNN>--<slug>` with
+   `linkMode=relative`; its lease is
+   `<primaryCheckout>/.subactor/leases/<ticket-NNN>--<slug>.json`. Root-ignore
+   `/worktrees/` and only
+   `/.subactor/{leases,sessions,recovery,receipts,cache,snapshots}/`; keep
+   `.subactor/manifest.json` tracked. Before the first effect, feature-probe
+   `git worktree add --relative-paths` and
+   `git worktree repair --relative-paths` (minimum Git 2.51.0), and reject a
+   symlink in any existing canonical path component. Legacy v1/v2/v3,
+   system-temporary, duplicate and unknown registrations are read-only recovery
+   inventory, never publishable locations. Never automatically move, repair,
+   delete, prune or clean them. A separately authorized exact operation first
+   audits dirty state, active processes and IDEs, leases, pull requests and
+   HEAD reachability.
    Each diff must resolve to exactly one active ticket. Shared contract paths are edited only by the declared
    integration workstream; `integrationTicket` coordinates work but does not
    transfer path ownership. Product commercial registries (prices,
@@ -140,11 +152,29 @@ Before any multi-step implementation, an agent must:
    not write on `main` or a dirty primary checkout. Markdown is not a
    substitute for the hook.
 23. Require material delivery: ticket directories, TODO, ticket indexes and a
-   generated artifact registry are tracking carriers, not an outcome. Reject a
+    generated artifact registry are tracking carriers, not an outcome. Reject a
    carrier-only commit or PR. If analysis finds no material delta, emit an
-   external no-change receipt and create no repository history. Intent may be
-   committed atomically with the first material change; do not create a
-   separate plan-only commit.
+    external no-change receipt and create no repository history. Intent may be
+    committed atomically with the first material change; do not create a
+    separate plan-only commit. A version bump and release projections join
+    their material implementation ticket; never create a separate release-only
+    ticket, branch or PR.
+24. Treat conversation memory as a cache, never task storage. At a material
+    milestone, configured checkpoint interval, context compaction, handoff,
+    pause, blocker, tool failure or external-effect boundary, emit a bounded
+    `new-project.work-continuity/v2` checkpoint through
+    `.governance/work_continuity.py`. Append it to the ignored host-agnostic
+    session event stream and atomically refresh the bounded recovery index;
+    event streams have no policy size cap. Persist its receipt externally for
+    cross-machine recovery. Bind the exact plan, slice, ticket, branch, HEAD,
+    lease, remote/account observation and snapshot receipt. Resume by observing
+    Git/PR/receipts first, verifying the monotonic chain, intent, HEAD and
+    workspace digest, then revalidating lease and remote account. Checkpoint
+    data and prose grant no authority. Dirty work needs an authorized
+    ticket-branch commit or a content-addressed, secret-scanned external
+    snapshot. Pre-commit checks only the local immutable pin; explicit
+    adoption/updater automation owns freshness and the hook never fetches or
+    mutates.
 
 Markdown approval is an audit note, not trusted merge approval. Required
 merge approval comes from the repository's protected review, attestation and

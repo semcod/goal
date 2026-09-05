@@ -1,0 +1,2 @@
+
+Resume: exact published v0.20.4 adoption check up-to-date; explicit working-diff managed gate GOV-PASS; pin check and workspace overlap guard pass. Packaging declaration is the mandatory atomic adoption binding; no dependencies or Goal version changed.

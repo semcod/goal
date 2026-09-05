@@ -11,24 +11,24 @@ conflictsWith.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-import importlib.util
-import sys
-
 _previous_bytecode_policy = sys.dont_write_bytecode
 sys.dont_write_bytecode = True
 try:
     try:
-        from ticket_activity import ActivityError, resolve as resolve_ticket_activity
+        from ticket_activity import ActivityError
+        from ticket_activity import resolve as resolve_ticket_activity
     except ModuleNotFoundError:
         _activity_spec = importlib.util.spec_from_file_location(
             "ticket_activity", Path(__file__).with_name("ticket_activity.py")
@@ -57,7 +57,7 @@ DEFAULT_IGNORE = (
     "__pycache__/**",
     "**/__pycache__/**",
 )
-DEFAULT_WORKTREE_DIRNAMES = (".worktrees", ".workspaces")
+DEFAULT_WORKTREE_DIRNAMES = ("worktrees", ".worktrees", ".workspaces")
 
 
 @dataclass(order=True)
@@ -95,6 +95,33 @@ class Checkout:
 
 class AuditError(RuntimeError):
     """The overlap audit could not complete safely."""
+
+
+def load_worktrees_contract():
+    """Load the exact managed Worktrees v4 inventory without bytecode writes."""
+    script = Path(__file__).resolve()
+    candidates = (
+        script.with_name("worktree_path_check.py"),
+        script.parent.parent / "subprojects" / "worktrees" / "conformance.py",
+    )
+    source = next((candidate for candidate in candidates if candidate.is_file()), None)
+    if source is None:
+        raise AuditError("the managed Worktrees v4 conformance module is missing")
+    spec = importlib.util.spec_from_file_location("overlap_worktrees_v4", source)
+    if spec is None or spec.loader is None:
+        raise AuditError(f"cannot load Worktrees v4 conformance from {source}")
+    module = importlib.util.module_from_spec(spec)
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+    except (ImportError, OSError, ValueError) as error:
+        raise AuditError(f"cannot load Worktrees v4 conformance: {error}") from error
+    finally:
+        sys.dont_write_bytecode = previous
+        sys.modules.pop(spec.name, None)
+    return module
 
 
 # git exports these into hooks. Inherited, they override `git -C <path>` and
@@ -191,6 +218,83 @@ def registered_worktrees(path: Path) -> list[Path]:
         if line.startswith("worktree "):
             worktrees.append(Path(line.removeprefix("worktree ")).resolve())
     return worktrees
+
+
+def primary_checkout(checkouts: list[Checkout]) -> Checkout:
+    owners = [
+        checkout
+        for checkout in checkouts
+        if checkout.common_git_dir == checkout.path / ".git"
+    ]
+    return min(
+        owners or checkouts,
+        key=lambda item: (len(item.path.parts), str(item.path)),
+    )
+
+
+def workspace_inventory(checkouts: list[Checkout]) -> dict[str, Any]:
+    """Compose owner layout classes with adopter-owned duplicate-clone evidence."""
+    contract = load_worktrees_contract()
+    path_style = "windows" if os.name == "nt" else "posix"
+    clone_groups: dict[Path, list[Checkout]] = {}
+    identity_groups: dict[str, list[Checkout]] = {}
+    for checkout in checkouts:
+        clone_groups.setdefault(checkout.common_git_dir, []).append(checkout)
+        identity_groups.setdefault(checkout.identity, []).append(checkout)
+
+    layout_entries: dict[Path, dict[str, Any]] = {}
+    for _, group in sorted(clone_groups.items(), key=lambda item: str(item[0])):
+        primary = primary_checkout(group)
+        try:
+            observed = contract.inventory(
+                repository=primary.identity,
+                repository_name=primary.path.name,
+                primary_checkout=str(primary.path),
+                registered=[
+                    {
+                        "path": str(checkout.path),
+                        "head": checkout.head,
+                        "branch": checkout.branch,
+                        "detached": checkout.branch is None,
+                    }
+                    for checkout in group
+                ],
+                path_style=path_style,
+            )
+        except (TypeError, ValueError) as error:
+            raise AuditError(f"Worktrees v4 inventory failed: {error}") from error
+        if observed.get("readOnly") is not True:
+            raise AuditError("Worktrees v4 inventory did not declare readOnly=true")
+        for entry in observed["entries"]:
+            layout_entries[Path(entry["path"])] = entry
+
+    authoritative_clone = {
+        identity: primary_checkout(group).common_git_dir
+        for identity, group in identity_groups.items()
+    }
+    entries: list[dict[str, Any]] = []
+    for checkout in sorted(checkouts, key=lambda item: str(item.path)):
+        layout = layout_entries.get(checkout.path)
+        if layout is None:
+            raise AuditError(f"Worktrees v4 inventory omitted {checkout.path}")
+        duplicate = checkout.common_git_dir != authoritative_clone[checkout.identity]
+        anomalies = list(layout["anomalies"])
+        if duplicate:
+            anomalies.append("duplicate-clone")
+        entries.append({
+            "path": str(checkout.path),
+            "identity": checkout.identity,
+            "branch": checkout.branch,
+            "head": checkout.head,
+            "dirty": checkout.dirty,
+            "classification": layout["classification"],
+            "layoutVersion": layout["layoutVersion"],
+            "ticket": layout["ticket"],
+            "slug": layout["slug"],
+            "cloneClassification": "duplicate-clone" if duplicate else "registered",
+            "anomalies": sorted(set(anomalies)),
+        })
+    return {"schema": "wellmanifest.worktrees/v4", "readOnly": True, "entries": entries}
 
 
 def path_ignored(relative: str, ignore: tuple[str, ...]) -> bool:
@@ -633,8 +737,13 @@ def overlap_findings(
     ignore: tuple[str, ...] = DEFAULT_IGNORE,
     only_identity: str | None = None,
     focus_checkout: Path | None = None,
+    inventory: dict[str, Any] | None = None,
 ) -> list[Finding]:
     findings: list[Finding] = []
+    inventory_by_path = {
+        Path(entry["path"]): entry
+        for entry in (inventory or {"entries": []})["entries"]
+    }
     for checkout in checkouts:
         for error in checkout.activity_errors:
             findings.append(Finding(
@@ -690,6 +799,10 @@ def overlap_findings(
                                 "rightBranch": second.branch,
                                 "overlappingPaths": shared,
                                 "code2llm": optional_code2llm_hint(shared),
+                                "workspaceClassifications": [
+                                    inventory_by_path[first.path],
+                                    inventory_by_path[second.path],
+                                ],
                             },
                         )
                     )
@@ -729,6 +842,10 @@ def overlap_findings(
                                     "right": str(second.path),
                                     "tickets": [left_ticket.ticket, right_ticket.ticket],
                                     "overlappingPatterns": pairs,
+                                    "workspaceClassifications": [
+                                        inventory_by_path[first.path],
+                                        inventory_by_path[second.path],
+                                    ],
                                 },
                             )
                         )
@@ -739,6 +856,7 @@ def report_payload(
     findings: list[Finding],
     checkouts: list[Checkout],
     only_identity: str | None = None,
+    inventory: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     groups: dict[str, int] = {}
     for checkout in checkouts:
@@ -747,6 +865,11 @@ def report_payload(
         "schema": REPORT_SCHEMA,
         "status": "passed" if not findings else "failed",
         "scope": only_identity or "workspace",
+        "inventory": inventory or {
+            "schema": "wellmanifest.worktrees/v4",
+            "readOnly": True,
+            "entries": [],
+        },
         "summary": {
             "errors": sum(1 for item in findings if item.severity == "error"),
             "warnings": sum(1 for item in findings if item.severity == "warning"),
@@ -825,7 +948,10 @@ def main(argv: list[str] | None = None) -> int:
             else None
         )
         checkouts = discover_checkouts(args.workspace_root.expanduser().resolve(), ignore)
-        findings = overlap_findings(checkouts, ignore, only_identity, focus_checkout)
+        inventory = workspace_inventory(checkouts)
+        findings = overlap_findings(
+            checkouts, ignore, only_identity, focus_checkout, inventory
+        )
     except AuditError as error:
         findings = [
             Finding(
@@ -837,8 +963,13 @@ def main(argv: list[str] | None = None) -> int:
             )
         ]
         checkouts = []
+        inventory = {
+            "schema": "wellmanifest.worktrees/v4",
+            "readOnly": True,
+            "entries": [],
+        }
 
-    payload = report_payload(findings, checkouts, only_identity)
+    payload = report_payload(findings, checkouts, only_identity, inventory)
     if args.format == "json":
         print(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
     else:

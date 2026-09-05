@@ -10,6 +10,17 @@
     "mode": {"enum": ["audit", "enforce"]},
     "profile": {"type": "string", "minLength": 1},
     "repositoryRole": {"type": "string", "minLength": 1},
+    "updates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "trigger", "action", "executor"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "trigger": {"const": "pre-commit"},
+        "action": {"const": "prepare-and-abort"},
+        "executor": {"enum": ["goal", "koru-goal"]}
+      }
+    },
     "adoptions": {
       "type": "array",
       "items": {
