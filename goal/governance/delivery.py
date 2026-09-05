@@ -591,7 +591,10 @@ def _clean_synchronized_base(policy: DeliveryPolicy, root: Path) -> bool:
         cwd=root,
     )
     if remote.returncode:
-        raise click.ClickException("cannot verify remote base for no-change delivery")
+        raise click.ClickException(
+            "pull-request delivery requires a ticket; none was found and "
+            "the remote base could not be verified for no-change delivery"
+        )
     rows = [line.split() for line in remote.stdout.splitlines() if line.strip()]
     return rows == [[_git_value("rev-parse", "HEAD", cwd=root), f"refs/heads/{policy.base_branch}"]]
 

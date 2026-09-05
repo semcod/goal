@@ -3,7 +3,7 @@
 - **ID**: ticket-069
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-05
 
 ## Goal and scope
@@ -25,5 +25,11 @@ Resolve historical IN_PROGRESS projections through the managed activity resolver
 A clean base matching the authoritative remote with no active ticket exits without
 bootstrap or publication. Dirty or unpublished work still requires ticket authority.
 
-- [ ] AC-05: Terminal receipts govern ticket selection; invalid receipts fail closed.
-- [ ] AC-06: Clean synchronized base exits successfully before workflow mutations.
+- [x] AC-05: Terminal receipts govern ticket selection; invalid receipts fail closed.
+- [x] AC-06: Clean synchronized base exits successfully before workflow mutations.
+
+## Local validation
+
+66 focused tests and 640 full tests pass (2 skips); scoped Ruff passes.
+The accidental generated Planfile delta was removed from the candidate.
+Protected review and merged-main CLI verification remain pending.

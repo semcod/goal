@@ -4,3 +4,5 @@ Docker build and container --version passed. Real Koru preflight reproduced cano
 Goal -a reran 633 tests (2 skips), then pre-commit failed with GOV-TICKET-ACTIVITY-001 while reading the unrelated dirty ticket-066 adoption worktree (unsupported terminal outcome rule).
 Read-only ticket-066 gate also reports GOV-PACKAGING-002 (pyproject standard declaration mismatches adoption lock) and GOV-SYNC-001. That prepared adoption excludes pyproject.toml and needs coordination with its integration owner; no unrelated files or hooks were changed.
 Publication stopped before commit, push, tag or registry effects. Candidate stays staged on ticket/069-early-governance-preflight.
+
+Terminal activity continuation: 66 focused / 640 full passed, 2 skips; Ruff passed. The managed gate passes after committing the removal of the generated Planfile delta. Original frozen validator ended with outcome=failure before any new push.
