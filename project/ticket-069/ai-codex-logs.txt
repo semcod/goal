@@ -8,3 +8,5 @@ Publication stopped before commit, push, tag or registry effects. Candidate stay
 Terminal activity continuation: 66 focused / 640 full passed, 2 skips; Ruff passed. The managed gate passes after committing the removal of the generated Planfile delta. Original frozen validator ended with outcome=failure before any new push.
 
 CI diagnosed GOV-BASE-001 because the shallow test checkout could not resolve the pre-adoption base. Refreshed acceptedBaseSha to b754227 (current remote main already integrated into the candidate); no workflow or gate change. Avoid managed subprocess startup for non-active status projections.
+
+CI exposed workflow tests invoking the real governance preflight against the host checkout, where clone-local receipts are absent. Isolate that service in the existing mocked workflow tests; dedicated real preflight and receipt tests remain enabled. No production gate or CI exemption was added.

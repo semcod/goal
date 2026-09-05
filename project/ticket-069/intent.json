@@ -15,7 +15,8 @@
     "project/ticket-069/**",
     "TODO.md",
     "project/TICKETS.md",
-    "tests/test_ticket_activity_delivery.py"
+    "tests/test_ticket_activity_delivery.py",
+    "tests/test_push_e2e.py"
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md"
@@ -41,7 +42,7 @@
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 4,
+      "maxImplementationFiles": 5,
       "maxAffectedComponents": 2,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
@@ -61,7 +62,8 @@
         {
           "name": "push-entry",
           "paths": [
-            "goal/push/core.py"
+            "goal/push/core.py",
+            "tests/test_push_e2e.py"
           ]
         }
       ],
