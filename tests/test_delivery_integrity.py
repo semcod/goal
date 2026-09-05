@@ -1233,3 +1233,90 @@ def test_noop_exits_before_bootstrap_and_publication(activity_repo, monkeypatch,
     )
     assert 'No changes to deliver' in capsys.readouterr().out
     assert git(root, 'status', '--porcelain') == ''
+
+
+@pytest.fixture
+def legacy_clean_repo(activity_repo):
+    root, _, _ = activity_repo
+    for relative in delivery.GOVERNANCE_PACKAGE_FILES.values():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('{}\n')
+    gate = root / 'project/governance-check.sh'
+    gate.write_text('#!/bin/sh\necho checked > .git/gate-ran\n')
+    gate.chmod(0o755)
+    git(root, 'add', '.')
+    git(root, 'commit', '-qm', 'adopted legacy target')
+    git(root, 'push', '-q', 'origin', 'main')
+    return root
+
+
+def test_legacy_clean_base_returns_before_all_workflow_mutations(
+    legacy_clean_repo, monkeypatch, capsys
+):
+    root = legacy_clean_repo
+    monkeypatch.chdir(root)
+    def unexpected(*args, **kwargs):
+        pytest.fail('clean legacy delivery started workflow mutations')
+    for name in ('_initialize_context', '_validate_toml_or_exit',
+                 '_bootstrap_projects_for_delivery', '_handle_commit_phase',
+                 'handle_publish', 'create_tag'):
+        monkeypatch.setattr(core, name, unexpected)
+    core.execute_push_workflow(
+        ctx_obj={'config': {}, 'all_flags': True},
+        bump='patch', no_tag=False, no_changelog=False, no_version_sync=False,
+        message=None, dry_run=False, yes=True, markdown=False, split=False,
+        ticket=None, abstraction=None, todo=False,
+    )
+    assert 'No changes to deliver' in capsys.readouterr().out
+    assert (root / '.git/gate-ran').exists()
+    assert git(root, 'status', '--porcelain') == ''
+    event = json.loads(delivery._audit_path(root).read_text().splitlines()[-1])
+    assert event['result'] == 'no-change'
+    assert event['commit'] == git(root, 'rev-parse', 'HEAD')
+    assert event['mode'] == 'legacy'
+
+
+@pytest.mark.parametrize('state', ['dirty', 'staged', 'ahead', 'behind', 'branch', 'detached'])
+def test_legacy_no_change_does_not_hide_pending_work(legacy_clean_repo, state):
+    root = legacy_clean_repo
+    if state in {'dirty', 'staged'}:
+        (root / 'pending.py').write_text('pending = True\n')
+        if state == 'staged':
+            git(root, 'add', 'pending.py')
+    elif state == 'ahead':
+        git(root, 'commit', '--allow-empty', '-qm', 'unpublished')
+    elif state == 'behind':
+        git(root, 'reset', '--hard', 'HEAD~1')
+    elif state == 'branch':
+        git(root, 'checkout', '-qb', 'pending')
+    else:
+        git(root, 'checkout', '--detach', '-q')
+    assert delivery._legacy_clean_default_base(root) is False
+
+
+def test_legacy_no_change_requires_authoritative_remote(legacy_clean_repo):
+    root = legacy_clean_repo
+    git(root, 'remote', 'set-url', 'origin', str(root / 'missing.git'))
+    with pytest.raises(click.ClickException, match='Could not verify remote HEAD'):
+        delivery.validate_legacy_governance(cwd=root, check_no_change=True)
+
+
+@pytest.mark.parametrize('operation', ['ticket', 'force', 'force_publish', 'version', 'ordinary'])
+def test_explicit_legacy_operations_continue_after_gate(legacy_clean_repo, monkeypatch, operation):
+    monkeypatch.chdir(legacy_clean_repo)
+    ctx = {'config': {}, 'all_flags': operation != 'ordinary'}
+    if operation == 'version':
+        ctx['version'] = '1.2.3'
+    def initialized(*args, **kwargs):
+        raise RuntimeError('workflow continued')
+    monkeypatch.setattr(core, '_validate_toml_or_exit', initialized)
+    with pytest.raises(RuntimeError, match='workflow continued'):
+        core.execute_push_workflow(
+            ctx_obj=ctx, bump='patch', no_tag=False, no_changelog=False,
+            no_version_sync=False, message=None, dry_run=False, yes=True,
+            markdown=False, split=False,
+            ticket='ticket-001' if operation == 'ticket' else None,
+            abstraction=None, todo=False, force=operation == 'force',
+            force_publish=operation == 'force_publish',
+        )

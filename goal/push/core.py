@@ -575,7 +575,14 @@ def execute_push_workflow(
         validate_delivery_ready(delivery)
         ctx_obj["delivery_mode"] = delivery.mode
     else:
-        validate_legacy_governance()
+        no_change = validate_legacy_governance(
+            check_no_change=bool(ctx_obj.get("all_flags"))
+            and not any((ticket, force, force_publish, ctx_obj.get("force_publish"),
+                         ctx_obj.get("version")))
+        )
+        if no_change is True:
+            click.echo("No changes to deliver; the remote default branch is synchronized.")
+            return
 
     _validate_toml_or_exit(dry_run)
 

@@ -446,14 +446,45 @@ def _governance_gate(root: Path) -> None:
         raise click.ClickException(detail)
 
 
-def validate_legacy_governance(*, cwd: Path | None = None) -> None:
+def validate_legacy_governance(
+    *, cwd: Path | None = None, check_no_change: bool = False
+) -> bool:
     """Check adopted repositories even without a configured delivery policy."""
     result = _run(["git", "rev-parse", "--show-toplevel"], cwd=cwd)
     if result.returncode != 0:
-        return
+        return False
     root = Path(result.stdout.strip()).resolve()
     if (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
         _governance_gate(root)
+        if check_no_change:
+            return _legacy_clean_default_base(root)
+    return False
+
+
+def _legacy_clean_default_base(root: Path) -> bool:
+    """Recognize an empty legacy delivery without granting publication authority."""
+    if _git_value("status", "--porcelain", "--untracked-files=all", cwd=root):
+        return False
+    branch = _git_value("branch", "--show-current", cwd=root)
+    if not branch or "origin" not in _git_value("remote", cwd=root).splitlines():
+        return False
+    remote = _run(["git", "ls-remote", "--symref", "origin", "HEAD"], cwd=root)
+    if remote.returncode:
+        raise click.ClickException("Could not verify remote HEAD for legacy no-change delivery")
+    head = _git_value("rev-parse", "HEAD", cwd=root)
+    rows = [line.split() for line in remote.stdout.splitlines() if line.strip()]
+    if rows != [["ref:", f"refs/heads/{branch}", "HEAD"], [head, "HEAD"]]:
+        return False
+    # This is local operational evidence, never a merge approval or ticket receipt.
+    event = {
+        "mode": "legacy", "result": "no-change", "remote": "origin",
+        "base": branch, "branch": branch, "commit": head,
+        "detail": "clean synchronized remote default branch",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    with _audit_path(root).open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event, sort_keys=True) + "\n")
+    return True
 
 
 def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) -> None:
