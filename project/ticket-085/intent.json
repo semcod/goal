@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-085",
+  "summary": "Report an empty push as a successful no-op",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "goal/push/core.py",
+    "tests/test_push_core_refactor.py",
+    "project/ticket-085/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d425695dd877f4e3664bda5c8fee2ae86309948e",
+    "targetBranch": "main",
+    "outcome": "Report an empty push as a successful no-op without false commit, version, test or retry claims. Publish via protected Validator.",
+    "nonGoals": [
+      "No changes to ungoverned configuration bootstrap or approval rules"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use a dedicated no-change report instead of the commit/error formatter.",
+      "components": [
+        {
+          "name": "push-report",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_push_core_refactor.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the report change and regression test."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_push_core_refactor.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Output regression and repository validation"
+      }
+    ]
+  }
+}
