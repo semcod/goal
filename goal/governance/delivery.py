@@ -455,10 +455,44 @@ def validate_legacy_governance(
         return False
     root = Path(result.stdout.strip()).resolve()
     if (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
-        _governance_gate(root)
+        try:
+            _governance_gate(root)
+        except click.ClickException:
+            # GOV-MATERIAL-001 explicitly prescribes an external no-change receipt.
+            # This never authorizes delivery: require the exact structured finding
+            # plus the same strict local/remote no-change checks as a passing gate.
+            if (check_no_change and _ticket_index_only_material_finding(root)
+                    and _legacy_clean_default_base(root)):
+                return True
+            raise
         if check_no_change:
             return _legacy_clean_default_base(root)
     return False
+
+
+def _ticket_index_only_material_finding(root: Path) -> bool:
+    if missing_governance_package_files(root):
+        return False
+    result = _run([str(root / "project/governance-check.sh"), "--format", "json"], cwd=root)
+    if result.returncode != 1:
+        return False
+    try:
+        report = json.loads(result.stdout)
+    except (ValueError, TypeError):
+        return False
+    if not isinstance(report, dict):
+        return False
+    findings = report.get("findings")
+    if (report.get("schema") != "new-project.governance-report/v1"
+            or report.get("status") != "failed"
+            or report.get("summary") != {"errors": 1, "findings": 1, "warnings": 0}
+            or not isinstance(findings, list) or len(findings) != 1):
+        return False
+    finding = findings[0]
+    return (isinstance(finding, dict)
+            and finding.get("code") == "GOV-MATERIAL-001"
+            and finding.get("severity") == "error"
+            and finding.get("paths") == ["project/TICKETS.md"])
 
 
 def _legacy_clean_default_base(root: Path) -> bool:

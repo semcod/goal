@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-079",
+  "summary": "Honor sole material-only diagnostic without delivery",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-079/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-078"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8a4dc4a1f4128594f88a9fab80ae840e4e8140ee",
+    "targetBranch": "main",
+    "outcome": "Return mutation-free no-change for synchronized legacy default branches with only an existing modified ticket index; preserve index bytes and staging.",
+    "nonGoals": [
+      "No gate bypass",
+      "No changes to Koru configuration or staged user data",
+      "No implicit release or change of delivery mode"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "When the managed gate reports only GOV-MATERIAL-001 for the existing ticket index, verify its structured report and synchronized default HEAD before emitting no-change. All other diagnostics still fail.",
+      "components": [
+        {
+          "name": "governance-preflight",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_delivery_integrity.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded preflight change; existing late test/commit gates remain."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_delivery_integrity.py",
+          "pytest -q",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "Focused regression suite, full Python tests, managed gate and Docker validation"
+      }
+    ]
+  }
+}
