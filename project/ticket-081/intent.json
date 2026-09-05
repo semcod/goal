@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-081",
+  "summary": "Align internal package metadata and distribute the verified dependency catalog",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "goal/__init__.py",
+    "CHANGELOG.md",
+    "integration/internal-dependencies.json",
+    "docs/internal-dependencies.md",
+    "project/ticket-081/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "90c8930490d09d439ee6161dddfb7ab45d80835a",
+    "targetBranch": "main",
+    "outcome": "Require optimized costs >=0.2.0, correct canonical package URLs, provide a reviewed internal dependency catalog and usage contract, and publish these material packaging changes together with Goal 2.2.0 including the merged dependency CLI.",
+    "nonGoals": [
+      "No global auto-merge policy changes",
+      "No release-only carrier change",
+      "No edits to unrelated working copies"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 70,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the runtime in semcod/goal and ship the operator catalog and usage contract beside packaging metadata. Reuse existing PyPI publication and protected PR delivery; schedules are consumer configuration.",
+      "components": [
+        {
+          "name": "package-metadata",
+          "paths": [
+            "pyproject.toml",
+            "uv.lock",
+            "VERSION",
+            "goal/__init__.py",
+            "CHANGELOG.md"
+          ]
+        },
+        {
+          "name": "dependency-integration",
+          "paths": [
+            "integration/internal-dependencies.json",
+            "docs/internal-dependencies.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Reviewed goal.internal-dependencies/v1 integration catalog"
+      ],
+      "dataChanges": [
+        "Minimum costs dependency is 0.2.0"
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert integration change; retain previous published artifacts and consumer lockfiles."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "uv lock --check",
+          "python -m pytest -q",
+          "python -m build",
+          "python -m twine check dist/*",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "External ecosystem-deps-audit release validation and hosted CI"
+      }
+    ]
+  }
+}
