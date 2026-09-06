@@ -49,6 +49,8 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Run tests
+        env:
+          WELLMANIFEST_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           python -m pytest tests/ -v --tb=short
 

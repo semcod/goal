@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-088",
+  "summary": "Bind CI governance validation to the actual pushed commit range",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    ".github/workflows/ci.yml",
+    "project/ticket-088/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "64d230b2526fec5c90f4c1a842923e37dd56789c",
+    "targetBranch": "main",
+    "outcome": "Publish CI that passes the actual GitHub push before SHA or PR base SHA to the existing governance pytest gate.",
+    "nonGoals": [
+      "Managed standard implementation changes",
+      "Ticket closure projections",
+      "Package version changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the existing WELLMANIFEST_BASE_SHA interface to bind validation to the event commit range.",
+      "components": [
+        {
+          "name": "ci-governance-range",
+          "paths": [
+            ".github/workflows/ci.yml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the workflow environment binding."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Verify GitHub expression and existing plugin base selection",
+          "python -m pytest tests/ -v --tb=short",
+          "./project/governance-check.sh --actor agent",
+          "docker compose config --quiet"
+        ],
+        "evidence": "CI before/after immutable run evidence."
+      }
+    ]
+  }
+}
