@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-087",
+  "summary": "Preserve virtualenv isolation during package publication",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "goal/cli/publish.py",
+    "tests/test_publish_python.py",
+    "project/ticket-087/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "06f70a83b500e5804e6051f46d03aa56f59fd250",
+    "targetBranch": "main",
+    "outcome": "Publish a tested fix that preserves virtualenv isolation when selecting the Python interpreter for package publication.",
+    "nonGoals": [
+      "Package version changes",
+      "Dependency policy changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Preserve the virtualenv executable path without dereferencing Python symlinks.",
+      "components": [
+        {
+          "name": "publish-interpreter",
+          "paths": [
+            "goal/cli/publish.py",
+            "tests/test_publish_python.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the two interpreter-path selections and regression tests."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_publish_python.py",
+          "python -m pytest -q",
+          "./project/governance-check.sh --actor agent",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Real virtualenv subprocess regression and full suite logs in external execution receipts."
+      }
+    ]
+  }
+}
