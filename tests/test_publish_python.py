@@ -1,7 +1,6 @@
 """Publication must run inside the selected environment, not its base Python."""
 
 import json
-import os
 import subprocess
 import sys
 import venv
@@ -12,7 +11,6 @@ import pytest
 from goal.cli.publish import _get_python_bin
 
 
-@pytest.mark.skipif(os.name == "nt", reason="POSIX virtualenv executable layout")
 @pytest.mark.parametrize("selection", ["active", ".venv", "venv", "env"])
 def test_selected_python_keeps_virtualenv_isolation(tmp_path, monkeypatch, selection):
     monkeypatch.chdir(tmp_path)
