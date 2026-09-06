@@ -1,0 +1,71 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-086",
+  "summary": "Fetch complete history for governed CI tests",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".github/workflows/ci.yml",
+    "project/ticket-086/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "36bee51c19e08378bd2d8dd877b57009b4d50f42",
+    "targetBranch": "main",
+    "outcome": "Allow hosted test governance to resolve immutable accepted bases in older ticket branches.",
+    "nonGoals": [
+      "No governance bypass or accepted-base rewrite",
+      "No dependency or runtime changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Checkout full Git history before the existing governed test command.",
+      "components": [
+        {
+          "name": "hosted-ci-history",
+          "paths": [
+            ".github/workflows/ci.yml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore previous checkout depth only if immutable base resolution is otherwise guaranteed."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Inspect checkout fetch-depth and actual hosted Python 3.12/3.13 results."
+      }
+    ]
+  }
+}
