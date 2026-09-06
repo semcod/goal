@@ -126,13 +126,14 @@ def _get_python_bin() -> str:
     if active_venv:
         active_python = Path(active_venv) / "bin" / "python"
         if active_python.exists():
-            return str(active_python.resolve())
+            # Resolving the symlink selects base Python and loses the virtualenv.
+            return str(active_python.absolute())
 
     # Check for venv in current directory (priority order: .venv, venv, env)
     for venv_name in [".venv", "venv", "env"]:
         venv_python = Path(".") / venv_name / "bin" / "python"
         if venv_python.exists():
-            return str(venv_python.resolve())
+            return str(venv_python.absolute())
 
     return sys.executable
 
