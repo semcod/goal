@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-072",
+  "summary": "Verify and refresh catalogued internal dependencies",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "goal/internal_dependencies.py",
+    "goal/cli/dependencies_cmd.py",
+    "goal/cli/__init__.py",
+    "tests/test_internal_dependencies.py",
+    "project/ticket-072/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8a4dc4a1f4128594f88a9fab80ae840e4e8140ee",
+    "targetBranch": "main",
+    "outcome": "Provide goal dependencies to check and refresh explicitly catalogued PyPI packages in uv lockfiles, report exact stable version targets and reject incompatible or alternate sources.",
+    "nonGoals": [
+      "No arbitrary fleet publication",
+      "No automatic dependency source replacement",
+      "No npm, Poetry or runtime environment update in this slice"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use an explicit package allowlist, bounded PyPI metadata reads and uv resolution with exact target versions. CLI updates lockfiles only and leaves required tests and delivery to repository CI. The catalog is explicit operator input and the report is stdout; existing uv.lock format and ownership are unchanged.",
+      "components": [
+        {
+          "name": "internal-dependency-policy",
+          "paths": [
+            "goal/internal_dependencies.py",
+            "tests/test_internal_dependencies.py"
+          ]
+        },
+        {
+          "name": "dependency-command",
+          "paths": [
+            "goal/cli/dependencies_cmd.py",
+            "goal/cli/__init__.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "goal dependencies --catalog FILE [--check|--update]"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded command and module; retained previous lockfiles support retry after failed resolution."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_internal_dependencies.py",
+          "pytest -q",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "External ecosystem-deps-audit validation receipts and governed CI"
+      }
+    ]
+  }
+}

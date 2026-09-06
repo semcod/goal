@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-082",
+  "summary": "Replace ineffective dependency schedule with locked catalog freshness checks",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".github/workflows/dependencies.yml",
+    "project/ticket-082/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-081"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6cf49574f47031495db7d58e244585ea17ab6bfc",
+    "targetBranch": "main",
+    "outcome": "Replace runner-package inventory and ineffective dependency PR creation with a daily read-only freshness audit of the committed uv lock and reviewed internal package catalog using supported Python.",
+    "nonGoals": [
+      "No ungoverned version PRs",
+      "No global auto-merge changes",
+      "No package upgrades in a scheduled audit"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the released dependency CLI and integration catalog; schedule observes lock freshness with contents read permission and exports JSON evidence. Governance continues to own update delivery.",
+      "components": [
+        {
+          "name": "scheduled-dependency-audit",
+          "paths": [
+            ".github/workflows/dependencies.yml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the scheduled workflow change."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "uv sync --locked --extra dev --python 3.12",
+          "goal dependencies --catalog FILTERED_CATALOG --check",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Executed workflow-equivalent shell and hosted dispatch"
+      }
+    ]
+  }
+}

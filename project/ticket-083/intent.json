@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-083",
+  "summary": "Keep bare governed invocation from creating configuration before no-change validation",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "goal/cli/__init__.py",
+    "tests/test_governed_cli_bootstrap.py",
+    "project/ticket-083/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d9ce9e602a4047a69cb9b6984d82d1b282701a42",
+    "targetBranch": "main",
+    "outcome": "Bare goal -a on a governed repository reads configuration without creating or rewriting goal.yaml before governance and no-change validation. Publish via protected Validator.",
+    "nonGoals": [
+      "No changes to ungoverned configuration bootstrap or approval rules"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Load configuration without persisting it for all-flags governed invocation. Existing delivery and governance gates remain authoritative.",
+      "components": [
+        {
+          "name": "cli-bootstrap",
+          "paths": [
+            "goal/cli/__init__.py",
+            "tests/test_governed_cli_bootstrap.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the CLI bootstrap guard and its regression tests together."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_governed_cli_bootstrap.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Focused regression tests and actual invocation in wellmanifest/performance"
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "goal.internal-dependencies/v1",
+  "packages": [
+    {
+      "name": "costs",
+      "repository": "semcod/costs",
+      "registry": "pypi",
+      "versioning": "semver"
+    },
+    {
+      "name": "goal",
+      "repository": "semcod/goal",
+      "registry": "pypi",
+      "versioning": "semver"
+    },
+    {
+      "name": "pfix",
+      "repository": "semcod/pfix",
+      "registry": "pypi",
+      "versioning": "semver"
+    },
+    {
+      "name": "clickmd",
+      "repository": "semcod/clickmd",
+      "registry": "pypi",
+      "versioning": "semver"
+    },
+    {
+      "name": "code2llm",
+      "repository": "semcod/code2llm",
+      "registry": "pypi",
+      "versioning": "semver"
+    }
+  ]
+}

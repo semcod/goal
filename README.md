@@ -1828,3 +1828,8 @@ _Last updated by [taskill](https://github.com/oqlos/taskill) at 2026-04-25 13:38
 > Introduces a configuration management system, improves the code analysis engine and commit message generation, expands CLI functionality and markdown output support, and applies bulk TODO fixes and documentation updates.
 
 <!-- taskill:status:end -->
+
+
+## Documentation ownership
+
+Before producing a report or plan, follow [documentation instructions](docs/AGENTS.md) and use the [documentation index](docs/README.md). Durable results belong in versioned repository documentation; private recovery archives and raw logs stay outside publication.

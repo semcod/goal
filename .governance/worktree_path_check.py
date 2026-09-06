@@ -299,7 +299,13 @@ def inventory(
     path_style: str = "posix",
 ) -> dict[str, Any]:
     """Build a deterministic, observation-only inventory record."""
-    _validate_segment("repositoryName", repository_name)
+    if (
+        not isinstance(repository_name, str)
+        or not repository_name
+        or repository_name in {".", ".."}
+        or any(character in repository_name for character in ("/", "\\", "\0"))
+    ):
+        raise ValueError("repositoryName must be an observed repository basename")
     path_type = _path_type(path_style)
     primary = path_type(primary_checkout)
     if not primary.is_absolute():

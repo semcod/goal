@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-078",
+  "summary": "Preserve tracking-only legacy no-change state",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "tests/test_delivery_integrity.py",
+    "project/ticket-078/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-074"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3854003c237160ba67a469491e3cf837201536af",
+    "targetBranch": "main",
+    "outcome": "Return mutation-free no-change for synchronized legacy default branches with only an existing modified ticket index; preserve index bytes and staging.",
+    "nonGoals": [
+      "No gate bypass",
+      "No changes to Koru configuration or staged user data",
+      "No implicit release or change of delivery mode"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "After managed governance, permit only modified tracked project/TICKETS.md in no-change detection. Reject deletion, rename, untracked data and implementation changes.",
+      "components": [
+        {
+          "name": "governance-preflight",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_delivery_integrity.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded preflight change; existing late test/commit gates remain."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_delivery_integrity.py",
+          "pytest -q",
+          "./project/governance-check.sh",
+          "docker build ."
+        ],
+        "evidence": "Focused regression suite, full Python tests, managed gate and Docker validation"
+      }
+    ]
+  }
+}

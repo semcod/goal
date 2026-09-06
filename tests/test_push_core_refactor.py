@@ -374,3 +374,21 @@ def test_push_context_get_returns_value_and_default():
     assert ctx.get("yes") is True
     assert ctx.get("missing") is None
     assert ctx.get("missing", "fallback") == "fallback"
+
+
+def test_empty_push_report_is_a_no_op_in_both_formats(capsys):
+    from goal.push.core import _handle_no_changes
+
+    for context, markdown in [({}, False), ({}, True), ({"markdown": True}, False)]:
+        _handle_no_changes(context, ["nodejs"], False, markdown)
+        output = capsys.readouterr().out
+        assert "No changes to commit" in output
+        assert "Error" not in output
+        assert "committed successfully" not in output
+        assert "Version updated" not in output
+        assert "Success (exit code" not in output
+        assert "Retry" not in output
+        if markdown or context.get("markdown"):
+            assert "# Goal Push Result" in output
+            assert "No commit was created" in output
+            assert "version was unchanged" in output

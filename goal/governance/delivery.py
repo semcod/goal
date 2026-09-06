@@ -455,15 +455,57 @@ def validate_legacy_governance(
         return False
     root = Path(result.stdout.strip()).resolve()
     if (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
-        _governance_gate(root)
+        try:
+            _governance_gate(root)
+        except click.ClickException:
+            # GOV-MATERIAL-001 explicitly prescribes an external no-change receipt.
+            # This never authorizes delivery: require the exact structured finding
+            # plus the same strict local/remote no-change checks as a passing gate.
+            if (check_no_change and _ticket_index_only_material_finding(root)
+                    and _legacy_clean_default_base(root)):
+                return True
+            raise
         if check_no_change:
             return _legacy_clean_default_base(root)
     return False
 
 
+def _ticket_index_only_material_finding(root: Path) -> bool:
+    if missing_governance_package_files(root):
+        return False
+    result = _run([str(root / "project/governance-check.sh"), "--format", "json"], cwd=root)
+    if result.returncode != 1:
+        return False
+    try:
+        report = json.loads(result.stdout)
+    except (ValueError, TypeError):
+        return False
+    if not isinstance(report, dict):
+        return False
+    findings = report.get("findings")
+    if (report.get("schema") != "new-project.governance-report/v1"
+            or report.get("status") != "failed"
+            or report.get("summary") != {"errors": 1, "findings": 1, "warnings": 0}
+            or not isinstance(findings, list) or len(findings) != 1):
+        return False
+    finding = findings[0]
+    return (isinstance(finding, dict)
+            and finding.get("code") == "GOV-MATERIAL-001"
+            and finding.get("severity") == "error"
+            and finding.get("paths") == ["project/TICKETS.md"])
+
+
 def _legacy_clean_default_base(root: Path) -> bool:
     """Recognize an empty legacy delivery without granting publication authority."""
-    if _git_value("status", "--porcelain", "--untracked-files=all", cwd=root):
+    status = _run(
+        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"], cwd=root
+    )
+    if status.returncode:
+        raise click.ClickException("Could not inspect legacy delivery working tree")
+    # The existing ticket index is a tracking carrier, never a release outcome.
+    # Preserve both its working bytes and staging; all other changes remain pending.
+    allowed = {" M project/TICKETS.md", "M  project/TICKETS.md", "MM project/TICKETS.md"}
+    if any(row not in allowed for row in status.stdout.split("\0") if row):
         return False
     branch = _git_value("branch", "--show-current", cwd=root)
     if not branch or "origin" not in _git_value("remote", cwd=root).splitlines():
@@ -479,7 +521,7 @@ def _legacy_clean_default_base(root: Path) -> bool:
     event = {
         "mode": "legacy", "result": "no-change", "remote": "origin",
         "base": branch, "branch": branch, "commit": head,
-        "detail": "clean synchronized remote default branch",
+        "detail": "synchronized remote default branch with no implementation changes",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     with _audit_path(root).open("a", encoding="utf-8") as handle:

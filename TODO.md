@@ -1,5 +1,7 @@
 # TODO
 
+Before research or writing, follow [documentation placement](docs/AGENTS.md); final reports and plans must be indexed in [docs/README.md](docs/README.md).
+
 ## Governed architecture roadmap
 
 - [ ] Deliver [ticket-066](project/ticket-066/README.md): adopt the immutable

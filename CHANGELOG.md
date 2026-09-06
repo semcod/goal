@@ -1,3 +1,10 @@
+## [2.2.0] - 2026-09-05
+
+- Add `goal dependencies --catalog FILE --check` and transactional `--update` for explicitly catalogued stable PyPI packages in uv lockfiles.
+- Require costs >=0.2.0 so new installations receive cached token counting and validated model pricing.
+- Correct canonical project links to semcod/goal and provide the reviewed integration catalog and update guide.
+- Include governed delivery, branch reconciliation and material-only no-change fixes merged since 2.1.302.
+
 ## [Unreleased]
 
 ### Changed
