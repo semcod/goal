@@ -104,10 +104,7 @@ def test_refuses_symlinks_in_managed_paths(adopted, relative):
     source = adopted[0] / relative
     saved = adopted[0] / "saved"
     source.rename(saved)
-    try:
-        source.symlink_to(saved, target_is_directory=saved.is_dir())
-    except OSError:
-        pytest.skip("symlinks unavailable")
+    source.symlink_to(saved, target_is_directory=saved.is_dir())
     with pytest.raises(click.ClickException, match="symlinked managed path"):
         run(adopted)
 
