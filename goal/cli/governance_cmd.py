@@ -502,6 +502,39 @@ def workspace_check(target_root, workspace_root, allow, output_format):
         raise click.exceptions.Exit(result.returncode)
 
 
+@governance.command("branch-intent-check")
+@click.option("--target-root", default=".", show_default=True,
+              type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.option("--report", required=True,
+              type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--observation", required=True,
+              type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--evidence-root", required=True,
+              type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.option("--expected-lock-sha256", required=True,
+              help="Adoption lock digest supplied independently by the protected caller.")
+@click.option("--timeout", default=30, show_default=True, type=click.IntRange(1, 300))
+def branch_intent_check(target_root, report, observation, evidence_root,
+                       expected_lock_sha256, timeout):
+    """Check a preserved branch's intent report without deleting anything.
+
+    Requires a published adopted package containing the reconciliation checker.
+    The protected caller verifies observation provenance and criterion coverage;
+    do not derive the expected lock digest from an author's untrusted checkout.
+    Exit 0 means ready for owner review, 1 unresolved, and 2 invalid evidence.
+    Report readiness never grants discard, merge or ticket-close authority.
+    """
+    from goal.governance.branch_intent import run_check
+
+    result = run_check(target_root, report, observation, evidence_root,
+                       expected_lock_sha256, timeout)
+    click.echo(result.stdout, nl=False)
+    if result.stderr:
+        click.echo(result.stderr, err=True, nl=False)
+    if result.returncode:
+        raise click.exceptions.Exit(result.returncode)
+
+
 @governance.group("delivery-hook")
 def delivery_hook():
     """Manage the local fail-fast pre-push guard."""

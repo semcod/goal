@@ -1,0 +1,84 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-073",
+  "summary": "Expose adopted branch intent reconciliation in Goal",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "goal/cli/governance_cmd.py",
+    "goal/governance/branch_intent.py",
+    "tests/test_branch_intent.py",
+    "project/ticket-073/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c13dc91341a1b722ed5a54ce3bb950e20d3c5d99",
+    "targetBranch": "main",
+    "outcome": "Publish a read-only Goal governance entry point for the adopted branch-intent checker with an externally pinned lock, preserved validator exit semantics and adversarial tests.",
+    "nonGoals": [
+      "No deletion or merge authority",
+      "No standard release or fleet adoption",
+      "No mutation of ticket-072 or other worktrees"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Goal verifies the caller-supplied lock digest and checker bytes, executes the frozen standalone checker in isolated Python, and preserves report readiness without granting deletion authority.",
+      "components": [
+        {
+          "name": "governance-cli",
+          "paths": [
+            "goal/cli/governance_cmd.py",
+            "goal/governance/branch_intent.py"
+          ]
+        },
+        {
+          "name": "tests",
+          "paths": [
+            "tests/test_branch_intent.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "goal governance branch-intent-check"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded CLI addition; it performs no repository or remote mutations."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest tests/test_branch_intent.py tests/test_governance_cmd.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Focused/full tests, exact-range governance and compose validation"
+      }
+    ]
+  }
+}
