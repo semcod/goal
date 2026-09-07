@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wellmanifest.org/schemas/worktrees/v4",
+  "$id": "https://wellmanifest.org/schemas/worktrees/v5",
   "title": "Wellmanifest worktree records",
   "oneOf": [
     {"$ref": "#/$defs/layoutRecord"},
@@ -67,7 +67,7 @@
         "minimumGitVersion"
       ],
       "properties": {
-        "schema": {"const": "wellmanifest.worktrees/v4"},
+        "schema": {"const": "wellmanifest.worktrees/v5"},
         "kind": {"const": "layout-record"},
         "repository": {"type": "string", "minLength": 1},
         "repositoryName": {"$ref": "#/$defs/repositoryName"},
@@ -110,7 +110,8 @@
         "classification": {
           "enum": [
             "primary",
-            "canonical-v4",
+            "canonical-v5",
+            "legacy-v4",
             "legacy-v3",
             "legacy-v2",
             "legacy-v1",
@@ -120,7 +121,7 @@
         },
         "layoutVersion": {
           "oneOf": [
-            {"enum": ["v1", "v2", "v3", "v4"]},
+            {"enum": ["v1", "v2", "v3", "v4", "v5"]},
             {"type": "null"}
           ]
         },
@@ -160,7 +161,7 @@
         "summary"
       ],
       "properties": {
-        "schema": {"const": "wellmanifest.worktrees/v4"},
+        "schema": {"const": "wellmanifest.worktrees/v5"},
         "kind": {"const": "inventory-record"},
         "repository": {"type": "string", "minLength": 1},
         "repositoryName": {"$ref": "#/$defs/observedRepositoryName"},

@@ -69,10 +69,10 @@ def load_worktrees_contract():
     )
     source = next((candidate for candidate in candidates if candidate.is_file()), None)
     if source is None:
-        raise AuditError("the managed Worktrees v4 conformance module is missing")
-    spec = importlib.util.spec_from_file_location("workspace_worktrees_v4", source)
+        raise AuditError("the managed Worktrees conformance module is missing")
+    spec = importlib.util.spec_from_file_location("workspace_worktrees_contract", source)
     if spec is None or spec.loader is None:
-        raise AuditError(f"cannot load Worktrees v4 conformance from {source}")
+        raise AuditError(f"cannot load Worktrees conformance from {source}")
     module = importlib.util.module_from_spec(spec)
     previous = sys.dont_write_bytecode
     sys.dont_write_bytecode = True
@@ -80,7 +80,7 @@ def load_worktrees_contract():
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)
     except (ImportError, OSError, ValueError) as error:
-        raise AuditError(f"cannot load Worktrees v4 conformance: {error}") from error
+        raise AuditError(f"cannot load Worktrees conformance: {error}") from error
     finally:
         sys.dont_write_bytecode = previous
         sys.modules.pop(spec.name, None)
@@ -414,9 +414,9 @@ def workspace_inventory(checkouts: list[Checkout]) -> dict[str, Any]:
                 path_style=path_style,
             )
         except (TypeError, ValueError) as error:
-            raise AuditError(f"Worktrees v4 inventory failed: {error}") from error
+            raise AuditError(f"Worktrees inventory failed: {error}") from error
         if observed.get("readOnly") is not True:
-            raise AuditError("Worktrees v4 inventory did not declare readOnly=true")
+            raise AuditError("Worktrees inventory did not declare readOnly=true")
         for entry in observed["entries"]:
             layout_entries[Path(entry["path"])] = entry
 
@@ -428,7 +428,7 @@ def workspace_inventory(checkouts: list[Checkout]) -> dict[str, Any]:
     for checkout in sorted(checkouts, key=lambda item: str(item.path)):
         layout = layout_entries.get(checkout.path)
         if layout is None:
-            raise AuditError(f"Worktrees v4 inventory omitted {checkout.path}")
+            raise AuditError(f"Worktrees inventory omitted {checkout.path}")
         duplicate = checkout.common_git_dir != authoritative_clone[checkout.identity]
         anomalies = list(layout["anomalies"])
         if duplicate:
@@ -446,7 +446,7 @@ def workspace_inventory(checkouts: list[Checkout]) -> dict[str, Any]:
             "cloneClassification": "duplicate-clone" if duplicate else "registered",
             "anomalies": sorted(set(anomalies)),
         })
-    return {"schema": "wellmanifest.worktrees/v4", "readOnly": True, "entries": entries}
+    return {"schema": contract.SCHEMA, "readOnly": True, "entries": entries}
 
 
 def local_branch_findings(
@@ -650,7 +650,7 @@ def main(argv: list[str] | None = None) -> int:
             evidence={"reason": str(error)},
         )]
         inventory = {
-            "schema": "wellmanifest.worktrees/v4",
+            "schema": None,
             "readOnly": True,
             "entries": [],
         }
