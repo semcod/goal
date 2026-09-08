@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-095",
+  "summary": "Enforce server-side Goal main publication and detect policy drift",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".github/main-protection.json",
+    ".github/scripts/check_main_protection.py",
+    ".github/tests/test_main_protection.py",
+    ".github/workflows/ci.yml",
+    "project/ticket-095/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bd43a30a3ce5122ebe551246bc8174900eae6174",
+    "targetBranch": "main",
+    "outcome": "Publish and activate server-enforced checks, current independent review and a Validator-only main publisher; prove a real PR can merge under those rules and CI detects drift.",
+    "nonGoals": [
+      "Change trusted Validator identity or grant bypass of checks.",
+      "Modify OneDev profiles while ticket-207 owns their shared files."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Version the exact Goal rulesets. Separate mandatory PR/check rules with no bypass from the update restriction whose sole publisher is the protected Validator App. Add read-only drift verification to both existing Python jobs.",
+      "components": [
+        {
+          "name": "github-publication",
+          "paths": [
+            ".github/main-protection.json",
+            ".github/scripts/check_main_protection.py",
+            ".github/tests/test_main_protection.py",
+            ".github/workflows/ci.yml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the prior recorded ruleset configuration through an explicit administrative recovery operation; do not bypass a failed check to merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m unittest discover -s .github/tests -v",
+          "python3 .github/scripts/check_main_protection.py"
+        ],
+        "evidence": "Policy failure cases and live required-check names."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 .github/scripts/check_main_protection.py --live",
+          "python3 -m pytest tests/ -q",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Fresh GitHub readback, exact-head independent approval, merge under active rules and green post-merge CI."
+      }
+    ]
+  }
+}

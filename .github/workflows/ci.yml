@@ -54,6 +54,13 @@ jobs:
         run: |
           python -m pytest tests/ -v --tb=short
 
+      - name: Verify main publication protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m unittest discover -s .github/tests -v
+          python .github/scripts/check_main_protection.py --public-live
+
       - name: Lint
         run: |
           pip install flake8 || true
