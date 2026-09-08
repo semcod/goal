@@ -13,9 +13,16 @@ równoległe worktree są dozwolone, nachodzące zmiany nie.
 ## Meaning
 
 `001` — rzeczywisty konkurencyjny wkład: brudne zmiany wobec brudnych zmian
-lub nowych commitów drugiej strony od wspólnego przodka; dla rozbieżnych
-commitów sprawdzany jest merge. Wspólna historia nie jest drugim wkładem.
-Brak możliwości ustalenia przodka zachowuje konserwatywne sprawdzanie.
+lub nowych commitów drugiej strony. Gdy oba checkouty widzą ten sam SHA
+`origin/<default>`, wkład każdego jest liczony od jego wspólnego przodka z
+tym SHA. Zmiany odziedziczone z main nie należą do nowego writera.
+Dla rozbieżnych commitów sprawdzany jest merge; konflikt przypisuje się parze
+tylko na ścieżce, na której obie strony wnoszą wkład. Konflikt starej gałęzi
+z main pozostaje widoczny w jej stanie, ale nie blokuje niezależnego writera.
+Brak zgodnych refów albo odczytu obiektów zachowuje konserwatywne sprawdzanie
+od wspólnego przodka pary. Tak samo traktowane są historie ze zmianą nazwy:
+Git może zgłosić konflikt pod inną ścieżką niż pierwotna edycja. Checker nie
+pobiera refów i nie zatwierdza merge'a.
 `002` — dwa `IN_PROGRESS` intent.json w różnych worktree deklarują nachodzące
 `allowedPaths` i żadne nie wymienia drugiego w `conflictsWith`.
 `003` — audyt nie dał się bezpiecznie dokończyć.

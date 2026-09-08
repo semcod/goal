@@ -2601,6 +2601,26 @@ def check_delivery_timebox(
             )
 
 
+def is_published_integration(root: Path, target: str, supplied_base: str | None) -> bool:
+    """Recognize one clean integration already observed on the target branch.
+
+    The supplied first parent is the target before this integration. Comparing
+    the accepted base with the published HEAD would include the ticket's own
+    changes as intervening drift. Ambiguous ranges and dirty trees retain the
+    conservative target comparison; this observation never grants approval.
+    """
+    if not supplied_base:
+        return False
+    try:
+        return (
+            git_output(root, ["rev-parse", "HEAD"]).decode().strip() == target
+            and git_output(root, ["rev-parse", f"{target}^1"]).decode().strip() == supplied_base
+            and not git_output(root, ["status", "--porcelain"])
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
 def check_delivery_base(
     root: Path,
     policy: dict[str, Any],
@@ -2649,6 +2669,11 @@ def check_delivery_base(
             current_target = git_output(root, ["rev-parse", "--verify", f"{target_ref}^{{commit}}"]).decode().strip()
         except (subprocess.CalledProcessError, FileNotFoundError):
             continue
+        supplied_base = next((sha for source, sha in observed if source == "suppliedBase"), None)
+        if is_published_integration(root, current_target, supplied_base):
+            # The accepted-to-supplied-base check below still detects changes
+            # that landed on the target before this ticket was integrated.
+            break
         observed.append((target_ref, current_target))
         break
 

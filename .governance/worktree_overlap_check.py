@@ -482,14 +482,15 @@ def contested_paths(
 ) -> tuple[str, ...]:
     """Paths these two checkouts genuinely contend for.
 
-    Compare each dirty delta with the peer's contribution since their shared
-    history, not with everything inherited from the default branch. An inert
-    snapshot at the same HEAD contributes no competing committed change.
-    Unknown ancestry retains the conservative path-intersection fallback.
+    Prefer each writer's contribution relative to the same observed origin
+    default-branch revision. A pair's older common ancestor includes main's
+    history in a fresh writer, even when that writer edits unrelated files.
+    Missing or divergent observations retain the common-ancestor fallback.
     """
     first_dirty = set(first.dirty_paths) - pending_main_imports(first.path)
     second_dirty = set(second.dirty_paths) - pending_main_imports(second.path)
     first_changes, second_changes = set(first.changed_paths), set(second.changed_paths)
+    shared_default = False
     if first.head and second.head:
         base = first.head if first.head == second.head else merge_base(first.path, first.head, second.head)
         if base:
@@ -502,6 +503,30 @@ def contested_paths(
                 second_changes = second_committed | second_dirty
             except AuditError:
                 pass
+        try:
+            first_default = run_git(first.path, "rev-parse", "--verify",
+                                    f"refs/remotes/origin/{default_branch(first.path)}^{{commit}}")
+            second_default = run_git(second.path, "rev-parse", "--verify",
+                                     f"refs/remotes/origin/{default_branch(second.path)}^{{commit}}")
+            if first_default == second_default:
+                first_base = run_git(first.path, "merge-base", first.head, first_default)
+                second_base = run_git(second.path, "merge-base", second.head, second_default)
+                first_committed = set(run_git(first.path, "diff", "--name-only", "--no-renames", first_base, first.head).splitlines())
+                second_committed = set(run_git(second.path, "diff", "--name-only", "--no-renames", second_base, second.head).splitlines())
+                first_renames = run_git(first.path, "diff", "--name-only", "--find-renames",
+                                        "--diff-filter=R", first_base, first.head)
+                second_renames = run_git(second.path, "diff", "--name-only", "--find-renames",
+                                         "--diff-filter=R", second_base, second.head)
+                # Replace both sides only after every strict Git read succeeds.
+                # Rename/directory-rename conflicts can be reported at a path
+                # edited under another name. Preserve the conservative path
+                # model until attribution can follow those identities too.
+                if not first_renames and not second_renames:
+                    first_changes = first_committed | first_dirty
+                    second_changes = second_committed | second_dirty
+                    shared_default = True
+        except AuditError:
+            pass
     dirty_overlap = (first_dirty & second_changes) | (second_dirty & first_changes)
     conflicts: set[str] = set()
     if first.head and second.head and first.head != second.head:
@@ -511,9 +536,14 @@ def contested_paths(
             reported = merge_tree_conflicts(first.path, first.head, second.head)
             if reported is None:
                 # No usable merge-tree: fall back to the path-intersection proxy.
-                conflicts = set(first.changed_paths) & set(second.changed_paths)
+                conflicts = first_changes & second_changes
             else:
                 conflicts = set(reported)
+                if shared_default:
+                    # A branch can conflict with main without contending with
+                    # this particular peer. Keep the conflict in its inventory,
+                    # but require contributions from both writers for pairing.
+                    conflicts &= first_changes & second_changes
     return tuple(
         sorted(
             name
