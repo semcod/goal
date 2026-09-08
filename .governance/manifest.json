@@ -194,7 +194,7 @@
   ],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.20.11"
+    "version": "0.20.12"
   },
   "ticket": {
     "activeStatuses": [

@@ -1,16 +1,19 @@
-# GOV-STANDARD-UPDATE-001: pre-commit cannot safely prepare a standard update
+# GOV-STANDARD-UPDATE-001: explicit standard update could not complete
 
 ## Situation
 
-The managed hook found a pinned adoption but its controller is missing, Goal is
-unavailable or incompatible, release verification failed, or Goal prepared or
-refused an update and stopped the commit.
+The explicitly invoked compatibility updater found Goal unavailable or
+incompatible, release verification failed, or Goal prepared or refused an
+update. Its legacy `--pre-commit` protocol prepares changes and returns control
+for review; the managed commit hook no longer invokes this updater.
 
 ## Meaning
 
 The committed pin remains authoritative. A newer release gains trust only when
 Goal verifies its annotated tag, final GitHub Release, full SHA and generated
 digests. Preparation does not stage, commit, merge or publish the result.
+The managed commit hook checks the staged local immutable pin and worktree
+guard only. A new upstream release does not change a feature ticket's pin.
 
 ## Safe resolution
 
@@ -19,13 +22,15 @@ digests. Preparation does not stage, commit, merge or publish the result.
 3. Validate `.governance/standard-adoption.json`; when `executor` is
    `koru-goal`, install a compatible Koru supervisor as well.
 4. Allocate or resume exactly one standard-adoption ticket in its own worktree.
-5. Retry the commit, review the prepared diff, stage it explicitly and retry.
+5. Run explicit adoption in that ticket, review the prepared diff, validate it
+   and stage it explicitly before committing.
 
 ## Verification
 
-- The Goal pre-commit adoption command returns zero when the verified release
+- The explicitly invoked Goal preparation command returns zero when the verified release
   is already pinned.
-- A prepared update remains visible and the original commit remains uncreated.
+- A prepared update remains visible for review and does not create a commit.
+- An ordinary commit does not invoke Goal, Koru or release discovery.
 - Managed governance and standard conformance pass after explicit restaging.
 
 ## Do not

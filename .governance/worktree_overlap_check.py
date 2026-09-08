@@ -440,6 +440,43 @@ def merge_tree_conflicts(path: Path, left: str, right: str) -> tuple[str, ...] |
     return tuple(sorted(set(conflicted)))
 
 
+def pending_main_imports(path: Path) -> set[str]:
+    """Clean staged imports from the current origin default branch, if proven.
+
+    An unfinished merge exposes already integrated main content as index edits.
+    It is not a competing contribution. Keep reporting that dirty state, but
+    exclude it from overlap attribution only when all local Git reads agree.
+    No fetch or index mutation is needed; unknown or older merge heads retain
+    conservative behavior. Committed feature edits are never exempted.
+    """
+    try:
+        incoming = run_git(path, "rev-parse", "--verify", "MERGE_HEAD")
+        merge_file = Path(run_git(path, "rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD"))
+        if merge_file.read_text(encoding="ascii").splitlines() != [incoming]:
+            return set()  # Octopus merges have more than one source of edits.
+        remote = run_git(path, "rev-parse", "--verify",
+                         f"refs/remotes/origin/{default_branch(path)}")
+        if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", incoming) or incoming != remote:
+            return set()
+        base = run_git(path, "merge-base", "HEAD", incoming)
+
+        def names(*args: str) -> set[str]:
+            return set(run_git(path, *args).split("\0")) - {""}
+
+        staged = names("diff", "--cached", "--name-only", "--no-renames", "-z", "HEAD")
+        different = names("diff", "--cached", "--name-only", "--no-renames", "-z", incoming)
+        unstaged = names("diff", "--name-only", "--no-renames", "-z")
+        untracked = names("ls-files", "--others", "--exclude-standard", "-z")
+        local_commits = names("diff", "--name-only", "--no-renames", "-z", base, "HEAD")
+        # diff --cached includes unresolved paths; retain an explicit check so
+        # equality can never be inferred from a non-stage-zero index entry.
+        unresolved = {entry.split("\t", 1)[1]
+                      for entry in names("ls-files", "--unmerged", "-z")}
+        return staged - different - unstaged - untracked - local_commits - unresolved
+    except (AuditError, IndexError, OSError, UnicodeError):
+        return set()
+
+
 def contested_paths(
     first: "Checkout", second: "Checkout", ignore: tuple[str, ...]
 ) -> tuple[str, ...]:
@@ -450,6 +487,8 @@ def contested_paths(
     snapshot at the same HEAD contributes no competing committed change.
     Unknown ancestry retains the conservative path-intersection fallback.
     """
+    first_dirty = set(first.dirty_paths) - pending_main_imports(first.path)
+    second_dirty = set(second.dirty_paths) - pending_main_imports(second.path)
     first_changes, second_changes = set(first.changed_paths), set(second.changed_paths)
     if first.head and second.head:
         base = first.head if first.head == second.head else merge_base(first.path, first.head, second.head)
@@ -459,11 +498,11 @@ def contested_paths(
             try:
                 first_committed = set(run_git(first.path, "diff", "--name-only", base, first.head).splitlines())
                 second_committed = set(run_git(second.path, "diff", "--name-only", base, second.head).splitlines())
-                first_changes = first_committed | set(first.dirty_paths)
-                second_changes = second_committed | set(second.dirty_paths)
+                first_changes = first_committed | first_dirty
+                second_changes = second_committed | second_dirty
             except AuditError:
                 pass
-    dirty_overlap = (set(first.dirty_paths) & second_changes) | (set(second.dirty_paths) & first_changes)
+    dirty_overlap = (first_dirty & second_changes) | (second_dirty & first_changes)
     conflicts: set[str] = set()
     if first.head and second.head and first.head != second.head:
         if not is_ancestor(first.path, first.head, second.head) and not is_ancestor(
