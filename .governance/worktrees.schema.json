@@ -8,8 +8,7 @@
   ],
   "$defs": {
     "repositoryName": {
-      "type": "string",
-      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      "$ref": "#/$defs/observedRepositoryName"
     },
     "observedRepositoryName": {
       "type": "string",

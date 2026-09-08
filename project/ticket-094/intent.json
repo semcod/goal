@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-094",
+  "summary": "Adopt the immutable published fix for integration-base validation",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    ".governance/**",
+    "pyproject.toml",
+    "project/ticket-094/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c684b082618c8b7ba0cd54ca03d04aeff1f771b3",
+    "targetBranch": "main",
+    "outcome": "Adopt approved standard 0.20.16, restore green post-merge main CI, and verify the actual local Goal installation.",
+    "nonGoals": [
+      "Change product CLI behavior beyond the published governance update.",
+      "Publish a new Goal package version."
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the immutable published standard through Goal and preserve all existing target-owned extensions. Update only the standard/revision package declaration from the adoption lock, through the standard atomic-adoption binding.",
+      "components": [
+        {
+          "name": "governance-adoption",
+          "paths": [
+            ".governance/**",
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Re-adopt the previous published source through protected delivery."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal governance adopt --check",
+          "./scripts/install-agent-hosts.sh --check"
+        ],
+        "evidence": "Published immutable source revision and managed payload digests."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "python3 -m pytest tests/ -q",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Required Python CI on the PR and after integration; fresh trusted merge and deployment readback."
+      }
+    ],
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "824625238d697511f58be2b73c0aa6e15c228a9a",
+      "toRevision": "6d2da011088b69ebe1636f3bf681e5ec21a062ab"
+    }
+  }
+}

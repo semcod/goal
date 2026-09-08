@@ -34,6 +34,16 @@ def _validate_segment(label: str, value: str) -> None:
         raise ValueError(f"{label} must contain lowercase ASCII words separated by hyphens")
 
 
+def _validate_repository_name(repository_name: str) -> None:
+    if (
+        not isinstance(repository_name, str)
+        or not repository_name
+        or repository_name in {".", ".."}
+        or any(character in repository_name for character in ("/", "\\", "\0"))
+    ):
+        raise ValueError("repositoryName must be an observed repository basename")
+
+
 def plan(
     *,
     repository: str,
@@ -44,7 +54,7 @@ def plan(
     path_style: str = "posix",
 ) -> dict[str, str]:
     """Return the canonical v5 layout record for one delivery unit."""
-    _validate_segment("repositoryName", repository_name)
+    _validate_repository_name(repository_name)
     _validate_segment("slug", slug)
     ticket_match = TICKET_RE.fullmatch(ticket)
     if not ticket_match:
@@ -303,13 +313,7 @@ def inventory(
     path_style: str = "posix",
 ) -> dict[str, Any]:
     """Build a deterministic, observation-only inventory record."""
-    if (
-        not isinstance(repository_name, str)
-        or not repository_name
-        or repository_name in {".", ".."}
-        or any(character in repository_name for character in ("/", "\\", "\0"))
-    ):
-        raise ValueError("repositoryName must be an observed repository basename")
+    _validate_repository_name(repository_name)
     path_type = _path_type(path_style)
     primary = path_type(primary_checkout)
     if not primary.is_absolute():
