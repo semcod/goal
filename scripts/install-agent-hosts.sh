@@ -114,18 +114,23 @@ governed = (
     | {contract["hook"]["path"]}
     | set(contract["hook"]["runtimeFiles"])
 )
-for item in manifest["files"]:
-    if item["target"] in governed or item["source"] == contract_source:
-        print(f"{item['source']}\t{item['target']}\t{int(bool(item['executable']))}")
+selected = [item for item in manifest["files"]
+            if item["target"] in governed or item["source"] == contract_source]
+missing = governed - {item["target"] for item in selected}
+if missing or not any(item["source"] == contract_source for item in selected):
+    raise SystemExit("Incomplete host package mapping")
+for item in selected:
+    print(f"{item['source']}\t{item['target']}\t{int(bool(item['executable']))}")
 PY
 }
 
 activate_in_place() {
   local dest="$1"
   dest="$(cd "$dest" && pwd)"
-  local contract hooks
-  contract="$(contract_path "$dest")"
-  hooks="$(hooks_path_config "$contract")"
+  local contract hooks targets
+  contract="$(contract_path "$dest")" || return 1
+  hooks="$(hooks_path_config "$contract")" || return 1
+  targets="$(contract_targets "$contract" "$dest")" || return 1
   local missing=()
 
   while IFS=$'\t' read -r target is_hook; do
@@ -133,10 +138,7 @@ activate_in_place() {
       missing+=("$target")
       continue
     fi
-    if [[ "$is_hook" == "1" && "$CHECK_ONLY" == false ]]; then
-      chmod +x "$dest/$target"
-    fi
-  done < <(contract_targets "$contract" "$dest")
+  done <<< "$targets"
 
   if [[ "${#missing[@]}" -gt 0 ]]; then
     printf 'GOV-AGENT-HOST-004: missing host files in %s:\n' "$dest" >&2
@@ -146,6 +148,12 @@ activate_in_place() {
   fi
 
   if [[ "$CHECK_ONLY" == true ]]; then
+    while IFS=$'\t' read -r target is_hook; do
+      if [[ "$is_hook" == "1" && ! -x "$dest/$target" ]]; then
+        echo "GOV-AGENT-HOST-005: hook is not executable: $dest/$target" >&2
+        return 1
+      fi
+    done <<< "$targets"
     local configured; configured="$(git -C "$dest" config --get core.hooksPath || true)"
     if [[ "$configured" != "$hooks" ]]; then
       echo "GOV-AGENT-HOST-006: core.hooksPath is '${configured:-unset}', expected '$hooks'" >&2
@@ -155,7 +163,12 @@ activate_in_place() {
     return 0
   fi
 
-  git -C "$dest" config core.hooksPath "$hooks"
+  while IFS=$'\t' read -r target is_hook; do
+    if [[ "$is_hook" == "1" ]]; then
+      chmod +x "$dest/$target" || return 1
+    fi
+  done <<< "$targets"
+  git -C "$dest" config core.hooksPath "$hooks" || return 1
   echo "Activated host contract and core.hooksPath=$hooks in $dest"
 }
 
@@ -166,35 +179,40 @@ bootstrap_into() {
     echo "Target is not a git work tree: $dest" >&2
     exit 1
   fi
-  local contract
-  contract="$(contract_path "$SOURCE")"
+  local contract files
+  contract="$(contract_path "$SOURCE")" || return 1
   local manifest="$SOURCE/governance/package-manifest.json"
   if [[ ! -f "$manifest" ]]; then
     echo "Source has no governance/package-manifest.json: $SOURCE" >&2
     exit 1
   fi
 
+  files="$(package_host_files "$manifest" "$contract" "${contract#"$SOURCE/"}")" || return 1
+  # Validate the entire input before the first destination write.
   while IFS=$'\t' read -r source target executable; do
     if [[ ! -f "$SOURCE/$source" ]]; then
       echo "Source file missing: $SOURCE/$source" >&2
-      exit 1
+      return 1
     fi
-    if [[ "$CHECK_ONLY" == true ]]; then
-      continue
-    fi
-    mkdir -p "$dest/$(dirname "$target")"
-    cp -f "$SOURCE/$source" "$dest/$target"
+  done <<< "$files"
+  if [[ "$CHECK_ONLY" == true ]]; then
+    activate_in_place "$dest"
+    return $?
+  fi
+  while IFS=$'\t' read -r source target executable; do
+    mkdir -p "$dest/$(dirname "$target")" || return 1
+    cp -f "$SOURCE/$source" "$dest/$target" || return 1
     if [[ "$executable" == "1" ]]; then
-      chmod +x "$dest/$target"
+      chmod +x "$dest/$target" || return 1
     fi
-  done < <(package_host_files "$manifest" "$contract" "${contract#"$SOURCE/"}")
+  done <<< "$files"
 
   activate_in_place "$dest"
 }
 
 install_user_files() {
-  local home="${HOME:-}"
-  if [[ -z "$home" || ! -d "$home" ]]; then
+  local task_user_home="${HOME:-}"
+  if [[ -z "$task_user_home" || ! -d "$task_user_home" ]]; then
     echo "HOME is not a directory; skipping --user" >&2
     return 1
   fi
@@ -205,13 +223,14 @@ install_user_files() {
   local rule="$SOURCE/.cursor/rules/new-project-standard.mdc"
   [[ -f "$rule" ]] || { echo "Source file missing: $rule" >&2; return 1; }
 
-  mkdir -p "$home/.cursor/rules" "$home/.gemini" "$home/.claude" "$home/.config/aider"
-  cp -f "$rule" "$home/.cursor/rules/new-project-standard.mdc"
+  mkdir -p "$task_user_home/.cursor/rules" "$task_user_home/.gemini" "$task_user_home/.claude" "$task_user_home/.config/aider" || return 1
+  cp -f "$rule" "$task_user_home/.cursor/rules/new-project-standard.mdc" || return 1
 
   local marker="wellmanifest/new-project host contract"
-  for pointer in "$home/.gemini/GEMINI.md" "$home/.claude/CLAUDE.md"; do
+  for pointer in "$task_user_home/.gemini/GEMINI.md" "$task_user_home/.claude/CLAUDE.md"; do
     if [[ ! -f "$pointer" ]] || ! grep -Fq "$marker" "$pointer"; then
-      cat > "$pointer" <<EOF
+      cat >> "$pointer" <<EOF || return 1
+
 # $marker
 
 When the current repository has \`./project/new-ticket.sh\`, follow that
@@ -221,7 +240,7 @@ that script. Never commit on main or a dirty primary checkout. Run
 EOF
     fi
   done
-  echo "Installed user-level host pointers under $home/.cursor $home/.gemini $home/.claude"
+  echo "Installed user-level host pointers under $task_user_home/.cursor $task_user_home/.gemini $task_user_home/.claude"
 }
 
 status=0

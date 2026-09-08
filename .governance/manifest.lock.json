@@ -4,7 +4,7 @@
     ".cursor/rules/new-project-standard.mdc": "72699a5cb3718be9a50603eda9c8a6d960f21b1949fdfe2b35013385b22f9afe",
     ".githooks/pre-commit": "8299a163efdb520df8726769a7f59a3bc011d8581a7a028e40e4e3c0eb7f52d4",
     ".github/copilot-instructions.md": "b31f9ba957ce108a83851f48f8dbff8b4301d1c744a77fe76914e6bb8499aca3",
-    ".github/workflows/new-project-governance.yml": "cc567c87a3a256a3975d93625a575ec6b03cbc4f1b12180abf61f97df35f7de2",
+    ".github/workflows/new-project-governance.yml": "b41d0df4cb11de5bd1458976e0a1f69ee6733593cd9bb93d68fbbb7fe2e52929",
     ".governance/AGENT_DECISIONS.md": "fb8fcbb00ba4100ec230aea34ef4634852dae30929eb9eaeafe548fbc7b1de87",
     ".governance/adoption-bindings.json": "9a6015fde26226d4c55764c81c1ab8e8d42fcf64661533a71d90fcc488edaeb3",
     ".governance/adoption-bindings.schema.json": "0fbad765ca67924b7b3340dcad09f262b62c979740a291da7dacd8e48d28241c",
@@ -42,7 +42,7 @@
     ".governance/governance_check.py": "305fc2fbf1c01a8a05e514346aa244977efabedd348379ebffd7e6562949fa17",
     ".governance/intent.schema.json": "9755f20cd189efe2205629781a6cf6b613bd93e9368416793c4de53256b0a9c0",
     ".governance/lock.schema.json": "ad80c98f800a4a3310870336dcdaf0aa689cc4988f71084d25d76bea2df1242f",
-    ".governance/manifest.base.json": "1a834c8de47b3a03eeece19c686966bce6ea5d9fc6a720305dba4ec70d243d8b",
+    ".governance/manifest.base.json": "763a046bb830631e3a6fb94f6a35403620918a02d4956d7573a8dcd03e4ba1ab",
     ".governance/manifest.schema.json": "5aa2ccd3f6898834d4e39a78342448145490be56aa132e16ac7c9d64acef8f73",
     ".governance/package-manifest.json": "a2ea77aca16d59282e1b60105521270ae112ebc52ddb3e08af3eeec26942dc3f",
     ".governance/precommit_standard_update.py": "c91e2bf9ae9d6ccc77bce0e61450c818a5961edee5bfde3b60426da88e296b0f",
@@ -82,7 +82,7 @@
     "project/governance-check.sh": "8eb977ff01a96e47455d227ed5ced949eb53ea19537f870d9016f803840e048e",
     "project/new-ticket.sh": "82353ad45aee1df6764fd8afac5b950027d89507ea82fd3147c469aa9e556247",
     "project/readme.sh": "b41a9c88374e6de0439284a4561fb11b1b482039bc5ba1bcf6683fd59b1a3968",
-    "scripts/install-agent-hosts.sh": "0e3a59ed654de872c41f810dd2b7aded96a4bebd862db226ac27ffaf5e478ced",
+    "scripts/install-agent-hosts.sh": "316a4dd6c877ba8f79a10bb761b188378deb8aea70fb7fcc54a729c664987f44",
     "scripts/runtime.sh": "8d5c91808d3c126fc84018a12f0b39dd49194fb8b01c5e024932ff9cf2a7a7e2",
     "wellmanifest_governance.py": "d6b71f091ffd88fb30c96f54162020d9aeb6e54555328834b68ccb21868ecc07",
     "worktree-guard.yaml": "bea3d3cda9bd764f9e79b975da8f5360df894fdc04fca0407def88ebd49111b7"
@@ -92,7 +92,7 @@
     "id": "wellmanifest/new-project",
     "publicationStatus": "published",
     "sourceRepository": "wellmanifest/new-project",
-    "sourceRevision": "bf3099667babd14ee778917d911d6c6bad45dcab",
-    "version": "0.20.12"
+    "sourceRevision": "824625238d697511f58be2b73c0aa6e15c228a9a",
+    "version": "0.20.13"
   }
 }
