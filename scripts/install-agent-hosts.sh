@@ -74,14 +74,22 @@ contract_path() {
 
 # Emits "<target-path>\t<is-hook>" lines for every file the contract governs.
 contract_targets() {
-  python3 - "$1" <<'PY'
-import json, sys
+  python3 - "$1" "$2" <<'PY'
+import json, pathlib, sys
 contract = json.load(open(sys.argv[1], encoding="utf-8"))
+root = pathlib.Path(sys.argv[2])
+hub = root / "governance/manifest.hub.json"
+source_paths = {}
+if hub.is_file():
+    package = json.loads((root / "governance/package-manifest.json").read_text())
+    source_paths = {item["target"]: item["source"] for item in package["files"]}
 for host in contract["hosts"]:
     print(f"{host['file']}\t0")
 print(f"{contract['hook']['path']}\t1")
 for runtime_file in contract["hook"]["runtimeFiles"]:
-    print(f"{runtime_file}\t0")
+    # The hub owns package sources; adopters own the managed target paths.
+    relative = source_paths.get(runtime_file, runtime_file)
+    print(f"{relative}\t0")
 PY
 }
 
@@ -128,7 +136,7 @@ activate_in_place() {
     if [[ "$is_hook" == "1" && "$CHECK_ONLY" == false ]]; then
       chmod +x "$dest/$target"
     fi
-  done < <(contract_targets "$contract")
+  done < <(contract_targets "$contract" "$dest")
 
   if [[ "${#missing[@]}" -gt 0 ]]; then
     printf 'GOV-AGENT-HOST-004: missing host files in %s:\n' "$dest" >&2

@@ -63,15 +63,17 @@ Before any multi-step implementation, an agent must:
    managed `wellmanifest/worktrees` checker. Resolve the primary checkout from
    Git even when allocation starts inside a linked checkout. The only
    publishable linked worktree is
-   `<primaryCheckout>/worktrees/<ticket-NNN>--<slug>` with
+   `<primaryCheckout>/.worktrees/<ticket-NNN>--<slug>` with
    `linkMode=relative`; its lease is
    `<primaryCheckout>/.subactor/leases/<ticket-NNN>--<slug>.json`. Root-ignore
-   `/worktrees/` and only
+   `/.worktrees/` and only
    `/.subactor/{leases,sessions,recovery,receipts,cache,snapshots}/`; keep
    `.subactor/manifest.json` tracked. Before the first effect, feature-probe
    `git worktree add --relative-paths` and
-   `git worktree repair --relative-paths` (minimum Git 2.51.0), and reject a
-   symlink in any existing canonical path component. Legacy v1/v2/v3,
+   `git worktree repair --relative-paths` (minimum Git 2.51.0). When the host starts outside the target checkout, pass
+   `feature-probe --from-worktree <checkout>` to the adopted checker; resolve
+   `repository_context_unavailable` before interpreting feature support. Reject a
+   symlink in any existing canonical path component. Legacy v1/v2/v3/v4,
    system-temporary, duplicate and unknown registrations are read-only recovery
    inventory, never publishable locations. Never automatically move, repair,
    delete, prune or clean them. A separately authorized exact operation first
@@ -92,23 +94,22 @@ Before any multi-step implementation, an agent must:
    either a `User` login is in protected `trusted-reviewers` or a `Bot` login
    is in the separate protected `trusted-validator-apps` input. Never trust an
    arbitrary Bot review.
-11a. **INVOKE VALIDATOR-AGENT — do not ask the human.** When publication needs
-   trusted merge approval (protected default branch, merge blocked on reviews,
-   or the user asks to publish/merge), the coding agent MUST dispatch
-   `subactor/validator-agent` itself:
+11a. **USE LOCAL ONEDEV AND THE INDEPENDENT VALIDATOR.** For `semcod/*` and
+   `subactor/*`, follow [.governance/docs/LOCAL_CI_PUBLICATION.md](.governance/docs/LOCAL_CI_PUBLICATION.md).
+   Resolve the protected repository profile, observe the current OneDev
+   head/base receipt and reuse any existing local reconciliation result.
+   Invoke the trusted `subactor/validator-agent/bin/run-local-direct-pr.sh`
+   with the exact repository, PR, ticket, head SHA and protected key reference;
+   use `--merge` only for already authorized publication. The deployed local
+   timer may own this invocation. GitHub Actions dispatch is a separate
+   transport and is not the default or an unavoidable dependency of local CI.
+   Do not declare publication blocked by Actions billing before checking the
+   local route. Retire a hosted check only through protected policy after an
+   equivalent deployed OneDev canary; preserve uncovered test/platform gates.
+   Freeze the head through review and merge. Never self-approve, write a fake
+   status, waive required checks or ask the human to invoke an available
+   Validator. Scope, pins, deployment and observed success are separate facts.
 
-   ```bash
-   # from a checkout of subactor/validator-agent @ main
-   ./bin/dispatch-direct-pr.sh \
-     --owner <org> --name <repo> --pr <N> --ticket ticket-NNN \
-     --wait-checks --merge --watch
-   ```
-
-   Freeze: re-read `gh pr view <N> --json headRefOid` immediately before
-   dispatch; do not push after freeze until approve or fail. MUST NOT ask the
-   human to “use the validator”, MUST NOT self-approve, and MUST NOT treat
-   chat/Markdown as merge approval. Normative:
-   `subactor/validator-agent/docs/PUBLICATION_FREEZE.md`.
 12. Require merge approval evidence to bind repository, PR, current HEAD,
    active ticket and actor. The protected resolver creates that evidence
    outside the PR checkout; repository-authored evidence is untrusted.
