@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-091",
+  "summary": "Adopt published immutable pin and main import governance fix",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".githooks/pre-commit",
+    ".governance/error/GOV-STANDARD-UPDATE.md",
+    ".governance/manifest.base.json",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    ".governance/worktree_overlap_check.py",
+    "pyproject.toml",
+    "project/ticket-091/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b3abc2660105a82050c61e7ea55b4381d391e881",
+    "targetBranch": "main",
+    "outcome": "Adopt published new-project 0.20.12 to preserve immutable pins and correctly recognize imports from main, unblocking ticket-090.",
+    "nonGoals": [
+      "No product source, action dependencies or protected-check changes"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the managed immutable standard updater, retaining target-owned manifest settings and package bindings.",
+      "components": [
+        {
+          "name": "governance",
+          "paths": [
+            ".githooks/pre-commit",
+            ".governance/error/GOV-STANDARD-UPDATE.md",
+            ".governance/manifest.base.json",
+            ".governance/manifest.json",
+            ".governance/manifest.lock.json",
+            ".governance/worktree_overlap_check.py",
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Review a subsequent immutable standard update; preserve previous pins in history."
+    },
+    "runtimeDependencies": [],
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "2cd39286dc0931870a8a60ee11c96dd6448b39e6",
+      "toRevision": "bf3099667babd14ee778917d911d6c6bad45dcab"
+    },
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "receipt:local:ticket-089-local-ci-adoption"
+      }
+    ]
+  }
+}
