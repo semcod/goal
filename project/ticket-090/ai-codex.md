@@ -1,0 +1,3 @@
+SESSION_EXECUTION_AUTHORIZATION: User requested continuation of Semcod pending PR/issue publication. Complete PR 124 in an isolated ticket worktree, preserve remote history without force push, validate, and invoke independent protected publication.
+
+Reconciliation: the original PR lacks intent in its first material commit (GOV-INTENT-003); preserve its remote history and publish an equivalent immutable upgrade in a new governed PR. The pending main import was preserved in an external scanned snapshot, then safely discarded from this agent-owned local branch before rebuilding from current main.

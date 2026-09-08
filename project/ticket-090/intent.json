@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-090",
+  "summary": "Publish immutable artifact upload update replacing ungoverned PR 124",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".github/workflows/dependencies.yml",
+    "project/ticket-090/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "665e5b384f369116e945dd5948200690ba8b43fa",
+    "targetBranch": "main",
+    "outcome": "Publish upload-artifact v7.0.1 with an immutable pin and a ticket present in the first implementation commit; supersede PR 124 after protected merge.",
+    "nonGoals": [
+      "No required-check, permission, secret, registry or test-matrix changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Create a governed replacement from current main rather than rewriting the original Dependabot commit; keep its original branch recoverable.",
+      "components": [
+        {
+          "name": "dependency-evidence-workflow",
+          "paths": [
+            ".github/workflows/dependencies.yml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the previous action pin through protected review."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh",
+          "python -m pytest tests/ -q",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Upstream action metadata, existing artifact inputs, managed gate and the required Python 3.12/3.13 CI matrix."
+      }
+    ]
+  }
+}
