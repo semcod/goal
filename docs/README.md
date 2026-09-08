@@ -1293,3 +1293,5 @@ pytest
 ## Documentation ownership
 
 Before writing durable information, analyses, reports or plans, follow [documentation placement instructions](AGENTS.md). Add links to delivered documents in this index; preserve generated sections above.
+
+- [Verify and publish a Goal contribution](information/contributor-verification.md) — repository checks, independent publication, recovery steps and remaining local CI acceptance work.

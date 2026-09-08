@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-097",
+  "summary": "Document Goal contributor checks and verify a real PR through the deployed local matrix",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "docs/information/contributor-verification.md",
+    "docs/README.md",
+    "project/ticket-097/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "64e433beccfb94d3bdd9cb28309f4e8dacd86b09",
+    "targetBranch": "main",
+    "outcome": "Publish an indexed contributor verification runbook and observe this material PR through deployed OneDev and independent protected publication.",
+    "nonGoals": [
+      "Retire hosted checks or change required status policy.",
+      "Change Goal dependencies or OneDev executor deployment.",
+      "Claim hardware connectivity or actuate devices."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep Goal contributor instructions in a canonical information document, link the OneDev-owned operational runbook, and retain all current protected publication gates.",
+      "components": [
+        {
+          "name": "contributor-documentation",
+          "paths": [
+            "docs/information/contributor-verification.md",
+            "docs/README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert this documentation change through the same protected publication process; no runtime configuration changes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh --base 64e433beccfb94d3bdd9cb28309f4e8dacd86b09",
+          "python3 -m pytest tests/ -q",
+          "python3 -m unittest discover -s .github/tests -v",
+          "python3 .github/scripts/check_main_protection.py --live",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Documentation metadata, local links, runnable commands and existing repository gates verified."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "goal --delivery-mode pull-request --no-publish -a push --ticket ticket-097 --no-tag --no-changelog --no-version-sync"
+        ],
+        "evidence": "Exact PR head/current base OneDev receipt, retained hosted checks and independent Validator merge observed externally."
+      }
+    ]
+  }
+}
