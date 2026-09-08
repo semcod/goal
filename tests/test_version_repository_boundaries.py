@@ -63,10 +63,7 @@ def test_nested_checkout_boundary(project, kind, operation):
         if kind == "gitfile":
             (foreign / ".git").write_text("gitdir: /unavailable/submodule/metadata\n")
         elif kind == "dangling-marker":
-            try:
-                (foreign / ".git").symlink_to(project / "missing-metadata")
-            except OSError:
-                pytest.skip("host cannot create symlinks")
+            (foreign / ".git").symlink_to(project / "missing-metadata")
     before = declarations(foreign)
 
     if operation == "discover":
@@ -89,12 +86,13 @@ def test_symlinked_declarations_do_not_read_or_write_external_files(project, ope
     before = declarations(outside)
     shared = project / "packages/shared"
     shared.mkdir()
-    try:
-        (shared / "VERSION").symlink_to(outside / "VERSION")
-        (shared / "__init__.py").symlink_to(outside / "pkg/__init__.py")
-        (project / "linked").symlink_to(outside, target_is_directory=True)
-    except OSError:
-        pytest.skip("host cannot create symlinks")
+    (shared / "VERSION").symlink_to(outside / "VERSION")
+    (shared / "__init__.py").symlink_to(outside / "pkg/__init__.py")
+    (project / "linked").symlink_to(outside, target_is_directory=True)
+    links = {
+        path: path.readlink()
+        for path in (shared / "VERSION", shared / "__init__.py", project / "linked")
+    }
 
     if operation == "discover":
         specs = discover_version_specs()
@@ -105,3 +103,4 @@ def test_symlinked_declarations_do_not_read_or_write_external_files(project, ope
         assert not any(Path(path).as_posix().startswith(("linked/", "packages/shared/")) for path in updated)
         assert (project / "packages/owned/VERSION").read_text() == "1.2.4\n"
     assert {path: path.read_bytes() for path in before} == before
+    assert {path: path.readlink() for path in links} == links
