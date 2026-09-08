@@ -19,6 +19,7 @@ from .version_utils import (
     update_readme_metadata,
 )
 from .version_state import validate_version_sources, write_version_source
+from .version_discovery import project_version_files
 from goal.version_validation import update_badge_versions
 
 
@@ -314,9 +315,8 @@ def _update_init_py_versions(new_version: str, updated: List[str]) -> None:
         "third_party",
     )
 
-    for init_file in Path(".").rglob("__init__.py"):
-        parts = init_file.parts
-        if any(p in parts for p in skip_dirs) or ".egg-info" in str(init_file):
+    for init_file in project_version_files(skip_dirs):
+        if init_file.name != "__init__.py" or ".egg-info" in str(init_file):
             continue
         try:
             content = init_file.read_text()
@@ -401,28 +401,24 @@ def _sync_nested_versions(
     if not old_version or old_version == new_version:
         return
     json_files = {"package.json", "composer.json"}
-    for dirpath, dirnames, filenames in os.walk("."):
-        dirnames[:] = [
-            d for d in dirnames if d not in _NESTED_SKIP_DIRS and not d.endswith(".egg-info")
-        ]
-        if os.path.abspath(dirpath) == os.path.abspath("."):
+    for path in project_version_files(_NESTED_SKIP_DIRS):
+        if len(path.parts) == 1:
             continue  # root files are handled explicitly by sync_all_versions
-        for filename in filenames:
-            if filename not in _NESTED_VERSION_FILES:
-                continue
-            path = Path(dirpath) / filename
-            if _read_version_of(path) != old_version:
-                continue  # not part of the synchronized set — leave it alone
-            rel = os.path.relpath(str(path))
-            if filename == "VERSION":
-                path.write_text(f"{new_version}\n", encoding="utf-8")
-                updated.append(rel)
-            elif filename in json_files:
-                _update_json_version_file(rel, new_version, user_config, updated)
-            elif filename == "pyproject.toml":
-                _update_toml_version(rel, new_version, user_config, updated)
-            elif filename == "Cargo.toml":
-                _update_cargo_version(rel, new_version, user_config, updated)
+        filename = path.name
+        if filename not in _NESTED_VERSION_FILES:
+            continue
+        if _read_version_of(path) != old_version:
+            continue  # not part of the synchronized set — leave it alone
+        rel = os.path.relpath(str(path))
+        if filename == "VERSION":
+            path.write_text(f"{new_version}\n", encoding="utf-8")
+            updated.append(rel)
+        elif filename in json_files:
+            _update_json_version_file(rel, new_version, user_config, updated)
+        elif filename == "pyproject.toml":
+            _update_toml_version(rel, new_version, user_config, updated)
+        elif filename == "Cargo.toml":
+            _update_cargo_version(rel, new_version, user_config, updated)
 
 
 def _sync_selected_version_sources(
