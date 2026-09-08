@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-092",
+  "summary": "Adopt published github-script v9 governance",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".github/workflows/new-project-governance.yml",
+    ".governance/manifest.base.json",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    "scripts/install-agent-hosts.sh",
+    "pyproject.toml",
+    "project/ticket-092/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "457f5d539131c7ae6705882405e803bd9d0cb585",
+    "targetBranch": "main",
+    "outcome": "Adopt published new-project 0.20.13 with github-script v9 and host activation fixes, superseding dependency PR 125.",
+    "nonGoals": [
+      "No product source or permissions or protected review policy changes"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the managed immutable standard updater, retaining target-owned manifest settings and package bindings.",
+      "components": [
+        {
+          "name": "governance",
+          "paths": [
+            ".github/workflows/new-project-governance.yml",
+            ".governance/manifest.base.json",
+            ".governance/manifest.json",
+            ".governance/manifest.lock.json",
+            "scripts/install-agent-hosts.sh",
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Review a subsequent immutable standard update; preserve previous pins in history."
+    },
+    "runtimeDependencies": [],
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "bf3099667babd14ee778917d911d6c6bad45dcab",
+      "toRevision": "824625238d697511f58be2b73c0aa6e15c228a9a"
+    },
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh --actor agent",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Managed immutable adoption, governance gate, Compose validation, required Python CI and independent protected review."
+      }
+    ]
+  }
+}
