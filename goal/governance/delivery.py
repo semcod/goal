@@ -404,7 +404,7 @@ def governance_diagnostic_guidance(root: Path, output: str) -> list[str]:
     return guidance
 
 
-def _governance_gate(root: Path) -> None:
+def _governance_gate(root: Path, *, base: str | None = None) -> None:
     missing = missing_governance_package_files(root)
     if missing:
         if is_new_project_source_hub(root):
@@ -432,7 +432,10 @@ def _governance_gate(root: Path) -> None:
         raise click.ClickException(
             "governance delivery requires project/governance-check.sh"
         )
-    result = _run([str(gate)], cwd=root)
+    arguments = [str(gate)]
+    if base is not None:
+        arguments.extend(["--base", base])
+    result = _run(arguments, cwd=root)
     if result.returncode != 0:
         detail = (
             "\n".join(
@@ -529,11 +532,42 @@ def _legacy_clean_default_base(root: Path) -> bool:
     return True
 
 
+def _pull_request_validation_base(policy: DeliveryPolicy, root: Path) -> str:
+    """Observe the actual target; stale local refs and ticket prose are not bases."""
+    remote_ref = f"refs/heads/{policy.base_branch}"
+    observed = _run(
+        ["git", "ls-remote", "--heads", policy.remote, remote_ref], cwd=root
+    )
+    rows = [line.split() for line in observed.stdout.splitlines() if line.strip()]
+    if (
+        observed.returncode != 0
+        or len(rows) != 1
+        or len(rows[0]) != 2
+        or rows[0][1] != remote_ref
+        or re.fullmatch(r"[0-9a-f]{40}", rows[0][0]) is None
+    ):
+        raise click.ClickException(
+            "pull-request preflight could not resolve exactly one authoritative "
+            f"{policy.remote}/{policy.base_branch} base"
+        )
+    base = rows[0][0]
+    known = _run(["git", "cat-file", "-e", f"{base}^{{commit}}"], cwd=root)
+    if known.returncode != 0:
+        raise click.ClickException(
+            "pull-request preflight cannot verify the authoritative base locally; "
+            f"fetch {policy.remote}/{policy.base_branch} and retry"
+        )
+    return base
+
+
 def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) -> None:
     """Fail before workflow side effects when delivery prerequisites are unmet."""
     root = _repository_root(cwd)
     if policy.require_clean_governance:
-        _governance_gate(root)
+        if policy.mode == "pull-request":
+            _governance_gate(root, base=_pull_request_validation_base(policy, root))
+        else:
+            _governance_gate(root)
 
     if policy.mode == "publish-only":
         status = _git_value("status", "--porcelain", cwd=root)

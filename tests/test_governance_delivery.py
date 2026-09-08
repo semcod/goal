@@ -1,6 +1,7 @@
 """Contract tests for governed delivery policy and local hook handling."""
 
 import json
+from dataclasses import replace
 from pathlib import Path
 import subprocess
 
@@ -8,6 +9,76 @@ import click
 import pytest
 
 from goal.governance import delivery
+
+
+def test_pr_preflight_supplies_real_base_to_unchanged_gate(tmp_path, monkeypatch):
+    root = _publish_repository(tmp_path)
+    base = _git(root, "rev-parse", "HEAD").stdout.strip()
+    for relative in delivery.GOVERNANCE_PACKAGE_FILES.values():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+    gate = root / "project/governance-check.sh"
+    gate.parent.mkdir(parents=True)
+    gate.write_text(
+        '#!/bin/sh\n[ "$#" = 2 ] && [ "$1" = --base ] && '
+        f'[ "$2" = "{base}" ] || exit 17\n', encoding="utf-8"
+    )
+    gate.chmod(0o755)
+    _git(root, "add", ".")
+    _git(root, "commit", "--quiet", "-m", "candidate after adoption")
+    original_run = delivery._run
+    def run(arguments, **kwargs):
+        if arguments == ["gh", "auth", "status"]:
+            return subprocess.CompletedProcess(arguments, 0, "", "")
+        return original_run(arguments, **kwargs)
+    monkeypatch.setattr(delivery, "_run", run)
+    monkeypatch.setattr(delivery.shutil, "which", lambda command: "/usr/bin/gh")
+    policy = replace(_pull_request_policy(), require_clean_governance=True)
+    before = _git(root, "status", "--porcelain").stdout
+    delivery.validate_delivery_ready(policy, cwd=root)
+    assert _git(root, "status", "--porcelain").stdout == before
+
+
+def test_pr_preflight_ignores_stale_tracking_ref_and_uses_configured_remote(tmp_path):
+    root = _publish_repository(tmp_path)
+    stale = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "remote", "rename", "origin", "upstream")
+    (root / "README.md").write_text("advanced target\n", encoding="utf-8")
+    _git(root, "commit", "--quiet", "-am", "target advance")
+    current = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "push", "--quiet", "upstream", "HEAD:release")
+    _git(root, "update-ref", "refs/remotes/upstream/release", stale)
+    policy = replace(_pull_request_policy(), remote="upstream", base_branch="release")
+    assert delivery._pull_request_validation_base(policy, root) == current
+    assert _git(root, "rev-parse", "upstream/release").stdout.strip() == stale
+
+
+@pytest.mark.parametrize("output", ["", "invalid\trefs/heads/main\n", "a" * 40 + "\trefs/heads/other\n", ("a" * 40 + "\trefs/heads/main\n") * 2])
+def test_pr_preflight_rejects_invalid_remote_observation(tmp_path, monkeypatch, output):
+    root = _repository(tmp_path)
+    monkeypatch.setattr(delivery, "_run", lambda args, **kwargs: subprocess.CompletedProcess(args, 0, output, ""))
+    with pytest.raises(click.ClickException, match="exactly one authoritative"):
+        delivery._pull_request_validation_base(_pull_request_policy(), root)
+
+
+def test_pr_preflight_does_not_fall_back_when_remote_is_unavailable(tmp_path):
+    root = _publish_repository(tmp_path)
+    _git(root, "remote", "set-url", "origin", str(tmp_path / "missing-remote"))
+    with pytest.raises(click.ClickException, match="exactly one authoritative"):
+        delivery._pull_request_validation_base(_pull_request_policy(), root)
+
+
+def test_pr_preflight_requires_observed_commit_to_exist_locally(tmp_path, monkeypatch):
+    root = _repository(tmp_path)
+    original_run = delivery._run
+    def run(arguments, **kwargs):
+        if arguments[:2] == ["git", "ls-remote"]:
+            return subprocess.CompletedProcess(arguments, 0, "a" * 40 + "\trefs/heads/main\n", "")
+        return original_run(arguments, **kwargs)
+    monkeypatch.setattr(delivery, "_run", run)
+    with pytest.raises(click.ClickException, match="fetch origin/main"):
+        delivery._pull_request_validation_base(_pull_request_policy(), root)
 
 
 def _config(**delivery_values):
