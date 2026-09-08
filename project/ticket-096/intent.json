@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-096",
+  "summary": "Bind PR preflight to the authoritative target instead of a stale adoption ticket",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "tests/test_governance_delivery.py",
+    "project/ticket-096/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bd43a30a3ce5122ebe551246bc8174900eae6174",
+    "targetBranch": "main",
+    "outcome": "A new PR after a standard adoption passes the unchanged governance gate with its actual remote target base; invalid or missing target observations fail closed.",
+    "nonGoals": [
+      "Change policy checks, trusted identities or branch protection."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Resolve the configured remote target to an immutable commit before PR preflight and pass it explicitly to the existing managed gate.",
+      "components": [
+        {
+          "name": "delivery-preflight",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded implementation through independently reviewed delivery."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_governance_delivery.py -q"
+        ],
+        "evidence": "Real Git remote/base and failure-path regression coverage."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/ -q",
+          "./project/governance-check.sh --base origin/main",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Protected publication, both Python CI jobs, post-merge CI and successful real ticket-095 preflight."
+      }
+    ]
+  }
+}
