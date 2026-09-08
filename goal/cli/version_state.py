@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import json
-import os
 import re
 import subprocess
 import tomllib
@@ -13,6 +12,7 @@ from pathlib import Path
 from typing import Iterable, Mapping, Optional, Sequence
 
 from .version_utils import bump_version, is_plain_version
+from .version_discovery import project_version_files
 
 
 _VERSION_RE = re.compile(
@@ -414,17 +414,10 @@ def _candidate_spec(path: Path, content: Optional[str] = None) -> Optional[str]:
 def discover_version_specs() -> tuple[str, ...]:
     """Find version declarations while pruning dependencies and fixtures."""
     specs: list[str] = []
-    for dirpath, dirnames, filenames in os.walk("."):
-        dirnames[:] = [
-            name
-            for name in dirnames
-            if name not in _SKIP_DIRS and not name.endswith(".egg-info")
-        ]
-        for filename in filenames:
-            path = Path(dirpath) / filename
-            spec = _candidate_spec(path)
-            if spec:
-                specs.append(_normalized_spec(spec))
+    for path in project_version_files(_SKIP_DIRS):
+        spec = _candidate_spec(path)
+        if spec:
+            specs.append(_normalized_spec(spec))
     return tuple(dict.fromkeys(specs))
 
 

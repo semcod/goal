@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-093",
+  "summary": "Keep automatic version discovery and synchronization inside repository boundaries",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "goal/cli/version_discovery.py",
+    "goal/cli/version_state.py",
+    "goal/cli/version_sync.py",
+    "tests/test_version_repository_boundaries.py",
+    "project/ticket-093/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "144351619db586f8036147a0988ea446e38acadb",
+    "targetBranch": "main",
+    "outcome": "Automatic version scanning and synchronization exclude nested Git repositories, linked worktrees and symlink targets while retaining ordinary monorepo packages. Publish through protected independent review.",
+    "nonGoals": [
+      "Change explicit version source configuration semantics.",
+      "Publish a new package version or change repository side-effect coordination."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use one pruned filesystem iterator for the three automatic version scans, retaining their existing skip policies and honoring Git boundaries without Git subprocesses.",
+      "components": [
+        {
+          "name": "version-discovery",
+          "paths": [
+            "goal/cli/version_discovery.py",
+            "goal/cli/version_state.py",
+            "goal/cli/version_sync.py",
+            "tests/test_version_repository_boundaries.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert this bounded source and regression-test commit through protected delivery."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_version_repository_boundaries.py tests/test_version_state.py tests/test_version_sync.py -q",
+          "python3 -m pytest tests/ -q",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Real nested Git repository and linked-worktree fixtures; whole-file before/after comparisons and retained monorepo updates."
+      }
+    ]
+  }
+}
