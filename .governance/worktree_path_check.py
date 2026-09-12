@@ -239,22 +239,14 @@ def _direct_child_stem(path: PurePath, root: PurePath) -> str | None:
     return relative.name if len(relative.parts) == 1 else None
 
 
-def classify_path(
-    *,
-    path: str,
-    primary_checkout: str,
-    repository_name: str,
-    branch: str | None = None,
-    path_style: str = "posix",
-) -> dict[str, Any]:
-    """Classify one registered path without changing or resolving it."""
-    path_type = _path_type(path_style)
-    candidate = path_type(path)
-    primary = path_type(primary_checkout)
-    workspace = primary.parent
-    stem: str | None = None
-    layout_version: str | None = None
+def _legacy_v1_stem(value, repository_name):
+    return value.startswith(f"{repository_name}--") and STEM_RE.fullmatch(
+        value[len(repository_name) + 2 :]
+    )
 
+
+def _classify_location(candidate, primary, workspace, repository_name, path_style):
+    stem = layout_version = None
     if candidate == primary:
         classification = "primary"
     elif (
@@ -277,9 +269,7 @@ def classify_path(
         classification, layout_version, stem = "legacy-v2", "v2", value
     elif (
         value := _direct_child_stem(candidate, workspace / ".worktrees")
-    ) and value.startswith(f"{repository_name}--") and STEM_RE.fullmatch(
-        value[len(repository_name) + 2 :]
-    ):
+    ) and _legacy_v1_stem(value, repository_name):
         classification = "legacy-v1"
         layout_version = "v1"
         stem = value[len(repository_name) + 2 :]
@@ -290,6 +280,24 @@ def classify_path(
         classification = "system-temp"
     else:
         classification = "unknown"
+
+    return classification, layout_version, stem
+
+
+def classify_path(
+    *,
+    path: str,
+    primary_checkout: str,
+    repository_name: str,
+    branch: str | None = None,
+    path_style: str = "posix",
+) -> dict[str, Any]:
+    """Classify one registered path without changing or resolving it."""
+    path_type = _path_type(path_style)
+    candidate = path_type(path)
+    primary = path_type(primary_checkout)
+    workspace = primary.parent
+    classification, layout_version, stem = _classify_location(candidate, primary, workspace, repository_name, path_style)
 
     ticket, slug = _delivery_identity(stem, branch)
     normalized_branch = branch.removeprefix("refs/heads/") if branch else None
@@ -302,6 +310,29 @@ def classify_path(
         "slug": slug,
         "anomalies": [],
     }
+
+
+def _mark_duplicate_deliveries(entries):
+    identity_counts = Counter(
+        (entry["ticket"], entry["slug"])
+        for entry in entries
+        if entry["classification"] != "primary" and entry["ticket"] and entry["slug"]
+    )
+    branch_counts = Counter(
+        entry["branch"]
+        for entry in entries
+        if entry["classification"] != "primary" and entry["branch"]
+    )
+    for entry in entries:
+        identity = (entry["ticket"], entry["slug"])
+        if (
+            entry["classification"] != "primary"
+            and (
+                (entry["ticket"] and identity_counts[identity] > 1)
+                or (entry["branch"] and branch_counts[entry["branch"]] > 1)
+            )
+        ):
+            entry["anomalies"].append("duplicate-delivery")
 
 
 def inventory(
@@ -342,26 +373,7 @@ def inventory(
         )
         entries.append(entry)
 
-    identity_counts = Counter(
-        (entry["ticket"], entry["slug"])
-        for entry in entries
-        if entry["classification"] != "primary" and entry["ticket"] and entry["slug"]
-    )
-    branch_counts = Counter(
-        entry["branch"]
-        for entry in entries
-        if entry["classification"] != "primary" and entry["branch"]
-    )
-    for entry in entries:
-        identity = (entry["ticket"], entry["slug"])
-        if (
-            entry["classification"] != "primary"
-            and (
-                (entry["ticket"] and identity_counts[identity] > 1)
-                or (entry["branch"] and branch_counts[entry["branch"]] > 1)
-            )
-        ):
-            entry["anomalies"].append("duplicate-delivery")
+    _mark_duplicate_deliveries(entries)
 
     classification_counts = Counter(entry["classification"] for entry in entries)
     anomaly_counts = Counter(anomaly for entry in entries for anomaly in entry["anomalies"])

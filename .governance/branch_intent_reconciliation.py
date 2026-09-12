@@ -146,6 +146,25 @@ def evidence(reference, observation, directory):
     return item
 
 
+def reconcile_criterion_disposition(row, criteria, proof, decision, follow, unresolved):
+    if row["outcome"] in ("implemented", "partial"):
+        required = {"content": {"content-equivalence"}, "behavior": {"test-result"},
+                    "either": {"content-equivalence", "test-result"}}[criteria[row["id"]]]
+        require(any(item["kind"] in required for item in proof), "implementation proof required; advisory is insufficient")
+    if row["outcome"] == "superseded":
+        require(decision is not None and decision["facts"]["disposition"] == "superseded", "superseding decision required")
+        require(follow is None, "superseded criterion cannot also defer work")
+    elif row["outcome"] in ("partial", "missing"):
+        require(decision is None or decision["facts"]["disposition"] == "discard",
+                "remaining work has contradictory decision")
+        require(follow is not None or (decision is not None and decision["facts"]["disposition"] == "discard"),
+                "remaining work needs a follow-up or explicit discard decision")
+    elif row["outcome"] == "unknown":
+        unresolved.append(row["id"])
+    elif row["outcome"] == "implemented":
+        require(decision is None and follow is None, "implemented criterion has contradictory disposition")
+
+
 def reconcile(report, observation, evidence_root):
     """Return review readiness only; the caller owns observation authenticity."""
     criteria = expectations(observation)
@@ -173,22 +192,7 @@ def reconcile(report, observation, evidence_root):
         for item, kind in ((decision, "decision"), (follow, "follow-up")):
             if item is not None:
                 require(item["kind"] == kind and row["id"] in item["criterionIds"], "wrong disposition evidence")
-        if row["outcome"] in ("implemented", "partial"):
-            required = {"content": {"content-equivalence"}, "behavior": {"test-result"},
-                        "either": {"content-equivalence", "test-result"}}[criteria[row["id"]]]
-            require(any(item["kind"] in required for item in proof), "implementation proof required; advisory is insufficient")
-        if row["outcome"] == "superseded":
-            require(decision is not None and decision["facts"]["disposition"] == "superseded", "superseding decision required")
-            require(follow is None, "superseded criterion cannot also defer work")
-        elif row["outcome"] in ("partial", "missing"):
-            require(decision is None or decision["facts"]["disposition"] == "discard",
-                    "remaining work has contradictory decision")
-            require(follow is not None or (decision is not None and decision["facts"]["disposition"] == "discard"),
-                    "remaining work needs a follow-up or explicit discard decision")
-        elif row["outcome"] == "unknown":
-            unresolved.append(row["id"])
-        elif row["outcome"] == "implemented":
-            require(decision is None and follow is None, "implemented criterion has contradictory disposition")
+        reconcile_criterion_disposition(row, criteria, proof, decision, follow, unresolved)
     require(seen == set(criteria), "report omits expected criteria")
     return {"schema": "new-project.branch-intent-result/v1", "status": "needs-review" if unresolved else "ready-for-owner-review",
             "unresolvedCriteria": sorted(unresolved), "authority": "none", "deletionAuthorized": False}

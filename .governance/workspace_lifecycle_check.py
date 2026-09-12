@@ -497,9 +497,7 @@ def local_branch_findings(
     return findings
 
 
-def evaluate(
-    workspace_root: Path, allowed: set[Path]
-) -> tuple[list[Finding], dict[str, Any]]:
+def discover_workspace_repositories(workspace_root: Path) -> set[Path]:
     if not workspace_root.is_dir():
         raise AuditError(f"workspace root is not a directory: {workspace_root}")
     candidates: list[Path] = []
@@ -534,6 +532,13 @@ def evaluate(
                 f"workspace contains more than {MAX_REPOSITORIES} repositories"
             )
         pending.extend(sorted(discovered, key=str))
+    return candidate_paths
+
+
+def evaluate(
+    workspace_root: Path, allowed: set[Path]
+) -> tuple[list[Finding], dict[str, Any]]:
+    candidate_paths = discover_workspace_repositories(workspace_root)
     checkouts = [
         inspect_checkout(candidate) for candidate in sorted(candidate_paths, key=str)
     ]

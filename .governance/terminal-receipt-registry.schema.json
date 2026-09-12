@@ -15,7 +15,7 @@
         "required": ["receiptRef", "ticket", "outcome", "headSha", "terminalSha", "targetBranch", "occurredAt"],
         "properties": {
           "receiptRef": {"type": "string", "pattern": "^receipt:\\S+$"},
-          "ticket": {"type": "string", "pattern": "^ticket-[0-9]{3}$"},
+          "ticket": {"type": "string", "pattern": "^ticket-[0-9]{3,}$"},
           "outcome": {"type": "string", "minLength": 1},
           "headSha": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
           "terminalSha": {"type": "string", "pattern": "^[a-f0-9]{40}$"},

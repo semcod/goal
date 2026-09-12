@@ -32,17 +32,7 @@ def finding(code: str, message: str, path: str = "") -> dict[str, str]:
     return {"code": code, "message": message, "path": path}
 
 
-def catalog_findings(catalog: Any) -> list[dict[str, str]]:
-    findings: list[dict[str, str]] = []
-    if not isinstance(catalog, dict) or catalog.get("schema") != "wellmanifest.standard-pack-routing/v1":
-        return [finding("STD-PACK-CATALOG", "unsupported standard pack catalog schema")]
-    packs = catalog.get("packs")
-    profiles = catalog.get("profiles")
-    models = catalog.get("executionModels")
-    if not isinstance(packs, list) or not isinstance(profiles, dict) or not isinstance(models, dict):
-        return [finding("STD-PACK-CATALOG", "catalog must define packs, profiles and executionModels")]
-    pack_ids: set[str] = set()
-    concerns: set[str] = set()
+def catalog_ownership_findings(packs, pack_ids, concerns, findings) -> None:
     for pack in packs:
         owns = pack.get("owns") if isinstance(pack, dict) else None
         if not isinstance(pack, dict) or not isinstance(pack.get("id"), str) or not isinstance(owns, list):
@@ -58,9 +48,9 @@ def catalog_findings(catalog: Any) -> list[dict[str, str]]:
             elif concern in concerns:
                 findings.append(finding("STD-PACK-DUPLICATE-OWNER", f"duplicate normative owner: {concern}"))
             concerns.add(concern)
-    for alias, target in (catalog.get("aliases") or {}).items():
-        if alias in pack_ids or target not in pack_ids:
-            findings.append(finding("STD-PACK-ALIAS", f"invalid compatibility alias: {alias} -> {target}"))
+
+
+def catalog_profile_findings(profiles, pack_ids, findings) -> None:
     for name, profile in profiles.items():
         if not isinstance(profile, dict):
             findings.append(finding("STD-PACK-PROFILE", f"profile {name} is not an object"))
@@ -71,6 +61,24 @@ def catalog_findings(catalog: Any) -> list[dict[str, str]]:
         for requirement in profile.get("requirements", []):
             if requirement.get("id") not in pack_ids or requirement.get("minimumLevel") not in LEVELS:
                 findings.append(finding("STD-PACK-PROFILE", f"profile {name} has invalid requirement"))
+
+
+def catalog_findings(catalog: Any) -> list[dict[str, str]]:
+    findings: list[dict[str, str]] = []
+    if not isinstance(catalog, dict) or catalog.get("schema") != "wellmanifest.standard-pack-routing/v1":
+        return [finding("STD-PACK-CATALOG", "unsupported standard pack catalog schema")]
+    packs = catalog.get("packs")
+    profiles = catalog.get("profiles")
+    models = catalog.get("executionModels")
+    if not isinstance(packs, list) or not isinstance(profiles, dict) or not isinstance(models, dict):
+        return [finding("STD-PACK-CATALOG", "catalog must define packs, profiles and executionModels")]
+    pack_ids: set[str] = set()
+    concerns: set[str] = set()
+    catalog_ownership_findings(packs, pack_ids, concerns, findings)
+    for alias, target in (catalog.get("aliases") or {}).items():
+        if alias in pack_ids or target not in pack_ids:
+            findings.append(finding("STD-PACK-ALIAS", f"invalid compatibility alias: {alias} -> {target}"))
+    catalog_profile_findings(profiles, pack_ids, findings)
     return findings
 
 
@@ -99,6 +107,63 @@ def profile_requirements(catalog: dict[str, Any], name: str) -> dict[str, str]:
     return result
 
 
+def adoption_artifact_findings(root, pack_id, record, level, findings) -> None:
+    artifacts = record.get("artifacts")
+    if LEVELS[level] >= LEVELS["S2"] and not isinstance(artifacts, list):
+        findings.append(finding("STD-ADOPTION-ARTIFACT", f"{pack_id} needs managed artifact digests"))
+        return
+    for artifact in artifacts or []:
+        if not isinstance(artifact, dict):
+            findings.append(finding("STD-ADOPTION-ARTIFACT", f"invalid artifact for {pack_id}"))
+            continue
+        target = artifact.get("target")
+        expected_digest = artifact.get("sha256")
+        if not isinstance(target, str) or target.startswith("/") or ".." in Path(target).parts:
+            findings.append(finding("STD-ADOPTION-ARTIFACT", f"unsafe target for {pack_id}"))
+            continue
+        target_path = root / target
+        if not target_path.is_file():
+            findings.append(finding("STD-ADOPTION-MISSING", f"managed projection is missing for {pack_id}", target))
+        elif SHA64.fullmatch(str(expected_digest or "")) is None or sha256(target_path) != expected_digest:
+            findings.append(finding("STD-ADOPTION-DRIFT", f"managed projection drift for {pack_id}", target))
+
+def adoption_record_findings(root, pack_id, record, models, findings) -> None:
+    level = record.get("level")
+    model = record.get("model")
+    if level not in LEVELS or model not in models:
+        findings.append(finding("STD-ADOPTION-RECORD", f"invalid model or level for {pack_id}"))
+        return
+    if LEVELS[level] > LEVELS.get(models[model].get("maximumLevel"), -1):
+        findings.append(finding("STD-ADOPTION-MODEL", f"{model} cannot claim {level} for {pack_id}"))
+    revision = record.get("revision")
+    if not isinstance(revision, str) or SHA40.fullmatch(revision) is None:
+        findings.append(finding("STD-ADOPTION-REVISION", f"{pack_id} needs an immutable 40-character revision"))
+    evidence = record.get("evidence")
+    evidence_levels = {
+        item.get("level") for item in evidence or []
+        if isinstance(item, dict) and isinstance(item.get("uri"), str)
+        and SHA64.fullmatch(str(item.get("sha256", "")))
+    }
+    for index in range(LEVELS[level] + 1):
+        expected = f"S{index}"
+        if expected not in evidence_levels:
+            findings.append(finding("STD-ADOPTION-EVIDENCE", f"{pack_id} lacks valid {expected} evidence"))
+    adoption_artifact_findings(root, pack_id, record, level, findings)
+
+
+def adoption_record_index(records, findings):
+    by_id: dict[str, dict[str, Any]] = {}
+    for record in records:
+        if not isinstance(record, dict) or not isinstance(record.get("id"), str):
+            findings.append(finding("STD-ADOPTION-RECORD", "adoption entry must have an id"))
+            continue
+        pack_id = record["id"]
+        if pack_id in by_id:
+            findings.append(finding("STD-ADOPTION-DUPLICATE", f"duplicate adoption: {pack_id}"))
+        by_id[pack_id] = record
+    return by_id
+
+
 def adoption_findings(root: Path, catalog: dict[str, Any], adoption: Any) -> list[dict[str, str]]:
     findings: list[dict[str, str]] = []
     if not isinstance(adoption, dict) or adoption.get("schema") != "wellmanifest.standard-adoption/v1":
@@ -112,59 +177,14 @@ def adoption_findings(root: Path, catalog: dict[str, Any], adoption: Any) -> lis
     records = adoption.get("adoptions")
     if not isinstance(records, list):
         return [finding("STD-ADOPTION-SCHEMA", "adoptions must be an array")]
-    by_id: dict[str, dict[str, Any]] = {}
-    for record in records:
-        if not isinstance(record, dict) or not isinstance(record.get("id"), str):
-            findings.append(finding("STD-ADOPTION-RECORD", "adoption entry must have an id"))
-            continue
-        pack_id = record["id"]
-        if pack_id in by_id:
-            findings.append(finding("STD-ADOPTION-DUPLICATE", f"duplicate adoption: {pack_id}"))
-        by_id[pack_id] = record
+    by_id = adoption_record_index(records, findings)
     models = catalog["executionModels"]
     known_packs = {item["id"] for item in catalog["packs"]}
     for pack_id, record in by_id.items():
         if pack_id not in known_packs:
             findings.append(finding("STD-ADOPTION-UNKNOWN", f"unknown pack: {pack_id}"))
             continue
-        level = record.get("level")
-        model = record.get("model")
-        if level not in LEVELS or model not in models:
-            findings.append(finding("STD-ADOPTION-RECORD", f"invalid model or level for {pack_id}"))
-            continue
-        if LEVELS[level] > LEVELS.get(models[model].get("maximumLevel"), -1):
-            findings.append(finding("STD-ADOPTION-MODEL", f"{model} cannot claim {level} for {pack_id}"))
-        revision = record.get("revision")
-        if not isinstance(revision, str) or SHA40.fullmatch(revision) is None:
-            findings.append(finding("STD-ADOPTION-REVISION", f"{pack_id} needs an immutable 40-character revision"))
-        evidence = record.get("evidence")
-        evidence_levels = {
-            item.get("level") for item in evidence or []
-            if isinstance(item, dict) and isinstance(item.get("uri"), str)
-            and SHA64.fullmatch(str(item.get("sha256", "")))
-        }
-        for index in range(LEVELS[level] + 1):
-            expected = f"S{index}"
-            if expected not in evidence_levels:
-                findings.append(finding("STD-ADOPTION-EVIDENCE", f"{pack_id} lacks valid {expected} evidence"))
-        artifacts = record.get("artifacts")
-        if LEVELS[level] >= LEVELS["S2"] and not isinstance(artifacts, list):
-            findings.append(finding("STD-ADOPTION-ARTIFACT", f"{pack_id} needs managed artifact digests"))
-            continue
-        for artifact in artifacts or []:
-            if not isinstance(artifact, dict):
-                findings.append(finding("STD-ADOPTION-ARTIFACT", f"invalid artifact for {pack_id}"))
-                continue
-            target = artifact.get("target")
-            expected_digest = artifact.get("sha256")
-            if not isinstance(target, str) or target.startswith("/") or ".." in Path(target).parts:
-                findings.append(finding("STD-ADOPTION-ARTIFACT", f"unsafe target for {pack_id}"))
-                continue
-            target_path = root / target
-            if not target_path.is_file():
-                findings.append(finding("STD-ADOPTION-MISSING", f"managed projection is missing for {pack_id}", target))
-            elif SHA64.fullmatch(str(expected_digest or "")) is None or sha256(target_path) != expected_digest:
-                findings.append(finding("STD-ADOPTION-DRIFT", f"managed projection drift for {pack_id}", target))
+        adoption_record_findings(root, pack_id, record, models, findings)
     for pack_id, minimum in required.items():
         record = by_id.get(pack_id)
         if record is None:

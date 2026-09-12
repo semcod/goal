@@ -24,7 +24,7 @@
   "properties": {
     "schema": {"const": "new-project.remediation-intent/v1"},
     "intentId": {"type": "string", "pattern": "^RI-[A-Z0-9][A-Z0-9-]*$"},
-    "ticket": {"type": "string", "pattern": "^ticket-[0-9]{3}$"},
+    "ticket": {"type": "string", "pattern": "^ticket-[0-9]{3,}$"},
     "repository": {"$ref": "#/$defs/repository"},
     "ownerRoute": {"$ref": "#/$defs/nonempty"},
     "status": {"enum": ["DRAFT", "READY", "ANALYZED"]},

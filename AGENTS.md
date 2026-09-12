@@ -1,5 +1,22 @@
 # AGENTS.md
 
+## Opted-in SQLite ticket storage
+
+When `git config --local --get new-project.ticketStorage` is `sqlite`, the
+registered primary checkout's ignored `project.sqlite` owns ticket content.
+References below to ticket README, intent, status and evidence mean records in
+that database; do not create or synchronize `project/ticket-*`, TODO or indexes
+for operational updates. Allocate through `project/new-ticket.sh` with the
+independently pinned Registry writer configured as `new-project.ticketStoreRoot`
+and `new-project.ticketStoreSha256`. Complete bounded intent in SQLite before
+implementation. Read it with the managed `ticket_input.py read` command and
+append changes through the Registry CLI with the expected revision.
+Local hooks and scope/continuity readers honor this mode. Protected CI still
+requires an independently acquired, exact-base/head snapshot and approval;
+local Git configuration, a database or its digest grants neither. Keep legacy
+files until a repository's protected CI adoption canary succeeds.
+
+
 This target repository follows `wellmanifest/new-project` policy-as-code.
 
 HOME vs ADOPT: wellmanifest owns standards; product CLI/daemons HOME in

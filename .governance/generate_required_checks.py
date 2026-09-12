@@ -178,6 +178,37 @@ def declared_names(document: dict[str, Any] | None) -> list[str]:
     return sorted(str(name) for name in names or [])
 
 
+def inspect_declaration(root: Path, write: bool) -> dict[str, Any]:
+    current = current_declaration(root)
+    inherited_hub_declaration = (current or {}).get("repository") == HUB_REPOSITORY
+    ignored = () if inherited_hub_declaration else tuple((current or {}).get(IGNORED_FIELD, ()) or ())
+    derived = declaration_for(root)
+    if derived is not None and ignored:
+        derived[IGNORED_FIELD] = list(ignored)
+    entry = {
+        "repository": root.name,
+        "derived": derived,
+        "currentRepository": (current or {}).get("repository"),
+        "currentNames": declared_names(current),
+        "derivedNames": declared_names(derived),
+    }
+    entry["agrees"] = (
+        derived is not None
+        and entry["currentRepository"] == derived["repository"]
+        and entry["currentNames"] == entry["derivedNames"]
+    )
+    entry["reusableWorkflowCallers"] = (derived or {}).get("reusableWorkflowCallers", [])
+    if write and derived is not None and not entry["agrees"]:
+        if entry["reusableWorkflowCallers"]:
+            entry["written"] = False  # A caller's context name cannot be derived here.
+        else:
+            declaration_path(root).write_text(
+                json.dumps(derived, indent=2) + "\n", encoding="utf-8"
+            )
+            entry["written"] = True
+    return entry
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("roots", nargs="+", help="Repository roots to inspect")
@@ -187,34 +218,7 @@ def main(argv: list[str] | None = None) -> int:
 
     report: list[dict[str, Any]] = []
     for raw in args.roots:
-        root = Path(raw).resolve()
-        current = current_declaration(root)
-        inherited_hub_declaration = (current or {}).get("repository") == HUB_REPOSITORY
-        ignored = () if inherited_hub_declaration else tuple((current or {}).get(IGNORED_FIELD, ()) or ())
-        derived = declaration_for(root)
-        if derived is not None and ignored:
-            derived[IGNORED_FIELD] = list(ignored)
-        entry = {
-            "repository": root.name,
-            "derived": derived,
-            "currentRepository": (current or {}).get("repository"),
-            "currentNames": declared_names(current),
-            "derivedNames": declared_names(derived),
-        }
-        entry["agrees"] = (
-            derived is not None
-            and entry["currentRepository"] == derived["repository"]
-            and entry["currentNames"] == entry["derivedNames"]
-        )
-        entry["reusableWorkflowCallers"] = (derived or {}).get("reusableWorkflowCallers", [])
-        if args.write and derived is not None and not entry["agrees"]:
-            if entry["reusableWorkflowCallers"]:
-                entry["written"] = False  # A caller's context name cannot be derived here.
-            else:
-                declaration_path(root).write_text(
-                    json.dumps(derived, indent=2) + "\n", encoding="utf-8"
-                )
-                entry["written"] = True
+        entry = inspect_declaration(Path(raw).resolve(), args.write)
         report.append(entry)
 
     if args.format == "json":

@@ -245,7 +245,7 @@ function validateMinimumShape(evaluation) {
     }
   }
   if (isObject(evaluation.contract)) {
-    if (!/^ticket-[0-9]{3}$/.test(evaluation.contract.ticket || "")) {
+    if (!/^ticket-[0-9]{3,}$/.test(evaluation.contract.ticket || "")) {
       diagnostics.push(diagnostic("EVD-SCHEMA-001", "contract.ticket is invalid", "contract.ticket", "use ticket-NNN"));
     }
     if (!Array.isArray(evaluation.contract.criteria) || evaluation.contract.criteria.length === 0) {

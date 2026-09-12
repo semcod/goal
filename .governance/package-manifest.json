@@ -116,6 +116,12 @@
       "executable": false
     },
     {
+      "source": "governance/ticket-activity-override.schema.json",
+      "target": ".governance/ticket-activity-override.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "governance/terminal-receipt-registry.schema.json",
       "target": ".governance/terminal-receipt-registry.schema.json",
       "strategy": "managed",
@@ -248,6 +254,18 @@
       "executable": true
     },
     {
+      "source": "scripts/ticket_input.py",
+      "target": ".governance/ticket_input.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "scripts/ticket_storage.py",
+      "target": ".governance/ticket_storage.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "scripts/ticket_allocation.py",
       "target": ".governance/ticket_allocation.py",
       "strategy": "managed",
@@ -266,7 +284,7 @@
       "executable": false
     },
     {
-      "source": "governance/required-checks.json",
+      "source": "template/files/required-checks.template.json",
       "target": ".governance/required-checks.json",
       "strategy": "extendable",
       "executable": false

@@ -15,13 +15,18 @@ from pathlib import Path
 from typing import Any
 
 SHA_RE = re.compile(r"^[a-f0-9]{40}$")
-TICKET_RE = re.compile(r"^ticket-[0-9]{3}$")
+TICKET_RE = re.compile(r"^ticket-[0-9]{3,}$")
 RECEIPT_REF_RE = re.compile(r"^receipt:\S+$")
 TARGET_BRANCH_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
 OCCURRED_AT_RE = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
 )
 REWRITE_VERIFICATION = "git-ancestry-or-rewritten-patch-series"
+DEFAULT_TARGET_BRANCH = "main"
+# status-projection stays the conservative default: an absent registry must not
+# be guessed away. git-ancestry is opt-in, for an adopter whose hand-edited
+# statuses have stopped tracking reality.
+MISSING_POLICIES = ("status-projection", "git-ancestry")
 
 
 class ActivityError(RuntimeError):
@@ -67,6 +72,35 @@ def policy_path(root: Path) -> Path:
     raise ActivityPolicyMissing("managed ticket activity policy is missing")
 
 
+def override_path(root: Path) -> Path | None:
+    for candidate in (
+        root / ".governance/ticket-activity.override.json",
+        root / "governance/ticket-activity.override.json",
+    ):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def apply_override(root: Path, value: dict[str, Any]) -> dict[str, Any]:
+    path = override_path(root)
+    if path is None:
+        return value
+    override = _load(path)
+    if (
+        not isinstance(override, dict)
+        or set(override) != {"$schema", "schema", "missingPolicy"}
+        or override.get("$schema") != "./ticket-activity-override.schema.json"
+        or override.get("schema") != "new-project.ticket-activity-override/v1"
+        or override.get("missingPolicy") not in MISSING_POLICIES
+    ):
+        raise ActivityError("target-owned ticket activity override is invalid")
+    effective = dict(value)
+    effective["registry"] = dict(value["registry"])
+    effective["registry"]["missingPolicy"] = override["missingPolicy"]
+    return effective
+
+
 def load_policy(root: Path) -> dict[str, Any]:
     value = _load(policy_path(root))
     required = {"$schema", "schema", "registry", "terminalOutcomes", "unsupportedOutcomePolicy"}
@@ -75,11 +109,18 @@ def load_policy(root: Path) -> dict[str, Any]:
     registry = value.get("registry")
     if not isinstance(registry, dict) or set(registry) != {"location", "path", "missingPolicy"}:
         raise ActivityError("managed ticket activity registry declaration is invalid")
-    if registry.get("location") != "git-common-dir" or registry.get("missingPolicy") != "status-projection":
+    if registry.get("location") != "git-common-dir" or registry.get("missingPolicy") not in MISSING_POLICIES:
         raise ActivityError("managed ticket activity registry policy is unsupported")
     raw_path = registry.get("path")
     if not isinstance(raw_path, str) or not raw_path or Path(raw_path).is_absolute() or ".." in Path(raw_path).parts:
         raise ActivityError("managed terminal receipt registry path is unsafe")
+    _validate_terminal_outcomes(value)
+    if value.get("unsupportedOutcomePolicy") != "remain-active":
+        raise ActivityError("unsupported outcome policy must remain-active")
+    return apply_override(root, value)
+
+
+def _validate_terminal_outcomes(value):
     outcomes = value.get("terminalOutcomes")
     if not isinstance(outcomes, dict) or not outcomes:
         raise ActivityError("managed terminal outcomes are missing")
@@ -94,9 +135,6 @@ def load_policy(root: Path) -> dict[str, Any]:
             or rule.get("releasesReservation") is not True
         ):
             raise ActivityError("managed terminal outcome rule is unsupported")
-    if value.get("unsupportedOutcomePolicy") != "remain-active":
-        raise ActivityError("unsupported outcome policy must remain-active")
-    return value
 
 
 def registry_path(root: Path, policy: dict[str, Any] | None = None) -> Path:
@@ -126,6 +164,27 @@ def projection_status(ticket_dir: Path) -> str | None:
     return match.group(1).upper() if match else None
 
 
+def _validate_terminal_receipt(receipt, seen):
+    fields = {"receiptRef", "ticket", "outcome", "headSha", "terminalSha", "targetBranch", "occurredAt"}
+    if not isinstance(receipt, dict) or set(receipt) != fields:
+        raise ActivityError("terminal receipt fields are invalid")
+    if not isinstance(receipt.get("receiptRef"), str) or RECEIPT_REF_RE.fullmatch(receipt["receiptRef"]) is None:
+        raise ActivityError("terminal receipt reference is invalid")
+    if receipt["receiptRef"] in seen:
+        raise ActivityError("terminal receipt references are not unique")
+    seen.add(receipt["receiptRef"])
+    if not TICKET_RE.fullmatch(receipt.get("ticket", "")):
+        raise ActivityError("terminal receipt ticket is invalid")
+    if not SHA_RE.fullmatch(receipt.get("headSha", "")) or not SHA_RE.fullmatch(receipt.get("terminalSha", "")):
+        raise ActivityError("terminal receipt SHA binding is invalid")
+    if not isinstance(receipt.get("outcome"), str) or not receipt["outcome"]:
+        raise ActivityError("terminal receipt value is blank")
+    if TARGET_BRANCH_RE.fullmatch(receipt.get("targetBranch", "")) is None:
+        raise ActivityError("terminal receipt target branch is invalid")
+    if OCCURRED_AT_RE.fullmatch(receipt.get("occurredAt", "")) is None:
+        raise ActivityError("terminal receipt timestamp is invalid")
+
+
 def _validate_registry(value: Any, expected_repository: str) -> list[dict[str, str]]:
     if not isinstance(value, dict) or set(value) != {"schema", "repositoryRef", "receipts"}:
         raise ActivityError("terminal receipt registry fields are invalid")
@@ -138,24 +197,7 @@ def _validate_registry(value: Any, expected_repository: str) -> list[dict[str, s
         raise ActivityError("terminal receipt registry receipts must be a list")
     seen: set[str] = set()
     for receipt in receipts:
-        fields = {"receiptRef", "ticket", "outcome", "headSha", "terminalSha", "targetBranch", "occurredAt"}
-        if not isinstance(receipt, dict) or set(receipt) != fields:
-            raise ActivityError("terminal receipt fields are invalid")
-        if not isinstance(receipt.get("receiptRef"), str) or RECEIPT_REF_RE.fullmatch(receipt["receiptRef"]) is None:
-            raise ActivityError("terminal receipt reference is invalid")
-        if receipt["receiptRef"] in seen:
-            raise ActivityError("terminal receipt references are not unique")
-        seen.add(receipt["receiptRef"])
-        if not TICKET_RE.fullmatch(receipt.get("ticket", "")):
-            raise ActivityError("terminal receipt ticket is invalid")
-        if not SHA_RE.fullmatch(receipt.get("headSha", "")) or not SHA_RE.fullmatch(receipt.get("terminalSha", "")):
-            raise ActivityError("terminal receipt SHA binding is invalid")
-        if not isinstance(receipt.get("outcome"), str) or not receipt["outcome"]:
-            raise ActivityError("terminal receipt value is blank")
-        if TARGET_BRANCH_RE.fullmatch(receipt.get("targetBranch", "")) is None:
-            raise ActivityError("terminal receipt target branch is invalid")
-        if OCCURRED_AT_RE.fullmatch(receipt.get("occurredAt", "")) is None:
-            raise ActivityError("terminal receipt timestamp is invalid")
+        _validate_terminal_receipt(receipt, seen)
     return receipts
 
 
@@ -320,10 +362,61 @@ def _advanced_ticket_branch(root: Path, ticket: str, head_sha: str, terminal_sha
     return bool(current and current != head_sha and _ancestor(root, head_sha, current) and not _ancestor(root, current, terminal_sha))
 
 
-def resolve(root: Path, ticket_dir: Path, active_statuses: set[str]) -> ActivityResolution:
+def _unmerged_ticket_branch(root: Path, ticket: str, target: str) -> bool:
+    """Report whether any branch for this ticket is still outside the target."""
+    number = ticket.removeprefix("ticket-")
+    listed = _git(
+        root, "for-each-ref", "--format=%(refname)",
+        f"refs/remotes/origin/ticket/{number}-*",
+        f"refs/heads/ticket/{number}-*",
+        check=False,
+    )
+    for ref in (listed or "").splitlines():
+        ref = ref.strip()
+        if ref and not _ancestor(root, ref, target):
+            return True
+    return False
+
+
+def delivery_landed(root: Path, ticket_dir: Path, target: str) -> bool:
+    """Answer from Git whether this ticket's delivery is already on the target.
+
+    The policy declares Git ancestry as the verification for a merged outcome,
+    but ``resolve`` could apply it only to a ticket that already had a receipt.
+    The receipt registry lives in the Git common directory, is untracked, and is
+    therefore usually absent, so a ticket merged through an ordinary pull
+    request stayed projected active for the rest of the repository's life.
+
+    Measured on 2026-09-09 across four adopters: 54, 65, 153 and 182 tickets
+    projected active at once, with merged deliveries among them. Every rule that
+    filters on "active" — conflict detection, allocation refusal, reservation
+    release — was reasoning over that noise, which is why declaring a conflict
+    never helped anyone.
+
+    A ticket's own directory is committed together with its delivery, because a
+    commit carrying only tracking carriers is refused. Its presence on the
+    target ref is therefore the ancestry evidence the policy asks for. A branch
+    for the same ticket that the target does not yet contain means more of the
+    delivery is still in flight, and the ticket stays active.
+    """
+    try:
+        relative = ticket_dir.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return False
+    present = subprocess.run(
+        ["git", "-C", str(root), "cat-file", "-e", f"{target}:{relative}"],
+        capture_output=True, check=False, timeout=20,
+        env={key: value for key, value in os.environ.items() if not key.startswith("GIT_")},
+    )
+    if present.returncode != 0:
+        return False
+    return not _unmerged_ticket_branch(root, ticket_dir.name, target)
+
+
+def resolve(root: Path, ticket_dir: Path, active_statuses: set[str], *, status_override: str | None = None) -> ActivityResolution:
     root = root.resolve()
     ticket = ticket_dir.name
-    status = projection_status(ticket_dir)
+    status = projection_status(ticket_dir) if status_override is None else status_override
     projected_active = status in active_statuses
     if not projected_active:
         return ActivityResolution(ticket, False, status, "status-projection", reason="projection-not-active")
@@ -331,8 +424,14 @@ def resolve(root: Path, ticket_dir: Path, active_statuses: set[str]) -> Activity
         policy = load_policy(root)
     except ActivityPolicyMissing:
         return ActivityResolution(ticket, True, status, "status-projection", reason="policy-not-adopted")
+    derive = policy["registry"]["missingPolicy"] == "git-ancestry"
+    default_target = _target_ref(root, DEFAULT_TARGET_BRANCH) if derive else None
     path = registry_path(root, policy)
     if not path.exists():
+        if default_target and delivery_landed(root, ticket_dir, default_target):
+            return ActivityResolution(
+                ticket, False, status, "git-ancestry", reason="delivery-on-target",
+            )
         return ActivityResolution(ticket, True, status, "status-projection", reason="registry-absent")
     receipts = _validate_registry(_load(path), repository_ref(root))
     matching = [item for item in receipts if item["ticket"] == ticket]
@@ -344,6 +443,10 @@ def resolve(root: Path, ticket_dir: Path, active_statuses: set[str]) -> Activity
         if not _terminal_verified(root, receipt, rule, target):
             continue
         return ActivityResolution(ticket, False, status, "terminal-receipt", receipt["receiptRef"], "verified-terminal")
+    if default_target and delivery_landed(root, ticket_dir, default_target):
+        return ActivityResolution(
+            ticket, False, status, "git-ancestry", reason="delivery-on-target",
+        )
     return ActivityResolution(ticket, True, status, "status-projection", reason="no-verifiable-terminal-receipt")
 
 

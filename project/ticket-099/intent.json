@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-099",
+  "summary": "Adopt wellmanifest/new-project 0.20.25",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-099/**",
+    "project/TICKETS.md",
+    ".governance/manifest.json",
+    ".governance/manifest.base.json",
+    ".governance/manifest.lock.json",
+    ".governance/package-manifest.json",
+    "pyproject.toml"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1360d7ef6b02b233708933af83edaf9f53d8840d",
+    "targetBranch": "main",
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "6d2da011088b69ebe1636f3bf681e5ec21a062ab",
+      "toRevision": "d54878a105a20d84dd554f205bc177dcacc8730a"
+    },
+    "outcome": "Goal runs the current published standard 0.20.25, whose agent host validator no longer fails to import on interpreters without tomllib, instead of the 0.20.16 projection.",
+    "nonGoals": [
+      "No source, test or behaviour change in Goal itself.",
+      "No release and no registry publish."
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 5,
+      "maxPublicInterfaceChanges": 3,
+      "maxRuntimeDependencies": 3
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Advance the pinned standard with `goal governance adopt --source-revision d54878a…` and realign the packaging metadata with the regenerated lock. The managed payload is covered by the atomic adoption proof; this ticket owns only the repository instance files that proof does not cover, and runs in the integration workstream because those files are shared contract paths.",
+      "components": [
+        {
+          "name": "governance-instance",
+          "paths": [
+            ".governance/manifest.json",
+            ".governance/manifest.base.json",
+            ".governance/manifest.lock.json",
+            ".governance/package-manifest.json",
+            "project/**"
+          ]
+        },
+        {
+          "name": "packaging-pin",
+          "paths": [
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the managed package and the packaging pin return to the 0.20.16 projection."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal governance adopt --source-revision d54878a105a20d84dd554f205bc177dcacc8730a --check",
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
+          "python -m pytest -q tests"
+        ],
+        "evidence": "Pending exact-head publication."
+      }
+    ]
+  }
+}

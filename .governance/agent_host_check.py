@@ -15,10 +15,21 @@ import json
 import os
 import subprocess
 import sys
-import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+try:  # Python 3.11+
+    import tomllib
+except ImportError:  # pragma: no cover - exercised on 3.10 runners
+    try:
+        import tomli as tomllib  # type: ignore[no-redef]
+    except ImportError:
+        # An adopter may declare requires-python >=3.10, where neither reader
+        # exists. Import must still succeed: governance_check.py reports an
+        # ImportError here as a missing managed validator, which turns an
+        # interpreter gap into a false sync defect.
+        tomllib = None  # type: ignore[assignment]
 
 SCHEMA = "new-project.agent-hosts/v1"
 CONTRACT_CANDIDATES = ("governance/agent-hosts.json", ".governance/agent-hosts.json")
@@ -134,6 +145,8 @@ def adopted_standard(root: Path) -> dict[str, Any]:
 
 
 def python_declaration(marker: Path) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    if tomllib is None:
+        return None, {}
     try:
         document = tomllib.loads(marker.read_text(encoding="utf-8"))
     except (OSError, tomllib.TOMLDecodeError):
@@ -173,6 +186,8 @@ def check_packaging(root: Path, contract: dict[str, Any]) -> list[Finding]:
         marker = root / marker_relative
         if not marker.is_file():
             continue  # The ecosystem is not present in this repository.
+        if ecosystem == "python" and tomllib is None:
+            continue  # No TOML reader on this interpreter; 3.11+ jobs enforce it.
         reader = python_declaration if ecosystem == "python" else node_declaration
         declaration, document = reader(marker)
         if declaration is None:

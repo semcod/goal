@@ -477,6 +477,35 @@ def pending_main_imports(path: Path) -> set[str]:
         return set()
 
 
+def changes_against_shared_default(first, second, first_dirty, second_dirty, first_changes, second_changes):
+    shared_default = False
+    try:
+        first_default = run_git(first.path, "rev-parse", "--verify",
+                                f"refs/remotes/origin/{default_branch(first.path)}^{{commit}}")
+        second_default = run_git(second.path, "rev-parse", "--verify",
+                                 f"refs/remotes/origin/{default_branch(second.path)}^{{commit}}")
+        if first_default == second_default:
+            first_base = run_git(first.path, "merge-base", first.head, first_default)
+            second_base = run_git(second.path, "merge-base", second.head, second_default)
+            first_committed = set(run_git(first.path, "diff", "--name-only", "--no-renames", first_base, first.head).splitlines())
+            second_committed = set(run_git(second.path, "diff", "--name-only", "--no-renames", second_base, second.head).splitlines())
+            first_renames = run_git(first.path, "diff", "--name-only", "--find-renames",
+                                    "--diff-filter=R", first_base, first.head)
+            second_renames = run_git(second.path, "diff", "--name-only", "--find-renames",
+                                     "--diff-filter=R", second_base, second.head)
+            # Replace both sides only after every strict Git read succeeds.
+            # Rename/directory-rename conflicts can be reported at a path
+            # edited under another name. Preserve the conservative path
+            # model until attribution can follow those identities too.
+            if not first_renames and not second_renames:
+                first_changes = first_committed | first_dirty
+                second_changes = second_committed | second_dirty
+                shared_default = True
+    except AuditError:
+        pass
+    return first_changes, second_changes, shared_default
+
+
 def contested_paths(
     first: "Checkout", second: "Checkout", ignore: tuple[str, ...]
 ) -> tuple[str, ...]:
@@ -503,30 +532,9 @@ def contested_paths(
                 second_changes = second_committed | second_dirty
             except AuditError:
                 pass
-        try:
-            first_default = run_git(first.path, "rev-parse", "--verify",
-                                    f"refs/remotes/origin/{default_branch(first.path)}^{{commit}}")
-            second_default = run_git(second.path, "rev-parse", "--verify",
-                                     f"refs/remotes/origin/{default_branch(second.path)}^{{commit}}")
-            if first_default == second_default:
-                first_base = run_git(first.path, "merge-base", first.head, first_default)
-                second_base = run_git(second.path, "merge-base", second.head, second_default)
-                first_committed = set(run_git(first.path, "diff", "--name-only", "--no-renames", first_base, first.head).splitlines())
-                second_committed = set(run_git(second.path, "diff", "--name-only", "--no-renames", second_base, second.head).splitlines())
-                first_renames = run_git(first.path, "diff", "--name-only", "--find-renames",
-                                        "--diff-filter=R", first_base, first.head)
-                second_renames = run_git(second.path, "diff", "--name-only", "--find-renames",
-                                         "--diff-filter=R", second_base, second.head)
-                # Replace both sides only after every strict Git read succeeds.
-                # Rename/directory-rename conflicts can be reported at a path
-                # edited under another name. Preserve the conservative path
-                # model until attribution can follow those identities too.
-                if not first_renames and not second_renames:
-                    first_changes = first_committed | first_dirty
-                    second_changes = second_committed | second_dirty
-                    shared_default = True
-        except AuditError:
-            pass
+        first_changes, second_changes, shared_default = changes_against_shared_default(
+            first, second, first_dirty, second_dirty, first_changes, second_changes
+        )
     dirty_overlap = (first_dirty & second_changes) | (second_dirty & first_changes)
     conflicts: set[str] = set()
     if first.head and second.head and first.head != second.head:
@@ -590,44 +598,90 @@ def active_statuses(root: Path) -> set[str]:
     return set()
 
 
+def virtual_ticket_files(root):
+    storage = run_git(root, "config", "--local", "--default", "files", "--get", "new-project.ticketStorage")
+    virtual = None
+    if storage == "sqlite":
+        try:
+            spec = importlib.util.spec_from_file_location("worktree_ticket_input", Path(__file__).with_name("ticket_input.py"))
+            module = importlib.util.module_from_spec(spec)
+            previous = sys.dont_write_bytecode
+            try:
+                sys.dont_write_bytecode = True
+                spec.loader.exec_module(module)
+            finally:
+                sys.dont_write_bytecode = previous
+            virtual = {item["ticket"]: item["files"] for item in module.configured_records(root)}
+        except Exception as error:
+            raise AuditError("configured SQLite ticket scopes are unavailable") from error
+    elif storage != "files":
+        raise AuditError("unknown ticket storage mode")
+    return virtual
+
+
+def ticket_status_override(virtual, directory):
+    override = {}
+    if virtual is not None:
+        try:
+            text = virtual[directory.name]["README.md"][0].decode("utf-8")
+            match = re.search(r"(?mi)^-[ \t]+\*\*Status\*\*:[ \t]*([A-Z_]+)[ \t]*$", text)
+            if match is None:
+                raise ValueError("ticket status missing")
+            override = {"status_override": match.group(1)}
+        except (KeyError, ValueError) as error:
+            raise AuditError("configured SQLite ticket status is invalid") from error
+    return override
+
+
+def scope_intent(directory, virtual):
+    intent_path = directory / "intent.json"
+    intent: dict[str, Any] = {}
+    try:
+        raw = virtual[directory.name]["intent.json"][0] if virtual is not None else intent_path.read_bytes()
+        value = json.loads(raw.decode("utf-8"))
+        if isinstance(value, dict):
+            intent = value
+    except (OSError, ValueError, KeyError) as error:
+        if virtual is not None:
+            raise AuditError("configured SQLite ticket intent is invalid") from error
+    return intent
+
+
+def ticket_scope_record(directory, intent):
+    allowed = intent.get("allowedPaths")
+    conflicts = intent.get("conflictsWith")
+    return TicketScope(
+        ticket=directory.name,
+        workstream=intent.get("workstream") if isinstance(intent.get("workstream"), str) else None,
+        allowed_paths=tuple(allowed) if isinstance(allowed, list) else (),
+        conflicts_with=tuple(conflicts) if isinstance(conflicts, list) else (),
+        path=str(directory.resolve()),
+    )
+
 def ticket_scopes(root: Path) -> tuple[tuple[TicketScope, ...], tuple[str, ...]]:
     project = root / "project"
-    if not project.is_dir():
+    virtual = virtual_ticket_files(root)
+    if virtual is None and not project.is_dir():
         return (), ()
     scopes: list[TicketScope] = []
     errors: list[str] = []
     statuses = active_statuses(root)
     if not statuses:
         return (), ()
-    for directory in sorted(project.iterdir(), key=lambda item: item.name):
-        if not directory.is_dir() or TICKET_DIRECTORY_RE.fullmatch(directory.name) is None:
+    directories = (project / name for name in virtual) if virtual is not None else project.iterdir()
+    for directory in sorted(directories, key=lambda item: item.name):
+        if (virtual is None and not directory.is_dir()) or TICKET_DIRECTORY_RE.fullmatch(directory.name) is None:
             continue
+        override = ticket_status_override(virtual, directory)
         try:
-            resolution = resolve_ticket_activity(root, directory, statuses)
+            resolution = resolve_ticket_activity(root, directory, statuses, **override)
         except ActivityError as error:
             errors.append(f"{directory.name}: {error}")
             resolution = None
         if resolution is not None and not resolution.active:
             continue
-        intent_path = directory / "intent.json"
-        intent: dict[str, Any] = {}
-        try:
-            value = json.loads(intent_path.read_text(encoding="utf-8"))
-            if isinstance(value, dict):
-                intent = value
-        except (OSError, json.JSONDecodeError):
-            pass
-        allowed = intent.get("allowedPaths")
-        conflicts = intent.get("conflictsWith")
-        scopes.append(
-            TicketScope(
-                ticket=directory.name,
-                workstream=intent.get("workstream") if isinstance(intent.get("workstream"), str) else None,
-                allowed_paths=tuple(allowed) if isinstance(allowed, list) else (),
-                conflicts_with=tuple(conflicts) if isinstance(conflicts, list) else (),
-                path=str(directory.resolve()),
-            )
-        )
+        intent = scope_intent(directory, virtual)
+        scopes.append(ticket_scope_record(directory, intent))
     return tuple(scopes), tuple(errors)
 
 
@@ -686,7 +740,7 @@ def extra_workspace_roots(seed: Path) -> list[Path]:
     return roots
 
 
-def discover_checkouts(workspace_root: Path, ignore: tuple[str, ...]) -> list[Checkout]:
+def workspace_candidates(workspace_root):
     if not workspace_root.is_dir():
         raise AuditError(f"workspace root is not a directory: {workspace_root}")
     seeds = [workspace_root.resolve(), *extra_workspace_roots(workspace_root)]
@@ -711,6 +765,12 @@ def discover_checkouts(workspace_root: Path, ignore: tuple[str, ...]) -> list[Ch
             for grandchild in grandchildren:
                 if grandchild.is_dir() and (grandchild / ".git").exists():
                     candidate_paths.add(grandchild.resolve())
+
+    return candidate_paths
+
+
+def discover_checkouts(workspace_root: Path, ignore: tuple[str, ...]) -> list[Checkout]:
+    candidate_paths = workspace_candidates(workspace_root)
 
     pending = sorted(candidate_paths, key=str)
     inspected: set[Path] = set()
@@ -814,18 +874,85 @@ def attributed_tickets(group: list[Checkout]) -> dict[Path, tuple[TicketScope, .
     }
 
 
-def overlap_findings(
-    checkouts: list[Checkout],
-    ignore: tuple[str, ...] = DEFAULT_IGNORE,
-    only_identity: str | None = None,
-    focus_checkout: Path | None = None,
-    inventory: dict[str, Any] | None = None,
-) -> list[Finding]:
-    findings: list[Finding] = []
-    inventory_by_path = {
-        Path(entry["path"]): entry
-        for entry in (inventory or {"entries": []})["entries"]
-    }
+def ticket_pair_findings(first, second, owned, ignore, identity, inventory_by_path, findings):
+    for left_ticket in owned[first.path]:
+        for right_ticket in owned[second.path]:
+            if left_ticket.ticket == right_ticket.ticket:
+                continue
+            if conflicts_declared(left_ticket, right_ticket):
+                continue
+            pairs = sorted(
+                {
+                    f"{left} <-> {right}"
+                    for left in left_ticket.allowed_paths
+                    for right in right_ticket.allowed_paths
+                    if globs_may_overlap(left, right)
+                    and not path_ignored(left, ignore)
+                    and not path_ignored(right, ignore)
+                }
+            )
+            if not pairs:
+                continue
+            findings.append(
+                Finding(
+                    code="GOV-WORKTREE-OVERLAP-002",
+                    severity="error",
+                    message=(
+                        "IN_PROGRESS tickets in sibling worktrees claim overlapping "
+                        "allowedPaths without conflictsWith."
+                    ),
+                    remediation=(
+                        "Add conflictsWith on both intents, serialize one ticket to "
+                        "BACKLOG/PLAN/BLOCKED, or narrow allowedPaths so they no longer overlap."
+                    ),
+                    evidence={
+                        "identity": identity,
+                        "left": str(first.path),
+                        "right": str(second.path),
+                        "tickets": [left_ticket.ticket, right_ticket.ticket],
+                        "overlappingPatterns": pairs,
+                        "workspaceClassifications": [
+                            inventory_by_path[first.path],
+                            inventory_by_path[second.path],
+                        ],
+                    },
+                )
+            )
+
+
+def checkout_pair_findings(first, second, owned, ignore, identity, inventory_by_path, findings):
+    shared = list(contested_paths(first, second, ignore))
+    if shared:
+        findings.append(
+            Finding(
+                code="GOV-WORKTREE-OVERLAP-001",
+                severity="error",
+                message=(
+                    "Two worktrees of the same repository are changing the same paths."
+                ),
+                remediation=(
+                    "Stop one writer, declare conflictsWith, or move the overlapping "
+                    "paths to a single ticket / integration workstream before merge."
+                ),
+                evidence={
+                    "identity": identity,
+                    "left": str(first.path),
+                    "right": str(second.path),
+                    "leftBranch": first.branch,
+                    "rightBranch": second.branch,
+                    "overlappingPaths": shared,
+                    "code2llm": optional_code2llm_hint(shared),
+                    "workspaceClassifications": [
+                        inventory_by_path[first.path],
+                        inventory_by_path[second.path],
+                    ],
+                },
+            )
+        )
+    ticket_pair_findings(first, second, owned, ignore, identity, inventory_by_path, findings)
+
+
+def activity_findings(checkouts, only_identity, findings):
     for checkout in checkouts:
         for error in checkout.activity_errors:
             # A repository-level gate must not fail on someone else's policy
@@ -839,6 +966,21 @@ def overlap_findings(
                 remediation="Reconcile or quarantine the clone-external registry from protected evidence; follow error/GOV-TICKET-ACTIVITY.md.",
                 evidence={"checkout": str(checkout.path), "detail": error, "fallback": "remain-active"},
             ))
+
+
+def overlap_findings(
+    checkouts: list[Checkout],
+    ignore: tuple[str, ...] = DEFAULT_IGNORE,
+    only_identity: str | None = None,
+    focus_checkout: Path | None = None,
+    inventory: dict[str, Any] | None = None,
+) -> list[Finding]:
+    findings: list[Finding] = []
+    inventory_by_path = {
+        Path(entry["path"]): entry
+        for entry in (inventory or {"entries": []})["entries"]
+    }
+    activity_findings(checkouts, only_identity, findings)
     groups: dict[str, list[Checkout]] = {}
     for checkout in checkouts:
         groups.setdefault(checkout.identity, []).append(checkout)
@@ -864,77 +1006,7 @@ def overlap_findings(
                     second.path.resolve(),
                 }:
                     continue
-                shared = list(contested_paths(first, second, ignore))
-                if shared:
-                    findings.append(
-                        Finding(
-                            code="GOV-WORKTREE-OVERLAP-001",
-                            severity="error",
-                            message=(
-                                "Two worktrees of the same repository are changing the same paths."
-                            ),
-                            remediation=(
-                                "Stop one writer, declare conflictsWith, or move the overlapping "
-                                "paths to a single ticket / integration workstream before merge."
-                            ),
-                            evidence={
-                                "identity": identity,
-                                "left": str(first.path),
-                                "right": str(second.path),
-                                "leftBranch": first.branch,
-                                "rightBranch": second.branch,
-                                "overlappingPaths": shared,
-                                "code2llm": optional_code2llm_hint(shared),
-                                "workspaceClassifications": [
-                                    inventory_by_path[first.path],
-                                    inventory_by_path[second.path],
-                                ],
-                            },
-                        )
-                    )
-                for left_ticket in owned[first.path]:
-                    for right_ticket in owned[second.path]:
-                        if left_ticket.ticket == right_ticket.ticket:
-                            continue
-                        if conflicts_declared(left_ticket, right_ticket):
-                            continue
-                        pairs = sorted(
-                            {
-                                f"{left} <-> {right}"
-                                for left in left_ticket.allowed_paths
-                                for right in right_ticket.allowed_paths
-                                if globs_may_overlap(left, right)
-                                and not path_ignored(left, ignore)
-                                and not path_ignored(right, ignore)
-                            }
-                        )
-                        if not pairs:
-                            continue
-                        findings.append(
-                            Finding(
-                                code="GOV-WORKTREE-OVERLAP-002",
-                                severity="error",
-                                message=(
-                                    "IN_PROGRESS tickets in sibling worktrees claim overlapping "
-                                    "allowedPaths without conflictsWith."
-                                ),
-                                remediation=(
-                                    "Add conflictsWith on both intents, serialize one ticket to "
-                                    "BACKLOG/PLAN/BLOCKED, or narrow allowedPaths so they no longer overlap."
-                                ),
-                                evidence={
-                                    "identity": identity,
-                                    "left": str(first.path),
-                                    "right": str(second.path),
-                                    "tickets": [left_ticket.ticket, right_ticket.ticket],
-                                    "overlappingPatterns": pairs,
-                                    "workspaceClassifications": [
-                                        inventory_by_path[first.path],
-                                        inventory_by_path[second.path],
-                                    ],
-                                },
-                            )
-                        )
+                checkout_pair_findings(first, second, owned, ignore, identity, inventory_by_path, findings)
     return findings
 
 

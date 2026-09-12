@@ -14,7 +14,8 @@
       "properties": {
         "location": {"const": "git-common-dir"},
         "path": {"type": "string", "pattern": "^[A-Za-z0-9._/-]+$"},
-        "missingPolicy": {"const": "status-projection"}
+        "missingPolicy": {"enum": ["status-projection", "git-ancestry"],
+          "description": "How to resolve a ticket when the receipt registry is absent. status-projection trusts the README status and is conservative. git-ancestry additionally asks Git whether the delivery already reached the target branch, which an adopter chooses when hand-edited statuses have stopped tracking reality."}
       }
     },
     "terminalOutcomes": {
