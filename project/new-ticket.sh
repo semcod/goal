@@ -11,6 +11,9 @@ FORCE_NEW=false
 ALLOCATION_KEY=""
 ALLOCATION_RECEIPT=""
 REFRESH_REMOTE=false
+TICKET_STORAGE=""
+STORE_ROOT=""
+STORE_SHA256=""
 
 # Work classification for intent/v3. The defaults are the contract's own answer
 # for an unclassified new ticket: rule W-CLASS-006 (work-request / maintenance)
@@ -36,6 +39,11 @@ Usage: ./project/new-ticket.sh [options]
                           Receipt returned by the registered allocator process
       --force-new        Create a new ticket despite an unfinished ticket
       --refresh-remote   Fetch/prune origin before allocating; local refs are used by default
+      --storage MODE     files (default) or sqlite; may come from local Git configuration
+      --ticket-store-root DIR
+                          Installed Registry ticket writer package
+      --ticket-store-sha256 SHA
+                          Independent digest of the complete writer package
   -h, --help             Show this help
 
 Accepted classification values are read from the work classification contract,
@@ -93,6 +101,12 @@ while [[ $# -gt 0 ]]; do
       ORIGIN="$2"
       shift 2
       ;;
+    --storage)
+      require_value "$@"; TICKET_STORAGE="$2"; shift 2 ;;
+    --ticket-store-root)
+      require_value "$@"; STORE_ROOT="$2"; shift 2 ;;
+    --ticket-store-sha256)
+      require_value "$@"; STORE_SHA256="$2"; shift 2 ;;
     --allocation-key)
       require_value "$@"
       ALLOCATION_KEY="$2"
@@ -132,6 +146,26 @@ AGENT="$(printf '%s' "$AGENT" | tr '[:upper:]' '[:lower:]')"
 if [[ ! "$AGENT" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
   echo "Agent id must match [a-z0-9][a-z0-9._-]*" >&2
   exit 2
+fi
+
+TICKET_STORAGE="${TICKET_STORAGE:-$(git config --local --get new-project.ticketStorage 2>/dev/null || true)}"
+TICKET_STORAGE="${TICKET_STORAGE:-files}"
+if [[ "$TICKET_STORAGE" != files && "$TICKET_STORAGE" != sqlite ]]; then
+  echo "GOV-TICKET-ALLOCATION-003: unknown ticket storage mode." >&2
+  exit 1
+fi
+TICKET_STORAGE_HELPER=""
+for candidate in .governance/ticket_storage.py scripts/ticket_storage.py; do
+  if [[ -f "$candidate" ]]; then TICKET_STORAGE_HELPER="$candidate"; break; fi
+done
+if [[ "$TICKET_STORAGE" == sqlite ]]; then
+  STORE_ROOT="${STORE_ROOT:-$(git config --local --get new-project.ticketStoreRoot 2>/dev/null || true)}"
+  STORE_SHA256="${STORE_SHA256:-$(git config --local --get new-project.ticketStoreSha256 2>/dev/null || true)}"
+  if [[ -z "$TICKET_STORAGE_HELPER" || -z "$STORE_ROOT" || -z "$STORE_SHA256" ]]; then
+    echo "GOV-TICKET-ALLOCATION-003: SQLite allocation requires the managed bridge and an independently pinned Registry writer." >&2
+    exit 1
+  fi
+  python3 "$TICKET_STORAGE_HELPER" verify --runtime-root "$STORE_ROOT" --runtime-sha256 "$STORE_SHA256"
 fi
 
 governance_manifest() {
@@ -203,8 +237,10 @@ if ! grep -Fxq -- "$WORKSTREAM" <<< "$WORKSTREAM_REGISTRY"; then
 fi
 
 is_active_ticket() {
-  local directory="$1" resolver status arguments=()
-  [[ -f "$directory/README.md" ]] || return 1
+  local directory="$1" resolver status arguments=() runner=()
+  if [[ "$TICKET_STORAGE" != sqlite ]]; then
+    [[ -f "$directory/README.md" ]] || return 1
+  fi
   for resolver in .governance/ticket_activity.py scripts/ticket_activity.py; do
     [[ -f "$resolver" ]] && break
   done
@@ -216,7 +252,12 @@ is_active_ticket() {
   while IFS= read -r status; do
     arguments+=(--active-status "$status")
   done <<< "$ACTIVE_STATUSES"
-  if python3 "$resolver" --root . resolve --ticket-dir "$directory" "${arguments[@]}" >/dev/null; then
+  if [[ "$TICKET_STORAGE" == sqlite ]]; then
+    runner=(python3 "$TICKET_STORAGE_HELPER" active --root "$PWD" --ticket "${directory##*/}")
+  else
+    runner=(python3 "$resolver" --root . resolve --ticket-dir "$directory")
+  fi
+  if "${runner[@]}" "${arguments[@]}" >/dev/null; then
     status=0
   else
     status=$?
@@ -359,7 +400,7 @@ refs_highest() {
 highest=0
 conflicting_ticket=""
 current_branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
-if [[ "$current_branch" =~ ticket[-/]([0-9]{3}) ]]; then
+if [[ "$current_branch" =~ ticket[-/]([0-9]{3,}) ]]; then
   current_ticket="project/ticket-${BASH_REMATCH[1]}"
   if is_active_ticket "$current_ticket"; then
     conflicting_ticket="$current_ticket"
@@ -367,6 +408,10 @@ if [[ "$current_branch" =~ ticket[-/]([0-9]{3}) ]]; then
 fi
 if git rev-parse --git-dir >/dev/null 2>&1; then
   highest="$(refs_highest)"
+  if [[ -n "$TICKET_STORAGE_HELPER" ]]; then
+    database_highest="$(python3 "$TICKET_STORAGE_HELPER" highest --root "$PWD")"
+    (( database_highest > highest )) && highest=$database_highest
+  fi
   if [[ -n "$allocation_state" && -f "$allocation_state" ]]; then
     read -r reserved_highest < "$allocation_state"
     if [[ ! "$reserved_highest" =~ ^[0-9]+$ ]]; then
@@ -447,6 +492,21 @@ ticket_id="ticket-$ticket_num"
 ticket_dir="project/$ticket_id"
 timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 date_only="${timestamp%%T*}"
+
+if [[ "$TICKET_STORAGE" == sqlite ]]; then
+  # Retain the existing private clone counter for older allocators. Ticket
+  # contents and revisions are stored only in SQLite, never in this cache.
+  if [[ -n "$allocation_state" ]]; then
+    allocation_state_tmp="$allocation_state.$$"
+    printf '%s\n' "$next_num" > "$allocation_state_tmp"
+    mv "$allocation_state_tmp" "$allocation_state"
+  fi
+  python3 "$TICKET_STORAGE_HELPER" create --root "$PWD" --ticket "$ticket_id" \
+    --title "$TITLE" --workstream "$WORKSTREAM" --kind "$KIND" --priority "$PRIORITY" --origin "$ORIGIN" \
+    --allocation-key "${ALLOCATION_KEY:-local:$ticket_id}" \
+    --runtime-root "$STORE_ROOT" --runtime-sha256 "$STORE_SHA256"
+  exit 0
+fi
 
 if ! mkdir "$ticket_dir" 2>/dev/null; then
   echo "GOV-TICKET-LOCK-003: ticket directory already exists: $ticket_dir" >&2

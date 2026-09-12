@@ -67,6 +67,19 @@ def valid_time(value: Any) -> bool:
     return True
 
 
+def validate_publication_lease_fields(value, phase, errors) -> None:
+    head, pr = value.get("headSha"), value.get("pullRequest")
+    if head is not None and (not isinstance(head, str) or not GIT_SHA_RE.fullmatch(head)):
+        errors.append(finding("GOV-CHANGE-LEASE-001", "headSha must be null or an exact Git SHA."))
+    if pr is not None and (not isinstance(pr, int) or pr < 1):
+        errors.append(finding("GOV-CHANGE-LEASE-001", "pullRequest must be null or a positive integer."))
+    frozen = value.get("publicationFrozen")
+    if not isinstance(frozen, bool) or frozen != (phase in FROZEN_PHASES):
+        errors.append(finding("GOV-CHANGE-LEASE-003", "publicationFrozen must match frozen phases.", phase=phase, publicationFrozen=frozen))
+    if phase in FROZEN_PHASES | {"merged", "closed", "released"} and head is None:
+        errors.append(finding("GOV-CHANGE-LEASE-003", "Publication and merge terminal phases require headSha.", phase=phase))
+
+
 def validate_lease(value: dict[str, Any]) -> list[dict[str, Any]]:
     errors = closed_object(value, LEASE_FIELDS, "lease")
     if errors:
@@ -85,16 +98,7 @@ def validate_lease(value: dict[str, Any]) -> list[dict[str, Any]]:
     for key in ("issuedAt", "expiresAt", "heartbeatAt"):
         if not valid_time(value.get(key)):
             errors.append(finding("GOV-CHANGE-LEASE-001", f"{key} must be an RFC 3339 timestamp."))
-    head, pr = value.get("headSha"), value.get("pullRequest")
-    if head is not None and (not isinstance(head, str) or not GIT_SHA_RE.fullmatch(head)):
-        errors.append(finding("GOV-CHANGE-LEASE-001", "headSha must be null or an exact Git SHA."))
-    if pr is not None and (not isinstance(pr, int) or pr < 1):
-        errors.append(finding("GOV-CHANGE-LEASE-001", "pullRequest must be null or a positive integer."))
-    frozen = value.get("publicationFrozen")
-    if not isinstance(frozen, bool) or frozen != (phase in FROZEN_PHASES):
-        errors.append(finding("GOV-CHANGE-LEASE-003", "publicationFrozen must match frozen phases.", phase=phase, publicationFrozen=frozen))
-    if phase in FROZEN_PHASES | {"merged", "closed", "released"} and head is None:
-        errors.append(finding("GOV-CHANGE-LEASE-003", "Publication and merge terminal phases require headSha.", phase=phase))
+    validate_publication_lease_fields(value, phase, errors)
     return errors
 
 
@@ -136,34 +140,32 @@ def validate_receipt(value: dict[str, Any]) -> list[dict[str, Any]]:
     return errors
 
 
-def evaluate_transition(lease: dict[str, Any], request: dict[str, Any], replacement: dict[str, Any] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    errors = validate_lease(lease) + validate_request(request)
+def transition_identity_error(lease, request, phase, errors):
     code = message = None
-    phase, action = str(lease.get("phase", "claimed")), request.get("action")
     if not errors and request["leaseId"] != lease["leaseId"]:
         code, message = "GOV-CHANGE-LEASE-002", "Request targets another lease."
     if not errors and (request["expectedRevision"] != lease["leaseRevision"] or request["expectedFencingToken"] != lease["fencingToken"] or request["expectedPhase"] != phase):
         code, message = "GOV-CHANGE-LEASE-002", "Compare-and-swap authority is stale."
-    next_phase = TRANSITIONS.get(str(action), {}).get(phase)
-    if not errors and code is None and next_phase is None:
-        code, message = "GOV-CHANGE-LEASE-003", "Transition is not allowed from the current phase."
-    target_head = request.get("targetHeadSha")
-    if not errors and code is None and action == "freeze-publication" and target_head is None:
-        code, message = "GOV-CHANGE-LEASE-003", "Freeze requires an exact targetHeadSha."
-    if not errors and code is None and phase in FROZEN_PHASES and target_head not in (None, lease.get("headSha")):
-        code, message = "GOV-CHANGE-LEASE-003", "Frozen publication head cannot be changed."
-    if not errors and code is None and action in {"dispatch-validation", "approve", "record-merge"} and target_head != lease.get("headSha"):
-        code, message = "GOV-CHANGE-LEASE-003", "Transition requires the exact frozen head."
-    if not errors and code is None and action == "supersede":
-        invalid = replacement is None or bool(validate_receipt(replacement)) or replacement.get("phaseAfter") not in TERMINAL_REPLACEMENT_PHASES or replacement.get("outcome") != "accepted"
-        if invalid:
-            code, message = "GOV-CHANGE-LEASE-004", "Supersede requires an accepted terminal replacement receipt."
-        elif request.get("replacementReceiptRef") != replacement.get("receiptRef"):
-            code, message = "GOV-CHANGE-LEASE-004", "Replacement receipt reference does not match."
-    if errors:
-        code, message = errors[0]["code"], errors[0]["message"]
+    return code, message
+
+
+def transition_phase_error(lease, request, phase, action, next_phase, target_head, replacement):
+    if next_phase is None:
+        return "GOV-CHANGE-LEASE-003", "Transition is not allowed from the current phase."
+    if action == "freeze-publication" and target_head is None:
+        return "GOV-CHANGE-LEASE-003", "Freeze requires an exact targetHeadSha."
+    if phase in FROZEN_PHASES and target_head not in (None, lease.get("headSha")):
+        return "GOV-CHANGE-LEASE-003", "Frozen publication head cannot be changed."
+    if action in {"dispatch-validation", "approve", "record-merge"} and target_head != lease.get("headSha"):
+        return "GOV-CHANGE-LEASE-003", "Transition requires the exact frozen head."
+    if action == "supersede":
+        return replacement_receipt_error(request, replacement)
+    return None, None
+
+
+def transition_receipt(lease, request, phase, action, next_phase, target_head, code):
     accepted = code is None
-    receipt = {
+    return {
         "schema": RECEIPT_SCHEMA, "requestId": request.get("requestId", "invalid"), "leaseId": lease.get("leaseId", "invalid"),
         "previousRevision": lease.get("leaseRevision", 1), "leaseRevision": lease.get("leaseRevision", 1) + int(accepted),
         "previousFencingToken": lease.get("fencingToken", 1), "fencingToken": lease.get("fencingToken", 1) + int(accepted),
@@ -172,6 +174,29 @@ def evaluate_transition(lease: dict[str, Any], request: dict[str, Any], replacem
         "headSha": target_head if accepted and action == "freeze-publication" else lease.get("headSha"), "pullRequest": lease.get("pullRequest"),
         "receiptRef": f"receipt://change-lease/{lease.get('leaseId', 'invalid')}/{request.get('requestId', 'invalid')}", "occurredAt": request.get("requestedAt", "1970-01-01T00:00:00Z"),
     }
+
+
+def replacement_receipt_error(request, replacement):
+    invalid = replacement is None or bool(validate_receipt(replacement)) or replacement.get("phaseAfter") not in TERMINAL_REPLACEMENT_PHASES or replacement.get("outcome") != "accepted"
+    if invalid:
+        return "GOV-CHANGE-LEASE-004", "Supersede requires an accepted terminal replacement receipt."
+    elif request.get("replacementReceiptRef") != replacement.get("receiptRef"):
+        return "GOV-CHANGE-LEASE-004", "Replacement receipt reference does not match."
+    return None, None
+
+
+def evaluate_transition(lease: dict[str, Any], request: dict[str, Any], replacement: dict[str, Any] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    errors = validate_lease(lease) + validate_request(request)
+    phase, action = str(lease.get("phase", "claimed")), request.get("action")
+    code, message = transition_identity_error(lease, request, phase, errors)
+    next_phase = TRANSITIONS.get(str(action), {}).get(phase)
+    target_head = request.get("targetHeadSha")
+    if not errors and code is None:
+        code, message = transition_phase_error(lease, request, phase, action, next_phase, target_head, replacement)
+    if errors:
+        code, message = errors[0]["code"], errors[0]["message"]
+    accepted = code is None
+    receipt = transition_receipt(lease, request, phase, action, next_phase, target_head, code)
     return receipt, errors or ([] if accepted else [finding(str(code), str(message), phase=phase, action=action)])
 
 

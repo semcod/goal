@@ -49,7 +49,7 @@ if [[ -z "$branch" || "$branch" == "HEAD" ]]; then
   exit 1
 fi
 
-if [[ ! "$branch" =~ ticket[-/]([0-9]{3}) ]]; then
+if [[ ! "$branch" =~ ticket[-/]([0-9]{3,}) ]]; then
   echo "GOV-AGENT-HOST-001: branch '$branch' is not bound to ticket-NNN." >&2
   echo "  Allocate with ./project/new-ticket.sh and commit on a ticket branch." >&2
   exit 1
@@ -58,13 +58,28 @@ fi
 ticket="ticket-${BASH_REMATCH[1]}"
 readme_rel="project/$ticket/README.md"
 
-if ! staged_readme="$(git show ":$readme_rel" 2>/dev/null)"; then
-  echo "GOV-AGENT-HOST-002: $root/$readme_rel is missing from the staged snapshot." >&2
-  echo "  Allocate with ./project/new-ticket.sh; do not invent a ticket number." >&2
+ticket_storage="$(git config --local --get new-project.ticketStorage 2>/dev/null || true)"
+if [[ "${ticket_storage:-files}" == sqlite ]]; then
+  reader="$root/.governance/ticket_input.py"
+  [[ -f "$reader" ]] || reader="$root/scripts/ticket_input.py"
+  if ! staged_readme="$(PYTHONDONTWRITEBYTECODE=1 python3 "$reader" read --root "$root" --ticket "$ticket" --file README.md)"; then
+    echo "GOV-AGENT-HOST-002: active SQLite ticket content is unavailable." >&2
+    exit 1
+  fi
+elif [[ "${ticket_storage:-files}" == files ]]; then
+  if ! staged_readme="$(git show ":$readme_rel" 2>/dev/null)"; then
+    echo "GOV-AGENT-HOST-002: $root/$readme_rel is missing from the staged snapshot." >&2
+    echo "  Allocate with ./project/new-ticket.sh; do not invent a ticket number." >&2
+    exit 1
+  fi
+else
+  echo "GOV-AGENT-HOST-002: unknown ticket storage mode." >&2
   exit 1
 fi
 
 governance_only_transition() {
+  # SQLite transitions never require a Git carrier commit.
+  [[ "${ticket_storage:-files}" == files ]] || return 1
   if git diff --cached --quiet -- "$readme_rel"; then
     return 1
   fi

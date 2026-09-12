@@ -137,6 +137,17 @@ def parse_time(value: object, label: str) -> dt.datetime:
     return parsed.astimezone(dt.timezone.utc)
 
 
+def validate_receipt_lifetime(receipt: dict, allocator: dict, now: dt.datetime) -> None:
+    issued = parse_time(receipt.get("issuedAt"), "issuedAt")
+    expires = parse_time(receipt.get("expiresAt"), "expiresAt")
+    if issued > now + dt.timedelta(seconds=60):
+        raise AllocationError("receipt issuedAt is in the future")
+    if expires <= now:
+        raise AllocationError("allocation receipt has expired")
+    if expires <= issued or (expires - issued).total_seconds() > allocator["maxReceiptAgeSeconds"]:
+        raise AllocationError("allocation receipt lifetime exceeds policy")
+
+
 def validate_receipt(receipt: dict, request: dict, config: dict, now: dt.datetime) -> str:
     fields = {
         "schema", "allocationId", "repositoryRef", "ticket", "number",
@@ -165,14 +176,7 @@ def validate_receipt(receipt: dict, request: dict, config: dict, now: dt.datetim
         raise AllocationError("receipt fencing token must be a positive integer")
     if not SHA256.fullmatch(str(receipt.get("proofDigest", ""))):
         raise AllocationError("receipt proof digest is invalid")
-    issued = parse_time(receipt.get("issuedAt"), "issuedAt")
-    expires = parse_time(receipt.get("expiresAt"), "expiresAt")
-    if issued > now + dt.timedelta(seconds=60):
-        raise AllocationError("receipt issuedAt is in the future")
-    if expires <= now:
-        raise AllocationError("allocation receipt has expired")
-    if expires <= issued or (expires - issued).total_seconds() > allocator["maxReceiptAgeSeconds"]:
-        raise AllocationError("allocation receipt lifetime exceeds policy")
+    validate_receipt_lifetime(receipt, allocator, now)
     return f"{number:03d}"
 
 

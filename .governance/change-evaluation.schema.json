@@ -58,7 +58,7 @@
         "approvalScopeHash"
       ],
       "properties": {
-        "ticket": { "type": "string", "pattern": "^ticket-[0-9]{3}$" },
+        "ticket": { "type": "string", "pattern": "^ticket-[0-9]{3,}$" },
         "workstream": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "criteria": {
           "type": "array",

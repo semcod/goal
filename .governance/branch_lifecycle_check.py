@@ -57,6 +57,35 @@ def require_ref(value: Any, label: str) -> str:
     return value
 
 
+def parse_snapshot_pulls(pulls_value: Any) -> list[dict[str, Any]]:
+    if not isinstance(pulls_value, list) or len(pulls_value) > MAX_ITEMS:
+        raise SnapshotError(f"openPullRequests must be an array with at most {MAX_ITEMS} items")
+    pulls: list[dict[str, Any]] = []
+    numbers: set[int] = set()
+    for index, item in enumerate(pulls_value):
+        if not isinstance(item, dict):
+            raise SnapshotError(f"openPullRequests[{index}] must be an object")
+        require_exact_fields(item, {"number", "headRepository", "headRef"}, f"openPullRequests[{index}]")
+        number = item["number"]
+        if not isinstance(number, int) or isinstance(number, bool) or number < 1:
+            raise SnapshotError(f"openPullRequests[{index}].number must be a positive integer")
+        if number in numbers:
+            raise SnapshotError("openPullRequests must not contain duplicate numbers")
+        numbers.add(number)
+        pulls.append(
+            {
+                "number": number,
+                "headRepository": require_repository(
+                    item["headRepository"],
+                    f"openPullRequests[{index}].headRepository",
+                    nullable=True,
+                ),
+                "headRef": require_ref(item["headRef"], f"openPullRequests[{index}].headRef"),
+            }
+        )
+    return pulls
+
+
 def parse_snapshot(value: Any, expected_repository: str | None) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise SnapshotError("snapshot root must be an object")
@@ -92,32 +121,7 @@ def parse_snapshot(value: Any, expected_repository: str | None) -> dict[str, Any
     if default_branch not in branches:
         raise SnapshotError("defaultBranch is missing from branches")
 
-    pulls_value = value["openPullRequests"]
-    if not isinstance(pulls_value, list) or len(pulls_value) > MAX_ITEMS:
-        raise SnapshotError(f"openPullRequests must be an array with at most {MAX_ITEMS} items")
-    pulls: list[dict[str, Any]] = []
-    numbers: set[int] = set()
-    for index, item in enumerate(pulls_value):
-        if not isinstance(item, dict):
-            raise SnapshotError(f"openPullRequests[{index}] must be an object")
-        require_exact_fields(item, {"number", "headRepository", "headRef"}, f"openPullRequests[{index}]")
-        number = item["number"]
-        if not isinstance(number, int) or isinstance(number, bool) or number < 1:
-            raise SnapshotError(f"openPullRequests[{index}].number must be a positive integer")
-        if number in numbers:
-            raise SnapshotError("openPullRequests must not contain duplicate numbers")
-        numbers.add(number)
-        pulls.append(
-            {
-                "number": number,
-                "headRepository": require_repository(
-                    item["headRepository"],
-                    f"openPullRequests[{index}].headRepository",
-                    nullable=True,
-                ),
-                "headRef": require_ref(item["headRef"], f"openPullRequests[{index}].headRef"),
-            }
-        )
+    pulls = parse_snapshot_pulls(value["openPullRequests"])
     return {
         "repository": repository,
         "defaultBranch": default_branch,
