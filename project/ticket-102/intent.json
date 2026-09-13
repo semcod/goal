@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-102",
+  "summary": "Preserve canonical ticket branches during PR publication",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-102/**",
+    "goal/governance/delivery.py",
+    "tests/test_governance_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "dfad90c41a250b12140347b64c316ae293af710c",
+    "targetBranch": "main",
+    "outcome": "New canonical ticket branches retain the same branch identity during protected PR publication, with explicit legacy PR reuse and no duplicate remote delivery.",
+    "nonGoals": [
+      "No dependency manifests or bootstrap edits; tickets 100/101 retain their scopes.",
+      "No Planfile controller, managed adoption or release changes."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Resolve canonical ticket branches at the existing controlled publication boundary; retain legacy transport only for existing open PRs or legacy workspaces.",
+      "components": [
+        {
+          "name": "governed-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material commit; existing remote branches and PRs remain preserved."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_governance_delivery.py -q"
+        ],
+        "evidence": "Canonical name, ticket mismatch, legacy reuse, ambiguous PR and API failure regressions."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base dfad90c41a250b12140347b64c316ae293af710c --head HEAD --actor agent"
+        ],
+        "evidence": "Exact scope and protected CI plus independent Validator before merge."
+      }
+    ]
+  }
+}

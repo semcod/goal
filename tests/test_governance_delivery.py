@@ -630,9 +630,10 @@ def test_merged_branch_pr_is_not_reused_for_a_new_delivery(tmp_path, monkeypatch
 def test_pull_request_push_preserves_colliding_local_branch(tmp_path, monkeypatch):
     """Canonical remote publication must not create or rewrite a local alias."""
     root = _repository(tmp_path)
-    canonical = "goal/ticket-055"
+    alias = "goal/ticket-055"
+    canonical = "ticket/055-close"
     stale_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
-    _git(root, "branch", canonical)
+    _git(root, "branch", alias)
     _git(root, "switch", "-c", "ticket/055-close")
     expected_head = _commit_ticket_change(
         root, "[ticket-055] close governed delivery evidence"
@@ -645,7 +646,7 @@ def test_pull_request_push_preserves_colliding_local_branch(tmp_path, monkeypatc
         if arguments[:2] == ["git", "push"]:
             return subprocess.CompletedProcess(arguments, 0, "", "")
         if arguments[:3] == ["gh", "pr", "list"]:
-            payload = [
+            payload = [] if arguments[arguments.index("--head") + 1] == alias else [
                 {
                     "url": "https://github.com/example/repo/pull/55",
                     "headRefOid": expected_head,
@@ -666,14 +667,14 @@ def test_pull_request_push_preserves_colliding_local_branch(tmp_path, monkeypatc
     assert resolved_head == canonical
     assert url == "https://github.com/example/repo/pull/55"
     assert _git(root, "branch", "--show-current").stdout.strip() == "ticket/055-close"
-    assert _git(root, "rev-parse", canonical).stdout.strip() == stale_sha
+    assert _git(root, "rev-parse", alias).stdout.strip() == stale_sha
     push = next(call for call in calls if call[:2] == ["git", "push"])
     assert push == [
         "git",
         "push",
         "-u",
         "origin",
-        "HEAD:refs/heads/goal/ticket-055",
+        "HEAD:refs/heads/ticket/055-close",
     ]
     assert "--force" not in push
     assert not any(call[:2] == ["git", "switch"] for call in calls)
@@ -787,3 +788,85 @@ def test_open_pr_with_stale_head_fails_closed(tmp_path, monkeypatch):
     assert sleeps == [delivery.PULL_REQUEST_HEAD_RETRY_SECONDS] * (
         delivery.PULL_REQUEST_HEAD_ATTEMPTS - 1
     )
+
+
+@pytest.mark.parametrize("branch,ticket", [
+    ("ticket/102-canonical-pr-branch", "ticket-102"),
+    ("ticket/1234-canonical-pr-branch", "ticket-1234"),
+])
+def test_pr_head_preserves_canonical_ticket_branch(tmp_path, branch, ticket):
+    root = _repository(tmp_path)
+    _git(root, "switch", "-c", branch)
+    assert delivery._pr_head(ticket, root) == branch
+
+
+@pytest.mark.parametrize("branch,ticket", [
+    ("ticket/102-canonical-pr-branch", "ticket-103"),
+    ("ticket/102-canonical-pr-branch", None),
+    ("ticket/102-invalid_slug", "ticket-102"),
+    ("ticket/102", "ticket-102"),
+])
+def test_pr_head_rejects_invalid_ticket_binding(tmp_path, branch, ticket):
+    root = _repository(tmp_path)
+    _git(root, "switch", "-c", branch)
+    with pytest.raises(click.ClickException, match="ticket"):
+        delivery._pr_head(ticket, root)
+
+
+@pytest.mark.parametrize("branch", ["main", "feature/legacy", None])
+def test_pr_head_keeps_legacy_and_detached_mapping(tmp_path, branch):
+    root = _repository(tmp_path)
+    if branch is None:
+        _git(root, "checkout", "--detach")
+    elif branch != "main":
+        _git(root, "switch", "-c", branch)
+    assert delivery._pr_head("ticket-102", root) == "goal/ticket-102"
+
+
+@pytest.mark.parametrize("existing", ["none", "canonical", "legacy", "both", "failure", "invalid"])
+def test_canonical_publication_observes_existing_prs_before_push(tmp_path, monkeypatch, existing):
+    root = _repository(tmp_path)
+    canonical, legacy = "ticket/102-canonical-pr-branch", "goal/ticket-102"
+    _git(root, "switch", "-c", canonical)
+    expected = _git(root, "rev-parse", "HEAD").stdout.strip()
+    calls, created = [], False
+    original_run = delivery._run
+
+    def run(arguments, *, cwd=None):
+        nonlocal created
+        calls.append(arguments)
+        if arguments[:2] == ["git", "push"]:
+            return subprocess.CompletedProcess(arguments, 0, "", "")
+        if arguments[:3] == ["gh", "pr", "list"]:
+            if existing == "failure":
+                return subprocess.CompletedProcess(arguments, 1, "", "API unavailable")
+            if existing == "invalid":
+                return subprocess.CompletedProcess(arguments, 0, "{}", "")
+            head = arguments[arguments.index("--head") + 1]
+            present = (existing == "both" or (existing == "legacy" and head == legacy)
+                       or (existing == "canonical" and head == canonical) or created)
+            pushed = any(c[:2] == ["git", "push"] for c in calls)
+            payload = [{"url": "https://github.com/example/repo/pull/102",
+                        "headRefOid": expected if pushed else "a" * 40}] if present else []
+            return subprocess.CompletedProcess(arguments, 0, json.dumps(payload), "")
+        if arguments[:3] == ["gh", "pr", "create"]:
+            created = True
+            return subprocess.CompletedProcess(arguments, 0, "created", "")
+        return original_run(arguments, cwd=cwd)
+
+    monkeypatch.setattr(delivery, "_run", run)
+    if existing in {"both", "failure", "invalid"}:
+        with pytest.raises(click.ClickException):
+            delivery.deliver_pull_request(_pull_request_policy(), ticket="ticket-102", title="bound", cwd=root)
+        assert not any(c[:2] == ["git", "push"] or c[:3] == ["gh", "pr", "create"] for c in calls)
+        return
+    head, url = delivery.deliver_pull_request(_pull_request_policy(), ticket="ticket-102", title="bound", cwd=root)
+    expected_branch = legacy if existing == "legacy" else canonical
+    assert head == expected_branch
+    assert url.endswith("/102")
+    push_index = next(i for i, c in enumerate(calls) if c[:2] == ["git", "push"])
+    assert calls[push_index][-1] == "HEAD:refs/heads/" + expected_branch
+    queries = [c[c.index("--head") + 1] for c in calls[:push_index] if c[:3] == ["gh", "pr", "list"]]
+    assert queries == [canonical, legacy]
+    assert created == (existing == "none")
+    assert _git(root, "branch", "--show-current").stdout.strip() == canonical

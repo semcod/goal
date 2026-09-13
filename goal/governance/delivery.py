@@ -870,10 +870,22 @@ def remove_delivery_hook(*, cwd: Path | None = None) -> Path:
     return path
 
 
-def _pr_head(ticket: str | None, root: Path) -> str:
+def _legacy_pr_head(ticket: str | None, root: Path) -> str:
     identity = ticket or _git_value("rev-parse", "--short=12", "HEAD", cwd=root)
     slug = re.sub(r"[^a-z0-9-]+", "-", identity.lower()).strip("-")
     return f"goal/{slug or 'change'}"
+
+
+def _pr_head(ticket: str | None, root: Path) -> str:
+    current = _git_value("branch", "--show-current", cwd=root)
+    if current.startswith("ticket/"):
+        match = re.fullmatch(r"ticket/([0-9]{3,})-[a-z0-9]+(?:-[a-z0-9]+)*", current)
+        if match is None or ticket != f"ticket-{match[1]}":
+            raise click.ClickException(
+                "canonical ticket/NNN-slug branch must match the delivery ticket"
+            )
+        return current
+    return _legacy_pr_head(ticket, root)
 
 
 def pending_pull_request_delivery(
@@ -982,6 +994,57 @@ def pending_pull_request_delivery(
     )
 
 
+def _query_open_pull_request(
+    policy: DeliveryPolicy, head: str, root: Path,
+) -> dict[str, str] | None:
+    """Observe one open PR without requiring its pre-push head to be current."""
+    result = _run(
+        ["gh", "pr", "list", "--state", "open", "--head", head,
+         "--base", policy.base_branch, "--limit", "2", "--json", "url,headRefOid"],
+        cwd=root,
+    )
+    if result.returncode != 0:
+        raise click.ClickException(
+            "could not query open pull requests: "
+            + (result.stderr or "unknown gh error").strip()
+        )
+    try:
+        matches = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise click.ClickException(
+            "could not query open pull requests: gh returned invalid JSON"
+        ) from error
+    if not isinstance(matches, list):
+        raise click.ClickException("could not query open pull requests: gh returned an invalid result")
+    if len(matches) > 1:
+        raise click.ClickException(f"multiple open pull requests use governed branch '{head}'")
+    if not matches:
+        return None
+    match = matches[0]
+    if not isinstance(match, dict):
+        raise click.ClickException("could not query open pull requests: gh returned an invalid entry")
+    if any(not isinstance(match.get(key), str) or not match[key].strip()
+           for key in ("url", "headRefOid")):
+        raise click.ClickException("open pull request is missing its URL or head commit")
+    return {key: match[key].strip() for key in ("url", "headRefOid")}
+
+
+def _publication_head(policy: DeliveryPolicy, ticket: str | None, root: Path) -> str:
+    head = _pr_head(ticket, root)
+    legacy = _legacy_pr_head(ticket, root)
+    if head == legacy:
+        return head
+    canonical_pr = _query_open_pull_request(policy, head, root)
+    legacy_pr = _query_open_pull_request(policy, legacy, root)
+    if canonical_pr is not None and legacy_pr is not None:
+        raise click.ClickException(
+            "canonical and legacy ticket branches both have open pull requests; reconcile before push"
+        )
+    # Updating a pre-existing alias is a compatibility path, never a new alias.
+    # The subsequent non-forced push and exact-head observation still apply.
+    return legacy if legacy_pr is not None else head
+
+
 def _find_open_pull_request(
     policy: DeliveryPolicy,
     head: str,
@@ -990,59 +1053,12 @@ def _find_open_pull_request(
     """Resolve one open PR and bind it to the currently pushed commit."""
     expected_head = _git_value("rev-parse", "HEAD", cwd=root)
     for attempt in range(PULL_REQUEST_HEAD_ATTEMPTS):
-        result = _run(
-            [
-                "gh",
-                "pr",
-                "list",
-                "--state",
-                "open",
-                "--head",
-                head,
-                "--base",
-                policy.base_branch,
-                "--limit",
-                "2",
-                "--json",
-                "url,headRefOid",
-            ],
-            cwd=root,
-        )
-        if result.returncode != 0:
-            raise click.ClickException(
-                "could not query open pull requests: "
-                + (result.stderr or "unknown gh error").strip()
-            )
-        try:
-            matches = json.loads(result.stdout)
-        except json.JSONDecodeError as error:
-            raise click.ClickException(
-                "could not query open pull requests: gh returned invalid JSON"
-            ) from error
-        if not isinstance(matches, list):
-            raise click.ClickException(
-                "could not query open pull requests: gh returned an invalid result"
-            )
-        if len(matches) > 1:
-            raise click.ClickException(
-                f"multiple open pull requests use governed branch '{head}'"
-            )
-        if not matches:
+        match = _query_open_pull_request(policy, head, root)
+        if match is None:
             return None
-
-        match = matches[0]
-        if not isinstance(match, dict):
-            raise click.ClickException(
-                "could not query open pull requests: gh returned an invalid entry"
-            )
-        url = str(match.get("url", "")).strip()
-        actual_head = str(match.get("headRefOid", "")).strip()
-        if not url or not actual_head:
-            raise click.ClickException(
-                "open pull request is missing its URL or head commit"
-            )
+        actual_head = match["headRefOid"]
         if actual_head == expected_head:
-            return url
+            return match["url"]
         if attempt + 1 < PULL_REQUEST_HEAD_ATTEMPTS:
             time.sleep(PULL_REQUEST_HEAD_RETRY_SECONDS)
             continue
@@ -1050,7 +1066,6 @@ def _find_open_pull_request(
             f"open pull request for '{head}' targets {actual_head}, "
             f"not current pushed HEAD {expected_head}"
         )
-
     raise AssertionError("pull-request head retry loop exhausted unexpectedly")
 
 
@@ -1063,7 +1078,7 @@ def deliver_pull_request(
 ) -> tuple[str, str]:
     """Push a controlled head branch and create or reuse its pull request."""
     root = _repository_root(cwd)
-    head = _pr_head(ticket, root)
+    head = _publication_head(policy, ticket, root)
     current = _git_value("branch", "--show-current", cwd=root)
     push_arguments = ["git", "push"]
     if current:
