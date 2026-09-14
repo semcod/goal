@@ -1,5 +1,7 @@
 # TODO
 
+- [ ] [ticket-112](project/ticket-112/README.md): compact Markdown guides and stable legacy links; local validation, no remote publication.
+
 Before research or writing, follow [documentation placement](docs/AGENTS.md); final reports and plans must be indexed in [docs/README.md](docs/README.md).
 
 ## Governed architecture roadmap

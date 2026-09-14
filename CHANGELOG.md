@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Documentation
+
+- Consolidate [Markdown output](docs/FEATURE/MARKDOWN_OUTPUT.md) and [integration guidance](docs/SERVICE/MARKDOWN_OUTPUT_INTEGRATION.md), correcting defaults and preserving legacy links.
+
 ### Changed
 - **`no_package_source_changes` now commits & pushes docs/metadata instead of
   leaving them uncommitted.** For registry projects where only docs/metadata

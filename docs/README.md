@@ -1,3 +1,19 @@
+# Goal documentation
+
+## Compact topic guides
+
+Wellmanifest/docs compact-format pilot: one topic per uppercase filename,
+priority in metadata, and short changelog entries linking here. This is not
+protected standard adoption. The generated reference below is unchanged.
+
+New references should link whole topic files. Legacy headings preserve old
+links; publishing these guides does not install the standard checker in CI
+or turn embedded examples into executable policy contracts.
+
+- [Markdown output](FEATURE/MARKDOWN_OUTPUT.md) — command defaults, optional metadata and report limits.
+- [Markdown integration](SERVICE/MARKDOWN_OUTPUT_INTEGRATION.md) — capture output, preserve exit codes and protect artifacts.
+- [Legacy overview](markdown-output.md) and [legacy guide](markdown-output-guide.md) — original entry paths and heading links.
+
 <!-- code2docs:start --># goal
 
 ![version](https://img.shields.io/badge/version-0.1.0-blue) ![python](https://img.shields.io/badge/python-%3E%3D3.8-blue) ![coverage](https://img.shields.io/badge/coverage-unknown-lightgrey) ![functions](https://img.shields.io/badge/functions-1411-green)
