@@ -362,3 +362,261 @@ def test_planner_binding_rejects_missing_route(tmp_path):
     root, catalog, digest = _binding_checkout(tmp_path, migrations=[])
     with pytest.raises(AdoptionPlanError, match="migration_recipe_missing"):
         _prepare_binding(root, catalog, digest)
+
+
+class _CommandBoundary:
+    def __init__(self):
+        self.permitted = True
+        self.observation = object()
+        self.authorizations = []
+        self.effects = []
+
+    def observe(self, plan, phase, key):
+        return self.observation
+
+    def authorize(self, plan, phase, key):
+        self.authorizations.append((plan, phase, key))
+        return self.permitted
+
+    def apply(self, plan, phase, key):
+        self.effects.append((plan, phase, key))
+
+
+def _command_adapter(tmp_path, **overrides):
+    from goal.governance.adoption_transaction import GoalAdoptionAdapter
+
+    root, catalog, digest = _binding_checkout(tmp_path)
+    executable = tmp_path / "goal-fixture"
+    executable.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+    executable.chmod(0o700)
+    boundary = _CommandBoundary()
+    arguments = {
+        "target_root": root, "catalog_path": catalog,
+        "catalog_sha256": digest, "repository": "semcod/fixture",
+        "ticket": "ticket-001", "profile_digest": "c" * 64,
+        "scope_digest": "d" * 64, "goal_executable": executable,
+        "timeout_seconds": 2, "delegate": boundary,
+    }
+    arguments.update(overrides)
+    adapter = GoalAdoptionAdapter(**arguments)
+    return adapter, boundary, root, catalog, executable
+
+
+def _command_process(monkeypatch, executable, *, returncode=0, failure=None):
+    import subprocess
+    from types import SimpleNamespace
+
+    original = subprocess.Popen
+    calls = []
+    waits = []
+
+    def communicate(*, timeout):
+        waits.append(timeout)
+        if failure is not None:
+            raise failure
+        return None, None
+
+    process = SimpleNamespace(
+        pid=123456789, returncode=returncode, communicate=communicate,
+        wait=lambda: waits.append("reaped"),
+    )
+
+    def spawn(argv, *args, **kwargs):
+        if argv[0] != str(executable):
+            return original(argv, *args, **kwargs)
+        calls.append((argv, kwargs))
+        return process
+
+    monkeypatch.setattr(subprocess, "Popen", spawn)
+    return calls, waits
+
+
+def test_command_adapter_fixed_immutable_invocation_and_no_receipt(tmp_path, monkeypatch):
+    import subprocess
+
+    adapter, boundary, root, _, executable = _command_adapter(tmp_path)
+    calls, waits = _command_process(monkeypatch, executable)
+    key = adapter.plan.key("adoption")
+    assert adapter.apply(adapter.plan, "adoption", key) is None
+    assert calls == [([
+        str(executable), "governance", "adopt", "--standard-repository",
+        "https://github.com/wellmanifest/new-project.git", "--source-revision",
+        adapter.plan.to_revision, "--target-root", str(root), "--upgrade",
+    ], {
+        "cwd": root, "stdin": subprocess.DEVNULL,
+        "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL,
+        "start_new_session": True,
+    })]
+    assert waits == [2]
+    assert len(boundary.authorizations) == 1
+    assert boundary.effects == []
+    assert adapter.observe(adapter.plan, "adoption", key) is boundary.observation
+
+
+@pytest.mark.parametrize("phase", ["validation", "publication", "merge"])
+def test_command_adapter_delegates_other_phases(tmp_path, monkeypatch, phase):
+    adapter, boundary, _, _, executable = _command_adapter(tmp_path)
+    calls, _ = _command_process(monkeypatch, executable)
+    key = adapter.plan.key(phase)
+    adapter.apply(adapter.plan, phase, key)
+    assert boundary.effects == [(adapter.plan, phase, key)]
+    assert len(boundary.authorizations) == 1
+    assert calls == []
+
+
+@pytest.mark.parametrize("mismatch", ["subject", "key", "phase"])
+def test_command_adapter_rejects_mismatched_call(tmp_path, monkeypatch, mismatch):
+    from dataclasses import replace
+
+    adapter, boundary, _, _, executable = _command_adapter(tmp_path)
+    calls, _ = _command_process(monkeypatch, executable)
+    plan = replace(adapter.plan, ticket="ticket-002") if mismatch == "subject" else adapter.plan
+    phase = "unknown" if mismatch == "phase" else "adoption"
+    key = "foreign" if mismatch == "key" else adapter.plan.key("adoption")
+    with pytest.raises(ValueError, match="mismatch"):
+        adapter.apply(plan, phase, key)
+    assert boundary.authorizations == []
+    assert calls == []
+
+
+@pytest.mark.parametrize("permission", [False, None, 1, "approved"])
+def test_command_adapter_requires_explicit_fresh_authority(tmp_path, monkeypatch, permission):
+    adapter, boundary, _, _, executable = _command_adapter(tmp_path)
+    calls, _ = _command_process(monkeypatch, executable)
+    key = adapter.plan.key("adoption")
+    assert adapter.authorize(adapter.plan, "adoption", key) is True
+    boundary.permitted = permission
+    with pytest.raises(PermissionError, match="fresh"):
+        adapter.apply(adapter.plan, "adoption", key)
+    assert len(boundary.authorizations) == 2
+    assert calls == []
+
+
+@pytest.mark.parametrize("change", ["untracked", "catalog", "head"])
+def test_command_adapter_reobserves_planning_inputs(tmp_path, monkeypatch, change):
+    adapter, boundary, root, catalog, executable = _command_adapter(tmp_path)
+    calls, _ = _command_process(monkeypatch, executable)
+    if change == "catalog":
+        catalog.write_bytes(catalog.read_bytes() + b"\n")
+    elif change == "head":
+        lock = root / ".governance" / "manifest.lock.json"
+        lock.write_bytes(lock.read_bytes() + b"\n")
+        _binding_commit(root)
+    else:
+        (root / "untracked-input").write_text("changed\n", encoding="utf-8")
+    with pytest.raises(PermissionError):
+        adapter.apply(adapter.plan, "adoption", adapter.plan.key("adoption"))
+    assert boundary.authorizations == []
+    assert calls == []
+
+
+def test_command_adapter_reobserves_after_authority_wait(tmp_path, monkeypatch):
+    adapter, boundary, root, _, executable = _command_adapter(tmp_path)
+    calls, _ = _command_process(monkeypatch, executable)
+
+    def authorize(*args):
+        (root / "concurrent-input").write_text("changed\n", encoding="utf-8")
+        return True
+
+    monkeypatch.setattr(boundary, "authorize", authorize)
+    with pytest.raises(PermissionError, match="changed during"):
+        adapter.apply(adapter.plan, "adoption", adapter.plan.key("adoption"))
+    assert calls == []
+
+
+@pytest.mark.parametrize("deadline", [True, 0, -1, float("nan"), float("inf"), "2", None])
+def test_command_adapter_rejects_invalid_deadline(tmp_path, deadline):
+    with pytest.raises(ValueError, match="deadline"):
+        _command_adapter(tmp_path, timeout_seconds=deadline)
+
+
+def test_command_adapter_rejects_relative_executable(tmp_path):
+    with pytest.raises(ValueError, match="absolute"):
+        _command_adapter(tmp_path, goal_executable="goal")
+
+
+def test_command_adapter_nonzero_requires_external_readback(tmp_path, monkeypatch):
+    adapter, boundary, _, _, executable = _command_adapter(tmp_path)
+    _command_process(monkeypatch, executable, returncode=7)
+    key = adapter.plan.key("adoption")
+    with pytest.raises(RuntimeError, match="exited 7; external readback"):
+        adapter.apply(adapter.plan, "adoption", key)
+    assert adapter.observe(adapter.plan, "adoption", key) is boundary.observation
+
+
+@pytest.mark.parametrize("interrupted", [False, True])
+def test_command_adapter_timeout_or_interrupt_kills_group(tmp_path, monkeypatch, interrupted):
+    import os
+    import signal
+    import subprocess
+
+    adapter, boundary, _, _, executable = _command_adapter(tmp_path)
+    failure = KeyboardInterrupt() if interrupted else subprocess.TimeoutExpired("fixture", 2)
+    _, waits = _command_process(monkeypatch, executable, failure=failure)
+    killed = []
+    monkeypatch.setattr(os, "killpg", lambda pid, sig: killed.append((pid, sig)))
+    key = adapter.plan.key("adoption")
+    with pytest.raises(type(failure)):
+        adapter.apply(adapter.plan, "adoption", key)
+    assert killed == [(123456789, signal.SIGKILL)]
+    assert waits == [2, "reaped"]
+    assert adapter.observe(adapter.plan, "adoption", key) is boundary.observation
+
+
+def test_command_adapter_reuses_real_adopt_generator_path(tmp_path, monkeypatch):
+    import json
+    import subprocess
+    from pathlib import Path
+    from click.testing import CliRunner
+    from goal.cli import governance_cmd
+
+    adapter, boundary, root, _, executable = _command_adapter(tmp_path)
+    original = subprocess.Popen
+    invocations = []
+
+    def checkout(repository, revision, destination, allow_unpublished_for_testing=False):
+        assert repository == "https://github.com/wellmanifest/new-project.git"
+        assert revision == adapter.plan.to_revision
+        assert allow_unpublished_for_testing is False
+        scripts = Path(destination) / "scripts"
+        scripts.mkdir(parents=True)
+        (scripts / "create_adoption_lock.py").write_text(
+            "import argparse, json\nfrom pathlib import Path\n"
+            "p=argparse.ArgumentParser()\n"
+            "p.add_argument('--target-root', required=True)\n"
+            "p.add_argument('--source-revision', required=True)\n"
+            "p.add_argument('--upgrade', action='store_true')\n"
+            "a=p.parse_args()\n"
+            "(Path(a.target_root)/'adapter-effect.json').write_text(json.dumps(vars(a)))\n",
+            encoding="utf-8",
+        )
+
+    class InlineCommand:
+        returncode = None
+
+        def __init__(self, argv):
+            self.argv = argv
+
+        def communicate(self, *, timeout):
+            assert timeout == 2
+            result = CliRunner().invoke(governance_cmd.adopt, self.argv[3:])
+            assert result.exception is None, result.output
+            self.returncode = result.exit_code
+            return None, None
+
+    def spawn(argv, *args, **kwargs):
+        if argv[0] == str(executable):
+            invocations.append(argv)
+            return InlineCommand(argv)
+        return original(argv, *args, **kwargs)
+
+    monkeypatch.setattr(governance_cmd, "_checkout_standard", checkout)
+    monkeypatch.setattr(subprocess, "Popen", spawn)
+    key = adapter.plan.key("adoption")
+    adapter.apply(adapter.plan, "adoption", key)
+    assert len(invocations) == 1
+    assert json.loads((root / "adapter-effect.json").read_text()) == {
+        "target_root": str(root), "source_revision": adapter.plan.to_revision,
+        "upgrade": True,
+    }
+    assert adapter.observe(adapter.plan, "adoption", key) is boundary.observation

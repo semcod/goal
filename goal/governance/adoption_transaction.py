@@ -334,3 +334,123 @@ def prepare_adoption_transaction(
         profile_digest=profile_digest,
         scope_digest=bound_scope,
     )
+
+
+class GoalAdoptionAdapter:
+    """Run the existing Goal adoption CLI, not a second migration engine.
+
+    The caller must resolve the executable/runtime and deadline from the trusted
+    profile bound by ``profile_digest``. The delegate owns authoritative readback,
+    fresh execution authority, and all non-adoption phases. Neither a zero exit
+    code nor a changed lock is promoted to an APPLIED observation here.
+    """
+
+    def __init__(
+        self, *, target_root, catalog_path, catalog_sha256, repository, ticket,
+        profile_digest, scope_digest, goal_executable, timeout_seconds, delegate,
+        target_revision=None,
+    ):
+        import math
+        import os
+        from pathlib import Path
+
+        if (
+            isinstance(timeout_seconds, bool)
+            or not isinstance(timeout_seconds, (int, float))
+            or not math.isfinite(timeout_seconds)
+            or timeout_seconds <= 0
+        ):
+            raise ValueError("adoption deadline must be finite and positive")
+        executable = Path(goal_executable)
+        if not executable.is_absolute():
+            raise ValueError("Goal executable must be an absolute trusted path")
+        executable = executable.resolve(strict=True)
+        if not executable.is_file() or not os.access(executable, os.X_OK):
+            raise ValueError("Goal executable must be an executable file")
+        self._inputs = {
+            "target_root": Path(target_root).resolve(strict=True),
+            "catalog_path": Path(catalog_path).resolve(strict=True),
+            "catalog_sha256": catalog_sha256,
+            "repository": repository,
+            "ticket": ticket,
+            "profile_digest": profile_digest,
+            "scope_digest": scope_digest,
+            "target_revision": target_revision,
+        }
+        self._plan = prepare_adoption_transaction(**self._inputs)
+        if self._plan is None:
+            raise ValueError("retained standard requires no adoption adapter")
+        self._executable = str(executable)
+        self._timeout = timeout_seconds
+        self._delegate = delegate
+
+    @property
+    def plan(self):
+        """The immutable subject that the external boundary must authorize."""
+        return self._plan
+
+    def _require_subject(self, plan, phase, key):
+        if (
+            phase not in ("adoption", "validation", "publication", "merge")
+            or plan != self._plan
+            or key != self._plan.key(phase)
+        ):
+            raise ValueError("adoption adapter subject, phase or key mismatch")
+
+    def _current_plan_matches(self):
+        try:
+            return prepare_adoption_transaction(**self._inputs) == self._plan
+        except (ValueError, OSError):
+            return False
+
+    def observe(self, plan, phase, key):
+        self._require_subject(plan, phase, key)
+        return self._delegate.observe(plan, phase, key)
+
+    def authorize(self, plan, phase, key):
+        self._require_subject(plan, phase, key)
+        if phase == "adoption" and not self._current_plan_matches():
+            return False
+        return self._delegate.authorize(plan, phase, key) is True
+
+    def apply(self, plan, phase, key):
+        import os
+        import signal
+        import subprocess
+
+        # Keep direct callers fail-closed too; controller authorization is not a
+        # reusable grant. The delegate still revalidates the actual writer lease.
+        if not self.authorize(plan, phase, key):
+            raise PermissionError("fresh adoption phase authority is required")
+        if phase != "adoption":
+            self._delegate.apply(plan, phase, key)
+            return
+        if not self._current_plan_matches():
+            raise PermissionError("adoption inputs changed during authorization")
+        argv = [
+            self._executable, "governance", "adopt",
+            "--standard-repository",
+            "https://github.com/wellmanifest/new-project.git",
+            "--source-revision", plan.to_revision,
+            "--target-root", str(self._inputs["target_root"]), "--upgrade",
+        ]
+        process = subprocess.Popen(
+            argv, cwd=self._inputs["target_root"], stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        try:
+            process.communicate(timeout=self._timeout)
+        except BaseException:
+            # A timeout/interruption may follow a partial write. Kill the whole
+            # command group and let the transaction journal require readback.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+            raise
+        if process.returncode != 0:
+            raise RuntimeError(
+                f"Goal adoption exited {process.returncode}; external readback required"
+            )
