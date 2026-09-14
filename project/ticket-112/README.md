@@ -3,7 +3,7 @@
 - **ID**: ticket-112
 - **Owner**: codex
 - **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-14
 
 ## Goal and scope
@@ -31,8 +31,9 @@ commit ec838fddbda7a6f5a19d90cf3700e0e0fcf0a702, not protected fleet adoption.
   This pilot does not grant protected adoption or publication authority.
 - Canonical result: [documentation index](../../docs/README.md).
 
-Local validation is complete. No push, PR, merge or release was performed.
-Ticket remains IN_PROGRESS pending a separately authorized publication.
+Local validation is complete. On 2026-09-14 the user authorized branch push,
+PR publication and independent protected merge. Keep IN_PROGRESS through
+exact-head review. Runtime deployment and DSL expansion remain out of scope.
 
 ## Tracking boundary
 

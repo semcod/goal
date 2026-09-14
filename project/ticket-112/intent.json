@@ -29,10 +29,10 @@
   "delivery": {
     "acceptedBaseSha": "ad8f1253d0168e0b7d4fa069ecab2a3017edb660",
     "targetBranch": "main",
-    "outcome": "Refactor existing documentation into concise topic documents, retaining historical entry paths and changelog links",
+    "outcome": "Publish the compact documentation refactoring through independent protected review and merge",
     "nonGoals": [
       "Runtime changes",
-      "Deploy or remote publication",
+      "Runtime deployment or DSL extension",
       "Claiming protected adoption of the unpublished docs standard"
     ],
     "complexity": "L",

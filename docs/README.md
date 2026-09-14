@@ -2,9 +2,13 @@
 
 ## Compact topic guides
 
-Local wellmanifest/docs compact-format pilot: one topic per uppercase filename,
+Wellmanifest/docs compact-format pilot: one topic per uppercase filename,
 priority in metadata, and short changelog entries linking here. This is not
 protected standard adoption. The generated reference below is unchanged.
+
+New references should link whole topic files. Legacy headings preserve old
+links; publishing these guides does not install the standard checker in CI
+or turn embedded examples into executable policy contracts.
 
 - [Markdown output](FEATURE/MARKDOWN_OUTPUT.md) — command defaults, optional metadata and report limits.
 - [Markdown integration](SERVICE/MARKDOWN_OUTPUT_INTEGRATION.md) — capture output, preserve exit codes and protect artifacts.

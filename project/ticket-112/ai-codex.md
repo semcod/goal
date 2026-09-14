@@ -1,5 +1,9 @@
 # Documentation pilot
 
+SESSION_EXECUTION_AUTHORIZATION (2026-09-14): user explicitly requested
+"kontynuuj, wypchnij, scal". Delivery now includes branch push, PR and the
+declared independent protected merge process, never self-approval.
+
 SESSION_EXECUTION_AUTHORIZATION: user requested continuation and documentation
 refactoring in several semcod repositories on 2026-09-14.
 
