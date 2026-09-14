@@ -1,0 +1,94 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-106",
+  "summary": "Register integration ownership for the new unpublished adoption controller and its tests",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-106/**",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/**",
+    "tests/**",
+    "docs/**"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4d8b4d286d2ceaa8bab3e948d5cceb7e89f5b5ca",
+    "targetBranch": "main",
+    "outcome": "Independently publish the exact local ownership entries needed for integration ticket-107 to implement the adoption controller",
+    "nonGoals": [
+      "No existing runtime component or persistent data is moved",
+      "No wildcard ownership expansion or changes to Wellmanifest standards",
+      "Controller implementation, tests and documentation are handed off to ticket-107"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Register initial integration ownership for two new unpublished paths: goal/governance/adoption_transaction.py and tests/test_adoption_transaction.py. All existing path rules and runtime owners remain unchanged.",
+      "components": [
+        {
+          "name": "local-ownership-registry",
+          "paths": [
+            ".governance/manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the previously accepted target manifest through a reviewed change before activating the unpublished controller; retain the handoff files."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Managed gate for the exact target-owned manifest delta"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q tests/test_governance_delivery.py"
+        ],
+        "evidence": "Delivery regression suite plus independent required CI checks"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "git diff --check"
+        ],
+        "evidence": "Controller source, tests and original intent preserved in the private handoff for ticket-107"
+      }
+    ]
+  }
+}
