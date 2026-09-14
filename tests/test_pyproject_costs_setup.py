@@ -22,7 +22,7 @@ dev = [
     dev = tomllib.loads(updated)["project"]["optional-dependencies"]["dev"]
     assert "goal>=2.1.0; python_version >= '3.12'" in dev
     assert "costs>=0.1.53; python_version >= '3.9'" in dev
-    assert "pfix>=0.1.60; python_version >= '3.10'" in dev
+    assert not any(spec.startswith("pfix") for spec in dev)
 
     unchanged, changed_again = _try_add_deps(updated)
     assert changed_again is False
@@ -50,7 +50,9 @@ dev = [
     dev = tomllib.loads(updated)["project"]["optional-dependencies"]["dev"]
     assert "goal>=2.1.0; python_version >= '3.12'" in dev
     assert "costs>=0.1.53; python_version >= '3.9'" in dev
-    assert "pfix>=0.1.60; python_version >= '3.10'" in dev
+    # A pfix requirement left by older Goal releases is neither migrated nor
+    # re-added; removing it stays an explicit, reviewed project change.
+    assert "pfix>=0.1.60" in dev
 
     unchanged, changed_again = _try_add_deps(updated)
     assert changed_again is False
@@ -69,7 +71,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pfix>=0.1.60",
+    "goal>=2.1.0",
 ]
 """
 
@@ -79,7 +81,7 @@ dev = [
     project = tomllib.loads(updated)["project"]
     assert project["dependencies"] == ["costs>=0.1.53"]
     assert project["optional-dependencies"]["dev"] == [
-        "pfix>=0.1.60; python_version >= '3.10'"
+        "goal>=2.1.0; python_version >= '3.12'"
     ]
 
     unchanged, changed_again = _try_add_deps(updated)

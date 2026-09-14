@@ -1,0 +1,104 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-100",
+  "summary": "Stop bootstrapping pfix auto-repair into projects",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-100/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/project_bootstrap.py",
+    "goal/bootstrap/pyproject_costs_setup.py",
+    "tests/test_project_bootstrap.py",
+    "tests/test_pyproject_costs_setup.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "dfad90c41a250b12140347b64c316ae293af710c",
+    "targetBranch": "main",
+    "outcome": "Goal bootstrap no longer installs, configures or injects pfix, so removing pfix from a project is not undone by the next Goal run.",
+    "nonGoals": [
+      "No automatic deletion of existing pfix declarations in bootstrapped projects.",
+      "No change to Goal's own pyproject.toml or uv.lock (separate integration ticket).",
+      "No release and no registry publish."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 1
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Delete the private pfix install/config/env helpers and their call from bootstrap_project, and drop pfix from the injected dev-dependency tuple. Keep reading an explicit [tool.pfix] auto_apply = false as a legacy opt-out of Goal's configuration auto-fix so no project silently gains auto-fix.",
+      "components": [
+        {
+          "name": "project-bootstrap",
+          "paths": [
+            "goal/project_bootstrap.py",
+            "tests/test_project_bootstrap.py"
+          ]
+        },
+        {
+          "name": "dev-dependency-injection",
+          "paths": [
+            "goal/bootstrap/pyproject_costs_setup.py",
+            "tests/test_pyproject_costs_setup.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; bootstrap reinstalls and reconfigures pfix as before."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_project_bootstrap.py"
+        ],
+        "evidence": "Pending exact-head publication."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_pyproject_costs_setup.py"
+        ],
+        "evidence": "Pending exact-head publication."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
+          "python -m pytest -q tests"
+        ],
+        "evidence": "Pending exact-head publication."
+      }
+    ]
+  }
+}
