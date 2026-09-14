@@ -1,0 +1,45 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-105",
+  "summary": "Deterministic pinned governance adoption planner",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": ["project/ticket-105/**", "TODO.md", "project/TICKETS.md", "goal/governance/adoption_plan.py", "goal/cli/governance_cmd.py", "tests/test_adoption_plan.py"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f344e9df780cddd8a1065d597b3ac4b7b13b32a6",
+    "targetBranch": "main",
+    "outcome": "Goal prepares deterministic digest-bound new-project adoption plans without an LLM or automatic latest-version churn, delivered through protected review.",
+    "nonGoals": ["No fleet execution or cross-pack certification", "No catalog publication or policy authority", "No change to governance gates or managed standard", "No adaptive security limits"],
+    "complexity": "S",
+    "estimatedMinutes": 50,
+    "budgets": {"maxImplementationFiles": 3, "maxAffectedComponents": 2, "maxPublicInterfaceChanges": 1, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Read an explicitly digest-pinned local catalog, observe Git and the adopted lock, keep supported pins by default, and find a shortest explicit route with stable tie-breaking. Emit advisory fixed-adopter steps, never execute catalog commands or grant authority.",
+      "components": [
+        {"name": "adoption-planner", "paths": ["goal/governance/adoption_plan.py", "tests/test_adoption_plan.py"]},
+        {"name": "governance-cli", "paths": ["goal/cli/governance_cmd.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["goal governance plan-adoption JSON CLI"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the implementation; existing adoption command remains unchanged."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python -m pytest tests/test_adoption_plan.py -q"], "evidence": "Pending local tests"},
+      {"criterion": "AC-02", "commands": ["python -m pytest tests/test_adoption_plan.py tests/test_governance_cmd.py -q"], "evidence": "Pending local tests"},
+      {"criterion": "AC-03", "commands": ["./project/governance-check.sh --base origin/main --head HEAD --actor agent"], "evidence": "Pending local gate and protected exact-head CI"}
+    ]
+  }
+}
