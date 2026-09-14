@@ -1,0 +1,121 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-107",
+  "summary": "Deliver the resumable adoption transaction controller, regression fixtures and bounded integration documentation",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-107/**",
+    "project/TICKETS.md",
+    "goal/governance/adoption_transaction.py",
+    "tests/test_adoption_transaction.py",
+    "docs/README.md",
+    "docs/information/adoption-transactions.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    "pyproject.toml",
+    "uv.lock",
+    ".governance/**"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "fabdc0c143c012f56e0f2ec1d009a07fadf7ff16",
+    "targetBranch": "main",
+    "outcome": "Independently publish a tested single-host adoption transaction controller for trusted existing automation adapters, with explicit live-integration limits",
+    "nonGoals": [
+      "Live consumer upgrades or protected deployment",
+      "New publisher, migration engine or authority source",
+      "Distributed locking, production scheduler or live adapters",
+      "Changes to wellmanifest standards or additional ownership rules"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Persist bounded local phase state before effects; require independent adapter readback and fresh authority before progression, with stable idempotency keys and no cached permission",
+      "components": [
+        {
+          "name": "adoption-controller",
+          "paths": [
+            "goal/governance/adoption_transaction.py"
+          ]
+        },
+        {
+          "name": "adoption-regressions",
+          "paths": [
+            "tests/test_adoption_transaction.py"
+          ]
+        },
+        {
+          "name": "adoption-documentation",
+          "paths": [
+            "docs/README.md",
+            "docs/information/adoption-transactions.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Python adoption transaction and trusted adapter API"
+      ],
+      "dataChanges": [
+        "Private local goal.adoption-transaction/v1 progress journal; not a trusted receipt"
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Do not activate the pilot module; preserve any private journal and use the previously accepted Goal runtime. No consumer migration is performed by this slice."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_adoption_transaction.py"
+        ],
+        "evidence": "Focused durable phase and restart fixture results, not a live adoption receipt"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q tests/test_adoption_transaction.py"
+        ],
+        "evidence": "Negative subject, CAS, authority, journal and uncertain-outcome fixtures"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Managed gate and whitespace checks for the exact integration scope"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python3 -m pytest -q tests/test_adoption_plan.py tests/test_governance_delivery.py"
+        ],
+        "evidence": "Existing pinned planner and protected delivery regression results"
+      }
+    ]
+  }
+}
