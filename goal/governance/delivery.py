@@ -444,6 +444,11 @@ def _governance_gate(root: Path, *, base: str | None = None) -> None:
             )
             or "governance gate failed"
         )
+        from goal.governance.remediation import publish_governance_remediation
+
+        remediation = publish_governance_remediation(root, detail)
+        if remediation.detail and remediation.proposal_path is not None:
+            detail += f"\nGoal remediation: {remediation.detail}"
         guidance = governance_diagnostic_guidance(root, detail)
         if guidance:
             detail += "\n" + "\n".join(guidance)
