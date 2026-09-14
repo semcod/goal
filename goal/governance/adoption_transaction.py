@@ -278,3 +278,59 @@ class AdoptionTransaction:
                 status = "COMPLETE" if index == len(PHASES) - 1 else "PROGRESSED"
                 return self._finish(state, status, phase, "OBSERVED")
             return self._finish(state, "COMPLETE", None, "REVALIDATED")
+
+
+def prepare_adoption_transaction(
+    target_root,
+    catalog_path,
+    catalog_sha256,
+    *,
+    repository: str,
+    ticket: str,
+    profile_digest: str,
+    scope_digest: str,
+    target_revision: str | None = None,
+) -> AdoptionPlan | None:
+    """Prepare one advisory transaction from a freshly observed pinned plan.
+
+    Return None when the existing pin should be retained. Blocked or multi-step
+    plans require explicit remediation/staging, never a shortcut to the final
+    revision. No adapter, journal, migration, publication or authority is invoked.
+
+    The returned scope_digest is derived from the caller's declared scope digest
+    and the full planner identity (including catalog, lock, HEAD and checkout).
+    profile_digest is preserved unchanged. Callers must retain the planning
+    inputs for independent adapter verification; neither digest grants trust.
+    The existing transaction constructor and journal format remain unchanged.
+    """
+    from hashlib import sha256
+    import json
+    import re
+
+    from goal.governance.adoption_plan import AdoptionPlanError, plan_adoption
+
+    if not isinstance(scope_digest, str) or re.fullmatch(r"[0-9a-f]{64}", scope_digest) is None:
+        raise AdoptionPlanError("scope SHA-256 must be 64 lowercase hex characters")
+    proposal = plan_adoption(target_root, catalog_path, catalog_sha256, target_revision)
+    if proposal["state"] == "retain":
+        return None
+    if proposal["state"] != "migration-planned":
+        raise AdoptionPlanError(f"transaction preparation blocked: {proposal['reason']}")
+    if len(proposal["steps"]) != 1:
+        raise AdoptionPlanError("transaction requires exactly one migration step; staged replanning required")
+    binding = {
+        "domain": "goal.adoption-transaction-scope/v1",
+        "declaredScopeSha256": scope_digest,
+        "plannerPlanId": proposal["planId"],
+    }
+    bound_scope = sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    step = proposal["steps"][0]
+    return AdoptionPlan(
+        repository=repository,
+        ticket=ticket,
+        base_sha=proposal["headSha"],
+        from_revision=step["fromRevision"],
+        to_revision=step["toRevision"],
+        profile_digest=profile_digest,
+        scope_digest=bound_scope,
+    )
