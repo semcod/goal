@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-104",
+  "summary": "Accept Conventional Commits ticket scopes in governed delivery",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-104/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "tests/test_governance_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "eaed2f00c39ac3db05f8b130c454d5b6f3ddd879",
+    "targetBranch": "main",
+    "outcome": "Governed pull-request resume accepts ticket-bound Conventional Commit subjects, so repositories with Conventional Commits hooks can publish ticket commits through Goal.",
+    "nonGoals": [
+      "No change to Goal's own commit title format.",
+      "No push, PR creation or governance check change.",
+      "No release and no registry publish."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Accept the bracket prefix or a Conventional Commit scope containing exactly one distinct numeric ticket identity equal to the requested ticket. Other non-ticket component scopes remain allowed; multiple different ticket identities are rejected.",
+      "components": [
+        {
+          "name": "governed-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "goal.governance.delivery.subject_binds_ticket (new helper)"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; resume again requires the [ticket-NNN] prefix."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_governance_delivery.py"
+        ],
+        "evidence": "Pending exact-head publication."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
+          "python -m pytest -q tests"
+        ],
+        "evidence": "Pending exact-head publication."
+      }
+    ]
+  }
+}
