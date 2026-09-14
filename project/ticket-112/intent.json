@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-112",
+  "summary": "Refactor documentation into compact topic guides",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "docs/markdown-output.md",
+    "docs/markdown-output-guide.md",
+    "docs/FEATURE/MARKDOWN_OUTPUT.md",
+    "docs/SERVICE/MARKDOWN_OUTPUT_INTEGRATION.md",
+    "docs/README.md",
+    "CHANGELOG.md",
+    "project/ticket-112/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ad8f1253d0168e0b7d4fa069ecab2a3017edb660",
+    "targetBranch": "main",
+    "outcome": "Refactor existing documentation into concise topic documents, retaining historical entry paths and changelog links",
+    "nonGoals": [
+      "Runtime changes",
+      "Deploy or remote publication",
+      "Claiming protected adoption of the unpublished docs standard"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Pilot compact document/v2; consolidate duplicated prose, preserve legacy headings as link maps and retain exact source evidence",
+      "components": [
+        {
+          "name": "documentation",
+          "paths": [
+            "docs/**"
+          ]
+        },
+        {
+          "name": "release-notes",
+          "paths": [
+            "CHANGELOG.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert this documentation-only commit; historic source remains available at the accepted base SHA."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Ticket validation record; compact format and legacy-link audit receipts"
+      }
+    ]
+  }
+}
