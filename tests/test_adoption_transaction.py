@@ -620,3 +620,190 @@ def test_command_adapter_reuses_real_adopt_generator_path(tmp_path, monkeypatch)
         "upgrade": True,
     }
     assert adapter.observe(adapter.plan, "adoption", key) is boundary.observation
+
+
+def _resume_command_adapter(adapter, boundary, root, catalog, executable, **overrides):
+    import hashlib
+    from dataclasses import asdict
+    from goal.governance.adoption_transaction import AdoptionPlan, GoalAdoptionAdapter
+
+    arguments = {
+        "target_root": root, "catalog_path": catalog,
+        "catalog_sha256": hashlib.sha256(catalog.read_bytes()).hexdigest(),
+        "repository": adapter.plan.repository, "ticket": adapter.plan.ticket,
+        "profile_digest": adapter.plan.profile_digest, "scope_digest": "d" * 64,
+        "goal_executable": executable, "timeout_seconds": 2, "delegate": boundary,
+        "resume_plan": AdoptionPlan(**asdict(adapter.plan)),
+    }
+    arguments.update(overrides)
+    return GoalAdoptionAdapter(**arguments)
+
+
+@pytest.mark.parametrize("outcome", ["partial", "complete", "committed"])
+def test_command_adapter_restart_reopens_journal_without_duplicate_adoption(
+    tmp_path, monkeypatch, outcome
+):
+    import hashlib
+    import json
+    import os
+    import subprocess
+    from goal.governance.adoption_transaction import (
+        AdoptionPlan, AdoptionTransaction, Observation,
+    )
+
+    adapter, _, root, catalog, executable = _command_adapter(tmp_path)
+    ledger = tmp_path / "synthetic-independent-readback.json"
+    journal = tmp_path / "transaction.json"
+    invocations = []
+    cleanup = []
+    original_popen = subprocess.Popen
+
+    class Boundary(_CommandBoundary):
+        def observe(self, plan, phase, key):
+            if phase != "adoption" or not ledger.exists():
+                return Observation("NOT_APPLIED", plan.digest, key)
+            content = ledger.read_bytes()
+            recorded = json.loads(content)
+            return Observation(
+                recorded["status"], recorded["plan_digest"],
+                recorded["idempotency_key"],
+                "sha256:" + hashlib.sha256(content).hexdigest()
+                if recorded["status"] == "APPLIED" else None,
+            )
+
+    class InterruptedCommand:
+        pid = 123456789
+        returncode = None
+
+        def communicate(self, *, timeout):
+            assert timeout == 2
+            lock = root / ".governance" / "manifest.lock.json"
+            if outcome == "partial":
+                lock.write_text("{", encoding="utf-8")
+            else:
+                payload = json.loads(lock.read_text())
+                payload["standard"]["sourceRevision"] = adapter.plan.to_revision
+                lock.write_text(json.dumps(payload), encoding="utf-8")
+                if outcome == "committed":
+                    _binding_commit(root)
+            ledger.write_text(json.dumps({
+                "status": "UNKNOWN" if outcome == "partial" else "APPLIED",
+                "plan_digest": adapter.plan.digest,
+                "idempotency_key": adapter.plan.key("adoption"),
+            }), encoding="utf-8")
+            raise KeyboardInterrupt()
+
+        def wait(self):
+            cleanup.append("reaped")
+
+    def spawn(argv, *args, **kwargs):
+        if argv[0] == str(executable):
+            invocations.append(argv)
+            return InterruptedCommand()
+        return original_popen(argv, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", spawn)
+    monkeypatch.setattr(os, "killpg", lambda pid, sig: cleanup.append((pid, sig)))
+    boundary = Boundary()
+    initial = _resume_command_adapter(adapter, boundary, root, catalog, executable)
+    transaction = AdoptionTransaction(journal)
+    with pytest.raises(KeyboardInterrupt):
+        transaction.advance(initial.plan, initial, expected_revision=0)
+    assert cleanup[-1] == "reaped"
+    stored = transaction.read(initial.plan)
+    assert stored["steps"][0]["attempts"] == 1
+    assert stored["steps"][0]["receipt"] is None
+
+    saved = AdoptionPlan(**stored["plan"])
+    resumed_boundary = Boundary()
+    resumed = _resume_command_adapter(
+        adapter, resumed_boundary, root, catalog, executable, resume_plan=saved,
+    )
+    reopened = AdoptionTransaction(journal)
+    result = reopened.advance(saved, resumed, expected_revision=stored["revision"])
+    observed = reopened.read(saved)
+    assert resumed.plan == saved
+    assert len(invocations) == 1
+    assert observed["steps"][0]["attempts"] == 1
+    if outcome == "partial":
+        assert result["status"] == "BLOCKED"
+        assert result["reason"] == "OUTCOME_UNKNOWN"
+        assert observed["steps"][0]["receipt"] is None
+        repeated = reopened.advance(
+            saved, resumed, expected_revision=observed["revision"],
+        )
+        assert repeated["reason"] == "OUTCOME_UNKNOWN"
+        assert len(invocations) == 1
+    else:
+        assert observed["steps"][0]["state"] == "complete"
+        assert observed["steps"][0]["receipt"] == (
+            "sha256:" + hashlib.sha256(ledger.read_bytes()).hexdigest()
+        )
+        resumed.apply(saved, "validation", saved.key("validation"))
+        assert resumed_boundary.effects == [(saved, "validation", saved.key("validation"))]
+        assert len(invocations) == 1
+    with pytest.raises(PermissionError):
+        resumed.apply(saved, "adoption", saved.key("adoption"))
+    assert len(invocations) == 1
+
+
+@pytest.mark.parametrize("overrides", [
+    {"repository": "semcod/foreign"},
+    {"ticket": "ticket-999"},
+    {"profile_digest": "e" * 64},
+    {"target_revision": "f" * 40},
+    {"resume_plan": {}},
+    {"scope_digest": "invalid"},
+    {"scope_digest": True},
+    {"catalog_sha256": "invalid"},
+])
+def test_command_adapter_resume_rejects_invalid_bindings(tmp_path, overrides):
+    adapter, boundary, root, catalog, executable = _command_adapter(tmp_path)
+    with pytest.raises(ValueError, match="resume"):
+        _resume_command_adapter(adapter, boundary, root, catalog, executable, **overrides)
+
+
+@pytest.mark.parametrize("change", ["scope", "catalog", "target"])
+def test_command_adapter_resume_data_cannot_authorize_changed_inputs(
+    tmp_path, monkeypatch, change
+):
+    adapter, boundary, root, catalog, executable = _command_adapter(tmp_path)
+    calls, _ = _command_process(monkeypatch, executable)
+    overrides = {}
+    if change == "scope":
+        overrides["scope_digest"] = "e" * 64
+    elif change == "catalog":
+        # Even a newly supplied matching catalog digest changes the bound plan.
+        catalog.write_bytes(catalog.read_bytes() + b"\n")
+    else:
+        other = tmp_path / "foreign-checkout"
+        other.mkdir()
+        overrides["target_root"] = other
+    resumed = _resume_command_adapter(
+        adapter, boundary, root, catalog, executable, **overrides,
+    )
+    key = resumed.plan.key("adoption")
+    assert resumed.observe(resumed.plan, "adoption", key) is boundary.observation
+    with pytest.raises(PermissionError):
+        resumed.apply(resumed.plan, "adoption", key)
+    assert calls == []
+    assert boundary.authorizations == []
+
+
+def test_command_adapter_resume_keeps_fresh_authority_on_unchanged_inputs(
+    tmp_path, monkeypatch
+):
+    adapter, boundary, root, catalog, executable = _command_adapter(tmp_path)
+    calls, _ = _command_process(monkeypatch, executable)
+    resumed = _resume_command_adapter(adapter, boundary, root, catalog, executable)
+    key = resumed.plan.key("adoption")
+    assert resumed.authorize(resumed.plan, "adoption", key) is True
+    boundary.permitted = False
+    with pytest.raises(PermissionError):
+        resumed.apply(resumed.plan, "adoption", key)
+    assert calls == []
+    boundary.permitted = True
+    resumed.apply(resumed.plan, "adoption", key)
+    assert len(calls) == 1
+    assert len(boundary.authorizations) == 3
+    assert resumed.observe(resumed.plan, "adoption", key) is boundary.observation

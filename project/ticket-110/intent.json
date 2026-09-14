@@ -1,0 +1,39 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-110",
+  "summary": "Restore the adoption adapter from a saved immutable transaction subject before attempting fresh planning against a partially or fully changed checkout",
+  "workstream": "integration",
+  "classification": {"kind": "BUG", "priority": "P1", "origin": "requested"},
+  "allowedPaths": ["project/ticket-110/**", "project/TICKETS.md", "goal/governance/adoption_transaction.py", "tests/test_adoption_transaction.py", "docs/information/adoption-command-adapter.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md", ".env", ".governance/**", "pyproject.toml", "uv.lock"],
+  "stacks": ["python"],
+  "dependsOn": [], "conflictsWith": [], "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2d86db24a21ff096cba87f0977e3ff9548797856",
+    "targetBranch": "main",
+    "outcome": "Publish a regression-tested restart fix through independent exact-head review without granting authority from the saved plan",
+    "nonGoals": ["Live consumer migration, package release or fleet deployment", "New journal or receipt schemas", "Automatic repair of partial writes, bypassing fresh authorization or shared configuration changes"],
+    "complexity": "M", "estimatedMinutes": 45,
+    "budgets": {"maxImplementationFiles": 3, "maxAffectedComponents": 3, "maxPublicInterfaceChanges": 1, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Allow an explicitly supplied existing AdoptionPlan for reconstruction and authoritative observation. Validate caller subject bindings; retain fresh planner comparison and delegated authority before every adoption write. Exercise interruption and disk-journal reopening on isolated Git fixtures.",
+      "components": [
+        {"name": "adoption-controller", "paths": ["goal/governance/adoption_transaction.py"]},
+        {"name": "adoption-regressions", "paths": ["tests/test_adoption_transaction.py"]},
+        {"name": "adoption-contract", "paths": ["docs/information/adoption-command-adapter.md"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["Optional resume_plan argument on the existing GoalAdoptionAdapter constructor"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Disable the optional resume entry point and retain the saved journal for independent reconciliation. Never retry an uncertain migration through the new-transaction constructor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python3 -m pytest -q tests/test_adoption_transaction.py"], "evidence": "After interrupted partial, complete or committed fixture writes, reconstruct the adapter and reopen the durable transaction without a second adoption effect"},
+      {"criterion": "AC-02", "commands": ["python3 -m pytest -q tests/test_adoption_transaction.py tests/test_adoption_plan.py tests/test_governance_cmd.py"], "evidence": "Foreign resume subjects and malformed bindings refuse construction; changed scope or checkout cannot authorize adoption, while delegate readback and subsequent phases remain available"},
+      {"criterion": "AC-03", "commands": ["./project/governance-check.sh", "git diff --check"], "evidence": "Managed governance, full stack checks and independent exact-head publication preserve all required gates"}
+    ]
+  }
+}

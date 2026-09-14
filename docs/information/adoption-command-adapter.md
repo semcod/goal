@@ -3,14 +3,14 @@
   "schema": "wellmanifest.docs/document/v1",
   "id": "adoption-command-adapter",
   "kind": "information",
-  "version": 1,
+  "version": 2,
   "title": "Existing Goal command adapter for adoption transactions",
   "status": "proposed",
   "owner": "semcod/goal",
   "created": "2026-09-14",
   "updated": "2026-09-14",
   "review_after": "2026-09-21",
-  "source_revision": "cc0614da3a0afb9e3e09525789a897559b1a4e77",
+  "source_revision": "2d86db24a21ff096cba87f0977e3ff9548797856",
   "affected_repositories": ["semcod/goal"],
   "evidence": ["goal/governance/adoption_transaction.py", "tests/test_adoption_transaction.py", "goal/cli/governance_cmd.py"]
 }
@@ -33,6 +33,23 @@ ticket and scope, protected profile digest, absolute Goal executable path,
 positive finite command deadline, and an independent `AdoptionAdapter` delegate.
 Use its `plan` as the transaction subject. Supported-pin retention needs no
 adapter; blocked and multi-step plans remain refused.
+
+For restart, reconstruct the existing `AdoptionPlan` from the saved transaction
+and pass it as `resume_plan` with the original planning inputs. This path does
+not require the checkout to remain clean or keep its pre-adoption lock/HEAD:
+those may already reflect a partial or completed effect. It checks the supplied
+repository, ticket, profile and explicit destination against the saved subject.
+The transaction controller still validates journal bindings and independent
+observations. A saved plan is not authorization or a success receipt.
+
+Resume preserves the existing target/catalog paths and executable requirements.
+The delegate must resolve trusted evidence for the original subject, not infer
+success from a candidate-authored journal or changed lock. Unknown outcomes
+remain blocked. Before another adoption write, the original planning inputs
+must again produce the same plan and fresh delegated authority is mandatory;
+changed scope, catalog or workspace cannot be smuggled in through `resume_plan`.
+Subsequent delegated phases can reconcile an already completed adoption without
+running the generator again. Repair or rollback of a partial write is separate.
 
 The protected caller must bind the complete executable/runtime installation and
 deadline to the profile, and verify that profile, catalog provenance, ticket
@@ -77,6 +94,13 @@ its generator subprocess, replacing only the standard checkout transport with a
 synthetic local fixture. Existing command tests cover immutable release fetching.
 These tests do not contact a consumer, access real credentials or attest a live
 migration.
+
+Restart regressions interrupt a fixture command after a partial, complete or
+committed lock update, reconstruct the adapter from the persisted journal, and
+reopen that journal through the public controller. Synthetic external readback
+either confirms the original effect or leaves it UNKNOWN; both paths preserve
+one adoption invocation. This is an isolated process-boundary simulation, not
+an attestation of a deployed daemon or a power-loss recovery test.
 
 <!-- docs:section limitations -->
 ## Remaining integration

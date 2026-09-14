@@ -348,7 +348,7 @@ class GoalAdoptionAdapter:
     def __init__(
         self, *, target_root, catalog_path, catalog_sha256, repository, ticket,
         profile_digest, scope_digest, goal_executable, timeout_seconds, delegate,
-        target_revision=None,
+        target_revision=None, resume_plan: AdoptionPlan | None = None,
     ):
         import math
         import os
@@ -377,9 +377,31 @@ class GoalAdoptionAdapter:
             "scope_digest": scope_digest,
             "target_revision": target_revision,
         }
-        self._plan = prepare_adoption_transaction(**self._inputs)
-        if self._plan is None:
-            raise ValueError("retained standard requires no adoption adapter")
+        if resume_plan is None:
+            self._plan = prepare_adoption_transaction(**self._inputs)
+            if self._plan is None:
+                raise ValueError("retained standard requires no adoption adapter")
+        else:
+            import re
+
+            if not isinstance(resume_plan, AdoptionPlan):
+                raise ValueError("resume_plan must be an existing AdoptionPlan")
+            if (
+                (repository, ticket, profile_digest)
+                != (resume_plan.repository, resume_plan.ticket, resume_plan.profile_digest)
+                or target_revision not in (None, resume_plan.to_revision)
+            ):
+                raise ValueError("resume subject does not match caller bindings")
+            for label, digest in (
+                ("scope", scope_digest), ("catalog", catalog_sha256)
+            ):
+                if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+                    raise ValueError(f"resume {label} digest must be a SHA-256 digest")
+            # A changed checkout may be the result of the previous effect. Do
+            # not replan before its independent readback. This saved subject is
+            # data, not authority: apply still requires a fresh matching plan
+            # and delegated authorization before any new adoption write.
+            self._plan = resume_plan
         self._executable = str(executable)
         self._timeout = timeout_seconds
         self._delegate = delegate
