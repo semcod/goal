@@ -1,0 +1,5 @@
+{
+  "$schema": "./ticket-activity-override.schema.json",
+  "schema": "new-project.ticket-activity-override/v1",
+  "missingPolicy": "git-ancestry"
+}
