@@ -35,7 +35,6 @@ dev = [
     "pytest>=7.0.0",
     "build",
     "twine",
-    "pfix>=0.1.60; python_version >= '3.10'",
     "tox>=4.0.0",
 ]
 
@@ -75,22 +74,6 @@ standard = "0.20.25"
 revision = "d54878a105a20d84dd554f205bc177dcacc8730a"
 gate = "project/governance-check.sh"
 
-[tool.pfix]
-# Self-healing Python configuration
-model = "openrouter/x-ai/grok-code-fast-1"
-auto_apply = true
-auto_install_deps = true
-auto_restart = false
-max_retries = 3
-create_backups = false
-git_auto_commit = false
-
-[tool.pfix.runtime_todo]
-enabled = true
-todo_file = "TODO.md"
-min_severity = "low"
-deduplicate = true
-
 [tool.tox]
 legacy_tox_ini = """
 [tox]
@@ -102,14 +85,8 @@ deps =
     pytest>=7.0.0
     build
     twine
-    pfix>=0.1.60
 extras = nfo
 commands = pytest {posargs}
-
-[testenv:lint]
-deps =
-    pfix>=0.1.60
-commands = pfix check {posargs}
 
 [testenv:pyqual]
 deps =

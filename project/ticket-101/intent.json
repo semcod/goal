@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-101",
+  "summary": "Remove pfix from Goal packaging metadata",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-101/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    "goal/**",
+    "tests/**"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "dfad90c41a250b12140347b64c316ae293af710c",
+    "targetBranch": "main",
+    "outcome": "Goal no longer configures, installs or locks pfix for its own development environment.",
+    "nonGoals": [
+      "No source or test change (ticket-100 owns the bootstrap code).",
+      "No release and no registry publish."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Delete the [tool.pfix] tables, the pfix dev requirement, the pfix tox dependency and the pfix-only lint tox environment, verify that the parsed TOML differs only by those entries, and regenerate uv.lock with uv 0.12.13.",
+      "components": [
+        {
+          "name": "packaging-metadata",
+          "paths": [
+            "pyproject.toml",
+            "uv.lock"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the pfix development declarations and lock entries return."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -c \"import tomllib; d=tomllib.load(open('pyproject.toml','rb')); assert 'pfix' not in d.get('tool',{})\"",
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent"
+        ],
+        "evidence": "Pending exact-head publication."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "uv lock --check"
+        ],
+        "evidence": "Pending exact-head publication."
+      }
+    ]
+  }
+}
