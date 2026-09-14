@@ -192,3 +192,173 @@ def test_cross_subject_observation_blocks_effect(tmp_path, plan):
     result = advance(AdoptionTransaction(tmp_path / "state.json"), plan, adapter)
     assert result["reason"] == "READBACK_UNAVAILABLE"
     assert not adapter.calls
+
+
+def _binding_checkout(tmp_path, *, supported=None, migrations=None):
+    import hashlib
+    import json
+    import subprocess
+
+    root = tmp_path / "consumer"
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main", str(root)], check=True)
+    lock = root / ".governance" / "manifest.lock.json"
+    lock.parent.mkdir()
+    lock.write_text(json.dumps({
+        "schema": "new-project.lock/v1",
+        "standard": {"id": "wellmanifest/new-project", "sourceRepository": "wellmanifest/new-project",
+                     "publicationStatus": "published", "sourceRevision": "a" * 40},
+    }), encoding="utf-8")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    _binding_commit(root)
+    catalog = tmp_path / "catalog.json"
+    catalog.write_text(json.dumps({
+        "schema": "goal.adoption-catalog/v1",
+        "standardRepository": "wellmanifest/new-project",
+        "supportedRevisions": ["b" * 40] if supported is None else supported,
+        "migrations": [{"fromRevision": "a" * 40, "toRevision": "b" * 40,
+                        "recipe": "goal-governance-adopt/v1"}] if migrations is None else migrations,
+    }), encoding="utf-8")
+    return root, catalog, hashlib.sha256(catalog.read_bytes()).hexdigest()
+
+
+def _binding_commit(root):
+    import subprocess
+
+    subprocess.run(["git", "-C", str(root), "-c", "user.name=Fixture",
+                    "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false",
+                    "commit", "-qam", "fixture"], check=True)
+
+
+def _prepare_binding(root, catalog, digest, **overrides):
+    from goal.governance.adoption_transaction import prepare_adoption_transaction
+
+    options = dict(repository="semcod/fixture", ticket="ticket-001",
+                   profile_digest="c" * 64, scope_digest="d" * 64)
+    options.update(overrides)
+    return prepare_adoption_transaction(root, catalog, digest, **options)
+
+
+def test_planner_binding_single_step_is_stable_and_read_only(tmp_path, monkeypatch):
+    import subprocess
+
+    root, catalog, digest = _binding_checkout(tmp_path)
+    lock = root / ".governance" / "manifest.lock.json"
+    before = lock.read_bytes()
+    run = subprocess.run
+    calls = []
+
+    def observed_run(argv, *args, **kwargs):
+        calls.append(argv)
+        return run(argv, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", observed_run)
+    plan = _prepare_binding(root, catalog, digest)
+    assert plan == _prepare_binding(root, catalog, digest)
+    assert plan.from_revision == "a" * 40
+    assert plan.to_revision == "b" * 40
+    assert plan.profile_digest == "c" * 64
+    assert plan.scope_digest != "d" * 64
+    assert lock.read_bytes() == before
+    assert calls and all(argv[0] == "git" for argv in calls)
+    assert run(["git", "-C", str(root), "status", "--porcelain"],
+               check=True, capture_output=True).stdout == b""
+
+
+def test_planner_binding_retains_supported_pin_even_with_dirty_product(tmp_path):
+    root, catalog, digest = _binding_checkout(tmp_path, supported=["a" * 40, "b" * 40])
+    (root / "product.txt").write_text("unrelated local work", encoding="utf-8")
+    assert _prepare_binding(root, catalog, digest) is None
+
+
+def test_planner_binding_honors_explicit_supported_destination(tmp_path):
+    root, catalog, digest = _binding_checkout(tmp_path, supported=["a" * 40, "b" * 40])
+    assert _prepare_binding(root, catalog, digest) is None
+    assert _prepare_binding(root, catalog, digest, target_revision="b" * 40).to_revision == "b" * 40
+
+
+def test_planner_binding_rejects_dirty_migration(tmp_path):
+    import pytest
+    from goal.governance.adoption_plan import AdoptionPlanError
+
+    root, catalog, digest = _binding_checkout(tmp_path)
+    (root / "product.txt").write_text("local work", encoding="utf-8")
+    with pytest.raises(AdoptionPlanError, match="dirty_worktree"):
+        _prepare_binding(root, catalog, digest)
+
+
+def test_planner_binding_rejects_changed_working_lock(tmp_path):
+    import pytest
+    from goal.governance.adoption_plan import AdoptionPlanError
+
+    root, catalog, digest = _binding_checkout(tmp_path)
+    lock = root / ".governance" / "manifest.lock.json"
+    lock.write_bytes(lock.read_bytes() + b"\n")
+    with pytest.raises(AdoptionPlanError, match="observation_changed"):
+        _prepare_binding(root, catalog, digest)
+
+
+def test_planner_binding_does_not_collapse_multiple_steps(tmp_path):
+    import pytest
+    from goal.governance.adoption_plan import AdoptionPlanError
+
+    root, catalog, digest = _binding_checkout(tmp_path, supported=["c" * 40], migrations=[
+        {"fromRevision": "a" * 40, "toRevision": "b" * 40, "recipe": "goal-governance-adopt/v1"},
+        {"fromRevision": "b" * 40, "toRevision": "c" * 40, "recipe": "goal-governance-adopt/v1"},
+    ])
+    with pytest.raises(AdoptionPlanError, match="exactly one migration step"):
+        _prepare_binding(root, catalog, digest)
+
+
+def test_planner_binding_catalog_bytes_invalidate_subject(tmp_path):
+    import hashlib
+    import pytest
+    from goal.governance.adoption_plan import AdoptionPlanError
+
+    root, catalog, digest = _binding_checkout(tmp_path)
+    before = _prepare_binding(root, catalog, digest)
+    catalog.write_bytes(catalog.read_bytes() + b"\n")
+    with pytest.raises(AdoptionPlanError, match="SHA-256 mismatch"):
+        _prepare_binding(root, catalog, digest)
+    after = _prepare_binding(root, catalog, hashlib.sha256(catalog.read_bytes()).hexdigest())
+    assert before.scope_digest != after.scope_digest
+    assert before.from_revision == after.from_revision
+    assert before.to_revision == after.to_revision
+
+
+def test_planner_binding_committed_lock_invalidates_subject(tmp_path):
+    root, catalog, digest = _binding_checkout(tmp_path)
+    before = _prepare_binding(root, catalog, digest)
+    lock = root / ".governance" / "manifest.lock.json"
+    lock.write_bytes(lock.read_bytes() + b"\n")
+    _binding_commit(root)
+    after = _prepare_binding(root, catalog, digest)
+    assert before.base_sha != after.base_sha
+    assert before.scope_digest != after.scope_digest
+
+
+def test_planner_binding_declared_subject_changes_are_preserved(tmp_path):
+    root, catalog, digest = _binding_checkout(tmp_path)
+    before = _prepare_binding(root, catalog, digest)
+    for change in ({"repository": "semcod/another"}, {"ticket": "ticket-002"},
+                   {"profile_digest": "e" * 64}, {"scope_digest": "f" * 64}):
+        assert _prepare_binding(root, catalog, digest, **change) != before
+
+
+def test_planner_binding_rejects_invalid_raw_scope(tmp_path):
+    import pytest
+    from goal.governance.adoption_plan import AdoptionPlanError
+
+    root, catalog, digest = _binding_checkout(tmp_path)
+    for scope in (None, True, "", "d" * 63, "D" * 64):
+        with pytest.raises(AdoptionPlanError, match="scope SHA-256"):
+            _prepare_binding(root, catalog, digest, scope_digest=scope)
+
+
+def test_planner_binding_rejects_missing_route(tmp_path):
+    import pytest
+    from goal.governance.adoption_plan import AdoptionPlanError
+
+    root, catalog, digest = _binding_checkout(tmp_path, migrations=[])
+    with pytest.raises(AdoptionPlanError, match="migration_recipe_missing"):
+        _prepare_binding(root, catalog, digest)

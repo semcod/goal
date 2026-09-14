@@ -1,0 +1,103 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-108",
+  "summary": "Bind the accepted pinned adoption planner to the existing resumable transaction subject without granting execution authority",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-108/**",
+    "project/TICKETS.md",
+    "goal/governance/adoption_transaction.py",
+    "tests/test_adoption_transaction.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    ".governance/**",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a474e8cad46d64e3e3d3634e60b78fbfbbd71f0e",
+    "targetBranch": "main",
+    "outcome": "Publish a tested read-only single-step bridge between the accepted adoption planner and transaction controller through independent exact-head review",
+    "nonGoals": [
+      "Live migration, publication adapters, fleet deployment or execution authority",
+      "Journal format changes, managed standard updates or ownership changes",
+      "Collapsing a multi-step migration into a single unchecked import",
+      "Package release or registry publication"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reobserve through the existing pinned planner and derive a transaction scope digest from the declared scope plus the full planner identity; retain supported pins without a transaction and refuse blocked or multi-step plans",
+      "components": [
+        {
+          "name": "adoption-controller",
+          "paths": [
+            "goal/governance/adoption_transaction.py"
+          ]
+        },
+        {
+          "name": "adoption-regressions",
+          "paths": [
+            "tests/test_adoption_transaction.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Read-only prepare_adoption_transaction factory returning one bound AdoptionPlan or no-change"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Stop using the new factory and retain the accepted constructor/API. No consumer changes or new persistent data format are introduced."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_adoption_transaction.py"
+        ],
+        "evidence": "Real isolated Git fixture: a single supported route prepares a stable transaction without modifying the consumer"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q tests/test_adoption_transaction.py tests/test_adoption_plan.py"
+        ],
+        "evidence": "Retain, blocked and multi-step outcomes plus changed catalog, lock, head and declared subject bindings"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Managed scope gate and whitespace validation before protected publication"
+      }
+    ]
+  }
+}
