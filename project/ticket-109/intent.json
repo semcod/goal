@@ -1,0 +1,39 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-109",
+  "summary": "Connect the resumable adoption transaction to the existing immutable Goal adoption command while preserving independent authorization and readback",
+  "workstream": "integration",
+  "classification": {"kind": "FEATURE", "priority": "P2", "origin": "requested"},
+  "allowedPaths": ["project/ticket-109/**", "project/TICKETS.md", "goal/governance/adoption_transaction.py", "tests/test_adoption_transaction.py", "docs/information/adoption-command-adapter.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md", ".env", ".governance/**", "pyproject.toml", "uv.lock"],
+  "stacks": ["python"],
+  "dependsOn": [], "conflictsWith": [], "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "cc0614da3a0afb9e3e09525789a897559b1a4e77",
+    "targetBranch": "main",
+    "outcome": "Publish a tested adapter invoking the existing pinned adoption command through the transaction protocol and independent exact-head review",
+    "nonGoals": ["Live consumer migration or fleet deployment", "Implementing independent authorization, receipts, validation or merge again", "New journal schema, managed standard changes, package release or shared configuration changes"],
+    "complexity": "M", "estimatedMinutes": 55,
+    "budgets": {"maxImplementationFiles": 3, "maxAffectedComponents": 3, "maxPublicInterfaceChanges": 1, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use one bound adapter around the existing transaction boundary. Reobserve the pinned planner before adoption, require fresh delegated authorization, execute the existing Goal CLI with fixed immutable arguments and bounded process-group lifetime, and leave all effect receipts and later phases to the independent delegate.",
+      "components": [
+        {"name": "adoption-controller", "paths": ["goal/governance/adoption_transaction.py"]},
+        {"name": "adoption-regressions", "paths": ["tests/test_adoption_transaction.py"]},
+        {"name": "adoption-contract", "paths": ["docs/information/adoption-command-adapter.md"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["GoalAdoptionAdapter implementing the existing AdoptionAdapter protocol"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Stop selecting the optional adapter and retain the existing controller and direct adoption command. No consumer or persistent data migration occurs in this delivery."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python3 -m pytest -q tests/test_adoption_transaction.py tests/test_governance_cmd.py"], "evidence": "Fixed immutable CLI invocation and existing adoption generator exercised on isolated fixtures without network or real credentials"},
+      {"criterion": "AC-02", "commands": ["python3 -m pytest -q tests/test_adoption_transaction.py tests/test_adoption_plan.py"], "evidence": "Changed subject, key, catalog and checkout refuse execution; fresh authority and authoritative observation remain required; timeout terminates the command group without reporting success"},
+      {"criterion": "AC-03", "commands": ["./project/governance-check.sh", "git diff --check"], "evidence": "Managed governance and exact-head protected delivery retain existing required checks"}
+    ]
+  }
+}
