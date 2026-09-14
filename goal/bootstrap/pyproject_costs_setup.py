@@ -10,10 +10,11 @@ import click
 
 logger = logging.getLogger(__name__)
 
+# pfix is deliberately not injected: its automatic repairs overwrote development
+# changes, so projects must opt in explicitly instead of receiving it by default.
 _REQUIRED_DEV_DEPS = (
     ("goal", '"goal>=2.1.0; python_version >= \'3.12\'"'),
     ("costs", '"costs>=0.1.53; python_version >= \'3.9\'"'),
-    ("pfix", '"pfix>=0.1.60; python_version >= \'3.10\'"'),
 )
 _LEGACY_DEV_DEP_REPLACEMENTS = tuple(
     (spec.split(";", 1)[0] + '"', spec)
@@ -181,7 +182,7 @@ def _ensure_costs_config(project_dir: Path) -> bool:
         pyproject.write_text(content, encoding="utf-8")
         click.echo(
             click.style(
-                "  ✓ Added goal, costs and pfix to dev dependencies", fg="green"
+                "  ✓ Added goal and costs to dev dependencies", fg="green"
             )
         )
 

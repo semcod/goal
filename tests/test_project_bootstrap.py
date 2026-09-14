@@ -22,9 +22,6 @@ from goal.project_bootstrap import (
     _find_git_root,
     _ensure_costs_installed,
     _ensure_python_test_dependency,
-    _ensure_pfix_installed,
-    _validate_pfix_env,
-    _ensure_pfix_env,
 )
 from goal.bootstrap.costs_badge import _install_costs_package
 from goal.cli import main
@@ -330,7 +327,7 @@ class TestEnsureProjectEnvironmentGeneric:
 
 
 # ---------------------------------------------------------------------------
-# OpenRouter / pfix env discovery
+# OpenRouter env discovery
 # ---------------------------------------------------------------------------
 
 
@@ -338,7 +335,7 @@ class TestOpenRouterEnvDiscovery:
     def test_finds_parent_env_over_blank_local_env(self, tmp_path):
         root_env = tmp_path / ".env"
         root_env.write_text(
-            "OPENROUTER_API_KEY=sk-or-v1-root-key\nLLM_MODEL=openrouter/qwen/qwen3-coder-next\n",
+            "OPENROUTER_API_KEY=test-openrouter-root-key\nLLM_MODEL=openrouter/qwen/qwen3-coder-next\n",
             encoding="utf-8",
         )
 
@@ -347,39 +344,10 @@ class TestOpenRouterEnvDiscovery:
         (sub / ".env").write_text("OPENROUTER_API_KEY=\n", encoding="utf-8")
 
         with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
-            env_file, api_key = _find_openrouter_api_key(sub)
+            env_file, credential = _find_openrouter_api_key(sub)
 
         assert env_file == root_env
-        assert api_key == "sk-or-v1-root-key"
-        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
-            assert _validate_pfix_env(sub) is True
-
-    def test_does_not_create_local_env_when_parent_key_exists(self, tmp_path):
-        root_env = tmp_path / ".env"
-        root_env.write_text(
-            "OPENROUTER_API_KEY=sk-or-v1-root-key\n",
-            encoding="utf-8",
-        )
-
-        sub = tmp_path / "my-api"
-        sub.mkdir()
-
-        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
-            assert _ensure_pfix_env(sub) is True
-
-        assert not (sub / ".env").exists()
-
-    def test_creates_llm_model_template_when_no_api_key_exists(self, tmp_path):
-        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=True):
-            assert _ensure_pfix_env(tmp_path) is True
-
-        env_text = (tmp_path / ".env").read_text(encoding="utf-8")
-        example_text = (tmp_path / ".env.example").read_text(encoding="utf-8")
-
-        assert "LLM_MODEL=openrouter/qwen/qwen3-coder-next" in env_text
-        assert "LLM_MODEL=openrouter/qwen/qwen3-coder-next" in example_text
-        assert "PFIX_MODEL" not in env_text
-        assert "PFIX_MODEL" not in example_text
+        assert credential == "test-openrouter-root-key"
 
 
 # ---------------------------------------------------------------------------
@@ -512,73 +480,6 @@ class TestPythonTestDependency:
                 is True
             )
         assert mock_run.call_count == 1
-
-
-# ---------------------------------------------------------------------------
-# pfix installation source selection
-# ---------------------------------------------------------------------------
-
-
-class TestPfixInstallSource:
-    def test_installs_pfix_from_pypi_by_default(self, tmp_path):
-        with (
-            mock.patch.dict(os.environ, {}, clear=False),
-            mock.patch(
-                "goal.project_bootstrap._find_python_bin",
-                return_value="/usr/bin/python3",
-            ),
-            mock.patch("goal.project_bootstrap._ensure_pfix_config", return_value=True),
-            mock.patch("goal.project_bootstrap._ensure_pfix_env", return_value=True),
-            mock.patch("goal.project_bootstrap._validate_pfix_env", return_value=True),
-            mock.patch("subprocess.run") as mock_run,
-        ):
-            mock_run.side_effect = [
-                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),
-                mock.MagicMock(returncode=0, stdout="", stderr=""),
-            ]
-
-            assert _ensure_pfix_installed(tmp_path, yes=True) is True
-
-        assert mock_run.call_args_list[1].args[0] == [
-            "/usr/bin/python3",
-            "-m",
-            "pip",
-            "install",
-            "pfix>=0.1.60",
-        ]
-
-    def test_installs_pfix_from_local_path_when_configured(self, tmp_path):
-        local_pfix = tmp_path / "local-pfix"
-        local_pfix.mkdir()
-
-        with (
-            mock.patch.dict(
-                os.environ, {"GOAL_PFIX_LOCAL_PATH": str(local_pfix)}, clear=False
-            ),
-            mock.patch(
-                "goal.project_bootstrap._find_python_bin",
-                return_value="/usr/bin/python3",
-            ),
-            mock.patch("goal.project_bootstrap._ensure_pfix_config", return_value=True),
-            mock.patch("goal.project_bootstrap._ensure_pfix_env", return_value=True),
-            mock.patch("goal.project_bootstrap._validate_pfix_env", return_value=True),
-            mock.patch("subprocess.run") as mock_run,
-        ):
-            mock_run.side_effect = [
-                mock.MagicMock(returncode=1, stdout="", stderr="ModuleNotFoundError"),
-                mock.MagicMock(returncode=0, stdout="", stderr=""),
-            ]
-
-            assert _ensure_pfix_installed(tmp_path, yes=True) is True
-
-        assert mock_run.call_args_list[1].args[0] == [
-            "/usr/bin/python3",
-            "-m",
-            "pip",
-            "install",
-            "-e",
-            str(local_pfix.resolve()),
-        ]
 
 
 # ---------------------------------------------------------------------------
@@ -749,13 +650,11 @@ class TestBootstrapProject:
         with (
             mock.patch("subprocess.run") as mock_run,
             mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
-            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
         ):
             mock_run.return_value = mock.MagicMock(
                 returncode=0, stdout="3.9.0", stderr=""
             )
             mock_costs.return_value = True
-            mock_pfix.return_value = True
             result = bootstrap_project(tmp_path, "python", yes=True)
             assert result["env_ok"] is True
             assert result["project_type"] == "python"
@@ -775,16 +674,36 @@ class TestBootstrapProject:
         with (
             mock.patch("subprocess.run") as mock_run,
             mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
-            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
         ):
             mock_run.return_value = mock.MagicMock(
                 returncode=0, stdout="3.9.0", stderr=""
             )
             mock_costs.return_value = True
-            mock_pfix.return_value = True
             result = bootstrap_project(tmp_path, "python", yes=True)
             assert result["test_created"] is None
             assert len(result["tests_found"]) == 1
+
+    def test_bootstrap_does_not_install_or_configure_pfix(self, tmp_path):
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "testpkg"\nversion = "0.1.0"'
+        )
+        with (
+            mock.patch("subprocess.run") as mock_run,
+            mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
+            mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False),
+        ):
+            mock_run.return_value = mock.MagicMock(
+                returncode=0, stdout="3.9.0", stderr=""
+            )
+            mock_costs.return_value = True
+            bootstrap_project(tmp_path, "python", yes=True)
+
+        commands = [" ".join(map(str, call.args[0])) for call in mock_run.call_args_list if call.args]
+        assert not any("pfix" in command for command in commands)
+        assert "[tool.pfix" not in (tmp_path / "pyproject.toml").read_text()
+        for env_name in (".env", ".env.example"):
+            env_file = tmp_path / env_name
+            assert not env_file.exists() or "PFIX_" not in env_file.read_text()
 
 
 # ---------------------------------------------------------------------------
@@ -810,14 +729,10 @@ class TestBootstrapAllProjects:
                 mock.patch(
                     "goal.project_bootstrap._ensure_costs_installed"
                 ) as mock_costs,
-                mock.patch(
-                    "goal.project_bootstrap._ensure_pfix_installed"
-                ) as mock_pfix,
                 mock.patch("shutil.which") as mock_which,
             ):
                 mock_run.return_value = mock.MagicMock(returncode=0)
                 mock_costs.return_value = True
-                mock_pfix.return_value = True
                 mock_which.return_value = "/usr/bin/npm"
                 results = bootstrap_all_projects(tmp_path, yes=True)
         finally:
@@ -865,13 +780,11 @@ class TestBootstrapCommand:
         with (
             mock.patch("subprocess.run") as mock_run,
             mock.patch("goal.project_bootstrap._ensure_costs_installed") as mock_costs,
-            mock.patch("goal.project_bootstrap._ensure_pfix_installed") as mock_pfix,
         ):
             mock_run.return_value = mock.MagicMock(
                 returncode=0, stdout="3.9.0", stderr=""
             )
             mock_costs.return_value = True
-            mock_pfix.return_value = True
             result = runner.invoke(main, ["bootstrap", "-y", "--path", str(tmp_path)])
         assert result.exit_code == 0
         assert "Bootstrap complete" in result.output
