@@ -96,6 +96,45 @@ def test_unpublished_diagnostic_does_not_write_or_delegate(tmp_path: Path, monke
     assert not (project / ".planfile").exists()
 
 
+def test_multiple_diagnostics_create_one_proposal_and_delegation_each(
+    tmp_path: Path, monkeypatch
+) -> None:
+    project = _project(tmp_path)
+    catalog = json.loads(
+        (project / ".governance/diagnostics.json").read_text(encoding="utf-8")
+    )
+    catalog["codes"]["GOV-BASE-001"] = {
+        "message": "The approved base changed.",
+        "remediation": "Refresh the approved base before implementation.",
+        "documentation": "error/GOV-BASE-001.md",
+    }
+    (project / ".governance/diagnostics.json").write_text(
+        json.dumps(catalog), encoding="utf-8"
+    )
+    calls: list[list[str]] = []
+
+    def runner(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, "created\n", "")
+
+    monkeypatch.setattr(remediation.subprocess, "run", runner)
+    result = remediation.publish_governance_remediation(
+        project,
+        "GOV-INTENT-003 ERROR\nGOV-BASE-001 ERROR\n",
+    )
+
+    proposals = sorted(
+        (project / ".planfile/.koru/goal-remediation").glob("*.json")
+    )
+    assert result.delegated is True
+    assert [path.name.split("-")[0:2] for path in proposals] == [
+        ["GOV", "BASE"],
+        ["GOV", "INTENT"],
+    ]
+    assert len(calls) == 2
+    assert all(command[:2] == ["koru", "goal-remediation"] for command in calls)
+
+
 def test_delegation_can_be_disabled_while_proposal_remains_audit_evidence(
     tmp_path: Path, monkeypatch
 ) -> None:

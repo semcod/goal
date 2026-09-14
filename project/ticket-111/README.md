@@ -25,6 +25,8 @@ weaken the governance gate.
   existing user files and governance output remain untouched.
 - [x] AC-04: Focused tests, Ruff, the managed governance check, stack checks
   and Docker Compose validation pass.
+- [x] AC-05: A single governance failure with multiple published codes creates
+  one proposal and one Koru delegation per code.
 
 ## Authorization
 
@@ -33,8 +35,8 @@ implementation and testing of Goal-to-Planfile-to-Koru remediation.
 
 ## Validation evidence
 
-Goal full suite: 778 passed, 2 skipped. Focused producer and delivery suite:
-73 passed. Ruff, `./project/governance-check.sh`, Docker Compose configuration,
+Goal full suite: 779 passed, 2 skipped. Focused producer and delivery suite:
+74 passed. Ruff, `./project/governance-check.sh`, Docker Compose configuration,
 compileall and `git diff --check` pass.
 
 ## Tracking boundary
