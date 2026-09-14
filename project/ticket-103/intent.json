@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-103",
+  "summary": "Adopt git-ancestry ticket activity override",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-103/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/ticket-activity.override.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    ".governance/ticket_activity.py"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "eaed2f00c39ac3db05f8b130c454d5b6f3ddd879",
+    "targetBranch": "main",
+    "outcome": "Merged tickets whose delivery is on main no longer count as active in clones without the terminal-receipt registry, so gates and allocation stop reasoning over stale IN_PROGRESS projections.",
+    "nonGoals": [
+      "No managed payload, lock or manifest change.",
+      "No ticket README rewrite.",
+      "No release and no registry publish."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Adopt the target-owned ticket activity override already supported by the pinned resolver, selecting git-ancestry instead of the status projection when the receipt registry is absent.",
+      "components": [
+        {
+          "name": "ticket-activity-policy",
+          "paths": [
+            ".governance/ticket-activity.override.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; activity falls back to the status projection."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 .governance/ticket_activity.py --root . validate"
+        ],
+        "evidence": "Fresh clone of origin/main eaed2f00c39a: 36 active without override, 0 with it."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent"
+        ],
+        "evidence": "Pending exact-head publication."
+      }
+    ]
+  }
+}
