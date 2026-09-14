@@ -895,15 +895,19 @@ def subject_binds_ticket(subject: str, ticket: str) -> bool:
     Goal writes ``[ticket-NNN] title``. Repositories whose commit-msg hooks
     enforce Conventional Commits bind the ticket in the scope instead, e.g.
     ``build(ticket-004): title`` or ``fix(delivery, ticket-004)!: title``.
-    Both name exactly one ticket; a scope that merely contains a longer id
-    such as ``ticket-0041`` does not bind ``ticket-004``.
+    Both name exactly one distinct ticket; a scope containing another ticket
+    or only a longer id such as ``ticket-0041`` does not bind ``ticket-004``.
     """
     if subject.startswith(f"[{ticket}] "):
         return True
     match = CONVENTIONAL_SUBJECT_RE.match(subject)
     if match is None:
         return False
-    return ticket in {part.strip() for part in match.group("scope").split(",")}
+    scope_parts = {part.strip() for part in match.group("scope").split(",")}
+    scope_tickets = {
+        part for part in scope_parts if re.fullmatch(r"ticket-[0-9]+", part)
+    }
+    return scope_tickets == {ticket}
 
 
 def pending_pull_request_delivery(

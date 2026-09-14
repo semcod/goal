@@ -46,7 +46,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Replace the hardcoded [ticket-NNN] prefix test with subject_binds_ticket(), which accepts the bracket prefix or a Conventional Commit scope whose comma-separated parts include exactly the ticket id.",
+      "decision": "Accept the bracket prefix or a Conventional Commit scope containing exactly one distinct numeric ticket identity equal to the requested ticket. Other non-ticket component scopes remain allowed; multiple different ticket identities are rejected.",
       "components": [
         {
           "name": "governed-delivery",
