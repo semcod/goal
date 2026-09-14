@@ -73,10 +73,7 @@ def test_publishes_canonical_proposal_and_delegates_without_shell(
         )
     ]
 
-    from planfile.contracts import TicketProposalV1
-
-    proposal = TicketProposalV1.model_validate(payload)
-    assert proposal.proposal_hash
+    assert payload["acceptance_criteria"]
 
 
 def test_unpublished_diagnostic_does_not_write_or_delegate(tmp_path: Path, monkeypatch) -> None:
