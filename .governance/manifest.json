@@ -80,7 +80,9 @@
           "goal/__init__.py",
           "uv.lock",
           "poetry.lock",
-          "Pipfile.lock"
+          "Pipfile.lock",
+          "goal/governance/adoption_transaction.py",
+          "tests/test_adoption_transaction.py"
         ]
       },
       "interfaces": {

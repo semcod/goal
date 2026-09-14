@@ -46,6 +46,7 @@ SOURCE_HUB_JSON_DIRECTORY = "governance"
 SOURCE_HUB_TEST_DIRECTORY = "tests"
 SOURCE_HUB_DIAGNOSTIC = "GOV-HUB-001"
 DIAGNOSTIC_CODE_PATTERN = re.compile(r"\bGOV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b")
+CONVENTIONAL_SUBJECT_RE = re.compile(r"^[a-z]+\((?P<scope>[^()]+)\)!?: \S")
 
 
 @dataclass(frozen=True)
@@ -888,6 +889,27 @@ def _pr_head(ticket: str | None, root: Path) -> str:
     return _legacy_pr_head(ticket, root)
 
 
+def subject_binds_ticket(subject: str, ticket: str) -> bool:
+    """Whether a commit subject names ``ticket`` in a supported binding form.
+
+    Goal writes ``[ticket-NNN] title``. Repositories whose commit-msg hooks
+    enforce Conventional Commits bind the ticket in the scope instead, e.g.
+    ``build(ticket-004): title`` or ``fix(delivery, ticket-004)!: title``.
+    Both name exactly one distinct ticket; a scope containing another ticket
+    or only a longer id such as ``ticket-0041`` does not bind ``ticket-004``.
+    """
+    if subject.startswith(f"[{ticket}] "):
+        return True
+    match = CONVENTIONAL_SUBJECT_RE.match(subject)
+    if match is None:
+        return False
+    scope_parts = {part.strip() for part in match.group("scope").split(",")}
+    scope_tickets = {
+        part for part in scope_parts if re.fullmatch(r"ticket-[0-9]+", part)
+    }
+    return scope_tickets == {ticket}
+
+
 def pending_pull_request_delivery(
     policy: DeliveryPolicy,
     *,
@@ -963,8 +985,7 @@ def pending_pull_request_delivery(
     subjects = [line for line in subjects_result.stdout.splitlines() if line]
     if subjects_result.returncode != 0 or not subjects:
         raise click.ClickException("pull-request resume found no committed candidate")
-    prefix = f"[{ticket}] "
-    unbound = [subject for subject in subjects if not subject.startswith(prefix)]
+    unbound = [subject for subject in subjects if not subject_binds_ticket(subject, ticket)]
     if unbound:
         raise click.ClickException(
             f"pull-request resume refuses commits not bound to {ticket}: {unbound[0]}"

@@ -601,6 +601,41 @@ def verify_delivery(ctx, delivery_mode):
     click.echo(json.dumps(payload, indent=2, sort_keys=True))
 
 
+@governance.command("plan-adoption")
+@click.option("--catalog", required=True,
+              type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--catalog-sha256", required=True,
+              help="Independently acquired SHA-256 of operator-supplied catalog bytes.")
+@click.option("--target-root", default=".", show_default=True,
+              type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.option("--target-revision", default=None,
+              help="Explicit destination SHA; otherwise preserve a supported current pin.")
+def plan_adoption_command(catalog, catalog_sha256, target_root, target_revision):
+    """Emit an offline advisory adoption plan; never fetch, write or call an LLM.
+
+    Catalog v1: schema=goal.adoption-catalog/v1,
+    standardRepository=wellmanifest/new-project, supportedRevisions=[SHA],
+    migrations=[{fromRevision: SHA, toRevision: SHA,
+    recipe: goal-governance-adopt/v1}]. All revisions are immutable commit SHAs.
+
+    Exit 0 means retain or migration planned, NOT policy approval or product
+    readiness. Exit 2 means blocked. No persistent queue or automatic upgrade
+    is created. Execute only through an independently authorized controller.
+    """
+    from goal.governance.adoption_plan import AdoptionPlanError, plan_adoption
+
+    try:
+        plan = plan_adoption(target_root, catalog, catalog_sha256, target_revision)
+    except (AdoptionPlanError, OSError) as error:
+        click.echo(json.dumps({"schema": "goal.adoption-plan/v1", "state": "blocked",
+                               "reason": "invalid_input", "detail": str(error),
+                               "authority": "advisory-only", "steps": []}, sort_keys=True))
+        raise click.exceptions.Exit(2) from error
+    click.echo(json.dumps(plan, indent=2, sort_keys=True))
+    if plan["state"] == "blocked":
+        raise click.exceptions.Exit(2)
+
+
 @governance.command("adopt")
 @click.option(
     "--standard-repository",

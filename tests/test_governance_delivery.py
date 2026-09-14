@@ -507,6 +507,56 @@ def test_pending_pr_delivery_rejects_unbound_ahead_commit(tmp_path):
         )
 
 
+def test_pending_pr_delivery_accepts_conventional_commit_ticket_scope(tmp_path):
+    root = _publish_repository(tmp_path)
+    _git(root, "switch", "-c", "ticket/049-resume")
+    head_sha = _commit_ticket_change(
+        root, "build(ticket-049): remove pfix auto-repair configuration"
+    )
+
+    candidate = delivery.pending_pull_request_delivery(
+        _pull_request_policy(), ticket="ticket-049", cwd=root
+    )
+
+    assert candidate is not None
+    assert candidate.head_sha == head_sha
+    assert candidate.title == "build(ticket-049): remove pfix auto-repair configuration"
+
+
+@pytest.mark.parametrize(
+    ("subject", "bound"),
+    [
+        ("[ticket-049] fix(delivery): keep candidate", True),
+        ("fix(ticket-049): keep candidate", True),
+        ("fix(delivery, ticket-049)!: keep candidate", True),
+        ("fix(ticket-049, delivery): keep candidate", True),
+        ("fix(ticket-049, ticket-049): same ticket identity", True),
+        ("fix(ticket-049, ticket-05): another numeric ticket", False),
+        ("fix(ticket-0491): keep candidate", False),
+        ("fix(delivery): ticket-049 keep candidate", False),
+        ("[ticket-0491] fix: keep candidate", False),
+        ("fix(ticket-049):keep candidate", False),
+    ],
+)
+def test_subject_binds_ticket_forms(subject, bound):
+    assert delivery.subject_binds_ticket(subject, "ticket-049") is bound
+
+
+@pytest.mark.parametrize("ticket", ["ticket-049", "ticket-050"])
+@pytest.mark.parametrize(
+    "scope",
+    [
+        "ticket-049, ticket-050",
+        "ticket-050, ticket-049",
+        "delivery, ticket-049, ticket-050",
+        "ticket-049, ticket-049, ticket-050",
+    ],
+)
+def test_subject_binds_ticket_rejects_multiple_ticket_identities(scope, ticket):
+    subject = f"fix({scope}): ambiguous ownership"
+    assert delivery.subject_binds_ticket(subject, ticket) is False
+
+
 def test_pending_pr_delivery_ignores_dirty_equal_and_merged_histories(tmp_path):
     root = _publish_repository(tmp_path)
     policy = _pull_request_policy()
