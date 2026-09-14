@@ -8,10 +8,70 @@
     "priority": "P1",
     "origin": "requested"
   },
-  "allowedPaths": ["project/ticket-111/**", "TODO.md", "project/TICKETS.md"],
+  "allowedPaths": [
+    "goal/governance/delivery.py",
+    "goal/governance/remediation.py",
+    "tests/test_governance_delivery.py",
+    "tests/test_governance_remediation.py",
+    "project/ticket-111/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": [],
   "dependsOn": [],
   "conflictsWith": [],
-  "integrationTicket": null
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f344e9df780cddd8a1065d597b3ac4b7b13b32a6",
+    "targetBranch": "main",
+    "outcome": "Goal emits a strict, deduplicated governance remediation proposal and delegates it through the Koru CLI while preserving the original fail-closed result.",
+    "nonGoals": [
+      "Do not import Koru or Planfile as a Goal runtime dependency",
+      "Do not create a ticket for diagnostics absent from the target catalog",
+      "Do not swallow or downgrade a governance failure",
+      "Do not execute, push, merge, tag or publish remediation work"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep Goal as a protocol producer. Write a canonical proposal under .planfile/.koru/goal-remediation and invoke the Koru consumer through an argument-vector subprocess boundary; preserve the original ClickException after best-effort delegation.",
+      "components": [
+        {
+          "name": "governance-proposal-producer",
+          "paths": ["goal/governance/delivery.py", "goal/governance/remediation.py"]
+        },
+        {
+          "name": "producer-regression-tests",
+          "paths": ["tests/test_governance_delivery.py", "tests/test_governance_remediation.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["versioned Goal-to-Koru remediation protocol"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Disable the producer hook and remove the Koru delegation call while retaining the existing governance gate."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest -q tests/test_governance_remediation.py tests/test_governance_delivery.py",
+          "python -m ruff check goal/governance/delivery.py goal/governance/remediation.py tests/test_governance_remediation.py tests/test_governance_delivery.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Focused producer and existing delivery checks plus managed repository gates"
+      }
+    ]
+  }
 }

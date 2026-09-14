@@ -6,6 +6,11 @@ Before research or writing, follow [documentation placement](docs/AGENTS.md); fi
 
 ## Governed architecture roadmap
 
+- [ ] Deliver [ticket-111](project/ticket-111/README.md): emit a strict
+  governance remediation proposal from `goal -a` and delegate it through the
+  Koru Planfile consumer while preserving the original fail-closed result.
+  State: `IN_PROGRESS / EDIT`; classification: `FEATURE / P1 / requested`.
+
 - [ ] Deliver [ticket-066](project/ticket-066/README.md): adopt the immutable
   new-project v0.20.4 package and its managed pre-commit automatic standard
   update controller. State: `IN_PROGRESS / EDIT`; classification:
