@@ -400,6 +400,21 @@ def _handle_no_files(
     return True
 
 
+def _has_committed_unreleased_sources() -> bool:
+    """Return whether a clean tree still contains source after its last tag.
+
+    The legacy no-change shortcut remains useful for an empty, synchronized
+    repository. In ``-a`` mode we only cross that boundary when a registry
+    package has committed source waiting for publication.
+    """
+    from goal.publish.changes import committed_unreleased_source_files
+
+    project_types = list(detect_project_types_deep().keys())
+    return bool(
+        project_types and committed_unreleased_source_files(project_types)
+    )
+
+
 def _resume_pending_pull_request(
     ctx_obj: Dict[str, Any],
     project_types: List[str],
@@ -551,6 +566,22 @@ def execute_push_workflow(
 ) -> None:
     """Execute the complete push workflow."""
 
+    # Keep the invariant at the workflow boundary as well as in the Click
+    # context. This covers library callers and compatibility shims that pass
+    # only ``all_flags`` instead of going through ``_configure_main_context``.
+    all_flags = bool(ctx_obj.get("all_flags", False))
+    explicit_force_publish = bool(force_publish)
+    explicit_force_publish = explicit_force_publish or bool(
+        ctx_obj.get("force_publish_explicit", False)
+    )
+    # A context carrying force_publish without the provenance marker is an
+    # older direct caller, so retain its explicit-force semantics unless it is
+    # the value derived from --all.
+    explicit_force_publish = explicit_force_publish or bool(
+        ctx_obj.get("force_publish", False) and not all_flags
+    )
+    force_publish = explicit_force_publish or all_flags
+
     from goal.governance.delivery import (
         authorized_push,
         deliver_pull_request,
@@ -576,13 +607,18 @@ def execute_push_workflow(
         ctx_obj["delivery_mode"] = delivery.mode
     else:
         no_change = validate_legacy_governance(
-            check_no_change=bool(ctx_obj.get("all_flags"))
-            and not any((ticket, force, force_publish, ctx_obj.get("force_publish"),
-                         ctx_obj.get("version")))
+            check_no_change=all_flags
+            and not any((ticket, force, explicit_force_publish, ctx_obj.get("version")))
         )
         if no_change is True:
-            click.echo("No changes to deliver; the remote default branch is synchronized.")
-            return
+            if all_flags and _has_committed_unreleased_sources():
+                click.echo(
+                    "Committed package source is pending publication; continuing -a workflow."
+                )
+                no_change = False
+            else:
+                click.echo("No changes to deliver; the remote default branch is synchronized.")
+                return
 
     _validate_toml_or_exit(dry_run)
 
@@ -592,7 +628,6 @@ def execute_push_workflow(
 
     yes = ctx_obj["yes"]
     no_publish = no_publish or ctx_obj.get("no_publish", False)
-    force_publish = force_publish or ctx_obj.get("force_publish", False)
     if delivery is not None and delivery.mode == "pull-request":
         no_publish = True
         ctx_obj["_suppress_goal_owned_cost_badge"] = True

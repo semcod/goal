@@ -128,6 +128,7 @@ class TestWorkflowOrder:
             "markdown": False,
             "config": {},
             "user_config": {},
+            "all_flags": True,
         }
 
         def track(name, retval=None):
@@ -158,7 +159,7 @@ class TestWorkflowOrder:
             patch(
                 "goal.push.core.handle_publish",
                 side_effect=track("publish", (True, None)),
-            ),
+            ) as publish,
             patch("goal.push.core.create_tag", side_effect=track("tag", "v0.1.1")),
             patch("goal.git_ops.get_remote_branch", return_value="main"),
             patch("goal.push.core.push_to_remote", side_effect=track("push")),
@@ -185,6 +186,7 @@ class TestWorkflowOrder:
         assert call_order == ["commit", "publish", "tag", "push"], (
             f"Expected [commit, publish, tag, push] but got {call_order}"
         )
+        assert publish.call_args.kwargs["force_publish"] is True
 
     @pytest.mark.parametrize(
         "project_types",

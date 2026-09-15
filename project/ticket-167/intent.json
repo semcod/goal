@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-167",
+  "summary": "Make goal -a force publication by default",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-167/**",
+    "goal/cli/__init__.py",
+    "goal/cli/push_cmd.py",
+    "goal/push/commands.py",
+    "goal/push/core.py",
+    "tests/test_governed_cli_bootstrap.py",
+    "tests/test_push_e2e.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "80a2f97d397c2506e937f23f2dfd5bd8ce154213",
+    "targetBranch": "main",
+    "outcome": "The -a workflow forces the publication decision while explicit no-publish and governed pull-request boundaries remain authoritative.",
+    "nonGoals": [
+      "Do not bypass publish_enabled project configuration.",
+      "Do not publish from governed pull-request mode before merge.",
+      "Do not change registry credentials or package-specific commands."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Derive force-publish intent in the main Click context and repeat the invariant at both CLI compatibility and workflow boundaries so all callers behave consistently.",
+      "components": [
+        {
+          "name": "goal-push-workflow",
+          "paths": [
+            "goal/cli/__init__.py",
+            "goal/cli/push_cmd.py",
+            "goal/push/commands.py",
+            "goal/push/core.py",
+            "tests/test_governed_cli_bootstrap.py",
+            "tests/test_push_e2e.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the guarded CLI/workflow change through the protected publication process."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_governed_cli_bootstrap.py tests/test_push_e2e.py tests/test_delivery_integrity.py"
+        ],
+        "evidence": "CLI context, compatibility command and workflow tests assert force-publish propagation."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q"
+        ],
+        "evidence": "Full Goal test suite and managed governance gate pass on the exact ticket head."
+      }
+    ]
+  }
+}
