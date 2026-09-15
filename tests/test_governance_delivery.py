@@ -2,8 +2,10 @@
 
 import json
 from dataclasses import replace
+import os
 from pathlib import Path
 import subprocess
+import sys
 
 import click
 import pytest
@@ -920,3 +922,72 @@ def test_canonical_publication_observes_existing_prs_before_push(tmp_path, monke
     assert queries == [canonical, legacy]
     assert created == (existing == "none")
     assert _git(root, "branch", "--show-current").stdout.strip() == canonical
+
+
+def _clone_with_governed_ticket_worktree(tmp_path: Path) -> Path:
+    """Default checkout without governance; its ticket worktree carries the adoption."""
+    root = _publish_repository(tmp_path)
+    (root / ".gitignore").write_text("/.worktrees/\n", encoding="utf-8")
+    _git(root, "add", ".gitignore")
+    _git(root, "commit", "--quiet", "-m", "ignore worktrees")
+    _git(root, "push", "--quiet", "origin", "main")
+    ticket = root / ".worktrees" / "ticket-001--adoption"
+    _git(root, "worktree", "add", "--quiet", "-b", "ticket/001-adoption", str(ticket))
+    manifest = ticket / delivery.GOVERNANCE_PACKAGE_FILES["manifest"]
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text("{}\n", encoding="utf-8")
+    return root
+
+
+def test_default_checkout_of_governed_clone_refuses_legacy_delivery(tmp_path, monkeypatch):
+    root = _clone_with_governed_ticket_worktree(tmp_path)
+    monkeypatch.setattr(delivery, "_governance_gate",
+                        lambda *args, **kwargs: pytest.fail("no gate exists in this checkout"))
+    with pytest.raises(click.ClickException, match=delivery.GOVERNED_CLONE_DIAGNOSTIC) as error:
+        delivery.validate_legacy_governance(cwd=root)
+    assert "ticket-001--adoption" in str(error.value)
+
+
+def test_primary_worktree_lease_marks_clone_governed(tmp_path):
+    root = _publish_repository(tmp_path)
+    lease = root / ".subactor" / "leases" / "ticket-002--work.json"
+    lease.parent.mkdir(parents=True)
+    lease.write_text("{}\n", encoding="utf-8")
+    with pytest.raises(click.ClickException, match=delivery.GOVERNED_CLONE_DIAGNOSTIC):
+        delivery.validate_legacy_governance(cwd=root)
+
+
+def test_linked_worktree_without_governance_keeps_legacy_flow(tmp_path):
+    root = _publish_repository(tmp_path)
+    _git(root, "worktree", "add", "--quiet", "-b", "feature", str(tmp_path / "feature"))
+    assert delivery.governed_clone_evidence(root) == []
+    assert delivery.validate_legacy_governance(cwd=root) is False
+
+
+def test_goal_all_in_default_checkout_neither_rewrites_config_nor_pushes_main(tmp_path):
+    root = _clone_with_governed_ticket_worktree(tmp_path)
+    # A generated config naming a version file that exists only in a ticket
+    # worktree: auto-detection used to prune it, commit and push it to main.
+    config = root / "goal.yaml"
+    config.write_text(
+        "version: '1.0'\nproject:\n  name: fixture\n  type: []\nversioning:\n"
+        "  strategy: semver\n  files:\n"
+        "  - .worktrees/ticket-001--adoption/src/fixture/__init__.py:__version__\n",
+        encoding="utf-8",
+    )
+    _git(root, "add", "goal.yaml")
+    _git(root, "commit", "--quiet", "-m", "generated goal config")
+    _git(root, "push", "--quiet", "origin", "main")
+    before_config = config.read_bytes()
+    before_remote = _git(root, "ls-remote", "origin", "refs/heads/main").stdout
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+    result = subprocess.run(
+        [sys.executable, "-m", "goal", "-a", "--no-publish"],
+        cwd=root, env=environment, capture_output=True, text=True, timeout=120,
+    )
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert delivery.GOVERNED_CLONE_DIAGNOSTIC in result.stdout + result.stderr
+    assert config.read_bytes() == before_config
+    assert _git(root, "ls-remote", "origin", "refs/heads/main").stdout == before_remote
+    assert _git(root, "status", "--porcelain").stdout == ""

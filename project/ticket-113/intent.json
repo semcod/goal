@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-113",
+  "summary": "Refuse default-branch delivery from an ungoverned checkout of a governed clone",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-113/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "goal/cli/__init__.py",
+    "tests/test_governance_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "351483113924b9f85b0fe1cde2d93029882f1c7a",
+    "targetBranch": "main",
+    "outcome": "Goal refuses legacy default-branch delivery and does not rewrite goal.yaml in a checkout whose clone carries governance in a registered worktree or primary worktree leases; publish through independent protected review.",
+    "nonGoals": [
+      "No change to governed pull-request delivery or to repositories without governance.",
+      "No reversal of the already pushed monag commit.",
+      "No self-approved merge."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Derive governed-clone evidence from git worktree registrations and primary leases; refuse the legacy delivery branch before commit and load configuration read-only for -a.",
+      "components": [
+        {
+          "name": "delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        },
+        {
+          "name": "cli",
+          "paths": [
+            "goal/cli/__init__.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "goal -a in an ungoverned checkout of a governed clone exits with GOV-DELIVERY-CLONE-001 instead of pushing the default branch."
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert this commit through the protected publication process."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_governance_delivery.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "End-to-end fixture: non-zero exit, unchanged goal.yaml bytes and unchanged remote default branch."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest tests/test_governance_delivery.py tests/test_delivery_integrity.py"
+        ],
+        "evidence": "Lease evidence and the legacy flow for clones without governance."
+      }
+    ]
+  }
+}
