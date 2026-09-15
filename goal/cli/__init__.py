@@ -474,7 +474,12 @@ def _configure_main_context(
     ctx.obj["recursive"] = recursive
     ctx.obj["interactive"] = interactive
     ctx.obj["no_publish"] = no_publish
-    ctx.obj["force_publish"] = force_publish
+    ctx.obj["force_publish_explicit"] = force_publish
+    # The full workflow is a release intent. Treat it like the explicit
+    # --force-publish flag so a clean tree with already-committed package
+    # changes still reaches the registry publisher. --no-publish remains an
+    # explicit opt-out and is enforced by the publish stage.
+    ctx.obj["force_publish"] = force_publish or all_flags
     ctx.obj["todo"] = todo
     ctx.obj["markdown"] = _resolve_output_markdown(markdown, all_flags)
     ctx.obj["dry_run"] = dry_run
