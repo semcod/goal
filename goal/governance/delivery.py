@@ -35,6 +35,7 @@ GOVERNANCE_PACKAGE_FILES = {
     "stack profiles": ".governance/stack-profiles.json",
 }
 GOVERNANCE_DIAGNOSTICS = ".governance/diagnostics.json"
+GOVERNED_CLONE_DIAGNOSTIC = "GOV-DELIVERY-CLONE-001"
 SOURCE_HUB_FILES = (
     "governance/package-manifest.json",
     "governance/manifest.default.json",
@@ -455,6 +456,31 @@ def _governance_gate(root: Path, *, base: str | None = None) -> None:
         raise click.ClickException(detail)
 
 
+def governed_clone_evidence(cwd: Path | None = None) -> list[Path]:
+    """Governance adopted elsewhere in this clone than the current checkout.
+
+    An adoption lives only on its ticket branch until it merges, so the default
+    checkout of an already governed clone has no manifest of its own. Registered
+    linked worktrees and the primary checkout's worktree leases share the clone.
+    """
+    listed = _run(["git", "worktree", "list", "--porcelain"], cwd=cwd)
+    if listed.returncode != 0:
+        return []
+    checkouts = [
+        Path(line.removeprefix("worktree ")).resolve()
+        for line in listed.stdout.splitlines()
+        if line.startswith("worktree ")
+    ]
+    evidence = [
+        path / GOVERNANCE_PACKAGE_FILES["manifest"]
+        for path in checkouts
+        if (path / GOVERNANCE_PACKAGE_FILES["manifest"]).is_file()
+    ]
+    if checkouts:
+        evidence.extend(sorted((checkouts[0] / ".subactor" / "leases").glob("*.json")))
+    return evidence
+
+
 def validate_legacy_governance(
     *, cwd: Path | None = None, check_no_change: bool = False
 ) -> bool:
@@ -463,6 +489,16 @@ def validate_legacy_governance(
     if result.returncode != 0:
         return False
     root = Path(result.stdout.strip()).resolve()
+    if not (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
+        evidence = governed_clone_evidence(root)
+        if evidence:
+            shown = ", ".join(str(path) for path in evidence[:3])
+            raise click.ClickException(
+                f"{GOVERNED_CLONE_DIAGNOSTIC}: this checkout has no adopted governance, "
+                f"but its clone does ({shown}). Legacy delivery would commit and push "
+                "to the default branch without the gate. Deliver from the ticket "
+                "checkout with --delivery-mode pull-request."
+            )
     if (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
         try:
             _governance_gate(root)

@@ -440,6 +440,13 @@ def _resolve_output_markdown(output_markdown: bool | None, all_flags: bool) -> b
     return bool(all_flags)
 
 
+def _governed_clone() -> bool:
+    """Whether another checkout of this clone carries adopted governance."""
+    from goal.governance.delivery import governed_clone_evidence
+
+    return bool(governed_clone_evidence())
+
+
 def _configure_main_context(
     ctx,
     bump,
@@ -478,9 +485,12 @@ def _configure_main_context(
         ctx.obj["config"] = load_config(config_path) if config_path else load_config()
     elif config_path:
         ctx.obj["config"] = load_config(config_path)
-    elif dry_run or (all_flags and os.path.isfile(".governance/manifest.json")):
+    elif dry_run or (all_flags and (os.path.isfile(".governance/manifest.json")
+                                    or _governed_clone())):
         # Governed -a must reach its gate/no-change check before any mutation.
         # ensure_config can create or rewrite goal.yaml during auto-detection.
+        # A default checkout whose adoption exists only in ticket worktrees is
+        # governed too: rewriting its goal.yaml would precede the refusal.
         ctx.obj["config"] = load_config()
     else:
         ctx.obj["config"] = ensure_config()
