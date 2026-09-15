@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-114",
+  "summary": "Prevent post-merge CI governance failures on integrated ticket history",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-114/**",
+    ".github/workflows/ci.yml",
+    ".github/tests/test_ci_governance_base.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2b4f4d4b03e486378cf4f6b90c2d1d3eab69a852",
+    "targetBranch": "main",
+    "outcome": "Push CI validates the integrated tree from the current commit while pull-request CI remains bound to the PR base; the post-merge GOV-TICKET-001 regression is covered without weakening required checks.",
+    "nonGoals": [
+      "No change to the managed governance gate or ticket activity policy.",
+      "No bypass of PR ticket binding, protected checks or trusted review.",
+      "No changes to the already merged ticket-113 implementation."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Select the governance base from the event type: retain the pull-request base SHA for candidate validation and use the current push SHA for post-merge integrated-tree validation.",
+      "components": [
+        {
+          "name": "ci",
+          "paths": [
+            ".github/workflows/ci.yml",
+            ".github/tests/test_ci_governance_base.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the workflow and regression-test changes through the protected publication process."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m unittest discover -s .github/tests -v"
+        ],
+        "evidence": "Static workflow regression asserts separate pull-request and push base expressions."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Integrated-tree validation and repository stack checks pass."
+      }
+    ]
+  }
+}
