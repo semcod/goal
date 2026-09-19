@@ -15,6 +15,7 @@
   "coordination": {
     "integration": {
       "requiredForPaths": [
+        ".governance/docs.json",
         "package.json",
         "pyproject.toml",
         "go.mod",
@@ -67,6 +68,7 @@
       },
       "integration": {
         "ownedPaths": [
+          ".governance/docs.json",
           "package.json",
           "pyproject.toml",
           "go.mod",
