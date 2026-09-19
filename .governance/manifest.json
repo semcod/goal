@@ -35,26 +35,32 @@
           "app/**",
           "lib/**",
           "test/**",
-          "tests/**",
-          ".gitignore",
-          ".governance/manifest.json",
-          ".governance/manifest.lock.json",
-          ".governance/ticket-allocation.json",
-          ".governance/required-checks.json"
+          "tests/**"
         ]
       },
       "governance": {
         "ownedPaths": [
-          ".governance/**",
+          ".aider.conf.yml",
+          ".cursor/rules/**",
+          ".githooks/**",
+          ".github/copilot-instructions.md",
+          ".github/workflows/new-project-governance.yml",
           ".gitignore",
+          ".governance/**",
+          ".subactor/**",
           "AGENTS.md",
+          "CLAUDE.md",
+          "GEMINI.md",
           "README.md",
           "TODO.md",
           "goal.yaml",
           "project/**",
           "project.sh",
           "project.bat",
-          "scripts/runtime.sh"
+          "scripts/install-agent-hosts.sh",
+          "scripts/runtime.sh",
+          "wellmanifest_governance.py",
+          "worktree-guard.yaml"
         ]
       },
       "infrastructure": {
@@ -198,7 +204,7 @@
   ],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.20.25"
+    "version": "0.20.32"
   },
   "ticket": {
     "activeStatuses": [

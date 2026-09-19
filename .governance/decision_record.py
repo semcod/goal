@@ -17,6 +17,40 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA = "new-project.decision-record/v1"
+ACTION_EVIDENCE = {
+    "read-only": (False, "observation"),
+    "local-check": (False, "check-report"),
+    "routine-edit": (False, "existing-intent-and-diff"),
+    "format": (False, "existing-intent-and-diff"),
+    "evidence-write": (False, "existing-effect-receipt"),
+    "checkpoint": (False, "continuity-receipt"),
+    "scope-change": (True, "scope-decision"),
+    "authority-change": (True, "authority-decision"),
+    "publication": (True, "protected-controller-receipt"),
+    "destructive-change": (True, "authorized-effect-decision"),
+}
+
+
+def classify_action(action: str) -> dict[str, Any]:
+    """Classify evidence needs, never the caller's authority to perform an effect.
+
+    The controller must independently verify the actual operation, intent and
+    lease. A caller-supplied label cannot downgrade a protected effect.
+    """
+    if not isinstance(action, str) or action not in ACTION_EVIDENCE:
+        raise ValueError("unknown action; use the closed action vocabulary")
+    required, evidence = ACTION_EVIDENCE[action]
+    return {
+        "schema": "new-project.action-classification/v1",
+        "action": action,
+        "decisionRecordRequired": required,
+        "evidenceKind": evidence,
+        "reuseMatchingEvidence": True,
+        "createsWorktree": False,
+        "grantsAuthority": False,
+    }
+
+
 DECISION_START = re.compile(r"^DECISION\s+(D-\d{3}-\d{4,})\s*$")
 FIELD = re.compile(r"^([A-Z][A-Z0-9_]*)\s+(.+)$")
 INPUT_LINE = re.compile(r"^INPUT\s+([A-Za-z0-9_]+)\s*=\s*(.+)$")
@@ -351,6 +385,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
+    p_classify = sub.add_parser(
+        "classify-action", help="read-only evidence classification; grants no authority"
+    )
+    p_classify.add_argument("--action", required=True, choices=sorted(ACTION_EVIDENCE))
+
     p_val = sub.add_parser("validate-dsl", help="validate one DSL decision record")
     p_val.add_argument("path", type=Path)
 
@@ -365,6 +404,9 @@ def main(argv: list[str] | None = None) -> int:
     p_app.add_argument("current", type=Path)
 
     args = parser.parse_args(argv)
+    if args.cmd == "classify-action":
+        print(json.dumps(classify_action(args.action), sort_keys=True))
+        return 0
     if args.cmd == "validate-dsl":
         record = parse_dsl_record(args.path.read_text(encoding="utf-8"))
         errors = validate_record(record)
@@ -373,7 +415,8 @@ def main(argv: list[str] | None = None) -> int:
             for e in errors:
                 print(e, file=sys.stderr)
             return 1
-        print("OK", record["decisionId"], record["verdict"])
+        print("VALID_RECORD", record["decisionId"], "recorded=" + record["verdict"],
+              "trustedApproval=false")
         return 0
     if args.cmd == "replay":
         record = parse_dsl_record(args.path.read_text(encoding="utf-8"))

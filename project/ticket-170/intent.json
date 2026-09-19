@@ -1,0 +1,108 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-170",
+  "summary": "Adopt wellmanifest/new-project 0.20.32 managed package refresh",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-170/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".aider.conf.yml",
+    ".cursor/rules/new-project-standard.mdc",
+    ".github/copilot-instructions.md",
+    ".githooks/pre-commit",
+    ".governance/**",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "project/new-ticket.sh",
+    "scripts/install-agent-hosts.sh",
+    "scripts/runtime.sh",
+    "worktree-guard.yaml",
+    ".gitignore",
+    ".subactor/manifest.json",
+    ".subactor/.gitignore",
+    "pyproject.toml"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "969357f9d84402c6fd34c422571a7992886e08bb",
+    "targetBranch": "main",
+    "outcome": "Adopt the verified wellmanifest/new-project 0.20.32 package and keep managed host/governance files hash-bound.",
+    "nonGoals": [
+      "No hand-edited managed files or lock digests",
+      "No product runtime behavior changes",
+      "No edits in other repositories"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "d54878a105a20d84dd554f205bc177dcacc8730a",
+      "toRevision": "b6ba9c21a65a6a5648ecf904b64c3b75295e136f"
+    },
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use verified standard adoption process to replace the complete managed package and regenerate its exact lock from the published revision.",
+      "components": [
+        {
+          "name": "managed-governance-package",
+          "paths": [
+            ".governance/**",
+            "AGENTS.md",
+            "CLAUDE.md",
+            "GEMINI.md",
+            ".aider.conf.yml",
+            ".cursor/rules/new-project-standard.mdc",
+            ".github/copilot-instructions.md",
+            ".githooks/pre-commit",
+            "project/new-ticket.sh",
+            "scripts/install-agent-hosts.sh",
+            "scripts/runtime.sh",
+            "worktree-guard.yaml",
+            ".gitignore",
+            ".subactor/manifest.json",
+            ".subactor/.gitignore",
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the atomic managed package adoption to the previous accepted revision."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Managed adoption verified up-to-date and local governance gate passes."
+      }
+    ]
+  }
+}

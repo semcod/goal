@@ -7,6 +7,7 @@ TITLE="New Task Ticket"
 USERS=""
 AGENT="antigravity"
 WORKSTREAM=""
+SCOPE_ARGUMENTS=()
 FORCE_NEW=false
 ALLOCATION_KEY=""
 ALLOCATION_RECEIPT=""
@@ -30,6 +31,7 @@ Usage: ./project/new-ticket.sh [options]
   -t, --title TITLE       Ticket title
   -a, --agent ID         Agent provider/id used for ai-{ID}.md
   -w, --workstream ID    Required workstream from the governance registry
+      --path PATTERN     Repeatable owned implementation scope; persisted in intent
   -u, --users IDS        Compatibility input only; human files are not created
   -k, --kind KIND        Work kind; default SERVICE
   -p, --priority P       Work priority; default P2
@@ -53,6 +55,7 @@ declare the three explicitly for a defect or new behavior.
 
 Only a human may authorize --force-new. Human-owned user-*.md files must be
 created and written by that human or by a trusted intake boundary.
+--force-new never bypasses repository work-start admission.
 EOF
 }
 
@@ -84,6 +87,11 @@ while [[ $# -gt 0 ]]; do
     -w|--workstream)
       require_value "$@"
       WORKSTREAM="$2"
+      shift 2
+      ;;
+    --path)
+      require_value "$@"
+      SCOPE_ARGUMENTS+=("--path=$2")
       shift 2
       ;;
     -k|--kind)
@@ -305,6 +313,16 @@ require_classification_value kind "$KIND"
 require_classification_value priority "$PRIORITY"
 require_classification_value origin "$ORIGIN"
 
+# Validate the explicit scope before any identity reservation or registered
+# allocation request. The same argv is used for admission and both stores.
+if (( ${#SCOPE_ARGUMENTS[@]} )); then
+  if [[ -z "$TICKET_STORAGE_HELPER" ]]; then
+    echo "GOV-WORK-START-001: explicit scope requires the managed ticket storage bridge." >&2
+    exit 3
+  fi
+  python3 "$TICKET_STORAGE_HELPER" scope --root "$PWD" --workstream "$WORKSTREAM" "${SCOPE_ARGUMENTS[@]}" >/dev/null
+fi
+
 allocation_config() {
   local candidate
   for candidate in .governance/ticket-allocation.json governance/ticket-allocation.json; do
@@ -368,8 +386,7 @@ if git_common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/de
   trap release_allocation_lock EXIT INT TERM
 fi
 
-# The allocator owns the freshness requirement. Relying on a caller to fetch
-# recreates the same partial view that clone-wide locking is meant to avoid.
+# Remote refresh is explicit. The start check below uses only observed refs.
 if [[ "$REFRESH_REMOTE" == true ]] \
   && git rev-parse --git-dir >/dev/null 2>&1 \
   && git remote get-url origin >/dev/null 2>&1; then
@@ -377,6 +394,30 @@ if [[ "$REFRESH_REMOTE" == true ]] \
     echo "GOV-TICKET-LOCK-004: remote ticket refs could not be refreshed safely." >&2
     echo "  remediation: restore origin connectivity and retry, or omit --refresh-remote and rely on local refs plus protected merge collision detection." >&2
     exit 4
+  fi
+fi
+
+# Before reserving an ID or contacting the registered allocator, inspect all
+# registered worktrees and local branches, not just this checkout's ticket.
+# The clone allocation lock covers this observation and the identity effect;
+# it is NOT a writer lease. Recheck admission and fencing before development.
+# Unborn/non-Git bootstrap has no branch history yet and retains seed behavior.
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+  start_runtime=""
+  for candidate in .governance/work_start_check.py scripts/work_start_check.py; do
+    if [[ -f "$candidate" ]]; then
+      start_runtime="$candidate"
+      break
+    fi
+  done
+  if [[ -z "$start_runtime" ]]; then
+    echo "GOV-WORK-START-001: managed work-start checker is missing; restore the complete pinned package." >&2
+    exit 3
+  fi
+  if ! start_report="$(python3 "$start_runtime" --root . --workstream "$WORKSTREAM" --storage "$TICKET_STORAGE" "${SCOPE_ARGUMENTS[@]}" --allocation-check)"; then
+    printf '%s\n' "$start_report" >&2
+    echo "GOV-WORK-START-001: reuse, assist, hand off or serialize existing work before new allocation; preserve all checkouts." >&2
+    exit 3
   fi
 fi
 
@@ -504,7 +545,7 @@ if [[ "$TICKET_STORAGE" == sqlite ]]; then
   python3 "$TICKET_STORAGE_HELPER" create --root "$PWD" --ticket "$ticket_id" \
     --title "$TITLE" --workstream "$WORKSTREAM" --kind "$KIND" --priority "$PRIORITY" --origin "$ORIGIN" \
     --allocation-key "${ALLOCATION_KEY:-local:$ticket_id}" \
-    --runtime-root "$STORE_ROOT" --runtime-sha256 "$STORE_SHA256"
+    --runtime-root "$STORE_ROOT" --runtime-sha256 "$STORE_SHA256" "${SCOPE_ARGUMENTS[@]}"
   exit 0
 fi
 
@@ -615,6 +656,11 @@ else
   "integrationTicket": null
 }
 EOF
+fi
+
+if (( ${#SCOPE_ARGUMENTS[@]} )); then
+  python3 "$TICKET_STORAGE_HELPER" scope --root "$PWD" --workstream "$WORKSTREAM" \
+    --ticket "$ticket_id" "${SCOPE_ARGUMENTS[@]}" >/dev/null
 fi
 
 if [[ -n "$USERS" ]]; then

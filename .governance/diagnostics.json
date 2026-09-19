@@ -1,9 +1,14 @@
 {
   "schema": "new-project.diagnostics/v2",
   "codes": {
+    "GOV-WORK-START-001": {
+      "message": "New work admission requires reconciliation of existing repository work or incomplete observations.",
+      "remediation": "Run the managed work-start check; reuse the matching ticket, assist read-only, arrange a fenced handoff or serialize. Preserve unknown work; do not force allocation.",
+      "documentation": "error/GOV-WORK-START.md"
+    },
     "GOV-AGENT-HOST-001": {
       "message": "Commit is not bound to an IN_PROGRESS ticket-NNN branch.",
-      "remediation": "Allocate through ./project/new-ticket.sh and commit on a branch whose name contains ticket-NNN.",
+      "remediation": "Inspect existing branches and worktrees first; reuse the allocated ticket checkout. Allocate through ./project/new-ticket.sh only after work-start admission; never rename or discard unknown work to satisfy the hook.",
       "documentation": "error/GOV-AGENT-HOST.md"
     },
     "GOV-AGENT-HOST-002": {
@@ -38,33 +43,33 @@
     },
     "GOV-APPROVAL-001": {
       "message": "Implementation lacks approval from a trusted external source.",
-      "remediation": "Obtain an exact-head approval from an allowlisted human, trusted Validator App or verified signed attestation.",
-      "documentation": null
+      "remediation": "Observe the exact PR/head and existing review request; invoke the configured protected controller within existing publication authority, or route to the trusted reviewer. Read back its receipt before retry; green checks alone are not approval.",
+      "documentation": "error/GOV-APPROVAL.md"
     },
     "GOV-APPROVAL-002": {
       "message": "Approval refers to a different ticket.",
-      "remediation": "Approve the current ticket after reviewing its latest intent and exact implementation head.",
-      "documentation": null
+      "remediation": "Reconcile the current ticket and PR binding, then request protected review of that exact subject. Never edit old approval evidence to name another ticket.",
+      "documentation": "error/GOV-APPROVAL.md"
     },
     "GOV-APPROVAL-003": {
       "message": "Approval evidence is missing, repository-controlled or structurally invalid.",
       "remediation": "Create v1 approval evidence outside the PR checkout through a protected verifier.",
-      "documentation": null
+      "documentation": "error/GOV-APPROVAL.md"
     },
     "GOV-APPROVAL-004": {
       "message": "Approval evidence is bound to another repository, pull request or commit.",
       "remediation": "Regenerate protected evidence for the exact repository, PR, HEAD and ticket tuple.",
-      "documentation": null
+      "documentation": "error/GOV-APPROVAL.md"
     },
     "GOV-APPROVAL-005": {
       "message": "Approval actor or verification method is not trusted for the claimed source.",
       "remediation": "Use the type-specific protected allowlist or verify a signed attestation with a trusted issuer.",
-      "documentation": null
+      "documentation": "error/GOV-APPROVAL.md"
     },
     "GOV-ARCHITECTURE-001": {
       "message": "Architecture ownership, UI/data impact or component mapping is unresolved.",
-      "remediation": "Complete the accepted architecture block in intent.json before implementation.",
-      "documentation": null
+      "remediation": "Classify actual data impact and resolve component or integration ownership under existing authority; follow the runbook before escalating.",
+      "documentation": "error/GOV-ARCHITECTURE-001.md"
     },
     "GOV-BASE-001": {
       "message": "The target branch or base SHA differs from the approved delivery contract.",
@@ -82,19 +87,19 @@
       "documentation": null
     },
     "GOV-BRANCH-LIFECYCLE-001": {
-      "message": "GitHub is not configured to delete merged head branches.",
+      "message": "GitHub automatic head-branch deletion after merge is disabled.",
       "remediation": "Set delete_branch_on_merge=true in repository settings.",
-      "documentation": null
+      "documentation": "error/GOV-WORKSPACE-LIFECYCLE.md"
     },
     "GOV-BRANCH-LIFECYCLE-002": {
-      "message": "The remote branch snapshot is inconsistent with open pull requests.",
-      "remediation": "Acquire one fresh protected snapshot and verify each open PR head branch.",
-      "documentation": null
+      "message": "Remote branches exist without ownership by an open pull request.",
+      "remediation": "Observe the exact branch head and open/closed PR history; preserve unmerged work and reconcile its intent before choosing continued delivery or an explicitly authorized discard. Do not create an empty PR or delete a branch merely to satisfy this check.",
+      "documentation": "error/GOV-WORKSPACE-LIFECYCLE.md"
     },
     "GOV-BRANCH-LIFECYCLE-003": {
-      "message": "A quiescent repository has a remote branch other than its default branch.",
-      "remediation": "Preserve unmerged work, then delete only a verified merged or explicitly discarded remote branch.",
-      "documentation": null
+      "message": "The branch lifecycle snapshot is missing, malformed or inconsistent.",
+      "remediation": "Re-acquire the snapshot from the protected GitHub workflow and reobserve inconsistent refs; preserve every branch while the observation is unresolved.",
+      "documentation": "error/GOV-WORKSPACE-LIFECYCLE.md"
     },
     "GOV-BUDGET-001": {
       "message": "The actual implementation diff exceeds its approved budget.",
@@ -465,6 +470,36 @@
       "message": "Branch intent reconciliation is incomplete, stale or invalid.",
       "remediation": "Preserve history, reacquire the complete accepted criterion inventory and independently verified receipts at the exact source/target SHA; retain unknown work for review. Report conformance never authorizes deletion.",
       "documentation": null
+    },
+    "GOV-SNAPSHOT-MIGRATION-001": {
+      "message": "The snapshot migration contract is invalid.",
+      "remediation": "Preserve the source; reobserve the exact subject and protected grant before a bounded successor action.",
+      "documentation": "error/GOV-SNAPSHOT-MIGRATION.md"
+    },
+    "GOV-SNAPSHOT-MIGRATION-002": {
+      "message": "The immutable migration subject or complete Git history is unavailable.",
+      "remediation": "Preserve the source; reobserve the exact subject and protected grant before a bounded successor action.",
+      "documentation": "error/GOV-SNAPSHOT-MIGRATION.md"
+    },
+    "GOV-SNAPSHOT-MIGRATION-003": {
+      "message": "The migration authorization is missing or differs from the protected subject.",
+      "remediation": "Preserve the source; reobserve the exact subject and protected grant before a bounded successor action.",
+      "documentation": "error/GOV-SNAPSHOT-MIGRATION.md"
+    },
+    "GOV-SNAPSHOT-MIGRATION-004": {
+      "message": "The migration does not preserve source ancestry and atomic new intent.",
+      "remediation": "Preserve the source; reobserve the exact subject and protected grant before a bounded successor action.",
+      "documentation": "error/GOV-SNAPSHOT-MIGRATION.md"
+    },
+    "GOV-SNAPSHOT-MIGRATION-005": {
+      "message": "The migration inventory or imported tree differs from its authorized snapshot.",
+      "remediation": "Preserve the source; reobserve the exact subject and protected grant before a bounded successor action.",
+      "documentation": "error/GOV-SNAPSHOT-MIGRATION.md"
+    },
+    "GOV-SNAPSHOT-MIGRATION-006": {
+      "message": "The migration authorization was consumed or its one-use base or ticket changed.",
+      "remediation": "Preserve the source; reobserve the exact subject and protected grant before a bounded successor action.",
+      "documentation": "error/GOV-SNAPSHOT-MIGRATION.md"
     }
   }
 }

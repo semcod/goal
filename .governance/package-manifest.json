@@ -2,6 +2,24 @@
   "schema": "new-project.package-manifest/v1",
   "files": [
     {
+      "source": "scripts/work_start_check.py",
+      "target": ".governance/work_start_check.py",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "governance/work-start-report.schema.json",
+      "target": ".governance/work-start-report.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "error/GOV-WORK-START.md",
+      "target": ".governance/error/GOV-WORK-START.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "template/files/AGENTS.template.md",
       "target": "AGENTS.md",
       "strategy": "managed",
@@ -148,6 +166,12 @@
     {
       "source": "error/README.md",
       "target": ".governance/error/README.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "error/GOV-APPROVAL.md",
+      "target": ".governance/error/GOV-APPROVAL.md",
       "strategy": "managed",
       "executable": false
     },
@@ -568,6 +592,36 @@
     {
       "source": "template/files/LOCAL_CI_PUBLICATION.template.md",
       "target": ".governance/docs/LOCAL_CI_PUBLICATION.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "scripts/snapshot_migration.py",
+      "target": ".governance/snapshot_migration.py",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "governance/snapshot-migration.schema.json",
+      "target": ".governance/snapshot-migration.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "error/GOV-SNAPSHOT-MIGRATION.md",
+      "target": ".governance/error/GOV-SNAPSHOT-MIGRATION.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "docs/information/snapshot-migration.md",
+      "target": ".governance/docs/SNAPSHOT_MIGRATION.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "error/GOV-ARCHITECTURE-001.md",
+      "target": ".governance/error/GOV-ARCHITECTURE-001.md",
       "strategy": "managed",
       "executable": false
     }

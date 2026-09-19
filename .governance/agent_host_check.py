@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -34,6 +35,7 @@ except ImportError:  # pragma: no cover - exercised on 3.10 runners
 SCHEMA = "new-project.agent-hosts/v1"
 CONTRACT_CANDIDATES = ("governance/agent-hosts.json", ".governance/agent-hosts.json")
 LOCK_CANDIDATES = ("governance/manifest.lock.json", ".governance/manifest.lock.json")
+SOURCE_LINK_MARKER = "<!-- wellmanifest:source-links:v1 -->"
 
 
 @dataclass(order=True)
@@ -95,6 +97,133 @@ def check_hosts(root: Path, contract: dict[str, Any]) -> list[Finding]:
                 "Bootstrap with ./scripts/install-agent-hosts.sh --source <hub> --target <repo>, or adopt the current standard package.",
                 [relative],
             ))
+    return findings
+
+
+def check_source_links(root: Path, contract: dict[str, Any]) -> list[Finding]:
+    """Require every managed host projection to expose its bounded sources.
+
+    The local files prove which package is adopted. Remote links are deliberately
+    navigation-only and point to concrete files on the current standard branch;
+    no validator fetches them and they never replace the local lock/digests.
+    """
+    findings: list[Finding] = []
+    source_links = contract.get("sourceLinks")
+    if not isinstance(source_links, dict):
+        return [Finding(
+            "GOV-AGENT-HOST-004",
+            "Agent host contract has no source-links declaration.",
+            "Adopt the current standard package with its managed source-links contract.",
+            ["sourceLinks"],
+        )]
+
+    local = source_links.get("local", [])
+    remote = source_links.get("remote", [])
+    remote_ids = [
+        item.get("id") for item in remote
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    ]
+    duplicate_ids = sorted({identifier for identifier in remote_ids if remote_ids.count(identifier) > 1})
+    if duplicate_ids:
+        return [Finding(
+            "GOV-AGENT-HOST-004",
+            "Agent host source-links declaration contains duplicate remote ids: "
+            + ", ".join(duplicate_ids),
+            "Restore unique remote source identifiers in the managed host contract.",
+            ["sourceLinks"],
+        )]
+    by_id = {
+        item.get("id"): item for item in remote
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    required_every = source_links.get("requiredInEveryHost", [])
+    required_agents = source_links.get("requiredInAgents", [])
+    required_ids = set(required_every) | set(required_agents)
+    missing_ids = sorted(identifier for identifier in required_ids if identifier not in by_id)
+    if missing_ids:
+        findings.append(Finding(
+            "GOV-AGENT-HOST-004",
+            "Agent host source-links declaration references unknown remote ids: "
+            + ", ".join(missing_ids),
+            "Restore the managed source-links contract from the standard package.",
+            ["sourceLinks"],
+        ))
+        return findings
+
+    malformed_urls = []
+    for identifier, item in by_id.items():
+        repository = item.get("repository")
+        path = item.get("path")
+        url = item.get("url")
+        expected = f"https://github.com/{repository}/blob/main/{path}"
+        if not isinstance(url, str) or url != expected:
+            malformed_urls.append(identifier)
+    if malformed_urls:
+        findings.append(Finding(
+            "GOV-AGENT-HOST-004",
+            "Agent host source-links declaration contains non-canonical URLs: "
+            + ", ".join(sorted(malformed_urls)),
+            "Use the concrete main-branch URL derived from each declared repository and path.",
+            ["sourceLinks"],
+        ))
+        return findings
+
+    local_paths = [
+        str(item["path"])
+        for item in local
+        if isinstance(item, dict)
+        and isinstance(item.get("path"), str)
+        and (root / str(item["path"])).is_file()
+    ]
+    if not local_paths:
+        findings.append(Finding(
+            "GOV-AGENT-HOST-004",
+            "No declared local source link resolves in this checkout.",
+            "Restore the local adoption lock/package or the hub manifest/package before using host instructions.",
+            ["sourceLinks"],
+        ))
+        return findings
+
+    for host in contract["hosts"]:
+        relative = str(host["file"])
+        path = root / relative
+        if not path.is_file():
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            findings.append(Finding(
+                "GOV-AGENT-HOST-004",
+                f"Host source links are unreadable in {relative}: {error}",
+                "Restore the managed host projection through standard adoption.",
+                [relative],
+            ))
+            continue
+        if SOURCE_LINK_MARKER not in content:
+            findings.append(Finding(
+                "GOV-AGENT-HOST-004",
+                f"Host instruction file has no managed source-links marker: {relative}",
+                "Regenerate managed host instructions from the pinned standard package.",
+                [relative],
+            ))
+        for local_path in local_paths:
+            if local_path not in content:
+                findings.append(Finding(
+                    "GOV-AGENT-HOST-004",
+                    f"Host instruction file omits local source link {local_path}: {relative}",
+                    "Regenerate managed host instructions from the pinned standard package.",
+                    [relative, local_path],
+                ))
+        remote_ids = required_agents if relative == "AGENTS.md" else required_every
+        for identifier in remote_ids:
+            url = by_id[identifier].get("url")
+            if not isinstance(url, str) or url not in content:
+                findings.append(Finding(
+                    "GOV-AGENT-HOST-004",
+                    f"Host instruction file omits remote source link {identifier}: {relative}",
+                    "Regenerate managed host instructions from the pinned standard package.",
+                    [relative, identifier],
+                ))
     return findings
 
 
@@ -251,6 +380,206 @@ def check_declaration(
     return findings
 
 
+def workflow_job_names(path: Path) -> list[str]:
+    """Parse the small, stable subset of GitHub workflow YAML we need.
+
+    The required-checks validator owns the complete workflow contract. This
+    deliberately remains a narrow, dependency-free preflight so an agent-host
+    audit can flag an impossible CI declaration before a long session starts.
+    """
+    lines = path.read_text(encoding="utf-8").splitlines()
+    in_jobs = False
+    jobs: list[str] = []
+    current_key: str | None = None
+    current_name: str | None = None
+
+    def flush() -> None:
+        nonlocal current_key, current_name
+        if current_key is not None:
+            jobs.append(current_name or current_key)
+        current_key = None
+        current_name = None
+
+    for line in lines:
+        if re.match(r"^jobs:\s*(?:#.*)?$", line):
+            in_jobs = True
+            continue
+        if not in_jobs:
+            continue
+        if (line and not line.startswith((" ", "\t"))
+                and line.strip() and not line.lstrip().startswith("#")):
+            break
+        match = re.match(r"^  ([A-Za-z0-9][A-Za-z0-9_-]*):\s*(?:#.*)?$", line)
+        if match:
+            flush()
+            current_key = match.group(1)
+            continue
+        name = re.match(r"^    name:\s*(.+?)\s*$", line)
+        if name and current_key is not None and current_name is None:
+            value = name.group(1).strip()
+            if " #" in value:
+                value = value.split(" #", 1)[0].rstrip()
+            if len(value) >= 2 and value[0] in {"'", '"'} and value[-1] == value[0]:
+                value = value[1:-1]
+            current_name = value
+    flush()
+    return jobs
+
+
+def check_guidance_anomalies(root: Path, contract: dict[str, Any]) -> list[Finding]:
+    """Catch bounded-session and impossible-CI hazards before model work begins.
+
+    This is intentionally static and offline. It does not fetch remote links,
+    infer intent from prose, or retry a failed command. A finding is a stop
+    signal with a concrete path, not an invitation to keep experimenting.
+    """
+    config = contract.get("anomalyChecks")
+    if not isinstance(config, dict):
+        return [Finding(
+            "GOV-AGENT-HOST-004",
+            "Agent host contract has no deterministic anomaly-check declaration.",
+            "Adopt the current standard package with its bounded-session audit contract.",
+            ["anomalyChecks"],
+        )]
+
+    findings: list[Finding] = []
+    max_bytes = config.get("maxInstructionBytes")
+    required_terms = config.get("requiredTerms", [])
+    contradictions = config.get("contradictions", [])
+    if not isinstance(max_bytes, int) or max_bytes < 1:
+        return [Finding(
+            "GOV-AGENT-HOST-004",
+            "Agent host anomaly contract has an invalid instruction-size limit.",
+            "Declare a positive maxInstructionBytes value in the managed contract.",
+            ["anomalyChecks"],
+        )]
+
+    for host in contract["hosts"]:
+        relative = str(host["file"])
+        path = root / relative
+        if not path.is_file():
+            continue  # check_hosts emits the more direct missing-file finding.
+        try:
+            content = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            findings.append(Finding(
+                "GOV-AGENT-HOST-004",
+                f"Host guidance cannot be audited in {relative}: {error}",
+                "Restore the managed host projection from the pinned package.",
+                [relative],
+            ))
+            continue
+        size = len(content.encode("utf-8"))
+        if size > max_bytes:
+            findings.append(Finding(
+                "GOV-AGENT-HOST-004",
+                f"Host guidance exceeds the bounded instruction size ({size} > {max_bytes} bytes): {relative}",
+                "Split or shorten the managed guidance before the host truncates its instruction chain.",
+                [relative],
+            ))
+        folded = content.casefold()
+        missing = [
+            str(term) for term in required_terms
+            if isinstance(term, str) and term.casefold() not in folded
+        ]
+        if missing:
+            findings.append(Finding(
+                "GOV-AGENT-HOST-004",
+                f"Host guidance lacks bounded-session controls {', '.join(missing)}: {relative}",
+                "Restore checkpoint, handoff and stop conditions so a blocked session cannot retry indefinitely.",
+                [relative],
+            ))
+        for rule in contradictions:
+            if not isinstance(rule, dict):
+                continue
+            patterns = rule.get("patterns")
+            if not isinstance(patterns, list) or len(patterns) < 2:
+                continue
+            present = [str(pattern) for pattern in patterns
+                       if isinstance(pattern, str) and pattern.casefold() in folded]
+            if len(present) == len(patterns):
+                identifier = str(rule.get("id", "unnamed"))
+                findings.append(Finding(
+                    "GOV-AGENT-HOST-004",
+                    f"Host guidance contains contradictory directives ({identifier}): {relative}",
+                    "Remove one directive or split the rules by an explicit, machine-checkable scope.",
+                    [relative],
+                ))
+
+    ci = config.get("ci")
+    if not isinstance(ci, dict):
+        return findings
+    candidates = ci.get("requiredChecksCandidates", [])
+    checks_path = next(
+        (root / str(candidate) for candidate in candidates
+         if isinstance(candidate, str) and (root / candidate).is_file()),
+        None,
+    )
+    if checks_path is None:
+        findings.append(Finding(
+            "GOV-AGENT-HOST-004",
+            "CI anomaly audit cannot find a required-checks declaration.",
+            "Restore governance/required-checks.json or .governance/required-checks.json.",
+            ["required-checks"],
+        ))
+        return findings
+    try:
+        declaration = load_json(checks_path)
+    except (OSError, json.JSONDecodeError) as error:
+        findings.append(Finding(
+            "GOV-AGENT-HOST-004",
+            f"CI required-checks declaration is unreadable: {error}",
+            "Restore a valid managed required-checks declaration.",
+            [str(checks_path.relative_to(root))],
+        ))
+        return findings
+    if not isinstance(declaration, dict):
+        return findings
+    pairs: list[tuple[str, str]] = []
+    bound = declaration.get("requiredChecks")
+    if isinstance(bound, list) and bound:
+        for item in bound:
+            if isinstance(item, dict) and isinstance(item.get("name"), str) and isinstance(item.get("workflowFile"), str):
+                pairs.append((item["name"], item["workflowFile"]))
+    elif isinstance(declaration.get("requiredCheckNames"), list) and isinstance(declaration.get("workflowFile"), str):
+        pairs = [(str(name), declaration["workflowFile"])
+                 for name in declaration["requiredCheckNames"]
+                 if isinstance(name, str)]
+    if not pairs:
+        findings.append(Finding(
+            "GOV-AGENT-HOST-004",
+            "CI required-checks declaration has no usable check/workflow pairs.",
+            "Declare requiredCheckNames with workflowFile, or bound requiredChecks entries.",
+            [str(checks_path.relative_to(root))],
+        ))
+        return findings
+    for workflow in sorted({workflow for _, workflow in pairs}):
+        workflow_path = root / workflow
+        if not workflow_path.is_file():
+            findings.append(Finding(
+                "GOV-AGENT-HOST-004",
+                f"CI required-checks declaration names a missing workflow: {workflow}",
+                "Point workflowFile at a workflow present in this checkout.",
+                [workflow, str(checks_path.relative_to(root))],
+            ))
+            continue
+        try:
+            published = workflow_job_names(workflow_path)
+        except (OSError, UnicodeDecodeError):
+            published = []
+        for name, declared_workflow in pairs:
+            if declared_workflow != workflow:
+                continue
+            if name not in published:
+                findings.append(Finding(
+                    "GOV-AGENT-HOST-004",
+                    f"CI required check {name!r} is not published by {workflow}.",
+                    "Add the job or change the declaration to a job this workflow actually publishes; do not retry a permanently impossible gate.",
+                    [workflow, str(checks_path.relative_to(root))],
+                ))
+    return findings
+
+
 def load_contract(root: Path, explicit: str | None) -> tuple[dict[str, Any] | None, Finding | None]:
     if explicit is not None:
         path = root / explicit if not Path(explicit).is_absolute() else Path(explicit)
@@ -280,7 +609,7 @@ def load_contract(root: Path, explicit: str | None) -> tuple[dict[str, Any] | No
             "GOV-AGENT-HOST-004", f"Agent host contract must declare schema {SCHEMA}.",
             "Restore the pinned host contract through a standard upgrade.", [str(path.name)],
         )
-    for key in ("hook", "hosts", "packaging"):
+    for key in ("hook", "hosts", "sourceLinks", "packaging", "anomalyChecks"):
         if key not in contract:
             return None, Finding(
                 "GOV-AGENT-HOST-004", f"Agent host contract has no '{key}' section.",
@@ -296,8 +625,10 @@ def audit(root: Path, actor: str = "agent", contract_path: str | None = None) ->
     else:
         findings = (
             check_hosts(root, contract)
+            + check_source_links(root, contract)
             + check_hook(root, contract, actor)
             + check_packaging(root, contract)
+            + check_guidance_anomalies(root, contract)
         )
     findings.sort()
     return {

@@ -70,8 +70,8 @@ python_files = ["test_*.py"]
 addopts = "-p wellmanifest_governance"
 
 [tool.wellmanifest]
-standard = "0.20.25"
-revision = "d54878a105a20d84dd554f205bc177dcacc8730a"
+standard = "0.20.32"
+revision = "b6ba9c21a65a6a5648ecf904b64c3b75295e136f"
 gate = "project/governance-check.sh"
 
 [tool.tox]
