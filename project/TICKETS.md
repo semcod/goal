@@ -110,6 +110,9 @@ This file indexes governance tickets without taking ownership of
 | **ticket-110** | [`README.md`](./ticket-110/README.md) | - | - | - | - | - |
 | **ticket-111** | [`README.md`](./ticket-111/README.md) | - | - |  [`ai-codex.md`](./ticket-111/ai-codex.md) | - | - |
 | **ticket-112** | [`README.md`](./ticket-112/README.md) | - | - |  [`ai-codex.md`](./ticket-112/ai-codex.md) | - | - |
+| **ticket-113** | [`README.md`](./ticket-113/README.md) | - | - | - | - | - |
+| **ticket-114** | [`README.md`](./ticket-114/README.md) | - | - | - | - | - |
+| **ticket-167** | [`README.md`](./ticket-167/README.md) | - | - | - | - | - |
 | **ticket-168** | [`README.md`](./ticket-168/README.md) | - | - | - | - | - |
 | **ticket-169** | [`README.md`](./ticket-169/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

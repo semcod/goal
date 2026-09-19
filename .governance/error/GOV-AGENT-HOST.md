@@ -9,6 +9,11 @@ emitowane przez `.githooks/pre-commit`, oraz `GOV-AGENT-HOST-004`,
 również `.githooks`, więc kod emitowany przez hooka nie może już wypaść z
 katalogu niezauważony.
 
+Ten sam audyt emituje `GOV-AGENT-HOST-004`, gdy instrukcje przekraczają limit
+hosta, tracą `checkpoint`/`handoff`/`stop`, zawierają skonfigurowaną sprzeczność
+albo deklarują required check, którego workflow nie publikuje. To są blokery
+przed rozpoczęciem długiej sesji, a nie sygnały do kolejnych ślepych retry.
+
 ## Situation
 
 `001`–`003` oraz `007` pojawiają się przy commicie: branch nie jest związany z ticketem
@@ -43,6 +48,8 @@ rzeczywistości sprawdzany.
    registry. Dla `003` nie twórz commita: chroniony kontroler dostawy zapisuje
    terminalny receipt poza checkoutem autora.
 4. Potwierdź stan: `python3 scripts/agent_host_check.py --root .`.
+   Przy findingu anomalii napraw źródłowy kontrakt/projekcję lub CI, a potem
+   uruchom audyt ponownie; nie obchodź go przez `--no-verify`.
 
 ## Verification
 

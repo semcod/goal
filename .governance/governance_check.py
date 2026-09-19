@@ -108,6 +108,7 @@ class Report:
     def __init__(self, root: Path) -> None:
         self.root = root
         self.findings: list[Finding] = []
+        self.snapshot_migrations: dict[str, dict[str, Any]] = {}
 
     def add(
         self,
@@ -616,6 +617,47 @@ def delivery_ui_impact_error(impact: str, states: list[str], evidence: list[str]
     return None
 
 
+DATA_CHANGE_KINDS = {
+    "component-local-state", "schema-migration", "cross-component-migration",
+    "ownership-transfer", "unknown",
+}
+
+
+def delivery_data_changes_error(changes: Any, components: Any) -> str | None:
+    """Legacy prose stays conservative; local state needs an explicit owner."""
+    if not isinstance(changes, list):
+        return "delivery architecture dataChanges must be a list"
+    names = [item.get("name") for item in components if isinstance(item, dict)] if isinstance(components, list) else []
+    seen = set()
+    for change in changes:
+        if isinstance(change, str):
+            if not change.strip():
+                return "delivery data change description is blank"
+        elif isinstance(change, dict):
+            if set(change) != {"kind", "component", "description"}:
+                return "delivery data change requires kind, component and description"
+            if not isinstance(change["kind"], str) or change["kind"] not in DATA_CHANGE_KINDS:
+                return "delivery data change kind is unknown"
+            if not isinstance(change["component"], str) or names.count(change["component"]) != 1:
+                return "delivery data change component must resolve to one declared component"
+            if not isinstance(change["description"], str) or not change["description"].strip():
+                return "delivery data change description is blank"
+        else:
+            return "delivery data change must be legacy prose or a typed record"
+        key = json.dumps(change, sort_keys=True)
+        if key in seen:
+            return "delivery data changes must be unique"
+        seen.add(key)
+    return None
+
+
+def integration_data_changes(changes: list[Any]) -> list[Any]:
+    # Do not infer an exemption from prose, spelling or an unknown record.
+    return [change for change in changes if not (
+        isinstance(change, dict) and change.get("kind") == "component-local-state"
+    )]
+
+
 def delivery_architecture_error(architecture: Any) -> str | None:
     fields = {
         "status", "decision", "components", "responsibilityChanges",
@@ -630,10 +672,11 @@ def delivery_architecture_error(architecture: Any) -> str | None:
             return f"delivery architecture {name} is blank"
     if not isinstance(architecture.get("responsibilityChanges"), bool):
         return "delivery responsibilityChanges must be boolean"
-    for name in ("interfaceChanges", "dataChanges"):
-        if not string_list(architecture.get(name)):
-            return f"delivery architecture {name} must be a unique string list"
-    return delivery_components_error(architecture.get("components")) or delivery_ui_error(architecture.get("ui"))
+    if not string_list(architecture.get("interfaceChanges")):
+        return "delivery architecture interfaceChanges must be a unique string list"
+    return (delivery_components_error(architecture.get("components"))
+            or delivery_data_changes_error(architecture.get("dataChanges"), architecture.get("components"))
+            or delivery_ui_error(architecture.get("ui")))
 
 
 def delivery_validation_error(validation: Any) -> str | None:
@@ -797,16 +840,74 @@ def standard_adoption_error(value: Any) -> str | None:
     return None
 
 
+def snapshot_migration_runtime():
+    spec = importlib.util.spec_from_file_location(
+        "new_project_snapshot_migration", Path(__file__).with_name("snapshot_migration.py"),
+    )
+    if spec is None or spec.loader is None:
+        raise ValueError("Managed snapshot migration runtime is unavailable")
+    module = importlib.util.module_from_spec(spec)
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous
+    return module
+
+
+def prepare_snapshot_migrations(args, root, records, base, changed, report):
+    candidates = [record for record in records if record.intent is not None
+                  and "snapshotMigration" in record.intent.get("delivery", {})
+                  and any(path.startswith(rel(root, record.directory) + "/") for path in changed)]
+    authorization = getattr(args, "migration_authorization", None)
+    if not candidates:
+        if authorization:
+            report.add("GOV-SNAPSHOT-MIGRATION-003", "Grant supplied without a migration ticket.",
+                       "Bind the protected grant to exactly one current migration ticket.")
+        return set(), set()
+    try:
+        if len(candidates) != 1:
+            raise ValueError("Exactly one migration ticket is required")
+        record = candidates[0]
+        branch = getattr(args, "migration_branch", None)
+        if not branch:
+            raise ValueError("Authenticated migration head branch is required")
+        observed_branch = subprocess.run(["git", "symbolic-ref", "--quiet", "--short", "HEAD"],
+                                         cwd=root, text=True, capture_output=True)
+        if observed_branch.returncode == 0 and observed_branch.stdout.strip() != branch:
+            raise ValueError("Current branch differs from the protected migration binding")
+        proof = snapshot_migration_runtime().prove(
+            root, record.intent, base=base, head=args.head,
+            repository=args.expected_repository, branch=branch,
+            authorization_path=authorization,
+            authorization_sha256=getattr(args, "migration_authorization_sha256", None),
+        )
+    except (OSError, ValueError, TypeError, KeyError, UnicodeError) as error:
+        report.add(getattr(error, "code", "GOV-SNAPSHOT-MIGRATION-003"),
+                   "Snapshot migration proof was rejected: " + str(error),
+                   "Reobserve the protected subject and follow error/GOV-SNAPSHOT-MIGRATION.md.")
+        return set(), set()
+    report.snapshot_migrations[record.directory.name] = proof
+    return set(proof["historicalTickets"]), set(proof["repairPaths"])
+
+
 def delivery_intent_error(value: Any) -> str | None:
     required_fields = {
         "acceptedBaseSha", "targetBranch", "outcome", "nonGoals",
         "complexity", "estimatedMinutes", "budgets", "architecture",
         "runtimeDependencies", "validation",
     }
-    if not isinstance(value, dict) or set(value) not in {
-        frozenset(required_fields), frozenset({*required_fields, "standardAdoption"}),
-    }:
+    optional_fields = {"standardAdoption", "snapshotMigration"}
+    if not isinstance(value, dict) or not required_fields <= set(value) <= required_fields | optional_fields:
         return "delivery must contain exactly the bounded-delivery fields"
+    if "snapshotMigration" in value:
+        try:
+            migration_error = snapshot_migration_runtime().contract_error(value["snapshotMigration"])
+        except (OSError, ValueError):
+            return "managed snapshot migration contract validator is unavailable"
+        if migration_error:
+            return migration_error
     error = delivery_header_error(value) or delivery_budgets_error(value.get("budgets"))
     if error:
         return error
@@ -1000,7 +1101,11 @@ def check_history_order(
     if not base:
         return
     try:
-        commits = git_output(root, ["rev-list", "--reverse", f"{base}..{head}"]).decode().splitlines()
+        arguments = ["rev-list", "--reverse", f"{base}..{head}"]
+        migration = report.snapshot_migrations.get(ticket_name)
+        if migration:
+            arguments.append("^" + migration["sourceSha"])
+        commits = git_output(root, arguments).decode().splitlines()
     except (subprocess.CalledProcessError, FileNotFoundError):
         report.add(
             "GOV-DIFF-001", "Git could not enumerate commits for history-order validation.",
@@ -2986,6 +3091,10 @@ def check_actual_delivery_budget(
 ) -> None:
     declared_limits = delivery["budgets"]
     implementation_limit = min(declared_limits["maxImplementationFiles"], policy["maxImplementationFiles"])
+    migration = report.snapshot_migrations.get(record.directory.name)
+    if migration:
+        imported = set(migration["importedPaths"])
+        implementation = [path for path in implementation if path not in imported]
     public_paths = [path for path in implementation if matches(path, policy["publicInterfacePaths"])]
     dependency_paths = [path for path in implementation if path in policy["dependencyManifestPaths"]]
     if (
@@ -3020,13 +3129,16 @@ def check_integration_ownership(
 ) -> None:
     integration_workstream = manifest["coordination"]["integration"]["workstream"]
     architecture = delivery["architecture"]
-    if (architecture["responsibilityChanges"] or architecture["dataChanges"]) and record.intent["workstream"] != integration_workstream:
+    data_changes = integration_data_changes(architecture["dataChanges"])
+    if (architecture["responsibilityChanges"] or data_changes) and record.intent["workstream"] != integration_workstream:
         report.add(
             "GOV-ARCHITECTURE-001",
             "Responsibility or persistent-data movement is not owned by an integration slice.",
-            "Use an explicit integration-workstream contract before changing component ownership or persistent data.",
+            "Use integration for responsibility transfers or data migrations. Explicit component-local-state records stay with the component owner; legacy prose remains integration-owned. Reconcile the declared impact and actual diff before requesting new authority.",
             [intent_path],
-            {"workstream": record.intent["workstream"], "requiredWorkstream": integration_workstream},
+            {"workstream": record.intent["workstream"], "requiredWorkstream": integration_workstream,
+             "responsibilityChanges": architecture["responsibilityChanges"],
+             "integrationDataChanges": data_changes},
         )
 
 
@@ -3974,6 +4086,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--ticket-database", help="Local primary-checkout project.sqlite; forbidden for CI/approval enforcement")
     parser.add_argument("--ticket-snapshot", help="Externally acquired ticket snapshot outside Git checkouts")
     parser.add_argument("--ticket-snapshot-sha256", help="Independent protected snapshot digest")
+    parser.add_argument("--migration-authorization", help="External migration grant selected by protected policy")
+    parser.add_argument("--migration-authorization-sha256", help="Independently protected grant digest")
+    parser.add_argument("--migration-branch", help="Authenticated PR head branch, including detached jobs")
     parser.add_argument("--resolved-ticket-output")
     parser.add_argument("--elapsed-minutes", type=int)
     parser.add_argument("--format", choices=["text", "json", "sarif"], default="text")
@@ -4131,6 +4246,13 @@ def run_governance_checks(
         directories = [record.directory for record in records]
     base = resolve_validation_base(args.base, root, records, manifest["ticket"], args.head)
     changed = resolve_changed_paths(args, root, base, report)
+    historical_tickets, migration_repairs = prepare_snapshot_migrations(args, root, records, base, changed, report)
+    if historical_tickets:
+        # This candidate's imported metadata is historical evidence, not a live
+        # reservation. The external controller still owns leases and closure.
+        records = [record for record in records if record.directory.name not in historical_tickets]
+        directories = [record.directory for record in records]
+    changed = sorted(set(changed) | migration_repairs)
     active = active_ticket_records(root, manifest["ticket"], records, report)
     changed_active = [
         record for record in active

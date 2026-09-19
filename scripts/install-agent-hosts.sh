@@ -228,17 +228,43 @@ install_user_files() {
 
   local marker="wellmanifest/new-project host contract"
   for pointer in "$task_user_home/.gemini/GEMINI.md" "$task_user_home/.claude/CLAUDE.md"; do
-    if [[ ! -f "$pointer" ]] || ! grep -Fq "$marker" "$pointer"; then
-      cat >> "$pointer" <<EOF || return 1
-
-# $marker
-
-When the current repository has \`./project/new-ticket.sh\`, follow that
-repository's host contract and \`AGENTS.md\`. Allocate tickets only through
-that script. Never commit on main or a dirty primary checkout. Run
-\`./scripts/install-agent-hosts.sh\` once per clone so the git hook is active.
-EOF
-    fi
+    # Governance can exist only in a registered ticket worktree until its
+    # adoption merges, so discovery must not depend on the current checkout.
+    # Replace only the managed paragraph after the marker; keep other text.
+    python3 - "$pointer" "$marker" <<'PY' || return 1
+import os, pathlib, sys, tempfile
+path, marker = pathlib.Path(sys.argv[1]), sys.argv[2]
+paragraph = [
+    "When the current Git checkout, or any checkout listed by `git worktree list`,",
+    "has `./project/new-ticket.sh`, or its primary checkout has",
+    "`.subactor/leases/*.json`, follow the host contract and `AGENTS.md` of the",
+    "ticket checkout that owns the work, even if the current checkout lacks them.",
+    "Allocate tickets only through that script. Never commit on main or a dirty",
+    "primary checkout. Run `./scripts/install-agent-hosts.sh` once per clone so",
+    "the git hook is active.",
+]
+text = path.read_text(encoding="utf-8") if path.exists() else ""
+lines = text.splitlines()
+heading = f"# {marker}"
+if heading in lines:
+    start = lines.index(heading)
+    body = start + 1
+    while body < len(lines) and not lines[body].strip():
+        body += 1
+    if body < len(lines) and lines[body].startswith("When the current "):
+        end = body
+        while end < len(lines) and lines[end].strip() and not lines[end].startswith("#"):
+            end += 1
+        lines[start:end] = [heading, "", *paragraph]
+    updated = "\n".join(lines) + "\n"
+else:
+    updated = text + ("" if not text or text.endswith("\n") else "\n") + "\n" + "\n".join([heading, "", *paragraph]) + "\n"
+if updated != text:
+    fd, temporary = tempfile.mkstemp(prefix=".host-pointer.", dir=path.parent)
+    with os.fdopen(fd, "w", encoding="utf-8") as stream:
+        stream.write(updated)
+    os.replace(temporary, path)
+PY
   done
   echo "Installed user-level host pointers under $task_user_home/.cursor $task_user_home/.gemini $task_user_home/.claude"
 }

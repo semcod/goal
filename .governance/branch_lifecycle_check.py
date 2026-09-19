@@ -155,8 +155,8 @@ def evaluate(snapshot: dict[str, Any]) -> list[Finding]:
         findings.append(Finding(
             code="GOV-BRANCH-LIFECYCLE-003",
             severity="error",
-            message="The snapshot is inconsistent: an internal open PR head is missing.",
-            remediation="Re-acquire one atomic snapshot and verify the open PR head branches.",
+            message="The branch lifecycle snapshot is missing, malformed or inconsistent.",
+            remediation="Re-acquire the snapshot and reobserve the open PR head branches; preserve refs while the observation is unresolved.",
             evidence={"repository": repository, "missingInternalHeads": missing_heads},
         ))
 
@@ -168,10 +168,10 @@ def evaluate(snapshot: dict[str, Any]) -> list[Finding]:
             severity="error",
             message="Remote branches exist without ownership by an open pull request.",
             remediation=(
-                "Open a bounded ticket pull request for each branch or obtain an explicit owner "
-                "decision to discard the unmerged branch after preserving history and reconciling "
-                "every accepted criterion with branch_intent_reconciliation.py. "
-                "Unknown evidence is not permission to discard."
+                "Observe the exact branch head and open/closed PR history; preserve unmerged work "
+                "and reconcile its intent with branch_intent_reconciliation.py before choosing "
+                "continued delivery or an explicitly authorized discard. Do not create an empty PR "
+                "or delete a branch merely to satisfy this check. Unknown evidence is not permission to discard."
             ),
             evidence={"repository": repository, "orphanedBranches": orphaned},
         ))
@@ -226,7 +226,7 @@ def main(argv: list[str] | None = None) -> int:
             code="GOV-BRANCH-LIFECYCLE-003",
             severity="error",
             message="The branch lifecycle snapshot is missing, malformed or inconsistent.",
-            remediation="Re-acquire the snapshot from the protected GitHub workflow.",
+            remediation="Re-acquire the snapshot from the protected GitHub workflow; preserve refs while the observation is unresolved.",
             evidence={"reason": str(error)},
         )]
 

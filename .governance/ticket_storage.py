@@ -52,18 +52,51 @@ def invoke(root, pin, *args, content=None):
     return json.loads(result.stdout)
 
 
+def scoped_paths(root, workstream, paths):
+    """Share the gate's ownership predicate; narrowing is never write authority."""
+    if not paths:
+        return []
+    from governance_check import pattern_covered_by
+    from work_start_check import manifest_at, material, patterns
+    scope = patterns(paths)
+    if any(any(part in {"", "."} for part in path.split("/")) for path in scope):
+        raise ValueError("canonical repository-relative scope required")
+    manifest = manifest_at(Path(root))
+    owned = patterns(manifest['coordination']['workstreams'][workstream]['ownedPaths'])
+    if not material(scope) or any(not any(pattern_covered_by(path, owner) for owner in owned) for path in scope):
+        raise ValueError("nonempty implementation scope owned by the workstream required")
+    return scope
+
+
+def persist_scope(args):
+    scope = scoped_paths(args.root, args.workstream, args.path)
+    if args.ticket is not None:
+        if not scope or re.fullmatch(r"ticket-[0-9]{3,}", args.ticket) is None:
+            raise ValueError("reserved identity and explicit scope required")
+        path = args.root / 'project' / args.ticket / 'intent.json'
+        no_links(path.absolute())
+        intent = json.loads(path.read_text(encoding='utf-8'))
+        if intent['ticket'] != args.ticket or intent['workstream'] != args.workstream:
+            raise ValueError("allocated intent identity mismatch")
+        # Replace template implementation placeholders, never broaden admission.
+        intent['allowedPaths'] = [f'project/{args.ticket}/**', 'TODO.md', 'project/TICKETS.md', *scope]
+        path.write_text(json.dumps(intent, indent=2) + '\n', encoding='utf-8')
+    return scope
+
+
 def create(args):
     ticket = args.ticket
     if re.fullmatch(r"ticket-[0-9]{3,}", ticket or "") is None:
         raise ValueError("reserved ticket identity required")
     if not args.title or "\n" in args.title or "\r" in args.title:
         raise ValueError("single-line title required")
+    scope = scoped_paths(args.root, args.workstream, args.path)
     intent = {"schema": "new-project.intent/v3", "ticket": ticket, "summary": args.title,
         "workstream": args.workstream,
         "classification": {"kind": args.kind, "priority": args.priority, "origin": args.origin},
-        # Allocation reserves identity, not source scope. The caller fills its
-        # bounded implementation intent in SQLite before changing source.
-        "allowedPaths": [f"project/{ticket}/**"], "forbiddenPaths": ["project/ticket-*/user-*.md"],
+        # Retain the admitted scope; complete delivery intent and fencing before
+        # editing. With no explicit scope, retain the conservative old seed.
+        "allowedPaths": [f"project/{ticket}/**", *scope], "forbiddenPaths": ["project/ticket-*/user-*.md"],
         "stacks": [], "dependsOn": [], "conflictsWith": [], "integrationTicket": None}
     readme = (f"# {args.title}\n\n- **Status**: IN_PROGRESS\n- **Workflow state**: EDIT\n\n"
         "## Goal and scope\n\nComplete the bounded intent in SQLite before implementation.\n")
@@ -76,16 +109,19 @@ def create(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["digest", "verify", "highest", "create", "active"])
+    parser.add_argument("command", choices=["digest", "verify", "highest", "create", "active", "scope"])
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--runtime-root")
     parser.add_argument("--runtime-sha256")
     parser.add_argument("--active-status", action="append", default=[])
+    parser.add_argument("--path", action="append", default=[])
     for name in ("ticket", "title", "workstream", "kind", "priority", "origin", "allocation-key"):
         parser.add_argument("--" + name)
     args = parser.parse_args()
     try:
-        if args.command == "active":
+        if args.command == "scope":
+            print(json.dumps(persist_scope(args)))
+        elif args.command == "active":
             from ticket_activity import resolve
             text = read_file(args.root, args.ticket, "README.md").decode("utf-8")
             match = re.search(r"(?mi)^-[ \t]+\*\*Status\*\*:[ \t]*([A-Z_]+)[ \t]*$", text)
@@ -105,6 +141,8 @@ def main():
             print(json.dumps(create(args)))
     except Exception:
         # Do not echo command input, ticket contents or child stderr.
+        if args.command == "scope":
+            parser.exit(3, "GOV-WORK-START-001: invalid scope, unowned paths or missing managed scope runtime.\n")
         parser.exit(2 if args.command == "active" else 1, "GOV-TICKET-ALLOCATION-003: SQLite storage or pinned runtime validation failed.\n")
 
 

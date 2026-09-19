@@ -29,6 +29,7 @@ observation. It grants no new Git, deployment, credential or cleanup authority.
 | Same authorized scope, routine reversible fix and required tests | Proceed within the ticket. |
 | Protected delivery is part of the authorized outcome | Invoke the declared validator/controller; its trusted evidence still governs merge/apply. |
 | Detached snapshot shares the writer's HEAD and has no competing source delta | Preserve it; common history alone is not a second writer. |
+| Branch without a worktree has every unique commit tree present in target history after divergence | Preserve the branch; managed admission can exclude that historical copy from competing deltas, without closing or discarding it. |
 | Real competing dirty changes or active overlapping intent | Stop the affected write and resolve ownership; keep disjoint work progressing. |
 | Missing or contradictory evidence | Report uncertainty, gather bounded observations; do not infer permission. |
 | CI capacity, credentials or another external prerequisite is unavailable | Persist the exact blocker and remaining stages; do not manufacture successful checks. |
@@ -54,6 +55,49 @@ adopt the verified revision. Do not disable a hook, edit a managed hash by
 hand, add a blanket ignore, or delete evidence merely to make a gate green.
 
 ## Report the achieved stage
+
+### Cheap preflight before expensive validation
+
+First resolve the existing ticket and checkout, dirty paths, actual remote
+publication and the next requested effect. The managed work-start query's
+optional `--observe-publication` reports remote branch evidence without fetch;
+its default local admission and authority boundaries remain unchanged. A local
+branch ahead of `main` or its upstream can already be published on a different
+remote ticket branch. Reconcile that binding, not an imaginary lost push.
+
+Before launching a long publication suite, use the declared publisher's
+read-only preflight, when available, to check ticket/branch identity, accepted
+base, commit-message syntax, delivery mode, configuration and pinned tools.
+Report an unavailable preflight rather than inventing a command or bypassing
+the publisher. Put the cheap checks first; still run required validation and
+recheck exact HEAD and fencing at the effect boundary. There is no new gate.
+
+Report the current phase, elapsed time, evidence timestamp, exact HEAD and
+next bounded action. Do not reset a retry counter or rerun an unchanged
+deterministic failure as if it were progress. Cache only against all evidence
+inputs; a cached test result never becomes trusted approval.
+
+### Recovery before another attempt
+
+Resolve the emitted diagnostic in the canonical diagnostics registry and use
+its managed runbook. In particular, branch lifecycle `002` means a branch
+without an open PR, whereas `003` means a missing, malformed or inconsistent
+snapshot. Neither finding grants cleanup authority. Read closed PRs and exact
+refs before deciding whether delivery, observation or reconciliation is needed.
+
+Every recovery answer names the next bounded action, its existing authority,
+the verification that completes it and what remains preserved if it fails.
+Reuse the current ticket, checkout and pending-effect journal. A repeated
+deterministic failure with unchanged inputs calls for diagnosis or a changed
+prerequisite, not another identical effect, fresh ticket or empty PR. A timed-out
+remote operation is observed before retry; a matching remote head means the
+push is already present, not that its PR was merged.
+
+Run the gate appropriate to the adopted delivery path; this guidance does not
+create a draft-push exemption or waive a failed required check. Continue safe
+diagnosis and authorized disjoint work while the dependent effect waits.
+
+### Evidence by stage
 
 Distinguish source edited, tests passed, commit created, PR open, trusted merge,
 deployment applied and public behavior verified. Each claim needs evidence

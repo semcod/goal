@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from contextvars import ContextVar
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -47,7 +48,107 @@ class ActivityResolution:
     reason: str | None = None
 
 
+_READ_BATCH: ContextVar[ActivityReadBatch | None] = ContextVar("activity_read_batch", default=None)
+
+
+class ActivityReadBatch:
+    """One checkout's read-only observations; no data survives context exit.
+
+    Re-read consulted Git queries and files before accepting any inactivity.
+    Context-local storage keeps concurrent/nested inspectors and clones apart.
+    An invalidated batch raises the ordinary fail-closed activity diagnostic.
+    """
+
+    def __init__(self, root: Path):
+        self.root = root.resolve()
+        self.queries = {}
+        self.files = {}
+        self.context_reset = None
+
+    def __enter__(self):
+        if self.context_reset is not None:
+            raise ActivityError("activity read batch is already open")
+        self.queries.clear()
+        self.files.clear()
+        self.context_reset = _READ_BATCH.set(self)
+        try:
+            # Fence checkout identity, HEAD and registration even when every
+            # historical receipt belongs to a different ticket branch.
+            _git(self.root, "rev-parse", "--path-format=absolute", "--git-common-dir", check=False)
+            _git(self.root, "rev-parse", "--verify", "HEAD", check=False)
+            _git(self.root, "worktree", "list", "--porcelain", check=False)
+            self.directory_names = self._directories()
+        except BaseException as error:
+            _READ_BATCH.reset(self.context_reset)
+            self.context_reset = None
+            if isinstance(error, OSError):
+                raise ActivityError("activity inputs unavailable during inspection") from error
+            raise
+        return self
+
+    def _directories(self):
+        project = self.root / "project"
+        return sorted(p.name for p in project.iterdir()) if project.is_dir() else None
+
+    def __exit__(self, kind, value, traceback):
+        _READ_BATCH.reset(self.context_reset)
+        self.context_reset = None
+        try:
+            if kind is None:
+                if self.directory_names != self._directories():
+                    raise ActivityError("ticket inventory changed during activity inspection; retry")
+                for (args, check), expected in self.queries.items():
+                    if _run_git(self.root, *args, check=check) != expected:
+                        raise ActivityError("Git state changed during activity inspection; retry")
+                for (path, operation), expected in self.files.items():
+                    if _file_observation(path, operation) != expected:
+                        raise ActivityError("activity document changed during inspection; retry")
+        except OSError as error:
+            raise ActivityError("activity inputs unavailable during revalidation") from error
+        finally:
+            self.queries.clear()
+            self.files.clear()
+
+
+def _file_observation(path: Path, operation: str):
+    if operation == "read_text":
+        try:
+            return path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return None
+    return getattr(path, operation)()
+
+
+def _file(path: Path, operation: str):
+    batch = _READ_BATCH.get()
+    if batch is None:
+        return _file_observation(path, operation)
+    key = (path.absolute(), operation)
+    if key not in batch.files:
+        batch.files[key] = _file_observation(*key)
+    return batch.files[key]
+
+
+def _read_text(path: Path) -> str:
+    value = _file(path, "read_text")
+    if value is None:
+        raise FileNotFoundError(path)
+    return value
+
+
 def _git(root: Path, *args: str, check: bool = True) -> str:
+    batch = _READ_BATCH.get()
+    if batch is None:
+        return _run_git(root, *args, check=check)
+    if root.resolve() != batch.root:
+        raise ActivityError("activity read batch cannot cross checkouts")
+    key = (args, check)
+    if key not in batch.queries:
+        batch.queries[key] = _run_git(root, *args, check=check)
+    return batch.queries[key]
+
+
+def _run_git(root: Path, *args: str, check: bool = True) -> str:
     env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
     result = subprocess.run(
         ["git", "-C", str(root), *args], capture_output=True, text=True,
@@ -60,14 +161,14 @@ def _git(root: Path, *args: str, check: bool = True) -> str:
 
 def _load(path: Path) -> Any:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(_read_text(path))
     except (OSError, json.JSONDecodeError) as error:
         raise ActivityError(f"invalid activity document {path}: {error}") from error
 
 
 def policy_path(root: Path) -> Path:
     for candidate in (root / ".governance/ticket-activity.json", root / "governance/ticket-activity.json"):
-        if candidate.is_file():
+        if _file(candidate, "is_file"):
             return candidate
     raise ActivityPolicyMissing("managed ticket activity policy is missing")
 
@@ -77,7 +178,7 @@ def override_path(root: Path) -> Path | None:
         root / ".governance/ticket-activity.override.json",
         root / "governance/ticket-activity.override.json",
     ):
-        if candidate.is_file():
+        if _file(candidate, "is_file"):
             return candidate
     return None
 
@@ -157,7 +258,7 @@ def repository_ref(root: Path) -> str:
 
 def projection_status(ticket_dir: Path) -> str | None:
     try:
-        text = (ticket_dir / "README.md").read_text(encoding="utf-8")
+        text = _read_text(ticket_dir / "README.md")
     except OSError:
         return None
     match = re.search(r"(?mi)^-[ \t]+\*\*Status\*\*:[ \t]*([A-Z_]+)[ \t]*$", text)
@@ -348,8 +449,9 @@ def _terminal_verified(
 
 def _target_ref(root: Path, branch: str) -> str | None:
     for ref in (f"refs/remotes/origin/{branch}", f"refs/heads/{branch}"):
-        if _git(root, "rev-parse", "--verify", ref, check=False):
-            return ref
+        sha = _git(root, "rev-parse", "--verify", ref, check=False)
+        if sha:
+            return sha
     return None
 
 
@@ -366,8 +468,10 @@ def _unmerged_ticket_branch(root: Path, ticket: str, target: str) -> bool:
     """Report whether any branch for this ticket is still outside the target."""
     number = ticket.removeprefix("ticket-")
     listed = _git(
-        root, "for-each-ref", "--format=%(refname)",
+        root, "for-each-ref", "--format=%(objectname)",
+        f"refs/remotes/origin/ticket/{number}",
         f"refs/remotes/origin/ticket/{number}-*",
+        f"refs/heads/ticket/{number}",
         f"refs/heads/ticket/{number}-*",
         check=False,
     )
@@ -427,7 +531,7 @@ def resolve(root: Path, ticket_dir: Path, active_statuses: set[str], *, status_o
     derive = policy["registry"]["missingPolicy"] == "git-ancestry"
     default_target = _target_ref(root, DEFAULT_TARGET_BRANCH) if derive else None
     path = registry_path(root, policy)
-    if not path.exists():
+    if not _file(path, "exists"):
         if default_target and delivery_landed(root, ticket_dir, default_target):
             return ActivityResolution(
                 ticket, False, status, "git-ancestry", reason="delivery-on-target",
@@ -451,6 +555,8 @@ def resolve(root: Path, ticket_dir: Path, active_statuses: set[str], *, status_o
 
 
 def record(root: Path, receipt: dict[str, str]) -> Path:
+    if _READ_BATCH.get() is not None:
+        raise ActivityError("activity read batch cannot record receipts")
     policy = load_policy(root)
     path = registry_path(root, policy)
     current: dict[str, Any]
