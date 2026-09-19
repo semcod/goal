@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-168",
+  "summary": "Register docs standard integration ownership",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-168/**",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    "pyproject.toml",
+    "uv.lock",
+    "goal/**",
+    "tests/**",
+    "docs/**"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4d6a1f9a7e07fc1af1516aa3bc029237d5a81a87",
+    "targetBranch": "main",
+    "outcome": "Register initial integration ownership for .governance/docs.json in Goal's local manifest",
+    "nonGoals": [
+      "No existing runtime component or persistent data is moved",
+      "No wildcard ownership expansion or changes to Wellmanifest standards",
+      "Documentation implementation and adoption are handed off to subsequent integration ticket"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Register initial integration ownership for .governance/docs.json under workstreams.integration.ownedPaths and coordination.integration.requiredForPaths in .governance/manifest.json.",
+      "components": [
+        {
+          "name": "manifest",
+          "paths": [
+            ".governance/manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the previously accepted target manifest"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Managed governance check passes cleanly"
+      }
+    ]
+  }
+}
