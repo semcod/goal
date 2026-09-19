@@ -12,7 +12,7 @@
   "review_after": "2026-09-21",
   "source_revision": "2d86db24a21ff096cba87f0977e3ff9548797856",
   "affected_repositories": ["semcod/goal"],
-  "evidence": ["goal/governance/adoption_transaction.py", "tests/test_adoption_transaction.py", "goal/cli/governance_cmd.py"]
+  "evidence": ["repo://goal/governance/adoption_transaction.py", "repo://tests/test_adoption_transaction.py", "repo://goal/cli/governance_cmd.py"]
 }
 ---
 
@@ -24,6 +24,11 @@
 `GoalAdoptionAdapter` connects the accepted transaction protocol to the existing
 `goal governance adopt` command. It does not clone the generator, invent another
 journal, or supply independent authorization and receipt providers.
+
+<!-- docs:section scope -->
+## Scope
+
+Integration ticket-107 and Goal command adapter interface.
 
 <!-- docs:section content -->
 ## Contract
@@ -84,7 +89,6 @@ bounded diagnostics. Processes that deliberately escape the process group are
 outside this adapter's containment contract; the execution profile must prevent
 that behavior or provide a stronger supervisor.
 
-<!-- docs:section validation -->
 ## Validation
 
 Isolated Git fixtures cover stale inputs, foreign subjects and keys, authority
@@ -103,7 +107,14 @@ one adoption invocation. This is an isolated process-boundary simulation, not
 an attestation of a deployed daemon or a power-loss recovery test.
 
 <!-- docs:section limitations -->
-## Remaining integration
+## Limitations
+
+This is an optional library adapter, not a deployed migration daemon. Before a
+live pilot, supply protected profile/catalog resolution, authoritative adoption
+readback, scoped lease authorization and real validation/publication delegates.
+
+<!-- docs:section next_actions -->
+## Remaining integration and next actions
 
 This is an optional library adapter, not a deployed migration daemon. Before a
 live pilot, supply protected profile/catalog resolution, authoritative adoption

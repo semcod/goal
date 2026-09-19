@@ -12,6 +12,8 @@ or turn embedded examples into executable policy contracts.
 
 - [Markdown output](FEATURE/MARKDOWN_OUTPUT.md) — command defaults, optional metadata and report limits.
 - [Markdown integration](SERVICE/MARKDOWN_OUTPUT_INTEGRATION.md) — capture output, preserve exit codes and protect artifacts.
+- [Adoption command adapter](information/adoption-command-adapter.md) — Goal command adapter for adoption transactions.
+- [Adoption transactions](information/adoption-transactions.md) — Resumable adoption transactions.
 - [Legacy overview](markdown-output.md) and [legacy guide](markdown-output-guide.md) — original entry paths and heading links.
 
 <!-- code2docs:start --># goal

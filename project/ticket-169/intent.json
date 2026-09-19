@@ -1,0 +1,96 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-169",
+  "summary": "Adopt wellmanifest docs standard and normalize documentation metadata",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-169/**",
+    "project/TICKETS.md",
+    ".governance/docs.json",
+    "docs/README.md",
+    "docs/information/adoption-command-adapter.md",
+    "docs/information/adoption-transactions.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [
+    "ticket-168"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bb2936452dcfae58b1665e677b8a4c66c20a7324",
+    "targetBranch": "main",
+    "outcome": "Adopt wellmanifest/docs standard in semcod/goal, add .governance/docs.json, link documentation in docs/README.md, and normalize evidence and section markers in docs/information/.",
+    "nonGoals": [
+      "No runtime CLI interfaces modified",
+      "No existing documentation deleted"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Pin wellmanifest/docs in .governance/docs.json, format docs/README.md and information docs to pass wellmanifest docs check.",
+      "components": [
+        {
+          "name": "governance",
+          "paths": [
+            ".governance/docs.json"
+          ]
+        },
+        {
+          "name": "documentation",
+          "paths": [
+            "docs/README.md",
+            "docs/information/adoption-command-adapter.md",
+            "docs/information/adoption-transactions.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert delivery commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 \"$DOCS_STANDARD_ROOT/docs/standard/check.py\" --root . --standard-revision 19efafbeb18923cfd51cc69bd519330488500137"
+        ],
+        "evidence": "Docs check passes with ok: true"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes cleanly"
+      }
+    ]
+  }
+}
