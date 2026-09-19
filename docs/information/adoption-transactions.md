@@ -12,7 +12,7 @@
   "review_after": "2026-09-21",
   "source_revision": "fabdc0c143c012f56e0f2ec1d009a07fadf7ff16",
   "affected_repositories": ["semcod/goal"],
-  "evidence": ["project/ticket-107/intent.json"]
+  "evidence": ["repo://project/ticket-107/intent.json"]
 }
 ---
 

@@ -1,0 +1,7 @@
+{
+  "schema": "wellmanifest.docs/adoption/v1",
+  "repository": "semcod/goal",
+  "standard": "wellmanifest/docs",
+  "source_revision": "19efafbeb18923cfd51cc69bd519330488500137",
+  "policy_sha256": "fac05e720ec49370ba393e817a4a03b895d7ed33828e09b3420f9fcfb09264b0"
+}
