@@ -67,3 +67,65 @@ class TestAnalyzePublishableChanges:
             ["python"],
         )
         assert report.has_changes is False
+
+    def test_empty_project_types_cannot_report_a_successful_publish(self, monkeypatch):
+        import importlib
+
+        publish_module = importlib.import_module("goal.cli.publish")
+
+        monkeypatch.setattr(
+            publish_module, "validate_project_toml_files", lambda: (True, [])
+        )
+        assert publish_module.publish_project([], "0.20.44", yes=True) is False
+
+    def test_nested_python_package_is_detected_and_published_from_its_root(
+        self, tmp_path, monkeypatch
+    ):
+        import importlib
+
+        from goal.cli.publish import (
+            _prefix_project_command,
+            _resolve_python_publish_cmd,
+        )
+        from goal.cli.version_utils import detect_project_types
+
+        package = tmp_path / "packages" / "wellman"
+        dist = package / "dist"
+        dist.mkdir(parents=True)
+        (package / "pyproject.toml").write_text(
+            '[project]\nname = "wellman"\nversion = "0.20.44"\n'
+        )
+        (dist / "wellman-0.20.44-py3-none-any.whl").write_text("wheel")
+        monkeypatch.chdir(tmp_path)
+
+        assert detect_project_types() == ["python"]
+        command = _prefix_project_command(
+            "twine upload dist/*", package.relative_to(tmp_path)
+        )
+        resolved = _resolve_python_publish_cmd(command, "0.20.44")
+
+        assert command.startswith("cd packages/wellman &&")
+        assert "dist/wellman-0.20.44-py3-none-any.whl" in resolved
+
+        publish_module = importlib.import_module("goal.cli.publish")
+        published_commands = []
+        monkeypatch.setattr(
+            publish_module, "validate_project_toml_files", lambda: (True, [])
+        )
+        monkeypatch.setattr(
+            publish_module,
+            "_prepare_python_publish",
+            lambda strategy, version: ("/usr/bin/python", True),
+        )
+        monkeypatch.setattr(
+            publish_module,
+            "_run_publish_command",
+            lambda ptype, publish_cmd, **kwargs: published_commands.append(publish_cmd)
+            or True,
+        )
+
+        assert publish_module.publish_project(["python"], "0.20.44", yes=True)
+        assert published_commands[0].startswith(
+            "cd packages/wellman && /usr/bin/python -m build &&"
+        )
+        assert "/usr/bin/python -m twine upload" in published_commands[0]

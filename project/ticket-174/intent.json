@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-174",
+  "summary": "Prevent false releases and publish nested Python packages",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-174/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/**",
+    "goal/push/**",
+    "tests/test_delivery_integrity.py",
+    "tests/test_publish_changes.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8d7cb0c0d5ce41d97ca27446fb119d960edcd227",
+    "targetBranch": "main",
+    "outcome": "Goal aborts before publish, tagging or push when the release commit fails, refuses false success with no detected registry package, and publishes a nested Python package from its own root",
+    "nonGoals": [
+      "No new runtime dependency",
+      "No automatic GitHub release or registry retry policy change",
+      "No change to the repository's existing main-only delivery policy"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Propagate commit results through the push boundary, make empty project detection fail closed, and resolve nested Python build/publish commands to the discovered package root",
+      "components": [
+        {
+          "name": "commit-delivery-boundary",
+          "paths": ["goal/push/core.py", "goal/push/stages/commit.py", "tests/test_delivery_integrity.py"]
+        },
+        {
+          "name": "project-detection-and-publish",
+          "paths": ["goal/cli/version_utils.py", "goal/cli/publish.py", "tests/test_publish_changes.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["_handle_commit_phase now returns a boolean commit result"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket commit before the next release; do not move or delete immutable release tag v0.20.43"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [".venv/bin/python -m pytest -q tests/test_delivery_integrity.py tests/test_publish_changes.py"],
+        "evidence": "A failed release commit is returned to the workflow and blocks publish, tag and push stages"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [".venv/bin/python -m pytest -q tests/test_publish_changes.py"],
+        "evidence": "Empty project type detection cannot report a successful publish and nested packages/wellman is resolved"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [".venv/bin/python -m pytest -q tests/test_publish_pattern.py tests/test_detect_version_files.py"],
+        "evidence": "Existing artifact filtering and nested version discovery regressions remain green"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [".venv/bin/python -m pytest -q", "./project/governance-check.sh --actor agent", "git diff --check"],
+        "evidence": "Full tests, governance and whitespace checks pass before delivery"
+      }
+    ]
+  }
+}

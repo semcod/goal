@@ -56,6 +56,61 @@ def _command_workdir(cmd: str) -> Path:
     return Path(match.group(1)) if match else Path(".")
 
 
+_PROJECT_SCAN_EXCLUDED = frozenset(
+    {
+        ".git",
+        ".venv",
+        "venv",
+        "env",
+        "node_modules",
+        "dist",
+        "build",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+    }
+)
+
+
+def _python_project_root() -> Path:
+    """Find the Python package root when the repository is a monorepo.
+
+    Goal is normally run from the repository root, while package metadata may
+    live below ``packages/`` or ``adapters/``.  The shallowest manifest wins;
+    generated, vendored and virtual-environment trees are ignored.
+    """
+    root = Path(".")
+    markers = ("pyproject.toml", "setup.py", "setup.cfg")
+    if any((root / marker).exists() for marker in markers):
+        return root
+
+    candidates: list[Path] = []
+    for marker in markers:
+        for path in root.rglob(marker):
+            relative = path.parent.relative_to(root)
+            if len(relative.parts) > 3:
+                continue
+            if any(
+                part.startswith(".") or part in _PROJECT_SCAN_EXCLUDED
+                for part in relative.parts
+            ):
+                continue
+            candidates.append(path.parent)
+    return (
+        min(set(candidates), key=lambda path: (len(path.parts), str(path)))
+        if candidates
+        else root
+    )
+
+
+def _prefix_project_command(command: str, project_root: Path) -> str:
+    """Run a command from a discovered nested package root exactly once."""
+    if project_root == Path(".") or _command_workdir(command) != Path("."):
+        return command
+    return f"cd {shlex.quote(str(project_root))} && {command}"
+
+
 def _dist_dir_for(cmd: str) -> Path:
     """Return the dist/ directory relative to the command's working directory."""
     return _command_workdir(cmd) / "dist"
@@ -186,9 +241,9 @@ def _ensure_publish_deps(python_bin: str) -> bool:
     return True
 
 
-def _read_pyproject_package_name() -> str:
+def _read_pyproject_package_name(project_dir: Path = Path(".")) -> str:
     """Return the distribution name from pyproject.toml, if available."""
-    pyproject = Path("pyproject.toml")
+    pyproject = project_dir / "pyproject.toml"
     if not pyproject.exists():
         return ""
 
@@ -207,9 +262,9 @@ def _read_pyproject_package_name() -> str:
         return match.group(1) if match else ""
 
 
-def _read_setup_py_package_name() -> str:
+def _read_setup_py_package_name(project_dir: Path = Path(".")) -> str:
     """Return the distribution name from setup.py, if available."""
-    setup_py = Path("setup.py")
+    setup_py = project_dir / "setup.py"
     if not setup_py.exists():
         return ""
 
@@ -222,9 +277,9 @@ def _read_setup_py_package_name() -> str:
     return match.group(1) if match else ""
 
 
-def _read_python_package_name() -> str:
+def _read_python_package_name(project_dir: Path = Path(".")) -> str:
     """Return the Python distribution name from supported metadata files."""
-    return _read_pyproject_package_name() or _read_setup_py_package_name()
+    return _read_pyproject_package_name(project_dir) or _read_setup_py_package_name(project_dir)
 
 
 def _normalized_name_candidates(package_name: str) -> list[str]:
@@ -301,15 +356,20 @@ def _resolve_python_publish_cmd(publish_cmd: str, version: str) -> str:
         return publish_cmd
 
     pattern = match.group(0)
-    dist_dir = Path(pattern).parent
-    project_name = _read_python_package_name()
+    command_root = _command_workdir(publish_cmd)
+    dist_dir = command_root / Path(pattern).parent
+    project_name = _read_python_package_name(command_root)
     artifacts = _python_artifacts_for_version(version, project_name, dist_dir)
     if not artifacts:
         artifacts = _python_artifacts_for_version(version, "", dist_dir)
     if not artifacts:
         return publish_cmd
 
-    corrected = _format_artifact_args(artifacts)
+    relative_artifacts = [
+        path.relative_to(command_root) if command_root != Path(".") else path
+        for path in artifacts
+    ]
+    corrected = _format_artifact_args(relative_artifacts)
     if sorted(glob.glob(pattern)) == [str(path) for path in artifacts]:
         return publish_cmd
 
@@ -359,7 +419,7 @@ def _ensure_python_artifacts_for_version(
     version: str, build_cmd: str, python_bin: str
 ) -> bool:
     dist_dir = _dist_dir_for(build_cmd)
-    package_name = _read_python_package_name()
+    package_name = _read_python_package_name(_command_workdir(build_cmd))
     if _python_artifacts_for_version(
         version, package_name, dist_dir
     ) or _python_artifacts_for_version(version, "", dist_dir):
@@ -476,7 +536,7 @@ def _run_publish_command(
     click.echo(f"  Publishing {ptype}: {publish_cmd}")
     gh_config = get_github_release_config(config) if ptype in ("python", "nodejs") else None
     package_name = (
-        _read_python_package_name()
+        _read_python_package_name(_command_workdir(publish_cmd))
         if ptype == "python"
         else _read_nodejs_package_name() if ptype == "nodejs" else ""
     )
@@ -617,6 +677,15 @@ def publish_project(
         )
         return False
 
+    if not project_types:
+        click.echo(
+            click.style(
+                "  Skipping publish: no registry project type was detected.",
+                fg="yellow",
+            )
+        )
+        return False
+
     success = True
     configured_project_types = _get_configured_project_types(config)
 
@@ -646,11 +715,17 @@ def publish_project(
             continue
 
         if ptype == "python":
+            project_root = _python_project_root()
+            strategy = dict(strategy)
+            strategy["build"] = _prefix_project_command(
+                strategy.get("build", "") or "python -m build", project_root
+            )
             python_bin, ok = _prepare_python_publish(strategy, version)
             if not ok:
                 success = False
                 continue
             publish_cmd = _replace_python_interpreter(publish_cmd, python_bin)
+            publish_cmd = _prefix_project_command(publish_cmd, project_root)
             click.echo(click.style(f"  Command: {publish_cmd}", fg="cyan"))
 
         if ptype == "python":
