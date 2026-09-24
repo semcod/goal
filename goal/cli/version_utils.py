@@ -36,16 +36,54 @@ def is_plain_version(value: str) -> bool:
 
 
 def detect_project_types() -> List[str]:
-    """Detect what type(s) of project this is."""
+    """Detect project types in the repository, including package subdirectories.
+
+    A repository may keep publishable packages under ``packages/`` or an
+    adapter directory.  The old detector only inspected ``.`` and silently
+    returned no types for that layout, which made ``goal -a`` report a false
+    successful release.  Scan a bounded depth while excluding generated and
+    vendored trees.
+    """
+    excluded = {
+        ".git",
+        ".venv",
+        "venv",
+        "env",
+        "node_modules",
+        "dist",
+        "build",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+    }
+    root = Path(".")
+    directories = [root]
+    try:
+        for candidate in root.rglob("*"):
+            if not candidate.is_dir():
+                continue
+            relative = candidate.relative_to(root)
+            if len(relative.parts) > 3:
+                continue
+            if any(part.startswith(".") or part in excluded for part in relative.parts):
+                continue
+            directories.append(candidate)
+    except OSError:
+        pass
+
     detected = []
     for ptype, config in PROJECT_TYPES.items():
-        for file_pattern in config["files"]:
-            if "*" in file_pattern:
-                if list(Path(".").glob(file_pattern)):
+        for directory in directories:
+            for file_pattern in config["files"]:
+                if "*" in file_pattern:
+                    if list(directory.glob(file_pattern)):
+                        detected.append(ptype)
+                        break
+                elif (directory / file_pattern).exists():
                     detected.append(ptype)
                     break
-            elif Path(file_pattern).exists():
-                detected.append(ptype)
+            if ptype in detected:
                 break
     return detected
 

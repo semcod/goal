@@ -168,17 +168,17 @@ def _commit_file_group(
     generator: CommitMessageGenerator,
     ticket: Optional[str],
     yes: bool,
-) -> None:
+) -> bool:
     """Stage and commit a single file group."""
     stage_paths(paths)
     if not get_staged_files():
         click.echo(
             click.style(f"  ℹ Skipping {gname}: no changes to commit", fg="yellow")
         )
-        return
+        return True
     d = generator.generate_detailed_message(cached=True, paths=paths)
     if not d:
-        return
+        return False
     title = apply_ticket_prefix(d.get("title"), ticket)
     result = run_git("commit", "-m", title, "-m", d.get("body"))
     if result.returncode != 0:
@@ -189,8 +189,10 @@ def _commit_file_group(
         )
         if not yes:
             sys.exit(1)
+        return False
     else:
         click.echo(click.style(f"✓ Committed ({gname}): {title}", fg="green"))
+    return True
 
 
 def _commit_release_metadata(
@@ -202,7 +204,7 @@ def _commit_release_metadata(
     current_version: str,
     no_version_sync: bool,
     no_changelog: bool,
-) -> None:
+) -> bool:
     """Sync versions, update changelog, update cost badges, and commit release metadata."""
     from ..core import _update_cost_badges
 
@@ -251,8 +253,10 @@ def _commit_release_metadata(
         click.echo(
             click.style(f"Error committing release metadata: {result.stderr}", fg="red")
         )
+        return False
     else:
         click.echo(click.style(f"✓ Committed (release): {release_title}", fg="green"))
+        return True
 
 
 def handle_split_commits(
@@ -264,7 +268,7 @@ def handle_split_commits(
     no_version_sync: bool,
     no_changelog: bool,
     yes: bool,
-) -> None:
+) -> bool:
     """Handle split commits per file group."""
     config_dict = (
         (ctx_obj.get("config") or {}).to_dict() if ctx_obj.get("config") else None
@@ -282,14 +286,17 @@ def handle_split_commits(
                 title = apply_ticket_prefix(d.get("title"), ticket) if d else gname
                 click.echo(f"- {gname}: {title} ({len(groups[gname])} files)")
 
+    success = True
     for gname in _GROUP_ORDER:
         if gname in groups:
-            _commit_file_group(gname, groups[gname], generator, ticket, yes)
+            success = _commit_file_group(
+                gname, groups[gname], generator, ticket, yes
+            ) and success
 
     from ..core import _update_cost_badges
 
     if (not no_version_sync) or (not no_changelog):
-        _commit_release_metadata(
+        success = _commit_release_metadata(
             ctx_obj,
             files,
             config_dict,
@@ -311,5 +318,7 @@ def handle_split_commits(
                             f"Error committing badge update: {result.stderr}", fg="red"
                         )
                     )
+                    success = False
                 else:
                     click.echo(click.style(f"✓ Committed (badges): {msg}", fg="green"))
+    return success

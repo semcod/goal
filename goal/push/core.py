@@ -959,7 +959,7 @@ def execute_push_workflow(
         commit_succeeded = _commit_without_release(
             ctx_obj, commit_title, commit_body, commit_msg, message
         )
-        if not commit_succeeded:
+        if commit_succeeded is False:
             if delivery is not None:
                 record_delivery_event(
                     delivery,
@@ -970,7 +970,7 @@ def execute_push_workflow(
                 "docs/metadata commit failed; publish, tag, and push were not attempted"
             )
     else:
-        _handle_commit_phase(
+        commit_succeeded = _handle_commit_phase(
             ctx_obj,
             split,
             message,
@@ -984,6 +984,16 @@ def execute_push_workflow(
             no_version_sync,
             no_changelog,
         )
+        if commit_succeeded is False:
+            if delivery is not None:
+                record_delivery_event(
+                    delivery,
+                    "commit-failed",
+                    detail="release commit failed",
+                )
+            raise click.ClickException(
+                "release commit failed; publish, tag, and push were not attempted"
+            )
 
     publish_config = ctx_obj.get("config")
     if hasattr(publish_config, "reload"):
@@ -1328,7 +1338,7 @@ def _handle_commit_phase(
     current_version: str,
     no_version_sync: bool,
     no_changelog: bool,
-) -> None:
+) -> bool:
     """Handle the commit phase of the workflow."""
     from goal.cli import confirm
 
@@ -1346,7 +1356,7 @@ def _handle_commit_phase(
     # Handle split commits or single commit
     if split and not message:
         run_git("reset")  # Unstage everything
-        handle_split_commits(
+        return handle_split_commits(
             ctx_obj,
             files,
             ticket,
@@ -1388,7 +1398,7 @@ def _handle_commit_phase(
             run_git_local("add", "README.md")
 
         # Single commit
-        handle_single_commit(
+        return handle_single_commit(
             commit_title, commit_body, commit_msg, message, ctx_obj["yes"]
         )
 

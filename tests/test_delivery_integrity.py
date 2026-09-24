@@ -115,6 +115,40 @@ def test_pull_request_context_suppresses_cost_badge_at_commit() -> None:
     single_commit.assert_called_once()
 
 
+def test_failed_release_commit_is_reported_to_caller() -> None:
+    """A failed commit must be observable before publish/tag stages run."""
+    from goal.push.core import _handle_commit_phase
+
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": None,
+        "user_config": {},
+    }
+    with (
+        patch("goal.push.core.handle_version_sync"),
+        patch("goal.push.core.handle_changelog"),
+        patch("goal.push.core._update_cost_badges", return_value=False),
+        patch("goal.push.core.handle_single_commit", return_value=False),
+    ):
+        succeeded = _handle_commit_phase(
+            ctx_obj=ctx_obj,
+            split=False,
+            message=None,
+            commit_title="fix: abort failed release commit",
+            commit_body=None,
+            commit_msg="fix: abort failed release commit",
+            files=["goal/push/core.py"],
+            ticket=None,
+            new_version="1.2.4",
+            current_version="1.2.3",
+            no_version_sync=False,
+            no_changelog=False,
+        )
+
+    assert succeeded is False
+
+
 def test_pull_request_bootstrap_uses_private_badge_control(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
