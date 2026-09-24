@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-173",
+  "summary": "Fix commit generator scope heuristics and generic summary in analyzer",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-173/**",
+    "goal/generator/**",
+    "tests/test_commit_generator.py",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8d7cb0c0d5ce41d97ca27446fb119d960edcd227",
+    "targetBranch": "main",
+    "outcome": "Fix commit generator scope detection for external repositories, prevent generic tag false matches, and omit heuristic implementation notes by default.",
+    "nonGoals": [
+      "No changes outside generator package and its tests",
+      "No breaking changes to public CLI flags"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Make package directory detection dynamic from file paths and restrict keyword tag matching to exact word boundary regexes.",
+      "components": [
+        {
+          "name": "goal.generator",
+          "paths": [
+            "goal/generator/analyzer.py",
+            "goal/generator/generator.py",
+            "tests/test_commit_generator.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert generator commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -v tests/test_commit_generator.py"
+        ],
+        "evidence": "Tests pass and scope detection works correctly for src/ and root package layouts."
+      }
+    ]
+  }
+}

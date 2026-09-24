@@ -369,14 +369,16 @@ class CommitMessageGenerator:
         return parts
 
     def _build_implementation_notes(self) -> List[str]:
-        """Build implementation notes section."""
-        return [
-            "\nImplementation notes (heuristics):",
-            "- Type inferred from file paths + diff keywords + add/delete ratio",
-            "- Scope prefers 'goal' when goal/* is touched; otherwise based on top-level dirs",
-            "- For <=6 files: generate short per-file notes from added lines (defs/classes/click options/headings)",
-            "- A/M/D derived from git name-status; per-file +X/-X from git numstat",
-        ]
+        """Build implementation notes section (only if debug_heuristics enabled)."""
+        if self.config and self.config.get("debug_heuristics"):
+            return [
+                "\nImplementation notes (heuristics):",
+                "- Type inferred from file paths + diff keywords + add/delete ratio",
+                "- Scope based on package structure and directory heuristics",
+                "- For <=6 files: generate short per-file notes from added lines",
+                "- A/M/D derived from git name-status; per-file +X/-X from git numstat",
+            ]
+        return []
 
     def generate_detailed_message(
         self, cached: bool = True, paths: Optional[List[str]] = None
