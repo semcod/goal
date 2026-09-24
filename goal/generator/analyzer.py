@@ -119,7 +119,6 @@ class ChangeAnalyzer:
 
     # Scope detection patterns
     SCOPE_PATTERNS = {
-        "goal": r"goal|cli|release",
         "examples": r"example|demo",
         "docs": r"doc|readme|md",
         "tests": r"test|spec",
@@ -329,26 +328,38 @@ class ChangeAnalyzer:
 
     def detect_scope(self, files: List[str]) -> Optional[str]:
         """Detect the scope of changes based on file paths."""
-        scope_counts = Counter()
+        # 1. Package directory detection (e.g. src/clonerd/... -> clonerd, lib/pkg/... -> pkg)
+        pkg_dirs = []
+        for f in files:
+            parts = f.split("/")
+            if len(parts) > 1 and parts[0] in ["src", "lib", "app", "packages"]:
+                pkg_dirs.append(parts[1])
+            elif len(parts) > 1 and parts[0] not in [".github", "tests", "test", "docs", "examples", ".codex", ".benchmarks", "build", "dist", ".governance", "project"]:
+                pkg_dirs.append(parts[0])
 
+        if pkg_dirs:
+            most_common_pkg = Counter(pkg_dirs).most_common(1)[0][0]
+            if not most_common_pkg.endswith((".py", ".md", ".json", ".yaml", ".yml", ".toml", ".txt")):
+                return most_common_pkg
+
+        # 2. Scope pattern matching across files
+        scope_counts = Counter()
         for file_path in files:
+            if file_path.startswith("goal/"):
+                scope_counts["goal"] += 2
             for scope, pattern in self.SCOPE_PATTERNS.items():
                 if re.search(pattern, file_path.lower()):
                     scope_counts[scope] += 1
 
         if scope_counts:
-            # Prefer core package scope when present
-            if any(f.startswith("goal/") for f in files):
-                return "goal"
             return scope_counts.most_common(1)[0][0]
 
-        # Try to extract from directory structure
+        # 3. Fallback directory structure
         dirs = [os.path.dirname(f).split("/")[0] for f in files if os.path.dirname(f)]
         dir_counts = Counter(d for d in dirs if d and d != ".")
 
         if dir_counts:
             most_common_dir = dir_counts.most_common(1)[0][0]
-            # Avoid generic scopes
             if most_common_dir not in ["src", "lib", "app"]:
                 return most_common_dir
 
@@ -385,12 +396,11 @@ class ChangeAnalyzer:
 class ContentAnalyzer:
     """Analyze content for short summaries and per-file notes."""
 
-    # Tag detectors: (label, file_match, diff_match)
-    # A tag is activated when file_match(files) or diff_match(diff) is truthy.
+    # Tag detectors: (label, file_match, diff_regex)
     _TAG_DETECTORS: List[Tuple[str, str, str]] = [
-        ("markdown output", "formatter.py", "markdown"),
-        ("commit messages", "commit_generator.py", "commit message"),
-        ("hooks", "git-hooks", "prepare-commit-msg"),
+        ("markdown output", "formatter.py", r"\bmarkdown\s+output\b"),
+        ("commit messages", "commit_generator.py", r"\bcommit\s+messages?\b"),
+        ("hooks", "git-hooks", r"prepare-commit-msg"),
     ]
 
     # Single-tag → fixed summary overrides
@@ -428,15 +438,16 @@ class ContentAnalyzer:
     def _detect_tags(self, file_lower: List[str], diff_lower: str) -> List[str]:
         """Detect thematic tags from files and diff content."""
         tags: List[str] = []
-        for label, file_needle, diff_needle in self._TAG_DETECTORS:
-            if any(file_needle in f for f in file_lower) or diff_needle in diff_lower:
+        for label, file_needle, diff_regex in self._TAG_DETECTORS:
+            if any(file_needle in f for f in file_lower) or (diff_regex and re.search(diff_regex, diff_lower)):
                 tags.append(label)
 
         # CLI tag only when no other tags matched
         if not tags:
-            has_cli = any(f.startswith("goal/") for f in file_lower) and (
-                "@click." in diff_lower or "click.option" in diff_lower
-            )
+            has_cli = any(
+                (f.startswith("goal/") or f.startswith("src/") or f.startswith("lib/"))
+                for f in file_lower
+            ) and ("@click." in diff_lower or "click.option" in diff_lower)
             if has_cli:
                 tags.append("cli workflow")
         return tags
