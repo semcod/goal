@@ -510,9 +510,23 @@ def validate_legacy_governance(
                     and _legacy_clean_default_base(root)):
                 return True
             raise
-        if check_no_change:
-            return _legacy_clean_default_base(root)
+        if check_no_change and _legacy_clean_default_base(root):
+            return True
+        _validate_legacy_ticket_branch(root)
     return False
+
+
+def _validate_legacy_ticket_branch(root: Path) -> None:
+    """Apply the adopted commit branch contract before legacy bootstrap edits."""
+    if not (root / ".governance/agent-hosts.json").is_file():
+        return
+    branch = _git_value("branch", "--show-current", cwd=root)
+    if re.search(r"ticket[-/]([0-9]{3,})", branch) is None:
+        raise click.ClickException(
+            f"GOV-AGENT-HOST-001: branch '{branch or 'detached HEAD'}' is not "
+            "bound to ticket-NNN. No bootstrap or release files were changed. "
+            "Allocate with ./project/new-ticket.sh and use its ticket checkout."
+        )
 
 
 def _ticket_index_only_material_finding(root: Path) -> bool:

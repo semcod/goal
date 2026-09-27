@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-175",
+  "summary": "Respect Rust workspaces and guard bootstrap before mutation",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-175/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/doctor/rust.py",
+    "goal/governance/delivery.py",
+    "goal/project_bootstrap.py",
+    "goal/rust_project.py",
+    "tests/test_delivery_integrity.py",
+    "tests/test_project_bootstrap.py",
+    "tests/test_project_doctor.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "784ee5cc5d9c5f901ceb8b53f220edc961cbed5e",
+    "targetBranch": "main",
+    "outcome": "Accept Rust virtual workspaces, avoid inert sample tests, and reject governed default-branch mutation before bootstrap.",
+    "nonGoals": [
+      "No change to user Twinerd worktree or license",
+      "No bypass of commit or publication gates"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 7,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Parse Cargo TOML for virtual workspace and member test discovery; perform existing agent branch contract admission before legacy bootstrap.",
+      "components": [
+        {
+          "name": "rust-diagnostics",
+          "paths": [
+            "goal/doctor/rust.py",
+            "goal/rust_project.py",
+            "tests/test_project_doctor.py"
+          ]
+        },
+        {
+          "name": "bootstrap",
+          "paths": [
+            "goal/project_bootstrap.py",
+            "tests/test_project_bootstrap.py"
+          ]
+        },
+        {
+          "name": "delivery-preflight",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_delivery_integrity.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert this bounded application change; retain existing commit hooks."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_project_doctor.py tests/test_project_bootstrap.py tests/test_delivery_integrity.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Virtual workspace, member tests, malformed manifests and mutation-free rejection regressions."
+      }
+    ]
+  }
+}
