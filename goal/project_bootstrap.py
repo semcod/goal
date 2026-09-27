@@ -772,6 +772,10 @@ def find_existing_tests(project_dir: Path, project_type: str) -> List[Path]:
     if not cfg:
         return []
 
+    if project_type == "rust":
+        from goal.rust_project import rust_test_files
+        return rust_test_files(project_dir)
+
     found: List[Path] = []
     for test_dir_name in cfg["test_dirs"]:
         test_dir = project_dir / test_dir_name
@@ -824,6 +828,14 @@ def scaffold_test(
     cfg = PROJECT_BOOTSTRAP.get(project_type)
     if not cfg or not cfg.get("scaffold_test"):
         return None
+
+    if project_type == "rust" and (project_dir / "Cargo.toml").exists():
+        from goal.rust_project import cargo_manifest, is_virtual_workspace
+        try:
+            if is_virtual_workspace(cargo_manifest(project_dir)):
+                return None  # Root tests would not belong to a Cargo package.
+        except (OSError, ValueError):
+            return None  # Leave malformed manifests for diagnostics.
 
     existing = find_existing_tests(project_dir, project_type)
     if existing:

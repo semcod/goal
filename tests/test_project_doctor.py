@@ -3,24 +3,24 @@
 import json
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
-from goal.project_doctor import (
-    Issue,
-    DoctorReport,
-    diagnose_project,
-    diagnose_and_report,
-    _diagnose_python,
-    _diagnose_nodejs,
-    _diagnose_rust,
-    _diagnose_go,
-    _diagnose_ruby,
-    _diagnose_php,
-    _diagnose_dotnet,
-    _diagnose_java,
-)
 from goal.cli import main
-
+from goal.project_doctor import (
+    DoctorReport,
+    Issue,
+    _diagnose_dotnet,
+    _diagnose_go,
+    _diagnose_java,
+    _diagnose_nodejs,
+    _diagnose_php,
+    _diagnose_python,
+    _diagnose_ruby,
+    _diagnose_rust,
+    diagnose_and_report,
+    diagnose_project,
+)
 
 # ---------------------------------------------------------------------------
 # DoctorReport model
@@ -555,3 +555,26 @@ class TestDoctorCommand:
         content = (tmp_path / "pyproject.toml").read_text()
         assert "[build-system]" in content  # should have been fixed
         assert "FIXED" in result.output or "auto-fixed" in result.output
+
+
+@pytest.mark.parametrize("content", [
+    '[workspace]\nmembers = ["crates/*"]\nresolver = "2"\n',
+    '[workspace.package]\nversion = "0.2.1"\nedition = "2021"\n',
+])
+def test_virtual_rust_workspace_needs_no_package_or_edition(tmp_path, content):
+    (tmp_path / "Cargo.toml").write_text(content)
+    assert _diagnose_rust(tmp_path) == []
+
+
+def test_invalid_workspace_toml_is_reported(tmp_path):
+    (tmp_path / "Cargo.toml").write_text('[workspace]\nmembers = [broken\n')
+    issues = _diagnose_rust(tmp_path)
+    assert [issue.code for issue in issues] == ["RS003"]
+
+
+def test_rust_edition_must_belong_to_package(tmp_path):
+    (tmp_path / "Cargo.toml").write_text(
+        '[package]\nname = "x"\nversion = "0.1.0"\n'
+        '[dependencies]\nedition-helper = "1"\n'
+    )
+    assert any(issue.code == "RS002" for issue in _diagnose_rust(tmp_path))

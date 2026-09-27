@@ -1432,3 +1432,42 @@ def test_legacy_material_diagnostic_requires_exact_no_change_report(
         with pytest.raises(click.ClickException):
             delivery.validate_legacy_governance(cwd=root, check_no_change=variant != "explicit")
     assert git(root, "diff") == before
+
+
+@pytest.mark.parametrize('branch', ['main', 'feature/unbound', 'detached'])
+def test_managed_branch_rejection_precedes_bootstrap_mutation(
+    legacy_clean_repo, monkeypatch, branch
+):
+    root = legacy_clean_repo
+    (root / '.governance/agent-hosts.json').write_text('{}\n')
+    (root / 'VERSION').write_text('0.2.0\n')
+    git(root, 'add', 'VERSION')
+    if branch == 'detached':
+        git(root, 'checkout', '--detach', '-q')
+    elif branch != 'main':
+        git(root, 'checkout', '-qb', branch)
+    before = git(root, 'status', '--porcelain')
+    index = (root / '.git/index').read_bytes()
+    monkeypatch.chdir(root)
+    def unexpected(*args, **kwargs):
+        pytest.fail('rejected branch reached a mutation stage')
+    for name in ('_initialize_context', '_bootstrap_projects_for_delivery',
+                 '_handle_commit_phase', 'handle_publish', 'create_tag'):
+        monkeypatch.setattr(core, name, unexpected)
+    with pytest.raises(click.ClickException, match='GOV-AGENT-HOST-001'):
+        core.execute_push_workflow(
+            ctx_obj={'config': {}, 'all_flags': True},
+            bump='patch', no_tag=False, no_changelog=False, no_version_sync=False,
+            message=None, dry_run=False, yes=True, markdown=False, split=False,
+            ticket=None, abstraction=None, todo=False,
+        )
+    assert git(root, 'status', '--porcelain') == before
+    assert (root / '.git/index').read_bytes() == index
+    assert (root / 'VERSION').read_text() == '0.2.0\n'
+
+
+def test_managed_ticket_branch_can_continue_after_gate(legacy_clean_repo):
+    root = legacy_clean_repo
+    (root / '.governance/agent-hosts.json').write_text('{}\n')
+    git(root, 'checkout', '-qb', 'ticket/175-rust-workspace')
+    assert delivery.validate_legacy_governance(cwd=root) is False

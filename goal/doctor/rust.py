@@ -1,22 +1,30 @@
 """Rust project diagnostics."""
 
-import re
+import tomllib
 from pathlib import Path
-from typing import List
 
 from goal.doctor.models import Issue
+from goal.rust_project import cargo_manifest, is_virtual_workspace
 
 
-def diagnose_rust(project_dir: Path, auto_fix: bool = True) -> List[Issue]:
+def diagnose_rust(project_dir: Path, auto_fix: bool = True) -> list[Issue]:
     """Run all Rust-specific diagnostics."""
-    issues: List[Issue] = []
+    issues: list[Issue] = []
     cargo = project_dir / "Cargo.toml"
     if not cargo.exists():
         return issues
 
-    content = cargo.read_text(errors="ignore")
+    try:
+        manifest = cargo_manifest(project_dir)
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError) as error:
+        return [Issue(severity="error", code="RS003", title="Invalid Cargo.toml",
+                      detail=str(error), file="Cargo.toml")]
 
-    if not re.search(r"^\[package\]", content, re.MULTILINE):
+    if is_virtual_workspace(manifest):
+        return issues  # A virtual root has no package or package edition.
+
+    package = manifest.get("package")
+    if not isinstance(package, dict):
         issues.append(
             Issue(
                 severity="error",
@@ -27,7 +35,7 @@ def diagnose_rust(project_dir: Path, auto_fix: bool = True) -> List[Issue]:
             )
         )
 
-    if "edition" not in content:
+    if isinstance(package, dict) and "edition" not in package:
         issues.append(
             Issue(
                 severity="warning",

@@ -882,3 +882,43 @@ def test_auto_fix_enabled_env_override(tmp_path, monkeypatch):
     assert _auto_fix_enabled(tmp_path) is False
     monkeypatch.setenv("GOAL_AUTO_FIX", "true")
     assert _auto_fix_enabled(tmp_path) is True
+
+
+def test_rust_workspace_discovers_member_tests_and_excludes(tmp_path):
+    (tmp_path / "Cargo.toml").write_text(
+        '[workspace]\nmembers = ["crates/*"]\nexclude = ["crates/ignored"]\n'
+    )
+    for name in ["unit", "integration", "ignored"]:
+        member = tmp_path / "crates" / name
+        (member / "src").mkdir(parents=True)
+        (member / "Cargo.toml").write_text('[package]\nname = "' + name + '"\n')
+        (member / "src/lib.rs").write_text('#[test]\nfn works() {}\n')
+    integration = tmp_path / "crates/integration/tests/api.rs"
+    integration.parent.mkdir()
+    integration.write_text('#[test]\nfn api() {}\n')
+    found = find_existing_tests(tmp_path, "rust")
+    assert set(found) == {tmp_path / 'crates/unit/src/lib.rs',
+                          tmp_path / 'crates/integration/src/lib.rs', integration}
+    assert scaffold_test(tmp_path, "rust", yes=True) is None
+    assert not (tmp_path / "tests").exists()
+
+
+def test_empty_virtual_workspace_never_gets_inert_root_test(tmp_path):
+    (tmp_path / "Cargo.toml").write_text('[workspace]\nmembers = []\n')
+    assert scaffold_test(tmp_path, "rust", yes=True) is None
+    assert not (tmp_path / "tests").exists()
+
+
+def test_rust_package_inline_tests_prevent_placeholder(tmp_path):
+    (tmp_path / "src").mkdir()
+    source = tmp_path / "src/main.rs"
+    source.write_text('#[cfg(test)] mod tests { #[test] fn works() {} }\n')
+    assert find_existing_tests(tmp_path, "rust") == [source]
+    assert scaffold_test(tmp_path, "rust", yes=True) is None
+
+
+def test_invalid_cargo_is_not_modified_by_scaffolding(tmp_path):
+    manifest = tmp_path / "Cargo.toml"
+    manifest.write_text('[workspace]\nmembers = [broken\n')
+    assert scaffold_test(tmp_path, "rust", yes=True) is None
+    assert not (tmp_path / "tests").exists()
