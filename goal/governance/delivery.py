@@ -522,11 +522,20 @@ def _validate_legacy_ticket_branch(root: Path) -> None:
         return
     branch = _git_value("branch", "--show-current", cwd=root)
     if re.search(r"ticket[-/]([0-9]{3,})", branch) is None:
-        raise click.ClickException(
+        detail = (
             f"GOV-AGENT-HOST-001: branch '{branch or 'detached HEAD'}' is not "
             "bound to ticket-NNN. No bootstrap or release files were changed. "
             "Allocate with ./project/new-ticket.sh and use its ticket checkout."
         )
+        from goal.governance.remediation import publish_governance_remediation
+
+        remediation = publish_governance_remediation(root, detail)
+        if remediation.detail and remediation.proposal_path is not None:
+            detail += f"\nGoal remediation: {remediation.detail}"
+        guidance = governance_diagnostic_guidance(root, detail)
+        if guidance:
+            detail += "\n" + "\n".join(guidance)
+        raise click.ClickException(detail)
 
 
 def _ticket_index_only_material_finding(root: Path) -> bool:

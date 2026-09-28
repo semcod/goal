@@ -369,3 +369,33 @@ def test_diagnose_broken_python_env_returns_none_outside_venv(monkeypatch, tmp_p
     monkeypatch.setattr(goal_cli.sys, "base_prefix", "/usr")
 
     assert goal_cli._diagnose_broken_python_env() is None
+
+
+def test_main_help_includes_koru_flag() -> None:
+    runner = CliRunner()
+    result = runner.invoke(main, ["--help"])
+    assert result.exit_code == 0
+    assert "-k, --koru" in result.output
+
+
+def test_push_help_includes_koru_flag() -> None:
+    runner = CliRunner()
+    result = runner.invoke(main, ["push", "--help"])
+    assert result.exit_code == 0
+    assert "-k, --koru" in result.output
+
+
+def test_goal_k_dispatches_to_push(monkeypatch) -> None:
+    from goal.cli import push_cmd
+
+    called = {}
+
+    def fake_execute(**kwargs):
+        called.update(kwargs)
+
+    monkeypatch.setattr(push_cmd, "execute_push_workflow", fake_execute)
+    runner = CliRunner()
+    result = runner.invoke(main, ["-k"])
+    assert result.exit_code == 0
+    assert called.get("koru") is True
+
