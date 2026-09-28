@@ -563,6 +563,7 @@ def execute_push_workflow(
     api_key: Optional[str] = None,
     no_publish: bool = False,
     force_publish: bool = False,
+    koru: bool = False,
 ) -> None:
     """Execute the complete push workflow."""
 
@@ -570,6 +571,18 @@ def execute_push_workflow(
     # context. This covers library callers and compatibility shims that pass
     # only ``all_flags`` instead of going through ``_configure_main_context``.
     all_flags = bool(ctx_obj.get("all_flags", False))
+    koru_enabled = koru or bool(ctx_obj.get("koru", False))
+
+    if koru_enabled:
+        from goal.governance.remediation import run_koru_repair
+
+        click.echo(click.style("Running Koru auto-repair (--doctor --repair)...", fg="cyan"))
+        success, repair_detail = run_koru_repair()
+        if success:
+            click.echo(click.style(f"✓ Koru auto-repair succeeded: {repair_detail}", fg="green"))
+        else:
+            click.echo(click.style(f"⚠ Koru auto-repair: {repair_detail}", fg="yellow"))
+
     explicit_force_publish = bool(force_publish)
     explicit_force_publish = explicit_force_publish or bool(
         ctx_obj.get("force_publish_explicit", False)

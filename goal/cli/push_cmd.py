@@ -43,6 +43,13 @@ def execute_push_workflow(*args, **kwargs):
 )
 @click.option("--todo", "-t", is_flag=True, help="Create TODO.md with detected issues")
 @click.option(
+    "--koru",
+    "-k",
+    "koru",
+    is_flag=True,
+    help="Run Koru auto-repair before workflow",
+)
+@click.option(
     "--model",
     default=None,
     help="AI model for cost tracking (e.g., openrouter/qwen/qwen3-coder-next)",
@@ -64,6 +71,7 @@ def push(
     ticket,
     abstraction,
     todo,
+    koru,
     model,
     api_key,
 ) -> None:
@@ -72,6 +80,7 @@ def push(
         bump = ctx.obj.get("bump", bump)
     # Use yes from ctx.obj (set by -a/--all or -y/--yes global flags)
     yes = ctx.obj.get("yes", False)
+    koru = koru or ctx.obj.get("koru", False)
     no_publish = no_publish or ctx.obj.get("no_publish", False)
     force_publish = force_publish or ctx.obj.get("force_publish", False)
     dry_run = dry_run or ctx.obj.get("dry_run", False)
@@ -98,6 +107,7 @@ def push(
         ticket=ticket,
         abstraction=abstraction,
         todo=todo,
+        koru=koru,
         model=model,
         api_key=api_key,
     )

@@ -465,8 +465,10 @@ def _configure_main_context(
     abstraction,
     delivery_mode,
     read_only_governance=False,
+    koru=False,
 ) -> None:
     ctx.ensure_object(dict)
+    ctx.obj["koru"] = koru
     ctx.obj["bump"] = bump
     ctx.obj["version"] = target_version
     ctx.obj["yes"] = yes or all_flags
@@ -574,6 +576,7 @@ class GoalGroup(click.Group):
         # We must skip option *values* (e.g. 'major' in '--bump major') so
         # they are not mistaken for subcommand names.
         has_all_flag = _has_cli_flag(args, "a", "--all")
+        has_koru_flag = _has_cli_flag(args, "k", "--koru")
         known_cmds = set(self.list_commands(ctx) or [])
         # Options whose next token is a value (not a flag).
         _VALUE_OPTIONS = {
@@ -629,7 +632,7 @@ class GoalGroup(click.Group):
 
         has_subcommand = any(p in known_cmds for p in positionals)
 
-        if has_all_flag and not has_subcommand:
+        if (has_all_flag or has_koru_flag) and not has_subcommand:
             if positionals:
                 # `goal -a ./*` (or explicit dirs) → sweep those paths across
                 # every dirty sub-repo via the `all` command.
@@ -639,7 +642,7 @@ class GoalGroup(click.Group):
                 elif auto_used:
                     args = opts + positionals
             else:
-                # Bare `goal -a` → default to the single-repo push workflow.
+                # Bare `goal -a` or `goal -k` → default to the single-repo push workflow.
                 push_cmd = click.Group.get_command(self, ctx, "push")
                 if push_cmd is not None:
                     args = (opts + ["push"]) if auto_used else (args + ["push"])
@@ -663,6 +666,13 @@ class GoalGroup(click.Group):
     "all_flags",
     is_flag=True,
     help="Run full workflow (tests, push, publish)",
+)
+@click.option(
+    "--koru",
+    "-k",
+    "koru",
+    is_flag=True,
+    help="Run Koru auto-repair before workflow",
 )
 @click.option(
     "--upgrade-deps",
@@ -720,6 +730,7 @@ def main(
     target_version,
     yes,
     all_flags,
+    koru,
     upgrade_deps,
     recursive,
     interactive,
@@ -769,6 +780,7 @@ def main(
         abstraction,
         delivery_mode,
         read_only_governance or is_help_request,
+        koru=koru,
     )
 
 

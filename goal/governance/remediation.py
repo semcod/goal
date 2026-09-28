@@ -194,4 +194,38 @@ def publish_governance_remediation(root: Path, output: str) -> RemediationResult
     )
 
 
-__all__ = ["RemediationResult", "publish_governance_remediation"]
+def run_koru_repair(root: Path | None = None) -> tuple[bool, str]:
+    """Execute koru auto-repair (--doctor --repair) against root."""
+    target = (root or Path.cwd()).resolve()
+    configured = os.environ.get("GOAL_KORU_EXECUTABLE", "koru").strip()
+    try:
+        executable = shlex.split(configured)
+    except ValueError as error:
+        return False, f"invalid GOAL_KORU_EXECUTABLE: {error}"
+    if not executable:
+        return False, "Koru auto-repair skipped: empty GOAL_KORU_EXECUTABLE"
+    command = [
+        *executable,
+        "--doctor",
+        "--repair",
+        "--project",
+        str(target),
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            cwd=target,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        return False, f"Koru auto-repair unavailable: {error}"
+    detail = (result.stdout or result.stderr or "").strip()
+    if result.returncode == 0:
+        return True, detail
+    return False, detail or f"koru exited with code {result.returncode}"
+
+
+__all__ = ["RemediationResult", "publish_governance_remediation", "run_koru_repair"]

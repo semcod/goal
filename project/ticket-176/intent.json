@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-176",
+  "summary": "Support -k and --koru flag for koru auto-repair",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-176/**",
+    "goal/cli/**",
+    "goal/governance/**",
+    "goal/push/**",
+    "tests/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "73173b240ea1eb558e3978bd7ed088617cb438e3",
+    "targetBranch": "main",
+    "outcome": "Support -k and --koru flag in Goal CLI to run Koru auto-repair and hook into governance remediation.",
+    "nonGoals": [
+      "No bypass of governance gate checks",
+      "No change to foreign package manifests"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 7,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add -k/--koru to GoalGroup and push command to trigger koru --doctor --repair and route GOV-AGENT-HOST-001 through publish_governance_remediation.",
+      "components": [
+        {
+          "name": "cli-options",
+          "paths": [
+            "goal/cli/__init__.py",
+            "goal/cli/push_cmd.py",
+            "tests/test_cli_options.py"
+          ]
+        },
+        {
+          "name": "push-core",
+          "paths": [
+            "goal/push/core.py"
+          ]
+        },
+        {
+          "name": "governance-remediation",
+          "paths": [
+            "goal/governance/delivery.py",
+            "goal/governance/remediation.py",
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commits on ticket-176 branch."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_cli_options.py tests/test_governance_delivery.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "CLI options parse -k/--koru and execute auto-repair."
+      }
+    ]
+  }
+}
