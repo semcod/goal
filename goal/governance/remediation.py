@@ -211,6 +211,7 @@ def run_koru_repair(root: Path | None = None) -> tuple[bool, str]:
         "--project",
         str(target),
     ]
+    env = {**os.environ, "KORU_CLI_NO_REEXEC": "1", "KORU_HEADLESS": "1"}
     try:
         result = subprocess.run(
             command,
@@ -219,6 +220,7 @@ def run_koru_repair(root: Path | None = None) -> tuple[bool, str]:
             text=True,
             check=False,
             timeout=120,
+            env=env,
         )
     except (OSError, subprocess.SubprocessError) as error:
         return False, f"Koru auto-repair unavailable: {error}"
@@ -228,4 +230,27 @@ def run_koru_repair(root: Path | None = None) -> tuple[bool, str]:
     return False, detail or f"koru exited with code {result.returncode}"
 
 
-__all__ = ["RemediationResult", "publish_governance_remediation", "run_koru_repair"]
+def format_koru_repair_summary(detail: str) -> str:
+    """Format a compact one-line summary from verbose doctor output."""
+    if not detail:
+        return ""
+    checks_match = re.search(r"(\d+\s+checks?,\s+\d+\s+passed[^\n]*)", detail)
+    applied_block = detail.split("Applied repair (--repair):")[-1] if "Applied repair (--repair):" in detail else ""
+    applied_matches = re.findall(r"-\s+([a-zA-Z0-9_]+):", applied_block.split("Notes:")[0])
+    parts = []
+    if checks_match:
+        parts.append(checks_match.group(1).strip())
+    if applied_matches:
+        parts.append(f"applied: {', '.join(applied_matches)}")
+    if parts:
+        return " (" + "; ".join(parts) + ")"
+    first_line = next((line.strip() for line in detail.splitlines() if line.strip()), "")
+    return f": {first_line}" if first_line else ""
+
+
+__all__ = [
+    "RemediationResult",
+    "format_koru_repair_summary",
+    "publish_governance_remediation",
+    "run_koru_repair",
+]

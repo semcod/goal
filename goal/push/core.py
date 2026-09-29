@@ -574,12 +574,16 @@ def execute_push_workflow(
     koru_enabled = koru or bool(ctx_obj.get("koru", False))
 
     if koru_enabled:
-        from goal.governance.remediation import run_koru_repair
+        from goal.governance.remediation import format_koru_repair_summary, run_koru_repair
 
+        verbose = bool(ctx_obj.get("verbose", False))
         click.echo(click.style("Running Koru auto-repair (--doctor --repair)...", fg="cyan"))
         success, repair_detail = run_koru_repair()
         if success:
-            click.echo(click.style(f"✓ Koru auto-repair succeeded: {repair_detail}", fg="green"))
+            summary = format_koru_repair_summary(repair_detail)
+            click.echo(click.style(f"✓ Koru auto-repair succeeded{summary}", fg="green"))
+            if verbose and repair_detail:
+                click.echo(repair_detail)
         else:
             click.echo(click.style(f"⚠ Koru auto-repair: {repair_detail}", fg="yellow"))
 

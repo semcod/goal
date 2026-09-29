@@ -477,7 +477,16 @@ def governed_clone_evidence(cwd: Path | None = None) -> list[Path]:
         if (path / GOVERNANCE_PACKAGE_FILES["manifest"]).is_file()
     ]
     if checkouts:
-        evidence.extend(sorted((checkouts[0] / ".subactor" / "leases").glob("*.json")))
+        lease_root = checkouts[0] / ".subactor" / "leases"
+        if lease_root.is_dir():
+            for lease_file in sorted(lease_root.glob("*.json")):
+                try:
+                    payload = json.loads(lease_file.read_text(encoding="utf-8"))
+                    if isinstance(payload, dict) and payload.get("status") == "released":
+                        continue
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                    pass
+                evidence.append(lease_file)
     return evidence
 
 
