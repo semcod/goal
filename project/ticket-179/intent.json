@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-179",
+  "summary": "Honor release-only delivery with detected package metadata",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-179/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/push/core.py",
+    "tests/test_release_only_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bc7e838233d94096b89436e33370ae563c8b0624",
+    "targetBranch": "main",
+    "outcome": "When registry publishing is explicitly disabled, deliver the configured GitHub Release without requiring package artifacts even if package metadata is detected; preserve exact annotated-tag repair, default asset requirements and terminal failures.",
+    "nonGoals": [
+      "Bypass governance or tests",
+      "Change GitHub fallback configuration",
+      "Claim registry publication when it is disabled",
+      "Change default or explicitly enabled registry behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the existing explicit registry configuration when choosing package asset requirements and the narrow clean exact-tag recovery path.",
+      "components": [
+        {
+          "name": "release-orchestration",
+          "paths": [
+            "goal/push/core.py"
+          ]
+        },
+        {
+          "name": "release-regressions",
+          "paths": [
+            "tests/test_release_only_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the source fix; retain protected publication receipts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_release_only_delivery.py tests/test_delivery_integrity.py tests/test_push_e2e.py -q"
+        ],
+        "evidence": "Disabled publishing allows explicitly configured metadata-only release with detected packages while enabled/default preserves asset requirements."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_release_only_delivery.py tests/test_delivery_integrity.py tests/test_push_e2e.py -q",
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "Exact annotated-tag recovery and terminal mirror failures remain enforced; governance passes."
+      }
+    ]
+  }
+}

@@ -69,6 +69,13 @@ def _resolve_release_tag(
     return None
 
 
+def _release_requires_package_assets(project_types: List[str], config: Any) -> bool:
+    """Package discovery does not override explicitly disabled registry delivery."""
+    from goal.publish.github_fallback import _publishing_section
+
+    return bool(project_types) and _publishing_section(config).get("enabled") is not False
+
+
 def _recover_existing_generic_release_decision(
     current_version: str,
     version_decision: Any,
@@ -83,7 +90,7 @@ def _recover_existing_generic_release_decision(
         not clean_force_publish
         or delivery is None
         or delivery.mode != "direct-main"
-        or project_types
+        or _release_requires_package_assets(project_types, publish_config)
         or getattr(version_decision, "reason", None) != "normal-bump"
     ):
         return version_decision, False
@@ -145,7 +152,7 @@ def _mirror_github_release(
 
     package_name = _configured_project_name(publish_config)
     governed_direct_main = delivery is not None and delivery.mode == "direct-main"
-    generic_project = not project_types
+    generic_project = not _release_requires_package_assets(project_types, publish_config)
     try:
         mirrored = try_github_release_on_tag(
             version=new_version,
