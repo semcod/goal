@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-177",
+  "summary": "Harden koru auto-repair and released lease filtering",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-177/**",
+    "goal/governance/**",
+    "goal/push/**",
+    "tests/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "824bf46866e697a588aa107c450d358c5bb86f7d",
+    "targetBranch": "main",
+    "outcome": "Harden Koru auto-repair runner with headless environment and compact summary; filter released leases from clone evidence.",
+    "nonGoals": [
+      "No bypass of governance gate checks",
+      "No change to foreign package manifests"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Filter released leases in governed_clone_evidence, pass KORU_CLI_NO_REEXEC and KORU_HEADLESS in run_koru_repair, and format one-line summary in push workflow.",
+      "components": [
+        {
+          "name": "governance-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "goal/governance/remediation.py",
+            "tests/test_governance_delivery.py"
+          ]
+        },
+        {
+          "name": "push-core",
+          "paths": [
+            "goal/push/core.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commits on ticket-177 branch."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_governance_delivery.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Tests pass and governance passes."
+      }
+    ]
+  }
+}
