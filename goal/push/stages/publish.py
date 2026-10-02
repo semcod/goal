@@ -5,6 +5,7 @@ import click
 from goal.cli.publish import publish_project
 from goal.cli import confirm
 from goal.publish.changes import PublishChangeReport, analyze_publishable_changes
+from goal.publish.github_fallback import _publishing_section
 from goal.io.stdio import (
     echo_auto,
     echo_heading,
@@ -67,14 +68,26 @@ def handle_publish(
     staged_files: list[str] | None = None,
     force_publish: bool = False,
 ) -> tuple[bool, PublishChangeReport | None]:
-    """Publish to package registries.
+    """Run the configured registry stage, independently of Git/GitHub delivery.
 
     Returns (publish_success, change_report). When publish is skipped because there
     are no package source changes, publish_success is False and the report explains why.
+    Explicit registry disabling completes this stage without a registry effect;
+    the enclosing workflow still validates its configured Git/GitHub delivery.
     """
     if no_publish:
         echo_status_warn("Skipping publish (--no-publish)")
         return False, None
+
+    if _publishing_section(config).get("enabled") is False:
+        echo_info(
+            "Registry publishing disabled in configuration; "
+            "configured Git/tag and GitHub Release delivery remains active."
+        )
+        # Intentional registry disabling completes this stage without a package
+        # publication. Git/tag delivery and the GitHub mirror are still gated
+        # independently by the enclosing managed workflow.
+        return True, None
 
     change_report: PublishChangeReport | None = None
     if staged_files is not None and not force_publish:

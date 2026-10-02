@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-178",
+  "summary": "Honor disabled registry publishing",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-178/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/push/stages/publish.py",
+    "tests/test_publish_stage.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "74e85d92f886fedd6f4644873a0204a83e6b2c75",
+    "targetBranch": "main",
+    "outcome": "Honor an explicit publishing.enabled=false without contacting or building registry packages, while preserving declared Git/tag and GitHub Release delivery and required tests.",
+    "nonGoals": [
+      "Bypass governance or tests",
+      "Change GitHub fallback configuration",
+      "Claim registry publication when it is disabled",
+      "Change default or explicitly enabled registry behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the existing publishing-section reader at the managed publish-stage boundary; disabled registry publishing is an intentional policy outcome before package-source analysis or registry effects.",
+      "components": [
+        {
+          "name": "registry-stage",
+          "paths": [
+            "goal/push/stages/publish.py"
+          ]
+        },
+        {
+          "name": "policy-regressions",
+          "paths": [
+            "tests/test_publish_stage.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the source fix; retain protected publication receipts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_publish_stage.py tests/test_publish_changes.py -q"
+        ],
+        "evidence": "Explicit disabled registry config, including forced and loaded-config forms, never analyzes package source or invokes a registry publisher."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_publish_stage.py tests/test_publish_changes.py -q",
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "Enabled/default registry behavior, --no-publish precedence and declared GitHub fallback remain intact."
+      }
+    ]
+  }
+}
