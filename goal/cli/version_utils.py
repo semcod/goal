@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import os
 import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
@@ -45,42 +46,40 @@ def detect_project_types() -> List[str]:
     vendored trees.
     """
     excluded = {
-        ".git",
-        ".venv",
-        "venv",
-        "env",
-        "node_modules",
-        "dist",
-        "build",
-        "__pycache__",
-        ".pytest_cache",
-        ".mypy_cache",
-        ".ruff_cache",
+        ".git", ".venv", "venv", "env", "node_modules", "dist", "build",
+        "target", "vendor", "third_party", "site-packages", "__pycache__",
+        ".pytest_cache", ".mypy_cache", ".ruff_cache", "examples", "example",
+        "samples", "sample", "fixtures", "__fixtures__", "testdata", "templates",
     }
     root = Path(".")
-    directories = [root]
-    try:
-        for candidate in root.rglob("*"):
-            if not candidate.is_dir():
-                continue
-            relative = candidate.relative_to(root)
-            if len(relative.parts) > 3:
-                continue
-            if any(part.startswith(".") or part in excluded for part in relative.parts):
-                continue
-            directories.append(candidate)
-    except OSError:
-        pass
+    directories = []
+    # Prune before descent: ignored fixtures never select test commands, and
+    # discovery never traverses another checkout or an external symlink.
+    for dirpath, dirnames, _filenames in os.walk(root, followlinks=False):
+        directory = Path(dirpath)
+        depth = len(directory.relative_to(root).parts)
+        dirnames[:] = [
+            name for name in dirnames
+            if depth < 3
+            and not name.startswith(".")
+            and name not in excluded
+            and not name.endswith(".egg-info")
+            and not (directory / name).is_symlink()
+            and not os.path.lexists(directory / name / ".git")
+        ]
+        directories.append(directory)
 
     detected = []
     for ptype, config in PROJECT_TYPES.items():
         for directory in directories:
             for file_pattern in config["files"]:
                 if "*" in file_pattern:
-                    if list(directory.glob(file_pattern)):
+                    if any(path.is_file() and not path.is_symlink()
+                           for path in directory.glob(file_pattern)):
                         detected.append(ptype)
                         break
-                elif (directory / file_pattern).exists():
+                elif ((directory / file_pattern).is_file()
+                      and not (directory / file_pattern).is_symlink()):
                     detected.append(ptype)
                     break
             if ptype in detected:

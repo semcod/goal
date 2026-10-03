@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-181",
+  "summary": "Keep governed test-stage inside owned project and ticket boundaries",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-181/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/version_utils.py",
+    "tests/test_version_repository_boundaries.py",
+    "goal/push/core.py",
+    "tests/test_push_core_refactor.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e98991d40dc53470cefb170bc19284e39dc1e7b8",
+    "targetBranch": "main",
+    "outcome": "Run governed tests only for owned bounded projects and preserve the accepted ticket scope: prune illustrative/foreign trees and keep slow-test observations advisory instead of mutating Planfile during governed publication. Reuse native ticket-181 and publish one atomic four-file material candidate through protected merge.",
+    "nonGoals": [
+      "Change explicit project configuration or bootstrap commands",
+      "Change version, dependencies, delivery approval or production files outside the two owned paths"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Prune owned project discovery before selecting test commands, and preserve slow-test metrics while skipping implicit Planfile ticket creation in governed delivery modes. Existing ungoverned ticket-generation behavior remains tested. Restore the scoped discovery implementation from the preserved rejected candidate; discard only its known generated out-of-scope Planfile effect in the new unpublished branch. Original remote branch, local recovery ref, original intent, snapshots and test receipts remain recoverable.",
+      "components": [
+        {
+          "name": "governed-test-stage",
+          "paths": [
+            "goal/cli/version_utils.py",
+            "goal/push/core.py"
+          ]
+        },
+        {
+          "name": "test-stage-boundary-regressions",
+          "paths": [
+            "tests/test_version_repository_boundaries.py",
+            "tests/test_push_core_refactor.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert through protected publication retaining independent receipts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_version_repository_boundaries.py -q",
+          "python3 -m pytest tests/test_push_core_refactor.py -q"
+        ],
+        "evidence": "Eight genuine discovery regressions plus governed test-stage mutation regressions preserve exact Planfile bytes and Git index while retaining performance metrics."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/ -q",
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "Full Python tests and native Goal publication succeed, with exact-head OneDev and independent protected merge."
+      }
+    ]
+  }
+}
