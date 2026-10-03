@@ -9,6 +9,7 @@ behavior-preserving change.
 """
 
 import sys
+import pytest
 from pathlib import Path
 
 # Add project root to path (matches other push test modules)
@@ -392,3 +393,25 @@ def test_empty_push_report_is_a_no_op_in_both_formats(capsys):
             assert "# Goal Push Result" in output
             assert "No commit was created" in output
             assert "version was unchanged" in output
+
+
+@pytest.mark.parametrize("mode", ["pull-request", "publish-only", "direct-main"])
+def test_governed_test_stage_keeps_planfile_and_index_unchanged(tmp_path, monkeypatch, mode):
+    import subprocess
+    from goal.push.core import _prepare_slow_test_tickets
+
+    monkeypatch.chdir(tmp_path)
+    planfile = _write_empty_planfile(tmp_path)
+    subprocess.run(["git", "init", "-q"], check=True, capture_output=True)
+    subprocess.run(["git", "add", str(planfile)], check=True, capture_output=True)
+    subprocess.run(["git", "-c", "user.name=Goal Test", "-c", "user.email=test@example.invalid",
+                    "commit", "-qm", "baseline"], check=True, capture_output=True)
+    before = planfile.read_bytes()
+    details = {"slow_tests": [{"classname": "tests.slow", "name": "test_case", "duration": 2.0}],
+               "startup_overhead": 10.0}
+    context = {"delivery_mode": mode, "test_details": details}
+    assert _prepare_slow_test_tickets(context, ["goal/feature.py"]) == ["goal/feature.py"]
+    assert planfile.read_bytes() == before
+    assert subprocess.check_output(["git", "diff", "--cached", "--name-only"]) == b""
+    assert context["added_slow_test_tickets"] == []
+    assert context["test_details"] == details

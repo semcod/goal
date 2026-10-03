@@ -179,6 +179,11 @@ def _mirror_github_release(
 
 def _prepare_slow_test_tickets(ctx_obj: Dict[str, Any], files: List[str]) -> List[str]:
     """Generate and stage slow-test tickets before the workflow commits."""
+    if ctx_obj.get("delivery_mode") in {"pull-request", "publish-only", "direct-main"}:
+        # Performance observations do not expand a governed ticket's write
+        # scope. Keep the metrics for the summary and let intake own new tasks.
+        ctx_obj["added_slow_test_tickets"] = []
+        return files
     test_details = ctx_obj.get("test_details", {})
     added_tickets = (
         add_slow_test_tickets_to_planfile(test_details) if test_details else []
