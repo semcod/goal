@@ -14,8 +14,10 @@ import secrets
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from typing import Any, Callable, Iterator
+from urllib.parse import urlencode, urlsplit
 
 import click
 
@@ -1088,6 +1090,85 @@ def pending_pull_request_delivery(
     )
 
 
+def _graphql_rate_exhausted(result: subprocess.CompletedProcess) -> bool:
+    detail = (str(result.stderr or '') + str(result.stdout or '')).lower()
+    return result.returncode != 0 and 'graphql' in detail and (
+        'graphql_rate_limit' in detail or ('rate limit' in detail and 'exceeded' in detail)
+    )
+
+
+def _rest_repository(policy: DeliveryPolicy, root: Path) -> str:
+    remote = _git_value('remote', 'get-url', policy.remote, cwd=root)
+    match = re.fullmatch(r'(?:[^@/]+@)?github\.com:([^?#]+)', remote)
+    if match:
+        repository = match[1]
+    else:
+        parsed = urlsplit(remote)
+        if (parsed.scheme not in ('https', 'ssh') or parsed.hostname != 'github.com'
+                or parsed.query or parsed.fragment):
+            raise click.ClickException('REST recovery requires an exact github.com repository on the configured remote')
+        repository = parsed.path.removeprefix('/')
+    repository = repository.removesuffix('.git')
+    if (not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository)
+            or any(part in ('.', '..') for part in repository.split('/'))):
+        raise click.ClickException('REST recovery could not resolve the configured repository')
+    return repository
+
+
+def _rest_open_pull_requests(policy: DeliveryPolicy, head: str, root: Path) -> list[dict[str, str]]:
+    repository = _rest_repository(policy, root)
+    query = urlencode({'state': 'open', 'head': repository.split('/')[0] + ':' + head,
+                       'base': policy.base_branch, 'per_page': 2})
+    result = _run(['gh', 'api', f'repos/{repository}/pulls?{query}'], cwd=root)
+    if result.returncode:
+        raise click.ClickException('could not query open pull requests through REST')
+    try:
+        rows = json.loads(result.stdout)
+    except (TypeError, json.JSONDecodeError) as error:
+        raise click.ClickException('REST pull request query returned invalid JSON') from error
+    if not isinstance(rows, list):
+        raise click.ClickException('REST pull request query returned an invalid result')
+    matches = []
+    for row in rows:
+        if not isinstance(row, dict):
+            raise click.ClickException('REST pull request query returned an invalid entry')
+        base, branch = row.get('base'), row.get('head')
+        if (row.get('state') != 'open' or not isinstance(base, dict)
+                or not isinstance(branch, dict) or base.get('ref') != policy.base_branch
+                or branch.get('ref') != head
+                or not isinstance(base.get('repo'), dict) or not isinstance(branch.get('repo'), dict)
+                or base['repo'].get('full_name') != repository
+                or branch['repo'].get('full_name') != repository):
+            raise click.ClickException('REST pull request binding does not match repository, base and branch')
+        url, sha = row.get('html_url'), branch.get('sha')
+        if (not isinstance(url, str)
+                or not re.fullmatch(r'https://github\.com/' + re.escape(repository) + r'/pull/[1-9][0-9]*', url)
+                or not isinstance(sha, str) or not re.fullmatch(r'[0-9a-f]{40}', sha)):
+            raise click.ClickException('REST pull request is missing a valid URL or head commit')
+        matches.append({'url': url, 'headRefOid': sha})
+    if len(matches) > 1:
+        raise click.ClickException(f"multiple open pull requests use governed branch '{head}'")
+    return matches
+
+
+def _recover_pull_request_creation(policy: DeliveryPolicy, head: str, title: str, root: Path) -> None:
+    # A failed CLI request may already have created the PR. Observe first;
+    # preserve the final current-HEAD verification instead of posting twice.
+    if _rest_open_pull_requests(policy, head, root):
+        return
+    repository = _rest_repository(policy, root)
+    payload = {'base': policy.base_branch, 'head': head, 'title': title,
+               'body': 'Created by governed goal -a pull-request delivery.'}
+    with tempfile.TemporaryDirectory(prefix='goal-pr-rest-') as directory:
+        request = Path(directory) / 'request.json'
+        request.write_text(json.dumps(payload), encoding='utf-8')
+        request.chmod(0o600)
+        result = _run(['gh', 'api', f'repos/{repository}/pulls', '--method', 'POST',
+                       '--input', str(request)], cwd=root)
+    if result.returncode:
+        raise click.ClickException('could not create pull request through REST; reconcile before another attempt')
+
+
 def _query_open_pull_request(
     policy: DeliveryPolicy, head: str, root: Path,
 ) -> dict[str, str] | None:
@@ -1097,17 +1178,20 @@ def _query_open_pull_request(
          "--base", policy.base_branch, "--limit", "2", "--json", "url,headRefOid"],
         cwd=root,
     )
-    if result.returncode != 0:
+    if _graphql_rate_exhausted(result):
+        matches = _rest_open_pull_requests(policy, head, root)
+    elif result.returncode != 0:
         raise click.ClickException(
             "could not query open pull requests: "
             + (result.stderr or "unknown gh error").strip()
         )
-    try:
-        matches = json.loads(result.stdout)
-    except json.JSONDecodeError as error:
-        raise click.ClickException(
-            "could not query open pull requests: gh returned invalid JSON"
-        ) from error
+    else:
+        try:
+            matches = json.loads(result.stdout)
+        except json.JSONDecodeError as error:
+            raise click.ClickException(
+                "could not query open pull requests: gh returned invalid JSON"
+            ) from error
     if not isinstance(matches, list):
         raise click.ClickException("could not query open pull requests: gh returned an invalid result")
     if len(matches) > 1:
@@ -1206,7 +1290,9 @@ def deliver_pull_request(
         ],
         cwd=root,
     )
-    if created.returncode != 0:
+    if _graphql_rate_exhausted(created):
+        _recover_pull_request_creation(policy, head, title, root)
+    elif created.returncode != 0:
         raise click.ClickException(
             "could not create pull request: "
             + (created.stderr or "unknown gh error").strip()
