@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-180",
+  "summary": "Recover governed PR delivery from GraphQL rate limits",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-180/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "tests/test_governance_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-181"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f2f849e8609cd0bf185c204afbdbbbb3df52a59a",
+    "targetBranch": "main",
+    "outcome": "Recover governed PR observation and creation through exact-repository REST when GitHub GraphQL reports rate exhaustion. Preserve non-forced push, canonical/legacy alias reconciliation, duplicate rejection and current pushed HEAD verification. Publish the material fix through independent protected merge.",
+    "nonGoals": [
+      "Bypass reviews, tests, policy or Git push authorization",
+      "Change delivery configuration, version, release or runtime dependencies",
+      "Retry ordinary authentication, validation or network failures through another effectful transport"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the existing gh PR transport. Recognize only explicit GraphQL rate exhaustion. Resolve the configured github.com remote exactly, query open/base/head through REST, validate returned bindings, and reconcile possible successful creation before at most one structured REST POST. Always verify current HEAD with the existing observer.",
+      "components": [
+        {
+          "name": "governed-pr-transport",
+          "paths": [
+            "goal/governance/delivery.py"
+          ]
+        },
+        {
+          "name": "delivery-regressions",
+          "paths": [
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert through protected publication; preserve independent receipts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_governance_delivery.py -q"
+        ],
+        "evidence": "Explicit GraphQL exhaustion recovers through REST without duplicate creation or mismatched repository/base/head."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_governance_delivery.py tests/test_delivery_integrity.py tests/test_push_e2e.py -q",
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "Existing bounded resume, ordinary failures and authorized non-forced push remain enforced; exact-head OneDev and independent protected publication pass."
+      }
+    ]
+  }
+}

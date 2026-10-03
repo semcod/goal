@@ -991,3 +991,108 @@ def test_goal_all_in_default_checkout_neither_rewrites_config_nor_pushes_main(tm
     assert config.read_bytes() == before_config
     assert _git(root, "ls-remote", "origin", "refs/heads/main").stdout == before_remote
     assert _git(root, "status", "--porcelain").stdout == ""
+
+
+def _graphql_transport_fixture(tmp_path, monkeypatch, *, existing=False, uncertain=False,
+                               bad_binding=None, post_error=False, stale=False):
+    from urllib.parse import parse_qs, urlsplit
+    root = _repository(tmp_path)
+    branch = "ticket/180-rest-recovery"
+    _git(root, "switch", "-c", branch)
+    _git(root, "remote", "add", "origin", "git@github.com:example/repo.git")
+    expected = _git(root, "rev-parse", "HEAD").stdout.strip()
+    original = delivery._run
+    state = {"created": existing, "calls": [], "posts": [], "expected": expected}
+    row = {"state": "open", "html_url": "https://github.com/example/repo/pull/180",
+           "base": {"ref": "main", "repo": {"full_name": "example/repo"}},
+           "head": {"ref": branch, "sha": "a" * 40 if stale else expected,
+                    "repo": {"full_name": "example/repo"}}}
+    if bad_binding == "repository": row["head"]["repo"]["full_name"] = "other/repo"
+    if bad_binding == "base": row["base"]["ref"] = "other"
+    if bad_binding == "branch": row["head"]["ref"] = "other"
+    if bad_binding == "url": row["html_url"] = "https://github.com/other/repo/pull/180"
+
+    def run(arguments, *, cwd=None):
+        state["calls"].append(arguments)
+        if arguments[:2] == ["git", "push"]:
+            return subprocess.CompletedProcess(arguments, 0, "", "")
+        if arguments[:3] in (["gh", "pr", "list"], ["gh", "pr", "create"]):
+            if arguments[2] == "create" and uncertain:
+                state["created"] = True
+            return subprocess.CompletedProcess(arguments, 1, "", "GraphQL: API rate limit already exceeded")
+        if arguments[:2] == ["gh", "api"]:
+            assert arguments[2].startswith("repos/example/repo/pulls")
+            if "--method" in arguments:
+                assert arguments[arguments.index("--method") + 1] == "POST"
+                payload = json.loads(Path(arguments[arguments.index("--input") + 1]).read_text())
+                state["posts"].append(payload)
+                if post_error:
+                    return subprocess.CompletedProcess(arguments, 1, "", "REST failed")
+                state["created"] = True
+                return subprocess.CompletedProcess(arguments, 0, json.dumps(row), "")
+            query = parse_qs(urlsplit(arguments[2]).query)
+            assert query["state"] == ["open"] and query["base"] == ["main"]
+            assert query["per_page"] == ["2"]
+            queried = query["head"][0].split(":", 1)[1]
+            rows = [row] if state["created"] and queried == branch else []
+            if bad_binding == "duplicate": rows *= 2
+            if bad_binding == "shape": rows = {"not": "a list"}
+            return subprocess.CompletedProcess(arguments, 0, json.dumps(rows), "")
+        return original(arguments, cwd=cwd)
+
+    monkeypatch.setattr(delivery, "_run", run)
+    monkeypatch.setattr(delivery.time, "sleep", lambda _: None)
+    return root, branch, state
+
+
+@pytest.mark.parametrize("uncertain", [False, True])
+def test_graphql_exhaustion_recovers_bound_pr_without_duplicate_create(tmp_path, monkeypatch, uncertain):
+    root, branch, state = _graphql_transport_fixture(tmp_path, monkeypatch, uncertain=uncertain)
+    title = '[ticket-180] Preserve "quotes", newline\n and $(literal)'
+    head, url = delivery.deliver_pull_request(_pull_request_policy(), ticket="ticket-180", title=title, cwd=root)
+    assert head == branch and url == "https://github.com/example/repo/pull/180"
+    assert len(state["posts"]) == (0 if uncertain else 1)
+    if state["posts"]:
+        assert state["posts"][0] == {"base": "main", "head": branch, "title": title,
+                                    "body": "Created by governed goal -a pull-request delivery."}
+    push = next(call for call in state["calls"] if call[:2] == ["git", "push"])
+    assert push == ["git", "push", "-u", "origin", "HEAD:refs/heads/" + branch]
+
+
+@pytest.mark.parametrize("binding", ["repository", "base", "branch", "url", "duplicate", "shape"])
+def test_graphql_rest_recovery_rejects_unbound_or_ambiguous_observation(tmp_path, monkeypatch, binding):
+    root, _, state = _graphql_transport_fixture(tmp_path, monkeypatch, existing=True, bad_binding=binding)
+    with pytest.raises(click.ClickException):
+        delivery.deliver_pull_request(_pull_request_policy(), ticket="ticket-180", title="bound", cwd=root)
+    assert not state["posts"]
+    assert not any(call[:2] == ["git", "push"] for call in state["calls"])
+
+
+def test_graphql_rest_recovery_checks_current_head_and_bounds_failed_post(tmp_path, monkeypatch):
+    root, _, state = _graphql_transport_fixture(tmp_path, monkeypatch, post_error=True)
+    with pytest.raises(click.ClickException, match="reconcile"):
+        delivery.deliver_pull_request(_pull_request_policy(), ticket="ticket-180", title="bound", cwd=root)
+    assert len(state["posts"]) == 1
+
+
+def test_graphql_rest_recovery_does_not_accept_stale_head(tmp_path, monkeypatch):
+    root, _, state = _graphql_transport_fixture(tmp_path, monkeypatch, existing=True, stale=True)
+    with pytest.raises(click.ClickException, match="not current pushed HEAD"):
+        delivery.deliver_pull_request(_pull_request_policy(), ticket="ticket-180", title="bound", cwd=root)
+    assert not state["posts"]
+
+
+@pytest.mark.parametrize("error", ["authentication failed", "network connection failed"])
+def test_ordinary_pr_query_errors_do_not_trigger_rest_effects(tmp_path, monkeypatch, error):
+    root = _repository(tmp_path)
+    calls = []
+    original = delivery._run
+    def run(arguments, *, cwd=None):
+        calls.append(arguments)
+        if arguments[:3] == ["gh", "pr", "list"]:
+            return subprocess.CompletedProcess(arguments, 1, "", error)
+        return original(arguments, cwd=cwd)
+    monkeypatch.setattr(delivery, "_run", run)
+    with pytest.raises(click.ClickException, match="could not query"):
+        delivery._query_open_pull_request(_pull_request_policy(), "ticket/180-rest-recovery", root)
+    assert not any(call[:2] == ["gh", "api"] for call in calls)
