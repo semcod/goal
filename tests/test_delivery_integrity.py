@@ -1471,3 +1471,20 @@ def test_managed_ticket_branch_can_continue_after_gate(legacy_clean_repo):
     (root / '.governance/agent-hosts.json').write_text('{}\n')
     git(root, 'checkout', '-qb', 'ticket/175-rust-workspace')
     assert delivery.validate_legacy_governance(cwd=root) is False
+
+
+def test_wellmanifest_baseline_manifest_does_not_trigger_governance_gate(tmp_path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    subprocess.run(["git", "init", "--quiet", str(root)], check=True)
+    gov = root / ".governance"
+    gov.mkdir()
+    (gov / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "wellmanifest.manifest/v1",
+                "standard": {"id": "profile:baseline", "version": "0.20.37"},
+            }
+        )
+    )
+    assert delivery.validate_legacy_governance(cwd=root) is False

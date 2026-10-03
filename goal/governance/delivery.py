@@ -208,6 +208,21 @@ def missing_governance_package_files(root: Path) -> list[str]:
     ]
 
 
+def is_new_project_manifest(path: Path) -> bool:
+    """Return True if the manifest declares a new-project governance schema, not baseline."""
+    if not path.is_file():
+        return False
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        schema = str(data.get("schema") or "")
+        standard_id = str((data.get("standard") or {}).get("id") or "")
+        if schema == "wellmanifest.manifest/v1" or standard_id.startswith("profile:"):
+            return False
+        return True
+    except Exception:
+        return True
+
+
 def is_new_project_source_hub(root: Path) -> bool:
     return all((root / relative).is_file() for relative in SOURCE_HUB_FILES)
 
@@ -476,7 +491,7 @@ def governed_clone_evidence(cwd: Path | None = None) -> list[Path]:
     evidence = [
         path / GOVERNANCE_PACKAGE_FILES["manifest"]
         for path in checkouts
-        if (path / GOVERNANCE_PACKAGE_FILES["manifest"]).is_file()
+        if is_new_project_manifest(path / GOVERNANCE_PACKAGE_FILES["manifest"])
     ]
     if checkouts:
         lease_root = checkouts[0] / ".subactor" / "leases"
@@ -500,7 +515,8 @@ def validate_legacy_governance(
     if result.returncode != 0:
         return False
     root = Path(result.stdout.strip()).resolve()
-    if not (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
+    manifest = root / GOVERNANCE_PACKAGE_FILES["manifest"]
+    if not is_new_project_manifest(manifest):
         evidence = governed_clone_evidence(root)
         if evidence:
             shown = ", ".join(str(path) for path in evidence[:3])
@@ -510,20 +526,20 @@ def validate_legacy_governance(
                 "to the default branch without the gate. Deliver from the ticket "
                 "checkout with --delivery-mode pull-request."
             )
-    if (root / GOVERNANCE_PACKAGE_FILES["manifest"]).exists():
-        try:
-            _governance_gate(root)
-        except click.ClickException:
-            # GOV-MATERIAL-001 explicitly prescribes an external no-change receipt.
-            # This never authorizes delivery: require the exact structured finding
-            # plus the same strict local/remote no-change checks as a passing gate.
-            if (check_no_change and _ticket_index_only_material_finding(root)
-                    and _legacy_clean_default_base(root)):
-                return True
-            raise
-        if check_no_change and _legacy_clean_default_base(root):
+        return False
+    try:
+        _governance_gate(root)
+    except click.ClickException:
+        # GOV-MATERIAL-001 explicitly prescribes an external no-change receipt.
+        # This never authorizes delivery: require the exact structured finding
+        # plus the same strict local/remote no-change checks as a passing gate.
+        if (check_no_change and _ticket_index_only_material_finding(root)
+                and _legacy_clean_default_base(root)):
             return True
-        _validate_legacy_ticket_branch(root)
+        raise
+    if check_no_change and _legacy_clean_default_base(root):
+        return True
+    _validate_legacy_ticket_branch(root)
     return False
 
 
