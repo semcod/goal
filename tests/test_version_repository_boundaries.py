@@ -104,3 +104,47 @@ def test_symlinked_declarations_do_not_read_or_write_external_files(project, ope
         assert (project / "packages/owned/VERSION").read_text() == "1.2.4\n"
     assert {path: path.read_bytes() for path in before} == before
     assert {path: path.readlink() for path in links} == links
+
+
+@pytest.mark.parametrize("boundary", ["examples", "samples", "fixtures", "templates", "vendor", "testdata", "packages/foreign"])
+def test_project_type_discovery_preserves_owned_packages_only(tmp_path, monkeypatch, boundary):
+    from goal.cli.version_utils import detect_project_types
+
+    root = tmp_path / "project"
+    root.mkdir()
+    (root / "pyproject.toml").write_text('[project]\nname = "owned"\n')
+    owned = root / "packages/owned"
+    owned.mkdir(parents=True)
+    (owned / "package.json").write_text('{"name": "owned-adapter"}')
+    foreign = root / boundary
+    foreign.mkdir(parents=True)
+    (foreign / "Cargo.toml").write_text('[package]\nname = "illustration"\n')
+    if boundary == "packages/foreign":
+        (foreign / ".git").write_text("gitdir: /unavailable/recovery\n")
+    monkeypatch.chdir(root)
+    assert detect_project_types() == ["python", "nodejs"]
+
+
+def test_project_type_discovery_prunes_depth_and_links(tmp_path, monkeypatch):
+    from goal.cli.version_utils import detect_project_types
+
+    root = tmp_path / "project"
+    root.mkdir()
+    (root / "pyproject.toml").write_text('[project]\nname = "owned"\n')
+    at_limit = root / "packages/owned/adapter"
+    at_limit.mkdir(parents=True)
+    (at_limit / "package.json").write_text('{"name": "owned-adapter"}')
+    too_deep = at_limit / "nested"
+    too_deep.mkdir()
+    (too_deep / "Cargo.toml").write_text('[package]\nname = "too-deep"\n')
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "go.mod").write_text('module foreign\n')
+    try:
+        (root / "linked").symlink_to(outside, target_is_directory=True)
+        (root / "Gemfile").symlink_to(outside / "Gemfile")
+        (outside / "Gemfile").write_text('source "https://rubygems.org"\n')
+    except OSError as exc:
+        pytest.skip(f"Host cannot create symbolic links: {exc}")
+    monkeypatch.chdir(root)
+    assert detect_project_types() == ["python", "nodejs"]

@@ -6696,5 +6696,23 @@ tickets:
   files:
   - tests/test_clone_repo.py
   dedupe_key: test-optimization:tests.test_clone_repo.TestCloneRepository:test_clone_failure_bad_remote
+- signal: slow_test_warning
+  title: Address high test suite startup overhead
+  description: 'The test suite startup and collection overhead is high: 8.19s.
+
+
+    This overhead is spent on imports, collection, and test environment initialization.
+
+    Analyze fixtures with broad scopes, reduce heavy imports on test collection, and
+    optimize pytest-xdist startup settings to decrease the delay before tests start
+    running.'
+  priority: high
+  labels:
+  - llm-ready
+  - test-optimization
+  - startup-overhead
+  files:
+  - pyproject.toml
+  dedupe_key: test-optimization:general:startup-overhead
 applied: []
 skipped: []

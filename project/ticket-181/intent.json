@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-181",
+  "summary": "Exclude demonstration and foreign trees from automatic project detection",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-181/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/version_utils.py",
+    "tests/test_version_repository_boundaries.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e98991d40dc53470cefb170bc19284e39dc1e7b8",
+    "targetBranch": "main",
+    "outcome": "Detect only owned root and bounded package projects; prune demonstrations, fixtures, generated, vendor and foreign checkout trees before selecting test commands. Publish the two-file fix through independent protected merge.",
+    "nonGoals": [
+      "Change explicit project configuration or bootstrap commands",
+      "Change version, dependencies, delivery approval or production files outside the two owned paths"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Prune a bounded depth-three os.walk before descent, do not follow symbolic links, and stop at any nested .git marker; retain owned packages and root manifests. Reuse existing project-type patterns without adding language dictionaries.",
+      "components": [
+        {
+          "name": "automatic-type-discovery",
+          "paths": [
+            "goal/cli/version_utils.py"
+          ]
+        },
+        {
+          "name": "discovery-boundary-tests",
+          "paths": [
+            "tests/test_version_repository_boundaries.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert through protected publication retaining independent receipts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_version_repository_boundaries.py -q"
+        ],
+        "evidence": "Demonstrations and foreign trees cannot select languages; owned adapters remain detectable."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/ -q",
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "Full Python tests and native Goal publication succeed, with exact-head OneDev and independent protected merge."
+      }
+    ]
+  }
+}
