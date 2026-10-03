@@ -140,11 +140,8 @@ def test_project_type_discovery_prunes_depth_and_links(tmp_path, monkeypatch):
     outside = tmp_path / "outside"
     outside.mkdir()
     (outside / "go.mod").write_text('module foreign\n')
-    try:
-        (root / "linked").symlink_to(outside, target_is_directory=True)
-        (root / "Gemfile").symlink_to(outside / "Gemfile")
-        (outside / "Gemfile").write_text('source "https://rubygems.org"\n')
-    except OSError as exc:
-        pytest.skip(f"Host cannot create symbolic links: {exc}")
+    (root / "linked").symlink_to(outside, target_is_directory=True)
+    (root / "Gemfile").symlink_to(outside / "Gemfile")
+    (outside / "Gemfile").write_text('source "https://rubygems.org"\n')
     monkeypatch.chdir(root)
     assert detect_project_types() == ["python", "nodejs"]
