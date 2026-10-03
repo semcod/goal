@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-182",
+  "summary": "ignore wellmanifest baseline manifest in legacy governance gate",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-182/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "goal/cli/__init__.py",
+    "tests/test_delivery_integrity.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "47472c635b03091131d1ded6e7e28fe32502dfea",
+    "targetBranch": "main",
+    "outcome": "Recognize wellmanifest baseline manifests in validate_legacy_governance and skip new-project gate checks on repositories adopting baseline without new-project governance.",
+    "nonGoals": [
+      "Bypass reviews, tests, policy or Git push authorization for new-project governed repositories"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Check whether .governance/manifest.json declares a new-project governance schema before requiring new-project package files or invoking project/governance-check.sh.",
+      "components": [
+        {
+          "name": "governance-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "goal/cli/__init__.py"
+          ]
+        },
+        {
+          "name": "delivery-tests",
+          "paths": [
+            "tests/test_delivery_integrity.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in ticket branch."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_delivery_integrity.py -q"
+        ],
+        "evidence": "Delivery integrity tests verify that baseline manifests do not trigger GOV-MANIFEST-001."
+      }
+    ]
+  }
+}

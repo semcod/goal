@@ -447,6 +447,14 @@ def _governed_clone() -> bool:
     return bool(governed_clone_evidence())
 
 
+def _is_governed_target() -> bool:
+    """Whether the current checkout has a new-project governance manifest."""
+    from pathlib import Path
+    from goal.governance.delivery import is_new_project_manifest
+
+    return is_new_project_manifest(Path(".governance/manifest.json"))
+
+
 def _configure_main_context(
     ctx,
     bump,
@@ -492,7 +500,7 @@ def _configure_main_context(
         ctx.obj["config"] = load_config(config_path) if config_path else load_config()
     elif config_path:
         ctx.obj["config"] = load_config(config_path)
-    elif dry_run or (all_flags and (os.path.isfile(".governance/manifest.json")
+    elif dry_run or (all_flags and (_is_governed_target()
                                     or _governed_clone())):
         # Governed -a must reach its gate/no-change check before any mutation.
         # ensure_config can create or rewrite goal.yaml during auto-detection.
