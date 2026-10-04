@@ -36,55 +36,58 @@ def is_plain_version(value: str) -> bool:
     return bool(_PLAIN_VERSION_RE.fullmatch(value.strip()))
 
 
-def detect_project_types() -> List[str]:
-    """Detect project types in the repository, including package subdirectories.
-
-    A repository may keep publishable packages under ``packages/`` or an
-    adapter directory.  The old detector only inspected ``.`` and silently
-    returned no types for that layout, which made ``goal -a`` report a false
-    successful release.  Scan a bounded depth while excluding generated and
-    vendored trees.
-    """
+def _project_directories(
+    root: Optional[Path] = None, max_depth: Optional[int] = 3
+) -> List[Path]:
+    """Bounded, pruned inventory of directories owned by this checkout."""
     excluded = {
         ".git", ".venv", "venv", "env", "node_modules", "dist", "build",
         "target", "vendor", "third_party", "site-packages", "__pycache__",
         ".pytest_cache", ".mypy_cache", ".ruff_cache", "examples", "example",
         "samples", "sample", "fixtures", "__fixtures__", "testdata", "templates",
     }
-    root = Path(".")
+    root = root or Path(".")
     directories = []
     # Prune before descent: ignored fixtures never select test commands, and
     # discovery never traverses another checkout or an external symlink.
     for dirpath, dirnames, _filenames in os.walk(root, followlinks=False):
         directory = Path(dirpath)
         depth = len(directory.relative_to(root).parts)
-        dirnames[:] = [
+        dirnames[:] = sorted(
             name for name in dirnames
-            if depth < 3
+            if (max_depth is None or depth < max_depth)
             and not name.startswith(".")
             and name not in excluded
             and not name.endswith(".egg-info")
             and not (directory / name).is_symlink()
             and not os.path.lexists(directory / name / ".git")
-        ]
+        )
         directories.append(directory)
 
-    detected = []
+    return directories
+
+
+def discover_project_roots(root: Optional[Path] = None) -> Dict[str, List[Path]]:
+    """Retain manifest directories instead of reducing discovery to type names."""
+    directories = _project_directories(root)
+    discovered = {}
     for ptype, config in PROJECT_TYPES.items():
+        matches = []
         for directory in directories:
-            for file_pattern in config["files"]:
-                if "*" in file_pattern:
-                    if any(path.is_file() and not path.is_symlink()
-                           for path in directory.glob(file_pattern)):
-                        detected.append(ptype)
-                        break
-                elif ((directory / file_pattern).is_file()
-                      and not (directory / file_pattern).is_symlink()):
-                    detected.append(ptype)
-                    break
-            if ptype in detected:
-                break
-    return detected
+            if any(
+                any(path.is_file() and not path.is_symlink()
+                    for path in directory.glob(pattern))
+                for pattern in config["files"]
+            ):
+                matches.append(directory.resolve())
+        if matches:
+            discovered[ptype] = matches
+    return discovered
+
+
+def detect_project_types() -> List[str]:
+    """Detect types at owned manifest roots, excluding foreign/generated trees."""
+    return list(discover_project_roots())
 
 
 def find_version_files() -> Dict[str, Path]:
