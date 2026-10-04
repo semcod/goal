@@ -1,0 +1,91 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-183",
+  "summary": "Run discovered module tests at their manifest roots",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-183/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/tests.py",
+    "goal/cli/tests_discovery.py",
+    "goal/cli/version_utils.py",
+    "tests/test_nested_test_routing.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "08837de0055dc60dcd0b03f3c5d7ec24205a11cb",
+    "targetBranch": "main",
+    "outcome": "Run discovered Rust, Go and JVM module tests at actual manifest roots; preserve custom root strategies and exclude foreign worktrees/dependencies. Publish through protected exact-head Validator.",
+    "nonGoals": [
+      "LLM changes",
+      "new dependencies",
+      "automatic tool installation",
+      "waiving test failures"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse bounded repository discovery with retained directories and explicit subprocess cwd. Keep Python root interpreter and custom strategy behavior.",
+      "components": [
+        {
+          "name": "cli-test-discovery",
+          "paths": [
+            "goal/cli/tests.py",
+            "goal/cli/tests_discovery.py",
+            "goal/cli/version_utils.py"
+          ]
+        },
+        {
+          "name": "test-routing-regressions",
+          "paths": [
+            "tests/test_nested_test_routing.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_nested_test_routing.py tests/test_cli_tests_runner.py tests/test_version_repository_boundaries.py -q",
+          "python3 -m pytest tests -q",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Nested exact cwd, JVM tool selection, exclusions, custom root strategies and propagated failure; actual protected CI."
+      }
+    ]
+  }
+}

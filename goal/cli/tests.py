@@ -10,6 +10,7 @@ import click
 
 from goal.git_ops import run_command
 from goal.cli.version import PROJECT_TYPES
+from goal.cli.version_utils import discover_project_roots
 from goal.project_bootstrap import _find_python_bin
 from goal.cli.tests_discovery import (
     _find_project_root,
@@ -292,7 +293,11 @@ def _run_tests_in_subdirs(project_type: str, base_cmd: List[str]) -> bool:
             )
         )
 
-    return all(_run_subdir_test(project_type, base_cmd, d) for d in test_dirs[:5])
+    success = True
+    for directory in test_dirs:
+        if not _run_subdir_test(project_type, base_cmd, directory):
+            success = False
+    return success
 
 
 def _resolve_root_python() -> str:
@@ -432,8 +437,8 @@ def _run_project_type_tests(ptype: str, config: object, *, markdown: bool = Fals
     if not test_cmd_str:
         return True
 
-    if ptype == "nodejs" and not _has_usable_test_script(Path("."), "nodejs"):
-        return True
+    if ptype == "nodejs" and not strategy_test_cmd and not _has_usable_test_script(Path("."), "nodejs"):
+        return _run_tests_in_subdirs(ptype, test_cmd_str.split())
 
     if ptype == "python":
         test_cmd, use_subprocess, python_bin = _build_python_test_command(
@@ -453,15 +458,81 @@ def _run_project_type_tests(ptype: str, config: object, *, markdown: bool = Fals
     return ok
 
 
+def _manifest_test_commands(ptype: str, directory: Path) -> List[str]:
+    """Choose JVM tools from actual manifests; preserve other type defaults."""
+    if ptype not in ("java", "kotlin"):
+        command = PROJECT_TYPES.get(ptype, {}).get("test_command", "")
+        return [command] if command else []
+    commands = []
+    for marker, tool, wrapper in (
+        ("pom.xml", "mvn", "mvnw"),
+        ("build.gradle", "gradle", "gradlew"),
+        ("build.gradle.kts", "gradle", "gradlew"),
+    ):
+        manifest = directory / marker
+        if not manifest.is_file() or manifest.is_symlink():
+            continue
+        launcher = directory / wrapper
+        executable = (
+            "./" + wrapper
+            if launcher.is_file() and not launcher.is_symlink()
+            and os.access(launcher, os.X_OK)
+            else tool
+        )
+        command = executable + " test"
+        if command not in commands:
+            commands.append(command)
+    if not commands:
+        raise ValueError(f"No Maven/Gradle build manifest in {directory}")
+    return commands
+
+
+def _run_manifest_tests(ptype: str, directories: List[Path], executed: set) -> bool:
+    """Run every required discovered module with explicit cwd, without chdir."""
+    if not directories:
+        raise ValueError(f"No owned manifest directory discovered for {ptype}")
+    success = True
+    for directory in directories:
+        for command in _manifest_test_commands(ptype, directory):
+            key = (directory, command)
+            if key in executed:
+                continue
+            executed.add(key)
+            click.echo(f"  Testing {ptype} in {directory}: {command}")
+            try:
+                result = subprocess.run(command, shell=True, cwd=directory, text=True)
+                if result.returncode:
+                    suffix = " (test launcher unavailable)" if result.returncode == 127 else ""
+                    click.echo(f"  ❌ failed in: {directory} (exit {result.returncode}){suffix}")
+                    success = False
+            except OSError as error:
+                click.echo(f"  ❌ failed in: {directory} ({type(error).__name__}: {error})")
+                success = False
+    return success
+
+
 def run_tests(
     project_types: List[str], config: object = None, *, markdown: bool = False
 ) -> bool:
     """Run tests for detected project types."""
     success = True
+    roots = discover_project_roots()
+    executed = set()
 
     for ptype in project_types:
         try:
-            if not _run_project_type_tests(ptype, config, markdown=markdown):
+            strategy = _get_project_strategy(config, ptype)
+            custom = strategy.get("test") if isinstance(strategy, dict) else None
+            default = PROJECT_TYPES.get(ptype, {}).get("test_command", "")
+            root_strategy = (
+                isinstance(custom, str) and bool(custom.strip())
+                and custom.strip() != default.strip()
+            )
+            if ptype in ("python", "nodejs") or root_strategy:
+                ok = _run_project_type_tests(ptype, config, markdown=markdown)
+            else:
+                ok = _run_manifest_tests(ptype, roots.get(ptype, []), executed)
+            if not ok:
                 success = False
         except Exception as e:
             success = False

@@ -1,12 +1,10 @@
 """Discovery helpers for locating test targets (extracted from tests.py for maintainability)."""
 
-import shutil
 from pathlib import Path
 from typing import List, Optional
 
 from goal.cli.version import PROJECT_TYPES
-
-_SKIP_DIRS = {"venv", ".venv", "build", "dist", "__pycache__", "node_modules"}
+from goal.cli.version_utils import _project_directories
 
 
 def _has_usable_test_script(project_dir: Path, project_type: str) -> bool:
@@ -59,9 +57,12 @@ def find_python_test_dirs() -> List[str]:
     seen_roots: set[str] = set()
     project_roots: List[Path] = []
 
-    for test_file in Path(".").rglob("test_*.py"):
-        if set(test_file.parts) & _SKIP_DIRS:
-            continue
+    test_files = (
+        file for directory in _project_directories(max_depth=None)
+        for file in directory.glob("test_*.py")
+        if file.is_file() and not file.is_symlink()
+    )
+    for test_file in test_files:
 
         project_root = _find_project_root(test_file.parent, "python")
         if project_root is None:
@@ -94,11 +95,10 @@ def find_python_test_dirs() -> List[str]:
 
 def find_nodejs_test_dirs() -> List[str]:
     """Find subdirectories with a usable Node.js test script."""
-    if shutil.which("npm") is None:
-        return []
     dirs: List[str] = []
-    for package_json in Path(".").rglob("package.json"):
-        if set(package_json.parts) & _SKIP_DIRS:
+    for directory in _project_directories(max_depth=None):
+        package_json = directory / "package.json"
+        if not package_json.is_file() or package_json.is_symlink():
             continue
         if str(package_json.parent) != "." and _has_usable_test_script(
             package_json.parent, "nodejs"
