@@ -1,6 +1,7 @@
 """Tests for project environment bootstrapping and test scaffolding."""
 
 import os
+import subprocess
 import sys
 import types
 from unittest import mock
@@ -922,3 +923,55 @@ def test_invalid_cargo_is_not_modified_by_scaffolding(tmp_path):
     manifest.write_text('[workspace]\nmembers = [broken\n')
     assert scaffold_test(tmp_path, "rust", yes=True) is None
     assert not (tmp_path / "tests").exists()
+
+
+def test_governed_bootstrap_preserves_package_sources(tmp_path, monkeypatch):
+    import goal.project_bootstrap as pb
+    monkeypatch.setenv("GOAL_BOOTSTRAP_READ_ONLY", "1")
+    monkeypatch.setenv("GOAL_AUTO_FIX", "1")
+    files = {"pyproject.toml": b'[project]\nname = "fixture"\nversion = "0.1.0"\n',
+             ".gitignore": b".venv/\n", "uv.lock": b"retained-lock\n"}
+    for name, content in files.items():
+        (tmp_path / name).write_bytes(content)
+    monkeypatch.setattr(pb, "_install_costs_package", lambda *args: True)
+    calls = []
+    monkeypatch.setattr(pb, "diagnose_and_report", lambda *args, **kw: calls.append(kw))
+    monkeypatch.setattr(pb, "find_existing_tests", lambda *args: [])
+    assert pb._ensure_costs_installed(tmp_path, "python") is True
+    assert pb._ensure_bootstrap_tests(tmp_path, "python", True) == ([], None)
+    pb._run_bootstrap_diagnostics(tmp_path, "python", True)
+    assert calls == [{"auto_fix": False}]
+    assert {p.name: p.read_bytes() for p in tmp_path.iterdir()} == files
+
+
+@pytest.mark.parametrize("returncode", [0, 1])
+def test_governed_dependencies_do_not_resolve_or_write_lock(tmp_path, monkeypatch, returncode):
+    import goal.project_bootstrap as pb
+    monkeypatch.setenv("GOAL_BOOTSTRAP_READ_ONLY", "1")
+    lock = tmp_path / "uv.lock"
+    lock.write_bytes(b"accepted-lock\n")
+    monkeypatch.setattr(pb, "_find_python_bin", lambda *args: "private-venv-python")
+    calls = []
+
+    def install(command, **kwargs):
+        calls.append((command, kwargs))
+        return subprocess.CompletedProcess(command, returncode)
+
+    monkeypatch.setattr(pb.subprocess, "run", install)
+    monkeypatch.setattr(pb, "PackageManagerBroker", lambda *args: pytest.fail("mutating manager"))
+    assert pb._install_python_deps_broker(tmp_path, ["test"]) is (returncode == 0)
+    assert calls == [(["private-venv-python", "-m", "pip", "install", "-e", ".[test]"],
+                     {"cwd": str(tmp_path), "capture_output": True, "text": True})]
+    assert lock.read_bytes() == b"accepted-lock\n"
+
+
+def test_governed_install_failure_does_not_use_mutating_fallback(tmp_path, monkeypatch):
+    import goal.project_bootstrap as pb
+    monkeypatch.setenv("GOAL_BOOTSTRAP_READ_ONLY", "1")
+    (tmp_path / ".venv").mkdir()
+    monkeypatch.setattr(pb, "_find_python_bin", lambda *args: "python")
+    monkeypatch.setattr(pb.subprocess, "run", lambda *args, **kwargs: subprocess.CompletedProcess(args, 0))
+    monkeypatch.setattr(pb, "_ensure_costs_installed", lambda *args: True)
+    monkeypatch.setattr(pb, "_install_python_deps_broker", lambda *args, **kwargs: False)
+    monkeypatch.setattr(pb, "_install_python_deps", lambda *args: pytest.fail("mutating fallback"))
+    assert pb._ensure_python_env(tmp_path, {}, True) is False

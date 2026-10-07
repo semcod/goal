@@ -1241,16 +1241,18 @@ def _bootstrap_projects_for_delivery(
         _bootstrap_projects(project_types, dry_run, yes)
         return
 
-    marker = "GOAL_SKIP_COSTS_BADGE"
-    previous = os.environ.get(marker)
-    os.environ[marker] = "1"
+    markers = ("GOAL_SKIP_COSTS_BADGE", "GOAL_BOOTSTRAP_READ_ONLY")
+    previous = {marker: os.environ.get(marker) for marker in markers}
+    for marker in markers:
+        os.environ[marker] = "1"
     try:
         _bootstrap_projects(project_types, dry_run, yes)
     finally:
-        if previous is None:
-            os.environ.pop(marker, None)
-        else:
-            os.environ[marker] = previous
+        for marker, value in previous.items():
+            if value is None:
+                os.environ.pop(marker, None)
+            else:
+                os.environ[marker] = value
 
 
 def _require_publish_bootstrap_read_only(delivery: Any) -> None:
