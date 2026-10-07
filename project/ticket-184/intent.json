@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-184",
+  "summary": "Keep governed publication bootstrap read only",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-184/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/project_bootstrap.py",
+    "goal/push/core.py",
+    "tests/test_governed_cli_bootstrap.py",
+    "tests/test_project_bootstrap.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c7512688912a01d18757442f75cdb8d3687ecb2d",
+    "targetBranch": "main",
+    "outcome": "Governed Goal publication prepares Python environments without editing trusted source configuration, adding env templates, updating locks or scaffolding tests. Join blocked Willman PLF-112 dependency publication using actual repaired Goal -a after protected exact-head merge.",
+    "nonGoals": [
+      "No registry or branch protection bypass",
+      "No SDK source changes or releases to crates.io",
+      "No generic Node/Rust installer redesign"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Prune owned project discovery before selecting test commands, and preserve slow-test metrics while skipping implicit Planfile ticket creation in governed delivery modes. Existing ungoverned ticket-generation behavior remains tested. Restore the scoped discovery implementation from the preserved rejected candidate; discard only its known generated out-of-scope Planfile effect in the new unpublished branch. Original remote branch, local recovery ref, original intent, snapshots and test receipts remain recoverable.",
+      "components": [
+        {
+          "name": "governed-python-bootstrap",
+          "paths": [
+            "goal/push/core.py",
+            "goal/project_bootstrap.py"
+          ]
+        },
+        {
+          "name": "bootstrap-regressions",
+          "paths": [
+            "tests/test_governed_cli_bootstrap.py",
+            "tests/test_project_bootstrap.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert through protected publication retaining independent receipts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_governed_cli_bootstrap.py tests/test_project_bootstrap.py -q"
+        ],
+        "evidence": "Real fixture source bytes preserved during costs/dependency/test bootstrap; governed marker restored even after failure."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "python3 -m pytest tests/ -q"
+        ],
+        "evidence": "Scope gate and full stack checks followed by OneDev and independent Validator exact-head merge."
+      }
+    ]
+  }
+}

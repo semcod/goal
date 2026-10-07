@@ -562,6 +562,8 @@ def _ensure_python_env(project_dir: Path, cfg: dict, yes: bool) -> bool:
         project_dir, extras=["dev", "test"]
     )
     if not broker_success:
+        if os.getenv("GOAL_BOOTSTRAP_READ_ONLY"):
+            return False
         _install_python_deps(project_dir, cfg, python_bin)
 
     test_dep = cfg.get("test_dep")
@@ -672,6 +674,17 @@ def _install_python_deps_broker(
     Returns:
         True if installation succeeded, False otherwise
     """
+    if os.getenv("GOAL_BOOTSTRAP_READ_ONLY"):
+        # Install the accepted package without managers that create/update locks.
+        requirement = "." if not extras else f".[{','.join(extras)}]"
+        result = subprocess.run(
+            [_find_python_bin(project_dir), "-m", "pip", "install", "-e", requirement],
+            cwd=str(project_dir), capture_output=True, text=True,
+        )
+        if result.returncode:
+            click.echo(click.style("  ✗ Read-only dependency install failed", fg="red"))
+        return result.returncode == 0
+
     broker = PackageManagerBroker(str(project_dir))
     try:
         # Lockfile-aware selection (poetry.lock → poetry, etc.); see broker.
@@ -976,7 +989,7 @@ def _auto_fix_enabled(project_dir: Path) -> bool:
 def _run_bootstrap_diagnostics(project_dir: Path, project_type: str, yes: bool):
     # Respect project settings even in --all/--yes mode: GOAL_AUTO_FIX env,
     # goal.yaml auto_apply/auto_fix, or [tool.pfix] auto_apply can opt out.
-    auto_fix = yes and _auto_fix_enabled(project_dir)
+    auto_fix = yes and not os.getenv("GOAL_BOOTSTRAP_READ_ONLY") and _auto_fix_enabled(project_dir)
     if yes and not auto_fix:
         click.echo(
             click.style(
@@ -992,7 +1005,7 @@ def _ensure_bootstrap_tests(
     project_dir: Path, project_type: str, yes: bool
 ) -> tuple[List[Path], Optional[Path]]:
     tests_found = find_existing_tests(project_dir, project_type)
-    if tests_found:
+    if tests_found or os.getenv("GOAL_BOOTSTRAP_READ_ONLY"):
         return tests_found, None
 
     test_created = scaffold_test(project_dir, project_type, yes=yes)
@@ -1069,6 +1082,9 @@ def _ensure_costs_installed(project_dir: Path, python_bin: str) -> bool:
     """
     if not _install_costs_package(project_dir, python_bin):
         return False
+
+    if os.getenv("GOAL_BOOTSTRAP_READ_ONLY"):
+        return True
 
     _ensure_costs_config(project_dir)
     _ensure_env_template(project_dir)

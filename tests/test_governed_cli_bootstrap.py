@@ -70,3 +70,27 @@ def test_ungoverned_all_flags_keeps_bootstrap(tmp_path, monkeypatch):
             configure()
     bootstrap.assert_called_once_with()
     assert not Path(".governance").exists()
+
+
+@pytest.mark.parametrize("mode", ["pull-request", "publish-only"])
+@pytest.mark.parametrize("previous", [None, "retained"])
+def test_governed_bootstrap_restores_markers_after_failure(monkeypatch, mode, previous):
+    from goal.push import core
+    for key in ["GOAL_SKIP_COSTS_BADGE", "GOAL_BOOTSTRAP_READ_ONLY"]:
+        if previous is None:
+            monkeypatch.delenv(key, raising=False)
+        else:
+            monkeypatch.setenv(key, previous)
+
+    def bootstrap(*args):
+        import os
+        assert os.environ["GOAL_BOOTSTRAP_READ_ONLY"] == "1"
+        assert os.environ["GOAL_SKIP_COSTS_BADGE"] == "1"
+        raise RuntimeError("installer failure")
+
+    monkeypatch.setattr(core, "_bootstrap_projects", bootstrap)
+    with pytest.raises(RuntimeError, match="installer failure"):
+        core._bootstrap_projects_for_delivery(["python"], False, True, mode)
+    import os
+    for key in ["GOAL_SKIP_COSTS_BADGE", "GOAL_BOOTSTRAP_READ_ONLY"]:
+        assert os.environ.get(key) == previous
