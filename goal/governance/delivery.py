@@ -48,6 +48,8 @@ SOURCE_HUB_REQUIRED_CHECKS = "scripts/check_required_checks.py"
 SOURCE_HUB_JSON_DIRECTORY = "governance"
 SOURCE_HUB_TEST_DIRECTORY = "tests"
 SOURCE_HUB_DIAGNOSTIC = "GOV-HUB-001"
+SOURCE_HUB_CACHE_FILE = ".subactor/cache/source-hub-health.json"
+SOURCE_HUB_CACHE_SCHEMA = "new-project.source-hub-cache/v1"
 DIAGNOSTIC_CODE_PATTERN = re.compile(r"\bGOV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b")
 CONVENTIONAL_SUBJECT_RE = re.compile(r"^[a-z]+\((?P<scope>[^()]+)\)!?: \S")
 
@@ -72,6 +74,7 @@ class SourceHubHealthResult:
     stdout: str
     stderr: str
     completed_checks: int
+    cached: bool = False
 
 
 @dataclass(frozen=True)
@@ -185,6 +188,11 @@ def _git_value(*arguments: str, cwd: Path | None = None) -> str:
     return result.stdout.strip()
 
 
+def _safe_git_value(*arguments: str, cwd: Path | None = None) -> str:
+    result = _run(["git", *arguments], cwd=cwd)
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
 def _repository_root(cwd: Path | None = None) -> Path:
     return Path(_git_value("rev-parse", "--show-toplevel", cwd=cwd)).resolve()
 
@@ -295,10 +303,169 @@ def _source_hub_git_status(root: Path) -> str | None:
     return result.stdout if result.returncode == 0 else None
 
 
+def _command_label(command: list[str], root: Path) -> str:
+    try:
+        return Path(command[-1]).relative_to(root).as_posix()
+    except (ValueError, IndexError):
+        return Path(command[-1]).name if command else "check"
+
+
+def _emit_progress(on_progress: Callable[[str], None] | None, message: str) -> None:
+    if on_progress is not None:
+        try:
+            on_progress(message)
+        except Exception:
+            pass
+    else:
+        try:
+            if click.get_current_context(silent=True) is not None:
+                click.echo(message, err=True)
+        except Exception:
+            pass
+
+
+def _file_sha256(path: Path) -> str:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except (OSError, UnicodeDecodeError):
+        return ""
+
+
+def _is_cache_path_ignored(root: Path, cache_path: Path) -> bool:
+    try:
+        proc = subprocess.run(
+            ["git", "check-ignore", "-q", str(cache_path)],
+            cwd=root,
+            capture_output=True,
+            check=False,
+        )
+        return proc.returncode == 0
+    except OSError:
+        return False
+
+
+def _compute_source_hub_cache_key(
+    root: Path,
+    json_files: list[Path],
+    commands: list[list[str]],
+    git_status: str | None,
+) -> str:
+    hasher = hashlib.sha256()
+    hasher.update(SOURCE_HUB_CACHE_SCHEMA.encode("utf-8"))
+
+    # 1. Tree / Git state
+    head_sha = _safe_git_value("rev-parse", "HEAD", cwd=root)
+    hasher.update(b"head:" + head_sha.encode("utf-8"))
+    hasher.update(b"status:" + (git_status or "").encode("utf-8"))
+
+    # 2. Config / Governance documents
+    for doc in json_files:
+        try:
+            rel = doc.relative_to(root).as_posix()
+        except ValueError:
+            rel = doc.name
+        hasher.update(f"doc:{rel}:{_file_sha256(doc)}".encode("utf-8"))
+
+    workflow = root / SOURCE_HUB_WORKFLOW
+    if workflow.is_file():
+        hasher.update(b"workflow:" + _file_sha256(workflow).encode("utf-8"))
+
+    required_checks = root / SOURCE_HUB_REQUIRED_CHECKS
+    if required_checks.is_file():
+        hasher.update(b"req_checks:" + _file_sha256(required_checks).encode("utf-8"))
+
+    for command in commands:
+        if command:
+            target_path = Path(command[-1])
+            if target_path.is_file():
+                try:
+                    rel = target_path.relative_to(root).as_posix()
+                except ValueError:
+                    rel = target_path.name
+                hasher.update(f"cmd:{rel}:{_file_sha256(target_path)}".encode("utf-8"))
+
+    gov_check = root / "scripts" / "governance_check.py"
+    if gov_check.is_file():
+        hasher.update(b"gov_check:" + _file_sha256(gov_check).encode("utf-8"))
+
+    # 3. Tool / Dependency / Environment
+    hasher.update(f"python:{sys.version}".encode("utf-8"))
+    bash = shutil.which("bash") or "bash"
+    hasher.update(f"bash:{bash}".encode("utf-8"))
+    hasher.update(f"platform:{sys.platform}".encode("utf-8"))
+
+    return hasher.hexdigest()
+
+
+def _read_source_hub_cache(root: Path, expected_key: str) -> SourceHubHealthResult | None:
+    cache_file = root / SOURCE_HUB_CACHE_FILE
+    if not cache_file.is_file():
+        return None
+    try:
+        content = json.loads(cache_file.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+
+    if not isinstance(content, dict):
+        return None
+    if content.get("schema") != SOURCE_HUB_CACHE_SCHEMA:
+        return None
+    if content.get("cache_key") != expected_key:
+        return None
+    if content.get("returncode") != 0:
+        return None
+
+    return SourceHubHealthResult(
+        returncode=0,
+        stdout=content.get("stdout", ""),
+        stderr=content.get("stderr", ""),
+        completed_checks=int(content.get("completed_checks", 0)),
+        cached=True,
+    )
+
+
+def _write_source_hub_cache(
+    root: Path,
+    cache_key: str,
+    result: SourceHubHealthResult,
+) -> None:
+    if result.returncode != 0:
+        return
+    cache_file = root / SOURCE_HUB_CACHE_FILE
+    if not _is_cache_path_ignored(root, cache_file):
+        return
+    try:
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "schema": SOURCE_HUB_CACHE_SCHEMA,
+            "cache_key": cache_key,
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+            "returncode": 0,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "completed_checks": result.completed_checks,
+        }
+        temp_fd, temp_path = tempfile.mkstemp(
+            dir=cache_file.parent, prefix="source-hub-cache-", suffix=".tmp"
+        )
+        try:
+            with os.fdopen(temp_fd, "w", encoding="utf-8") as stream:
+                json.dump(data, stream, indent=2)
+            os.replace(temp_path, cache_file)
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+    except OSError:
+        pass
+
+
 def run_source_hub_health(
     root: Path,
     *,
     runner: Runner = subprocess.run,
+    on_progress: Callable[[str], None] | None = None,
+    timeout: float = 300.0,
+    use_cache: bool | None = None,
 ) -> SourceHubHealthResult:
     """Execute the canonical source-hub Linux contract without repository writes."""
     target = root.resolve()
@@ -308,6 +475,27 @@ def run_source_hub_health(
     json_files, commands = contract
     initial_status = _source_hub_git_status(target)
 
+    can_cache = (
+        (runner is subprocess.run if use_cache is None else use_cache)
+        and os.environ.get("GOAL_NO_PREFLIGHT_CACHE") != "1"
+    )
+    cache_key: str | None = None
+    if can_cache:
+        cache_key = _compute_source_hub_cache_key(
+            target, json_files, commands, initial_status
+        )
+        cached_result = _read_source_hub_cache(target, cache_key)
+        if cached_result is not None:
+            _emit_progress(
+                on_progress,
+                f"source-hub preflight: cached result valid ({cache_key[:12]}), skipping {len(commands)} checks",
+            )
+            return cached_result
+
+    _emit_progress(
+        on_progress,
+        f"source-hub preflight: validating {len(json_files)} canonical JSON documents",
+    )
     for document in json_files:
         try:
             with document.open(encoding="utf-8") as stream:
@@ -319,14 +507,42 @@ def run_source_hub_health(
     stdout_parts: list[str] = []
     stderr_parts: list[str] = []
     completed = 0
-    for command in commands:
+    total_commands = len(commands)
+    for index, command in enumerate(commands):
+        label = _command_label(command, target)
+        _emit_progress(
+            on_progress,
+            f"source-hub preflight [{index + 1}/{total_commands}]: {label}",
+        )
         try:
-            result = runner(
-                command,
-                cwd=target,
-                capture_output=True,
-                text=True,
-                check=False,
+            try:
+                result = runner(
+                    command,
+                    cwd=target,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=timeout,
+                )
+            except TypeError:
+                result = runner(
+                    command,
+                    cwd=target,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+        except subprocess.TimeoutExpired as error:
+            stderr_parts.append(
+                f"{SOURCE_HUB_DIAGNOSTIC}: source-hub check timed out after {timeout}s: {label}\n"
+            )
+            return SourceHubHealthResult(
+                returncode=124,
+                stdout="".join(stdout_parts)
+                + (error.stdout if isinstance(error.stdout, str) else ""),
+                stderr="".join(stderr_parts)
+                + (error.stderr if isinstance(error.stderr, str) else ""),
+                completed_checks=completed,
             )
         except OSError as error:
             return _source_hub_failure(
@@ -337,7 +553,6 @@ def run_source_hub_health(
         stdout_parts.append(result.stdout or "")
         if result.returncode != 0:
             stderr_parts.append(result.stderr or "")
-            label = Path(command[-1]).relative_to(target).as_posix()
             stderr_parts.append(
                 f"{SOURCE_HUB_DIAGNOSTIC}: source-hub check failed: {label}\n"
             )
@@ -361,12 +576,21 @@ def run_source_hub_health(
         "GOV-HUB-PASS: source-hub health passed "
         f"({len(json_files)} JSON documents, {len(commands) - 1} shell suites)\n"
     )
-    return SourceHubHealthResult(
+    final_result = SourceHubHealthResult(
         returncode=0,
         stdout="".join(stdout_parts),
         stderr="".join(stderr_parts),
         completed_checks=completed,
+        cached=False,
     )
+    if can_cache and cache_key is not None:
+        _write_source_hub_cache(target, cache_key, final_result)
+
+    _emit_progress(
+        on_progress,
+        f"source-hub preflight: passed ({len(json_files)} JSON documents, {len(commands) - 1} shell suites)",
+    )
+    return final_result
 
 
 def _safe_runbook(root: Path, raw_path: Any) -> str | None:
@@ -652,14 +876,17 @@ def _pull_request_validation_base(policy: DeliveryPolicy, root: Path) -> str:
     return base
 
 
+_DELIVERY_GATE_CACHE: set[tuple[str, str, str, str, str | None]] = set()
+
+
+def clear_delivery_gate_cache() -> None:
+    """Clear the in-process delivery gate cache."""
+    _DELIVERY_GATE_CACHE.clear()
+
+
 def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) -> None:
     """Fail before workflow side effects when delivery prerequisites are unmet."""
     root = _repository_root(cwd)
-    if policy.require_clean_governance:
-        if policy.mode == "pull-request":
-            _governance_gate(root, base=_pull_request_validation_base(policy, root))
-        else:
-            _governance_gate(root)
 
     if policy.mode == "publish-only":
         status = _git_value("status", "--porcelain", cwd=root)
@@ -708,6 +935,40 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
         auth = _run(["gh", "auth", "status"], cwd=root)
         if auth.returncode != 0:
             raise click.ClickException("pull-request delivery requires `gh auth login`")
+
+    validation_base: str | None = None
+    if policy.mode == "pull-request":
+        validation_base = _pull_request_validation_base(policy, root)
+
+    if policy.require_clean_governance:
+        use_dedup = os.environ.get("GOAL_NO_PREFLIGHT_CACHE") != "1"
+        gate_key: tuple[str, str, str, str, str | None] | None = None
+        if use_dedup:
+            try:
+                head = _safe_git_value("rev-parse", "HEAD", cwd=root)
+                status = _safe_git_value(
+                    "status", "--porcelain=v1", "-z", "--untracked-files=all", cwd=root
+                )
+                gate_key = (
+                    str(root.resolve()),
+                    policy.mode,
+                    head,
+                    status,
+                    validation_base,
+                )
+            except Exception:
+                gate_key = None
+
+        if gate_key is not None and gate_key in _DELIVERY_GATE_CACHE:
+            return
+
+        if validation_base is not None:
+            _governance_gate(root, base=validation_base)
+        else:
+            _governance_gate(root)
+
+        if gate_key is not None:
+            _DELIVERY_GATE_CACHE.add(gate_key)
 
 
 def _audit_path(root: Path) -> Path:
