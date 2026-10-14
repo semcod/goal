@@ -1,0 +1,84 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-186",
+  "summary": "Source hub health preflight progress and deterministic cache",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-186/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_governance_source_hub.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ce911b7e8983b5914ac0eeb31d3a0ad6e5549582",
+    "targetBranch": "main",
+    "outcome": "Add source hub preflight progress reporting, bounded execution timeout, deterministic caching under .subactor/cache/, and in-process delivery validation deduplication to prevent repetitive test suite runs during Goal preflight.",
+    "nonGoals": [
+      "No relaxation of governance checks or test requirements."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Implement proportional progress messages and deterministic caching keyed on git head, dirty state, json/workflow/suite file hashes, python and platform in run_source_hub_health, with delivery validation deduplication.",
+      "components": [
+        {
+          "name": "governance-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "goal/push/core.py",
+            "tests/test_governance_source_hub.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_governance_source_hub.py"
+        ],
+        "evidence": "project/ticket-186/README.md"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-186/README.md"
+      }
+    ]
+  }
+}
