@@ -134,10 +134,15 @@ def update_changelog(
         (config or {}).get("git", {}).get("changelog", {}).get("group_by_domain", False)
     )
 
+    effective_files = (
+        changelog_entry.get("files", files)
+        if isinstance(changelog_entry, dict)
+        else files
+    )
     if use_domain_grouping and config:
-        entry = _build_domain_entry(version, date_str, files, config)
+        entry = _build_domain_entry(version, date_str, effective_files, config)
     else:
-        entry = _build_simple_entry(version, date_str, files)
+        entry = _build_simple_entry(version, date_str, effective_files)
 
     changelog_path.write_text(_insert_entry(existing_content, entry))
 

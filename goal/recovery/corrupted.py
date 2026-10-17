@@ -24,6 +24,14 @@ class CorruptedObjectStrategy(RecoveryStrategy):
             re.search(pattern, error_output, re.IGNORECASE) for pattern in patterns
         )
 
+    def _run_repair_step(self, desc: str, cmd: list[str]) -> None:
+        click.echo(f"{desc}...")
+        try:
+            subprocess.run(cmd, cwd=self.repo_path, check=True, capture_output=True)
+            click.echo(f"✓ {desc} completed")
+        except subprocess.CalledProcessError as e:
+            click.echo(f"⚠ {desc} failed: {e}")
+
     def recover(self, error_output: str) -> bool:
         """Attempt to recover from corrupted objects."""
         click.echo(
@@ -39,12 +47,7 @@ class CorruptedObjectStrategy(RecoveryStrategy):
         ]
 
         for desc, cmd in repairs:
-            click.echo(f"{desc}...")
-            try:
-                subprocess.run(cmd, cwd=self.repo_path, check=True, capture_output=True)
-                click.echo(f"✓ {desc} completed")
-            except subprocess.CalledProcessError as e:
-                click.echo(f"⚠ {desc} failed: {e}")
+            self._run_repair_step(desc, cmd)
 
         # Test if repository is fixed
         try:

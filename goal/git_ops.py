@@ -366,7 +366,11 @@ def _handle_merge_strategy(branches: list, has_files: bool) -> None:
             _run_git_verbose("add", "-A")
             _run_git_verbose("commit", "-m", "chore: initial local state before merge")
         result = _run_git_verbose(
-            "merge", f"origin/{branch}", "--allow-unrelated-histories", "--no-edit"
+            "merge",
+            f"origin/{branch}",
+            "--allow-unrelated-histories",
+            "--no-edit",
+            capture=True,
         )
         if result.returncode != 0:
             click.echo(

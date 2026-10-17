@@ -298,6 +298,20 @@ class RecoveryManager:
         except:
             return []
 
+    def _cherry_pick_single_commit(self, commit: str) -> bool:
+        try:
+            subprocess.run(
+                ["git", "cherry-pick", commit], check=True, capture_output=True
+            )
+            click.echo(f"✓ Cherry-picked {commit}")
+            return True
+        except subprocess.CalledProcessError as e:
+            click.echo(
+                click.style(f"✗ Failed to cherry-pick {commit}: {e}", fg="red")
+            )
+            subprocess.run(["git", "cherry-pick", "--abort"], check=False)
+            return False
+
     def cherry_pick_commits(self, commits: List[str]) -> bool:
         """Cherry-pick commits onto clean clone."""
         if not commits:
@@ -312,17 +326,7 @@ class RecoveryManager:
             os.chdir(self.clean_clone_dir)
 
             for commit in reversed(commits):  # Apply in correct order
-                try:
-                    subprocess.run(
-                        ["git", "cherry-pick", commit], check=True, capture_output=True
-                    )
-                    click.echo(f"✓ Cherry-picked {commit}")
-                except subprocess.CalledProcessError as e:
-                    click.echo(
-                        click.style(f"✗ Failed to cherry-pick {commit}: {e}", fg="red")
-                    )
-                    # Abort cherry-pick
-                    subprocess.run(["git", "cherry-pick", "--abort"], check=False)
+                if not self._cherry_pick_single_commit(commit):
                     return False
 
             return True

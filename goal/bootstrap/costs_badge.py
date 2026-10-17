@@ -51,6 +51,16 @@ def _costs_version_satisfies_minimum(version: object) -> bool:
     return bool(current) and current >= minimum
 
 
+def _run_costs_install_command(command: list[str], project_dir: Path) -> bool:
+    install_result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        cwd=str(project_dir),
+    )
+    return install_result.returncode == 0
+
+
 def _install_costs_requirement(project_dir: Path, python_bin: str) -> bool:
     requirement = f"costs>={_MIN_COSTS_VERSION}"
     commands = [
@@ -61,13 +71,7 @@ def _install_costs_requirement(project_dir: Path, python_bin: str) -> bool:
         commands.append([uv_bin, "pip", "install", "--python", python_bin, requirement])
 
     for command in commands:
-        install_result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            cwd=str(project_dir),
-        )
-        if install_result.returncode == 0:
+        if _run_costs_install_command(command, project_dir):
             return True
     return False
 
@@ -202,7 +206,7 @@ def _calculate_ai_costs(repo_root: Path):
     all_commits_data = parse_commits(
         str(repo_root), max_count=500, ai_only=False, full_history=True
     )
-    ai_commits = _filter_ai_commits(all_commits_data)
+    ai_commits = _filter_ai_commits(all_commits_data, indicators=_AI_INDICATORS)
 
     total_cost = sum(
         _single_commit_ai_cost(

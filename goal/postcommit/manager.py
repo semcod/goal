@@ -111,6 +111,9 @@ class PostCommitManager:
         )
         click.echo("-" * 40)
 
+        def _execute_postcommit_action(action_instance) -> bool:
+            return action_instance.execute(commit_info)
+
         all_succeeded = True
 
         for action_config in actions_config:
@@ -132,7 +135,7 @@ class PostCommitManager:
                 all_succeeded = False
                 continue
 
-            success = action.execute(commit_info)
+            success = _execute_postcommit_action(action)
             if not success:
                 all_succeeded = False
 

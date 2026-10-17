@@ -361,6 +361,39 @@ def _find_git_root(project_dir: Path) -> Optional[Path]:
     return None
 
 
+def _refresh_uv_test_dep(project_dir: Path, test_dep: str) -> None:
+    proj_env = isolated_env(str(project_dir))
+    check = subprocess.run(
+        ["uv", "run", "python", "-c", f"import {test_dep}"],
+        capture_output=True,
+        text=True,
+        cwd=str(project_dir),
+        env=proj_env,
+    )
+    if check.returncode == 0:
+        return
+    click.echo(
+        click.style(
+            "  Restoring declared dev dependencies after uv upgrade",
+            fg="cyan",
+        )
+    )
+    install = subprocess.run(
+        get_uv_sync_command(project_dir).split(),
+        capture_output=True,
+        text=True,
+        cwd=str(project_dir),
+        env=proj_env,
+    )
+    if install.returncode != 0:
+        click.echo(
+            click.style(
+                f"  ⚠ Could not restore {test_dep} via uv sync",
+                fg="yellow",
+            )
+        )
+
+
 def refresh_test_dependencies(
     project_types: List[str],
     *,
@@ -368,7 +401,7 @@ def refresh_test_dependencies(
     dry_run: bool = False,
 ) -> None:
     """Re-ensure test runner deps after dependency upgrades (e.g. uv sync --upgrade)."""
-    if dry_run or "python" not in project_types:
+    if dry_run or not yes or "python" not in project_types:
         return
 
     cfg = PROJECT_BOOTSTRAP.get("python", {})
@@ -381,36 +414,7 @@ def refresh_test_dependencies(
         has_uv = bool(shutil.which("uv")) and (project_dir / "uv.lock").exists()
 
         if has_uv:
-            proj_env = isolated_env(str(project_dir))
-            check = subprocess.run(
-                ["uv", "run", "python", "-c", f"import {test_dep}"],
-                capture_output=True,
-                text=True,
-                cwd=str(project_dir),
-                env=proj_env,
-            )
-            if check.returncode == 0:
-                continue
-            click.echo(
-                click.style(
-                    "  Restoring declared dev dependencies after uv upgrade",
-                    fg="cyan",
-                )
-            )
-            install = subprocess.run(
-                get_uv_sync_command(project_dir).split(),
-                capture_output=True,
-                text=True,
-                cwd=str(project_dir),
-                env=proj_env,
-            )
-            if install.returncode != 0:
-                click.echo(
-                    click.style(
-                        f"  ⚠ Could not restore {test_dep} via uv sync",
-                        fg="yellow",
-                    )
-                )
+            _refresh_uv_test_dep(project_dir, test_dep)
             continue
 
         python_bin = _find_python_bin(project_dir)
@@ -589,6 +593,12 @@ def _should_skip_install(project_dir: Path, markers: List[str]) -> bool:
     return True
 
 
+def _run_shell_install(project_dir: Path, cmd: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        cmd, shell=True, cwd=str(project_dir), capture_output=True, text=True
+    )
+
+
 def _install_python_deps(project_dir: Path, cfg: dict, python_bin: str) -> None:
     """Run the first matching dependency install command for a Python project.
 
@@ -617,22 +627,14 @@ def _install_python_deps(project_dir: Path, cfg: dict, python_bin: str) -> None:
                 cmd = f"uv pip install {cmd.split('install ', 1)[1]}"
 
         click.echo(click.style(f"  Installing deps: {cmd}", fg="cyan"))
-        result = subprocess.run(
-            cmd, shell=True, cwd=str(project_dir), capture_output=True, text=True
-        )
+        result = _run_shell_install(project_dir, cmd)
 
         if result.returncode != 0:
             fallback = dep_cfg.get("fallback")
             if fallback:
                 cmd = fallback.format(python=python_bin)
                 click.echo(click.style(f"  Retrying: {cmd}", fg="yellow"))
-                result = subprocess.run(
-                    cmd,
-                    shell=True,
-                    cwd=str(project_dir),
-                    capture_output=True,
-                    text=True,
-                )
+                result = _run_shell_install(project_dir, cmd)
 
             if result.returncode != 0:
                 click.echo(
@@ -736,9 +738,7 @@ def _ensure_generic_env(
             )
             continue
         click.echo(click.style(f"  Installing deps: {cmd}", fg="cyan"))
-        result = subprocess.run(
-            cmd, shell=True, cwd=str(project_dir), capture_output=True, text=True
-        )
+        result = _run_shell_install(project_dir, cmd)
         if result.returncode == 0:
             click.echo(click.style("  ✓ Dependencies installed", fg="green"))
         else:
