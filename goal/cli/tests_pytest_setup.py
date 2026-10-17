@@ -27,6 +27,26 @@ def _is_uv_project(project_root: Path) -> bool:
     return (project_root / "uv.lock").exists()
 
 
+def _run_uv_sync_attempt(cmd: list[str], project_root: Path) -> bool:
+    result = subprocess.run(
+        cmd,
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if result.returncode != 0:
+        return False
+
+    verify = subprocess.run(
+        ["uv", "run", "python", "-c", "import pytest"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+    )
+    return verify.returncode == 0
+
+
 def _try_uv_install(project_root: Path) -> bool:
     """Try to install dependencies using uv sync variants."""
     uv_attempts = [
@@ -36,26 +56,32 @@ def _try_uv_install(project_root: Path) -> bool:
     ]
 
     for cmd in uv_attempts:
-        result = subprocess.run(
-            cmd,
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.returncode != 0:
-            continue
-
-        verify = subprocess.run(
-            ["uv", "run", "python", "-c", "import pytest"],
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-        )
-        if verify.returncode == 0:
+        if _run_uv_sync_attempt(cmd, project_root):
             return True
 
     return False
+
+
+def _run_pip_install_attempt(
+    cmd: list[str], python_bin: str, project_root: Path
+) -> bool:
+    install_result = subprocess.run(
+        cmd,
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if install_result.returncode != 0:
+        return False
+
+    verify = subprocess.run(
+        [python_bin, "-c", "import pytest"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+    )
+    return verify.returncode == 0
 
 
 def ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
@@ -98,23 +124,7 @@ def ensure_pytest_for_project(project_root: Path, python_bin: str) -> bool:
     ]
 
     for cmd in install_attempts:
-        install_result = subprocess.run(
-            cmd,
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if install_result.returncode != 0:
-            continue
-
-        verify = subprocess.run(
-            [python_bin, "-c", "import pytest"],
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-        )
-        if verify.returncode == 0:
+        if _run_pip_install_attempt(cmd, python_bin, project_root):
             return True
 
     click.echo(

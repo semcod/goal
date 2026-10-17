@@ -257,8 +257,10 @@ class EnhancedSummaryGenerator:
             try:
                 with open(f, "r") as fp:
                     content = fp.read()
-            except:
-                continue
+            except Exception:
+                content = self._extract_file_diff(diff_content or "", f)
+                if not content:
+                    continue
 
             imports = re.findall(import_pattern, content)
             for imp in imports:
@@ -280,6 +282,27 @@ class EnhancedSummaryGenerator:
             "domains": file_domains,
             "ascii": self._render_relations_ascii(relations, files),
         }
+
+    @staticmethod
+    def _extract_file_diff(diff_content: str, filepath: str) -> str:
+        """Extract only the unified diff section corresponding to filepath."""
+        if not diff_content:
+            return ""
+        norm = filepath.lstrip("./")
+        collecting = False
+        lines = []
+        for line in diff_content.splitlines():
+            if line.startswith("diff --git "):
+                collecting = line.endswith(f" b/{norm}") or f"a/{norm} " in line
+            elif line.startswith("+++ ") and not collecting:
+                if line == f"+++ b/{norm}" or line == f"+++ {norm}":
+                    collecting = True
+            elif collecting and (line.startswith("diff --git ") or line.startswith("--- a/")):
+                if line.startswith("--- a/") and line != f"--- a/{norm}":
+                    collecting = False
+            if collecting:
+                lines.append(line)
+        return "\n".join(lines)
 
     def _infer_domain(self, filepath: str) -> str:
         """Infer domain/area from filepath."""

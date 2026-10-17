@@ -70,7 +70,7 @@ def _prefer_uv_run(python_bin: str, has_uv: bool) -> bool:
     """Use uv run only when the resolved interpreter cannot execute pytest."""
     if not has_uv:
         return False
-    return not _pytest_importable(python_bin)
+    return not _pytest_importable(python_bin, project_root=None)
 
 
 def _rewrite_bash_pytest_for_uv(
@@ -146,12 +146,12 @@ def _display_test_error(
         click.style(f"\n  ❌ failed in: {test_dir}{exit_suffix}", fg="red", bold=True)
     )
 
-    stdout_tail = _tail(result.stdout)
+    stdout_tail = _tail(result.stdout, n=_FAILURE_TAIL_LINES)
     if stdout_tail:
         click.echo(click.style("  stdout (tail):", fg="yellow"))
         for line in stdout_tail.split("\n"):
             click.echo(f"    {line}")
-    stderr_tail = _tail(result.stderr)
+    stderr_tail = _tail(result.stderr, n=_FAILURE_TAIL_LINES)
     if stderr_tail:
         click.echo(click.style("  stderr (tail):", fg="yellow"))
         for line in stderr_tail.split("\n"):
@@ -487,6 +487,10 @@ def _manifest_test_commands(ptype: str, directory: Path) -> List[str]:
     return commands
 
 
+def _run_manifest_test_cmd(command: str, directory: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(command, shell=True, cwd=directory, text=True)
+
+
 def _run_manifest_tests(ptype: str, directories: List[Path], executed: set) -> bool:
     """Run every required discovered module with explicit cwd, without chdir."""
     if not directories:
@@ -500,7 +504,7 @@ def _run_manifest_tests(ptype: str, directories: List[Path], executed: set) -> b
             executed.add(key)
             click.echo(f"  Testing {ptype} in {directory}: {command}")
             try:
-                result = subprocess.run(command, shell=True, cwd=directory, text=True)
+                result = _run_manifest_test_cmd(command, directory)
                 if result.returncode:
                     suffix = " (test launcher unavailable)" if result.returncode == 127 else ""
                     click.echo(f"  ❌ failed in: {directory} (exit {result.returncode}){suffix}")

@@ -107,6 +107,16 @@ def _install_python_deps_legacy(
         else cfg.get("dep_install_commands", [])
     )
 
+    def _run_dep_install_cmd(command_str: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            command_str,
+            shell=True,
+            cwd=str(project_dir),
+            capture_output=True,
+            text=True,
+            env=isolated_env(str(project_dir)),
+        )
+
     for dep_cfg in dep_commands:
         condition = dep_cfg["condition"]
         if not _match_marker(project_dir, condition):
@@ -121,28 +131,14 @@ def _install_python_deps_legacy(
                 cmd = f"uv pip install {cmd.split('install ', 1)[1]}"
 
         click.echo(click.style(f"  Installing deps: {cmd}", fg="cyan"))
-        result = subprocess.run(
-            cmd,
-            shell=True,
-            cwd=str(project_dir),
-            capture_output=True,
-            text=True,
-            env=isolated_env(str(project_dir)),
-        )
+        result = _run_dep_install_cmd(cmd)
 
         if result.returncode != 0:
             fallback = dep_cfg.get("fallback")
             if fallback:
                 cmd = fallback.format(python=python_bin)
                 click.echo(click.style(f"  Retrying: {cmd}", fg="yellow"))
-                result = subprocess.run(
-                    cmd,
-                    shell=True,
-                    cwd=str(project_dir),
-                    capture_output=True,
-                    text=True,
-                    env=isolated_env(str(project_dir)),
-                )
+                result = _run_dep_install_cmd(cmd)
 
             if result.returncode != 0:
                 click.echo(

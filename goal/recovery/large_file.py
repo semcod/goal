@@ -62,7 +62,7 @@ class LargeFileStrategy(RecoveryStrategy):
 
         if not file_paths:
             # Try to find large files in the repository
-            file_paths = self._find_large_files()
+            file_paths = self._find_large_files(min_size_mb=50)
 
         if not file_paths:
             click.echo(click.style("❌ Could not identify large files", fg="red"))
@@ -343,7 +343,9 @@ class LargeFileStrategy(RecoveryStrategy):
                     f.write(f"{path}\n")
 
             # Remove from git (in chunks to avoid argument list too long)
-            _run_git_chunked(self.run_git, ["rm", "--cached"], file_paths, check=False)
+            _run_git_chunked(
+                self.run_git, ["rm", "--cached"], file_paths, chunk_size=100, check=False
+            )
             self.run_git("add", ".gitignore")
 
             commit_msg = "chore: remove large files and update .gitignore"

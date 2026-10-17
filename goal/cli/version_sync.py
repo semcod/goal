@@ -245,6 +245,10 @@ def _append_changed_paths(
             updated.append(path)
 
 
+def _run_lockfile_refresher(cmd: List[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
 def _sync_dependency_lockfiles(updated: List[str]) -> None:
     """Refresh detected dependency lockfiles after manifest metadata changes."""
     for lockfile, manifests, command, tracked_paths in _DEPENDENCY_LOCK_REFRESHERS:
@@ -256,7 +260,7 @@ def _sync_dependency_lockfiles(updated: List[str]) -> None:
         label = " ".join(cmd)
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = _run_lockfile_refresher(cmd)
         except FileNotFoundError:
             _warn_lock_refresh(
                 f"{lockfile} exists but '{cmd[0]}' is not available; skipping lockfile refresh."

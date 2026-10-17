@@ -189,17 +189,19 @@ class CodeChangeAggregatorMixin:
 
         return relations
 
+    def _read_git_head_file(self, filepath: str) -> str:
+        old_result = subprocess.run(
+            ["git", "show", f"HEAD:{filepath}"], capture_output=True, text=True
+        )
+        return old_result.stdout if old_result.returncode == 0 else ""
+
     def generate_functional_summary(self, files: List[str]) -> Dict[str, Any]:
         """Generate a complete functional summary of changes."""
         file_analyses = []
 
         for filepath in files:
             try:
-                # Get old content from git
-                old_result = subprocess.run(
-                    ["git", "show", f"HEAD:{filepath}"], capture_output=True, text=True
-                )
-                old_content = old_result.stdout if old_result.returncode == 0 else ""
+                old_content = self._read_git_head_file(filepath)
 
                 # Get new content
                 try:

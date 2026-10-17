@@ -1,0 +1,135 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-187",
+  "summary": "Fix PERF-AUDIT findings and populate standard-adoption.json",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-187/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/bootstrap/costs_badge.py",
+    "goal/bootstrap/installer.py",
+    "goal/changelog.py",
+    "goal/cli/tests.py",
+    "goal/cli/tests_pytest_setup.py",
+    "goal/cli/version_sync.py",
+    "goal/deep_analyzer_aggregate.py",
+    "goal/git_ops.py",
+    "goal/postcommit/manager.py",
+    "goal/project_bootstrap.py",
+    "goal/push/core.py",
+    "goal/recovery/corrupted.py",
+    "goal/recovery/large_file.py",
+    "goal/recovery/manager.py",
+    "goal/summary/generator.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "84d01ba2d8250d1c274cad299fb07178939fe511",
+    "targetBranch": "main",
+    "outcome": "Eliminate PERF-AUDIT-SQLITE-001, PERF-AUDIT-SUBPROC-001, and PERF-AUDIT-KWARG-001 findings across 15 Goal modules and populate .governance/standard-adoption.json with baseline standard pack adoptions.",
+    "nonGoals": [
+      "No changes to CLI public command signatures or release workflow semantics."
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 5,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract subprocess and postcommit execution helpers outside loops, wire unused optional parameters in internal helpers and workflow entrypoints, and populate .governance/standard-adoption.json for baseline packs.",
+      "components": [
+        {
+          "name": "bootstrap",
+          "paths": [
+            "goal/bootstrap/costs_badge.py",
+            "goal/bootstrap/installer.py",
+            "goal/project_bootstrap.py"
+          ]
+        },
+        {
+          "name": "cli",
+          "paths": [
+            "goal/cli/tests.py",
+            "goal/cli/tests_pytest_setup.py",
+            "goal/cli/version_sync.py"
+          ]
+        },
+        {
+          "name": "recovery",
+          "paths": [
+            "goal/recovery/corrupted.py",
+            "goal/recovery/large_file.py",
+            "goal/recovery/manager.py"
+          ]
+        },
+        {
+          "name": "workflow",
+          "paths": [
+            "goal/changelog.py",
+            "goal/git_ops.py",
+            "goal/postcommit/manager.py",
+            "goal/push/core.py"
+          ]
+        },
+        {
+          "name": "analysis",
+          "paths": [
+            "goal/deep_analyzer_aggregate.py",
+            "goal/summary/generator.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_version_sync.py tests/test_changelog.py"
+        ],
+        "evidence": "project/ticket-187/README.md"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 .governance/standard_pack_check.py --root ."
+        ],
+        "evidence": "project/ticket-187/README.md"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-187/README.md"
+      }
+    ]
+  }
+}

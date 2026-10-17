@@ -583,6 +583,10 @@ def execute_push_workflow(
     # context. This covers library callers and compatibility shims that pass
     # only ``all_flags`` instead of going through ``_configure_main_context``.
     all_flags = bool(ctx_obj.get("all_flags", False))
+    if model is not None:
+        ctx_obj.setdefault("model", model)
+    if api_key is not None:
+        ctx_obj.setdefault("api_key", api_key)
     koru_enabled = koru or bool(ctx_obj.get("koru", False))
 
     if koru_enabled:
