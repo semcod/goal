@@ -445,6 +445,14 @@ def collect_version_sources(
     for spec in ordered_specs:
         initial_origin = "configured" if spec in configured_set else "detected"
         source = read_version_source(spec, initial_origin)
+        if (
+            initial_origin == "detected"
+            and Path(source.path).name == "setup.py"
+            and source.value is None
+        ):
+            # No literal version: setup.py computes it (e.g. from VERSION or
+            # pyproject.toml), so it is not a declaration to read or bump.
+            continue
         if initial_origin == "detected" and _is_primary_source(source):
             source = VersionSource(**{**source.__dict__, "origin": "primary"})
         observed.append(source)
