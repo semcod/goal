@@ -112,6 +112,36 @@ def test_setup_py_keyword_version_is_resolved_and_written_safely(
     assert "version='1.2.4'" in content
 
 
+def test_detected_setup_py_with_computed_version_is_not_a_source(
+    tmp_path, monkeypatch
+):
+    config = _init_release(tmp_path, "1.2.3")
+    (tmp_path / "setup.py").write_text(
+        "from pathlib import Path\n"
+        "from setuptools import setup\n"
+        'version = (Path(__file__).parent / "VERSION").read_text().strip()\n'
+        'setup(name="fixture", version=version)\n'
+    )
+    monkeypatch.chdir(tmp_path)
+
+    decision = resolve_version_decision(config=config, registry_versions={})
+
+    assert decision.target_version == "1.2.4"
+    assert "setup.py" not in {Path(s.path).name for s in collect_version_sources(config)}
+
+
+def test_configured_setup_py_without_literal_still_fails(tmp_path, monkeypatch):
+    config = _init_release(tmp_path, "1.2.3")
+    (tmp_path / "setup.py").write_text(
+        "from setuptools import setup\nsetup(name='fixture', version=compute())\n"
+    )
+    config["versioning"]["files"].append("setup.py:version")
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(VersionStateError):
+        resolve_version_decision(config=config, registry_versions={})
+
+
 def test_partial_local_prebump_repairs_forward(tmp_path, monkeypatch):
     config = _init_release(tmp_path, "1.2.3")
     (tmp_path / "VERSION").write_text("1.2.4\n")

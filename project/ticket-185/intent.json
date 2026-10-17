@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-185",
+  "summary": "skip detected setup.py with computed version as a version source",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-185/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/version_state.py",
+    "tests/test_version_state.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ce911b7e8983b5914ac0eeb31d3a0ad6e5549582",
+    "targetBranch": "main",
+    "outcome": "goal no longer fails a release with 'setup.py:version: selector version was not found' when an auto-detected setup.py computes its version (for example from VERSION); an explicitly configured setup.py source without a literal still fails.",
+    "nonGoals": [
+      "No change to literal setup.py version reading or writing."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Skip detected setup.py sources without a version literal in collect_version_sources.",
+      "components": [
+        {
+          "name": "version-state",
+          "paths": [
+            "goal/cli/version_state.py",
+            "tests/test_version_state.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_version_state.py"
+        ],
+        "evidence": "project/ticket-185/README.md"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-185/README.md"
+      }
+    ]
+  }
+}
