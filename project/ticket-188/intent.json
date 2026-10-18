@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-188",
+  "summary": "Ignore released and missing-worktree leases in governed_clone_evidence",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-188/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "tests/test_governance_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b6501606c29523c878065a9eeb2cb110b8bd8df0",
+    "targetBranch": "main",
+    "outcome": "Ignore released and stale missing-worktree .subactor/leases/*.json records in governed_clone_evidence so non-governed repositories with historical lease artifacts are not blocked by GOV-DELIVERY-CLONE-001 during goal -a.",
+    "nonGoals": [
+      "No change to active governed ticket worktree enforcement."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend lease filtering in governed_clone_evidence to skip lease payloads where status/phase/state is released, released_at is present, or an explicit worktreePath/worktree/worktreeId directory no longer exists on disk.",
+      "components": [
+        {
+          "name": "governance_delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_governance_delivery.py -k lease"
+        ],
+        "evidence": "project/ticket-188/README.md"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-188/README.md"
+      }
+    ]
+  }
+}
