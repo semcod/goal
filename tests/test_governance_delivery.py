@@ -957,6 +957,20 @@ def test_primary_worktree_lease_marks_clone_governed(tmp_path):
         delivery.validate_legacy_governance(cwd=root)
 
 
+def test_released_or_missing_worktree_leases_do_not_mark_clone_governed(tmp_path):
+    root = _publish_repository(tmp_path)
+    lease_dir = root / ".subactor" / "leases"
+    lease_dir.mkdir(parents=True)
+    (lease_dir / "ticket-001--phase.json").write_text('{"phase": "released"}\n', encoding="utf-8")
+    (lease_dir / "ticket-002--state.json").write_text('{"state": "released"}\n', encoding="utf-8")
+    (lease_dir / "ticket-003--missing.json").write_text(
+        f'{{"worktreePath": "{root / ".worktrees" / "ticket-003--gone"}"}}\n',
+        encoding="utf-8",
+    )
+    assert delivery.governed_clone_evidence(root) == []
+    assert delivery.validate_legacy_governance(cwd=root) is False
+
+
 def test_linked_worktree_without_governance_keeps_legacy_flow(tmp_path):
     root = _publish_repository(tmp_path)
     _git(root, "worktree", "add", "--quiet", "-b", "feature", str(tmp_path / "feature"))

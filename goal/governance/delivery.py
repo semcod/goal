@@ -723,8 +723,17 @@ def governed_clone_evidence(cwd: Path | None = None) -> list[Path]:
             for lease_file in sorted(lease_root.glob("*.json")):
                 try:
                     payload = json.loads(lease_file.read_text(encoding="utf-8"))
-                    if isinstance(payload, dict) and payload.get("status") == "released":
-                        continue
+                    if isinstance(payload, dict):
+                        if any(
+                            payload.get(k) == "released"
+                            for k in ("status", "phase", "state")
+                        ) or payload.get("released_at"):
+                            continue
+                        wt_raw = payload.get("worktreePath") or payload.get("worktree")
+                        if not wt_raw and payload.get("worktreeId"):
+                            wt_raw = str(checkouts[0] / ".worktrees" / str(payload["worktreeId"]))
+                        if wt_raw and not Path(str(wt_raw)).exists():
+                            continue
                 except (OSError, UnicodeDecodeError, json.JSONDecodeError):
                     pass
                 evidence.append(lease_file)
