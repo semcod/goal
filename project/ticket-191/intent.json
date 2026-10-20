@@ -1,0 +1,84 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-191",
+  "summary": "Forward bootstrap-native-adoption from goal governance adopt (new-project 499)",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-191/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/governance_cmd.py",
+    "tests/test_governance_cmd.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "297279a030a3182baa634c0b6bc7ea8ce34e48c2",
+    "targetBranch": "main",
+    "outcome": "goal governance adopt can perform the first adoption of a committed repository without governance so its first ticket can be allocated, and tells the operator when that route is needed.",
+    "nonGoals": [
+      "No automatic bootstrap without the explicit flag",
+      "No change to the new-project generator or allocator",
+      "No writer, review or publication authority from the receipt"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Forward an explicit --bootstrap-native-adoption flag to the pinned create_adoption_lock.py, reject it with --pre-commit, and print a stderr note after a successful non-check adoption whose HEAD has no .governance/manifest.json.",
+      "components": [
+        {
+          "name": "governance-adopt-cli",
+          "paths": [
+            "goal/cli/governance_cmd.py",
+            "tests/test_governance_cmd.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "goal governance adopt --bootstrap-native-adoption"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the generator flag remains usable directly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_governance_cmd.py"
+        ],
+        "evidence": "project/ticket-191/README.md"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-191/README.md"
+      }
+    ]
+  }
+}
