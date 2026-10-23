@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-194",
+  "summary": "Align declared external status checks with the active main ruleset",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-194/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".github/main-protection.json",
+    ".github/scripts/check_main_protection.py",
+    ".github/tests/test_main_protection.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d3ebb26ebf5f34ac30836dda54dc7ac56ce1b981",
+    "targetBranch": "main",
+    "outcome": "Declare and verify all five existing required main checks, preserving hosted provider bindings, independent review and publisher restrictions.",
+    "nonGoals": [
+      "No live ruleset mutation or required-check waiver",
+      "No Goal resolver source changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Model additional external status declarations explicitly while retaining exact hosted matrix and provider bindings.",
+      "components": [
+        {
+          "name": "main-protection-audit",
+          "paths": [
+            ".github/main-protection.json",
+            ".github/scripts/check_main_protection.py",
+            ".github/tests/test_main_protection.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected source revert; no live ruleset mutation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m unittest discover -s .github/tests -v",
+          "python3 .github/scripts/check_main_protection.py --live",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal194/local-validation"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Original OneDev, hosted checks and independent Validator merge"
+        ],
+        "evidence": "receipt:goal194/publication"
+      }
+    ]
+  }
+}

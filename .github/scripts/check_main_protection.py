@@ -52,9 +52,30 @@ def validate_policy(policy, contexts):
     require(review['required_review_thread_resolution'], 'Review threads must be resolved')
     checks = rules['required_status_checks']['parameters']
     require(checks['strict_required_status_checks_policy'] and not checks['do_not_enforce_on_create'], 'Checks must cover the current base')
+    external = policy.get('external_required_checks', [])
+    require(isinstance(external, list) and all(
+        isinstance(item, dict) and 'context' in item
+        and set(item) <= {'context', 'integration_id'}
+        and isinstance(item['context'], str) and bool(item['context'].strip())
+        and ('integration_id' not in item or
+             (type(item['integration_id']) is int and item['integration_id'] > 0))
+        for item in external), 'Invalid external check declaration')
+    external_names = {item['context'] for item in external}
+    require(len(external_names) == len(external)
+            and not external_names.intersection(contexts),
+            'External checks must be unique and separate from hosted checks')
     entries = checks['required_status_checks']
-    require({entry['context'] for entry in entries} == contexts and len(entries) == len(contexts), 'Required check names differ from the workflow declaration/matrix')
-    require(all(entry['integration_id'] == 15368 for entry in entries), 'Checks must come from GitHub Actions')
+    expected_names = contexts | external_names
+    require({entry['context'] for entry in entries} == expected_names
+            and len(entries) == len(expected_names),
+            'Required check names differ from the workflow matrix and external declaration')
+    require(all(entry.get('integration_id') == 15368
+                for entry in entries if entry['context'] in contexts),
+            'Hosted checks must come from GitHub Actions')
+    external_by_name = {item['context']: item for item in external}
+    require(all(entry == external_by_name[entry['context']]
+                for entry in entries if entry['context'] in external_names),
+            'External checks differ from their explicit declaration')
     publisher = by_name['goal-main-trusted-publisher']
     require(publisher['bypass_actors'] == [{'actor_id': 4344831, 'actor_type': 'Integration', 'bypass_mode': 'always'}], 'Only the protected Validator App may publish')
     require(publisher['rules'] == [{'type': 'update', 'parameters': {'update_allows_fetch_and_merge': False}}], 'Publisher exception must apply only to the update restriction')
