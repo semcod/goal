@@ -1222,11 +1222,48 @@ def test_verified_terminal_receipts_allow_clean_base_noop(activity_repo):
     assert git(root, 'status', '--porcelain') == ''
 
 
-def test_one_unfinished_ticket_is_inferred(activity_repo):
+def test_one_unfinished_ticket_is_inferred_when_checkout_has_work(activity_repo):
     root, registry, value = activity_repo
     value['receipts'].pop()
     registry.write_text(json.dumps(value))
+    (root / 'pending.py').write_text('pending = True\n')
     assert delivery.resolve_pull_request_ticket(policy(), None, cwd=root) == 'ticket-002'
+
+
+@pytest.mark.parametrize('pending_tickets', [1, 2])
+def test_clean_base_preserves_unfinished_foreign_branches(activity_repo, pending_tickets):
+    root, registry, value = activity_repo
+    value['receipts'] = value['receipts'][:-pending_tickets]
+    registry.write_text(json.dumps(value))
+    git(root, 'checkout', '-qb', 'ticket/002-pending')
+    (root / 'pending.py').write_text('pending = True\n')
+    git(root, 'add', 'pending.py')
+    git(root, 'commit', '-qm', 'unfinished foreign work')
+    foreign_head = git(root, 'rev-parse', 'HEAD')
+    git(root, 'checkout', '-q', 'main')
+    before = registry.read_bytes()
+    head = git(root, 'rev-parse', 'HEAD')
+    assert delivery.resolve_pull_request_ticket(policy(), None, cwd=root) is None
+    assert registry.read_bytes() == before
+    assert git(root, 'rev-parse', 'ticket/002-pending') == foreign_head
+    assert git(root, 'rev-parse', 'HEAD') == head
+    assert git(root, 'status', '--porcelain') == ''
+
+
+def test_explicit_ticket_is_preserved_on_clean_base(activity_repo):
+    root, _, _ = activity_repo
+    assert delivery.resolve_pull_request_ticket(policy(), 'ticket-002', cwd=root) == 'ticket-002'
+
+
+def test_unverified_remote_cannot_hide_an_unfinished_ticket(activity_repo, tmp_path):
+    root, registry, value = activity_repo
+    value['receipts'].pop()
+    registry.write_text(json.dumps(value))
+    # Keep the repository identity bound to its valid receipt registry while
+    # making only the remote transport unavailable.
+    Path(git(root, 'remote', 'get-url', 'origin')).rename(tmp_path / 'offline.git')
+    with pytest.raises(click.ClickException, match='remote base could not be verified'):
+        delivery.resolve_pull_request_ticket(policy(), None, cwd=root)
 
 
 def test_invalid_registry_fails_closed(activity_repo):
@@ -1249,8 +1286,12 @@ def test_terminal_receipts_do_not_hide_undelivered_work(activity_repo, state):
         delivery.resolve_pull_request_ticket(policy(), None, cwd=root)
 
 
-def test_noop_exits_before_bootstrap_and_publication(activity_repo, monkeypatch, capsys):
-    root, _, _ = activity_repo
+@pytest.mark.parametrize('pending_ticket', [False, True])
+def test_noop_exits_before_bootstrap_and_publication(activity_repo, monkeypatch, capsys, pending_ticket):
+    root, registry, value = activity_repo
+    if pending_ticket:
+        value['receipts'].pop()
+        registry.write_text(json.dumps(value))
     monkeypatch.chdir(root)
     monkeypatch.setattr(delivery, 'validate_delivery_ready', Mock())
     monkeypatch.setattr(core, '_validate_toml_or_exit', Mock())

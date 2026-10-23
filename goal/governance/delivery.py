@@ -1091,11 +1091,13 @@ def resolve_pull_request_ticket(
         if _ticket_is_active(root, directory):
             active.append(directory.name)
 
+    # Pending work in another checkout does not create a delta on this base.
+    # Inspect activity first so malformed registry evidence still fails closed.
+    if _clean_synchronized_base(policy, root):
+        return None
     if len(active) == 1:
         return active[0]
     if not active:
-        if _clean_synchronized_base(policy, root):
-            return None
         raise click.ClickException(
             "pull-request delivery requires `--ticket` or exactly one "
             "IN_PROGRESS governance ticket; none was found"
