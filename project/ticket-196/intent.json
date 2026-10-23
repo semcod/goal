@@ -1,0 +1,99 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-196",
+  "summary": "Complete pending publication autonomously and protect frozen goal config",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-196/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/__init__.py",
+    "goal/config/manager.py",
+    "goal/push/core.py",
+    "tests/test_push_workflow_completion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "05d91d5740fff233b36d22388a9c104678fab57e",
+    "targetBranch": "main",
+    "outcome": "Governed pull-request mode completes a waited-for publication on a clean synchronized base (publish-completion event, publishing re-enabled, clean publish-only release machinery) instead of a no-change return; config auto-detection skips tooling caches and governed runtime state, never replaces an explicit versioning.files projection, and governed targets load the frozen goal.yaml without rewrites from every command.",
+    "nonGoals": [
+      "No changes to the protected gate contracts or delivery policy schema",
+      "No changes to publishing transports or registry credentials handling",
+      "No legacy (ungoverned) flow behavior changes"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reinterpret the governed no-change boundary as a publish completion when committed unreleased sources exist (mirroring the legacy continuation); make config auto-detection bootstrap-only for versioning.files and cache-safe; extend the governed load_config protection to every command.",
+      "components": [
+        {
+          "name": "push-workflow",
+          "paths": [
+            "goal/push/core.py"
+          ]
+        },
+        {
+          "name": "config-manager",
+          "paths": [
+            "goal/config/manager.py",
+            "goal/cli/__init__.py",
+            "tests/test_push_workflow_completion.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the three source files; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k completes_pending"
+        ],
+        "evidence": "receipt:goal196/completion-flow"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k stays_no_change"
+        ],
+        "evidence": "receipt:goal196/no-change-boundary"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k 'discovery or preserves_explicit or never_rewrites'",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal196/config-protection"
+      }
+    ]
+  }
+}
