@@ -24,6 +24,37 @@ class ProtectionTests(unittest.TestCase):
         self.assertIn('test (3.13)', self.contexts)
         self.assertNotIn('test', self.contexts)
 
+    def test_external_check_retains_hosted_matrix(self):
+        self.validate()
+        self.assertEqual(self.policy['external_required_checks'],
+                         [{'context': 'onedev/local-verify'}])
+        self.assertEqual(len(self.contexts), 4)
+
+    def test_missing_external_check_rejected(self):
+        entries = self.policy['rulesets'][0]['rules'][-1]['parameters']['required_status_checks']
+        entries[:] = [item for item in entries if item['context'] != 'onedev/local-verify']
+        with self.assertRaises(ValueError):
+            self.validate()
+
+    def test_wrong_hosted_provider_rejected(self):
+        self.policy['rulesets'][0]['rules'][-1]['parameters']['required_status_checks'][0]['integration_id'] = 1
+        with self.assertRaises(ValueError):
+            self.validate()
+
+    def test_invalid_external_declarations_rejected(self):
+        invalid = [None, ['onedev/local-verify'], [{'context': ''}],
+                   [{'context': 'test (3.12)'}],
+                   [{'context': 'onedev/local-verify'}] * 2,
+                   [{'context': 'onedev/local-verify', 'integration_id': True}],
+                   [{'context': 'onedev/local-verify', 'integration_id': 1}],
+                   [{'context': 'onedev/local-verify', 'unexpected': True}]]
+        for declaration in invalid:
+            with self.subTest(declaration=declaration):
+                candidate = copy.deepcopy(self.policy)
+                candidate['external_required_checks'] = declaration
+                with self.assertRaises(ValueError):
+                    checker.validate_policy(candidate, self.contexts)
+
     def test_gate_bypass_rejected(self):
         self.policy['rulesets'][0]['bypass_actors'] = self.policy['rulesets'][1]['bypass_actors']
         with self.assertRaises(ValueError):
