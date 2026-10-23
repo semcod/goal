@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-197",
+  "summary": "Document autonomous publication completion and frozen config guarantee",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-197/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "README.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "05d91d5740fff233b36d22388a9c104678fab57e",
+    "targetBranch": "main",
+    "outcome": "README v2.2.2 section documents the autonomous publication completion and the frozen goal.yaml guarantees delivered by ticket-196.",
+    "nonGoals": [
+      "No code changes",
+      "No changes to other documentation sections"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Documentation-only delta in the existing What's New section.",
+      "components": [
+        {
+          "name": "goal-readme",
+          "paths": [
+            "README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of README.md; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "git diff shows only README.md delta besides ticket carriers"
+        ],
+        "evidence": "receipt:goal197/readme-delta"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal197/governance-check"
+      }
+    ]
+  }
+}
