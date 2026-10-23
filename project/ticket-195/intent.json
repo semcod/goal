@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-195",
+  "summary": "Align Goal runtime version with the released package metadata",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-195/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/__init__.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e2f4050ff60366f2d98b623b77ce6161b654a3fb",
+    "targetBranch": "main",
+    "outcome": "Goal runtime banner agrees with existing2.2.1 release metadata and no longer requests a self-update to the already installed version.",
+    "nonGoals": [
+      "No version bump, new PyPI release or self-update logic change",
+      "No changes to blocked Planfile tickets or other Goal scopes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Correct the stale runtime version literal in the existing declared version projection; retain current updater semantics.",
+      "components": [
+        {
+          "name": "runtime-version-projection",
+          "paths": [
+            "goal/__init__.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore previous isolated runtime entrypoint; protected revert if needed."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Version parity across VERSION, pyproject.toml and module; existing CLI/update regression suite; governed local and protected checks"
+        ],
+        "evidence": "receipt:goal195/tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Independent exact-head merge then reversible runtime promotion; actual plain goal-a succeeds without redundant update or checkout mutation"
+        ],
+        "evidence": "receipt:goal195/runtime"
+      }
+    ]
+  }
+}
