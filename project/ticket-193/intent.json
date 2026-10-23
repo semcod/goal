@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-193",
+  "summary": "Keep clean governed main separate from unfinished ticket branches",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-193/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "tests/test_delivery_integrity.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d3ebb26ebf5f34ac30836dda54dc7ac56ce1b981",
+    "targetBranch": "main",
+    "outcome": "On a clean synchronized governed default branch, Goal reports no changes even when another ticket branch remains unfinished, without modifying the ticket registry or foreign work.",
+    "nonGoals": [
+      "No legacy --all force provenance changes from blocked192 proposal",
+      "No closure, branch removal, hook bypass or package registry release"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Validate ticket activity as before, then prefer the existing verified clean-default-base no-change route before inferring another branch ticket. Preserve explicit ticket selection and dirty/ahead/nondefault behavior.",
+      "components": [
+        {
+          "name": "governed-ticket-selection",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_delivery_integrity.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected source revert and restore prior local Goal symlink; no state migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Delivery integrity regressions: active unrelated branches, invalid registry, explicit tickets and dirty/ahead/nondefault bases"
+        ],
+        "evidence": "receipt:goal193/resolver-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Managed governance and original protected Python3.12/3.13 matrix plus independent Validator merge"
+        ],
+        "evidence": "receipt:goal193/publication"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "Install exact independently merged source as a reversible local runtime; actual clean Heyasa main goal -a succeeds with033 preserved"
+        ],
+        "evidence": "receipt:goal193/runtime"
+      }
+    ]
+  }
+}
