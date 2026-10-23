@@ -81,6 +81,25 @@ workflow and remaining project-local Docker/ticket steps.
 
 ### ✨ New Features
 
+**🔄 Autonomous publication completion (governed repositories)**
+- After the protected merge lands, a governed `goal -a` on a clean,
+  synchronized base with committed-but-unpublished package sources now
+  **completes the waited-for publication** automatically: it records a
+  `publish-completion` delivery event, re-enables publishing and finishes
+  tag + registry upload without creating a new commit.
+- Without pending sources the boundary stays a no-change return — clean main
+  remains a safe, quiet no-op.
+
+**🛡️ Frozen goal.yaml protection**
+- Version-file auto-detection now skips tooling caches and governed runtime
+  state (`.pytest_cache`, `.subactor`, `.worktrees`, …), so stale snapshots
+  can never be learned as version carriers.
+- An explicit, non-empty `versioning.files` list is authoritative: detection
+  is bootstrap-only and never replaces it.
+- Governed targets load the frozen `goal.yaml` from **every** command
+  (`goal publish` included) — auto-detection can no longer rewrite a
+  protected configuration as a side effect.
+
 **🧹 `goal all` — sweep many repos at once**
 - `goal all [PATHS...]` runs `goal -a` in every sub-repo that has uncommitted
   changes (defaults to `*` — all sub-folders of the current directory).
