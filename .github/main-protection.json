@@ -56,6 +56,9 @@
               {
                 "context": "governance / enforce",
                 "integration_id": 15368
+              },
+              {
+                "context": "onedev/local-verify"
               }
             ]
           }
@@ -89,6 +92,11 @@
           }
         }
       ]
+    }
+  ],
+  "external_required_checks": [
+    {
+      "context": "onedev/local-verify"
     }
   ]
 }
