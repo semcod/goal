@@ -636,6 +636,16 @@ def plan_adoption_command(catalog, catalog_sha256, target_root, target_revision)
         raise click.exceptions.Exit(2)
 
 
+def _governance_committed(target: Path) -> bool:
+    """True when HEAD already contains an adopted governance manifest."""
+    result = subprocess.run(
+        ["git", "-C", str(target), "cat-file", "-e", "HEAD:.governance/manifest.json"],
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0
+
+
 @governance.command("adopt")
 @click.option(
     "--standard-repository",
@@ -679,6 +689,15 @@ def plan_adoption_command(catalog, catalog_sha256, target_root, target_revision)
     ),
 )
 @click.option(
+    "--bootstrap-native-adoption",
+    is_flag=True,
+    help=(
+        "First adoption into a committed repository without governance: record "
+        "the installer receipt that the first --bootstrap-adoption-digest "
+        "ticket allocation requires."
+    ),
+)
+@click.option(
     "--pre-commit",
     is_flag=True,
     help="Prepare an authorized stale standard adoption and stop the commit.",
@@ -695,6 +714,7 @@ def adopt(
     check,
     upgrade,
     allow_unpublished_for_testing,
+    bootstrap_native_adoption,
     pre_commit,
     ticket,
 ):
@@ -710,10 +730,12 @@ def adopt(
         raise click.UsageError("--check and --upgrade are mutually exclusive")
     if pre_commit and (not latest or not ticket):
         raise click.UsageError("--pre-commit requires --latest and --ticket")
-    if pre_commit and (check or upgrade or allow_unpublished_for_testing):
+    if pre_commit and (
+        check or upgrade or allow_unpublished_for_testing or bootstrap_native_adoption
+    ):
         raise click.UsageError(
-            "--pre-commit cannot be combined with --check, --upgrade, or "
-            "--allow-unpublished-for-testing"
+            "--pre-commit cannot be combined with --check, --upgrade, "
+            "--allow-unpublished-for-testing, or --bootstrap-native-adoption"
         )
 
     target = target_root.resolve()
@@ -763,6 +785,9 @@ def adopt(
             command.append("--upgrade")
         if allow_unpublished_for_testing:
             command.append("--allow-unpublished-for-testing")
+        if bootstrap_native_adoption:
+            command.append("--bootstrap-native-adoption")
+        fresh_repository = not check and not _governance_committed(target)
 
         result = subprocess.run(command, capture_output=True, text=True, check=False)
         if result.stdout:
@@ -771,6 +796,14 @@ def adopt(
             click.echo(result.stderr, err=True, nl=False)
         if result.returncode != 0:
             raise click.exceptions.Exit(result.returncode)
+        if fresh_repository and not bootstrap_native_adoption:
+            click.echo(
+                "note: this repository has no committed governance; its first ticket "
+                "allocation needs the bootstrap receipt. Rerun with "
+                "--bootstrap-native-adoption, then allocate with "
+                "./project/new-ticket.sh --bootstrap-adoption-digest <dirtyDigest>.",
+                err=True,
+            )
         if pre_commit:
             click.echo(
                 f"prepared standard update {current_revision}..{source_revision} "

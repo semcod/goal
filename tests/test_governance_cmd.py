@@ -74,8 +74,11 @@ parser.add_argument('--source-revision', required=True)
 parser.add_argument('--check', action='store_true')
 parser.add_argument('--upgrade', action='store_true')
 parser.add_argument('--allow-unpublished-for-testing', action='store_true')
+parser.add_argument('--bootstrap-native-adoption', action='store_true')
 args = parser.parse_args()
 target = Path(args.target_root)
+if args.bootstrap_native_adoption:
+    (target / '.bootstrap-native').write_text('explicit\\n', encoding='utf-8')
 if args.allow_unpublished_for_testing:
     (target / '.candidate-testing').write_text('explicit\\n', encoding='utf-8')
 if args.check:
@@ -1035,3 +1038,103 @@ def test_rejects_check_with_upgrade(tmp_path):
 
     assert result.exit_code == 2
     assert "mutually exclusive" in result.output
+
+
+def _adopt(standard, revision, target, *extra):
+    return CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--source-revision",
+            revision,
+            "--target-root",
+            str(target),
+            *extra,
+        ],
+    )
+
+
+def _committed_repository(path, *, governance=False):
+    path.mkdir()
+    _git(path, "init", "--quiet")
+    _git(path, "config", "user.email", "goal-governance@example.invalid")
+    _git(path, "config", "user.name", "goal-governance-test")
+    (path / "README.md").write_text("fixture\n", encoding="utf-8")
+    if governance:
+        (path / ".governance").mkdir()
+        (path / ".governance" / "manifest.json").write_text("{}\n", encoding="utf-8")
+    _git(path, "add", ".")
+    _git(path, "commit", "--quiet", "-m", "fixture")
+    return path
+
+
+def test_bootstrap_native_adoption_is_forwarded_without_note(tmp_path):
+    standard, revision = make_standard(tmp_path)
+    target = _committed_repository(tmp_path / "target")
+
+    result = _adopt(standard, revision, target, "--bootstrap-native-adoption")
+
+    assert result.exit_code == 0, result.output
+    assert (target / ".bootstrap-native").read_text(encoding="utf-8") == "explicit\n"
+    assert "--bootstrap-adoption-digest" not in result.output
+
+
+def test_fresh_repository_without_bootstrap_flag_names_the_first_ticket_route(tmp_path):
+    standard, revision = make_standard(tmp_path)
+    target = _committed_repository(tmp_path / "target")
+
+    result = _adopt(standard, revision, target)
+
+    assert result.exit_code == 0, result.output
+    assert not (target / ".bootstrap-native").exists()
+    assert "--bootstrap-native-adoption" in result.output
+    assert "--bootstrap-adoption-digest" in result.output
+
+
+def test_repository_with_committed_governance_gets_no_bootstrap_note(tmp_path):
+    standard, revision = make_standard(tmp_path)
+    target = _committed_repository(tmp_path / "target", governance=True)
+
+    result = _adopt(standard, revision, target, "--upgrade")
+
+    assert result.exit_code == 0, result.output
+    assert "--bootstrap-native-adoption" not in result.output
+
+
+def test_check_gets_no_bootstrap_note(tmp_path):
+    standard, revision = make_standard(tmp_path)
+    target = _committed_repository(tmp_path / "target")
+
+    result = _adopt(standard, revision, target, "--check")
+
+    assert result.exit_code == 1
+    assert "--bootstrap-native-adoption" not in result.output
+
+
+def test_pre_commit_rejects_bootstrap_native_adoption(tmp_path):
+    standard, _revision = make_standard(tmp_path)
+    target = _committed_repository(tmp_path / "target")
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "adopt",
+            "--standard-repository",
+            str(standard),
+            "--latest",
+            "--pre-commit",
+            "--ticket",
+            "ticket-001",
+            "--target-root",
+            str(target),
+            "--bootstrap-native-adoption",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "cannot be combined" in result.output
+    assert "--bootstrap-native-adoption" in result.output
