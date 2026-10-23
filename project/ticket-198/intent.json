@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-198",
+  "summary": "Release 2.2.2 integration version files",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-198/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "VERSION",
+    "pyproject.toml"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "05d91d5740fff233b36d22388a9c104678fab57e",
+    "targetBranch": "main",
+    "outcome": "Integration-owned 2.2.2 release projection: VERSION and pyproject.toml move 2.2.1 -> 2.2.2, carrying ticket-196 (autonomous publication completion + frozen config protection) and ticket-197 (documentation).",
+    "nonGoals": [
+      "No goal/ source changes (owned by ticket-196)",
+      "No README changes (owned by ticket-197)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Plain version projection in the two integration-owned release files.",
+      "components": [
+        {
+          "name": "goal-release-version-files",
+          "paths": [
+            "VERSION",
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the two version lines; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "git diff shows only VERSION and pyproject.toml version deltas besides ticket carriers"
+        ],
+        "evidence": "receipt:goal198/diff-scope"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -c \"import tomllib; tomllib.load(open('pyproject.toml','rb'))\" && python -m pytest -q tests"
+        ],
+        "evidence": "receipt:goal198/metadata-and-tests"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal198/governance-check"
+      }
+    ]
+  }
+}
