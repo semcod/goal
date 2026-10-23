@@ -500,12 +500,16 @@ def _configure_main_context(
         ctx.obj["config"] = load_config(config_path) if config_path else load_config()
     elif config_path:
         ctx.obj["config"] = load_config(config_path)
-    elif dry_run or (all_flags and (_is_governed_target()
-                                    or _governed_clone())):
-        # Governed -a must reach its gate/no-change check before any mutation.
+    elif _is_governed_target() or _governed_clone():
+        # Governed targets never rewrite goal.yaml from any command: the
+        # protected gate freezes the file and auto-detection must neither
+        # precede a refusal nor corrupt a frozen projection after a merge.
+        # Previously only dry-run/--all runs were protected; ``goal publish``
+        # and other subcommands still triggered ensure_config() rewrites.
+        ctx.obj["config"] = load_config()
+    elif dry_run:
+        # Dry runs must reach their gate/no-change check before any mutation.
         # ensure_config can create or rewrite goal.yaml during auto-detection.
-        # A default checkout whose adoption exists only in ticket worktrees is
-        # governed too: rewriting its goal.yaml would precede the refusal.
         ctx.obj["config"] = load_config()
     else:
         ctx.obj["config"] = ensure_config()

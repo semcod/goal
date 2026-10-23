@@ -674,9 +674,31 @@ def execute_push_workflow(
     if delivery is not None:
         ticket = resolve_pull_request_ticket(delivery, ticket)
         if delivery.mode == "pull-request" and ticket is None:
-            record_delivery_event(delivery, "no-change", detail="clean synchronized base")
-            click.echo("No changes to deliver; base is synchronized and no ticket is active.")
-            return
+            if _has_committed_unreleased_sources():
+                click.echo(
+                    click.style(
+                        "Merged release is pending publication; completing the "
+                        "publish on the synchronized base.",
+                        fg="yellow",
+                    )
+                )
+                # The protected merge already happened: finish tag + registry
+                # publish without creating a new commit. ``clean_force_publish``
+                # downstream skips the commit and the release machinery
+                # publishes the committed package sources.
+                no_publish = False
+                ctx_obj["no_publish"] = False
+                force_publish = True
+                ctx_obj["force_publish"] = True
+                record_delivery_event(
+                    delivery,
+                    "publish-completion",
+                    detail="pending publication on synchronized base",
+                )
+            else:
+                record_delivery_event(delivery, "no-change", detail="clean synchronized base")
+                click.echo("No changes to deliver; base is synchronized and no ticket is active.")
+                return
 
     project_types = _detect_project_types()
 

@@ -264,6 +264,18 @@ class GoalConfig:
             ".tox",
             ".nox",
             "__pycache__",
+            # tooling caches and governed runtime state: manifests and version
+            # literals found here are stale snapshots or fixtures, never the
+            # project's own sources (a frozen goal.yaml must never learn them)
+            ".pytest_cache",
+            ".mypy_cache",
+            ".ruff_cache",
+            ".hypothesis",
+            ".subactor",
+            ".worktrees",
+            ".cache",
+            ".idea",
+            ".vscode",
             # non-project trees: their manifests are fixtures, not the project's
             "examples",
             "example",
@@ -422,10 +434,14 @@ class GoalConfig:
             self._config["project"]["type"] = detected_types
             changed = True
 
-        # Update version files
+        # Update version files. An explicit, non-empty ``versioning.files``
+        # list is authoritative: auto-detection is a bootstrap convenience and
+        # must never replace a configured projection (doing so rewrote frozen
+        # goal.yaml files with cache-path garbage when the real source went
+        # dynamic and a stale snapshot still carried a static literal).
         detected_files = self._detect_version_files()
         current_files = self._config.get("versioning", {}).get("files", [])
-        if set(detected_files) != set(current_files):
+        if not current_files and detected_files:
             self._config["versioning"]["files"] = detected_files
             changed = True
 
