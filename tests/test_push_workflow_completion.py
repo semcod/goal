@@ -109,9 +109,11 @@ def test_pull_request_mode_completes_pending_publication(monkeypatch):
     assert "publish-completion" in recorded
     assert "no-change" not in recorded
     # The completion path re-enables publishing and the clean publish-only
-    # release machinery despite the pull-request mode's pre-merge suppression.
+    # release machinery despite the pull-request mode's pre-merge suppression,
+    # and marks the context so the delivery dispatch skips the PR epilogue.
     assert ctx["no_publish"] is False
     assert ctx["force_publish"] is True
+    assert ctx["_publish_completion"] is True
 
 
 def test_pull_request_mode_stays_no_change_without_pending_sources(monkeypatch, capsys):
