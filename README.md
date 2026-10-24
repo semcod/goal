@@ -75,6 +75,32 @@ without writing; reviewed managed-file upgrades require `--upgrade`. See
 [`docs/governance-adoption.md`](docs/governance-adoption.md) for the retrofit
 workflow and remaining project-local Docker/ticket steps.
 
+## 🆕 What's New in v2.2.3
+
+> **Autonomous publication completion** — governed `goal -a` now finishes the
+> release it was waiting for, and cannot corrupt a frozen configuration.
+
+- **Publication completion.** On a clean, synchronized base with a
+  pre-bumped release, `goal -a` completes the registry publication (upload +
+  summary) without creating a commit and reports
+  `publication completed on the synchronized base; no pull request needed`.
+- **Registry-baseline fallback.** When a publish-only release leaves no tag on
+  the base branch, a tree version newer than the published registry version
+  counts as pending publication, so the completion still fires.
+- **Cache-safe discovery.** Version-file discovery skips tooling caches and
+  governed runtime state (`.pytest_cache`, `.subactor`, `.worktrees`);
+  release-evidence snapshots are never learned as version carriers, and an
+  explicit non-empty `versioning.files` projection is authoritative.
+- **Frozen config guarantee.** Governed targets load `goal.yaml` from every
+  command, so auto-detection can no longer rewrite a protected configuration
+  as a side effect of `goal publish` or other subcommands.
+- **Dynamic version contracts.** A `__version__` assignment with a non-literal
+  right-hand side is observed, not managed — repositories with dynamic
+  discovery (e.g. heyasa) run the release workflow without selector errors.
+- **Actionable boundary.** Unreleased sources after the last tag fail with
+  "requires a release ticket … run goal -a from its ticket branch" instead of
+  the confusing clean force-publish validation.
+
 ## 🆕 What's New in v2.2.2
 
 > **Monorepo sweep** — run the full `goal -a` workflow across every git repository with uncommitted changes under a folder, in one command.
