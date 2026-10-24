@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-202",
+  "summary": "Treat dynamic __version__ declarations as observed contracts",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-202/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/version_state.py",
+    "tests/test_push_workflow_completion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3e3c890933be71a8b3f90b4545baf42c8562b944",
+    "targetBranch": "main",
+    "outcome": "Dynamic __version__ declarations are observed contracts: no selector error, excluded from static sync, so repositories with dynamic version discovery (heyasa) run the governed release workflow without VersionStateError.",
+    "nonGoals": [
+      "No changes to managed literal sources",
+      "No gate or policy changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Classify non-literal __version__ assignments as contracts in the version-state reader, reusing the existing data-contract semantics.",
+      "components": [
+        {
+          "name": "version-state-reader",
+          "paths": [
+            "goal/cli/version_state.py",
+            "tests/test_push_workflow_completion.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the two files; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k dynamic"
+        ],
+        "evidence": "receipt:goal202/dynamic-contract"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal202/regression"
+      }
+    ]
+  }
+}
