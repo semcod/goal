@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-208",
+  "summary": "Record 2.2.3 release notes in CHANGELOG",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-208/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "CHANGELOG.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "62cb4c8979c10b012bbb715987aa19039aa6c6c4",
+    "targetBranch": "main",
+    "outcome": "CHANGELOG gains the 2.2.3 entry documenting the governed publication completion, registry-baseline fallback, cache-safe discovery, frozen-config guarantee, dynamic __version__ contracts, unreleased-sources message and the epilogue fix.",
+    "nonGoals": [
+      "No source or version changes",
+      "No README edits in this ticket"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Documentation-only delta in the existing changelog file.",
+      "components": [
+        {
+          "name": "goal-changelog",
+          "paths": [
+            "CHANGELOG.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of CHANGELOG.md; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "git diff shows only CHANGELOG.md delta besides ticket carriers"
+        ],
+        "evidence": "receipt:goal208/changelog"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal208/governance-check"
+      }
+    ]
+  }
+}
