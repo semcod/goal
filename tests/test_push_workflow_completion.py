@@ -231,3 +231,57 @@ def test_is_governed_target_helper_stays_manifest_bound(tmp_path, monkeypatch):
         '{"schema": "new-project.manifest/v1"}', encoding="utf-8"
     )
     assert _is_governed_target() is True
+
+
+def test_registry_publication_pending_when_tree_ahead_of_registry(monkeypatch, tmp_path):
+    """A publish-only release left no tag: the registry decides, not the diff."""
+    from types import SimpleNamespace
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "goal"\nversion = "2.2.2"\n', encoding="utf-8"
+    )
+    sources = [SimpleNamespace(value="2.2.2"), SimpleNamespace(value="2.2.2")]
+    monkeypatch.setattr(
+        "goal.cli.version_state.collect_version_sources", lambda: sources
+    )
+    monkeypatch.setattr(
+        "goal.version_validation.get_registry_version",
+        lambda registry, package: "2.2.1" if package == "goal" else None,
+    )
+
+    assert push_core._registry_publication_pending(["python"]) is True
+
+
+def test_registry_publication_not_pending_when_registry_caught_up(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "goal"\nversion = "2.2.2"\n', encoding="utf-8"
+    )
+    sources = [SimpleNamespace(value="2.2.2")]
+    monkeypatch.setattr(
+        "goal.cli.version_state.collect_version_sources", lambda: sources
+    )
+    monkeypatch.setattr(
+        "goal.version_validation.get_registry_version",
+        lambda registry, package: "2.2.2",
+    )
+
+    assert push_core._registry_publication_pending(["python"]) is False
+
+
+def test_registry_publication_pending_requires_single_tree_version(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "goal"\nversion = "2.2.2"\n', encoding="utf-8"
+    )
+    sources = [SimpleNamespace(value="2.2.2"), SimpleNamespace(value="2.2.1")]
+    monkeypatch.setattr(
+        "goal.cli.version_state.collect_version_sources", lambda: sources
+    )
+
+    assert push_core._registry_publication_pending(["python"]) is False

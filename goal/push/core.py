@@ -1,8 +1,10 @@
 """Push workflow core - orchestrator and utilities."""
 
 import os
+import re
 import sys
 import time
+import tomllib
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -422,9 +424,57 @@ def _has_committed_unreleased_sources() -> bool:
     from goal.publish.changes import committed_unreleased_source_files
 
     project_types = list(detect_project_types_deep().keys())
-    return bool(
-        project_types and committed_unreleased_source_files(project_types)
-    )
+    files = committed_unreleased_source_files(project_types)
+    if files:
+        return True
+    # A publish-only release leaves no tag on the base branch, so the version
+    # transition commit becomes its own boundary and the diff-vs-boundary
+    # check comes back empty even though the registry never received the
+    # release. A tree version newer than the published registry baseline is
+    # pending publication regardless of that empty diff.
+    return _registry_publication_pending(project_types)
+
+
+def _registry_publication_pending(project_types: List[str]) -> bool:
+    """Return whether the tree version is newer than the published registry."""
+    if not project_types:
+        return False
+    try:
+        from goal.cli.version_state import collect_version_sources
+        from goal.version_validation import get_registry_version
+    except ImportError:
+        return False
+    try:
+        sources = collect_version_sources()
+    except (OSError, ValueError):
+        return False
+    values = {getattr(source, "value", None) for source in sources}
+    values.discard(None)
+    if len(values) != 1:
+        return False
+    current = next(iter(values))
+
+    registry = "pypi" if "python" in project_types else None
+    if registry is None:
+        return False
+    try:
+        package = tomllib.loads(
+            Path("pyproject.toml").read_text(encoding="utf-8")
+        )["project"]["name"]
+    except (OSError, tomllib.TOMLDecodeError, KeyError):
+        return False
+    published = get_registry_version(registry, package)
+    if not published or published == current:
+        return False
+
+    def _key(version: str) -> tuple:
+        parts = re.findall(r"\d+", version.split("+")[0])
+        return tuple(int(part) for part in parts) or (0,)
+
+    try:
+        return _key(current) > _key(published)
+    except (TypeError, ValueError):
+        return current != published
 
 
 def _resume_pending_pull_request(

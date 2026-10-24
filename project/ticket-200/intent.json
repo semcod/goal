@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-200",
+  "summary": "Treat registry-lagging tree version as pending publication",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-200/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/push/core.py",
+    "tests/test_push_workflow_completion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4d4c8206ae1c3cb1afc16e226c7a344334f63011",
+    "targetBranch": "main",
+    "outcome": "The governed no-change boundary consults the published registry baseline when the tag/transition diff is empty: a synchronized tree version newer than the registry is pending publication, so goal -a completes the release autonomously (publish-only releases leave no base-branch tag).",
+    "nonGoals": [
+      "No changes to the delivery policy schema or gates",
+      "No tagging or publishing behavior changes beyond the pending detection"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Registry-baseline fallback inside _has_committed_unreleased_sources using the existing version-state sources and registry handlers; fail-closed on ambiguous sources.",
+      "components": [
+        {
+          "name": "push-workflow",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_push_workflow_completion.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the two files; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k registry_publication"
+        ],
+        "evidence": "receipt:goal200/registry-fallback"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "included in registry_publication selection"
+        ],
+        "evidence": "receipt:goal200/registry-fallback"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal200/boundary-regression"
+      }
+    ]
+  }
+}
