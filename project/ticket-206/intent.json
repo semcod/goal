@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-206",
+  "summary": "Release 2.2.3 integration version files",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-206/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "VERSION",
+    "pyproject.toml"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "790d7bcfc26de4356f193d8e471735fd7d07499e",
+    "targetBranch": "main",
+    "outcome": "Integration-owned 2.2.3 release projection: VERSION and pyproject.toml move 2.2.2 -> 2.2.3, carrying the governed-autonomy fixes 196 and 199-205.",
+    "nonGoals": [
+      "No goal/ source changes",
+      "No README changes in this ticket"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Plain version projection in the two integration-owned release files.",
+      "components": [
+        {
+          "name": "goal-release-version-files",
+          "paths": [
+            "VERSION",
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the two version lines; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "git diff shows only VERSION and pyproject.toml version deltas besides ticket carriers"
+        ],
+        "evidence": "receipt:goal206/diff-scope"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests"
+        ],
+        "evidence": "receipt:goal206/tests"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal206/governance-check"
+      }
+    ]
+  }
+}
