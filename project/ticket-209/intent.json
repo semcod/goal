@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-209",
+  "summary": "Document 2.2.3 autonomy guarantees in README",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-209/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "README.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6235d30e493ba95fc9b8a6345be5539bae82aef1",
+    "targetBranch": "main",
+    "outcome": "README documents the 2.2.3 autonomy guarantees (publication completion, registry fallback, cache-safe discovery, frozen config, dynamic version contracts, actionable boundary).",
+    "nonGoals": [
+      "No source or version changes",
+      "No CHANGELOG edits in this ticket"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Documentation-only delta in the existing What's New series.",
+      "components": [
+        {
+          "name": "goal-readme",
+          "paths": [
+            "README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of README.md; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "git diff shows only README.md delta besides ticket carriers"
+        ],
+        "evidence": "receipt:goal209/readme"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal209/governance-check"
+      }
+    ]
+  }
+}
