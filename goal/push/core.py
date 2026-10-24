@@ -725,6 +725,24 @@ def execute_push_workflow(
         ticket = resolve_pull_request_ticket(delivery, ticket)
         if delivery.mode == "pull-request" and ticket is None:
             if _has_committed_unreleased_sources():
+                if not _registry_publication_pending(
+                    list(detect_project_types_deep().keys())
+                ):
+                    # Sources landed after the last release tag but the tree
+                    # version still matches the registry: this is ordinary
+                    # unreleased work, not a pre-bumped release waiting for
+                    # its publish. Governed delivery cannot commit on the base
+                    # branch, so name the actionable route instead of failing
+                    # later in the clean publish-only validation.
+                    from goal.publish.changes import _latest_release_tag
+
+                    latest = _latest_release_tag() or "the last release"
+                    raise click.ClickException(
+                        "Committed package sources are unreleased since "
+                        f"{latest}; governed pull-request delivery requires a "
+                        "release ticket. Allocate one and run goal -a from its "
+                        "ticket branch."
+                    )
                 click.echo(
                     click.style(
                         "Merged release is pending publication; completing the "

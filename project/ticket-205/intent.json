@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-205",
+  "summary": "Report unreleased sources distinctly from pre-bumped completion",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-205/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/push/core.py",
+    "tests/test_push_workflow_completion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "208d7ba7a47a61eec6cb7fd3510c5945e9811936",
+    "targetBranch": "main",
+    "outcome": "The governed completion branch requires the tree version to be ahead of the registry before treating the boundary as a pending publish; plain unreleased work fails immediately with an actionable release-ticket message instead of the confusing clean force-publish validation.",
+    "nonGoals": [
+      "No change to the real completion path",
+      "No change to the no-change boundary",
+      "No gate or policy changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Guard the completion branch with the registry-baseline pending check (ticket-200 helper) and surface a named governed error.",
+      "components": [
+        {
+          "name": "push-workflow",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_push_workflow_completion.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the two files; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k unreleased_sources"
+        ],
+        "evidence": "receipt:goal205/boundary-message"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal205/regression"
+      }
+    ]
+  }
+}
