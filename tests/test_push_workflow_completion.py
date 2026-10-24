@@ -285,3 +285,24 @@ def test_registry_publication_pending_requires_single_tree_version(monkeypatch, 
     )
 
     assert push_core._registry_publication_pending(["python"]) is False
+
+
+def test_discovery_ignores_governed_runtime_state_and_worktrees(monkeypatch, tmp_path):
+    from goal.cli.version_state import discover_version_specs
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "VERSION").write_text("2.2.2\n", encoding="utf-8")
+    snapshot = tmp_path / ".subactor" / "receipts" / "evidence" / "merged-source"
+    snapshot.mkdir(parents=True)
+    (snapshot / "VERSION").write_text("2.2.1\n", encoding="utf-8")
+    (snapshot / "pyproject.toml").write_text(
+        '[project]\nname = "goal"\nversion = "2.2.1"\n', encoding="utf-8"
+    )
+    worktree = tmp_path / ".worktrees" / "ticket-01--delivery"
+    worktree.mkdir(parents=True)
+    (worktree / "VERSION").write_text("2.2.1\n", encoding="utf-8")
+
+    specs = discover_version_specs()
+
+    assert specs == ("VERSION",)
+    assert not any(name.startswith((".subactor", ".worktrees")) for name in specs)
