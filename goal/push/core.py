@@ -1202,13 +1202,31 @@ def execute_push_workflow(
         if not pushed:
             raise click.ClickException("governed direct-main push failed")
     else:
-        head, pr_url = deliver_pull_request(
-            delivery,
-            ticket=ticket,
-            title=commit_title,
-        )
-        record_delivery_event(delivery, "pull-request", detail=pr_url, head=head)
-        click.echo(click.style(f"Pull request: {pr_url}", fg="green"))
+        if ctx_obj.get("_publish_completion"):
+            # The completion already finished the cycle on the synchronized
+            # base (governed policy skipped the remote tag; the registry
+            # upload is done). A pull-request epilogue has no commit to
+            # deliver and would only push an empty branch.
+            record_delivery_event(
+                delivery,
+                "published" if publish_success else "publish-skipped",
+                detail="publish completion on synchronized base",
+            )
+            click.echo(
+                click.style(
+                    "Governed pull-request mode: publication completed on the "
+                    "synchronized base; no pull request needed.",
+                    fg="green",
+                )
+            )
+        else:
+            head, pr_url = deliver_pull_request(
+                delivery,
+                ticket=ticket,
+                title=commit_title,
+            )
+            record_delivery_event(delivery, "pull-request", detail=pr_url, head=head)
+            click.echo(click.style(f"Pull request: {pr_url}", fg="green"))
 
     # Optionally mirror the git tag as a GitHub Release (Releases page ≠ tags).
     # Without this, tags advance while /releases/latest stays frozen until PyPI
