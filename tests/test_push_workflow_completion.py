@@ -306,3 +306,26 @@ def test_discovery_ignores_governed_runtime_state_and_worktrees(monkeypatch, tmp
 
     assert specs == ("VERSION",)
     assert not any(name.startswith((".subactor", ".worktrees")) for name in specs)
+
+
+def test_dynamic_version_declaration_is_an_observed_contract(monkeypatch, tmp_path):
+    """heyasa-style dynamic discovery must not abort the release workflow."""
+    from goal.cli.version_state import collect_version_sources
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "goal.yaml").write_text("version: '1.0'\n", encoding="utf-8")
+    (tmp_path / "VERSION").write_text("0.2.0\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "heyasa"\nversion = "0.2.0"\n', encoding="utf-8"
+    )
+    module = tmp_path / "heyasa"
+    module.mkdir()
+    (module / "__init__.py").write_text(
+        '"""Hey Asa."""\n\n__version__ = _discover_version()\n', encoding="utf-8"
+    )
+
+    sources = collect_version_sources()
+    errored = [s for s in sources if s.error]
+    assert errored == []
+    managed = [s for s in sources if s.value is not None]
+    assert {s.value for s in managed} == {"0.2.0"}

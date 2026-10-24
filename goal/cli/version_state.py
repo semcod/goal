@@ -272,7 +272,15 @@ def _extract_version(path: Path, selector: str, content: str) -> tuple[Optional[
         match = re.search(
             r'^__version__\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE
         )
-        return (normalize_version(match.group(1)), False) if match else (None, False)
+        if match:
+            return normalize_version(match.group(1)), False
+        if re.search(r"^__version__\s*=\s*\S", content, re.MULTILINE):
+            # Dynamic declaration (e.g. __version__ = _discover_version()):
+            # the module observes the released version at runtime, so the
+            # static release machinery neither reads nor rewrites it. Treat
+            # it as an observed contract, not an unreadable source.
+            return None, True
+        return None, False
 
     if path.name in {"package.json", "composer.json"}:
         value = json.loads(content).get("version")
