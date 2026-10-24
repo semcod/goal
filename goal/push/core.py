@@ -740,6 +740,7 @@ def execute_push_workflow(
                 ctx_obj["no_publish"] = False
                 force_publish = True
                 ctx_obj["force_publish"] = True
+                ctx_obj["_publish_completion"] = True
                 record_delivery_event(
                     delivery,
                     "publish-completion",
