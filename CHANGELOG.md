@@ -1,3 +1,32 @@
+## [2.2.3] - 2026-10-25
+
+### Added
+- Governed publication completion: on a clean synchronized base with a
+  pre-bumped release, `goal -a` finishes the waited-for registry publication
+  (tag + upload) without creating a commit, and reports it explicitly.
+- Registry-baseline fallback: when a publish-only release leaves no tag on the
+  base branch, a tree version newer than the published registry version counts
+  as pending publication.
+
+### Changed
+- Version-spec discovery skips tooling caches and governed runtime state
+  (`.pytest_cache`, `.subactor`, `.worktrees`), so release-evidence snapshots
+  are never learned as version carriers.
+- An explicit non-empty `versioning.files` projection is authoritative;
+  auto-detection is bootstrap-only and never replaces it.
+- Governed targets load the frozen `goal.yaml` from every command, so
+  auto-detection can no longer rewrite a protected configuration as a side
+  effect of `goal publish` or other subcommands.
+- A `__version__` assignment with a non-literal right-hand side is an observed
+  contract (not managed, no selector error), supporting dynamic discovery.
+- Unreleased sources after the last tag now fail with an actionable
+  "requires a release ticket" message instead of the confusing clean
+  force-publish validation.
+
+### Fixed
+- Publish-completion runs no longer attempt a pull-request epilogue, which
+  previously pushed an empty synthetic branch and could orphan it.
+
 ## [2.2.0] - 2026-09-05
 
 - Add `goal dependencies --catalog FILE --check` and transactional `--update` for explicitly catalogued stable PyPI packages in uv lockfiles.
