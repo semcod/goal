@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-201",
+  "summary": "Skip governed runtime state in version-spec discovery",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-201/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/version_state.py",
+    "tests/test_push_workflow_completion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d2e274385f280137c089d84f2da88a98d20cbc1c",
+    "targetBranch": "main",
+    "outcome": "discover_version_specs skips .subactor and .worktrees, so release-evidence snapshots stop being inferred-lockstep version carriers and the clean publish-only completion no longer classifies a fully bumped release as partial.",
+    "nonGoals": [
+      "No changes to lockstep semantics for live project sources",
+      "No gate or policy changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend the discovery skip set with governed runtime state and delivery worktree directories, mirroring the ticket-196 config-discovery hygiene.",
+      "components": [
+        {
+          "name": "version-state-discovery",
+          "paths": [
+            "goal/cli/version_state.py",
+            "tests/test_push_workflow_completion.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the two files; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k discovery"
+        ],
+        "evidence": "receipt:goal201/discovery-skip"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal201/regression"
+      }
+    ]
+  }
+}

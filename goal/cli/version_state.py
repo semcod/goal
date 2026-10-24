@@ -42,6 +42,10 @@ _SKIP_DIRS = {
     ".pytest_cache",
     ".ruff_cache",
     ".eggs",
+    # governed runtime state and delivery worktrees: version carriers found
+    # here are evidence snapshots of past releases, never the live project
+    ".subactor",
+    ".worktrees",
     "examples",
     "example",
     "samples",
