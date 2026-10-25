@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-213",
+  "summary": "Confirm exact registry version before treating tree as unpublished",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-213/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/push/core.py",
+    "goal/version_validation.py",
+    "tests/test_push_workflow_completion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "086ee8f03ee8e00fa72b296a4f15000d31b76d09",
+    "targetBranch": "main",
+    "outcome": "Registry publication pending detection consults the version-specific PyPI document, so CDN lag after an upload no longer resurrects a finished publication or blocks a re-run.",
+    "nonGoals": [
+      "No changes to the publish transports",
+      "No changes to tag handling",
+      "No gate or policy changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add exact_version_published() to version_validation and consult it inside _registry_publication_pending before returning pending.",
+      "components": [
+        {
+          "name": "push-workflow",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_push_workflow_completion.py"
+          ]
+        },
+        {
+          "name": "registry-validation",
+          "paths": [
+            "goal/version_validation.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the three files; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k exact_version"
+        ],
+        "evidence": "receipt:goal213/exact-version"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal213/regression"
+      }
+    ]
+  }
+}
