@@ -466,6 +466,13 @@ def _registry_publication_pending(project_types: List[str]) -> bool:
     published = get_registry_version(registry, package)
     if not published or published == current:
         return False
+    # The registry's "latest" document is CDN-cached right after an upload, so
+    # a just-published tree can still look newer. Trust the version-specific
+    # document before claiming that publication is pending.
+    from goal.version_validation import exact_version_published
+
+    if exact_version_published(registry, package, current):
+        return False
 
     def _key(version: str) -> tuple:
         parts = re.findall(r"\d+", version.split("+")[0])

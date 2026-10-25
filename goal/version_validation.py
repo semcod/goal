@@ -72,6 +72,27 @@ def get_registry_version(registry: str, package_name: str) -> Optional[str]:
     return None
 
 
+def exact_version_published(
+    registry: str, package_name: str, version: str
+) -> bool:
+    """Return whether an exact version is already visible in the registry.
+
+    The registry "latest" document is CDN-cached for a short window after an
+    upload, so a tree that was just published can still look newer than the
+    registry. The version-specific document is the authoritative check for
+    that window: it answers whether this exact release already exists.
+    """
+    if registry.lower() != "pypi" or not version:
+        return False
+    try:
+        url = f"https://pypi.org/pypi/{package_name}/{version}/json"
+        with urllib.request.urlopen(url, timeout=10) as response:
+            data = json.loads(response.read().decode())
+            return bool(data.get("info", {}).get("version") == version)
+    except (urllib.error.URLError, json.JSONDecodeError, KeyError):
+        return False
+
+
 def extract_badge_versions(readme_path: Path) -> List[Tuple[str, str, str]]:
     """Extract version badges from README.md.
 

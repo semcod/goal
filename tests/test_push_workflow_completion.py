@@ -369,6 +369,11 @@ def test_registry_publication_pending_when_tree_ahead_of_registry(monkeypatch, t
         "goal.version_validation.get_registry_version",
         lambda registry, package: "2.2.1" if package == "goal" else None,
     )
+    # The exact version is not published yet: the tree genuinely leads.
+    monkeypatch.setattr(
+        "goal.version_validation.exact_version_published",
+        lambda registry, package, version: False,
+    )
 
     assert push_core._registry_publication_pending(["python"]) is True
 
@@ -387,6 +392,30 @@ def test_registry_publication_not_pending_when_registry_caught_up(monkeypatch, t
     monkeypatch.setattr(
         "goal.version_validation.get_registry_version",
         lambda registry, package: "2.2.2",
+    )
+
+    assert push_core._registry_publication_pending(["python"]) is False
+
+
+def test_registry_publication_not_pending_when_exact_version_visible(monkeypatch, tmp_path):
+    """CDN-lagged "latest" must not resurrect a finished publication."""
+    from types import SimpleNamespace
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "heyasa"\nversion = "0.4.0"\n', encoding="utf-8"
+    )
+    sources = [SimpleNamespace(value="0.4.0")]
+    monkeypatch.setattr(
+        "goal.cli.version_state.collect_version_sources", lambda: sources
+    )
+    monkeypatch.setattr(
+        "goal.version_validation.get_registry_version",
+        lambda registry, package: "0.3.1",  # stale cached latest
+    )
+    monkeypatch.setattr(
+        "goal.version_validation.exact_version_published",
+        lambda registry, package, version: version == "0.4.0",
     )
 
     assert push_core._registry_publication_pending(["python"]) is False
