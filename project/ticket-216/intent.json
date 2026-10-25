@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-216",
+  "summary": "Diagnose disagreeing managed version sources explicitly",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-216/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/push/core.py",
+    "tests/test_push_workflow_completion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ffb8cb135f8effe2d7129c0a8d9cdb708cafb0ee",
+    "targetBranch": "main",
+    "outcome": "The governed pull-request boundary reports disagreeing managed version sources explicitly, naming the values and the remaining coordinated release tickets instead of a generic message.",
+    "nonGoals": [
+      "No change to version synchronization itself",
+      "No gate or policy changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add _managed_version_values() and guard the ticket-less pull-request boundary before the pending/no-change branches.",
+      "components": [
+        {
+          "name": "push-workflow",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_push_workflow_completion.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the two files; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py -k disagreeing"
+        ],
+        "evidence": "receipt:goal216/conflict-message"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_push_workflow_completion.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal216/regression"
+      }
+    ]
+  }
+}
