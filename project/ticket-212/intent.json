@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-212",
+  "summary": "Align runtime banner with 2.2.4 release",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-212/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/__init__.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4b4f51df9aefd1729f05dad32c0336c2a6aead5a",
+    "targetBranch": "main",
+    "outcome": "Runtime banner __version__ 2.2.3 -> 2.2.4 completing the coordinated version projection so the clean publish-only completion classifies the release as fully bumped.",
+    "nonGoals": [
+      "No other version carriers or source changes",
+      "No publication actions in this ticket"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 8,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Single-line banner literal bump (static by design).",
+      "components": [
+        {
+          "name": "goal-runtime-banner",
+          "paths": [
+            "goal/__init__.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the single line; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -c \"import goal; assert goal.__version__ == '2.2.4'\""
+        ],
+        "evidence": "receipt:goal212/banner"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal212/tests-and-governance"
+      }
+    ]
+  }
+}
