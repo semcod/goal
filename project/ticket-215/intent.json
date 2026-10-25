@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-215",
+  "summary": "Align runtime banner with 2.2.5 release",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-215/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/__init__.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "91fef3f11303f1ab8abe49b46537ae6543df7def",
+    "targetBranch": "main",
+    "outcome": "Runtime banner __version__ 2.2.4 -> 2.2.5 completing the coordinated projection so the clean publish-only completion accepts the release.",
+    "nonGoals": [
+      "No other version carriers or source changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 8,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Single-line banner literal bump.",
+      "components": [
+        {
+          "name": "goal-runtime-banner",
+          "paths": [
+            "goal/__init__.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the single line; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -c \"import goal; assert goal.__version__ == '2.2.5'\""
+        ],
+        "evidence": "receipt:goal215/banner"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal215/tests-and-governance"
+      }
+    ]
+  }
+}
