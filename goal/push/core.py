@@ -435,6 +435,17 @@ def _has_committed_unreleased_sources() -> bool:
     return _registry_publication_pending(project_types)
 
 
+def _managed_version_values() -> List[str]:
+    """Return the distinct managed version declarations in the tree."""
+    try:
+        from goal.cli.version_state import collect_version_sources
+
+        sources = collect_version_sources()
+    except (ImportError, OSError, ValueError):
+        return []
+    return sorted({source.value for source in sources if source.value is not None})
+
+
 def _registry_publication_pending(project_types: List[str]) -> bool:
     """Return whether the tree version is newer than the published registry."""
     if not project_types:
@@ -763,6 +774,18 @@ def execute_push_workflow(
     if delivery is not None:
         ticket = resolve_pull_request_ticket(delivery, ticket)
         if delivery.mode == "pull-request" and ticket is None:
+            disagreeing = _managed_version_values()
+            if len(disagreeing) > 1:
+                # A coordinated release lands its version projection across
+                # workstream tickets; between them the managed declarations
+                # disagree. Name that exact state instead of a generic
+                # release-ticket or clean force-publish message.
+                raise click.ClickException(
+                    "Managed version sources disagree ("
+                    + ", ".join(disagreeing)
+                    + "): land the remaining coordinated release tickets "
+                    "(version files and runtime banner) before running goal -a."
+                )
             if _has_committed_unreleased_sources():
                 if not _registry_publication_pending(
                     list(detect_project_types_deep().keys())
