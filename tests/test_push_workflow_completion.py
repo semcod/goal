@@ -287,6 +287,72 @@ def test_unreleased_sources_without_prebumped_version_name_the_route(monkeypatch
     assert recorded == []
 
 
+def _fake_git_result(code: int):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(returncode=code, stdout="", stderr="")
+
+
+def test_completion_pushes_the_release_tag(monkeypatch):
+    """The tag skipped before the merge is created on the completed base."""
+    import contextlib
+
+    calls: list[tuple] = []
+
+    def fake_run_git(*args, **kwargs):
+        calls.append(args)
+        if args[0] == "rev-parse":
+            return _fake_git_result(1)  # tag missing locally
+        return _fake_git_result(0)
+
+    monkeypatch.setattr(push_core, "run_git", fake_run_git)
+    monkeypatch.setattr(
+        "goal.governance.delivery.authorized_push",
+        lambda delivery: contextlib.nullcontext(),
+    )
+
+    assert push_core._push_completion_release_tag(_pull_request_policy(), "2.2.4") is True
+    assert ("tag", "-a", "v2.2.4", "-m", "Release 2.2.4") in calls
+    assert ("push", "origin", "v2.2.4") in calls
+
+
+def test_completion_tag_reuses_an_existing_local_tag(monkeypatch):
+    import contextlib
+
+    calls: list[tuple] = []
+
+    def fake_run_git(*args, **kwargs):
+        calls.append(args)
+        return _fake_git_result(0)  # tag already exists
+
+    monkeypatch.setattr(push_core, "run_git", fake_run_git)
+    monkeypatch.setattr(
+        "goal.governance.delivery.authorized_push",
+        lambda delivery: contextlib.nullcontext(),
+    )
+
+    assert push_core._push_completion_release_tag(_pull_request_policy(), "2.2.4") is True
+    assert not any(call[0] == "tag" for call in calls)
+    assert ("push", "origin", "v2.2.4") in calls
+
+
+def test_completion_tag_reports_push_failure(monkeypatch):
+    import contextlib
+
+    def fake_run_git(*args, **kwargs):
+        if args[0] == "push":
+            return _fake_git_result(1)
+        return _fake_git_result(0)
+
+    monkeypatch.setattr(push_core, "run_git", fake_run_git)
+    monkeypatch.setattr(
+        "goal.governance.delivery.authorized_push",
+        lambda delivery: contextlib.nullcontext(),
+    )
+
+    assert push_core._push_completion_release_tag(_pull_request_policy(), "2.2.4") is False
+
+
 def test_registry_publication_pending_when_tree_ahead_of_registry(monkeypatch, tmp_path):
     """A publish-only release left no tag: the registry decides, not the diff."""
     from types import SimpleNamespace

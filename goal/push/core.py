@@ -538,6 +538,38 @@ def _resume_pending_pull_request(
     click.echo(click.style(f"Pull request: {pr_url}", fg="green"))
 
 
+def _push_completion_release_tag(delivery: Any, new_version: str) -> bool:
+    """Create and push the annotated release tag after a completed publish.
+
+    Governed modes skip the remote release tag before the merge because the
+    commit is not on the base branch yet. Once the publication completed on
+    the synchronized base, the release is final evidence and the tag belongs
+    on that HEAD. Only the tag is pushed - no branch is ever moved.
+    """
+    from goal.governance.delivery import authorized_push
+
+    tag_name = f"v{new_version}"
+    existing = run_git("rev-parse", "-q", "--verify", f"refs/tags/{tag_name}")
+    if existing.returncode != 0:
+        created = run_git("tag", "-a", tag_name, "-m", f"Release {new_version}")
+        if created.returncode != 0:
+            click.echo(
+                click.style(
+                    f"⚠ Could not create release tag {tag_name}.", fg="yellow"
+                )
+            )
+            return False
+    with authorized_push(delivery):
+        pushed = run_git("push", delivery.remote, tag_name, capture=True)
+    if pushed.returncode != 0:
+        click.echo(
+            click.style(f"⚠ Could not push release tag {tag_name}.", fg="yellow")
+        )
+        return False
+    click.echo(click.style(f"✓ Release tag {tag_name} pushed.", fg="green"))
+    return True
+
+
 def _abort_if_missing_commit_title(commit_title: Optional[str]) -> bool:
     if commit_title:
         return False
@@ -1223,13 +1255,19 @@ def execute_push_workflow(
     else:
         if ctx_obj.get("_publish_completion"):
             # The completion already finished the cycle on the synchronized
-            # base (governed policy skipped the remote tag; the registry
-            # upload is done). A pull-request epilogue has no commit to
-            # deliver and would only push an empty branch.
+            # base (the registry upload is done). A pull-request epilogue has
+            # no commit to deliver and would only push an empty branch. The
+            # release tag skipped before the merge is created here instead.
+            tag_pushed = False
+            if publish_success and not no_tag:
+                tag_pushed = _push_completion_release_tag(delivery, new_version)
+            detail = "publish completion on synchronized base"
+            if tag_pushed:
+                detail += "; release tag pushed"
             record_delivery_event(
                 delivery,
                 "published" if publish_success else "publish-skipped",
-                detail="publish completion on synchronized base",
+                detail=detail,
             )
             click.echo(
                 click.style(
