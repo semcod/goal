@@ -92,6 +92,26 @@ class PendingPullRequestDelivery:
     files: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class CanonicalReleaseAdmission:
+    """Verified admission record for a canonical Worktrees v5 release checkout."""
+
+    ticket: str
+    slug: str
+    worktree_id: str
+    branch: str
+    primary_checkout: str
+    worktree_path: str
+    lease_path: str
+    head_sha: str
+    remote_base_sha: str
+    lease_id: str
+    lease_revision: int
+    fencing_token: int
+    merge_receipt_ref: str
+
+
+
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -960,6 +980,61 @@ def _pull_request_validation_base(policy: DeliveryPolicy, root: Path) -> str:
 
 
 _DELIVERY_GATE_CACHE: set[tuple[str, str, str, str, str | None]] = set()
+_CANONICAL_TICKET_RE = re.compile(r"^ticket-([0-9]{3,})$")
+_CANONICAL_WORKTREE_STEM_RE = re.compile(
+    r"^(ticket-[0-9]{3,})--([a-z0-9]+(?:-[a-z0-9]+)*)$"
+)
+_CANONICAL_TICKET_BRANCH_RE = re.compile(
+    r"^(?:refs/heads/)?ticket/([0-9]{3,})-([a-z0-9]+(?:-[a-z0-9]+)*)$"
+)
+_CHANGE_LEASE_SCHEMA = "wellmanifest.change-lease/v1"
+_CHANGE_LEASE_FIELDS = {
+    "schema",
+    "leaseId",
+    "repositoryRef",
+    "targetBranch",
+    "ticketId",
+    "workstream",
+    "scopeHash",
+    "branchRef",
+    "worktreeId",
+    "ownerActor",
+    "ownerSession",
+    "phase",
+    "leaseRevision",
+    "fencingToken",
+    "issuedAt",
+    "expiresAt",
+    "heartbeatAt",
+    "headSha",
+    "pullRequest",
+    "validatorRunId",
+    "publicationFrozen",
+    "planHash",
+    "previousReceiptRef",
+    "eventSequence",
+}
+_CHANGE_LEASE_ACTIVE_PHASES = {
+    "claimed",
+    "editing",
+    "validating",
+    "publication_frozen",
+    "dispatching",
+    "approved",
+}
+_CHANGE_LEASE_FROZEN_PHASES = {"publication_frozen", "dispatching", "approved"}
+_TERMINAL_RECEIPT_REGISTRY_SCHEMA = "new-project.terminal-receipt-registry/v1"
+_TERMINAL_RECEIPT_FIELDS = {
+    "receiptRef",
+    "ticket",
+    "outcome",
+    "headSha",
+    "terminalSha",
+    "targetBranch",
+    "occurredAt",
+}
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_GIT_HEX_SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 
 
 def clear_delivery_gate_cache() -> None:
@@ -967,9 +1042,605 @@ def clear_delivery_gate_cache() -> None:
     _DELIVERY_GATE_CACHE.clear()
 
 
-def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) -> None:
-    """Fail before workflow side effects when delivery prerequisites are unmet."""
+def _parse_worktree_porcelain_text(raw: str) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    if "\0" in raw:
+        blocks = [block.split("\0") for block in raw.split("\0\0") if block]
+    else:
+        blocks = [block.splitlines() for block in raw.strip().split("\n\n") if block.strip()]
+    for fields in blocks:
+        record: dict[str, Any] = {
+            "path": None,
+            "head": None,
+            "branch": None,
+            "bare": False,
+            "detached": False,
+            "locked": False,
+            "prunable": False,
+        }
+        for field in fields:
+            if not field:
+                continue
+            key, _, value = field.partition(" ")
+            if key == "worktree":
+                record["path"] = value
+            elif key == "HEAD":
+                record["head"] = value
+            elif key == "branch":
+                record["branch"] = value
+            elif key in {"bare", "detached", "locked", "prunable"}:
+                record[key] = True
+        if isinstance(record["path"], str) and record["path"]:
+            records.append(record)
+    return records
+
+
+def _registered_worktrees(root: Path) -> list[dict[str, Any]]:
+    result = _run(["git", "worktree", "list", "--porcelain", "-z"], cwd=root)
+    if result.returncode != 0:
+        result = _run(["git", "worktree", "list", "--porcelain"], cwd=root)
+    if result.returncode != 0:
+        detail = (result.stderr or "git worktree list failed").strip()
+        raise click.ClickException(
+            f"canonical direct-main release cannot inspect git worktrees: {detail}"
+        )
+    records = _parse_worktree_porcelain_text(result.stdout)
+    if not records:
+        raise click.ClickException(
+            "canonical direct-main release found no registered git worktrees"
+        )
+    return records
+
+
+def _is_linked_worktree(root: Path) -> bool:
+    try:
+        records = _registered_worktrees(root)
+    except click.ClickException:
+        return False
+    primary = Path(records[0]["path"]).resolve()
+    return root.resolve() != primary
+
+
+def _direct_child_name(candidate: Path, parent: Path) -> str | None:
+    try:
+        rel = candidate.relative_to(parent)
+    except ValueError:
+        return None
+    return rel.name if len(rel.parts) == 1 else None
+
+
+def _classify_worktree_path(
+    candidate: Path, primary: Path
+) -> tuple[str, str | None, str | None]:
+    workspace = primary.parent
+    repo_name = primary.name
+    if candidate == primary:
+        return "primary", None, None
+    stem = _direct_child_name(candidate, primary / ".worktrees")
+    if stem and (match := _CANONICAL_WORKTREE_STEM_RE.fullmatch(stem)):
+        return "canonical-v5", match.group(1), match.group(2)
+    stem = _direct_child_name(candidate, primary / "worktrees")
+    if stem and (match := _CANONICAL_WORKTREE_STEM_RE.fullmatch(stem)):
+        return "legacy-v4", match.group(1), match.group(2)
+    stem = _direct_child_name(candidate, workspace / ".worktrees" / ".branches" / repo_name)
+    if stem and (match := _CANONICAL_WORKTREE_STEM_RE.fullmatch(stem)):
+        return "legacy-v3", match.group(1), match.group(2)
+    stem = _direct_child_name(candidate, workspace / ".worktrees" / repo_name)
+    if stem and (match := _CANONICAL_WORKTREE_STEM_RE.fullmatch(stem)):
+        return "legacy-v2", match.group(1), match.group(2)
+    stem = _direct_child_name(candidate, workspace / ".worktrees")
+    if stem and stem.startswith(f"{repo_name}--"):
+        rest = stem[len(repo_name) + 2 :]
+        if match := _CANONICAL_WORKTREE_STEM_RE.fullmatch(rest):
+            return "legacy-v1", match.group(1), match.group(2)
+
+    posix_candidate = PurePosixPath(candidate.as_posix())
+    posix_primary = PurePosixPath(primary.as_posix())
+    in_temp_root = any(
+        temp_root == posix_candidate or temp_root in posix_candidate.parents
+        for temp_root in (PurePosixPath("/tmp"), PurePosixPath("/var/tmp"))
+    )
+    primary_in_temp = any(
+        temp_root == posix_primary or temp_root in posix_primary.parents
+        for temp_root in (PurePosixPath("/tmp"), PurePosixPath("/var/tmp"))
+    )
+    if in_temp_root:
+        if not primary_in_temp:
+            return "system-temp", None, None
+        try:
+            rel_parts = candidate.relative_to(workspace).parts
+        except ValueError:
+            return "system-temp", None, None
+        if any(part == "tmp" or part.startswith(("tmp-", "temp-", "tmp_")) for part in rel_parts):
+            return "system-temp", None, None
+    return "unknown", None, None
+
+
+def _reject_worktree_symlinks(
+    primary: Path,
+    caller_path: Path,
+    worktree_path: Path,
+    lease_path: Path,
+) -> None:
+    if caller_path.is_symlink():
+        raise click.ClickException(
+            f"canonical direct-main release refuses symlink component: {caller_path}"
+        )
+    workspace = primary.parent
+    for target in (caller_path, primary, worktree_path, lease_path):
+        try:
+            rel = target.relative_to(workspace)
+        except ValueError:
+            continue
+        current = workspace
+        for part in rel.parts:
+            current = current / part
+            if current.is_symlink():
+                raise click.ClickException(
+                    f"canonical direct-main release refuses symlink component: {current}"
+                )
+
+
+def _extract_repo_slug(value: str) -> str | None:
+    cleaned = value.strip().removesuffix(".git").rstrip("/").lower()
+    if not cleaned:
+        return None
+    if cleaned.startswith("github:"):
+        slug = cleaned.removeprefix("github:").strip("/")
+        return slug if re.fullmatch(r"[a-z0-9_.-]+/[a-z0-9_.-]+", slug) else None
+    if cleaned.startswith("git@") and ":" in cleaned:
+        slug = cleaned.partition(":")[2].strip("/")
+        return slug if re.fullmatch(r"[a-z0-9_.-]+/[a-z0-9_.-]+", slug) else None
+    if "://" in cleaned:
+        parsed = urlsplit(cleaned)
+        parts = [part for part in parsed.path.split("/") if part]
+        if len(parts) >= 2:
+            slug = f"{parts[-2]}/{parts[-1]}"
+            return slug if re.fullmatch(r"[a-z0-9_.-]+/[a-z0-9_.-]+", slug) else None
+    if re.fullmatch(r"[a-z0-9_.-]+/[a-z0-9_.-]+", cleaned):
+        return cleaned
+    return None
+
+
+def _repository_refs_compatible(
+    root: Path, remote_name: str, candidate_ref: Any
+) -> bool:
+    if not isinstance(candidate_ref, str) or not candidate_ref.strip():
+        return False
+    raw_candidate = candidate_ref.strip().removesuffix(".git").rstrip("/").lower()
+    remote_url = _safe_git_value("remote", "get-url", remote_name, cwd=root)
+    raw_expected = (
+        remote_url.strip().removesuffix(".git").rstrip("/").lower()
+        if remote_url
+        else f"local:{_git_common_dir(root)}".lower()
+    )
+    if raw_candidate == raw_expected:
+        return True
+    candidate_slug = _extract_repo_slug(raw_candidate)
+    expected_slug = _extract_repo_slug(raw_expected)
+    if candidate_slug and expected_slug and candidate_slug == expected_slug:
+        return True
+    if candidate_slug and remote_url and "://" not in raw_expected and not raw_expected.startswith("git@"):
+        local_parts = [part for part in PurePosixPath(raw_expected).parts if part not in {"/", "."}]
+        if len(local_parts) >= 2 and f"{local_parts[-2]}/{local_parts[-1]}" == candidate_slug:
+            return True
+    return False
+
+
+def _parse_iso_timestamp(value: Any, label: str) -> datetime:
+    if not isinstance(value, str) or not value.strip():
+        raise click.ClickException(
+            f"canonical direct-main release requires valid RFC 3339 {label}"
+        )
+    try:
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError as error:
+        raise click.ClickException(
+            f"canonical direct-main release requires valid RFC 3339 {label}"
+        ) from error
+    if parsed.tzinfo is None:
+        raise click.ClickException(
+            f"canonical direct-main release requires timezone-aware {label}"
+        )
+    return parsed.astimezone(timezone.utc)
+
+
+def _validate_release_lease(
+    *,
+    lease_path: Path,
+    worktree_path: Path,
+    remote_name: str,
+    expected_ticket: str,
+    expected_worktree_id: str,
+    expected_branch: str,
+    expected_target_branch: str,
+    head_sha: str,
+) -> tuple[str, int, int]:
+    if not lease_path.is_file():
+        raise click.ClickException(
+            f"canonical direct-main release requires active change lease at {lease_path}"
+        )
+    try:
+        lease = json.loads(lease_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise click.ClickException(
+            f"canonical direct-main release cannot read change lease {lease_path}: {error}"
+        ) from error
+    if not isinstance(lease, dict) or set(lease) != _CHANGE_LEASE_FIELDS:
+        raise click.ClickException(
+            "canonical direct-main release change lease is not a valid closed wellmanifest.change-lease/v1 object"
+        )
+    if lease.get("schema") != _CHANGE_LEASE_SCHEMA:
+        raise click.ClickException(
+            "canonical direct-main release change lease schema must be wellmanifest.change-lease/v1"
+        )
+    for key in (
+        "leaseId",
+        "repositoryRef",
+        "targetBranch",
+        "ticketId",
+        "workstream",
+        "branchRef",
+        "worktreeId",
+        "ownerActor",
+        "ownerSession",
+    ):
+        if not isinstance(lease.get(key), str) or not lease[key].strip():
+            raise click.ClickException(
+                f"canonical direct-main release change lease field '{key}' is invalid"
+            )
+    if not _repository_refs_compatible(worktree_path, remote_name, lease.get("repositoryRef")):
+        raise click.ClickException(
+            "canonical direct-main release change lease belongs to another repository"
+        )
+    if lease["ticketId"] != expected_ticket:
+        raise click.ClickException(
+            f"canonical direct-main release change lease ticketId '{lease['ticketId']}' does not match {expected_ticket}"
+        )
+    if lease["worktreeId"] != expected_worktree_id:
+        raise click.ClickException(
+            f"canonical direct-main release change lease worktreeId '{lease['worktreeId']}' does not match {expected_worktree_id}"
+        )
+    if lease["branchRef"] not in {expected_branch, f"refs/heads/{expected_branch}"}:
+        raise click.ClickException(
+            f"canonical direct-main release change lease branchRef '{lease['branchRef']}' does not match {expected_branch}"
+        )
+    if lease["targetBranch"] != expected_target_branch:
+        raise click.ClickException(
+            f"canonical direct-main release change lease targetBranch '{lease['targetBranch']}' does not match {expected_target_branch}"
+        )
+    if not _SHA256_RE.fullmatch(str(lease.get("scopeHash", ""))) or not _SHA256_RE.fullmatch(
+        str(lease.get("planHash", ""))
+    ):
+        raise click.ClickException(
+            "canonical direct-main release change lease hashes must be lowercase SHA-256 values"
+        )
+    for key in ("leaseRevision", "fencingToken", "eventSequence"):
+        val = lease.get(key)
+        if type(val) is not int or val < 1:
+            raise click.ClickException(
+                f"canonical direct-main release change lease {key} must be a positive integer"
+            )
+    phase = lease.get("phase")
+    if phase not in _CHANGE_LEASE_ACTIVE_PHASES:
+        raise click.ClickException(
+            f"canonical direct-main release change lease is not active (phase: {phase})"
+        )
+    frozen = lease.get("publicationFrozen")
+    if type(frozen) is not bool or frozen != (phase in _CHANGE_LEASE_FROZEN_PHASES):
+        raise click.ClickException(
+            "canonical direct-main release change lease publicationFrozen does not match phase"
+        )
+    lease_head = lease.get("headSha")
+    if phase in _CHANGE_LEASE_FROZEN_PHASES and lease_head is None:
+        raise click.ClickException(
+            "canonical direct-main release frozen change lease requires headSha"
+        )
+    if lease_head is not None:
+        if not isinstance(lease_head, str) or not _GIT_HEX_SHA_RE.fullmatch(lease_head):
+            raise click.ClickException(
+                "canonical direct-main release change lease headSha is invalid"
+            )
+        if lease_head != head_sha:
+            raise click.ClickException(
+                f"canonical direct-main release change lease headSha ({lease_head[:12]}) does not match HEAD ({head_sha[:12]})"
+            )
+    _parse_iso_timestamp(lease.get("issuedAt"), "issuedAt")
+    _parse_iso_timestamp(lease.get("heartbeatAt"), "heartbeatAt")
+    expires_at = _parse_iso_timestamp(lease.get("expiresAt"), "expiresAt")
+    if expires_at <= datetime.now(timezone.utc):
+        raise click.ClickException(
+            "canonical direct-main release change lease has expired"
+        )
+    return str(lease["leaseId"]), int(lease["leaseRevision"]), int(lease["fencingToken"])
+
+
+def _validate_release_merge_receipt(
+    *,
+    worktree_path: Path,
+    remote_name: str,
+    target_branch: str,
+    head_sha: str,
+) -> str:
+    common_dir = _git_common_dir(worktree_path)
+    rel_registry = "new-project/terminal-receipts.json"
+    activity_policy_path = worktree_path / ".governance" / "ticket-activity.json"
+    if activity_policy_path.is_file():
+        try:
+            activity_policy = json.loads(activity_policy_path.read_text(encoding="utf-8"))
+            configured_rel = activity_policy.get("registry", {}).get("path")
+            if isinstance(configured_rel, str) and configured_rel.strip():
+                rel_registry = configured_rel.strip()
+        except (OSError, json.JSONDecodeError):
+            pass
+    receipts_path = common_dir / rel_registry
+    if not receipts_path.is_file():
+        raise click.ClickException(
+            f"canonical direct-main release requires terminal merge receipt registry at {receipts_path}"
+        )
+    try:
+        registry = json.loads(receipts_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise click.ClickException(
+            f"canonical direct-main release cannot read terminal receipt registry: {error}"
+        ) from error
+    if (
+        not isinstance(registry, dict)
+        or set(registry) != {"schema", "repositoryRef", "receipts"}
+        or registry.get("schema") != _TERMINAL_RECEIPT_REGISTRY_SCHEMA
+    ):
+        raise click.ClickException(
+            "canonical direct-main release terminal receipt registry is invalid"
+        )
+    if not _repository_refs_compatible(
+        worktree_path, remote_name, registry.get("repositoryRef")
+    ):
+        raise click.ClickException(
+            "canonical direct-main release terminal receipt registry belongs to another repository"
+        )
+    receipts = registry.get("receipts")
+    if not isinstance(receipts, list) or not receipts:
+        raise click.ClickException(
+            "canonical direct-main release terminal receipt registry contains no receipts"
+        )
+    seen_refs: set[str] = set()
+    matching_ref: str | None = None
+    for entry in receipts:
+        if not isinstance(entry, dict) or set(entry) != _TERMINAL_RECEIPT_FIELDS:
+            raise click.ClickException(
+                "canonical direct-main release terminal receipt entry has invalid fields"
+            )
+        ref = entry.get("receiptRef")
+        if not isinstance(ref, str) or not ref.strip() or ref in seen_refs:
+            raise click.ClickException(
+                "canonical direct-main release terminal receipt reference is invalid or duplicate"
+            )
+        seen_refs.add(ref)
+        if _CANONICAL_TICKET_RE.fullmatch(str(entry.get("ticket", ""))) is None:
+            raise click.ClickException(
+                "canonical direct-main release terminal receipt ticket is invalid"
+            )
+        if not _GIT_HEX_SHA_RE.fullmatch(str(entry.get("headSha", ""))) or not _GIT_HEX_SHA_RE.fullmatch(
+            str(entry.get("terminalSha", ""))
+        ):
+            raise click.ClickException(
+                "canonical direct-main release terminal receipt SHA binding is invalid"
+            )
+        _parse_iso_timestamp(entry.get("occurredAt"), "receipt occurredAt")
+        if (
+            entry.get("outcome") == "merged"
+            and entry.get("targetBranch") == target_branch
+            and entry.get("terminalSha") == head_sha
+        ):
+            matching_ref = ref
+    if matching_ref is None:
+        raise click.ClickException(
+            f"canonical direct-main release requires a verified merged terminal receipt for {target_branch} HEAD {head_sha[:12]}"
+        )
+    return matching_ref
+
+
+def validate_canonical_release_checkout(
+    policy: DeliveryPolicy,
+    *,
+    ticket: str | None = None,
+    cwd: Path | None = None,
+) -> CanonicalReleaseAdmission:
+    """Validate Worktrees v5 canonical release checkout, lease, remote base, and merge receipt."""
+    caller_path = (
+        Path(cwd)
+        if cwd is not None
+        else Path(os.environ.get("PWD") or os.getcwd())
+    )
+    if caller_path.is_symlink():
+        raise click.ClickException(
+            f"canonical direct-main release refuses symlink component: {caller_path}"
+        )
     root = _repository_root(cwd)
+    records = _registered_worktrees(root)
+    if records[0].get("bare"):
+        raise click.ClickException(
+            "canonical direct-main release cannot run in a bare repository"
+        )
+    primary_raw = Path(records[0]["path"])
+    if primary_raw.is_symlink():
+        raise click.ClickException(
+            f"canonical direct-main release refuses symlink component: {primary_raw}"
+        )
+    primary_checkout = primary_raw.resolve()
+    resolved_root = root.resolve()
+
+    if ticket is None or not str(ticket).strip():
+        raise click.ClickException(
+            "canonical direct-main release requires explicit --ticket ticket-NNN; "
+            "branch label alone grants no publication authority"
+        )
+    cleaned_ticket = str(ticket).strip()
+    ticket_match = _CANONICAL_TICKET_RE.fullmatch(cleaned_ticket)
+    if ticket_match is None:
+        raise click.ClickException(
+            f"canonical direct-main release requires canonical --ticket ticket-NNN, got '{cleaned_ticket}'"
+        )
+    ticket_num = ticket_match.group(1)
+
+    for candidate_check in (caller_path, primary_raw):
+        try:
+            rel_check = candidate_check.relative_to(primary_checkout.parent)
+        except ValueError:
+            continue
+        cur = primary_checkout.parent
+        for part in rel_check.parts:
+            cur = cur / part
+            if cur.is_symlink():
+                raise click.ClickException(
+                    f"canonical direct-main release refuses symlink component: {cur}"
+                )
+
+    classification, stem_ticket, slug = _classify_worktree_path(
+        resolved_root, primary_checkout
+    )
+    if classification == "primary":
+        raise click.ClickException(
+            "canonical direct-main release requires linked worktree .worktrees/ticket-NNN--slug, "
+            "not the primary checkout (classification: primary)"
+        )
+    if classification != "canonical-v5" or stem_ticket is None or slug is None:
+        raise click.ClickException(
+            f"canonical direct-main release refuses non-canonical worktree '{resolved_root}' "
+            f"(classification: {classification}); expected {primary_checkout / '.worktrees' / f'{cleaned_ticket}--<slug>'}"
+        )
+    if stem_ticket != cleaned_ticket:
+        raise click.ClickException(
+            f"canonical direct-main release worktree '{resolved_root.name}' does not match --ticket {cleaned_ticket}"
+        )
+
+    worktree_id = f"{cleaned_ticket}--{slug}"
+    expected_branch = f"ticket/{ticket_num}-{slug}"
+    lease_path = primary_checkout / ".subactor" / "leases" / f"{worktree_id}.json"
+    _reject_worktree_symlinks(
+        primary_checkout, caller_path, resolved_root, lease_path
+    )
+
+    branch = _git_value("branch", "--show-current", cwd=resolved_root)
+    if branch != expected_branch:
+        raise click.ClickException(
+            f"canonical direct-main release requires branch '{expected_branch}' for {worktree_id}, "
+            f"current branch is '{branch or 'HEAD (detached)'}'"
+        )
+
+    duplicate_count = 0
+    for entry in records[1:]:
+        entry_path = Path(str(entry["path"])).resolve()
+        _, entry_ticket, _ = _classify_worktree_path(entry_path, primary_checkout)
+        raw_branch = str(entry.get("branch") or "")
+        branch_match = _CANONICAL_TICKET_BRANCH_RE.fullmatch(raw_branch)
+        if entry_ticket is None and branch_match is not None:
+            entry_ticket = f"ticket-{branch_match.group(1)}"
+        norm_branch = raw_branch.removeprefix("refs/heads/")
+        if entry_ticket == cleaned_ticket or norm_branch == expected_branch:
+            duplicate_count += 1
+    if duplicate_count > 1:
+        raise click.ClickException(
+            f"canonical direct-main release refuses duplicate-delivery worktree registration for {cleaned_ticket} ({expected_branch})"
+        )
+
+    dot_git = resolved_root / ".git"
+    if dot_git.is_symlink() or not dot_git.is_file():
+        raise click.ClickException(
+            "canonical direct-main release requires linked worktree .git file"
+        )
+    dot_git_text = dot_git.read_text(encoding="utf-8").strip()
+    if not dot_git_text.startswith("gitdir:"):
+        raise click.ClickException(
+            "canonical direct-main release worktree .git file is malformed"
+        )
+    gitdir_target = dot_git_text.partition(":")[2].strip()
+    if (
+        not gitdir_target
+        or Path(gitdir_target).is_absolute()
+        or PurePosixPath(gitdir_target).is_absolute()
+    ):
+        raise click.ClickException(
+            "canonical direct-main release requires relative worktree .git link (linkMode=relative); "
+            "run git worktree repair --relative-paths"
+        )
+    admin_gitdir = (resolved_root / gitdir_target).resolve()
+    backlink = admin_gitdir / "gitdir"
+    if backlink.is_file():
+        backlink_target = backlink.read_text(encoding="utf-8").strip()
+        if (
+            not backlink_target
+            or Path(backlink_target).is_absolute()
+            or PurePosixPath(backlink_target).is_absolute()
+        ):
+            raise click.ClickException(
+                "canonical direct-main release requires relative admin gitdir backlink (linkMode=relative); "
+                "run git worktree repair --relative-paths"
+            )
+
+    status = _git_value(
+        "status", "--porcelain=v1", "-z", "--untracked-files=all", cwd=resolved_root
+    )
+    if status:
+        raise click.ClickException(
+            "canonical direct-main release requires a clean release worktree"
+        )
+
+    head_sha = _git_value("rev-parse", "HEAD", cwd=resolved_root)
+    remote_base_sha = _pull_request_validation_base(policy, resolved_root)
+    if head_sha != remote_base_sha:
+        raise click.ClickException(
+            f"canonical direct-main release requires HEAD to equal authoritative {policy.remote}/{policy.base_branch} "
+            f"({head_sha[:12]} != {remote_base_sha[:12]})"
+        )
+
+    lease_id, lease_revision, fencing_seq = _validate_release_lease(
+        lease_path=lease_path,
+        worktree_path=resolved_root,
+        remote_name=policy.remote,
+        expected_ticket=cleaned_ticket,
+        expected_worktree_id=worktree_id,
+        expected_branch=expected_branch,
+        expected_target_branch=policy.base_branch,
+        head_sha=head_sha,
+    )
+    merge_receipt_ref = _validate_release_merge_receipt(
+        worktree_path=resolved_root,
+        remote_name=policy.remote,
+        target_branch=policy.base_branch,
+        head_sha=head_sha,
+    )
+    return CanonicalReleaseAdmission(
+        ticket=cleaned_ticket,
+        slug=slug,
+        worktree_id=worktree_id,
+        branch=expected_branch,
+        primary_checkout=str(primary_checkout),
+        worktree_path=str(resolved_root),
+        lease_path=str(lease_path),
+        head_sha=head_sha,
+        remote_base_sha=remote_base_sha,
+        lease_id=lease_id,
+        lease_revision=lease_revision,
+        fencing_token=fencing_seq,
+        merge_receipt_ref=merge_receipt_ref,
+    )
+
+
+def validate_delivery_ready(
+    policy: DeliveryPolicy,
+    *,
+    cwd: Path | None = None,
+    ticket: str | None = None,
+) -> CanonicalReleaseAdmission | None:
+    """Fail before workflow side effects when delivery prerequisites are unmet."""
+    caller_path = Path(cwd) if cwd is not None else None
+    if caller_path is not None and caller_path.is_symlink() and policy.mode == "direct-main":
+        raise click.ClickException(
+            f"canonical direct-main release refuses symlink component: {caller_path}"
+        )
+    root = _repository_root(cwd)
+    canonical_admission: CanonicalReleaseAdmission | None = None
 
     if policy.mode == "publish-only":
         status = _git_value("status", "--porcelain", cwd=root)
@@ -1005,7 +1676,15 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
 
     if policy.mode == "direct-main":
         branch = _git_value("branch", "--show-current", cwd=root)
-        if branch != policy.base_branch:
+        is_linked = _is_linked_worktree(root)
+        is_ticket_branch = _CANONICAL_TICKET_BRANCH_RE.fullmatch(branch) is not None
+        if ticket is not None or is_linked or is_ticket_branch:
+            canonical_admission = validate_canonical_release_checkout(
+                policy,
+                ticket=ticket,
+                cwd=cwd if cwd is not None else root,
+            )
+        elif branch != policy.base_branch:
             raise click.ClickException(
                 f"direct-main requires branch '{policy.base_branch}', current branch is '{branch}'"
             )
@@ -1022,6 +1701,8 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
     validation_base: str | None = None
     if policy.mode == "pull-request":
         validation_base = _pull_request_validation_base(policy, root)
+    elif canonical_admission is not None:
+        validation_base = canonical_admission.remote_base_sha
 
     if policy.require_clean_governance:
         use_dedup = os.environ.get("GOAL_NO_PREFLIGHT_CACHE") != "1"
@@ -1043,7 +1724,7 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
                 gate_key = None
 
         if gate_key is not None and gate_key in _DELIVERY_GATE_CACHE:
-            return
+            return canonical_admission
 
         if validation_base is not None:
             _governance_gate(root, base=validation_base)
@@ -1052,6 +1733,8 @@ def validate_delivery_ready(policy: DeliveryPolicy, *, cwd: Path | None = None) 
 
         if gate_key is not None:
             _DELIVERY_GATE_CACHE.add(gate_key)
+
+    return canonical_admission
 
 
 def _audit_path(root: Path) -> Path:

@@ -560,6 +560,35 @@ def _resume_pending_pull_request(
         click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
 
 
+def _remote_release_tag_commit_sha(remote: str, tag_name: str) -> str | None:
+    """Resolve the remote commit SHA for a release tag without mutating refs."""
+    result = run_git(
+        "ls-remote",
+        "--tags",
+        remote,
+        f"refs/tags/{tag_name}",
+        f"refs/tags/{tag_name}^{{}}",
+    )
+    if getattr(result, "returncode", 1) != 0:
+        detail = (getattr(result, "stderr", "") or "remote tag lookup failed").strip()
+        raise click.ClickException(
+            f"canonical direct-main release could not inspect remote tags on {remote}: {detail}"
+        )
+    stdout = getattr(result, "stdout", "") or ""
+    direct_sha: str | None = None
+    peeled_sha: str | None = None
+    for line in stdout.splitlines():
+        parts = line.split()
+        if len(parts) != 2:
+            continue
+        sha, ref = parts
+        if ref == f"refs/tags/{tag_name}^{{}}":
+            peeled_sha = sha
+        elif ref == f"refs/tags/{tag_name}":
+            direct_sha = sha
+    return peeled_sha or direct_sha
+
+
 def _push_completion_release_tag(delivery: Any, new_version: str) -> bool:
     """Create and push the annotated release tag after a completed publish.
 
@@ -728,12 +757,14 @@ def execute_push_workflow(
     force_publish = explicit_force_publish or all_flags
 
     from goal.governance.delivery import (
+        CanonicalReleaseAdmission,
         authorized_push,
         deliver_pull_request,
         pending_pull_request_delivery,
         record_delivery_event,
         resolve_pull_request_ticket,
         resolve_delivery_policy,
+        validate_canonical_release_checkout,
         validate_delivery_ready,
         validate_legacy_governance,
     )
@@ -743,6 +774,7 @@ def execute_push_workflow(
         ctx_obj.get("delivery_mode"),
         all_flags=bool(ctx_obj.get("all_flags", False)),
     )
+    canonical_release: CanonicalReleaseAdmission | None = None
     if delivery is not None:
         if delivery.mode == "publish-only" and (
             no_publish or ctx_obj.get("no_publish", False)
@@ -752,13 +784,30 @@ def execute_push_workflow(
             ticket = resolve_pull_request_ticket(delivery, ticket)
         preflight_start = time.time()
         try:
-            validate_delivery_ready(delivery)
+            if delivery.mode == "direct-main" and ticket is not None:
+                maybe_admission = validate_delivery_ready(delivery, ticket=ticket)
+            else:
+                maybe_admission = validate_delivery_ready(delivery)
+            if isinstance(maybe_admission, CanonicalReleaseAdmission):
+                canonical_release = maybe_admission
         finally:
             ctx_obj["_preflight_time"] = (
                 ctx_obj.get("_preflight_time", 0.0) + (time.time() - preflight_start)
             )
             ctx_obj["_elapsed_time"] = time.time() - start_time
         ctx_obj["delivery_mode"] = delivery.mode
+        if canonical_release is not None:
+            ctx_obj["_suppress_goal_owned_cost_badge"] = True
+            record_delivery_event(
+                delivery,
+                "release-preflight",
+                detail=(
+                    f"ticket={canonical_release.ticket} "
+                    f"lease={canonical_release.lease_id} "
+                    f"receipt={canonical_release.merge_receipt_ref}"
+                ),
+                head=canonical_release.head_sha,
+            )
     else:
         preflight_start = time.time()
         try:
@@ -905,13 +954,17 @@ def execute_push_workflow(
         project_types,
         dry_run,
         yes,
-        delivery.mode if delivery is not None else None,
+        "publish-only"
+        if canonical_release is not None
+        else (delivery.mode if delivery is not None else None),
     )
 
     if ctx_obj.get("upgrade_deps"):
         refresh_test_dependencies(project_types, yes=yes, dry_run=dry_run)
 
-    _require_publish_bootstrap_read_only(delivery)
+    _require_publish_bootstrap_read_only(
+        delivery, canonical_release=canonical_release is not None
+    )
 
     # Handle TODO update via prefact
     ctx_obj["todo"] = todo
@@ -939,8 +992,17 @@ def execute_push_workflow(
 
     files = get_staged_files()
     has_staged_files = bool(files and files != [""])
+    if canonical_release is not None:
+        if has_staged_files or get_working_tree_files():
+            raise click.ClickException(
+                "canonical direct-main release requires a clean release worktree; "
+                "source changes must land via pull-request before release publication"
+            )
+        force_publish = True
+        ctx_obj["force_publish"] = True
     clean_force_publish = bool(
-        force_publish and not no_publish and not has_staged_files
+        (force_publish and not no_publish and not has_staged_files)
+        or (canonical_release is not None and not has_staged_files)
     )
     if not clean_force_publish and _handle_no_files(
         ctx_obj, project_types, dry_run, markdown, files
@@ -1140,6 +1202,36 @@ def execute_push_workflow(
         commit_body,
     )
 
+    if canonical_release is not None:
+        revalidated = validate_canonical_release_checkout(
+            delivery, ticket=canonical_release.ticket
+        )
+        if revalidated != canonical_release:
+            raise click.ClickException(
+                "canonical direct-main release state changed during test execution"
+            )
+        if not no_tag:
+            expected_tag = f"v{new_version}"
+            remote_tag_sha = _remote_release_tag_commit_sha(
+                delivery.remote, expected_tag
+            )
+            if remote_tag_sha is not None:
+                if not existing_release_repair:
+                    raise click.ClickException(
+                        f"canonical direct-main release tag {expected_tag} already exists on {delivery.remote}"
+                    )
+                if remote_tag_sha != canonical_release.head_sha:
+                    raise click.ClickException(
+                        f"canonical direct-main release repair tag {expected_tag} on {delivery.remote} "
+                        f"points to {remote_tag_sha[:12]}, expected {canonical_release.head_sha[:12]}"
+                    )
+        record_delivery_event(
+            delivery,
+            "release-tests-qualified",
+            detail=f"ticket={canonical_release.ticket} version=v{new_version}",
+            head=canonical_release.head_sha,
+        )
+
     if clean_force_publish:
         # This path intentionally creates no commit, so it must remain clean.
         ctx_obj["added_slow_test_tickets"] = []
@@ -1307,17 +1399,70 @@ def execute_push_workflow(
             )
         )
     elif delivery.mode == "direct-main":
-        with authorized_push(delivery):
-            pushed = push_to_remote(
-                delivery.base_branch,
-                tag_name,
-                no_tag,
-                ctx_obj["yes"],
-                remote=delivery.remote,
+        if canonical_release is not None:
+            revalidated = validate_canonical_release_checkout(
+                delivery, ticket=canonical_release.ticket
             )
-        record_delivery_event(delivery, "pushed" if pushed else "push-failed")
-        if not pushed:
-            raise click.ClickException("governed direct-main push failed")
+            if revalidated != canonical_release:
+                raise click.ClickException(
+                    "canonical direct-main release state changed before tag publication"
+                )
+            pushed = True
+            if tag_name and not effective_no_tag:
+                remote_tag_sha = _remote_release_tag_commit_sha(
+                    delivery.remote, tag_name
+                )
+                if remote_tag_sha is not None:
+                    if (
+                        existing_release_repair
+                        and remote_tag_sha == canonical_release.head_sha
+                    ):
+                        record_delivery_event(
+                            delivery,
+                            "release-tag-reused",
+                            detail=f"ticket={canonical_release.ticket} tag={tag_name}",
+                            head=canonical_release.head_sha,
+                        )
+                    else:
+                        raise click.ClickException(
+                            f"canonical direct-main release tag {tag_name} already exists on {delivery.remote}"
+                        )
+                else:
+                    with authorized_push(delivery):
+                        push_result = run_git(
+                            "push",
+                            delivery.remote,
+                            f"refs/tags/{tag_name}",
+                            capture=True,
+                        )
+                    pushed = getattr(push_result, "returncode", 1) == 0
+                    if pushed:
+                        record_delivery_event(
+                            delivery,
+                            "release-tag",
+                            detail=f"ticket={canonical_release.ticket} tag={tag_name}",
+                            head=canonical_release.head_sha,
+                        )
+            record_delivery_event(
+                delivery,
+                "pushed" if pushed else "push-failed",
+                detail=f"ticket={canonical_release.ticket} tag={tag_name or 'none'}",
+                head=canonical_release.head_sha,
+            )
+            if not pushed:
+                raise click.ClickException("governed direct-main push failed")
+        else:
+            with authorized_push(delivery):
+                pushed = push_to_remote(
+                    delivery.base_branch,
+                    tag_name,
+                    no_tag,
+                    ctx_obj["yes"],
+                    remote=delivery.remote,
+                )
+            record_delivery_event(delivery, "pushed" if pushed else "push-failed")
+            if not pushed:
+                raise click.ClickException("governed direct-main push failed")
     else:
         if ctx_obj.get("_publish_completion"):
             # The completion already finished the cycle on the synchronized
@@ -1472,9 +1617,13 @@ def _bootstrap_projects_for_delivery(
                 os.environ[marker] = value
 
 
-def _require_publish_bootstrap_read_only(delivery: Any) -> None:
-    """Abort before staging when publish-only bootstrap changed the source tree."""
-    if delivery is None or delivery.mode != "publish-only":
+def _require_publish_bootstrap_read_only(
+    delivery: Any, *, canonical_release: bool = False
+) -> None:
+    """Abort before staging when publish-only or canonical release bootstrap changed the source tree."""
+    if delivery is None or (
+        delivery.mode != "publish-only" and not canonical_release
+    ):
         return
 
     changed = list(dict.fromkeys([*get_staged_files(), *get_working_tree_files()]))
