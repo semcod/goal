@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-218",
+  "summary": "Qualify canonical release checkout preflight and exact-head delivery",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-218/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_governance_delivery.py",
+    "tests/test_release_only_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ef52387dcc69687aca65e06fb5ed5372d0104ae4",
+    "targetBranch": "main",
+    "outcome": "Qualify direct-main release preflight and exact-head delivery for canonical Worktrees v5 release checkouts (.worktrees/ticket-NNN--slug) with explicit --ticket, active change lease, exact authoritative remote base SHA, and independent terminal merge receipt, revalidating after tests and pushing only the release tag without touching primary checkouts or moving main.",
+    "nonGoals": [
+      "Do not allow source commits or branch movement on main during canonical release publication.",
+      "Do not modify dependency manifests or lockfiles."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add CanonicalReleaseAdmission and validate_canonical_release_checkout in goal/governance/delivery.py to verify Worktrees v5 layout, relative gitlink, symlink-free path components, non-duplicate worktree registration, clean working tree, exact remote base SHA, active wellmanifest.change-lease/v1 lease, and independent terminal merge receipt; integrate preflight, post-test revalidation, and tag-only remote push into execute_push_workflow in goal/push/core.py.",
+      "components": [
+        {
+          "name": "governance-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "tests/test_governance_delivery.py"
+          ]
+        },
+        {
+          "name": "push-workflow",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_release_only_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the ticket-218 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_governance_delivery.py tests/test_release_only_delivery.py",
+          "./project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "receipt:goal218/canonical-release-admission"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_governance_delivery.py",
+          "./project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "receipt:goal218/canonical-release-fail-closed"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_release_only_delivery.py tests/test_delivery_integrity.py",
+          "./project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "receipt:goal218/exact-head-tag-only-delivery"
+      }
+    ]
+  }
+}
