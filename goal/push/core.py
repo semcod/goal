@@ -554,6 +554,10 @@ def _resume_pending_pull_request(
         head=head,
     )
     click.echo(click.style(f"Pull request: {pr_url}", fg="green"))
+    if "_start_time" in ctx_obj:
+        elapsed = time.time() - ctx_obj["_start_time"]
+        ctx_obj["_elapsed_time"] = elapsed
+        click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
 
 
 def _push_completion_release_tag(delivery: Any, new_version: str) -> bool:
@@ -648,6 +652,10 @@ def _run_test_stage_or_exit(
             os.environ["GOAL_SKIP_COSTS_BADGE"] = goal_skip_costs_badge
 
     if test_exit_code != 0 and ctx_obj["yes"]:
+        if "_start_time" in ctx_obj:
+            elapsed = time.time() - ctx_obj["_start_time"]
+            ctx_obj["_elapsed_time"] = elapsed
+            click.echo(click.style(f"\n⏱️  Total time: {elapsed:.1f}s", fg="cyan"))
         click.echo(
             click.style("Aborting workflow because tests failed.", fg="red", bold=True)
         )
@@ -678,6 +686,10 @@ def execute_push_workflow(
     koru: bool = False,
 ) -> None:
     """Execute the complete push workflow."""
+
+    start_time = time.time()
+    ctx_obj["_start_time"] = start_time
+    ctx_obj["_preflight_time"] = 0.0
 
     # Keep the invariant at the workflow boundary as well as in the Click
     # context. This covers library callers and compatibility shims that pass
@@ -736,13 +748,31 @@ def execute_push_workflow(
             no_publish or ctx_obj.get("no_publish", False)
         ):
             raise click.ClickException("publish-only conflicts with --no-publish")
-        validate_delivery_ready(delivery)
+        if delivery.mode == "pull-request" and ticket is not None:
+            ticket = resolve_pull_request_ticket(delivery, ticket)
+        preflight_start = time.time()
+        try:
+            validate_delivery_ready(delivery)
+        finally:
+            ctx_obj["_preflight_time"] = (
+                ctx_obj.get("_preflight_time", 0.0) + (time.time() - preflight_start)
+            )
+            ctx_obj["_elapsed_time"] = time.time() - start_time
         ctx_obj["delivery_mode"] = delivery.mode
     else:
-        no_change = validate_legacy_governance(
-            check_no_change=all_flags
-            and not any((ticket, force, explicit_force_publish, ctx_obj.get("version")))
-        )
+        preflight_start = time.time()
+        try:
+            no_change = validate_legacy_governance(
+                check_no_change=all_flags
+                and not any(
+                    (ticket, force, explicit_force_publish, ctx_obj.get("version"))
+                )
+            )
+        finally:
+            ctx_obj["_preflight_time"] = (
+                ctx_obj.get("_preflight_time", 0.0) + (time.time() - preflight_start)
+            )
+            ctx_obj["_elapsed_time"] = time.time() - start_time
         if no_change is True:
             if all_flags and _has_committed_unreleased_sources():
                 click.echo(
@@ -754,8 +784,6 @@ def execute_push_workflow(
                 return
 
     _validate_toml_or_exit(dry_run)
-
-    start_time = time.time()
 
     _initialize_context(ctx_obj, bump, message, yes, markdown)
 
@@ -772,7 +800,8 @@ def execute_push_workflow(
         )
 
     if delivery is not None:
-        ticket = resolve_pull_request_ticket(delivery, ticket)
+        if ticket is None:
+            ticket = resolve_pull_request_ticket(delivery, ticket)
         if delivery.mode == "pull-request" and ticket is None:
             disagreeing = _managed_version_values()
             if len(disagreeing) > 1:
@@ -896,7 +925,14 @@ def execute_push_workflow(
         sys.exit(2)
 
     if delivery is not None and delivery.mode == "pull-request":
-        validate_delivery_ready(delivery)
+        preflight_start = time.time()
+        try:
+            validate_delivery_ready(delivery)
+        finally:
+            ctx_obj["_preflight_time"] = (
+                ctx_obj.get("_preflight_time", 0.0) + (time.time() - preflight_start)
+            )
+            ctx_obj["_elapsed_time"] = time.time() - start_time
 
     if not dry_run:
         run_git("add", "-A")

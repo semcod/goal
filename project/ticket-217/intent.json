@@ -1,0 +1,102 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-217",
+  "summary": "Validate exact source-hub candidate governance before publication",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-217/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/governance_cmd.py",
+    "goal/governance/delivery.py",
+    "goal/push/core.py",
+    "tests/test_governance_cmd.py",
+    "tests/test_governance_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7607bf6bc6235e3bf0d213fed3f372a80b9af118",
+    "targetBranch": "main",
+    "outcome": "In the recognized source hub, validate exact candidate governance against governance/manifest.hub.json with accepted base, exact head, and CI actor before expensive source suites and before PR publication; route workspace-check to scripts/workspace_lifecycle_check.py in the source hub; reject invalid --ticket before preflight suites; include preflight duration in total workflow timing.",
+    "nonGoals": [
+      "Do not weaken source-hub suites or target repository governance gates.",
+      "Do not modify dependency manifests or lockfiles."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Prioritize source-hub detection in _governance_gate even when an incidental .governance directory exists, invoke scripts/governance_check.py with governance/manifest.hub.json and --actor ci before run_source_hub_health and deliver_pull_request, route workspace-check to scripts/workspace_lifecycle_check.py for source hubs, and validate canonical --ticket and start timing before preflight in execute_push_workflow.",
+      "components": [
+        {
+          "name": "governance-delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "goal/cli/governance_cmd.py",
+            "tests/test_governance_delivery.py",
+            "tests/test_governance_cmd.py"
+          ]
+        },
+        {
+          "name": "push-workflow",
+          "paths": [
+            "goal/push/core.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the ticket-217 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_governance_delivery.py",
+          "./project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "receipt:goal217/source-hub-candidate-gate"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_governance_cmd.py",
+          "./project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "receipt:goal217/source-hub-workspace-check"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_governance_delivery.py",
+          "./project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "receipt:goal217/preflight-ticket-and-timing"
+      }
+    ]
+  }
+}

@@ -43,6 +43,11 @@ SOURCE_HUB_FILES = (
     "governance/manifest.default.json",
     "scripts/governance_check.py",
 )
+SOURCE_HUB_MANIFEST = "governance/manifest.hub.json"
+SOURCE_HUB_STACK_PROFILES = "governance/stack-profiles.json"
+SOURCE_HUB_WORK_CLASSIFICATION = "governance/work-classification.dsl.json"
+SOURCE_HUB_WORKSPACE_CHECKER = "scripts/workspace_lifecycle_check.py"
+SOURCE_HUB_DIAGNOSTICS = "governance/diagnostics.json"
 SOURCE_HUB_WORKFLOW = ".github/workflows/ci.yml"
 SOURCE_HUB_REQUIRED_CHECKS = "scripts/check_required_checks.py"
 SOURCE_HUB_JSON_DIRECTORY = "governance"
@@ -613,6 +618,8 @@ def _safe_runbook(root: Path, raw_path: Any) -> str | None:
 def governance_diagnostic_guidance(root: Path, output: str) -> list[str]:
     """Resolve safe canonical v2 guidance for codes emitted by a validator."""
     catalog_path = root / GOVERNANCE_DIAGNOSTICS
+    if not catalog_path.is_file() and is_new_project_source_hub(root):
+        catalog_path = root / SOURCE_HUB_DIAGNOSTICS
     try:
         catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
@@ -647,22 +654,89 @@ def governance_diagnostic_guidance(root: Path, output: str) -> list[str]:
     return guidance
 
 
-def _governance_gate(root: Path, *, base: str | None = None) -> None:
+def _source_hub_candidate_gate(
+    root: Path, *, base: str, head: str | None = None
+) -> None:
+    missing = [
+        relative
+        for relative in (
+            SOURCE_HUB_MANIFEST,
+            SOURCE_HUB_STACK_PROFILES,
+            "scripts/governance_check.py",
+        )
+        if not (root / relative).is_file()
+    ]
+    if missing:
+        raise click.ClickException(
+            f"{SOURCE_HUB_DIAGNOSTIC}: missing source-hub candidate contract: "
+            + ", ".join(missing)
+        )
+    resolved_head = head or _git_value("rev-parse", "HEAD", cwd=root)
+    arguments = [
+        sys.executable,
+        str(root / "scripts" / "governance_check.py"),
+        "--root",
+        str(root),
+        "--manifest",
+        SOURCE_HUB_MANIFEST,
+        "--stack-profiles",
+        SOURCE_HUB_STACK_PROFILES,
+    ]
+    if (root / SOURCE_HUB_WORK_CLASSIFICATION).is_file():
+        arguments.extend(["--work-classification", SOURCE_HUB_WORK_CLASSIFICATION])
+    arguments.extend(
+        [
+            "--base",
+            base,
+            "--head",
+            resolved_head,
+            "--actor",
+            "ci",
+            "--format",
+            "text",
+        ]
+    )
+    result = _run(arguments, cwd=root)
+    if result.returncode != 0:
+        detail = (
+            "\n".join(
+                part.strip()
+                for part in (result.stdout, result.stderr)
+                if part.strip()
+            )
+            or "source-hub candidate governance failed"
+        )
+        from goal.governance.remediation import publish_governance_remediation
+
+        remediation = publish_governance_remediation(root, detail)
+        if remediation.detail and remediation.proposal_path is not None:
+            detail += f"\nGoal remediation: {remediation.detail}"
+        guidance = governance_diagnostic_guidance(root, detail)
+        if guidance:
+            detail += "\n" + "\n".join(guidance)
+        raise click.ClickException(detail)
+
+
+def _governance_gate(
+    root: Path, *, base: str | None = None, head: str | None = None
+) -> None:
+    if is_new_project_source_hub(root):
+        if base is not None:
+            _source_hub_candidate_gate(root, base=base, head=head)
+        result = run_source_hub_health(root)
+        if result.returncode == 0:
+            return
+        detail = (
+            "\n".join(
+                part.strip()
+                for part in (result.stdout, result.stderr)
+                if part.strip()
+            )
+            or "source-hub health failed"
+        )
+        raise click.ClickException(detail)
     missing = missing_governance_package_files(root)
     if missing:
-        if is_new_project_source_hub(root):
-            result = run_source_hub_health(root)
-            if result.returncode == 0:
-                return
-            detail = (
-                "\n".join(
-                    part.strip()
-                    for part in (result.stdout, result.stderr)
-                    if part.strip()
-                )
-                or "source-hub health failed"
-            )
-            raise click.ClickException(detail)
         raise click.ClickException(
             "GOV-MANIFEST-001: governance delivery requires a complete adopted "
             "package; missing: "
@@ -1080,8 +1154,15 @@ def resolve_pull_request_ticket(
     cwd: Path | None = None,
 ) -> str | None:
     """Resolve one governed ticket before pull-request workflow mutations."""
-    if policy.mode != "pull-request" or ticket:
+    if policy.mode != "pull-request":
         return ticket
+    if ticket is not None:
+        cleaned = str(ticket).strip()
+        if re.fullmatch(r"ticket-[0-9]{3,}", cleaned) is None:
+            raise click.ClickException(
+                "pull-request delivery requires canonical `--ticket ticket-NNN`"
+            )
+        return cleaned
 
     root = _repository_root(cwd)
     active: list[str] = []
@@ -1544,6 +1625,10 @@ def deliver_pull_request(
 ) -> tuple[str, str]:
     """Push a controlled head branch and create or reuse its pull request."""
     root = _repository_root(cwd)
+    if policy.require_clean_governance and is_new_project_source_hub(root):
+        validation_base = _pull_request_validation_base(policy, root)
+        head_sha = _git_value("rev-parse", "HEAD", cwd=root)
+        _source_hub_candidate_gate(root, base=validation_base, head=head_sha)
     head = _publication_head(policy, ticket, root)
     current = _git_value("branch", "--show-current", cwd=root)
     push_arguments = ["git", "push"]
