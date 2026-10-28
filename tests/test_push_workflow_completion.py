@@ -69,6 +69,9 @@ def _run_workflow_until_project_detection(monkeypatch, ctx, recorded, sources_pe
         lambda policy, ticket, **kwargs: None,
     )
     monkeypatch.setattr(
+        push_core, "_managed_version_values", lambda: ["2.2.5"]
+    )
+    monkeypatch.setattr(
         push_core,
         "_has_committed_unreleased_sources",
         lambda: sources_pending,
@@ -238,6 +241,45 @@ def test_is_governed_target_helper_stays_manifest_bound(tmp_path, monkeypatch):
     assert _is_governed_target() is True
 
 
+def test_disagreeing_managed_versions_are_named_explicitly(monkeypatch):
+    """A mid-release projection split gets its own actionable diagnostic."""
+    import click
+
+    ctx = _workflow_ctx()
+    monkeypatch.setattr(push_core, "_validate_toml_or_exit", lambda dry_run: None)
+    monkeypatch.setattr(
+        "goal.governance.delivery.resolve_delivery_policy",
+        lambda *a, **k: _pull_request_policy(),
+    )
+    monkeypatch.setattr(
+        "goal.governance.delivery.validate_delivery_ready", lambda delivery: None
+    )
+    monkeypatch.setattr(
+        "goal.governance.delivery.resolve_pull_request_ticket",
+        lambda policy, ticket, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        push_core, "_managed_version_values", lambda: ["2.2.4", "2.2.5"]
+    )
+
+    with pytest.raises(click.ClickException, match="Managed version sources disagree"):
+        push_core.execute_push_workflow(
+            ctx,
+            bump=None,
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket=None,
+            abstraction=None,
+            todo=False,
+        )
+
+
 def test_unreleased_sources_without_prebumped_version_name_the_route(monkeypatch):
     """Unreleased work after the last tag is not a pending publish completion."""
     import click
@@ -259,6 +301,9 @@ def test_unreleased_sources_without_prebumped_version_name_the_route(monkeypatch
     monkeypatch.setattr(
         "goal.governance.delivery.resolve_pull_request_ticket",
         lambda policy, ticket, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        push_core, "_managed_version_values", lambda: ["2.2.5"]
     )
     monkeypatch.setattr(
         push_core, "_has_committed_unreleased_sources", lambda: True

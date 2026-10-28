@@ -1110,3 +1110,704 @@ def test_ordinary_pr_query_errors_do_not_trigger_rest_effects(tmp_path, monkeypa
     with pytest.raises(click.ClickException, match="could not query"):
         delivery._query_open_pull_request(_pull_request_policy(), "ticket/180-rest-recovery", root)
     assert not any(call[:2] == ["gh", "api"] for call in calls)
+
+
+def _source_hub_repository(tmp_path: Path, *, with_incidental_governance: bool = False) -> Path:
+    root = _publish_repository(tmp_path)
+    for relative in (
+        *delivery.SOURCE_HUB_FILES,
+        delivery.SOURCE_HUB_MANIFEST,
+        delivery.SOURCE_HUB_STACK_PROFILES,
+        delivery.SOURCE_HUB_WORK_CLASSIFICATION,
+    ):
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+    if with_incidental_governance:
+        for relative in delivery.GOVERNANCE_PACKAGE_FILES.values():
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{}\n", encoding="utf-8")
+        gate = root / "project" / "governance-check.sh"
+        gate.parent.mkdir(parents=True, exist_ok=True)
+        gate.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+        gate.chmod(0o755)
+    _git(root, "add", ".")
+    _git(root, "commit", "--quiet", "-m", "seed source hub")
+    _git(root, "push", "--quiet", "origin", "main")
+    return root
+
+
+@pytest.mark.parametrize("incidental_governance", [False, True])
+def test_source_hub_candidate_gate_runs_before_suites_with_or_without_incidental_governance(
+    tmp_path, monkeypatch, incidental_governance
+):
+    root = _source_hub_repository(tmp_path, with_incidental_governance=incidental_governance)
+    base_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "switch", "-c", "ticket/230-candidate-scope")
+    head_sha = _commit_ticket_change(root, "[ticket-230] validate source hub candidate")
+
+    order = []
+    original_run = delivery._run
+
+    def fake_run(arguments, *, cwd=None):
+        if len(arguments) >= 2 and str(arguments[1]).endswith("scripts/governance_check.py"):
+            order.append(("candidate_gate", arguments))
+            return subprocess.CompletedProcess(arguments, 0, "GOV-PASS\n", "")
+        if len(arguments) >= 1 and str(arguments[0]).endswith("governance-check.sh"):
+            pytest.fail("target wrapper must never run in source hub")
+        return original_run(arguments, cwd=cwd)
+
+    monkeypatch.setattr(delivery, "_run", fake_run)
+    monkeypatch.setattr(
+        delivery,
+        "run_source_hub_health",
+        lambda candidate: (
+            order.append(("health_suites", candidate))
+            or delivery.SourceHubHealthResult(0, "GOV-HUB-PASS\n", "", 3)
+        ),
+    )
+
+    delivery._governance_gate(root, base=base_sha)
+
+    assert [step for step, _ in order] == ["candidate_gate", "health_suites"]
+    gate_args = order[0][1]
+    assert gate_args[gate_args.index("--manifest") + 1] == delivery.SOURCE_HUB_MANIFEST
+    assert gate_args[gate_args.index("--stack-profiles") + 1] == delivery.SOURCE_HUB_STACK_PROFILES
+    assert gate_args[gate_args.index("--work-classification") + 1] == delivery.SOURCE_HUB_WORK_CLASSIFICATION
+    assert gate_args[gate_args.index("--base") + 1] == base_sha
+    assert gate_args[gate_args.index("--head") + 1] == head_sha
+    assert gate_args[gate_args.index("--actor") + 1] == "ci"
+
+
+def test_source_hub_candidate_gate_rejects_over_budget_candidate_before_suites(
+    tmp_path, monkeypatch
+):
+    root = _source_hub_repository(tmp_path, with_incidental_governance=True)
+    base_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "switch", "-c", "ticket/339-over-budget")
+    _commit_ticket_change(root, "[ticket-339] over budget candidate")
+
+    original_run = delivery._run
+
+    def fake_run(arguments, *, cwd=None):
+        if len(arguments) >= 2 and str(arguments[1]).endswith("scripts/governance_check.py"):
+            return subprocess.CompletedProcess(
+                arguments,
+                1,
+                "GOV-DELIVERY-001 ERROR: estimatedMinutes=40 exceeds maxActiveMinutes=30\n",
+                "",
+            )
+        return original_run(arguments, cwd=cwd)
+
+    monkeypatch.setattr(delivery, "_run", fake_run)
+    monkeypatch.setattr(
+        delivery,
+        "run_source_hub_health",
+        lambda _candidate: pytest.fail("expensive source-hub suites must not run after candidate failure"),
+    )
+
+    with pytest.raises(click.ClickException, match="GOV-DELIVERY-001"):
+        delivery._governance_gate(root, base=base_sha)
+
+
+@pytest.mark.parametrize(
+    "missing_rel",
+    [delivery.SOURCE_HUB_MANIFEST, delivery.SOURCE_HUB_STACK_PROFILES],
+)
+def test_source_hub_candidate_gate_fails_closed_when_source_contract_missing(
+    tmp_path, monkeypatch, missing_rel
+):
+    root = _source_hub_repository(tmp_path)
+    base_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    (root / missing_rel).unlink()
+    monkeypatch.setattr(
+        delivery,
+        "run_source_hub_health",
+        lambda _candidate: pytest.fail("suites must not run when candidate contract is missing"),
+    )
+
+    with pytest.raises(click.ClickException, match=f"missing source-hub candidate contract.*{missing_rel}"):
+        delivery._governance_gate(root, base=base_sha)
+
+
+def test_deliver_pull_request_validates_exact_source_hub_head_before_push(
+    tmp_path, monkeypatch
+):
+    root = _source_hub_repository(tmp_path)
+    base_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "switch", "-c", "ticket/230-exact-head")
+    head_sha = _commit_ticket_change(root, "[ticket-230] validate exact head before push")
+
+    policy = replace(_pull_request_policy(), require_clean_governance=True)
+    events = []
+    original_run = delivery._run
+
+    def fake_run(arguments, *, cwd=None):
+        if len(arguments) >= 2 and str(arguments[1]).endswith("scripts/governance_check.py"):
+            events.append(("candidate_gate", arguments))
+            return subprocess.CompletedProcess(arguments, 0, "GOV-PASS\n", "")
+        if arguments[:2] == ["git", "push"]:
+            events.append(("git_push", arguments))
+            return subprocess.CompletedProcess(arguments, 0, "", "")
+        if arguments[:3] == ["gh", "pr", "list"]:
+            payload = (
+                [{"url": "https://github.com/wellmanifest/new-project/pull/354", "headRefOid": head_sha}]
+                if any(kind == "pr_create" for kind, _ in events)
+                else []
+            )
+            return subprocess.CompletedProcess(arguments, 0, json.dumps(payload), "")
+        if arguments[:3] == ["gh", "pr", "create"]:
+            events.append(("pr_create", arguments))
+            return subprocess.CompletedProcess(
+                arguments, 0, "https://github.com/wellmanifest/new-project/pull/354\n", ""
+            )
+        return original_run(arguments, cwd=cwd)
+
+    monkeypatch.setattr(delivery, "_run", fake_run)
+
+    branch, url = delivery.deliver_pull_request(
+        policy,
+        ticket="ticket-230",
+        title="[ticket-230] validate exact head before push",
+        cwd=root,
+    )
+
+    assert branch == "ticket/230-exact-head"
+    assert url.endswith("/354")
+    assert [kind for kind, _ in events] == ["candidate_gate", "git_push", "pr_create"]
+    gate_args = events[0][1]
+    assert gate_args[gate_args.index("--base") + 1] == base_sha
+    assert gate_args[gate_args.index("--head") + 1] == head_sha
+
+
+def test_execute_push_workflow_rejects_invalid_ticket_before_preflight_and_records_timing(
+    monkeypatch,
+):
+    from unittest.mock import patch
+    from goal.push import core
+
+    policy = _pull_request_policy()
+    ctx_obj = {
+        "yes": True,
+        "markdown": False,
+        "config": {},
+        "user_config": {},
+        "delivery_mode": "pull-request",
+        "all_flags": True,
+    }
+
+    with (
+        patch("goal.governance.delivery.resolve_delivery_policy", return_value=policy),
+        patch(
+            "goal.governance.delivery.validate_delivery_ready",
+            side_effect=AssertionError("preflight must not run for invalid --ticket"),
+        ),
+        pytest.raises(click.ClickException, match="canonical `--ticket ticket-NNN`"),
+    ):
+        core.execute_push_workflow(
+            ctx_obj=ctx_obj,
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket="230",
+            abstraction=None,
+            todo=False,
+        )
+
+
+def test_execute_push_workflow_records_preflight_and_total_time_on_success_and_failure(
+    monkeypatch,
+):
+    from unittest.mock import patch
+    from goal.push import core
+
+    policy = _pull_request_policy()
+    clock = [100.0]
+
+    def fake_time():
+        return clock[0]
+
+    monkeypatch.setattr(core.time, "time", fake_time)
+
+    # 1. Failure during preflight records both _preflight_time and _elapsed_time
+    fail_ctx = {
+        "yes": True,
+        "markdown": False,
+        "config": {},
+        "user_config": {},
+        "delivery_mode": "pull-request",
+        "all_flags": True,
+    }
+
+    def fail_preflight(_delivery):
+        clock[0] += 185.0
+        raise click.ClickException("GOV-DELIVERY-001: over budget")
+
+    with (
+        patch("goal.governance.delivery.resolve_delivery_policy", return_value=policy),
+        patch("goal.governance.delivery.validate_delivery_ready", side_effect=fail_preflight),
+        pytest.raises(click.ClickException, match="GOV-DELIVERY-001"),
+    ):
+        core.execute_push_workflow(
+            ctx_obj=fail_ctx,
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket="ticket-230",
+            abstraction=None,
+            todo=False,
+        )
+
+    assert fail_ctx["_preflight_time"] == pytest.approx(185.0)
+    assert fail_ctx["_elapsed_time"] == pytest.approx(185.0)
+
+    # 2. Committed-candidate resume includes preflight duration in total elapsed time
+    clock[0] = 500.0
+    ok_ctx = {
+        "yes": True,
+        "markdown": False,
+        "config": {},
+        "user_config": {},
+        "delivery_mode": "pull-request",
+        "all_flags": True,
+    }
+    candidate = delivery.PendingPullRequestDelivery(
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        title="[ticket-230] fix(delivery): include preflight timing",
+        files=("goal/push/core.py",),
+    )
+
+    def slow_preflight(_delivery):
+        clock[0] += 180.0
+
+    def fast_tests(*_args, **_kwargs):
+        clock[0] += 6.0
+        return ("Tests passed", 0)
+
+    with (
+        patch("goal.governance.delivery.resolve_delivery_policy", return_value=policy),
+        patch("goal.governance.delivery.validate_delivery_ready", side_effect=slow_preflight),
+        patch(
+            "goal.governance.delivery.pending_pull_request_delivery",
+            side_effect=[candidate, candidate],
+        ),
+        patch(
+            "goal.governance.delivery.deliver_pull_request",
+            return_value=("ticket/230-timing", "https://example.test/pr/354"),
+        ),
+        patch("goal.governance.delivery.record_delivery_event"),
+        patch("goal.push.core._validate_toml_or_exit"),
+        patch("goal.push.core._detect_project_types", return_value=["python"]),
+        patch("goal.cli.version.get_current_version", return_value="2.2.4"),
+        patch("goal.push.core.run_test_stage", side_effect=fast_tests),
+    ):
+        core.execute_push_workflow(
+            ctx_obj=ok_ctx,
+            bump="patch",
+            no_tag=False,
+            no_changelog=False,
+            no_version_sync=False,
+            message=None,
+            dry_run=False,
+            yes=True,
+            markdown=False,
+            split=False,
+            ticket="ticket-230",
+            abstraction=None,
+            todo=False,
+        )
+
+    assert ok_ctx["_preflight_time"] == pytest.approx(180.0)
+    assert ok_ctx["_elapsed_time"] == pytest.approx(186.0)
+
+
+def _canonical_release_policy():
+    return delivery.resolve_delivery_policy(
+        _config(
+            default_mode="direct-main",
+            allowed_modes=["direct-main", "pull-request"],
+            require_clean_governance=False,
+        ),
+        "direct-main",
+        all_flags=True,
+    )
+
+
+def _write_canonical_lease(
+    primary: Path,
+    *,
+    ticket: str = "ticket-001",
+    slug: str = "release",
+    repository_ref: str = "github:semcod/goal",
+    target_branch: str = "main",
+    branch_ref: str | None = None,
+    phase: str = "approved",
+    head_sha: str | None = None,
+    expires_at: str = "2099-01-01T00:00:00Z",
+    fencing_seq: int = 1,
+    revision: int = 1,
+) -> Path:
+    worktree_id = f"{ticket}--{slug}"
+    ticket_num = ticket.removeprefix("ticket-")
+    resolved_branch = branch_ref or f"refs/heads/ticket/{ticket_num}-{slug}"
+    frozen = phase in {"publication_frozen", "dispatching", "approved"}
+    lease_dir = primary / ".subactor" / "leases"
+    lease_dir.mkdir(parents=True, exist_ok=True)
+    lease_path = lease_dir / f"{worktree_id}.json"
+    payload = {
+        "schema": "wellmanifest.change-lease/v1",
+        "leaseId": f"lease:semcod/goal:{worktree_id}",
+        "repositoryRef": repository_ref,
+        "targetBranch": target_branch,
+        "ticketId": ticket,
+        "workstream": "application",
+        "scopeHash": "a" * 64,
+        "branchRef": resolved_branch,
+        "worktreeId": worktree_id,
+        "ownerActor": "agent:test",
+        "ownerSession": "session:test",
+        "phase": phase,
+        "leaseRevision": revision,
+        "fencingToken": fencing_seq,
+        "issuedAt": "2026-10-28T10:00:00Z",
+        "expiresAt": expires_at,
+        "heartbeatAt": "2026-10-28T10:05:00Z",
+        "headSha": head_sha,
+        "pullRequest": 10,
+        "validatorRunId": "run-1",
+        "publicationFrozen": frozen,
+        "planHash": "b" * 64,
+        "previousReceiptRef": None,
+        "eventSequence": revision,
+    }
+    lease_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return lease_path
+
+
+def _write_terminal_receipts(
+    primary: Path,
+    *,
+    repository_ref: str,
+    terminal_sha: str,
+    head_sha: str | None = None,
+    ticket: str = "ticket-001",
+    outcome: str = "merged",
+    target_branch: str = "main",
+) -> Path:
+    registry_path = primary / ".git" / "new-project" / "terminal-receipts.json"
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema": "new-project.terminal-receipt-registry/v1",
+        "repositoryRef": repository_ref,
+        "receipts": [
+            {
+                "receiptRef": f"receipt:github-pr:semcod/goal:{ticket}",
+                "ticket": ticket,
+                "outcome": outcome,
+                "headSha": head_sha or terminal_sha,
+                "terminalSha": terminal_sha,
+                "targetBranch": target_branch,
+                "occurredAt": "2026-10-28T10:00:00Z",
+            }
+        ],
+    }
+    registry_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return registry_path
+
+
+def _canonical_release_fixture(tmp_path: Path):
+    remote = tmp_path / "remotes" / "semcod" / "goal.git"
+    remote.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["git", "init", "--bare", "--quiet", str(remote)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    primary = tmp_path / "goal"
+    primary.mkdir()
+    _git(primary, "init", "--quiet", "-b", "main")
+    _git(primary, "config", "user.email", "goal-delivery@example.invalid")
+    _git(primary, "config", "user.name", "goal-delivery-test")
+    (primary / ".gitignore").write_text("/.worktrees/\n/.subactor/\n", encoding="utf-8")
+    (primary / "README.md").write_text("release candidate\n", encoding="utf-8")
+    _git(primary, "add", ".gitignore", "README.md")
+    _git(primary, "commit", "--quiet", "-m", "initial release candidate")
+    _git(primary, "remote", "add", "origin", str(remote))
+    _git(primary, "push", "--quiet", "-u", "origin", "main")
+    head_sha = _git(primary, "rev-parse", "HEAD").stdout.strip()
+
+    worktree = primary / ".worktrees" / "ticket-001--release"
+    _git(
+        primary,
+        "worktree",
+        "add",
+        "--relative-paths",
+        "-b",
+        "ticket/001-release",
+        str(worktree),
+        "origin/main",
+    )
+    repo_ref = str(remote).removesuffix(".git").lower()
+    _write_canonical_lease(
+        primary,
+        ticket="ticket-001",
+        slug="release",
+        repository_ref="github:semcod/goal",
+        head_sha=head_sha,
+    )
+    _write_terminal_receipts(
+        primary,
+        repository_ref=repo_ref,
+        terminal_sha=head_sha,
+    )
+    return primary, worktree, remote, head_sha
+
+
+def test_canonical_release_preflight_admits_worktree_while_primary_is_dirty_on_foreign_branch(
+    tmp_path: Path,
+):
+    primary, worktree, _remote, head_sha = _canonical_release_fixture(tmp_path)
+    _git(primary, "checkout", "-b", "wip/foreign-work")
+    (primary / "README.md").write_text("dirty primary modification\n", encoding="utf-8")
+    (primary / "untracked-primary.txt").write_text("untracked\n", encoding="utf-8")
+
+    policy = _canonical_release_policy()
+    admission = delivery.validate_delivery_ready(
+        policy, cwd=worktree, ticket="ticket-001"
+    )
+
+    assert isinstance(admission, delivery.CanonicalReleaseAdmission)
+    assert admission.ticket == "ticket-001"
+    assert admission.slug == "release"
+    assert admission.worktree_id == "ticket-001--release"
+    assert admission.branch == "ticket/001-release"
+    assert admission.head_sha == head_sha
+    assert admission.remote_base_sha == head_sha
+    assert admission.merge_receipt_ref == "receipt:github-pr:semcod/goal:ticket-001"
+    assert _git(primary, "branch", "--show-current").stdout.strip() == "wip/foreign-work"
+    assert "untracked-primary.txt" in _git(primary, "status", "--porcelain").stdout
+
+
+def test_canonical_release_preflight_rejects_missing_ticket_and_primary_checkout(
+    tmp_path: Path,
+):
+    primary, worktree, _remote, _head_sha = _canonical_release_fixture(tmp_path)
+    policy = _canonical_release_policy()
+
+    with pytest.raises(
+        click.ClickException,
+        match="explicit --ticket ticket-NNN; branch label alone grants no publication authority",
+    ):
+        delivery.validate_delivery_ready(policy, cwd=worktree)
+
+    with pytest.raises(
+        click.ClickException,
+        match="requires linked worktree .worktrees/ticket-NNN--slug, not the primary checkout",
+    ):
+        delivery.validate_delivery_ready(policy, cwd=primary, ticket="ticket-001")
+
+
+def test_canonical_release_preflight_rejects_noncanonical_worktree_locations(
+    tmp_path: Path,
+):
+    primary, worktree, _remote, head_sha = _canonical_release_fixture(tmp_path)
+    policy = _canonical_release_policy()
+
+    # 1. system-temp location
+    temp_wt = tmp_path / "tmp-release-wt"
+    _git(
+        primary,
+        "worktree",
+        "add",
+        "--relative-paths",
+        "-b",
+        "ticket/002-release",
+        str(temp_wt),
+        "origin/main",
+    )
+    with pytest.raises(click.ClickException, match="classification: system-temp"):
+        delivery.validate_delivery_ready(policy, cwd=temp_wt, ticket="ticket-002")
+
+    # 2. legacy-v4 location (<primary>/worktrees/ticket-003--release)
+    legacy_v4 = primary / "worktrees" / "ticket-003--release"
+    _git(
+        primary,
+        "worktree",
+        "add",
+        "--relative-paths",
+        "-b",
+        "ticket/003-release",
+        str(legacy_v4),
+        "origin/main",
+    )
+    with pytest.raises(click.ClickException, match="classification: legacy-v4"):
+        delivery.validate_delivery_ready(policy, cwd=legacy_v4, ticket="ticket-003")
+
+    # 3. unknown location
+    unknown_wt = tmp_path / "custom-checkout"
+    _git(
+        primary,
+        "worktree",
+        "add",
+        "--relative-paths",
+        "-b",
+        "ticket/004-release",
+        str(unknown_wt),
+        "origin/main",
+    )
+    with pytest.raises(click.ClickException, match="classification: unknown"):
+        delivery.validate_delivery_ready(policy, cwd=unknown_wt, ticket="ticket-004")
+
+    # 4. symlinked checkout path
+    symlink_wt = tmp_path / "symlink-worktree"
+    symlink_wt.symlink_to(worktree)
+    with pytest.raises(click.ClickException, match="refuses symlink component"):
+        delivery.validate_delivery_ready(policy, cwd=symlink_wt, ticket="ticket-001")
+
+    # 5. duplicate-delivery registration for ticket-001
+    dup_wt = primary / ".worktrees" / "ticket-001--release-dup"
+    _git(
+        primary,
+        "worktree",
+        "add",
+        "--relative-paths",
+        "-b",
+        "ticket/001-release-dup",
+        str(dup_wt),
+        "origin/main",
+    )
+    _write_canonical_lease(
+        primary,
+        ticket="ticket-001",
+        slug="release",
+        repository_ref="github:semcod/goal",
+        head_sha=head_sha,
+    )
+    with pytest.raises(click.ClickException, match="duplicate-delivery"):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+
+def test_canonical_release_preflight_rejects_dirty_worktree_and_diverged_remote_base(
+    tmp_path: Path,
+):
+    primary, worktree, _remote, _head_sha = _canonical_release_fixture(tmp_path)
+    policy = _canonical_release_policy()
+
+    dirty_file = worktree / "dirty.txt"
+    dirty_file.write_text("dirty\n", encoding="utf-8")
+    with pytest.raises(click.ClickException, match="clean release worktree"):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+    dirty_file.unlink()
+
+    (primary / "README.md").write_text("new commit on main\n", encoding="utf-8")
+    _git(primary, "commit", "--quiet", "-am", "advance main")
+    _git(primary, "push", "--quiet", "origin", "main")
+    _git(worktree, "fetch", "--quiet", "origin", "main")
+    with pytest.raises(
+        click.ClickException, match="requires HEAD to equal authoritative origin/main"
+    ):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+
+def test_canonical_release_preflight_rejects_invalid_lease_and_receipt(
+    tmp_path: Path,
+):
+    primary, worktree, remote, head_sha = _canonical_release_fixture(tmp_path)
+    policy = _canonical_release_policy()
+    repo_ref = str(remote).removesuffix(".git").lower()
+    lease_path = primary / ".subactor" / "leases" / "ticket-001--release.json"
+    receipt_path = primary / ".git" / "new-project" / "terminal-receipts.json"
+
+    # 1. Expired lease
+    _write_canonical_lease(
+        primary,
+        head_sha=head_sha,
+        expires_at="2020-01-01T00:00:00Z",
+    )
+    with pytest.raises(click.ClickException, match="change lease has expired"):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+    # 2. Released / inactive lease
+    _write_canonical_lease(
+        primary,
+        head_sha=head_sha,
+        phase="released",
+    )
+    with pytest.raises(click.ClickException, match="change lease is not active"):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+    # 3. Wrong-repository lease
+    _write_canonical_lease(
+        primary,
+        head_sha=head_sha,
+        repository_ref="github:other/repository",
+    )
+    with pytest.raises(
+        click.ClickException, match="change lease belongs to another repository"
+    ):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+    # 4. Wrong-headSha lease
+    _write_canonical_lease(
+        primary,
+        head_sha="f" * 40,
+    )
+    with pytest.raises(click.ClickException, match="does not match HEAD"):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+    # 5. Missing lease
+    lease_path.unlink()
+    with pytest.raises(click.ClickException, match="requires active change lease"):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+    # Restore valid lease and test receipt failures
+    _write_canonical_lease(primary, head_sha=head_sha)
+
+    # 6. Stale receipt (terminalSha != HEAD)
+    _write_terminal_receipts(
+        primary,
+        repository_ref=repo_ref,
+        terminal_sha="e" * 40,
+    )
+    with pytest.raises(
+        click.ClickException,
+        match="requires a verified merged terminal receipt",
+    ):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+    # 7. Wrong-repository receipt registry
+    _write_terminal_receipts(
+        primary,
+        repository_ref="github:other/repository",
+        terminal_sha=head_sha,
+    )
+    with pytest.raises(
+        click.ClickException,
+        match="terminal receipt registry belongs to another repository",
+    ):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+    # 8. Missing receipt registry
+    receipt_path.unlink()
+    with pytest.raises(
+        click.ClickException,
+        match="requires terminal merge receipt registry",
+    ):
+        delivery.validate_delivery_ready(policy, cwd=worktree, ticket="ticket-001")
+
+

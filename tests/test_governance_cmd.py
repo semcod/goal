@@ -1138,3 +1138,111 @@ def test_pre_commit_rejects_bootstrap_native_adoption(tmp_path):
     assert result.exit_code == 2
     assert "cannot be combined" in result.output
     assert "--bootstrap-native-adoption" in result.output
+
+
+@pytest.mark.parametrize("with_incidental_governance", [False, True])
+def test_workspace_check_routes_source_hub_to_canonical_script(
+    tmp_path, with_incidental_governance
+):
+    target = tmp_path / "new-project"
+    workspace = tmp_path / "workspace"
+    allowed = workspace / "active"
+    target.mkdir()
+    workspace.mkdir()
+    for relative in (
+        "governance/package-manifest.json",
+        "governance/manifest.default.json",
+        "scripts/governance_check.py",
+    ):
+        path = target / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+    hub_checker = target / "scripts" / "workspace_lifecycle_check.py"
+    hub_checker.write_text(
+        "import sys\nprint('HUB_WORKSPACE_ARGS=' + '|'.join(sys.argv[1:]))\nraise SystemExit(5)\n",
+        encoding="utf-8",
+    )
+    if with_incidental_governance:
+        make_workspace_checker(target, exit_code=99)
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "workspace-check",
+            "--target-root",
+            str(target),
+            "--workspace-root",
+            str(workspace),
+            "--allow",
+            str(allowed),
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 5
+    assert f"HUB_WORKSPACE_ARGS=--workspace-root|{workspace}|--allow|{allowed}|--format|json" in result.output
+
+
+def test_workspace_check_source_hub_fails_closed_when_canonical_script_missing(tmp_path):
+    target = tmp_path / "new-project"
+    workspace = tmp_path / "workspace"
+    target.mkdir()
+    workspace.mkdir()
+    for relative in (
+        "governance/package-manifest.json",
+        "governance/manifest.default.json",
+        "scripts/governance_check.py",
+    ):
+        path = target / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "governance",
+            "workspace-check",
+            "--target-root",
+            str(target),
+            "--workspace-root",
+            str(workspace),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "source-hub workspace lifecycle checker is missing: scripts/workspace_lifecycle_check.py" in result.output
+
+
+def test_governance_check_prefers_source_hub_even_with_incidental_governance(
+    tmp_path, monkeypatch
+):
+    target = tmp_path / "new-project"
+    target.mkdir()
+    make_adopted_governance(target, exit_code=99)
+    for relative in (
+        "governance/package-manifest.json",
+        "governance/manifest.default.json",
+        "scripts/governance_check.py",
+    ):
+        path = target / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(
+        governance_cmd,
+        "run_source_hub_health",
+        lambda candidate: SourceHubHealthResult(
+            0, f"GOV-HUB-PASS: {candidate.name}\n", "", 3
+        ),
+    )
+
+    result = CliRunner().invoke(
+        main,
+        ["governance", "check", "--target-root", str(target)],
+    )
+
+    assert result.exit_code == 0
+    assert "GOV-HUB-PASS: new-project" in result.output
+    assert "VALIDATOR_ARGS=" not in result.output
+

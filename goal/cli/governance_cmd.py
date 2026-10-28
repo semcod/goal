@@ -17,6 +17,7 @@ from goal.cli import main
 from goal.config import load_config
 from goal.governance.delivery import (
     GOVERNANCE_PACKAGE_FILES,
+    SOURCE_HUB_WORKSPACE_CHECKER,
     authorize_hook_push,
     check_delivery_hook,
     governance_diagnostic_guidance,
@@ -390,21 +391,21 @@ def _reject_reserved_validator_options(arguments):
 def governance_check(target_root, validator_args):
     """Run the deterministic validator from the adopted governance package."""
     target = target_root.resolve()
+    if is_new_project_source_hub(target):
+        if validator_args:
+            raise click.UsageError(
+                "source-hub health does not accept target-validator arguments"
+            )
+        result = run_source_hub_health(target)
+        if result.stdout:
+            click.echo(result.stdout, nl=False)
+        if result.stderr:
+            click.echo(result.stderr, err=True, nl=False)
+        if result.returncode != 0:
+            raise click.exceptions.Exit(result.returncode)
+        return
     missing = missing_governance_package_files(target)
     if missing:
-        if is_new_project_source_hub(target):
-            if validator_args:
-                raise click.UsageError(
-                    "source-hub health does not accept target-validator arguments"
-                )
-            result = run_source_hub_health(target)
-            if result.stdout:
-                click.echo(result.stdout, nl=False)
-            if result.stderr:
-                click.echo(result.stderr, err=True, nl=False)
-            if result.returncode != 0:
-                raise click.exceptions.Exit(result.returncode)
-            return
         raise click.ClickException(
             "adopted governance package is incomplete; missing: "
             + ", ".join(missing)
@@ -472,7 +473,14 @@ def workspace_check(target_root, workspace_root, allow, output_format):
     """Run the read-only checker from the adopted governance package."""
     target = target_root.resolve()
     checker = target / WORKSPACE_LIFECYCLE_CHECKER
-    if not checker.is_file():
+    if is_new_project_source_hub(target):
+        hub_checker = target / SOURCE_HUB_WORKSPACE_CHECKER
+        if not hub_checker.is_file():
+            raise click.ClickException(
+                f"source-hub workspace lifecycle checker is missing: {SOURCE_HUB_WORKSPACE_CHECKER}"
+            )
+        checker = hub_checker
+    elif not checker.is_file():
         raise click.ClickException(
             f"adopted workspace lifecycle checker is missing: {WORKSPACE_LIFECYCLE_CHECKER}; "
             "run `goal governance adopt` with a published source revision"
