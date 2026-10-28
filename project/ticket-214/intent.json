@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-214",
+  "summary": "Release 2.2.5 integration version files",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-214/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "VERSION",
+    "pyproject.toml"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ffb8cb135f8effe2d7129c0a8d9cdb708cafb0ee",
+    "targetBranch": "main",
+    "outcome": "Integration-owned 2.2.5 release projection: VERSION and pyproject.toml move 2.2.4 -> 2.2.5 carrying ticket-213 (exact registry version confirmation).",
+    "nonGoals": [
+      "No source changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Plain version projection in the two integration-owned release files.",
+      "components": [
+        {
+          "name": "goal-release-version-files",
+          "paths": [
+            "VERSION",
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the two version lines; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "git diff shows only VERSION and pyproject.toml version deltas besides ticket carriers"
+        ],
+        "evidence": "receipt:goal214/diff-scope"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests"
+        ],
+        "evidence": "receipt:goal214/tests"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal214/governance-check"
+      }
+    ]
+  }
+}
