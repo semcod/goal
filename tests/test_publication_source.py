@@ -3,7 +3,6 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import io
 import json
-import os
 import subprocess
 import threading
 from urllib.error import HTTPError, URLError
@@ -126,7 +125,7 @@ def test_dirty_source_is_not_downloaded(project):
 
 @pytest.mark.parametrize("url", [None, "http://files.pythonhosted.org/" + NAME,
     "https://secret@files.pythonhosted.org/" + NAME, "https://evil.example/" + NAME,
-    URL + "?token=secret", URL + "#fragment", URL.replace(NAME, "other.whl"),
+    URL + "?download=1", URL + "#fragment", URL.replace(NAME, "other.whl"),
     "https://files.pythonhosted.org:443/" + NAME])
 def test_untrusted_artifact_targets_are_unknown_without_network(project, url):
     artifact = Artifact(NAME, hashlib.sha256(wheel()).hexdigest(), False, url)
@@ -224,11 +223,18 @@ def test_archive_uncompressed_and_file_count_limits(monkeypatch):
         source._wheel_files(wheel({"example/a.py": b"a", "example/b.py": b"b"}))
 
 
-@pytest.mark.skipif(os.name != "posix", reason="requires Git symlink fixtures")
 def test_source_symlink_is_not_followed(project):
     root, where, _ = project
-    (root / where / "example/link.py").symlink_to("__init__.py")
-    result = compare((root, where, commit(root)))
+    # Git can represent a symbolic entry as a plain file on platforms where
+    # creating OS symlinks requires privileges. Keep this regression universal.
+    git(root, "config", "core.symlinks", "false")
+    name = "example/link.py" if where == "." else "src/example/link.py"
+    (root / name).write_bytes(b"__init__.py")
+    blob = subprocess.check_output(["git", "-C", str(root), "hash-object", "-w", "--stdin"], input=b"__init__.py").decode().strip()
+    git(root, "update-index", "--add", "--cacheinfo", "120000", blob, name)
+    git(root, "commit", "-qm", "symbolic fixture")
+    assert git(root, "status", "--porcelain") == ""
+    result = compare((root, where, git(root, "rev-parse", "HEAD")))
     assert result["reason"] == "source_entry_not_regular"
 
 
