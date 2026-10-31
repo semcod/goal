@@ -398,4 +398,26 @@ def test_goal_k_dispatches_to_push(monkeypatch) -> None:
     result = runner.invoke(main, ["-k"])
     assert result.exit_code == 0
     assert called.get("koru") is True
+    assert called["ctx_obj"]["all_flags"] is True
+
+
+def test_koru_explicit_push_requests_complete_workflow(monkeypatch):
+    from goal.cli import push_cmd
+    called = {}
+    monkeypatch.setattr(push_cmd, "execute_push_workflow", lambda **kwargs: called.update(kwargs))
+    result = CliRunner().invoke(main, ["-k", "push", "--ticket", "ticket-001"])
+    assert result.exit_code == 0, result.output
+    assert called["ctx_obj"]["all_flags"] is True and called["koru"] is True
+    assert called["ticket"] == "ticket-001"
+
+
+@pytest.mark.parametrize("arguments", [["-a", "all", "target"], ["-k", "target"]])
+def test_batch_dispatch_does_not_bootstrap_parent_directory(tmp_path, monkeypatch, arguments):
+    from goal.cli import all_cmd
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(goal_cli, "ensure_config", lambda *a, **k: pytest.fail("parent bootstrap"))
+    monkeypatch.setattr(all_cmd, "_classify_targets", lambda paths: ([], [], []))
+    result = CliRunner().invoke(main, arguments)
+    assert result.exit_code == 0, result.output
+    assert not (tmp_path / "goal.yaml").exists()
 

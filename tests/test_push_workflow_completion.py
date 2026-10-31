@@ -74,7 +74,7 @@ def _run_workflow_until_project_detection(monkeypatch, ctx, recorded, sources_pe
     monkeypatch.setattr(
         push_core,
         "_has_committed_unreleased_sources",
-        lambda: sources_pending,
+        lambda *args: sources_pending,
     )
     monkeypatch.setattr(
         push_core, "_registry_publication_pending", lambda types: sources_pending
@@ -133,6 +133,29 @@ def test_pull_request_mode_stays_no_change_without_pending_sources(monkeypatch, 
 
     assert recorded == ["no-change"]
     assert "No changes to deliver" in capsys.readouterr().out
+
+
+def test_clean_completion_preserves_explicit_no_publish(monkeypatch, capsys):
+    recorded = []
+    ctx = _workflow_ctx(no_publish=True)
+    monkeypatch.setattr(push_core, "_validate_toml_or_exit", lambda dry_run: None)
+    _run_workflow_until_project_detection(monkeypatch, ctx, recorded, sources_pending=True)
+    assert recorded == ["no-change"]
+    assert ctx["no_publish"] is True
+    assert "_publish_completion" not in ctx
+    assert "publishing explicitly disabled" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("sources_pending", [False, True])
+def test_unknown_registry_defers_existing_ticket(monkeypatch, sources_pending):
+    import click
+
+    recorded = []
+    ctx = _workflow_ctx(_publication_plan=SimpleNamespace(reason="registry_unknown"))
+    monkeypatch.setattr(push_core, "_validate_toml_or_exit", lambda dry_run: None)
+    with pytest.raises(click.ClickException, match="unknown; defer and reconcile the existing ticket"):
+        _run_workflow_until_project_detection(monkeypatch, ctx, recorded, sources_pending)
+    assert not recorded and "_publish_completion" not in ctx
 
 
 def test_version_file_discovery_ignores_tooling_caches(tmp_path, monkeypatch):
@@ -312,7 +335,7 @@ def test_unreleased_sources_without_prebumped_version_name_the_route(monkeypatch
         push_core, "_registry_publication_pending", lambda types: False
     )
 
-    with pytest.raises(click.ClickException, match="requires a release ticket"):
+    with pytest.raises(click.ClickException, match="material implementation ticket"):
         push_core.execute_push_workflow(
             ctx,
             bump=None,
@@ -398,87 +421,60 @@ def test_completion_tag_reports_push_failure(monkeypatch):
     assert push_core._push_completion_release_tag(_pull_request_policy(), "2.2.4") is False
 
 
-def test_registry_publication_pending_when_tree_ahead_of_registry(monkeypatch, tmp_path):
-    """A publish-only release left no tag: the registry decides, not the diff."""
-    from types import SimpleNamespace
+@pytest.mark.parametrize("package,version,latest,exact,pending", [
+    ("goal", "2.2.2", "2.2.1", "missing", True),
+    ("goal", "2.2.2", "2.2.2", "present", False),
+    ("heyasa", "0.4.0", "0.3.1", "present", False),
+    ("goal", "2.2.2", None, "unknown", False),
+])
+def test_registry_completion_uses_shared_typed_plan(
+    monkeypatch, tmp_path, package, version, latest, exact, pending
+):
+    from goal.publish import state
 
     monkeypatch.chdir(tmp_path)
     (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "goal"\nversion = "2.2.2"\n', encoding="utf-8"
+        f'[project]\nname = "{package}"\nversion = "{version}"\n'
     )
-    sources = [SimpleNamespace(value="2.2.2"), SimpleNamespace(value="2.2.2")]
-    monkeypatch.setattr(
-        "goal.cli.version_state.collect_version_sources", lambda: sources
-    )
-    monkeypatch.setattr(
-        "goal.version_validation.get_registry_version",
-        lambda registry, package: "2.2.1" if package == "goal" else None,
-    )
-    # The exact version is not published yet: the tree genuinely leads.
-    monkeypatch.setattr(
-        "goal.version_validation.exact_version_published",
-        lambda registry, package, version: False,
-    )
-
-    assert push_core._registry_publication_pending(["python"]) is True
-
-
-def test_registry_publication_not_pending_when_registry_caught_up(monkeypatch, tmp_path):
-    from types import SimpleNamespace
-
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "goal"\nversion = "2.2.2"\n', encoding="utf-8"
-    )
-    sources = [SimpleNamespace(value="2.2.2")]
-    monkeypatch.setattr(
-        "goal.cli.version_state.collect_version_sources", lambda: sources
-    )
-    monkeypatch.setattr(
-        "goal.version_validation.get_registry_version",
-        lambda registry, package: "2.2.2",
-    )
-
-    assert push_core._registry_publication_pending(["python"]) is False
-
-
-def test_registry_publication_not_pending_when_exact_version_visible(monkeypatch, tmp_path):
-    """CDN-lagged "latest" must not resurrect a finished publication."""
-    from types import SimpleNamespace
-
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "heyasa"\nversion = "0.4.0"\n', encoding="utf-8"
-    )
-    sources = [SimpleNamespace(value="0.4.0")]
-    monkeypatch.setattr(
-        "goal.cli.version_state.collect_version_sources", lambda: sources
-    )
-    monkeypatch.setattr(
-        "goal.version_validation.get_registry_version",
-        lambda registry, package: "0.3.1",  # stale cached latest
-    )
-    monkeypatch.setattr(
-        "goal.version_validation.exact_version_published",
-        lambda registry, package, version: version == "0.4.0",
-    )
-
-    assert push_core._registry_publication_pending(["python"]) is False
+    monkeypatch.setattr("goal.cli.version_state.collect_version_sources",
+                        lambda *args: [SimpleNamespace(value=version)])
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs:
+        state.PackageObservation(target.registry, target.package,
+            "present" if latest else "unknown", latest, "fixture", "now"))
+    monkeypatch.setattr(state, "observe_release", lambda target, **kwargs:
+        state.PublicationObservation(target, exact, "fixture", "now"))
+    assert push_core._registry_publication_pending(["python"]) is pending
 
 
 def test_registry_publication_pending_requires_single_tree_version(monkeypatch, tmp_path):
-    from types import SimpleNamespace
+    from goal.publish import state
 
     monkeypatch.chdir(tmp_path)
     (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "goal"\nversion = "2.2.2"\n', encoding="utf-8"
+        '[project]\nname = "goal"\nversion = "2.2.2"\n'
     )
-    sources = [SimpleNamespace(value="2.2.2"), SimpleNamespace(value="2.2.1")]
-    monkeypatch.setattr(
-        "goal.cli.version_state.collect_version_sources", lambda: sources
-    )
-
+    monkeypatch.setattr("goal.cli.version_state.collect_version_sources",
+        lambda *args: [SimpleNamespace(value="2.2.2"), SimpleNamespace(value="2.2.1")])
+    monkeypatch.setattr(state, "observe_package", lambda *a, **k: pytest.fail("version drift must defer before HTTP"))
     assert push_core._registry_publication_pending(["python"]) is False
+
+
+def test_initial_completion_keeps_committed_version_without_changes(monkeypatch, tmp_path):
+    from goal.cli.version_state import resolve_version_decision
+    from goal.publish.state import ProjectReleasePlan
+
+    monkeypatch.chdir(tmp_path)
+    project = tmp_path / "pyproject.toml"
+    project.write_text('[project]\nname = "fixture"\nversion = "0.1.0"\n')
+    initial = project.read_bytes()
+    ctx = _workflow_ctx(_publish_completion=True, _publication_plan=ProjectReleasePlan(
+        str(tmp_path), version="0.1.0", pending=True, initial_release=True))
+    target = push_core._publish_completion_target(ctx, True)
+    decision = resolve_version_decision(target_version=target, registry_versions={})
+    assert target == decision.current_version == decision.target_version == "0.1.0"
+    assert project.read_bytes() == initial
+    assert push_core._publish_completion_target({**ctx, "version": "0.2.0"}, True) == "0.2.0"
+    assert push_core._publish_completion_target(ctx, False) is None
 
 
 def test_discovery_ignores_governed_runtime_state_and_worktrees(monkeypatch, tmp_path):

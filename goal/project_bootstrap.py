@@ -679,8 +679,14 @@ def _install_python_deps_broker(
     if os.getenv("GOAL_BOOTSTRAP_READ_ONLY"):
         # Install the accepted package without managers that create/update locks.
         requirement = "." if not extras else f".[{','.join(extras)}]"
+        python = _find_python_bin(project_dir)
+        uv = shutil.which("uv")
+        command = (
+            [uv, "pip", "install", "--python", python, "-e", requirement]
+            if uv else [python, "-m", "pip", "install", "-e", requirement]
+        )
         result = subprocess.run(
-            [_find_python_bin(project_dir), "-m", "pip", "install", "-e", requirement],
+            command,
             cwd=str(project_dir), capture_output=True, text=True,
         )
         if result.returncode:

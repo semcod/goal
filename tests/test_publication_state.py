@@ -195,3 +195,140 @@ def test_module_entrypoint_is_json_and_does_not_bootstrap_or_write(tmp_path):
     assert result.returncode == 2, result.stderr
     assert json.loads(result.stdout)["state"] == "unknown"
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("code,expected", [(404, "missing"), (403, "unknown"), (429, "unknown")])
+def test_package_existence_preserves_authoritative_absence_and_throttling(code, expected):
+    headers = Message()
+    headers["Retry-After"] = "120"
+    calls = []
+
+    def opener(url, timeout):
+        calls.append(url)
+        raise HTTPError(url, code, "refused", headers, None)
+
+    result = state.observe_package(TARGET, opener=opener, now=NOW)
+    assert result.state == expected and result.latest_version is None
+    assert result.retry_not_before == "2026-10-31T12:02:00+00:00"
+    assert calls == ["https://pypi.org/pypi/example-pkg/json"]
+
+
+def test_package_document_reports_its_latest_version_without_confusing_target():
+    data = document(info={"name": "example_pkg", "version": "9.0.0"})
+    observed = state.observe_package(TARGET, opener=lambda *a, **k: Response(data))
+    assert observed.state == "present" and observed.latest_version == "9.0.0"
+
+
+@pytest.fixture
+def release_project(tmp_path, monkeypatch):
+    import yaml
+
+    config = {"publishing": {"enabled": True, "registries": ["pypi"]},
+              "versioning": {"files": ["pyproject.toml:version"]},
+              "governance": {"delivery": {"default_mode": "pull-request", "base_branch": "main",
+                                         "remote": "origin", "require_goal_a": True,
+                                         "require_clean_governance": True}}}
+    (tmp_path / "pyproject.toml").write_text('[project]\nname="example-pkg"\nversion="4.3.2"\n')
+    (tmp_path / "goal.yaml").write_text(yaml.safe_dump(config))
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(tmp_path), *args], text=True).strip()
+    git("init", "-q", "-b", "main")
+    git("config", "user.name", "Fixture")
+    git("config", "user.email", "fixture@example.invalid")
+    git("add", ".")
+    git("commit", "-qm", "fixture")
+    git("remote", "add", "origin", "https://fixture-secret@github.com/example/release.git?key=private")
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs: state.PackageObservation(
+        target.registry, target.package, "missing", None, "not_found", NOW.isoformat(), 404))
+    return config, git
+
+
+def test_project_plan_binds_source_and_initial_version_without_effects(release_project, tmp_path):
+    config, git = release_project
+    before = {str(p.relative_to(tmp_path)): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    planned = state.plan_current_project(config, require_config=True)
+    assert planned.pending and planned.initial_release and planned.ready_for_goal
+    assert planned.version == "4.3.2" and planned.source_head == git("rev-parse", "HEAD")
+    assert planned.repository == "github.com/example/release"
+    wire = planned.to_dict()
+    assert wire["authorization_granted"] is False and wire["source_publication_verified"] is False
+    assert "fixture-secret" not in json.dumps(wire) and "private" not in json.dumps(wire)
+    assert {str(p.relative_to(tmp_path)): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize("condition", ["dirty", "ticket_branch", "stale_tracking"])
+def test_pending_plan_does_not_grant_execution_on_unready_sources(release_project, tmp_path, condition):
+    config, git = release_project
+    if condition == "dirty":
+        (tmp_path / "changed.py").write_text("change\n")
+    elif condition == "ticket_branch":
+        git("checkout", "-qb", "ticket/001-fixture")
+    else:
+        (tmp_path / "README.md").write_text("new head\n")
+        git("add", ".")
+        git("commit", "-qm", "new head")
+    plan = state.plan_current_project(config)
+    assert plan.pending and not plan.ready_for_goal
+
+
+def test_project_plan_never_runs_a_repository_fsmonitor(release_project, tmp_path):
+    config, git = release_project
+    marker = tmp_path / "ran-fsmonitor"
+    hook = tmp_path / ".git/fsmonitor-fixture"
+    hook.write_text(f"#!/bin/sh\ntouch '{marker}'\n")
+    hook.chmod(0o700)
+    git("config", "core.fsmonitor", str(hook))
+    assert state.plan_current_project(config).pending
+    assert not marker.exists()
+
+
+@pytest.mark.parametrize("mode", ["outage", "present", "missing"])
+def test_project_registry_readiness_uses_exact_and_package_observations(release_project, monkeypatch, mode):
+    config, _ = release_project
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs: state.PackageObservation(
+        target.registry, target.package, "unknown" if mode == "outage" else "present",
+        None if mode == "outage" else "4.3.1", "fixture", NOW.isoformat()))
+    monkeypatch.setattr(state, "observe_release", lambda target, **kwargs: state.PublicationObservation(
+        target, "present" if mode == "present" else "missing", "fixture", NOW.isoformat()))
+    planned = state.plan_current_project(config)
+    assert planned.pending is (mode == "missing")
+    assert not planned.initial_release
+    if mode == "outage":
+        assert planned.reason == "registry_unknown"
+
+
+@pytest.mark.parametrize("condition", ["disabled", "private", "mixed", "multiple_registries", "version_drift"])
+def test_unconfigured_or_unsupported_project_is_not_queried(release_project, tmp_path, monkeypatch, condition):
+    config, _ = release_project
+    if condition == "disabled":
+        config["publishing"]["enabled"] = False
+    elif condition == "private":
+        config["registries"] = {"pypi": {"url": "https://credential@private.example/simple/"}}
+    elif condition == "mixed":
+        (tmp_path / "Cargo.toml").write_text("[package]\n")
+    elif condition == "multiple_registries":
+        config["publishing"]["registries"] = ["pypi", "private"]
+    else:
+        (tmp_path / "VERSION").write_text("4.3.1\n")
+        config["versioning"]["files"].append("VERSION")
+    monkeypatch.setattr(state, "observe_package", lambda *a, **k: pytest.fail("must not query"))
+    assert not state.plan_current_project(config).pending
+
+
+def test_project_cli_is_read_only_without_configuration(tmp_path, capsys):
+    previous = Path.cwd()
+    assert state.main(["--project", str(tmp_path)]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data["schema"] == "goal.release-plan/v1" and not data["ready_for_goal"]
+    assert data["reason"] == "publishing_not_configured"
+    assert list(tmp_path.iterdir()) == [] and Path.cwd() == previous
+
+
+def test_malformed_project_yaml_does_not_expose_its_content(tmp_path, capsys):
+    (tmp_path / "goal.yaml").write_text('secret: sensitive-fixture\npublishing: [invalid\n')
+    assert state.main(["--project", str(tmp_path)]) == 2
+    output = capsys.readouterr()
+    assert json.loads(output.out)["reason"] == "project_plan_unavailable"
+    assert "sensitive-fixture" not in output.out and output.err == ""

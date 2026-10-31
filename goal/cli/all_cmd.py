@@ -1,11 +1,11 @@
-"""``goal all`` — run the full ``goal -a`` workflow across every git repository
-with uncommitted changes under the given paths (monorepo sweep).
+"""Run the protected workflow for changes and configured pending releases.
 
 Also backs the ``goal -a ./*`` form: when ``-a``/``--all`` is passed together
 with one or more path/glob arguments, :class:`GoalGroup` routes the invocation
 to this command (see ``goal/cli/__init__.py``).
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -41,21 +41,27 @@ def _expand_targets(paths: List[str]) -> List[str]:
             matches = []
         for m in matches:
             m = os.path.normpath(m)
-            if os.path.isdir(m) and m not in seen:
-                seen.add(m)
+            identity = os.path.realpath(m)
+            if os.path.isdir(m) and identity not in seen:
+                seen.add(identity)
                 resolved.append(m)
     return sorted(resolved)
 
 
 def _is_git_repo(path: str) -> bool:
     """Return True when ``path`` is the working tree of a git repository."""
-    return os.path.isdir(os.path.join(path, ".git"))
+    try:
+        result = subprocess.run(["git", "-C", path, "rev-parse", "--show-toplevel"],
+                                capture_output=True, text=True, timeout=10)
+        return result.returncode == 0 and os.path.realpath(result.stdout.strip()) == os.path.realpath(path)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
 
 
 def _has_uncommitted_changes(path: str) -> bool:
     """Return True when ``path`` has staged, unstaged, or untracked changes."""
     result = subprocess.run(
-        ["git", "-C", path, "status", "--porcelain"],
+        ["git", "--no-optional-locks", "-C", path, "-c", "core.fsmonitor=false", "status", "--porcelain"],
         capture_output=True,
         text=True,
     )
@@ -90,9 +96,32 @@ def _explicit_yes() -> bool:
     return _has_cli_flag(sys.argv, "y", "--yes")
 
 
-def _run_goal_a(path: str, dry_run: bool) -> int:
+def _pending_release(path: str, config_path=None) -> bool:
+    """Query the shared planner in an isolated child; never bootstrap the target."""
+    command = [sys.executable, "-I", "-m", "goal.publish.state", "--project", os.path.abspath(path)]
+    if config_path:
+        command += ["--project-config", config_path]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=45)
+        plan = json.loads(result.stdout)
+        return (result.returncode == 0 and plan.get("schema") == "goal.release-plan/v1"
+                and plan.get("ready_for_goal") is True and plan.get("authorization_granted") is False)
+    except (OSError, subprocess.TimeoutExpired, ValueError, AttributeError):
+        return False
+
+
+def _run_goal_a(path: str, dry_run: bool, options=None) -> int:
     """Run ``goal -a`` (the full workflow) inside ``path`` as a subprocess."""
-    cmd = [sys.executable, "-m", "goal", "-a"]
+    options = options or {}
+    cmd = [sys.executable, "-I", "-m", "goal", "-a"]
+    for key, flag in (("koru", "-k"), ("no_publish", "--no-publish"),
+                      ("force_publish_explicit", "--force-publish")):
+        if options.get(key):
+            cmd.append(flag)
+    for key, flag in (("delivery_mode", "--delivery-mode"), ("version", "--target-version"),
+                      ("config_path", "--config")):
+        if options.get(key) is not None:
+            cmd += [flag, str(options[key])]
     if dry_run:
         cmd.append("--dry-run")
     click.echo(click.style(f"\n=== goal -a → {path} ===", fg="cyan", bold=True))
@@ -103,48 +132,54 @@ def _run_goal_a(path: str, dry_run: bool) -> int:
 @click.argument("paths", nargs=-1)
 @click.pass_context
 def all_(ctx, paths) -> None:
-    """Run ``goal -a`` in every sub-repo with uncommitted changes.
+    """Run ``goal -a`` for changes and configured clean pending Python releases.
 
     PATHS are directories or globs (default: ``*`` — all entries in the current
-    directory). Only git repositories that have uncommitted changes are
-    processed; clean repos and non-git directories are skipped. Equivalent to
+    directory). A read-only plan also includes clean, synchronized public-PyPI
+    releases waiting for publication. Other clean repos are skipped. Equivalent to
     the ``goal -a ./*`` shorthand.
     """
-    dry_run = ctx.obj.get("dry_run", False)
+    options = dict(ctx.obj or {})
+    config_path = ctx.parent.params.get("config_path") if ctx.parent else None
+    if config_path:
+        options["config_path"] = os.path.abspath(config_path)
+    dry_run = options.get("dry_run", False)
     dirty, clean, non_repo = _classify_targets(list(paths))
+    pending = [] if options.get("no_publish") else [path for path in clean if _pending_release(path, options.get("config_path"))]
+    selected = dirty + pending
 
-    if not dirty:
+    if not selected:
         click.echo(
             click.style(
-                "No sub-repositories with uncommitted changes found.", fg="yellow"
+                "No sub-repositories with changes or ready pending releases found.", fg="yellow"
             )
         )
         return
 
     click.echo(
         click.style(
-            f"\nProjects with uncommitted changes ({len(dirty)}):",
+            f"\nProjects with changes or pending releases ({len(selected)}):",
             fg="cyan",
             bold=True,
         )
     )
-    for d in dirty:
+    for d in selected:
         click.echo(f"  • {d}")
-    if clean:
+    if len(clean) > len(pending):
         click.echo(
-            click.style(f"Skipping {len(clean)} clean repo(s).", fg="bright_black")
+            click.style(f"Skipping {len(clean) - len(pending)} other clean repo(s).", fg="bright_black")
         )
 
     # Batch gate: list + one confirmation, skipped only with an explicit -y/--yes
     # (or when nothing will actually happen because of --dry-run).
     if not dry_run and not _explicit_yes():
-        if not confirm(f"Run `goal -a` on these {len(dirty)} project(s)?"):
+        if not confirm(f"Run `goal -a` on these {len(selected)} project(s)?"):
             click.echo(click.style("Aborted.", fg="red"))
             ctx.exit(1)
 
     results: List[Tuple[str, int]] = []
-    for d in dirty:
-        code = _run_goal_a(d, dry_run)
+    for d in selected:
+        code = _run_goal_a(d, dry_run, options)
         results.append((d, code))
 
     succeeded = [d for d, c in results if c == 0]

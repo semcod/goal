@@ -945,12 +945,14 @@ def test_governed_bootstrap_preserves_package_sources(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("returncode", [0, 1])
-def test_governed_dependencies_do_not_resolve_or_write_lock(tmp_path, monkeypatch, returncode):
+@pytest.mark.parametrize("uv", [None, "/trusted/uv"])
+def test_governed_dependencies_do_not_resolve_or_write_lock(tmp_path, monkeypatch, returncode, uv):
     import goal.project_bootstrap as pb
     monkeypatch.setenv("GOAL_BOOTSTRAP_READ_ONLY", "1")
     lock = tmp_path / "uv.lock"
     lock.write_bytes(b"accepted-lock\n")
     monkeypatch.setattr(pb, "_find_python_bin", lambda *args: "private-venv-python")
+    monkeypatch.setattr(pb.shutil, "which", lambda name: uv if name == "uv" else None)
     calls = []
 
     def install(command, **kwargs):
@@ -960,7 +962,9 @@ def test_governed_dependencies_do_not_resolve_or_write_lock(tmp_path, monkeypatc
     monkeypatch.setattr(pb.subprocess, "run", install)
     monkeypatch.setattr(pb, "PackageManagerBroker", lambda *args: pytest.fail("mutating manager"))
     assert pb._install_python_deps_broker(tmp_path, ["test"]) is (returncode == 0)
-    assert calls == [(["private-venv-python", "-m", "pip", "install", "-e", ".[test]"],
+    command = ([uv, "pip", "install", "--python", "private-venv-python", "-e", ".[test]"]
+               if uv else ["private-venv-python", "-m", "pip", "install", "-e", ".[test]"])
+    assert calls == [(command,
                      {"cwd": str(tmp_path), "capture_output": True, "text": True})]
     assert lock.read_bytes() == b"accepted-lock\n"
 
