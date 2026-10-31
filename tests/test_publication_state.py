@@ -395,6 +395,19 @@ def test_source_flag_requires_project_context():
     assert error.value.code == 2
 
 
+def test_historical_version_does_not_create_a_missing_publication_signal(release_project, monkeypatch):
+    from goal.publish import source
+    config, _ = release_project
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs: state.PackageObservation(
+        target.registry, target.package, "present", "9.0.0", "fixture", NOW.isoformat()))
+    monkeypatch.setattr(state, "observe_release", lambda target, **kwargs: state.PublicationObservation(
+        target, "present", "fixture", NOW.isoformat()))
+    monkeypatch.setattr(source, "compare_published_python", lambda *a, **k: pytest.fail("must not compare old release"))
+    plan = state.plan_current_project(config, verify_source=True)
+    assert plan.reason == "source_version_behind_registry" and not plan.reconciliation_required
+    assert not plan.pending and not plan.ready_for_goal
+
+
 @pytest.mark.parametrize("url", ["https://credential@files.pythonhosted.org/secret.whl", "https://evil.example/secret.whl"])
 def test_release_metadata_does_not_emit_untrusted_artifact_urls(url):
     data = document()

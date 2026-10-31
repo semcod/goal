@@ -13,7 +13,7 @@ import subprocess
 import tomllib
 from urllib.error import HTTPError
 from urllib.parse import unquote, urlsplit
-from urllib.request import urlopen
+from urllib.request import HTTPRedirectHandler, build_opener
 import zipfile
 
 MAX_ARCHIVE = 20 * 1024 * 1024
@@ -25,6 +25,11 @@ SCOPE = "tracked-python-package-content"
 
 class Unknown(ValueError):
     pass
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, target):
+        return None
 
 
 def _git(root, *args, input=None, limit=MAX_FILE):
@@ -147,7 +152,7 @@ def compare_published_python(root: Path, head: str, artifacts, *, timeout=10, op
         if not re.fullmatch(r"[0-9a-f]{64}", artifact.sha256):
             raise Unknown("invalid_artifact_digest")
         source = _source_files(root, head)
-        with (opener or urlopen)(artifact.url, timeout=timeout) as response:
+        with (opener or build_opener(_NoRedirect()).open)(artifact.url, timeout=timeout) as response:
             if response.geturl() != artifact.url:
                 raise Unknown("unexpected_artifact_redirect")
             raw = response.read(MAX_ARCHIVE + 1)
@@ -164,7 +169,7 @@ def compare_published_python(root: Path, head: str, artifacts, *, timeout=10, op
                       published_manifest_sha256=_manifest_digest(published), python_files_compared=len(source))
     except HTTPError as error:
         from goal.publish.state import _retry_deadline
-        result.update(reason="artifact_http_unknown", retry_not_before=_retry_deadline(
+        result.update(reason="unexpected_artifact_redirect" if 300 <= error.code < 400 else "artifact_http_unknown", retry_not_before=_retry_deadline(
             error.headers.get("Retry-After") if error.headers else None, datetime.now(timezone.utc)))
         error.close()
     except Unknown as error:

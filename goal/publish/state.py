@@ -366,6 +366,11 @@ def plan_current_project(config=None, *, timeout=10, require_config=False, verif
                     and branch == base and top is not None and Path(top).resolve() == root and identity is not None)
     comparison = None
     if verify_source and exact.state == "present":
+        try:
+            if version_key(target.version) < version_key(package.latest_version):
+                return plan("source_version_behind_registry", observation=exact, package_observation=package)
+        except (ValueError, TypeError):
+            return plan("unsupported_registry_version", observation=exact, package_observation=package)
         from goal.publish.source import compare_published_python
         comparison = (compare_published_python(root, head, exact.artifacts, timeout=timeout)
                       if synchronized else {"state": "unknown", "reason": "source_not_synchronized", "source_head": head})

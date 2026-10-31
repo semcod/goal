@@ -1,9 +1,11 @@
 """A present version must not conceal changed package content or grant upload."""
 import hashlib
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import io
 import json
 import os
 import subprocess
+import threading
 from urllib.error import HTTPError, URLError
 import zipfile
 
@@ -228,3 +230,32 @@ def test_source_symlink_is_not_followed(project):
     (root / where / "example/link.py").symlink_to("__init__.py")
     result = compare((root, where, commit(root)))
     assert result["reason"] == "source_entry_not_regular"
+
+
+def test_default_downloader_refuses_redirect_before_a_second_request(project, monkeypatch):
+    requested = []
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            requested.append(self.path)
+            self.send_response(302)
+            self.send_header("Location", "/must-not-read-private-target")
+            self.end_headers()
+        def log_message(self, *args):
+            pass
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        local = f"http://127.0.0.1:{server.server_port}/first/{NAME}"
+        artifact = Artifact(NAME, hashlib.sha256(wheel()).hexdigest(), False, local)
+        # Bypass only the initial public-host guard to exercise real urllib
+        # redirect handling against an isolated loopback fixture.
+        original = source.urlsplit
+        monkeypatch.setattr(source, "urlsplit", lambda url: original(URL) if url == local else original(url))
+        result = source.compare_published_python(project[0], project[2], [artifact], timeout=5)
+        assert result["state"] == "unknown" and result["reason"] == "unexpected_artifact_redirect"
+        assert requested == ["/first/" + NAME]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
