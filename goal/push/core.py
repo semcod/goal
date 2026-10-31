@@ -730,19 +730,6 @@ def execute_push_workflow(
         ctx_obj.setdefault("api_key", api_key)
     koru_enabled = koru or bool(ctx_obj.get("koru", False))
 
-    if koru_enabled:
-        from goal.governance.remediation import format_koru_repair_summary, run_koru_repair
-
-        verbose = bool(ctx_obj.get("verbose", False))
-        click.echo(click.style("Running Koru auto-repair (--doctor --repair)...", fg="cyan"))
-        success, repair_detail = run_koru_repair()
-        if success:
-            summary = format_koru_repair_summary(repair_detail)
-            click.echo(click.style(f"✓ Koru auto-repair succeeded{summary}", fg="green"))
-            if verbose and repair_detail:
-                click.echo(repair_detail)
-        else:
-            click.echo(click.style(f"⚠ Koru auto-repair: {repair_detail}", fg="yellow"))
 
     explicit_force_publish = bool(force_publish)
     explicit_force_publish = explicit_force_publish or bool(
@@ -775,6 +762,7 @@ def execute_push_workflow(
         all_flags=bool(ctx_obj.get("all_flags", False)),
     )
     canonical_release: CanonicalReleaseAdmission | None = None
+    no_change = False
     if delivery is not None:
         if delivery.mode == "publish-only" and (
             no_publish or ctx_obj.get("no_publish", False)
@@ -822,15 +810,46 @@ def execute_push_workflow(
                 ctx_obj.get("_preflight_time", 0.0) + (time.time() - preflight_start)
             )
             ctx_obj["_elapsed_time"] = time.time() - start_time
-        if no_change is True:
-            if all_flags and _has_committed_unreleased_sources():
-                click.echo(
-                    "Committed package source is pending publication; continuing -a workflow."
+
+    # Repair mutates the checkout: admit it first and keep previews and merged
+    # release checkouts read-only. A failed repair must not reach publication.
+    if koru_enabled:
+        if dry_run or ctx_obj.get("dry_run", False):
+            click.echo("Dry run: would run Koru auto-repair; repair was not executed.")
+        else:
+            if delivery is not None and (
+                delivery.mode != "pull-request"
+                or resolve_pull_request_ticket(delivery, ticket) is None
+            ):
+                raise click.ClickException(
+                    "Koru repair requires an admitted ticket worktree; "
+                    "merged release checkouts are read-only."
                 )
-                no_change = False
+            from goal.governance.remediation import format_koru_repair_summary, run_koru_repair
+
+            click.echo(click.style("Running Koru auto-repair (--doctor --repair)...", fg="cyan"))
+            success, repair_detail = run_koru_repair()
+            if not success:
+                raise click.ClickException(f"Koru auto-repair failed: {repair_detail}")
+            summary = format_koru_repair_summary(repair_detail)
+            click.echo(click.style(f"✓ Koru auto-repair succeeded{summary}", fg="green"))
+            if ctx_obj.get("verbose", False) and repair_detail:
+                click.echo(repair_detail)
+            # Recheck the mutated checkout before any build/commit/upload stage.
+            if delivery is not None:
+                validate_delivery_ready(delivery)
             else:
-                click.echo("No changes to deliver; the remote default branch is synchronized.")
-                return
+                no_change = validate_legacy_governance()
+
+    if no_change is True:
+        if all_flags and _has_committed_unreleased_sources():
+            click.echo(
+                "Committed package source is pending publication; continuing -a workflow."
+            )
+            no_change = False
+        else:
+            click.echo("No changes to deliver; the remote default branch is synchronized.")
+            return
 
     _validate_toml_or_exit(dry_run)
 
