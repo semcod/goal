@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -78,6 +79,11 @@ def _install_costs_requirement(project_dir: Path, python_bin: str) -> bool:
 
 def _install_costs_package(project_dir: Path, python_bin: str) -> bool:
     """Ensure a recent costs package is installed. Returns True on success."""
+    # Governed delivery disables badge generation and source decoration. The
+    # optional cost tracker must not add a network installation to that path.
+    if os.getenv("GOAL_BOOTSTRAP_READ_ONLY") and os.getenv("GOAL_SKIP_COSTS_BADGE"):
+        return True
+
     result = subprocess.run(
         [python_bin, "-c", "import costs; print(costs.__version__)"],
         capture_output=True,

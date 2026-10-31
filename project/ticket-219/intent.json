@@ -1,0 +1,107 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-219",
+  "summary": "Make Goal Koru repair respect dry-run and admission; propagate publication failures",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-219/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/push/core.py",
+    "tests/test_koru_workflow.py",
+    "goal/cli/publish_cmd.py",
+    "tests/test_publish_failure_status.py",
+    "goal/bootstrap/costs_badge.py",
+    "tests/test_bootstrap_costs_optout.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1cb8f8926a95115bddd71e4182e6beb60f5eafc7",
+    "targetBranch": "main",
+    "outcome": "Goal previews never invoke mutating Koru repair; admitted repair is rechecked and failures stop the workflow; publication failure returns nonzero.",
+    "nonGoals": [
+      "No registry upload or deployment",
+      "No dependency or version changes",
+      "No changes to protected policy or merge approval"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move Koru execution after applicable admission, enforce preview and ticket boundaries, recheck repaired state, and raise ClickException on failed repair/upload. Governed read-only bootstrap with disabled badges skips optional costs installation before any import/install probe.",
+      "components": [
+        {
+          "name": "push-workflow",
+          "paths": [
+            "goal/push/core.py",
+            "tests/test_koru_workflow.py"
+          ]
+        },
+        {
+          "name": "publish-command",
+          "paths": [
+            "goal/cli/publish_cmd.py",
+            "tests/test_publish_failure_status.py"
+          ]
+        },
+        {
+          "name": "optional-bootstrap",
+          "paths": [
+            "goal/bootstrap/costs_badge.py",
+            "tests/test_bootstrap_costs_optout.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert; no data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_koru_workflow.py"
+        ],
+        "evidence": "receipt:goal219/koru-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_publish_failure_status.py"
+        ],
+        "evidence": "receipt:goal219/publish-tests"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal219/governance"
+      }
+    ]
+  }
+}

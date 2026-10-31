@@ -54,7 +54,7 @@ def _publish_impl(ctx_obj, use_make, target, version_arg) -> None:
         version_arg = get_current_version()
 
     if not publish_project(project_types, version_arg, False, config=config):
-        click.echo(click.style("Publish failed. Continuing.", fg="yellow"))
+        raise click.ClickException("Publish failed")
 
 
 @main.command()
