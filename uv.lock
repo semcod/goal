@@ -771,7 +771,7 @@ wheels = [
 
 [[package]]
 name = "goal"
-version = "2.2.6"
+version = "2.2.7"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -794,10 +794,15 @@ dev = [
 nfo = [
     { name = "nfo" },
 ]
+publish = [
+    { name = "build" },
+    { name = "twine" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "build", marker = "extra == 'dev'" },
+    { name = "build", marker = "extra == 'publish'" },
     { name = "click", specifier = ">=8.0.0" },
     { name = "clickmd", specifier = ">=0.1.0" },
     { name = "costs", specifier = ">=0.2.0" },
@@ -808,10 +813,11 @@ requires-dist = [
     { name = "tomlkit", specifier = ">=0.12.0" },
     { name = "tox", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "twine", marker = "extra == 'dev'" },
+    { name = "twine", marker = "extra == 'publish'" },
     { name = "typer", specifier = ">=0.24" },
     { name = "wheel", marker = "extra == 'dev'" },
 ]
-provides-extras = ["nfo", "dev"]
+provides-extras = ["nfo", "publish", "dev"]
 
 [[package]]
 name = "h11"
