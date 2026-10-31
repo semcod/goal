@@ -9,15 +9,18 @@ need their own explicit adapter; their URLs must never silently query PyPI.
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 import hashlib
 from http.client import HTTPException
 import json
 import math
+import os
 from pathlib import Path
 import re
+import subprocess
+import tomllib
 from typing import Callable, Literal, Mapping
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlsplit
@@ -96,6 +99,67 @@ def _retry_deadline(value: str | None, now: datetime) -> str | None:
         return None
 
 
+def _registry_document(target, url, timeout, opener, instant):
+    """One bounded transport for exact releases and package existence queries."""
+    def error(state, reason, **kwargs):
+        return None, PublicationObservation(target, state, reason, instant.isoformat(), **kwargs)
+
+    try:
+        with (opener or urlopen)(url, timeout=timeout) as response:
+            status = response.status
+            if urlsplit(response.geturl())[:2] != urlsplit(target.registry)[:2]:
+                return error("unknown", "unexpected_redirect", http_status=status)
+            if status != 200:
+                return error("unknown", "unexpected_http_status", http_status=status)
+            document = response.read(_MAX_DOCUMENT_BYTES + 1)
+        if len(document) > _MAX_DOCUMENT_BYTES:
+            return error("unknown", "response_too_large", http_status=status)
+        return json.loads(document), None
+    except HTTPError as failure:
+        same_origin = urlsplit(failure.geturl())[:2] == urlsplit(target.registry)[:2]
+        retry = _retry_deadline(failure.headers.get("Retry-After") if failure.headers else None, instant)
+        state = "missing" if failure.code == 404 and same_origin else "unknown"
+        failure.close()
+        return error(state, "not_found" if state == "missing" else "http_error", http_status=failure.code, retry_not_before=retry)
+    except (URLError, TimeoutError, OSError, HTTPException):
+        return error("unknown", "network_error")
+    except (ValueError, TypeError, AttributeError):
+        return error("unknown", "invalid_release_document")
+
+
+@dataclass(frozen=True)
+class PackageObservation:
+    registry: str
+    package: str
+    state: Literal["present", "missing", "unknown"]
+    latest_version: str | None
+    reason: str
+    observed_at: str
+    http_status: int | None = None
+    retry_not_before: str | None = None
+
+
+def observe_package(target: ReleaseTarget, *, timeout=10, opener=None, now=None) -> PackageObservation:
+    """Distinguish a new distribution from unavailable latest-version metadata."""
+    instant = now or datetime.now(timezone.utc)
+    if not math.isfinite(timeout) or timeout <= 0 or instant.tzinfo is None:
+        raise ValueError("query requires a positive finite timeout and aware time")
+    url = f"{target.registry}/pypi/{quote(target.package, safe='')}/json"
+    data, error = _registry_document(target, url, timeout, opener, instant)
+    if error is not None:
+        return PackageObservation(target.registry, target.package, error.state, None, error.reason,
+                                  error.observed_at, error.http_status, error.retry_not_before)
+    try:
+        actual = ReleaseTarget(target.registry, data["info"]["name"], data["info"]["version"])
+        if actual.package != target.package:
+            raise ValueError("package identity mismatch")
+        return PackageObservation(target.registry, target.package, "present", actual.version,
+                                  "package_document", instant.isoformat(), 200)
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return PackageObservation(target.registry, target.package, "unknown", None,
+                                  "invalid_package_document", instant.isoformat(), 200)
+
+
 def observe_release(
     target: ReleaseTarget,
     *,
@@ -125,17 +189,11 @@ def observe_release(
     def result(state: str, reason: str, **kwargs) -> PublicationObservation:
         return PublicationObservation(target, state, reason, instant.isoformat(), verification=verification, **kwargs)
 
+    data, error = _registry_document(target, target.url, timeout, opener, instant)
+    if error is not None:
+        return replace(error, verification=verification)
+    status = 200
     try:
-        with (opener or urlopen)(target.url, timeout=timeout) as response:
-            status = response.status
-            if urlsplit(response.geturl())[:2] != urlsplit(target.registry)[:2]:
-                return result("unknown", "unexpected_redirect", http_status=status)
-            if status != 200:
-                return result("unknown", "unexpected_http_status", http_status=status)
-            document = response.read(_MAX_DOCUMENT_BYTES + 1)
-        if len(document) > _MAX_DOCUMENT_BYTES:
-            return result("unknown", "response_too_large", http_status=status)
-        data = json.loads(document)
         info, urls = data["info"], data["urls"]
         if re.sub(r"[-_.]+", "-", info["name"]).lower() != target.package or info["version"] != target.version:
             return result("unknown", "release_identity_mismatch", http_status=status)
@@ -161,27 +219,183 @@ def observe_release(
             else:
                 verification = "matched"
         return result("present", "release_document", http_status=status, artifacts=tuple(sorted(artifacts, key=lambda item: item.filename)))
-    except HTTPError as error:
-        same_origin = urlsplit(error.geturl())[:2] == urlsplit(target.registry)[:2]
-        retry = _retry_deadline(error.headers.get("Retry-After") if error.headers else None, instant)
-        state = "missing" if error.code == 404 and same_origin else "unknown"
-        error.close()
-        return result(state, "not_found" if state == "missing" else "http_error", http_status=error.code, retry_not_before=retry)
-    except (URLError, TimeoutError, OSError, HTTPException):
-        return result("unknown", "network_error")
     except (ValueError, TypeError, KeyError, AttributeError):
         return result("unknown", "invalid_release_document")
+
+
+@dataclass(frozen=True)
+class ProjectReleasePlan:
+    project_root: str
+    package: str | None = None
+    version: str | None = None
+    source_head: str | None = None
+    source_branch: str | None = None
+    source_clean: bool = False
+    tracking_head: str | None = None
+    repository: str | None = None
+    observation: PublicationObservation | None = None
+    package_observation: PackageObservation | None = None
+    pending: bool = False
+    initial_release: bool = False
+    ready_for_goal: bool = False
+    reason: str = "not_configured"
+
+    def to_dict(self):
+        return {"schema": "goal.release-plan/v1", **asdict(self),
+                "authorization_granted": False, "source_publication_verified": False}
+
+
+def _config_value(config, key, default=None):
+    if isinstance(config, Mapping):
+        value = config
+        for part in key.split("."):
+            if not isinstance(value, Mapping) or part not in value:
+                return default
+            value = value[part]
+        return value
+    return config.get(key, default) if config is not None else default
+
+
+def _git_observation(*arguments):
+    try:
+        result = subprocess.run(["git", "--no-optional-locks", "-c", "core.fsmonitor=false",
+                                 *arguments], capture_output=True, text=True, timeout=10)
+        return result.stdout.strip() if result.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+
+
+def plan_current_project(config=None, *, timeout=10, require_config=False) -> ProjectReleasePlan:
+    """Read-only release intent. Eligibility never substitutes for Goal admission.
+
+    Tracking refs are observations, not an authoritative remote or review proof.
+    Goal -a must revalidate the remote base, source ownership and protected gates.
+    Existing-version presence also says nothing about a newer source/artifact.
+    """
+    root = Path.cwd().resolve()
+    base = _config_value(config, "governance.delivery.base_branch", "main")
+    remote = _config_value(config, "governance.delivery.remote", "origin")
+    valid_refs = (isinstance(base, str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", base)
+                  and isinstance(remote, str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", remote))
+    head = _git_observation("rev-parse", "HEAD")
+    branch = _git_observation("branch", "--show-current")
+    top = _git_observation("rev-parse", "--show-toplevel")
+    clean = _git_observation("status", "--porcelain=v1", "--untracked-files=all") == ""
+    tracking = _git_observation("rev-parse", f"refs/remotes/{remote}/{base}") if valid_refs else None
+    identity = None
+    if valid_refs:
+        origin = _git_observation("remote", "get-url", remote) or ""
+        # Never emit userinfo, query tokens or arbitrary remote-helper strings.
+        match = re.fullmatch(r"git@github\.com:([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?", origin)
+        if match:
+            identity = "github.com/" + match.group(1).lower()
+        else:
+            try:
+                parsed = urlsplit(origin)
+                if ((parsed.scheme == "https" and parsed.hostname == "github.com")
+                        or (parsed.scheme == "ssh" and parsed.hostname in {"github.com", "ssh.github.com"})):
+                    path = parsed.path.strip("/").removesuffix(".git")
+                    if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", path):
+                        identity = "github.com/" + path.lower()
+            except ValueError:
+                pass
+    values = dict(project_root=str(root), source_head=head, source_branch=branch,
+                  source_clean=clean, tracking_head=tracking, repository=identity)
+
+    def plan(reason, **changes):
+        return ProjectReleasePlan(**values, reason=reason, **changes)
+
+    if require_config and _config_value(config, "publishing.enabled") is None:
+        return plan("publishing_not_configured")
+    if _config_value(config, "publishing.enabled", True) is not True:
+        return plan("publishing_disabled")
+    if _config_value(config, "strategies.python.publish_enabled", True) is not True:
+        return plan("python_publishing_disabled")
+    registries = _config_value(config, "publishing.registries", ["pypi"])
+    if registries != ["pypi"]:
+        return plan("unsupported_project_registry")
+    if any((root / name).is_file() for name in ("package.json", "Cargo.toml")):
+        return plan("mixed_registry_project_requires_explicit_adapter")
+    try:
+        metadata = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+        target = ReleaseTarget(_config_value(config, "registries.pypi.url", "pypi"), metadata["name"], metadata["version"])
+        if target.registry != "https://pypi.org":
+            return plan("unsupported_workflow_registry")
+        from goal.cli.version_state import collect_version_sources, normalize_version, version_key
+        versions = {source.value for source in collect_version_sources(config) if source.value is not None}
+        if versions != {normalize_version(target.version)}:
+            return plan("version_sources_disagree")
+        version_key(target.version)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+        return plan("unsupported_or_missing_package_metadata")
+    values.update(package=target.package, version=target.version)
+    package = observe_package(target, timeout=timeout)
+    if package.state == "unknown":
+        return plan("registry_unknown", package_observation=package)
+    if package.state == "missing":
+        exact = PublicationObservation(target, "missing", "package_not_found", package.observed_at, 404)
+        pending, initial = True, True
+    else:
+        exact = observe_release(target, timeout=timeout)
+        if exact.state == "unknown":
+            return plan("registry_unknown", observation=exact, package_observation=package)
+        try:
+            pending = exact.state == "missing" and version_key(target.version) > version_key(package.latest_version)
+        except (ValueError, TypeError):
+            return plan("unsupported_registry_version", observation=exact, package_observation=package)
+        initial = False
+    delivery = _config_value(config, "governance.delivery", {})
+    allowed = delivery.get("allowed_modes", ["pull-request"]) if isinstance(delivery, Mapping) else []
+    governed = (isinstance(delivery, Mapping) and delivery.get("default_mode", "pull-request") == "pull-request"
+                and delivery.get("require_goal_a") is True and delivery.get("require_clean_governance") is True
+                and isinstance(allowed, list) and "pull-request" in allowed)
+    suitable = (pending and governed and clean and head is not None and head == tracking
+                and branch == base and top is not None and Path(top).resolve() == root and identity is not None)
+    return plan("pending_release" if pending else "version_present_or_not_newer", observation=exact,
+                package_observation=package, pending=pending, initial_release=initial, ready_for_goal=bool(suitable))
 
 
 def main(argv: list[str] | None = None) -> int:
     """JSON observation entrypoint; does not bootstrap the project or invoke Goal."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--registry", required=True)
-    parser.add_argument("--package", required=True)
-    parser.add_argument("--version", required=True)
+    parser.add_argument("--registry")
+    parser.add_argument("--package")
+    parser.add_argument("--version")
+    parser.add_argument("--project", type=Path, help="Read-only plan for one configured project")
+    parser.add_argument("--project-config", type=Path, help="Explicit configuration for --project")
     parser.add_argument("--artifact", action="append", type=Path, default=[])
     parser.add_argument("--timeout", type=float, default=10)
     args = parser.parse_args(argv)
+    if args.project is not None:
+        if any((args.registry, args.package, args.version, args.artifact)):
+            parser.error("--project cannot be combined with explicit registry/package/version/artifacts")
+        previous = Path.cwd()
+        configuration = args.project_config.resolve() if args.project_config is not None else None
+        try:
+            os.chdir(args.project)
+            config = None
+            configuration = configuration or Path("goal.yaml")
+            if configuration.is_file():
+                import yaml
+                try:
+                    config = yaml.safe_load(configuration.read_text())
+                except yaml.YAMLError:
+                    raise ValueError("invalid project configuration") from None
+                if not isinstance(config, dict):
+                    raise ValueError("project configuration must be a mapping")
+            planned = plan_current_project(config, timeout=args.timeout, require_config=True)
+            print(json.dumps(planned.to_dict(), sort_keys=True))
+            return 2 if planned.reason == "registry_unknown" else 0
+        except (ValueError, OSError):
+            print(json.dumps({"schema": "goal.release-plan/v1", "reason": "project_plan_unavailable",
+                              "ready_for_goal": False, "authorization_granted": False}))
+            return 2
+        finally:
+            os.chdir(previous)
+    if args.project_config is not None:
+        parser.error("--project-config requires --project")
+    if not all((args.registry, args.package, args.version)):
+        parser.error("--registry, --package and --version are required without --project")
     try:
         expected = {}
         for path in args.artifact:

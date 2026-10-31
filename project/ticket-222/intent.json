@@ -1,0 +1,135 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-222",
+  "summary": "Repair governed Koru workflow and unpublished release discovery",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-222/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/__init__.py",
+    "goal/cli/all_cmd.py",
+    "goal/project_bootstrap.py",
+    "goal/publish/state.py",
+    "goal/push/core.py",
+    "tests/test_batch_release.py",
+    "tests/test_cli_options.py",
+    "tests/test_project_bootstrap.py",
+    "tests/test_publication_state.py",
+    "tests/test_push_workflow_completion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4f7b77d3580e463722de00742bbd6cae0012fcb4",
+    "targetBranch": "main",
+    "outcome": "Make Koru workflow aliases satisfy full governed admission, discover clean configured unpublished releases without treating outages as absence, preserve batch opt-outs and repair pip-less UV bootstrap.",
+    "nonGoals": [
+      "No dependency or version changes; use the already integrated 2.2.6 after material repairs merge",
+      "No upload before independent source acceptance",
+      "No private or mixed-registry automatic publication",
+      "No queue/scheduler deployment or protected policy changes",
+      "No source-publication claim from process status or stale artifacts"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {
+      "maxImplementationFiles": 10,
+      "maxAffectedComponents": 4,
+      "maxPublicInterfaceChanges": 3,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the typed registry observer for a read-only project release plan, with explicit source identity and no authority grant. Bare Koru workflow invocations select the complete existing workflow; preserve admission and dry-run behavior. Batch orchestration consumes plans and forwards effect-limiting flags. Initial clean merged publication uses its committed version only after authoritative package absence. UV pip targets the exact environment without lock-capable sync.",
+      "components": [
+        {
+          "name": "registry-project-readmodel",
+          "paths": [
+            "goal/publish/state.py",
+            "tests/test_publication_state.py"
+          ]
+        },
+        {
+          "name": "full-workflow-routing",
+          "paths": [
+            "goal/cli/__init__.py",
+            "tests/test_cli_options.py"
+          ]
+        },
+        {
+          "name": "batch-publication-completion",
+          "paths": [
+            "goal/cli/all_cmd.py",
+            "goal/push/core.py",
+            "tests/test_batch_release.py",
+            "tests/test_push_workflow_completion.py"
+          ]
+        },
+        {
+          "name": "readonly-venv-bootstrap",
+          "paths": [
+            "goal/project_bootstrap.py",
+            "tests/test_project_bootstrap.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Bare -k and Koru push/batch invocations request the existing full workflow",
+        "Add read-only --project publication planning to the installed observer command",
+        "Batch includes configured clean pending releases and preserves caller effect opt-outs"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected source revert; no data migration or authority policy change."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_cli_options.py tests/test_koru_workflow.py tests/test_batch_release.py"
+        ],
+        "evidence": "receipt:goal222/routing-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_publication_state.py tests/test_push_workflow_completion.py"
+        ],
+        "evidence": "receipt:goal222/readmodel-release-tests"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_project_bootstrap.py"
+        ],
+        "evidence": "receipt:goal222/bootstrap-tests"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "project/governance-check.sh",
+          "protected OneDev and independent Validator",
+          "goal -a on the independently merged clean base"
+        ],
+        "evidence": "receipt:goal222/publication"
+      }
+    ]
+  }
+}

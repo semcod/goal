@@ -629,7 +629,7 @@ class GoalGroup(click.Group):
         )
         ctx.meta["goal_read_only_governance"] = bool(
             dispatcher_positionals
-            and dispatcher_positionals[0] in {"governance", "dependencies"}
+            and dispatcher_positionals[0] in {"governance", "dependencies", "all"}
         )
 
         # `auto` is a word-form of the -a/--all flag, so `goal auto ...` behaves
@@ -644,12 +644,22 @@ class GoalGroup(click.Group):
 
         has_subcommand = any(p in known_cmds for p in positionals)
 
+        # Koru repairs the same complete workflow as -a. Preserve unrelated
+        # commands (including help/configuration) while making bare -k and
+        # explicit push/batch forms satisfy the full-workflow admission gate.
+        command = next((p for p in positionals if p in known_cmds), None)
+        if has_koru_flag and not has_all_flag and command in {None, "push", "all"}:
+            has_all_flag = True
+            opts = ["-a", *opts]
+            args = ["-a", *args]
+
         if (has_all_flag or has_koru_flag) and not has_subcommand:
             if positionals:
                 # `goal -a ./*` (or explicit dirs) → sweep those paths across
                 # every dirty sub-repo via the `all` command.
                 all_cmd = click.Group.get_command(self, ctx, "all")
                 if all_cmd is not None:
+                    ctx.meta["goal_read_only_governance"] = True
                     args = opts + ["all"] + positionals
                 elif auto_used:
                     args = opts + positionals
@@ -684,7 +694,7 @@ class GoalGroup(click.Group):
     "-k",
     "koru",
     is_flag=True,
-    help="Run Koru auto-repair before workflow",
+    help="Run the full workflow with admitted Koru auto-repair",
 )
 @click.option(
     "--upgrade-deps",

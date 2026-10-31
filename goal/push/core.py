@@ -447,52 +447,29 @@ def _managed_version_values() -> List[str]:
 
 
 def _registry_publication_pending(project_types: List[str]) -> bool:
-    """Return whether the tree version is newer than the published registry."""
-    if not project_types:
+    """Use the shared read-only plan; an outage never means an absent release."""
+    if "python" not in project_types:
         return False
-    try:
-        from goal.cli.version_state import collect_version_sources
-        from goal.version_validation import get_registry_version
-    except ImportError:
-        return False
-    try:
-        sources = collect_version_sources()
-    except (OSError, ValueError):
-        return False
-    values = {getattr(source, "value", None) for source in sources}
-    values.discard(None)
-    if len(values) != 1:
-        return False
-    current = next(iter(values))
+    from goal.publish.state import plan_current_project
 
-    registry = "pypi" if "python" in project_types else None
-    if registry is None:
-        return False
-    try:
-        package = tomllib.loads(
-            Path("pyproject.toml").read_text(encoding="utf-8")
-        )["project"]["name"]
-    except (OSError, tomllib.TOMLDecodeError, KeyError):
-        return False
-    published = get_registry_version(registry, package)
-    if not published or published == current:
-        return False
-    # The registry's "latest" document is CDN-cached right after an upload, so
-    # a just-published tree can still look newer. Trust the version-specific
-    # document before claiming that publication is pending.
-    from goal.version_validation import exact_version_published
+    context = click.get_current_context(silent=True)
+    config = context.obj.get("config") if context is not None and isinstance(context.obj, dict) else None
+    plan = plan_current_project(config)
+    if context is not None and isinstance(context.obj, dict):
+        context.obj["_publication_plan"] = plan
+    return plan.pending
 
-    if exact_version_published(registry, package, current):
-        return False
 
-    def _key(version: str) -> tuple:
-        parts = re.findall(r"\d+", version.split("+")[0])
-        return tuple(int(part) for part in parts) or (0,)
+def _publish_completion_target(ctx_obj, clean_force_publish):
+    requested = ctx_obj.get("version")
+    if requested is not None or not clean_force_publish or not ctx_obj.get("_publish_completion"):
+        return requested
+    from goal.publish.state import ProjectReleasePlan, plan_current_project
 
-    try:
-        return _key(current) > _key(published)
-    except (TypeError, ValueError):
-        return current != published
+    plan = ctx_obj.get("_publication_plan")
+    if not isinstance(plan, ProjectReleasePlan):
+        plan = plan_current_project(ctx_obj.get("config"))
+    return plan.version if plan.initial_release and plan.pending else None
 
 
 def _resume_pending_pull_request(
@@ -729,6 +706,7 @@ def execute_push_workflow(
     if api_key is not None:
         ctx_obj.setdefault("api_key", api_key)
     koru_enabled = koru or bool(ctx_obj.get("koru", False))
+    explicit_no_publish = no_publish or bool(ctx_obj.get("no_publish", False))
 
 
     explicit_force_publish = bool(force_publish)
@@ -871,6 +849,10 @@ def execute_push_workflow(
         if ticket is None:
             ticket = resolve_pull_request_ticket(delivery, ticket)
         if delivery.mode == "pull-request" and ticket is None:
+            if explicit_no_publish:
+                record_delivery_event(delivery, "no-change", detail="clean synchronized base; --no-publish")
+                click.echo("No source changes to deliver; publishing explicitly disabled.")
+                return
             disagreeing = _managed_version_values()
             if len(disagreeing) > 1:
                 # A coordinated release lands its version projection across
@@ -883,10 +865,21 @@ def execute_push_workflow(
                     + "): land the remaining coordinated release tickets "
                     "(version files and runtime banner) before running goal -a."
                 )
-            if _has_committed_unreleased_sources():
+            committed_pending = _has_committed_unreleased_sources()
+            publication_plan = ctx_obj.get("_publication_plan")
+            if publication_plan is not None and publication_plan.reason == "registry_unknown":
+                raise click.ClickException(
+                    "Registry publication state is unknown; defer and reconcile the existing ticket."
+                )
+            if committed_pending:
                 if not _registry_publication_pending(
                     list(detect_project_types_deep().keys())
                 ):
+                    publication_plan = ctx_obj.get("_publication_plan")
+                    if publication_plan is not None and publication_plan.reason == "registry_unknown":
+                        raise click.ClickException(
+                            "Registry publication state is unknown; defer and reconcile the existing ticket."
+                        )
                     # Sources landed after the last release tag but the tree
                     # version still matches the registry: this is ordinary
                     # unreleased work, not a pre-bumped release waiting for
@@ -899,8 +892,8 @@ def execute_push_workflow(
                     raise click.ClickException(
                         "Committed package sources are unreleased since "
                         f"{latest}; governed pull-request delivery requires a "
-                        "release ticket. Allocate one and run goal -a from its "
-                        "ticket branch."
+                        "version projection in the material implementation ticket. "
+                        "Reconcile that existing ticket and run goal -a from its ticket branch."
                     )
                 click.echo(
                     click.style(
@@ -1093,10 +1086,11 @@ def execute_push_workflow(
 
     commit_msg = commit_title
 
+    requested_version = _publish_completion_target(ctx_obj, clean_force_publish)
     try:
         resolved_version = get_version_info(
             bump=bump,
-            target_version=ctx_obj.get("version"),
+            target_version=requested_version,
             config=ctx_obj.get("config"),
             project_types=project_types,
             include_decision=True,
