@@ -49,8 +49,19 @@ def wheel(files=None):
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for name, value in (FILES if files is None else files).items():
-            archive.writestr(name, value)
+            entry = zipfile.ZipInfo(name, date_time=(2020, 1, 1, 0, 0, 0))
+            archive.writestr(entry, value, compress_type=zipfile.ZIP_DEFLATED)
     return stream.getvalue()
+
+
+def test_wheel_fixture_is_stable_across_clock_changes(monkeypatch):
+    from types import SimpleNamespace
+    def clock(year):
+        return SimpleNamespace(time=lambda: 0, localtime=lambda *_: (year, 1, 1, 0, 0, 0, 0, 1, 0))
+    monkeypatch.setattr(zipfile, "time", clock(2020))
+    first = wheel()
+    monkeypatch.setattr(zipfile, "time", clock(2021))
+    assert wheel() == first
 
 
 class Response(io.BytesIO):

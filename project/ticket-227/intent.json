@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-227",
+  "summary": "Stabilize wheel fixtures that gate publication",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-227/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_publication_source.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d4f34121b43a82cbfb67d03d6cadddfaa563b4f3",
+    "targetBranch": "main",
+    "outcome": "Make hashed wheel fixtures independent of wall-clock time so the existing strict race/integrity regression reliably validates and releases the accepted Goal 2.2.7 source.",
+    "nonGoals": [
+      "No production observer or publisher logic changes",
+      "No version or dependency changes",
+      "No suppressed test, weakened integrity assertion or review bypass"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Construct the existing wheel test archive with explicit constant ZIP entry timestamps. Add a deterministic clock-change regression which fails with the original generator. Keep the strict commit-race reason and all archive integrity checks. This resolves the qualified publication-blocking fixture defect recorded by the existing diagnostic owner incident; the accepted 2.2.7 release remains pending its first upload.",
+      "components": [
+        {
+          "name": "publication-test-fixtures",
+          "paths": [
+            "tests/test_publication_source.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of the exact test fixture correction; retain published immutable versions."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Clock-change regression fails with the original generator and passes after timestamp correction",
+          "Original strict race and integrity tests remain unchanged"
+        ],
+        "evidence": "receipt:goal227/deterministic-fixtures"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Affected Testless and actual Goal workflow",
+          "project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal227/local-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "Exact-head/current-base OneDev and independent Validator"
+        ],
+        "evidence": "receipt:goal227/source-publication"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "Goal -a publish-only on the clean accepted canonical checkout",
+          "Verify both registry artifacts and installed canaries"
+        ],
+        "evidence": "receipt:goal227/package-publication"
+      }
+    ]
+  }
+}
