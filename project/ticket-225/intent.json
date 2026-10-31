@@ -1,0 +1,105 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-225",
+  "summary": "Reconcile published Python content with exact source",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-225/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/publish/state.py",
+    "goal/publish/source.py",
+    "tests/test_publication_state.py",
+    "tests/test_publication_source.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "24c3c89c662d53bee1fb7e2c8f5978fdc4c06a52",
+    "targetBranch": "main",
+    "outcome": "Expose opt-in bounded public-wheel Python-content comparison bound to exact clean Git source, with typed unknown/divergence and a separate reconciliation signal that cannot trigger existing-version reupload.",
+    "nonGoals": [
+      "No source edits, repair, upload or merge authorized by observations",
+      "No broad binary/private/multiple registry artifact adapter",
+      "No claim of complete artifact/source reproducibility from Python-content comparison",
+      "No packaging/version/lock changes; join the already accepted material 2.2.7 integration before its first registry upload"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend the shared Goal JSON observer with --verify-source for --project, bounded SHA-256-verified public wheel reads and explicit static setuptools flat/src package matching against immutable clean Git content. Preserve existing version presence, missing-release readiness and publication_verified=false. Source-content divergence exposes reconciliation_required separately, retaining source/head and artifact/manifest evidence; uncertainty and HTTP Retry-After defer. The consumer never compares artifacts itself.",
+      "components": [
+        {
+          "name": "shared-publication-observer",
+          "paths": [
+            "goal/publish/state.py",
+            "goal/publish/source.py",
+            "tests/test_publication_state.py",
+            "tests/test_publication_source.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Optional goal[publish] installation bundle"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of this opt-in comparison; retain all existing registry observation and publication checks."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Affected source-integrity/layout/unknown/CLI regressions through Testless"
+        ],
+        "evidence": "receipt:goal225/source-comparison-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "project/governance-check.sh",
+          "actual Goal source delivery"
+        ],
+        "evidence": "receipt:goal225/source-delivery"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "Exact-head/current-base OneDev and independent Validator"
+        ],
+        "evidence": "receipt:goal225/independent-source"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "Goal publishes accepted 2.2.7 from clean merged source",
+          "Verify both registry artifacts against Git and installed pip-less/source-divergence canaries"
+        ],
+        "evidence": "receipt:goal225/package-publication"
+      }
+    ]
+  }
+}
