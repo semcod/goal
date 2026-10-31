@@ -332,3 +332,86 @@ def test_malformed_project_yaml_does_not_expose_its_content(tmp_path, capsys):
     output = capsys.readouterr()
     assert json.loads(output.out)["reason"] == "project_plan_unavailable"
     assert "sensitive-fixture" not in output.out and output.err == ""
+
+
+@pytest.mark.parametrize("mode", ["diverged", "matched", "unknown"])
+def test_opt_in_source_comparison_is_reconciliation_only(release_project, tmp_path, monkeypatch, capsys, mode):
+    from goal.publish import source
+    config, git = release_project
+    head = git("rev-parse", "HEAD")
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs: state.PackageObservation(
+        target.registry, target.package, "present", target.version, "fixture", NOW.isoformat()))
+    monkeypatch.setattr(state, "observe_release", lambda target, **kwargs: state.PublicationObservation(
+        target, "present", "fixture", NOW.isoformat()))
+    calls = []
+    def compare(root, source_head, artifacts, **kwargs):
+        calls.append((root, source_head))
+        return {"state": mode, "source_head": source_head, "scope": "tracked-python-package-content"}
+    monkeypatch.setattr(source, "compare_published_python", compare)
+    planned = state.plan_current_project(config, verify_source=True)
+    assert planned.reconciliation_required is (mode == "diverged")
+    assert not planned.pending and not planned.ready_for_goal
+    assert not planned.to_dict()["source_publication_verified"]
+    assert calls == [(tmp_path, head)]
+    assert state.main(["--project", str(tmp_path), "--verify-source"]) == (2 if mode == "unknown" else 0)
+    wire = json.loads(capsys.readouterr().out)
+    assert wire["reconciliation_required"] is (mode == "diverged")
+    assert wire["authorization_granted"] is False
+
+
+@pytest.mark.parametrize("condition", ["dirty", "ticket_branch", "stale_tracking"])
+def test_source_comparison_requires_synchronized_clean_base(release_project, tmp_path, monkeypatch, condition):
+    from goal.publish import source
+    config, git = release_project
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs: state.PackageObservation(
+        target.registry, target.package, "present", target.version, "fixture", NOW.isoformat()))
+    monkeypatch.setattr(state, "observe_release", lambda target, **kwargs: state.PublicationObservation(
+        target, "present", "fixture", NOW.isoformat()))
+    monkeypatch.setattr(source, "compare_published_python", lambda *a, **k: pytest.fail("must not compare"))
+    if condition == "dirty":
+        (tmp_path / "dirty.py").write_text("change\n")
+    elif condition == "ticket_branch":
+        git("checkout", "-qb", "ticket/001-fixture")
+    else:
+        (tmp_path / "README.md").write_text("changed\n")
+        git("add", ".")
+        git("commit", "-qm", "new head")
+    planned = state.plan_current_project(config, verify_source=True)
+    assert planned.source_comparison["state"] == "unknown"
+    assert not planned.reconciliation_required and not planned.ready_for_goal
+
+
+def test_opt_in_does_not_compare_a_missing_release(release_project, monkeypatch):
+    from goal.publish import source
+    config, _ = release_project
+    monkeypatch.setattr(source, "compare_published_python", lambda *a, **k: pytest.fail("must not compare"))
+    plan = state.plan_current_project(config, verify_source=True)
+    assert plan.pending and plan.ready_for_goal and not plan.reconciliation_required
+
+
+def test_source_flag_requires_project_context():
+    with pytest.raises(SystemExit) as error:
+        state.main(["--verify-source", "--registry", "pypi", "--package", "example", "--version", "1"])
+    assert error.value.code == 2
+
+
+def test_historical_version_does_not_create_a_missing_publication_signal(release_project, monkeypatch):
+    from goal.publish import source
+    config, _ = release_project
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs: state.PackageObservation(
+        target.registry, target.package, "present", "9.0.0", "fixture", NOW.isoformat()))
+    monkeypatch.setattr(state, "observe_release", lambda target, **kwargs: state.PublicationObservation(
+        target, "present", "fixture", NOW.isoformat()))
+    monkeypatch.setattr(source, "compare_published_python", lambda *a, **k: pytest.fail("must not compare old release"))
+    plan = state.plan_current_project(config, verify_source=True)
+    assert plan.reason == "source_version_behind_registry" and not plan.reconciliation_required
+    assert not plan.pending and not plan.ready_for_goal
+
+
+@pytest.mark.parametrize("url", ["https://credential@files.pythonhosted.org/secret.whl", "https://evil.example/secret.whl"])
+def test_release_metadata_does_not_emit_untrusted_artifact_urls(url):
+    data = document()
+    data["urls"][0]["url"] = url
+    result = observe(data)
+    assert result.state == "present" and result.artifacts[0].url is None
+    assert "credential" not in json.dumps(result.to_dict()) and "evil.example" not in json.dumps(result.to_dict())

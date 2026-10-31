@@ -23,7 +23,7 @@ import subprocess
 import tomllib
 from typing import Callable, Literal, Mapping
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 from urllib.request import urlopen
 
 
@@ -66,6 +66,7 @@ class Artifact:
     filename: str
     sha256: str
     yanked: bool
+    url: str | None = None
 
 
 @dataclass(frozen=True)
@@ -207,7 +208,17 @@ def observe_release(
                     or not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest)
                     or type(yanked) is not bool):
                 return result("unknown", "invalid_artifact_metadata", http_status=status)
-            artifacts.append(Artifact(name, digest, yanked))
+            url = item.get("url")
+            try:
+                parsed = urlsplit(url) if isinstance(url, str) else None
+                host = "files.pythonhosted.org" if target.registry == "https://pypi.org" else "test-files.pythonhosted.org"
+                if (parsed is None or parsed.scheme != "https" or parsed.hostname != host or parsed.port is not None
+                        or parsed.username or parsed.password or parsed.query or parsed.fragment
+                        or unquote(parsed.path.rsplit("/", 1)[-1]) != name):
+                    url = None
+            except ValueError:
+                url = None
+            artifacts.append(Artifact(name, digest, yanked, url))
         available = {item.filename: item for item in artifacts}
         if len(available) != len(artifacts):
             return result("unknown", "duplicate_artifact_metadata", http_status=status)
@@ -238,6 +249,8 @@ class ProjectReleasePlan:
     pending: bool = False
     initial_release: bool = False
     ready_for_goal: bool = False
+    reconciliation_required: bool = False
+    source_comparison: dict | None = None
     reason: str = "not_configured"
 
     def to_dict(self):
@@ -265,7 +278,7 @@ def _git_observation(*arguments):
         return None
 
 
-def plan_current_project(config=None, *, timeout=10, require_config=False) -> ProjectReleasePlan:
+def plan_current_project(config=None, *, timeout=10, require_config=False, verify_source=False) -> ProjectReleasePlan:
     """Read-only release intent. Eligibility never substitutes for Goal admission.
 
     Tracking refs are observations, not an authoritative remote or review proof.
@@ -349,10 +362,24 @@ def plan_current_project(config=None, *, timeout=10, require_config=False) -> Pr
     governed = (isinstance(delivery, Mapping) and delivery.get("default_mode", "pull-request") == "pull-request"
                 and delivery.get("require_goal_a") is True and delivery.get("require_clean_governance") is True
                 and isinstance(allowed, list) and "pull-request" in allowed)
-    suitable = (pending and governed and clean and head is not None and head == tracking
-                and branch == base and top is not None and Path(top).resolve() == root and identity is not None)
+    synchronized = (governed and clean and head is not None and head == tracking
+                    and branch == base and top is not None and Path(top).resolve() == root and identity is not None)
+    comparison = None
+    if verify_source and exact.state == "present":
+        try:
+            if version_key(target.version) < version_key(package.latest_version):
+                return plan("source_version_behind_registry", observation=exact, package_observation=package)
+        except (ValueError, TypeError):
+            return plan("unsupported_registry_version", observation=exact, package_observation=package)
+        from goal.publish.source import compare_published_python
+        comparison = (compare_published_python(root, head, exact.artifacts, timeout=timeout)
+                      if synchronized else {"state": "unknown", "reason": "source_not_synchronized", "source_head": head})
+        reason = {"diverged": "published_python_content_differs", "matched": "published_python_content_matches"}.get(
+            comparison["state"], "published_python_content_unknown")
+        return plan(reason, observation=exact, package_observation=package, source_comparison=comparison,
+                    reconciliation_required=comparison["state"] == "diverged", pending=False, ready_for_goal=False)
     return plan("pending_release" if pending else "version_present_or_not_newer", observation=exact,
-                package_observation=package, pending=pending, initial_release=initial, ready_for_goal=bool(suitable))
+                package_observation=package, pending=pending, initial_release=initial, ready_for_goal=bool(pending and synchronized))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -363,6 +390,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version")
     parser.add_argument("--project", type=Path, help="Read-only plan for one configured project")
     parser.add_argument("--project-config", type=Path, help="Explicit configuration for --project")
+    parser.add_argument("--verify-source", action="store_true", help="Compare public wheel Python content with supported clean Git source")
     parser.add_argument("--artifact", action="append", type=Path, default=[])
     parser.add_argument("--timeout", type=float, default=10)
     args = parser.parse_args(argv)
@@ -383,9 +411,9 @@ def main(argv: list[str] | None = None) -> int:
                     raise ValueError("invalid project configuration") from None
                 if not isinstance(config, dict):
                     raise ValueError("project configuration must be a mapping")
-            planned = plan_current_project(config, timeout=args.timeout, require_config=True)
+            planned = plan_current_project(config, timeout=args.timeout, require_config=True, verify_source=args.verify_source)
             print(json.dumps(planned.to_dict(), sort_keys=True))
-            return 2 if planned.reason == "registry_unknown" else 0
+            return 2 if planned.reason in {"registry_unknown", "published_python_content_unknown"} else 0
         except (ValueError, OSError):
             print(json.dumps({"schema": "goal.release-plan/v1", "reason": "project_plan_unavailable",
                               "ready_for_goal": False, "authorization_granted": False}))
@@ -394,6 +422,8 @@ def main(argv: list[str] | None = None) -> int:
             os.chdir(previous)
     if args.project_config is not None:
         parser.error("--project-config requires --project")
+    if args.verify_source:
+        parser.error("--verify-source requires --project")
     if not all((args.registry, args.package, args.version)):
         parser.error("--registry, --package and --version are required without --project")
     try:
