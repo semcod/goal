@@ -3,6 +3,7 @@
 import glob
 import re
 import shlex
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -194,50 +195,35 @@ def _get_python_bin() -> str:
 
 
 def _ensure_publish_deps(python_bin: str) -> bool:
-    """Ensure build and twine are installed for publishing."""
-    # Check if build is available
-    result = subprocess.run(
-        [python_bin, "-m", "build", "--help"], capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        click.echo(click.style("  Installing build module...", fg="cyan"))
-        install_result = subprocess.run(
-            [python_bin, "-m", "pip", "install", "--quiet", "build"],
-            capture_output=True,
-            text=True,
-            cwd=str(Path(".")),
-        )
-        if install_result.returncode != 0:
-            click.echo(
-                click.style(
-                    f"  ✗ Failed to install build module: {install_result.stderr}",
-                    fg="red",
-                )
-            )
-            return False
-        click.echo(click.style("  ✓ build installed", fg="green"))
+    """Prepare both publication tools inside the exact selected environment.
 
-    # Check if twine is available
-    result = subprocess.run(
-        [python_bin, "-m", "twine", "--help"], capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        click.echo(click.style("  Installing twine...", fg="cyan"))
-        install_result = subprocess.run(
-            [python_bin, "-m", "pip", "install", "--quiet", "twine"],
-            capture_output=True,
-            text=True,
-            cwd=str(Path(".")),
-        )
-        if install_result.returncode != 0:
-            click.echo(
-                click.style(
-                    f"  ✗ Failed to install twine: {install_result.stderr}", fg="red"
-                )
-            )
+    UV environments need not contain pip. Installation never invokes sync/lock,
+    changes interpreter or treats an installer exit as a verified tool import.
+    """
+    for module in ("build", "twine"):
+        check = [python_bin, "-m", module, "--help"]
+        try:
+            result = subprocess.run(check, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                continue
+            click.echo(click.style(f"  Installing {module} module...", fg="cyan"))
+            uv = shutil.which("uv")
+            command = ([uv, "pip", "install", "--python", python_bin, "--quiet", module]
+                       if uv else [python_bin, "-m", "pip", "install", "--quiet", module])
+            installed = subprocess.run(command, capture_output=True, text=True,
+                                       cwd=str(Path(".")), timeout=120)
+            if installed.returncode != 0:
+                # Installer diagnostics can contain authenticated index URLs.
+                click.echo(click.style(f"  ✗ Failed to install {module} (exit {installed.returncode})", fg="red"))
+                return False
+            verified = subprocess.run(check, capture_output=True, text=True, timeout=30)
+            if verified.returncode != 0:
+                click.echo(click.style(f"  ✗ Installed {module} is unavailable in the selected environment", fg="red"))
+                return False
+            click.echo(click.style(f"  ✓ {module} installed", fg="green"))
+        except (OSError, subprocess.TimeoutExpired):
+            click.echo(click.style(f"  ✗ Could not prepare {module} in the selected environment", fg="red"))
             return False
-        click.echo(click.style("  ✓ twine installed", fg="green"))
-
     return True
 
 

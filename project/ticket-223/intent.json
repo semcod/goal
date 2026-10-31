@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-223",
+  "summary": "Bootstrap publication tools in pip-less UV environments",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-223/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/publish.py",
+    "tests/test_publish_python.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b32fec17a0170b9ea7109c89f04d0606f8280ddd",
+    "targetBranch": "main",
+    "outcome": "Make shared publication tool preparation work in supported pip-less UV project environments without lock mutation or false installation success.",
+    "nonGoals": [
+      "No transport replacement or registry upload in tests",
+      "No fallback to a different interpreter or lock-capable uv sync",
+      "No version changes in this application slice; packaging integration owns the next material release"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the existing shared publication dependency boundary for both tools. Prefer UV pip with the exact interpreter, retain bounded interpreter-local pip compatibility when UV is absent, and recheck installed tools before any build/upload. Return failure without printing potentially credential-bearing installer diagnostics.",
+      "components": [
+        {
+          "name": "python-publication-tool-preparation",
+          "paths": [
+            "goal/cli/publish.py",
+            "tests/test_publish_python.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected source revert; no data migration and no published artifact replacement."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_publish_python.py tests/test_publish_stage.py tests/test_publish_failure_status.py -q"
+        ],
+        "evidence": "receipt:goal223/publication-tool-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "project/governance-check.sh",
+          "protected OneDev and independent Validator"
+        ],
+        "evidence": "receipt:goal223/source-publication"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "Real pip-less tool bootstrap canary after accepted packaging integration"
+        ],
+        "evidence": "receipt:goal223/live-pipless-canary"
+      }
+    ]
+  }
+}
