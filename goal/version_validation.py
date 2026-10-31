@@ -81,16 +81,18 @@ def exact_version_published(
     upload, so a tree that was just published can still look newer than the
     registry. The version-specific document is the authoritative check for
     that window: it answers whether this exact release already exists.
+
+    False also covers an unknown observation for compatibility. Monitors and
+    retry queues must use ``goal.publish.state.observe_release`` to distinguish
+    absence from an unavailable registry and to verify expected artifact hashes.
     """
-    if registry.lower() != "pypi" or not version:
-        return False
+    from goal.publish.state import ReleaseTarget, observe_release
+
     try:
-        url = f"https://pypi.org/pypi/{package_name}/{version}/json"
-        with urllib.request.urlopen(url, timeout=10) as response:
-            data = json.loads(response.read().decode())
-            return bool(data.get("info", {}).get("version") == version)
-    except (urllib.error.URLError, json.JSONDecodeError, KeyError):
+        target = ReleaseTarget(registry, package_name, version)
+    except (ValueError, TypeError, AttributeError):
         return False
+    return observe_release(target).state == "present"
 
 
 def extract_badge_versions(readme_path: Path) -> List[Tuple[str, str, str]]:
