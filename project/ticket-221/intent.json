@@ -1,0 +1,111 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-221",
+  "summary": "Install reusable publication status command",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-221/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "VERSION",
+    "goal/__init__.py",
+    "integration/test_publication_entrypoint.py",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1ba7b3931a1fbbe9b8fc36fada137672527ae03b",
+    "targetBranch": "main",
+    "outcome": "Install goal-publication-status as a reusable read-only CLI; verify the built wheel in a clean environment and publish its material integration as Goal 2.2.6.",
+    "nonGoals": [
+      "No runtime dependency upgrades",
+      "No changes to protected merge policy",
+      "No downstream queue or scheduler changes in this ticket"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Register the existing typed observer main as a console entrypoint. Exercise the packaged executable in a disposable environment without ambient Goal imports, network or project bootstrap. Match the setuptools floor to existing PEP 639 metadata and include that build backend in dev for offline wheel tests. Preserve all runtime dependency versions.",
+      "components": [
+        {
+          "name": "publication-command-packaging",
+          "paths": [
+            "pyproject.toml",
+            "VERSION",
+            "goal/__init__.py",
+            "uv.lock"
+          ]
+        },
+        {
+          "name": "isolated-wheel-smoke",
+          "paths": [
+            "integration/test_publication_entrypoint.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Add installed goal-publication-status console command"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert and previous immutable CLI installation; no persistent data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q integration/test_publication_entrypoint.py tests/test_publication_state.py"
+        ],
+        "evidence": "receipt:goal221/wheel-and-observation-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "uv lock --check --offline",
+          "project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal221/lock-and-governance"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "protected OneDev and independent Validator"
+        ],
+        "evidence": "receipt:goal221/independent-merge"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "goal -a -y on the independently merged clean base",
+          "goal-publication-status --registry pypi --package goal --version 2.2.6 with explicit built artifacts"
+        ],
+        "evidence": "receipt:goal221/exact-pypi-readback"
+      }
+    ]
+  }
+}
