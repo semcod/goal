@@ -1,0 +1,91 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-220",
+  "summary": "Reusable exact registry publication observations",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-220/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/publish/state.py",
+    "goal/version_validation.py",
+    "tests/test_publication_state.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a88d4f66f67bcfa1eda85a37d4fa89cd2b3691cc",
+    "targetBranch": "main",
+    "outcome": "Provide reusable exact PyPI/TestPyPI observations with distinct present, missing and unknown states, bounded retries and artifact verification; retain existing boolean API compatibility.",
+    "nonGoals": [
+      "No upload, repair, Git mutation, version or dependency changes",
+      "No private registry adapter or fleet migration",
+      "No protected policy or controller changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "One read-only stdlib observation module serves compatibility checks and JSON subprocess consumers; untrusted responses never imply missing or verified artifacts.",
+      "components": [
+        {
+          "name": "registry-observation",
+          "paths": [
+            "goal/publish/state.py",
+            "goal/version_validation.py"
+          ]
+        },
+        {
+          "name": "regressions",
+          "paths": [
+            "tests/test_publication_state.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Add read-only exact-release observation API and module JSON entrypoint"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected source revert; no persistent data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_publication_state.py"
+        ],
+        "evidence": "receipt:goal220/registry-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal220/governance"
+      }
+    ]
+  }
+}
