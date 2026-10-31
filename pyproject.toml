@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.2.5"
+version = "2.2.6"
 description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
 readme = "README.md"
 authors = [
@@ -33,6 +33,8 @@ nfo = [
 ]
 dev = [
     "pytest>=7.0.0",
+    "setuptools>=77",
+    "wheel",
     "build",
     "twine",
     "tox>=4.0.0",
@@ -40,6 +42,7 @@ dev = [
 
 [project.scripts]
 goal = "goal.cli:main"
+goal-publication-status = "goal.publish.state:main"
 
 [project.urls]
 Homepage = "https://github.com/semcod/goal"
