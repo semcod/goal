@@ -1,6 +1,7 @@
 """Exercise the actual wheel and observer executable in an isolated environment."""
 
 import ast
+from email.parser import BytesParser
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,8 @@ import textwrap
 import tomllib
 import unittest
 import zipfile
+
+from packaging.requirements import Requirement
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -78,6 +81,20 @@ class PublicationEntrypointTests(unittest.TestCase):
         self.assertEqual(result.stdout.strip(), version)
         with zipfile.ZipFile(self.wheel) as archive:
             self.assertEqual(archive.read("goal/publish/state.py"), (ROOT / "goal/publish/state.py").read_bytes())
+
+    def test_publication_tools_are_an_optional_reusable_installation_bundle(self):
+        with zipfile.ZipFile(self.wheel) as archive:
+            metadata_name = next(name for name in archive.namelist() if name.endswith('.dist-info/METADATA'))
+            metadata = BytesParser().parsebytes(archive.read(metadata_name))
+        self.assertIn('publish', metadata.get_all('Provides-Extra'))
+        requirements = [Requirement(value) for value in metadata.get_all('Requires-Dist')]
+        for tool in ('build', 'twine'):
+            selected = [requirement for requirement in requirements if requirement.name == tool]
+            self.assertTrue(any(requirement.marker and requirement.marker.evaluate({'extra': 'publish'}) for requirement in selected))
+            self.assertFalse(any(requirement.marker is None or requirement.marker.evaluate({'extra': ''}) for requirement in selected))
+        project = tomllib.loads((ROOT / 'pyproject.toml').read_text())['project']
+        self.assertEqual(set(project['optional-dependencies']['publish']), {'build', 'twine'})
+        self.assertFalse({'build', 'twine'} & set(project['dependencies']))
 
     def test_installed_observer_distinguishes_verification_and_network_failure(self):
         # Replace network inside the isolated child, keeping the test runner's

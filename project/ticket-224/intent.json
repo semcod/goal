@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-224",
+  "summary": "Package reusable Python publication tools as an optional extra",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-224/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "VERSION",
+    "goal/__init__.py",
+    "integration/test_publication_entrypoint.py",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "251a5e048b4b84cf58000fdee2d72da26910f24b",
+    "targetBranch": "main",
+    "outcome": "Expose reusable Goal publication tooling as an optional dependency extra and verify its built wheel metadata; ship the accepted pip-less fix as Goal 2.2.7.",
+    "nonGoals": [
+      "No mandatory runtime dependency additions or unrelated locked dependency upgrades",
+      "No package upload before independently merged application ticket-223 and this integration",
+      "No new upload transport or project wrapper migration"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add the reusable goal[publish] extra for the existing build and twine transports, retain base/dev behavior and locked versions, and test the actual wheel metadata in the existing isolated executable matrix. Align all package projections to 2.2.7 in this material packaging integration. Publication waits for ticket-223 to merge into the accepted base.",
+      "components": [
+        {
+          "name": "publication-package-contract",
+          "paths": [
+            "pyproject.toml",
+            "VERSION",
+            "goal/__init__.py",
+            "uv.lock",
+            "integration/test_publication_entrypoint.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Optional goal[publish] installation bundle"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected source revert; preserve prior immutable packages/runtime and do not replace registry artifacts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "uv sync --locked --extra dev",
+          "python -I integration/test_publication_entrypoint.py -v"
+        ],
+        "evidence": "receipt:goal224/isolated-wheel-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "project/governance-check.sh",
+          "protected OneDev and independent Validator"
+        ],
+        "evidence": "receipt:goal224/source-publication"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "goal -a on the accepted merged base",
+          "Exact PyPI source/hash and installed pip-less canary readback"
+        ],
+        "evidence": "receipt:goal224/registry-and-runtime"
+      }
+    ]
+  }
+}

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goal"
-version = "2.2.6"
+version = "2.2.7"
 description = "Goal - Automated git push with enterprise-grade commit intelligence, smart conventional commit generation based on deep code analysis, and interactive release workflow management."
 readme = "README.md"
 authors = [
@@ -30,6 +30,10 @@ license-files = ["LICEN[CS]E*"]
 [project.optional-dependencies]
 nfo = [
     "nfo>=0.2.22",
+]
+publish = [
+    "build",
+    "twine",
 ]
 dev = [
     "pytest>=7.0.0",
