@@ -1,0 +1,103 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-229",
+  "summary": "Verify delegated publication through the real CLI and package boundary",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-229/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "VERSION",
+    "goal/__init__.py",
+    "integration/test_publication_entrypoint.py",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-228"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "57c0df1306a634cb225fc87685cc806c437d4d94",
+    "targetBranch": "main",
+    "outcome": "Verify the real Goal CLI subprocess and packaged delegation boundary so failed selected publishers cannot be hidden by direct upload, and release the material integration as 2.2.8.",
+    "nonGoals": [
+      "No application path edits or duplicate publisher",
+      "No network upload in regression fixtures",
+      "No runtime dependency or adoption changes",
+      "No CI pin or independent approval bypass"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Application ticket-228 owns the CLI failure fix. Integration owns a real child-process command test with isolated HOME, a deterministic delegated executable and a harmless configured upload marker. Qualify the test against accepted 2.2.7 before using the independently accepted application fix. Assert package byte parity for the CLI module. Join version projections to this material integration and retain all existing lock dependency records. Independently reconcile exact verification input pins in OneDev before requesting delivery.",
+      "components": [
+        {
+          "name": "delegated-publication-integration",
+          "paths": [
+            "integration/test_publication_entrypoint.py",
+            "pyproject.toml",
+            "VERSION",
+            "goal/__init__.py",
+            "uv.lock"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Independent protected revert; existing immutable registry versions are never overwritten."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Real CLI regression fails on public 2.2.7 and passes with the accepted source fix",
+          "Success/failure preserves delegated argv/cwd and never calls the configured fallback"
+        ],
+        "evidence": "receipt:goal229/cli-boundary"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Installed wheel parity and observer integration suite",
+          "Version and lock projection contract",
+          "Native governance and actual Goal -a delivery"
+        ],
+        "evidence": "receipt:goal229/local-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "Independently accepted exact OneDev input profile",
+          "Required exact-current-base checks and Validator merge",
+          "Goal publication and verified public artifacts"
+        ],
+        "evidence": "receipt:goal229/protected-publication"
+      }
+    ]
+  }
+}
