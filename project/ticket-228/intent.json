@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-228",
+  "summary": "Stop direct fallback after delegated publication failure",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-228/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/publish_cmd.py",
+    "tests/test_publish_failure_status.py",
+    "tests/test_push_e2e.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-219"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "57c0df1306a634cb225fc87685cc806c437d4d94",
+    "targetBranch": "main",
+    "outcome": "Make delegated publication failures terminal before any direct fallback upload.",
+    "nonGoals": [
+      "No version carrier or runtime dependency change",
+      "No admission, repair, review or CI bypass",
+      "No change to direct publication without an available make target"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "The Makefile is the selected publisher when a target exists. A failure is authoritative and must raise ClickException before fallback. Preserve successful delegation, explicit --no-make, unavailable targets and previews. This prevents failed Goal admission/repair from being hidden when project Makefiles delegate to Goal.",
+      "components": [
+        {
+          "name": "publication-command",
+          "paths": [
+            "goal/cli/publish_cmd.py",
+            "tests/test_publish_failure_status.py",
+            "tests/test_push_e2e.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Independent protected revert; no registry artifact overwrite."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Regression fails against accepted source and passes after patch",
+          "make failure 1/37 does not call direct upload even if it would succeed"
+        ],
+        "evidence": "receipt:goal228/failure-regression"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Affected Testless tests",
+          "Actual Goal -a governed source delivery",
+          "Native governance"
+        ],
+        "evidence": "receipt:goal228/local-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "Protected OneDev Python 3.12/3.13 exact-base/head verification",
+          "Independent Validator publication"
+        ],
+        "evidence": "receipt:goal228/protected-publication"
+      }
+    ]
+  }
+}

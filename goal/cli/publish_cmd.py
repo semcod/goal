@@ -40,12 +40,8 @@ def _publish_impl(ctx_obj, use_make, target, version_arg) -> None:
         click.echo(f"\n{click.style('Publishing:', fg='cyan', bold=True)} {cmd}")
         result = run_command_tee(cmd)
         if result.returncode != 0:
-            click.echo(
-                click.style(
-                    f"Makefile publish failed with exit code {result.returncode}; "
-                    "falling back to direct publish.",
-                    fg="yellow",
-                )
+            raise click.ClickException(
+                f"Makefile publish failed with exit code {result.returncode}"
             )
         else:
             return
