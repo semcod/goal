@@ -235,6 +235,54 @@ class TestDiagnosePython:
         assert 'version = "0.1.35"' in (tmp_path / "pyproject.toml").read_text()
         assert (tmp_path / "VERSION").read_text().strip() == "0.1.36"
 
+    @pytest.mark.parametrize("auto_fix", [False, True])
+    @pytest.mark.parametrize("file_version", ["2.2.59", "2.2.58"])
+    def test_py011_preserves_dynamic_version_fallback(
+        self, tmp_path, auto_fix, file_version
+    ):
+        self._version_project(tmp_path, "2.2.59", file_version)
+        package = tmp_path / "x"
+        package.mkdir()
+        initializer = package / "__init__.py"
+        content = (
+            "from importlib.metadata import version, PackageNotFoundError\n"
+            "try:\n"
+            "    __version__ = version('x')\n"
+            "except PackageNotFoundError:\n"
+            "    __version__ = 'unknown'\n"
+            "raise RuntimeError('doctor must never execute this module')\n"
+        )
+        initializer.write_text(content)
+
+        issues = _diagnose_python(tmp_path, auto_fix=auto_fix)
+
+        py011 = [i for i in issues if i.code == "PY011"]
+        assert len(py011) == int(file_version != "2.2.59")
+        assert initializer.read_text() == content
+        assert (tmp_path / "VERSION").read_text().strip() == (
+            "2.2.59" if auto_fix else file_version
+        )
+
+    @pytest.mark.parametrize("auto_fix", [False, True])
+    def test_py011_syncs_static_literal_without_rewriting_nested_versions(
+        self, tmp_path, auto_fix
+    ):
+        self._version_project(tmp_path, "2.2.59", "2.2.59")
+        package = tmp_path / "x"
+        package.mkdir()
+        initializer = package / "__init__.py"
+        content = "__version__ = '2.2.58'\ndef nested():\n    __version__ = 'vendor'\n"
+        initializer.write_text(content)
+
+        py011 = [
+            i for i in _diagnose_python(tmp_path, auto_fix=auto_fix) if i.code == "PY011"
+        ]
+
+        assert len(py011) == 1
+        assert py011[0].fixed is auto_fix
+        expected = content.replace("'2.2.58'", '"2.2.59"') if auto_fix else content
+        assert initializer.read_text() == expected
+
     @staticmethod
     def _py013_project(tmp_path, publish_command):
         (tmp_path / "pyproject.toml").write_text(

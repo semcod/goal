@@ -166,8 +166,12 @@ class PythonDiagnostics(PythonDiagnosticsCore):
 
         if init_py and init_py.exists():
             init_content = init_py.read_text(errors="ignore")
+            # Match the module-level contract used by version_state. Nested
+            # assignments may be exception fallbacks for a dynamic version.
             init_ver_match = re.search(
-                r'__version__\s*=\s*["\']([^"\']+)["\']', init_content
+                r'^__version__\s*=\s*["\']([^"\']+)["\']',
+                init_content,
+                re.MULTILINE,
             )
             if init_ver_match and init_ver_match.group(1) != pyproject_version:
                 inconsistencies.append(
@@ -200,9 +204,10 @@ class PythonDiagnostics(PythonDiagnosticsCore):
 
         if init_py and init_py.exists():
             init_content = re.sub(
-                r'(__version__\s*=\s*)["\'][^"\']+["\']',
+                r'^(__version__\s*=\s*)["\'][^"\']+["\']',
                 rf'\1"{pyproject_version}"',
                 init_py.read_text(errors="ignore"),
+                flags=re.MULTILINE,
             )
             init_py.write_text(init_content, encoding="utf-8")
 

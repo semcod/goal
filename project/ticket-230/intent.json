@@ -1,0 +1,93 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-230",
+  "summary": "Preserve dynamic package versions in doctor diagnostics",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-230/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/doctor/python_diag_extended.py",
+    "tests/test_project_doctor.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-202"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9e0fac542a62a06c006c38c1c1d757772ed72268",
+    "targetBranch": "main",
+    "outcome": "Ignore nested fallback version assignments in PY011 and preserve dynamic version contracts during static version synchronization.",
+    "nonGoals": [
+      "No version, dependency, source execution or governance change"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the same anchored module-level literal contract already used by Goal version state. Nested fallback assignments are neither observed static version declarations nor safe synchronization targets. Do not import or execute package modules.",
+      "components": [
+        {
+          "name": "python-version-diagnostics",
+          "paths": [
+            "goal/doctor/python_diag_extended.py",
+            "tests/test_project_doctor.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Independent protected revert; no registry artifact overwrite."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Dynamic fallback regression fails against accepted source",
+          "No-fix and auto-fix preserve dynamic initializer bytes; true VERSION mismatches still report and synchronize"
+        ],
+        "evidence": "receipt:goal228/failure-regression"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Affected Testless tests",
+          "Actual Goal -a governed source delivery",
+          "Native governance"
+        ],
+        "evidence": "receipt:goal228/local-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "Protected OneDev Python 3.12/3.13 exact-base/head verification",
+          "Independent Validator publication"
+        ],
+        "evidence": "receipt:goal228/protected-publication"
+      }
+    ]
+  }
+}
