@@ -81,6 +81,7 @@ class PublicationEntrypointTests(unittest.TestCase):
         self.assertEqual(result.stdout.strip(), version)
         with zipfile.ZipFile(self.wheel) as archive:
             self.assertEqual(archive.read("goal/publish/state.py"), (ROOT / "goal/publish/state.py").read_bytes())
+            self.assertEqual(archive.read("goal/cli/publish_cmd.py"), (ROOT / "goal/cli/publish_cmd.py").read_bytes())
 
     def test_publication_tools_are_an_optional_reusable_installation_bundle(self):
         with zipfile.ZipFile(self.wheel) as archive:
@@ -126,6 +127,60 @@ class PublicationEntrypointTests(unittest.TestCase):
                 self.assertEqual(observed["verification"], verification)
                 self.assertEqual(observed["verified"], mode == "match")
         self.assertEqual(list(self.work.iterdir()), [])
+
+
+@unittest.skipUnless(os.name == "posix", "Executable Makefile delegation uses POSIX fixtures")
+class DelegatedPublicationCommandTests(unittest.TestCase):
+    def test_selected_publisher_controls_cli_success_and_failure(self):
+        # Run the real CLI in a child process. The fallback publisher is a local
+        # marker command, so an old or regressed CLI cannot perform an upload.
+        for make_exit in (0, 37):
+            with self.subTest(make_exit=make_exit), tempfile.TemporaryDirectory(prefix="goal-delegation-") as directory:
+                work = Path(directory)
+                home = work / "home"
+                home.mkdir()
+                (home / ".goal").write_text(json.dumps({
+                    "author_name": "Publication Test", "author_email": "publication@example.invalid",
+                    "license": "Apache-2.0",
+                }))
+                binaries = work / "bin"
+                binaries.mkdir()
+                delegated = binaries / "make"
+                delegated.write_text(
+                    "#!" + sys.executable + "\n"
+                    "import json, os, pathlib, sys\n"
+                    "pathlib.Path('make-call.json').write_text(json.dumps({'argv': sys.argv[1:], 'cwd': os.getcwd()}))\n"
+                    f"sys.exit({make_exit})\n"
+                )
+                delegated.chmod(0o700)
+                (work / "Makefile").write_text("publish:\n\t@exit 37\n")
+                (work / "package.json").write_text(json.dumps({"name": "local-delegation-test", "version": "1.2.3"}))
+                fallback = work / "fallback.py"
+                fallback.write_text("from pathlib import Path\nPath('unexpected-upload').write_text('attempted')\n")
+                import shlex
+                (work / "goal.yaml").write_text(json.dumps({
+                    "version": "1.0", "project": {"name": "local-delegation-test", "type": ["nodejs"]},
+                    "strategies": {"nodejs": {"publish_enabled": True,
+                        "publish": shlex.quote(sys.executable) + " " + shlex.quote(str(fallback))}},
+                }))
+                environment = dict(os.environ)
+                for key in ("PYTHONHOME", "VIRTUAL_ENV"):
+                    environment.pop(key, None)
+                environment.update(
+                    HOME=str(home), XDG_CONFIG_HOME=str(home / "config"), XDG_STATE_HOME=str(home / "state"),
+                    PATH=str(binaries) + os.pathsep + environment.get("PATH", ""), PYTHONPATH=str(ROOT),
+                    GOAL_SKIP_COSTS_BADGE="1",
+                )
+                result = subprocess.run(
+                    [sys.executable, "-c", "from goal.cli import main; main()", "publish", "--make"],
+                    cwd=work, env=environment, capture_output=True, text=True, timeout=30,
+                )
+                self.assertEqual(result.returncode == 0, make_exit == 0, result.stdout + result.stderr)
+                self.assertEqual(json.loads((work / "make-call.json").read_text()),
+                                 {"argv": ["publish"], "cwd": str(work)})
+                self.assertFalse((work / "unexpected-upload").exists(), result.stdout + result.stderr)
+                if make_exit:
+                    self.assertIn("Makefile publish failed with exit code 37", result.stderr)
 
 
 if __name__ == "__main__":
