@@ -1,0 +1,98 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-233",
+  "summary": "Release Goal 2.2.10 with safe Python doctor cleanup",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-233/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "VERSION",
+    "goal/__init__.py",
+    "integration/test_publication_entrypoint.py",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-232"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6b79ffdd872d470608246d43b347bcec7a113f0f",
+    "targetBranch": "main",
+    "outcome": "Release Goal 2.2.10 with the independently accepted safe Python doctor cleanup and verify it in the installed wheel.",
+    "nonGoals": [
+      "No additional runtime dependencies or unrelated lock changes",
+      "No direct registry effect before independent source merge"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the accepted application repair unchanged; add an installed-wheel diagnostic contract and update only root release version projections. Preserve all other locked package records. Independently publish and deploy exact OneDev input pins before the current-base matrix.",
+      "components": [
+        {
+          "name": "goal-release-integration",
+          "paths": [
+            "VERSION",
+            "pyproject.toml",
+            "goal/__init__.py",
+            "uv.lock",
+            "integration/test_publication_entrypoint.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Independent protected revert and a new immutable package version; do not overwrite registry artifacts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python integration/test_publication_entrypoint.py"
+        ],
+        "evidence": "receipt:goal233/installed-wheel"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "uv lock --check --offline",
+          "testless scan -s goal/doctor tests/test_project_doctor.py",
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal233/local-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python integration/test_publication_entrypoint.py"
+        ],
+        "evidence": "receipt:goal233/protected-publication"
+      }
+    ]
+  }
+}

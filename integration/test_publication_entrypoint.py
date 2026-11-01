@@ -5,6 +5,7 @@ from email.parser import BytesParser
 import json
 import os
 from pathlib import Path
+import site
 import subprocess
 import sys
 import tempfile
@@ -66,6 +67,43 @@ class PublicationEntrypointTests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertIn("--package", result.stderr)
         self.assertIn("--version", result.stderr)
+
+    def test_installed_doctor_preserves_project_dist_files(self):
+        program = textwrap.dedent(r'''
+            import json, sys, tempfile
+            from pathlib import Path
+            sys.path.extend(sys.argv[1:])
+            import goal
+            from goal.doctor.python import diagnose_python
+            assert Path(goal.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+
+            with tempfile.TemporaryDirectory(prefix="goal-installed-dist-") as directory:
+                root = Path(directory)
+                (root / "pyproject.toml").write_text(
+                    '[build-system]\nrequires = ["setuptools"]\n'
+                    'build-backend = "setuptools.build_meta"\n'
+                    '[project]\nname = "demo-pkg"\nversion = "1.2.0"\n'
+                    'requires-python = ">=3.12"\n'
+                )
+                dist = root / "dist"
+                dist.mkdir()
+                preserved = [".gitignore", "notes.txt", "demo_pkg-1.2.0-py3-none-any.whl"]
+                stale = "other-1.0-py3-none-any.whl"
+                for name in [*preserved, stale]:
+                    (dist / name).write_text("fixture")
+                reported = [issue for issue in diagnose_python(root, auto_fix=False)
+                            if issue.code == "PY012"]
+                assert len(reported) == 1 and stale in reported[0].detail
+                assert all(name not in reported[0].detail for name in preserved)
+                fixed = [issue for issue in diagnose_python(root, auto_fix=True)
+                         if issue.code == "PY012"]
+                assert len(fixed) == 1 and fixed[0].fixed
+                assert all((dist / name).read_text() == "fixture" for name in preserved)
+                assert not (dist / stale).exists()
+                print(json.dumps({"preserved": preserved, "staleRemoved": True}))
+        ''')
+        result = self.run_checked([str(self.python), "-I", "-c", program, *site.getsitepackages()])
+        self.assertTrue(json.loads(result.stdout)["staleRemoved"])
 
     def test_wheel_contains_the_observer_and_consistent_release_metadata(self):
         project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
