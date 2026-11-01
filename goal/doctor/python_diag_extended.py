@@ -266,7 +266,7 @@ class PythonDiagnostics(PythonDiagnosticsCore):
     def check_py012_dist_cleanup(self) -> None:
         """PY012: Check for stale package files in dist/ directory."""
         dist_dir = self.project_dir / "dist"
-        if not dist_dir.exists():
+        if dist_dir.is_symlink() or not dist_dir.is_dir():
             return
 
         name_match = re.search(r'^name\s*=\s*"([^"]+)"', self.content, re.MULTILINE)
@@ -298,11 +298,30 @@ class PythonDiagnostics(PythonDiagnosticsCore):
 
     @staticmethod
     def _collect_stale_dist_files(dist_dir: Path, project_name: str) -> List[str]:
-        return [
-            f.name
-            for f in dist_dir.iterdir()
-            if f.is_file() and not f.name.startswith(f"{project_name}-")
-        ]
+        # Only unambiguous distribution names are cleanup candidates. Wheels
+        # normalize project-name separators to underscores; compare normalized
+        # names so the project's own wheel is never mistaken for another one.
+        wheel = re.compile(
+            r"(?P<name>[A-Za-z0-9_]+)-[0-9][A-Za-z0-9_.!+]*-"
+            r"(?:[0-9][A-Za-z0-9_.]*-)?[A-Za-z0-9_.]+-"
+            r"[A-Za-z0-9_.]+-[A-Za-z0-9_.]+\.whl"
+        )
+        sdist = re.compile(
+            r"(?P<name>[A-Za-z0-9][A-Za-z0-9_.-]*)-"
+            r"[0-9][A-Za-z0-9_.!+]*\.(?:tar\.gz|zip)"
+        )
+        def normalize(name: str) -> str:
+            return re.sub(r"[-_.]+", "-", name).lower()
+
+        expected = normalize(project_name)
+        stale = []
+        for path in dist_dir.iterdir():
+            if path.is_symlink() or not path.is_file():
+                continue
+            match = wheel.fullmatch(path.name) or sdist.fullmatch(path.name)
+            if match and normalize(match.group("name")) != expected:
+                stale.append(path.name)
+        return stale
 
     @staticmethod
     def _remove_stale_dist_files(dist_dir: Path, stale_files: List[str]) -> List[str]:

@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-232",
+  "summary": "Preserve unrelated dist files during Python doctor cleanup",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-232/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/doctor/python_diag_extended.py",
+    "tests/test_project_doctor.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e9a97b9dc81401606caf26d78ec9f3f42ddd2119",
+    "targetBranch": "main",
+    "outcome": "Preserve non-distribution files, normalized project distributions and symlinked dist directories while retaining cleanup for recognizable other distributions.",
+    "nonGoals": [
+      "No publication, version, dependency or governance-package change"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Classify only conservatively recognizable wheel and source-distribution names; compare normalized Python project names, ignore symlinks, and preserve ambiguous names without executing project code.",
+      "components": [
+        {
+          "name": "python-doctor-dist-diagnostics",
+          "paths": [
+            "goal/doctor/python_diag_extended.py",
+            "tests/test_project_doctor.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Independent protected revert; do not overwrite published artifacts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_project_doctor.py"
+        ],
+        "evidence": "receipt:goal232/doctor-preservation"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_project_doctor.py"
+        ],
+        "evidence": "receipt:goal232/stale-distributions"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh",
+          "testless scan -s goal/doctor tests/test_project_doctor.py"
+        ],
+        "evidence": "receipt:goal232/local-validation"
+      }
+    ]
+  }
+}

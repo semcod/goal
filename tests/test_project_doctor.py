@@ -67,6 +67,55 @@ class TestDoctorReport:
 
 
 class TestDiagnosePython:
+    @staticmethod
+    def _py012_project(tmp_path):
+        (tmp_path / "pyproject.toml").write_text(
+            '[build-system]\nrequires = ["setuptools"]\n'
+            'build-backend = "setuptools.build_meta"\n'
+            '[project]\nname = "demo-pkg"\nversion = "1.2.0"\n'
+            'requires-python = ">=3.12"\n'
+        )
+        dist = tmp_path / "dist"
+        dist.mkdir()
+        return dist
+
+    def test_py012_ignores_non_distributions_and_normalized_project_artifacts(self, tmp_path):
+        dist = self._py012_project(tmp_path)
+        preserved = [".gitignore", "notes.txt", "not-an-archive.whl",
+                     "demo_pkg-1.2.0-py3-none-any.whl", "demo-pkg-1.2.0.tar.gz"]
+        for name in preserved:
+            (dist / name).write_text("preserve")
+        issues = _diagnose_python(tmp_path, auto_fix=True)
+        assert not any(issue.code == "PY012" for issue in issues)
+        assert all((dist / name).read_text() == "preserve" for name in preserved)
+
+    def test_py012_removes_only_other_well_formed_distributions(self, tmp_path):
+        dist = self._py012_project(tmp_path)
+        preserved = [".gitignore", "notes.txt", "demo_pkg-1.2.0-py3-none-any.whl"]
+        stale = ["other-1.0-py3-none-any.whl", "other-pkg-2.0.tar.gz"]
+        for name in [*preserved, *stale]:
+            (dist / name).write_text("fixture")
+        reported = _diagnose_python(tmp_path, auto_fix=False)
+        issue = next(issue for issue in reported if issue.code == "PY012")
+        assert all(name in issue.detail for name in stale)
+        assert all(name not in issue.detail for name in preserved)
+        fixed = _diagnose_python(tmp_path, auto_fix=True)
+        assert any(issue.code == "PY012" and issue.fixed for issue in fixed)
+        assert all((dist / name).is_file() for name in preserved)
+        assert all(not (dist / name).exists() for name in stale)
+
+    def test_py012_never_cleans_a_symlinked_dist(self, tmp_path):
+        dist = self._py012_project(tmp_path)
+        dist.rmdir()
+        external = tmp_path / "external"
+        external.mkdir()
+        artifact = external / "other-1.0-py3-none-any.whl"
+        artifact.write_text("preserve")
+        dist.symlink_to(external, target_is_directory=True)
+        issues = _diagnose_python(tmp_path, auto_fix=True)
+        assert not any(issue.code == "PY012" for issue in issues)
+        assert artifact.read_text() == "preserve"
+
     def test_no_pyproject(self, tmp_path):
         issues = _diagnose_python(tmp_path)
         assert issues == []
