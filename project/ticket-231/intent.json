@@ -1,0 +1,103 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-231",
+  "summary": "Verify dynamic version diagnostics at the package boundary",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-231/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "VERSION",
+    "goal/__init__.py",
+    "integration/test_publication_entrypoint.py",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-230"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8dd9e9478b2a067051fe5da4c8d4a6c5d037a1eb",
+    "targetBranch": "main",
+    "outcome": "Verify dynamic Python version diagnostics through the process and wheel boundaries and publish the material integration as Goal 2.2.9.",
+    "nonGoals": [
+      "No application path edits or duplicate publisher",
+      "No network upload in regression fixtures",
+      "No runtime dependency or adoption changes",
+      "No CI pin or independent approval bypass"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Application ticket-230 owns the static version diagnostic repair. Integration adds a fresh Python child process over a dynamic initializer that must never execute. Check report/auto-fix and real VERSION mismatch cases, then enforce exact byte parity for the packaged diagnostic module. Join only root version projections; preserve every other lock record. Publish exact independently accepted CI input pins before full validation.",
+      "components": [
+        {
+          "name": "doctor-package-integration",
+          "paths": [
+            "integration/test_publication_entrypoint.py",
+            "VERSION",
+            "pyproject.toml",
+            "goal/__init__.py",
+            "uv.lock"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Independent protected revert; existing immutable registry versions are never overwritten."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Actual installed Goal 2.2.8 fails the dynamic fallback subprocess contract",
+          "Accepted application source passes four report/sync cases without importing the project"
+        ],
+        "evidence": "receipt:goal229/cli-boundary"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Installed wheel parity and observer integration suite",
+          "Version and lock projection contract",
+          "Native governance and actual Goal -a delivery"
+        ],
+        "evidence": "receipt:goal229/local-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "Independently accepted exact OneDev input profile",
+          "Required exact-current-base checks and Validator merge",
+          "Goal publication and verified public artifacts"
+        ],
+        "evidence": "receipt:goal229/protected-publication"
+      }
+    ]
+  }
+}
