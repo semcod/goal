@@ -82,6 +82,7 @@ class PublicationEntrypointTests(unittest.TestCase):
         with zipfile.ZipFile(self.wheel) as archive:
             self.assertEqual(archive.read("goal/publish/state.py"), (ROOT / "goal/publish/state.py").read_bytes())
             self.assertEqual(archive.read("goal/cli/publish_cmd.py"), (ROOT / "goal/cli/publish_cmd.py").read_bytes())
+            self.assertEqual(archive.read("goal/doctor/python_diag_extended.py"), (ROOT / "goal/doctor/python_diag_extended.py").read_bytes())
 
     def test_publication_tools_are_an_optional_reusable_installation_bundle(self):
         with zipfile.ZipFile(self.wheel) as archive:
@@ -181,6 +182,43 @@ class DelegatedPublicationCommandTests(unittest.TestCase):
                 self.assertFalse((work / "unexpected-upload").exists(), result.stdout + result.stderr)
                 if make_exit:
                     self.assertIn("Makefile publish failed with exit code 37", result.stderr)
+
+
+class DoctorVersionContractTests(unittest.TestCase):
+    def test_dynamic_initializer_is_preserved_by_process_diagnostics(self):
+        program = textwrap.dedent(r'''
+            import json,tempfile
+            from pathlib import Path
+            from goal.doctor.python import diagnose_python
+
+            results=[]
+            for auto_fix in (False,True):
+             for file_version in ('1.2.3','1.2.2'):
+              with tempfile.TemporaryDirectory(prefix='goal-doctor-contract-') as directory:
+               root=Path(directory)
+               (root/'pyproject.toml').write_text('[build-system]\nrequires = ["setuptools>=77.0.3"]\nbuild-backend = "setuptools.build_meta"\n\n[project]\nname = "sample"\nversion = "1.2.3"\nrequires-python = ">=3.12"\nlicense = "MIT"\n')
+               (root/'VERSION').write_text(file_version+'\n')
+               (root/'sample').mkdir()
+               initializer=root/'sample/__init__.py'
+               content="from importlib.metadata import version, PackageNotFoundError\ntry:\n    __version__ = version('sample')\nexcept PackageNotFoundError:\n    __version__ = 'unknown'\nraise RuntimeError('diagnostics must never execute the project')\n"
+               initializer.write_text(content)
+               issues=[issue for issue in diagnose_python(root,auto_fix=auto_fix) if issue.code=='PY011']
+               expected=int(file_version!='1.2.3')
+               assert len(issues)==expected,(auto_fix,file_version,[issue.detail for issue in issues])
+               assert initializer.read_text()==content,'Nested fallback was rewritten'
+               assert (root/'VERSION').read_text().strip()==('1.2.3' if auto_fix else file_version)
+               assert all(issue.fixed is auto_fix for issue in issues)
+               results.append({'autoFix':auto_fix,'sourceVersion':file_version,'py011Count':len(issues),'initializerPreserved':True})
+            print(json.dumps(results))
+        ''')
+        environment = dict(os.environ)
+        environment.pop("PYTHONHOME", None)
+        environment["PYTHONPATH"] = str(ROOT)
+        result = subprocess.run([sys.executable, "-c", program], cwd=ROOT, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        cases = json.loads(result.stdout)
+        self.assertEqual(len(cases), 4)
+        self.assertTrue(all(case["initializerPreserved"] for case in cases))
 
 
 if __name__ == "__main__":
