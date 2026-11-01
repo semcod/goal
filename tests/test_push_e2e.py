@@ -874,8 +874,8 @@ class TestPushWorkflowE2E:
         assert result is True
         mock_run_command.assert_called_once_with("npm publish --access public")
 
-    def test_publish_command_falls_back_when_make_publish_fails(self):
-        """Test that goal publish falls back to direct publish after Makefile failure."""
+    def test_publish_command_stops_when_make_publish_fails(self):
+        """A delegated failure must not bypass the Makefile publication workflow."""
         from goal.cli.publish_cmd import _publish_impl
 
         ctx_obj = {"config": None}
@@ -902,16 +902,17 @@ class TestPushWorkflowE2E:
                 returncode=1, stdout="boom", stderr="boom"
             )
 
-            _publish_impl(ctx_obj, True, "publish", None)
+            import click
+            import pytest
+            with pytest.raises(click.ClickException, match="Makefile publish failed"):
+                _publish_impl(ctx_obj, True, "publish", None)
 
         mock_detect.assert_called_once()
         mock_which.assert_called_once_with("make")
         mock_has_target.assert_called_once_with("publish")
         mock_run_command.assert_called_once_with("make publish")
-        mock_version.assert_called_once_with()
-        mock_publish_project.assert_called_once_with(
-            ["python"], "1.2.3", False, config=None
-        )
+        mock_version.assert_not_called()
+        mock_publish_project.assert_not_called()
 
     def test_publish_command_dry_run_never_publishes(self):
         """Global --dry-run must prevent direct and Makefile publication."""
