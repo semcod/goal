@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-235",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: repair maskservice:PLF-22281 cold UV pytest startup while retaining required root plugins, configured arguments and warm project behavior.",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-235/**",
+    "goal/cli/tests.py",
+    "tests/test_cli_tests_runner.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9d0683a9deeb63066c1c4b555a2871e61ed55bc7",
+    "targetBranch": "main",
+    "outcome": "First UV-provisioned pytest invocation loads required project-local plugins via Python module startup; warm/configured and subproject launchers retain behavior.",
+    "nonGoals": [
+      "No dependency/version/tag/registry changes",
+      "No plugin disabling, gate weakening or retry-until-green",
+      "No shell strategy redesign or unrelated test metrics changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep existing command selection; use uv run python -m pytest for every UV fallback so Python puts the working directory on the import path before pytest plugin discovery. Preserve resolved Python for warm environments.",
+      "components": [
+        {
+          "name": "python-test-launcher",
+          "paths": [
+            "goal/cli/tests.py",
+            "tests/test_cli_tests_runner.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected ordinary revert of the launcher change."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_cli_tests_runner.py"
+        ],
+        "evidence": "receipt:goal22281/cold-start-regressions"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/"
+        ],
+        "evidence": "receipt:goal22281/full-suite"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal22281/protected-publication"
+      }
+    ]
+  }
+}
