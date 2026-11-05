@@ -236,6 +236,20 @@ def format_push_result(
     return formatter.render()
 
 
+def resolve_test_execution_status(
+    test_exit_code: int, test_details: dict[str, Any], project_types: list[str] | None = None
+) -> str:
+    """Preserve explicit unexecuted states without masking a failed command."""
+    if test_exit_code != 0:
+        return "failed"
+    status = test_details.get("status")
+    if status is None:
+        return "not_selected" if project_types == [] else "passed"
+    return status if isinstance(status, str) and status in {
+        "passed", "failed", "not_selected", "skipped"
+    } else "unknown"
+
+
 def format_goal_all_summary(
     *,
     project_types: List[str],
@@ -281,7 +295,7 @@ def format_goal_all_summary(
         f"**Files changed:** {len(files)} (+{total_adds}/-{total_dels} lines)",
     )
 
-    test_status = "passed" if test_exit_code == 0 else "failed"
+    test_status = resolve_test_execution_status(test_exit_code, test_details, project_types)
     slowest = []
     needs_improvement = []
     for test in test_details.get("slow_tests", []):
