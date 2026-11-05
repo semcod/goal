@@ -121,6 +121,74 @@ class PublicationEntrypointTests(unittest.TestCase):
             self.assertEqual(archive.read("goal/publish/state.py"), (ROOT / "goal/publish/state.py").read_bytes())
             self.assertEqual(archive.read("goal/cli/publish_cmd.py"), (ROOT / "goal/cli/publish_cmd.py").read_bytes())
             self.assertEqual(archive.read("goal/doctor/python_diag_extended.py"), (ROOT / "goal/doctor/python_diag_extended.py").read_bytes())
+            for module in ("goal/cli/tests.py", "goal/push/stages/test.py", "goal/push/core.py", "goal/formatter.py"):
+                self.assertEqual(archive.read(module), (ROOT / module).read_bytes())
+
+    def test_installed_unexecuted_tests_preserve_truthful_status_and_ignore_old_metrics(self):
+        program = textwrap.dedent(r'''
+            import contextlib, io, json, os, sys, tempfile
+            from pathlib import Path
+            from unittest.mock import patch
+            sys.path.extend(sys.argv[1:])
+            import goal
+            from goal.push.stages.test import run_test_stage
+            from goal.formatter import resolve_test_execution_status
+            assert Path(goal.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+
+            with tempfile.TemporaryDirectory(prefix="goal-installed-selection-") as directory:
+                os.chdir(directory)
+                report = Path(".goal_test_report.xml")
+                report.write_text('<testsuite><testcase name="old" time="37"/></testsuite>')
+                for types, automatic, status, expected in (
+                    ([], True, "not_selected", "No project tests selected"),
+                    (["python"], False, "skipped", "Tests skipped"),
+                ):
+                    ctx = {}
+                    with patch("goal.push.stages.test.confirm", return_value=False), contextlib.redirect_stdout(io.StringIO()):
+                        result = run_test_stage(types, automatic, False, ctx, [], {}, "1", "1", "canary", "")
+                    assert result == (expected, 0)
+                    details = ctx["test_details"]
+                    assert details["status"] == status
+                    assert all(details[key] == 0 for key in ("wall_time", "total_test_time", "startup_overhead"))
+                    assert details["slow_tests"] == [] and report.exists()
+                    assert resolve_test_execution_status(0, details, types) == status
+                    assert resolve_test_execution_status(1, details, types) == "failed"
+                print(json.dumps({"notSelectedAndSkippedDistinct": True, "oldMetricsIgnored": True, "failureDominates": True}))
+        ''')
+        result = self.run_checked([str(self.python), "-I", "-c", program, *site.getsitepackages()])
+        self.assertTrue(json.loads(result.stdout)["oldMetricsIgnored"])
+
+    def test_installed_cold_uv_command_loads_a_required_project_plugin(self):
+        program = textwrap.dedent(r'''
+            import json, os, shutil, subprocess, sys, tempfile
+            from pathlib import Path
+            sys.path.extend(sys.argv[2:])
+            import goal
+            from goal.cli.tests import _build_python_test_command, _pytest_importable
+            assert Path(goal.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+            os.environ.pop("PYTEST_CURRENT_TEST", None)
+            assert not _pytest_importable(sys.executable), "Installed qualification venv must not contain pytest"
+            uv = shutil.which("uv")
+            assert uv, "Release qualification requires UV"
+
+            with tempfile.TemporaryDirectory(prefix="goal-installed-plugin-") as directory:
+                root = Path(directory)
+                os.chdir(root)
+                cmd, direct, _ = _build_python_test_command("pytest test_required.py -q", "pytest test_required.py -q")
+                assert direct and cmd == ["uv", "run", "python", "-m", "pytest", "test_required.py", "-q"]
+                (root / "pytest.ini").write_text("[pytest]\naddopts = -p required_local_plugin\n")
+                (root / "required_local_plugin.py").write_text("import pytest\n@pytest.fixture\ndef local_contract():\n    return 'loaded'\n")
+                (root / "test_required.py").write_text("def test_plugin(local_contract):\n    assert local_contract == 'loaded'\n")
+                # Run the generated module payload through real UV, reusing the
+                # host's pytest interpreter so this wheel contract needs no downloads.
+                actual = [uv, "run", "--offline", "--no-project", "--python", sys.argv[1], *cmd[2:]]
+                result = subprocess.run(actual, cwd=root, capture_output=True, text=True, timeout=30, check=False)
+                assert result.returncode == 0, result.stdout + result.stderr
+                assert "1 passed" in result.stdout
+                print(json.dumps({"coldInterpreterLacksPytest": True, "moduleLauncher": cmd, "requiredPluginLoaded": True}))
+        ''')
+        result = self.run_checked([str(self.python), "-I", "-c", program, sys.executable, *site.getsitepackages()])
+        self.assertTrue(json.loads(result.stdout)["requiredPluginLoaded"])
 
     def test_publication_tools_are_an_optional_reusable_installation_bundle(self):
         with zipfile.ZipFile(self.wheel) as archive:

@@ -1,0 +1,109 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-236",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: maskservice:PLF-22282 meaningful isolated installed-wheel test contracts and public Goal2.2.11 release after trusted source merge.",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-236/**",
+    "VERSION",
+    "pyproject.toml",
+    "goal/__init__.py",
+    "uv.lock",
+    "integration/test_publication_entrypoint.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1d42dbb772c5b0093493b2288a1ac8609a536424",
+    "targetBranch": "main",
+    "outcome": "Public Goal2.2.11 contains the already accepted honest test selection and cold UV module launcher, qualified from a real installed wheel; all release metadata and non-root dependency records remain consistent.",
+    "nonGoals": [
+      "No application behavior changes or new dependencies",
+      "No protected check weakening or unreviewed verifier pin changes",
+      "No registry upload before trusted exact-head source merge and no overwriting published artifacts"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Exercise accepted test-stage statuses/metrics and UV module/plugin startup through the actual isolated wheel installation. Update only the root version in four release projections. Coordinate exact OneDev raw-input pins through a separately governed onedev-agent producer and its safe deployment; preserve all required matrix and independent-review controls. Genuine Goal publication follows trusted source merge and immutable artifact verification.",
+      "components": [
+        {
+          "name": "installed-test-contract",
+          "paths": [
+            "integration/test_publication_entrypoint.py"
+          ]
+        },
+        {
+          "name": "release-projections",
+          "paths": [
+            "VERSION",
+            "pyproject.toml",
+            "goal/__init__.py",
+            "uv.lock"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Use a subsequent immutable public patch or protected source revert; retain previous local prefix and never overwrite existing registry artifacts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python integration/test_publication_entrypoint.py -v"
+        ],
+        "evidence": "receipt:goal22282/installed-wheel-regressions"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "uv lock --check --offline",
+          "python -m pytest -q tests/",
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal22282/source-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m goal -a --no-publish --delivery-mode pull-request"
+        ],
+        "evidence": "receipt:goal22282/protected-publication"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "goal -a --delivery-mode publish-only"
+        ],
+        "evidence": "receipt:goal22282/immutable-public-registry-readback"
+      }
+    ]
+  }
+}
