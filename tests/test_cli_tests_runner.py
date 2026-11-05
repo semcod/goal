@@ -1,6 +1,10 @@
+import os
+import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 
 from goal.cli import tests as cli_tests
 
@@ -130,7 +134,7 @@ def test_rewrite_bash_pytest_for_uv_converts_goal_yaml_style_command():
     with patch("goal.cli.tests._pytest_importable", return_value=False):
         assert (
             _rewrite_bash_pytest_for_uv(cmd, has_uv=True, python_bin="/usr/bin/python3")
-            == "uv run pytest tests/ -v"
+            == "uv run python -m pytest tests/ -v"
         )
     with patch("goal.cli.tests._pytest_importable", return_value=True):
         assert (
@@ -147,6 +151,7 @@ def test_rewrite_bash_pytest_for_uv_converts_goal_yaml_style_command():
 
 def test_build_python_test_command_prefers_venv_pytest_when_importable(monkeypatch):
     monkeypatch.delenv("VIRTUAL_ENV", raising=False)
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
 
     with (
         patch(
@@ -163,6 +168,85 @@ def test_build_python_test_command_prefers_venv_pytest_when_importable(monkeypat
     assert cmd[:3] == ["/tmp/project/.venv/bin/python", "-m", "pytest"]
     assert use_subprocess is True
     assert python_bin == "/tmp/project/.venv/bin/python"
+
+
+@pytest.mark.parametrize(
+    "strategy, expected_args",
+    [
+        ("", []),
+        ("pytest 'tests with spaces/' -k 'first or second'", ["tests with spaces/", "-k", "first or second"]),
+        ("python -m pytest tests/ --maxfail=1", ["tests/", "--maxfail=1"]),
+    ],
+)
+def test_cold_uv_root_launcher_preserves_module_startup_and_arguments(
+    monkeypatch, strategy, expected_args
+):
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    with (
+        patch.object(cli_tests, "_resolve_root_python", return_value="/project/.venv/bin/python"),
+        patch.object(cli_tests, "_pytest_importable", return_value=False),
+        patch.object(cli_tests, "_has_package", return_value=False),
+        patch("shutil.which", return_value="/bin/uv"),
+    ):
+        cmd, use_subprocess, python_bin = cli_tests._build_python_test_command(
+            strategy or "pytest", strategy
+        )
+
+    assert cmd == ["uv", "run", "python", "-m", "pytest", *expected_args]
+    assert use_subprocess is True
+    assert python_bin == "/project/.venv/bin/python"
+
+
+def test_uv_module_payload_loads_required_project_plugin(tmp_path, monkeypatch):
+    """Exercise real pytest plugin discovery without depending on UV/network in CI."""
+    plugin = "goal_local_required_plugin"
+    (tmp_path / "pytest.ini").write_text(f"[pytest]\naddopts = -p {plugin}\n")
+    (tmp_path / f"{plugin}.py").write_text(
+        "import pytest\n"
+        "@pytest.fixture\ndef required_local_fixture():\n    return 'loaded'\n"
+    )
+    (tmp_path / "test_local_plugin.py").write_text(
+        "def test_plugin(required_local_fixture):\n"
+        "    assert required_local_fixture == 'loaded'\n"
+    )
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    with (
+        patch.object(cli_tests, "_resolve_root_python", return_value=sys.executable),
+        patch.object(cli_tests, "_pytest_importable", return_value=False),
+        patch("shutil.which", return_value="/bin/uv"),
+    ):
+        cmd, _, _ = cli_tests._build_python_test_command("pytest -q", "pytest -q")
+
+    assert cmd[:3] == ["uv", "run", "python"]
+    # UV supplies the Python interpreter; execute the generated module payload
+    # directly here. A separate cold UV canary qualifies actual provisioning.
+    env = {k: v for k, v in os.environ.items() if k not in {"PYTHONPATH", "PYTHONSAFEPATH"}}
+    env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+    result = subprocess.run(
+        [sys.executable, *cmd[3:]], cwd=tmp_path, env=env,
+        capture_output=True, text=True, timeout=30, check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "1 passed" in result.stdout
+
+
+def test_uv_subproject_launcher_uses_module_and_keeps_test_path(tmp_path, monkeypatch):
+    (tmp_path / "pyproject.toml").write_text('[project]\nname="fixture"\nversion="0.1.0"\n')
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    with (
+        patch.object(cli_tests, "_find_project_root", return_value=tmp_path),
+        patch.object(cli_tests, "_check_python_venv", return_value=(True, "")),
+        patch.object(cli_tests, "_resolve_project_python", return_value="/project/.venv/bin/python"),
+        patch.object(cli_tests, "_has_package", return_value=False),
+        patch("shutil.which", return_value="/bin/uv"),
+        patch.object(cli_tests.subprocess, "run", return_value=MagicMock(returncode=0)) as run,
+    ):
+        assert cli_tests._run_python_test("nested/tests", ["python", "-m", "pytest"]) == (True, False)
+
+    assert run.call_args.args[0] == [
+        "uv", "run", "python", "-m", "pytest",
+        "--junitxml=.goal_test_report.xml", "nested/tests",
+    ]
 
 
 def test_display_test_error_names_path_exit_code_and_shows_tail(capsys):

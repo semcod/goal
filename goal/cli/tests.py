@@ -87,7 +87,7 @@ def _rewrite_bash_pytest_for_uv(
         return None
 
     args = (match.group(1) or "").strip().strip("'\"")
-    return f"uv run pytest {args}".strip()
+    return f"uv run python -m pytest {args}".strip()
 
 
 def _coerce_python_strategy_to_project_pytest(
@@ -218,7 +218,7 @@ def _run_python_test(test_dir: str, base_cmd: List[str]) -> tuple[bool, bool]:
             )
             return True, True
     if has_uv:
-        subdir_cmd = ["uv", "run", "pytest"]
+        subdir_cmd = ["uv", "run", "python", "-m", "pytest"]
     else:
         subdir_cmd = [python_bin, "-m", "pytest"]
 
@@ -333,7 +333,7 @@ def _build_python_test_command(
         if coerced_cmd is not None:
             if use_uv_run:
                 if coerced_cmd[0] == python_bin and coerced_cmd[1:3] == ["-m", "pytest"]:
-                    coerced_cmd = ["uv", "run", "pytest"] + coerced_cmd[3:]
+                    coerced_cmd = ["uv", "run", "python", "-m", "pytest"] + coerced_cmd[3:]
             return coerced_cmd, use_subprocess, python_bin
         uv_cmd = _rewrite_bash_pytest_for_uv(test_cmd_str, has_uv, python_bin)
         if uv_cmd:
@@ -342,7 +342,8 @@ def _build_python_test_command(
 
     # Default command
     if use_uv_run:
-        cmd = ["uv", "run", "pytest"]
+        # Module startup adds the project root before pytest loads local plugins.
+        cmd = ["uv", "run", "python", "-m", "pytest"]
     else:
         cmd = [python_bin, "-m", "pytest"]
 
