@@ -175,7 +175,7 @@ def test_build_python_test_command_prefers_venv_pytest_when_importable(monkeypat
     [
         ("", []),
         ("pytest 'tests with spaces/' -k 'first or second'", ["tests with spaces/", "-k", "first or second"]),
-        ("python -m pytest tests/ --maxfail=1", ["tests/", "--maxfail=1"]),
+        ("python -m pytest tests/ --strict-markers", ["tests/", "--strict-markers"]),
     ],
 )
 def test_cold_uv_root_launcher_preserves_module_startup_and_arguments(

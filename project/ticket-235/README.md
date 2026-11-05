@@ -37,3 +37,5 @@ Governance passed with 0 errors/warnings. The original console launcher still
 fails the required root plugin import as a negative control. No new Ruff
 findings relative to the same baseline/configuration. Exact protected head
 validation and merge remain pending; no public package/version effect.
+
+The argument-preservation regression also covers strict marker validation.
