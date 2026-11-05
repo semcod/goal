@@ -15,6 +15,12 @@ from goal.io.stdio import (
 )
 
 
+def _unexecuted_details(status: str) -> dict:
+    """Do not import metrics from a previous invocation's JUnit report."""
+    return {"status": status, "wall_time": 0.0, "total_test_time": 0.0,
+            "startup_overhead": 0.0, "slow_tests": []}
+
+
 def run_test_stage(
     project_types: List[str],
     yes: bool,
@@ -32,10 +38,19 @@ def run_test_stage(
     test_exit_code = 0
     use_markdown = markdown or ctx_obj.get("markdown")
 
+    if not project_types:
+        ctx_obj["test_details"] = _unexecuted_details("not_selected")
+        click.echo(click.style(
+            "No project tests selected; declared delivery checks are still required.",
+            fg="yellow",
+        ))
+        return "No project tests selected", 0
+
     if not yes:
         if confirm("Run tests?"):
             click.echo(click.style("\nRunning tests...", fg="cyan"))
             test_success = run_tests(project_types, config=ctx_obj.get("config"))
+            test_result = "Tests passed" if test_success else "Tests failed"
             if not test_success:
                 test_exit_code = 1
                 if not confirm("Tests failed. Continue anyway?", default=False):
@@ -64,6 +79,8 @@ def run_test_stage(
             click.echo(
                 click.style("  🤖 AUTO: Skipping tests (user chose N)", fg="cyan")
             )
+            ctx_obj["test_details"] = _unexecuted_details("skipped")
+            return "Tests skipped", 0
     else:
         echo_auto("Running tests (--all mode)")
         try:
@@ -87,5 +104,6 @@ def run_test_stage(
 
     from goal.cli.tests import get_test_execution_details
     ctx_obj["test_details"] = get_test_execution_details()
+    ctx_obj["test_details"]["status"] = "passed" if test_exit_code == 0 else "failed"
 
     return test_result, test_exit_code

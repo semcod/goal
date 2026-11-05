@@ -225,6 +225,8 @@ def output_final_summary(
 
     test_details = ctx_obj.get("test_details", {})
     added_tickets = list(ctx_obj.get("added_slow_test_tickets", []))
+    from goal.formatter import resolve_test_execution_status
+    test_status = resolve_test_execution_status(test_exit_code, test_details, project_types)
 
     use_markdown = markdown or ctx_obj.get("markdown")
     is_all_mode = ctx_obj.get("yes") or use_markdown
@@ -277,7 +279,7 @@ def output_final_summary(
                 "version_update": {"from": current_version, "to": new_version},
                 "git": {"commit_message": commit_msg, "files_changed": len(files)},
                 "test_execution": {
-                    "status": "passed" if test_exit_code == 0 else "failed",
+                    "status": test_status,
                     "total_wall_time_seconds": round(
                         test_details.get("wall_time", 0.0), 2
                     ),

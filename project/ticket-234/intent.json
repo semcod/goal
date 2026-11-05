@@ -1,0 +1,99 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-234",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: continue authorized Maskservice PLF-22276; distinguish no selected project tests from passed execution while preserving required governance checks.",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-234/**",
+    "project/TICKETS.md",
+    "goal/push/stages/test.py",
+    "goal/push/core.py",
+    "goal/formatter.py",
+    "tests/test_test_stage_selection.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0f507b9761407cb0bb51175c21b0e37b5b84c498",
+    "targetBranch": "main",
+    "outcome": "Empty project-type selection and explicit test opt-out produce truthful not_selected/skipped console and structured summaries without stale JUnit metrics; required governed delivery gates still block publication.",
+    "nonGoals": [
+      "No persistent health cache or new dependencies",
+      "No package version, tag, registry publication, hardware or CI gate retirement",
+      "No per-framework executed-test-count claim; this defect concerns empty detected project-type selection and explicit user skip"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 80,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse existing invocation context test_details for explicit status, resolve final status centrally in existing formatter, retain boolean runner and governance/delivery prerequisites. Never parse a previous run report for an unexecuted stage.",
+      "components": [
+        {
+          "name": "test-stage",
+          "paths": [
+            "goal/push/stages/test.py"
+          ]
+        },
+        {
+          "name": "delivery-summary",
+          "paths": [
+            "goal/push/core.py",
+            "goal/formatter.py",
+            "tests/test_test_stage_selection.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected ordinary revert; preserve historical result evidence."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_test_stage_selection.py"
+        ],
+        "evidence": "receipt:goal22276/selection-regressions"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_delivery_integrity.py tests/test_governance_delivery.py tests/test_formatter.py tests/test_push_core_refactor.py"
+        ],
+        "evidence": "receipt:goal22276/delivery-regressions"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal22276/protected-publication"
+      }
+    ]
+  }
+}
