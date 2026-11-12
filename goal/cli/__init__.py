@@ -599,6 +599,7 @@ class GoalGroup(click.Group):
             "--nfo-format",
             "--nfo-sink",
             "--delivery-mode",
+            "--source-hub-verification",
         }
         # Split the argv into option tokens (with their values) and bare
         # positional tokens so we can tell "goal -a" from "goal -a ./foo ./bar".
@@ -744,6 +745,12 @@ class GoalGroup(click.Group):
     help="Governed delivery: direct main, registry only, or pull request.",
 )
 @click.option("--nfo-format", default="markdown", help="nfo log format")
+@click.option(
+    "--source-hub-verification",
+    type=click.Choice(["local", "protected-ci"]),
+    default="local",
+    help="Source hubs: run all checks locally, or prepare a frozen PR awaiting protected CI. Requires -a --no-publish and pull-request mode.",
+)
 @click.option("--nfo-sink", default="", help="Additional nfo sink")
 @click.pass_context
 def main(
@@ -766,6 +773,7 @@ def main(
     delivery_mode,
     nfo_format,
     nfo_sink,
+    source_hub_verification="local",
 ) -> None:
     """Goal - Automated git push with smart commit messages."""
     read_only_governance = bool(ctx.meta.get("goal_read_only_governance"))
@@ -777,7 +785,7 @@ def main(
         or ctx.resilient_parsing
         or ctx.meta.get("goal_help_request")
     )
-    if not is_help_request and not read_only_governance:
+    if not is_help_request and not read_only_governance and source_hub_verification == "local":
         _warn_goal_binary_mismatch()
         _warn_wheel_shadows_editable()
         latest_version = _show_goal_version_banner()
@@ -801,9 +809,13 @@ def main(
         config_path,
         abstraction,
         delivery_mode,
-        read_only_governance or is_help_request,
+        read_only_governance or is_help_request or source_hub_verification == "protected-ci",
         koru=koru,
     )
+    if source_hub_verification != "local":
+        from goal.governance.review_preparation import configure_strategy
+
+        configure_strategy(ctx.obj, source_hub_verification)
 
 
 # Import commands to register them

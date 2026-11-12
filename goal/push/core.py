@@ -489,6 +489,10 @@ def _resume_pending_pull_request(
         pending_pull_request_delivery,
         record_delivery_event,
     )
+    from goal.governance.review_preparation import (
+        preparation_result,
+        submission_arguments,
+    )
 
     short_head = candidate.head_sha[:12]
     click.echo(
@@ -525,14 +529,17 @@ def _resume_pending_pull_request(
         delivery,
         ticket=ticket,
         title=candidate.title,
+        **submission_arguments(ctx_obj, candidate, ticket),
     )
     record_delivery_event(
         delivery,
-        "pull-request",
+        preparation_result(ctx_obj),
         detail=pr_url,
         head=head,
     )
     click.echo(click.style(f"Pull request: {pr_url}", fg="green"))
+    if preparation_result(ctx_obj) == "pull-request-prepared":
+        click.echo("Complete source-hub verification PENDING in protected CI; independent approval required.")
     if "_start_time" in ctx_obj:
         elapsed = time.time() - ctx_obj["_start_time"]
         ctx_obj["_elapsed_time"] = elapsed
@@ -741,6 +748,9 @@ def execute_push_workflow(
         ctx_obj.get("delivery_mode"),
         all_flags=bool(ctx_obj.get("all_flags", False)),
     )
+    from goal.governance.review_preparation import preflight_arguments
+
+    verification_arguments = preflight_arguments(ctx_obj, delivery, ticket)
     canonical_release: CanonicalReleaseAdmission | None = None
     no_change = False
     if delivery is not None:
@@ -755,7 +765,7 @@ def execute_push_workflow(
             if delivery.mode == "direct-main" and ticket is not None:
                 maybe_admission = validate_delivery_ready(delivery, ticket=ticket)
             else:
-                maybe_admission = validate_delivery_ready(delivery)
+                maybe_admission = validate_delivery_ready(delivery, **verification_arguments)
             if isinstance(maybe_admission, CanonicalReleaseAdmission):
                 canonical_release = maybe_admission
         finally:
@@ -932,6 +942,9 @@ def execute_push_workflow(
         and ticket
     ):
         pending_delivery = pending_pull_request_delivery(delivery, ticket=ticket)
+        from goal.governance.review_preparation import require_prepared_candidate
+
+        require_prepared_candidate(ctx_obj, pending_delivery)
         if pending_delivery is not None:
             _resume_pending_pull_request(
                 ctx_obj,
