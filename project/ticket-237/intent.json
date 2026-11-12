@@ -1,0 +1,105 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-237",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: continue Heyasa autonomy dependency semcod/goal:STARTER-029 / issue239. Bounded prerequisite: stop owned POSIX source-hub process groups on timeout and cancellation, preserve real errors/cache/check requirements. Include admitted-checkout fixture isolation discovered by full validation; retain all native gates and classifiers.",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-237/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "goal/governance/source_hub_process.py",
+    "tests/test_source_hub_process.py",
+    "tests/test_governance_cmd.py",
+    "tests/test_governance_delivery.py",
+    "tests/test_project_bootstrap.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "961c33fda76b9d7720e1d40e33137eda0574a7b7",
+    "targetBranch": "main",
+    "outcome": "Source-hub timeouts and interruptions terminate the owned POSIX process group; diagnostics retain output and failures never create success cache. Deliver exact-head source through OneDev and independent Validator. Goal239 full baseline/candidate qualification remains open. Full project-bound validation also isolates missing-config, noncanonical-location and Python bootstrap fixtures from the real checkout.",
+    "nonGoals": [
+      "No NP429 writes, adoption, runtime activation, dependency/version/tag/registry changes",
+      "No draft or bypass publication, timeout increase, skipped suite or fake cache/status",
+      "No termination of foreign processes or escaped independent sessions"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use a small POSIX process-group runner for the actual built-in Linux source-hub executor; keep custom runners and existing non-POSIX behavior compatible. Propagate interruption after bounded cleanup, preserve timeout output and canonical gate/cache semantics. Regression tests use actual owned descendants, including a TERM-ignoring child. Seed isolated Git roots in configuration/bootstrap fixtures, and test system-temp classification explicitly instead of assuming pytest TMPDIR is global /tmp.",
+      "components": [
+        {
+          "name": "source-hub-execution",
+          "paths": [
+            "goal/governance/delivery.py",
+            "goal/governance/source_hub_process.py"
+          ]
+        },
+        {
+          "name": "execution-regressions",
+          "paths": [
+            "tests/test_source_hub_process.py",
+            "tests/test_governance_cmd.py",
+            "tests/test_governance_delivery.py",
+            "tests/test_project_bootstrap.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Protected revert of exact source change; no operator runtime was changed."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_source_hub_process.py tests/test_governance_source_hub.py"
+        ],
+        "evidence": "receipt:goal239/process-regressions"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/",
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal239/full-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "goal -a --no-publish --delivery-mode pull-request"
+        ],
+        "evidence": "receipt:goal239/protected-source-delivery"
+      }
+    ]
+  }
+}
