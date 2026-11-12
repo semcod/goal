@@ -290,6 +290,7 @@ def test_maybe_self_update_skips_when_no_newer_version(monkeypatch) -> None:
 
 
 def test_maybe_self_update_runs_without_prompt_when_yes(monkeypatch) -> None:
+    monkeypatch.delenv(goal_cli.SELF_UPDATE_REEXEC_ENV, raising=False)
     called = []
     monkeypatch.setattr(goal_cli, "_auto_update_goal", lambda *a: called.append(a))
     # A stray confirm() would fail the test (no input available in CI).

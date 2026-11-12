@@ -295,6 +295,78 @@ def test_changed_frozen_head_refused_before_remote_effect(hub, monkeypatch):
             review.require_prepared_candidate(context, unsafe)
 
 
+@pytest.mark.parametrize("window", ["lookup", "create", "existing", "rest"])
+def test_late_candidate_mutation_never_reports_prepared_success(hub, monkeypatch, window):
+    root, _, remote, policy, _ = hub
+    candidate = review.validate_preparation(policy, "ticket-001", root)
+    original_run = delivery._run
+    original_assert = review.assert_candidate
+    pushed = checked_after_push = changed = created = False
+    creations = []
+
+    def change_candidate():
+        nonlocal changed
+        (root / "concurrent.txt").write_text("changed after the post-push assertion\n")
+        git(root, "add", "concurrent.txt")
+        git(root, "commit", "-qm", "[ticket-001] fix(hub): concurrent mutation")
+        git(root, "push", "-q", "origin", "HEAD:refs/heads/ticket/001-review")
+        changed = True
+
+    def check(*args, **kwargs):
+        nonlocal checked_after_push
+        result = original_assert(*args, **kwargs)
+        if pushed:
+            checked_after_push = True
+        return result
+
+    def run(args, **kwargs):
+        nonlocal pushed, created
+        if args[:2] == ["git", "push"]:
+            result = original_run(args, **kwargs)
+            pushed = result.returncode == 0
+            return result
+        if args[:3] == ["gh", "pr", "list"]:
+            if pushed and checked_after_push and not changed and window in {"lookup", "existing"}:
+                change_candidate()
+                if window == "existing":
+                    # The lookup response was captured just before the branch moved.
+                    rows = [{"url": "https://example.invalid/hub/pull/1", "headRefOid": candidate.head_sha}]
+                    return subprocess.CompletedProcess(args, 0, json.dumps(rows), "")
+            rows = [{"url": "https://example.invalid/hub/pull/1", "headRefOid": git(remote, "rev-parse", "refs/heads/ticket/001-review")}] if created else []
+            return subprocess.CompletedProcess(args, 0, json.dumps(rows), "")
+        if args[:3] == ["gh", "pr", "create"]:
+            creations.append(args)
+            if window == "create":
+                assert checked_after_push
+                change_candidate()
+            created = True
+            if window == "rest":
+                return subprocess.CompletedProcess(args, 1, "", "API rate limit exceeded (graphql)")
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[:2] == ["gh", "api"]:
+            assert window == "rest" and "--method" not in args
+            assert checked_after_push and created and not changed
+            change_candidate()
+            # REST can observe the old PR while the branch changes in flight.
+            row = {"state": "open", "html_url": "https://github.com/example/hub/pull/1",
+                   "base": {"ref": "main", "repo": {"full_name": "example/hub"}},
+                   "head": {"ref": "ticket/001-review", "sha": candidate.head_sha,
+                            "repo": {"full_name": "example/hub"}}}
+            return subprocess.CompletedProcess(args, 0, json.dumps([row]), "")
+        return original_run(args, **kwargs)
+
+    if window == "rest":
+        monkeypatch.setattr(delivery, "_rest_repository", lambda *_: "example/hub")
+    monkeypatch.setattr(review, "assert_candidate", check)
+    monkeypatch.setattr(delivery, "_run", run)
+    with pytest.raises(click.ClickException):
+        delivery.deliver_pull_request(policy, ticket="ticket-001", title=candidate.title,
+                                      cwd=root, expected_candidate=candidate)
+    assert pushed and checked_after_push and changed
+    assert len(creations) == (1 if window in {"create", "rest"} else 0)
+    assert git(remote, "rev-parse", "refs/heads/ticket/001-review") != candidate.head_sha
+
+
 def test_rest_recovery_preserves_pending_body(tmp_path, monkeypatch):
     policy = delivery.DeliveryPolicy(
         "pull-request", True, ("pull-request",), "origin", "main", True
