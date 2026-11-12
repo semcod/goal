@@ -680,7 +680,7 @@ def governance_diagnostic_guidance(root: Path, output: str) -> list[str]:
 
 
 def _source_hub_candidate_gate(
-    root: Path, *, base: str, head: str | None = None
+    root: Path, *, base: str, head: str | None = None, runner: Runner | None = None
 ) -> None:
     missing = [
         relative
@@ -721,7 +721,7 @@ def _source_hub_candidate_gate(
             "text",
         ]
     )
-    result = _run(arguments, cwd=root)
+    result = (runner or _run)(arguments, cwd=root)
     if result.returncode != 0:
         detail = (
             "\n".join(
@@ -1637,6 +1637,7 @@ def validate_delivery_ready(
     *,
     cwd: Path | None = None,
     ticket: str | None = None,
+    source_hub_verification: str = "local",
 ) -> CanonicalReleaseAdmission | None:
     """Fail before workflow side effects when delivery prerequisites are unmet."""
     caller_path = Path(cwd) if cwd is not None else None
@@ -1645,6 +1646,12 @@ def validate_delivery_ready(
             f"canonical direct-main release refuses symlink component: {caller_path}"
         )
     root = _repository_root(cwd)
+    if source_hub_verification not in {"local", "protected-ci"}:
+        raise click.ClickException("unknown source-hub verification strategy")
+    if source_hub_verification == "protected-ci":
+        from goal.governance.review_preparation import validate_strategy
+
+        validate_strategy(policy)
     canonical_admission: CanonicalReleaseAdmission | None = None
 
     if policy.mode == "publish-only":
@@ -1708,6 +1715,13 @@ def validate_delivery_ready(
         validation_base = _pull_request_validation_base(policy, root)
     elif canonical_admission is not None:
         validation_base = canonical_admission.remote_base_sha
+
+    if source_hub_verification == "protected-ci":
+        from goal.governance.review_preparation import validate_preparation
+
+        # Never enter the complete-local gate cache with a pending CI result.
+        validate_preparation(policy, ticket, root, base=validation_base)
+        return None
 
     if policy.require_clean_governance:
         use_dedup = os.environ.get("GOAL_NO_PREFLIGHT_CACHE") != "1"
@@ -2208,14 +2222,17 @@ def _rest_open_pull_requests(policy: DeliveryPolicy, head: str, root: Path) -> l
     return matches
 
 
-def _recover_pull_request_creation(policy: DeliveryPolicy, head: str, title: str, root: Path) -> None:
+def _recover_pull_request_creation(
+    policy: DeliveryPolicy, head: str, title: str, root: Path,
+    *, body: str = "Created by governed goal -a pull-request delivery.",
+) -> None:
     # A failed CLI request may already have created the PR. Observe first;
     # preserve the final current-HEAD verification instead of posting twice.
     if _rest_open_pull_requests(policy, head, root):
         return
     repository = _rest_repository(policy, root)
     payload = {'base': policy.base_branch, 'head': head, 'title': title,
-               'body': 'Created by governed goal -a pull-request delivery.'}
+               'body': body}
     with tempfile.TemporaryDirectory(prefix='goal-pr-rest-') as directory:
         request = Path(directory) / 'request.json'
         request.write_text(json.dumps(payload), encoding='utf-8')
@@ -2310,20 +2327,34 @@ def deliver_pull_request(
     ticket: str | None,
     title: str,
     cwd: Path | None = None,
+    expected_candidate: PendingPullRequestDelivery | None = None,
+    body: str = "Created by governed goal -a pull-request delivery.",
 ) -> tuple[str, str]:
     """Push a controlled head branch and create or reuse its pull request."""
     root = _repository_root(cwd)
-    if policy.require_clean_governance and is_new_project_source_hub(root):
+    if expected_candidate is not None:
+        from goal.governance.review_preparation import validate_preparation
+
+        if validate_preparation(policy, ticket, root) != expected_candidate:
+            raise click.ClickException("protected-ci frozen candidate changed before push")
+    if expected_candidate is None and policy.require_clean_governance and is_new_project_source_hub(root):
         validation_base = _pull_request_validation_base(policy, root)
         head_sha = _git_value("rev-parse", "HEAD", cwd=root)
         _source_hub_candidate_gate(root, base=validation_base, head=head_sha)
     head = _publication_head(policy, ticket, root)
     current = _git_value("branch", "--show-current", cwd=root)
+    if expected_candidate is not None and head != current:
+        raise click.ClickException("protected-ci refuses publication through a legacy branch alias")
     push_arguments = ["git", "push"]
     if current:
         push_arguments.append("-u")
-    push_arguments.extend([policy.remote, f"HEAD:refs/heads/{head}"])
+    push_source = expected_candidate.head_sha if expected_candidate is not None else "HEAD"
+    push_arguments.extend([policy.remote, f"{push_source}:refs/heads/{head}"])
     with authorized_push(policy, cwd=root):
+        if expected_candidate is not None:
+            from goal.governance.review_preparation import assert_candidate
+
+            assert_candidate(policy, ticket, root, expected_candidate)
         pushed = _run(push_arguments, cwd=root)
     if pushed.returncode != 0:
         raise click.ClickException(
@@ -2331,6 +2362,8 @@ def deliver_pull_request(
             + (pushed.stderr or "unknown git error").strip()
         )
 
+    if expected_candidate is not None:
+        assert_candidate(policy, ticket, root, expected_candidate)
     existing_url = _find_open_pull_request(policy, head, root)
     if existing_url is not None:
         return head, existing_url
@@ -2347,12 +2380,12 @@ def deliver_pull_request(
             "--title",
             title,
             "--body",
-            "Created by governed goal -a pull-request delivery.",
+            body,
         ],
         cwd=root,
     )
     if _graphql_rate_exhausted(created):
-        _recover_pull_request_creation(policy, head, title, root)
+        _recover_pull_request_creation(policy, head, title, root, body=body)
     elif created.returncode != 0:
         raise click.ClickException(
             "could not create pull request: "

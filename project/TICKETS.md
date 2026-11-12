@@ -155,9 +155,17 @@ This file indexes governance tickets without taking ownership of
 | **ticket-211** | [`README.md`](./ticket-211/README.md) | - | - | - | - | - |
 | **ticket-212** | [`README.md`](./ticket-212/README.md) | - | - | - | - | - |
 | **ticket-213** | [`README.md`](./ticket-213/README.md) | - | - | - | - | - |
+| **ticket-214** | [`README.md`](./ticket-214/README.md) | - | - | - | - | - |
 | **ticket-215** | [`README.md`](./ticket-215/README.md) | - | - | - | - | - |
 | **ticket-216** | [`README.md`](./ticket-216/README.md) | - | - | - | - | - |
 | **ticket-217** | [`README.md`](./ticket-217/README.md) | - | - | - | - | - |
+| **ticket-218** | [`README.md`](./ticket-218/README.md) | - | - | - | - | - |
+| **ticket-219** | [`README.md`](./ticket-219/README.md) | - | - | - | - | - |
+| **ticket-220** | [`README.md`](./ticket-220/README.md) | - | - | - | - | - |
+| **ticket-221** | [`README.md`](./ticket-221/README.md) | - | - | - | - | - |
+| **ticket-222** | [`README.md`](./ticket-222/README.md) | - | - | - | - | - |
+| **ticket-223** | [`README.md`](./ticket-223/README.md) | - | - | - | - | - |
+| **ticket-224** | [`README.md`](./ticket-224/README.md) | - | - | - | - | - |
 | **ticket-225** | [`README.md`](./ticket-225/README.md) | - | - | - | - | - |
 | **ticket-227** | [`README.md`](./ticket-227/README.md) | - | - | - | - | - |
 | **ticket-228** | [`README.md`](./ticket-228/README.md) | - | - | - | - | - |
@@ -166,5 +174,10 @@ This file indexes governance tickets without taking ownership of
 | **ticket-231** | [`README.md`](./ticket-231/README.md) | - | - | - | - | - |
 | **ticket-232** | [`README.md`](./ticket-232/README.md) | - | - | - | - | - |
 | **ticket-233** | [`README.md`](./ticket-233/README.md) | - | - | - | - | - |
+| **ticket-234** | [`README.md`](./ticket-234/README.md) | - | - | - | - | - |
+| **ticket-235** | [`README.md`](./ticket-235/README.md) | - | - | - | - | - |
+| **ticket-236** | [`README.md`](./ticket-236/README.md) | - | - | - | - | - |
+| **ticket-237** | [`README.md`](./ticket-237/README.md) | - | - | - | - | - |
+| **ticket-238** | [`README.md`](./ticket-238/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
 | ticket-214 | Release 2.2.5 integration version files | IN_PROGRESS | EDIT | integration | ai-claude |

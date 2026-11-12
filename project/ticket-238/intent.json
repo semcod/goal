@@ -1,0 +1,112 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-238",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: continue, test and request protected merge for Goal STARTER-030 / issue241, prerequisite of Heyasa autonomy. Explicit pending protected-CI preparation for frozen canonical source-hub PRs; ordinary local verification unchanged.",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-238/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/cli/__init__.py",
+    "goal/governance/delivery.py",
+    "goal/governance/review_preparation.py",
+    "goal/push/core.py",
+    "tests/test_source_review_preparation.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8391b8e3f19da827efc1592713f2cddab0b3dadc",
+    "targetBranch": "main",
+    "outcome": "Explicit protected-CI strategy prepares a clean frozen ticket-bound source-hub PR while marking complete CI verification pending. Local candidate governance, JSON, CI wiring and required-check comparison remain mandatory. Independent required checks and Validator remain mandatory for merge.",
+    "nonGoals": [
+      "No source430/429 writes or reuse of ended leases",
+      "No fake health cache/status, check waiver, direct merge or protected runtime/profile change",
+      "No dependency/version/release/global runtime activation"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 3,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep normal verification unchanged; isolate explicit strategy, bounded preparation, frozen publication guards and pending metadata in one helper module. Use canonical registered checkout and actual native writer checking.",
+      "components": [
+        {
+          "name": "cli",
+          "paths": [
+            "goal/cli/__init__.py",
+            "goal/push/core.py"
+          ]
+        },
+        {
+          "name": "delivery",
+          "paths": [
+            "goal/governance/delivery.py",
+            "goal/governance/review_preparation.py"
+          ]
+        },
+        {
+          "name": "regressions",
+          "paths": [
+            "tests/test_source_review_preparation.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "CLI source verification strategy",
+        "Delivery preflight strategy keyword",
+        "Frozen-head/custom-body PR submission keywords"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Independent protected revert of source change; no global runtime activation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_source_review_preparation.py tests/test_governance_source_hub.py tests/test_governance_delivery.py"
+        ],
+        "evidence": "receipt:goal241/focused-tests"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/",
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "receipt:goal241/full-validation"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "goal -a --no-publish --delivery-mode pull-request push --ticket ticket-238"
+        ],
+        "evidence": "receipt:goal241/protected-source-delivery"
+      }
+    ]
+  }
+}
