@@ -1,0 +1,63 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-239",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: STARTER-031 repairs the reproduced frozen-candidate PR lookup race after merged PR242 and isolates the existing self-update test environment; continue tests and protected merge.",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-239/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "tests/test_cli_options.py",
+    "tests/test_source_review_preparation.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d249e40c64d510125766b6bca338fc40e9367a56",
+    "targetBranch": "main",
+    "outcome": "Prepared PRs retain the immutable expected SHA across lookup and creation races and fail closed on later changes; first-run self-update tests isolate their environment.",
+    "nonGoals": [
+      "No source430/429 or other writer edits.",
+      "No timeout/check waiver, fake cache/status, direct merge or protected policy change.",
+      "No dependency, version, release or global tool activation."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the captured candidate SHA for PR matching and revalidate the candidate around network effects. Retain normal local delivery defaults and recovery. Reuse real-Git fixtures to inject later mutations; clear only the self-update marker inside the first-run test.",
+      "components": [
+        {"name": "frozen-pr-delivery", "paths": ["goal/governance/delivery.py", "tests/test_source_review_preparation.py"]},
+        {"name": "self-update-test-isolation", "paths": ["tests/test_cli_options.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Independently reviewed revert; retain exact-head failure and merge receipts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python -m pytest -q tests/test_source_review_preparation.py tests/test_governance_source_hub.py tests/test_governance_delivery.py"], "evidence": "receipt:goal031/focused-races"},
+      {"criterion": "AC-02", "commands": ["python -m pytest -q tests/test_cli_options.py"], "evidence": "receipt:goal031/inherited-update-marker"},
+      {"criterion": "AC-03", "commands": ["python -m pytest -q tests/", "bash project/governance-check.sh", "goal -a --no-publish --delivery-mode pull-request push --ticket ticket-239"], "evidence": "receipt:goal031/protected-delivery"}
+    ]
+  }
+}

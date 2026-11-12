@@ -2301,9 +2301,12 @@ def _find_open_pull_request(
     policy: DeliveryPolicy,
     head: str,
     root: Path,
+    *,
+    expected_head: str | None = None,
 ) -> str | None:
-    """Resolve one open PR and bind it to the currently pushed commit."""
-    expected_head = _git_value("rev-parse", "HEAD", cwd=root)
+    """Resolve one open PR and bind it to the expected published commit."""
+    if expected_head is None:
+        expected_head = _git_value("rev-parse", "HEAD", cwd=root)
     for attempt in range(PULL_REQUEST_HEAD_ATTEMPTS):
         match = _query_open_pull_request(policy, head, root)
         if match is None:
@@ -2364,7 +2367,13 @@ def deliver_pull_request(
 
     if expected_candidate is not None:
         assert_candidate(policy, ticket, root, expected_candidate)
-    existing_url = _find_open_pull_request(policy, head, root)
+    lookup_arguments = (
+        {"expected_head": expected_candidate.head_sha}
+        if expected_candidate is not None else {}
+    )
+    existing_url = _find_open_pull_request(policy, head, root, **lookup_arguments)
+    if expected_candidate is not None:
+        assert_candidate(policy, ticket, root, expected_candidate)
     if existing_url is not None:
         return head, existing_url
 
@@ -2385,13 +2394,19 @@ def deliver_pull_request(
         cwd=root,
     )
     if _graphql_rate_exhausted(created):
+        if expected_candidate is not None:
+            assert_candidate(policy, ticket, root, expected_candidate)
         _recover_pull_request_creation(policy, head, title, root, body=body)
     elif created.returncode != 0:
         raise click.ClickException(
             "could not create pull request: "
             + (created.stderr or "unknown gh error").strip()
         )
-    created_url = _find_open_pull_request(policy, head, root)
+    if expected_candidate is not None:
+        assert_candidate(policy, ticket, root, expected_candidate)
+    created_url = _find_open_pull_request(policy, head, root, **lookup_arguments)
+    if expected_candidate is not None:
+        assert_candidate(policy, ticket, root, expected_candidate)
     if created_url is None:
         raise click.ClickException(
             "gh pr create reported success, but no matching open pull request exists"
