@@ -265,6 +265,12 @@ class TestScaffoldTest:
 
 
 class TestEnsureProjectEnvironmentPython:
+    @pytest.fixture(autouse=True)
+    def _isolated_repository(self, tmp_path):
+        # Bootstrap discovers Git parents without consulting GIT_CEILING_DIRECTORIES.
+        # A real fixture root prevents cost tracking from touching the source repo.
+        subprocess.run(["git", "init", "--quiet", str(tmp_path)], check=True)
+
     def test_creates_venv_and_installs(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "testpkg"\nversion = "0.1.0"'

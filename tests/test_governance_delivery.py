@@ -1622,13 +1622,20 @@ def test_canonical_release_preflight_rejects_missing_ticket_and_primary_checkout
         delivery.validate_delivery_ready(policy, cwd=primary, ticket="ticket-001")
 
 
+@pytest.mark.parametrize("temporary_path", ["/tmp/goal-release", "/var/tmp/goal-release"])
+def test_canonical_release_classifies_system_temporary_paths(temporary_path):
+    assert delivery._classify_worktree_path(
+        Path(temporary_path), Path("/home/fixture/goal")
+    ) == ("system-temp", None, None)
+
+
 def test_canonical_release_preflight_rejects_noncanonical_worktree_locations(
     tmp_path: Path,
 ):
     primary, worktree, _remote, head_sha = _canonical_release_fixture(tmp_path)
     policy = _canonical_release_policy()
 
-    # 1. system-temp location
+    # 1. pytest scratch is noncanonical, including when TMPDIR is checkout-bound.
     temp_wt = tmp_path / "tmp-release-wt"
     _git(
         primary,
@@ -1640,7 +1647,7 @@ def test_canonical_release_preflight_rejects_noncanonical_worktree_locations(
         str(temp_wt),
         "origin/main",
     )
-    with pytest.raises(click.ClickException, match="classification: system-temp"):
+    with pytest.raises(click.ClickException, match="refuses non-canonical worktree"):
         delivery.validate_delivery_ready(policy, cwd=temp_wt, ticket="ticket-002")
 
     # 2. legacy-v4 location (<primary>/worktrees/ticket-003--release)

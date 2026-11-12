@@ -648,6 +648,8 @@ def test_verify_delivery_does_not_rewrite_existing_goal_yaml():
 def test_authorize_push_fails_closed_without_goal_yaml():
     runner = CliRunner()
     with runner.isolated_filesystem():
+        # Keep the missing-config subject independent of any parent checkout.
+        _git(governance_cmd.Path.cwd(), "init", "--quiet")
         result = runner.invoke(main, ["governance", "authorize-push", "origin"])
 
         assert result.exit_code == 1

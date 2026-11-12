@@ -21,6 +21,8 @@ from urllib.parse import urlencode, urlsplit
 
 import click
 
+from goal.governance.source_hub_process import run_check as _run_source_hub_check
+
 
 DELIVERY_MODES = ("direct-main", "publish-only", "pull-request")
 HOOK_START = "# GOAL-GOVERNANCE-DELIVERY:START"
@@ -540,23 +542,26 @@ def run_source_hub_health(
             f"source-hub preflight [{index + 1}/{total_commands}]: {label}",
         )
         try:
-            try:
-                result = runner(
-                    command,
-                    cwd=target,
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                    timeout=timeout,
-                )
-            except TypeError:
-                result = runner(
-                    command,
-                    cwd=target,
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
+            if runner is subprocess.run:
+                result = _run_source_hub_check(command, cwd=target, timeout=timeout)
+            else:
+                try:
+                    result = runner(
+                        command,
+                        cwd=target,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                        timeout=timeout,
+                    )
+                except TypeError:
+                    result = runner(
+                        command,
+                        cwd=target,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
         except subprocess.TimeoutExpired as error:
             stderr_parts.append(
                 f"{SOURCE_HUB_DIAGNOSTIC}: source-hub check timed out after {timeout}s: {label}\n"
