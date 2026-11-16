@@ -498,15 +498,67 @@ def test_pending_pr_delivery_accepts_clean_ticket_bound_ahead_range(tmp_path):
     )
 
 
-def test_pending_pr_delivery_rejects_unbound_ahead_commit(tmp_path):
+@pytest.mark.parametrize(
+    "message",
+    [
+        "fix: unrelated candidate",
+        "chore(merge): sync current origin/main (ticket-049)",
+    ],
+)
+def test_pending_pr_delivery_rejects_unbound_ahead_commit(tmp_path, message):
     root = _publish_repository(tmp_path)
     _git(root, "switch", "-c", "ticket/049-resume")
-    _commit_ticket_change(root, "fix: unrelated candidate")
+    _commit_ticket_change(root, message)
 
     with pytest.raises(click.ClickException, match="not bound to ticket-049"):
         delivery.pending_pull_request_delivery(
             _pull_request_policy(), ticket="ticket-049", cwd=root
         )
+
+
+@pytest.mark.parametrize(
+    ("message", "bound"),
+    [
+        ("chore(merge): sync current origin/main (ticket-049)", True),
+        ("chore(merge): sync current upstream/release/2026 (ticket-049)", True),
+        ("chore(merge): sync current origin/main", False),
+        ("chore(merge): sync current origin/main (ticket-0491)", False),
+        ("chore(merge): sync current origin/main (ticket-050)", False),
+        ("chore(merge): sync current ticket-050/main (ticket-049)", False),
+        ("chore(merge): sync current origin/main (ticket-049) extra", False),
+        ("chore(merge): sync current origin/main (ticket-050) (ticket-049)", False),
+        ("fix(merge): sync current origin/main (ticket-049)", False),
+        ("chore(merge): arbitrary ticket-049 prose", False),
+    ],
+)
+def test_pending_pr_delivery_checks_legacy_sync_merge_ticket(tmp_path, message, bound):
+    root = _publish_repository(tmp_path)
+    _git(root, "switch", "-c", "ticket/049-resume")
+    _commit_ticket_change(root, "fix(ticket-049): keep candidate")
+    _git(root, "switch", "main")
+    (root / "upstream.txt").write_text("accepted upstream\n", encoding="utf-8")
+    _git(root, "add", "upstream.txt")
+    _git(root, "commit", "--quiet", "-m", "upstream advance")
+    base_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    _git(root, "push", "--quiet", "origin", "main")
+    _git(root, "switch", "ticket/049-resume")
+    _git(root, "merge", "--quiet", "--no-ff", "main", "-m", message)
+    head_sha = _git(root, "rev-parse", "HEAD").stdout.strip()
+    assert len(_git(root, "show", "-s", "--format=%P", "HEAD").stdout.split()) == 2
+
+    if not bound:
+        with pytest.raises(click.ClickException, match="not bound to ticket-049"):
+            delivery.pending_pull_request_delivery(
+                _pull_request_policy(), ticket="ticket-049", cwd=root
+            )
+        return
+
+    candidate = delivery.pending_pull_request_delivery(
+        _pull_request_policy(), ticket="ticket-049", cwd=root
+    )
+    assert candidate == delivery.PendingPullRequestDelivery(
+        base_sha=base_sha, head_sha=head_sha, title=message, files=("candidate.txt",)
+    )
 
 
 def test_pending_pr_delivery_accepts_conventional_commit_ticket_scope(tmp_path):
