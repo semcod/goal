@@ -1,0 +1,63 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-242",
+  "summary": "Accept unambiguous merge commit ticket suffixes",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-242/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/governance/delivery.py",
+    "tests/test_governance_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "outcome": "Resume an existing ticket through Goal when a genuine legacy synchronization merge has one exact trailing ticket binding.",
+    "acceptedBaseSha": "4a19295fe0d37f4e348a412e3ef53de0999b2abe",
+    "targetBranch": "main",
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "architecture": {
+      "status": "accepted",
+      "decision": "Read actual Git parent metadata and accept the closed legacy synchronization subject only for a merge commit. Retain ordinary commit binding, scope, authority and all required CI checks.",
+      "components": [
+        {
+          "name": "governed-delivery",
+          "paths": ["goal/governance/delivery.py", "tests/test_governance_delivery.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "rollback": "Revert the parser change through protected review; preserve original branch history.",
+      "ui": {"impact": "none", "states": [], "evidence": []}
+    },
+    "budgets": {
+      "maxAffectedComponents": 1,
+      "maxImplementationFiles": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "runtimeDependencies": [],
+    "nonGoals": [
+      "Do not accept unbound ordinary commits or ambiguous ticket identities",
+      "Do not rewrite published history, waive CI or modify standard adoption and example versions"
+    ],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python -m pytest tests/test_governance_delivery.py -q"], "evidence": "Real Git histories exercise merge and non-merge ticket binding."},
+      {"criterion": "AC-02", "commands": ["python -m pytest tests/test_governance_delivery.py -q"], "evidence": "Negative ticket identity regressions and existing delivery contracts remain passing."},
+      {"criterion": "AC-03", "commands": ["./project/governance-check.sh"], "evidence": "Managed governance, all required exact-head CI and independent protected publication."}
+    ]
+  }
+}

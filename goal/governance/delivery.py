@@ -2056,6 +2056,19 @@ def subject_binds_ticket(subject: str, ticket: str) -> bool:
     return scope_tickets == {ticket}
 
 
+def _legacy_sync_merge_binds_ticket(parents: str, subject: str, ticket: str) -> bool:
+    """Accept the old sync subject only for an actual, unambiguous Git merge."""
+    return (
+        len(parents.split()) > 1
+        and re.fullmatch(
+            r"chore\(merge\): sync current [A-Za-z0-9][A-Za-z0-9._/-]* \("
+            + re.escape(ticket) + r"\)",
+            subject,
+        ) is not None
+        and re.findall(r"\bticket-[0-9]+\b", subject) == [ticket]
+    )
+
+
 def pending_pull_request_delivery(
     policy: DeliveryPolicy,
     *,
@@ -2125,13 +2138,18 @@ def pending_pull_request_delivery(
         raise click.ClickException("pull-request resume could not compare Git history")
 
     subjects_result = _run(
-        ["git", "log", "--format=%s", f"{base_sha}..{head_sha}"],
+        ["git", "log", "--format=%P%x00%s", f"{base_sha}..{head_sha}"],
         cwd=root,
     )
-    subjects = [line for line in subjects_result.stdout.splitlines() if line]
-    if subjects_result.returncode != 0 or not subjects:
+    records = [line.split("\0", 1) for line in subjects_result.stdout.splitlines() if line]
+    if subjects_result.returncode != 0 or not records or any(len(row) != 2 for row in records):
         raise click.ClickException("pull-request resume found no committed candidate")
-    unbound = [subject for subject in subjects if not subject_binds_ticket(subject, ticket)]
+    subjects = [subject for _, subject in records]
+    unbound = [
+        subject for parents, subject in records
+        if not subject_binds_ticket(subject, ticket)
+        and not _legacy_sync_merge_binds_ticket(parents, subject, ticket)
+    ]
     if unbound:
         raise click.ClickException(
             f"pull-request resume refuses commits not bound to {ticket}: {unbound[0]}"
