@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-243",
+  "summary": "Resolve setuptools dynamic version file in publication observer",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-243/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "goal/publish/state.py",
+    "tests/test_publication_state.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "outcome": "Resolve supported static setuptools dynamic version files (tool.setuptools.dynamic.version.file) in goal.publish.state.plan_current_project while keeping version consistency, --verify-source artifact checks, and fail-closed security boundaries intact.",
+    "acceptedBaseSha": "a7863f16cdb13b7d2fa4484e9c630fdfdb679ed1",
+    "targetBranch": "main",
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "architecture": {
+      "status": "accepted",
+      "decision": "Read static pyproject.toml metadata and safely resolve bounded relative tool.setuptools.dynamic.version.file values (str or 1-item list) only when build-backend is setuptools.build_meta without backend-path and symlinks/attr/traversal are absent.",
+      "components": [
+        {
+          "name": "publication-observer",
+          "paths": [
+            "goal/publish/state.py",
+            "tests/test_publication_state.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "rollback": "Revert the commit through protected review; preserve original repository metadata and dependency pins.",
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      }
+    },
+    "budgets": {
+      "maxAffectedComponents": 1,
+      "maxImplementationFiles": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "runtimeDependencies": [],
+    "nonGoals": [
+      "Do not execute Python code or resolve tool.setuptools.dynamic.version.attr",
+      "Do not modify pyproject.toml, uv.lock, heyasa/goal.yaml, or protected publication authority"
+    ],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_publication_state.py"
+        ],
+        "evidence": "Dynamic setuptools file declarations (str, 1-item list, nested path) resolve package version and pending state without mutating the repo."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_publication_state.py tests/test_publication_source.py tests/test_push_workflow_completion.py"
+        ],
+        "evidence": "Version source drift, --verify-source comparison, and fail-closed rejection of unsafe paths/symlinks/attr/backends pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Repository governance and independent CI/Validator checks pass."
+      }
+    ]
+  }
+}

@@ -32,6 +32,7 @@ _REGISTRIES = {
     "testpypi": "https://test.pypi.org",
 }
 _MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
+_MAX_VERSION_FILE_BYTES = 4096
 
 
 @dataclass(frozen=True)
@@ -278,6 +279,73 @@ def _git_observation(*arguments):
         return None
 
 
+def _safe_relative_version_path(root: Path, raw_path: str) -> Path:
+    if (not isinstance(raw_path, str) or not raw_path or raw_path.startswith("/") or raw_path.endswith("/")
+            or "\\" in raw_path or any(ord(ch) < 32 or ord(ch) == 127 for ch in raw_path)):
+        raise ValueError("unsafe dynamic version path")
+    parts = raw_path.split("/")
+    if any(part in {"", ".", ".."} for part in parts):
+        raise ValueError("invalid dynamic version path component")
+    root_resolved = root.resolve()
+    current = root
+    for part in parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError("symlink dynamic version path")
+    if not current.is_file() or not current.resolve().is_relative_to(root_resolved):
+        raise ValueError("dynamic version file must be a regular file inside the repository")
+    return current
+
+
+def _declared_project_metadata(root: Path) -> tuple[str, str, bool]:
+    manifest = root / "pyproject.toml"
+    if manifest.is_symlink() or not manifest.is_file():
+        raise ValueError("missing pyproject.toml")
+    document = tomllib.loads(manifest.read_text(encoding="utf-8"))
+    project = document.get("project")
+    if not isinstance(project, Mapping):
+        raise ValueError("missing [project] table")
+    name = project["name"]
+    if not isinstance(name, str):
+        raise ValueError("invalid project.name")
+    dynamic = project.get("dynamic")
+    if dynamic is not None and (not isinstance(dynamic, list) or not all(isinstance(item, str) for item in dynamic)):
+        raise ValueError("invalid project.dynamic")
+    dynamic_fields = set(dynamic or ())
+    if "version" in project:
+        if "version" in dynamic_fields:
+            raise ValueError("conflicting static and dynamic version")
+        if not isinstance(project["version"], str):
+            raise ValueError("invalid project.version")
+        return name, project["version"], False
+    if "version" not in dynamic_fields:
+        raise ValueError("missing project version")
+    build = document.get("build-system")
+    if not isinstance(build, Mapping) or build.get("build-backend") != "setuptools.build_meta" or build.get("backend-path"):
+        raise ValueError("unsupported dynamic version build backend")
+    tool = document.get("tool")
+    setuptools_cfg = tool.get("setuptools") if isinstance(tool, Mapping) else None
+    dynamic_cfg = setuptools_cfg.get("dynamic") if isinstance(setuptools_cfg, Mapping) else None
+    version_cfg = dynamic_cfg.get("version") if isinstance(dynamic_cfg, Mapping) else None
+    if not isinstance(version_cfg, Mapping) or set(version_cfg.keys()) != {"file"}:
+        raise ValueError("unsupported setuptools dynamic version source")
+    file_spec = version_cfg["file"]
+    if isinstance(file_spec, list):
+        if len(file_spec) != 1 or not isinstance(file_spec[0], str):
+            raise ValueError("unsupported dynamic version file list")
+        file_spec = file_spec[0]
+    elif not isinstance(file_spec, str):
+        raise ValueError("invalid dynamic version file specification")
+    version_path = _safe_relative_version_path(root, file_spec)
+    raw = version_path.read_bytes()
+    if len(raw) > _MAX_VERSION_FILE_BYTES:
+        raise ValueError("dynamic version file too large")
+    text = raw.decode("utf-8").strip()
+    if not text or "\n" in text or "\r" in text:
+        raise ValueError("invalid dynamic version file content")
+    return name, text, True
+
+
 def plan_current_project(config=None, *, timeout=10, require_config=False, verify_source=False) -> ProjectReleasePlan:
     """Read-only release intent. Eligibility never substitutes for Goal admission.
 
@@ -330,12 +398,14 @@ def plan_current_project(config=None, *, timeout=10, require_config=False, verif
     if any((root / name).is_file() for name in ("package.json", "Cargo.toml")):
         return plan("mixed_registry_project_requires_explicit_adapter")
     try:
-        metadata = tomllib.loads((root / "pyproject.toml").read_text())["project"]
-        target = ReleaseTarget(_config_value(config, "registries.pypi.url", "pypi"), metadata["name"], metadata["version"])
+        package_name, package_version, dynamic_version = _declared_project_metadata(root)
+        target = ReleaseTarget(_config_value(config, "registries.pypi.url", "pypi"), package_name, package_version)
         if target.registry != "https://pypi.org":
             return plan("unsupported_workflow_registry")
         from goal.cli.version_state import collect_version_sources, normalize_version, version_key
         versions = {source.value for source in collect_version_sources(config) if source.value is not None}
+        if dynamic_version:
+            versions.add(normalize_version(target.version))
         if versions != {normalize_version(target.version)}:
             return plan("version_sources_disagree")
         version_key(target.version)
