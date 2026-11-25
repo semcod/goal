@@ -179,5 +179,7 @@ This file indexes governance tickets without taking ownership of
 | **ticket-236** | [`README.md`](./ticket-236/README.md) | - | - | - | - | - |
 | **ticket-237** | [`README.md`](./ticket-237/README.md) | - | - | - | - | - |
 | **ticket-238** | [`README.md`](./ticket-238/README.md) | - | - | - | - | - |
+| **ticket-239** | [`README.md`](./ticket-239/README.md) | - | - | - | - | - |
+| **ticket-242** | [`README.md`](./ticket-242/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
 | ticket-214 | Release 2.2.5 integration version files | IN_PROGRESS | EDIT | integration | ai-claude |

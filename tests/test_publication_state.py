@@ -415,3 +415,161 @@ def test_release_metadata_does_not_emit_untrusted_artifact_urls(url):
     result = observe(data)
     assert result.state == "present" and result.artifacts[0].url is None
     assert "credential" not in json.dumps(result.to_dict()) and "evil.example" not in json.dumps(result.to_dict())
+
+
+def _setup_dynamic_project(tmp_path, monkeypatch, *, file_expr='"VERSION"', version_text="4.3.2\n",
+                           backend="setuptools.build_meta", backend_path=None, static_version=None,
+                           dynamic_line='dynamic = ["version"]', init_version="_discover_version()"):
+    import yaml
+
+    config = {"publishing": {"enabled": True, "registries": ["pypi"]},
+              "versioning": {"files": ["VERSION", "pyproject.toml:version", "pkg/__init__.py:__version__"]},
+              "governance": {"delivery": {"default_mode": "pull-request", "base_branch": "main",
+                                          "remote": "origin", "require_goal_a": True,
+                                          "require_clean_governance": True}}}
+    lines = ["[build-system]", 'requires = ["setuptools>=77.0.3"]', f'build-backend = "{backend}"']
+    if backend_path is not None:
+        lines.append(f"backend-path = {backend_path}")
+    lines.extend(["", "[project]", 'name = "example-pkg"'])
+    if static_version is not None:
+        lines.append(f'version = "{static_version}"')
+    if dynamic_line is not None:
+        lines.append(dynamic_line)
+    if file_expr is not None:
+        lines.extend(["", "[tool.setuptools.dynamic]", f"version = {file_expr}"])
+    (tmp_path / "pyproject.toml").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (tmp_path / "goal.yaml").write_text(yaml.safe_dump(config), encoding="utf-8")
+    if version_text is not None:
+        (tmp_path / "VERSION").write_text(version_text, encoding="utf-8")
+    pkg = tmp_path / "pkg"
+    pkg.mkdir(exist_ok=True)
+    (pkg / "__init__.py").write_text(f"__version__ = {init_version}\n", encoding="utf-8")
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(tmp_path), *args], text=True).strip()
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.name", "Fixture")
+    git("config", "user.email", "fixture@example.invalid")
+    git("add", ".")
+    git("commit", "-qm", "fixture")
+    git("remote", "add", "origin", "https://github.com/example/release.git")
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
+    monkeypatch.chdir(tmp_path)
+    return config, git
+
+
+@pytest.mark.parametrize("spec", ["str", "list", "nested"])
+def test_project_plan_resolves_setuptools_dynamic_version_file(tmp_path, monkeypatch, spec):
+    if spec == "str":
+        file_expr, create_nested = '{file = "VERSION"}', False
+    elif spec == "list":
+        file_expr, create_nested = '{file = ["VERSION"]}', False
+    else:
+        file_expr, create_nested = '{file = "pkg/VERSION.txt"}', True
+
+    if create_nested:
+        (tmp_path / "pkg").mkdir()
+        (tmp_path / "pkg" / "VERSION.txt").write_text("4.3.2\n", encoding="utf-8")
+    config, git = _setup_dynamic_project(
+        tmp_path, monkeypatch, file_expr=file_expr, version_text=None if create_nested else "4.3.2\n",
+    )
+    if create_nested:
+        config["versioning"]["files"] = []
+        import yaml
+        (tmp_path / "goal.yaml").write_text(yaml.safe_dump(config), encoding="utf-8")
+        git("add", ".")
+        git("commit", "-qm", "drop root VERSION")
+        git("update-ref", "refs/remotes/origin/main", "HEAD")
+
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs: state.PackageObservation(
+        target.registry, target.package, "missing", None, "not_found", NOW.isoformat(), 404))
+    before = {str(p.relative_to(tmp_path)): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    planned = state.plan_current_project(config, require_config=True)
+    assert planned.package == "example-pkg" and planned.version == "4.3.2"
+    assert planned.pending is True and planned.ready_for_goal is True
+    assert planned.reason == "pending_release"
+    wire = planned.to_dict()
+    assert wire["authorization_granted"] is False and wire["source_publication_verified"] is False
+    assert {str(p.relative_to(tmp_path)): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize("mode", ["matched", "diverged"])
+def test_dynamic_version_preserves_source_verification_and_drift_detection(tmp_path, monkeypatch, mode):
+    from goal.publish import source
+
+    config, git = _setup_dynamic_project(tmp_path, monkeypatch, file_expr='{file = "VERSION"}')
+    head = git("rev-parse", "HEAD")
+    monkeypatch.setattr(state, "observe_package", lambda target, **kwargs: state.PackageObservation(
+        target.registry, target.package, "present", target.version, "fixture", NOW.isoformat()))
+    monkeypatch.setattr(state, "observe_release", lambda target, **kwargs: state.PublicationObservation(
+        target, "present", "fixture", NOW.isoformat()))
+    calls = []
+
+    def compare(root, source_head, artifacts, **kwargs):
+        calls.append((root, source_head))
+        return {"state": mode, "source_head": source_head, "scope": "tracked-python-package-content"}
+
+    monkeypatch.setattr(source, "compare_published_python", compare)
+    planned = state.plan_current_project(config, verify_source=True)
+    assert calls == [(tmp_path, head)]
+    assert planned.reason == (
+        "published_python_content_matches" if mode == "matched" else "published_python_content_differs"
+    )
+    assert planned.reconciliation_required is (mode == "diverged")
+
+    # Drift in another declared version carrier still blocks before querying PyPI.
+    (tmp_path / "pkg" / "__init__.py").write_text('__version__ = "4.3.1"\n', encoding="utf-8")
+    git("add", ".")
+    git("commit", "-qm", "drift")
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
+    monkeypatch.setattr(state, "observe_package", lambda *a, **k: pytest.fail("must not query on drift"))
+    drifted = state.plan_current_project(config, verify_source=True)
+    assert drifted.reason == "version_sources_disagree" and not drifted.pending and not drifted.ready_for_goal
+
+
+@pytest.mark.parametrize("case", [
+    "attr_only", "file_and_attr", "multi_file", "empty_list", "parent_traversal",
+    "absolute_path", "symlink_inside", "symlink_outside", "non_setuptools",
+    "backend_path", "static_and_dynamic", "missing_file", "empty_file", "multiline_file",
+])
+def test_unsupported_or_unsafe_dynamic_version_metadata_fails_closed(tmp_path, monkeypatch, case):
+    kwargs = {"file_expr": '{file = "VERSION"}', "version_text": "4.3.2\n"}
+    if case == "attr_only":
+        kwargs["file_expr"] = '{attr = "pkg.__version__"}'
+    elif case == "file_and_attr":
+        kwargs["file_expr"] = '{file = "VERSION", attr = "pkg.__version__"}'
+    elif case == "multi_file":
+        kwargs["file_expr"] = '{file = ["VERSION", "OTHER"]}'
+    elif case == "empty_list":
+        kwargs["file_expr"] = "{file = []}"
+    elif case == "parent_traversal":
+        kwargs["file_expr"] = '{file = "../VERSION"}'
+    elif case == "absolute_path":
+        kwargs["file_expr"] = '{file = "/etc/passwd"}'
+    elif case == "non_setuptools":
+        kwargs["backend"] = "hatchling.build"
+    elif case == "backend_path":
+        kwargs["backend_path"] = '["."]'
+    elif case == "static_and_dynamic":
+        kwargs["static_version"] = "4.3.2"
+    elif case == "missing_file":
+        kwargs["version_text"] = None
+    elif case == "empty_file":
+        kwargs["version_text"] = "   \n"
+    elif case == "multiline_file":
+        kwargs["version_text"] = "4.3.2\n4.3.3\n"
+
+    config, git = _setup_dynamic_project(tmp_path, monkeypatch, **kwargs)
+    if case in {"symlink_inside", "symlink_outside"}:
+        (tmp_path / "REAL_VERSION").write_text("4.3.2\n", encoding="utf-8")
+        (tmp_path / "VERSION").unlink()
+        target = tmp_path / "REAL_VERSION" if case == "symlink_inside" else tmp_path.parent / "outside_version"
+        if case == "symlink_outside":
+            target.write_text("4.3.2\n", encoding="utf-8")
+        (tmp_path / "VERSION").symlink_to(target)
+
+    monkeypatch.setattr(state, "observe_package", lambda *a, **k: pytest.fail("must not query on invalid metadata"))
+    planned = state.plan_current_project(config, require_config=True)
+    assert planned.reason == "unsupported_or_missing_package_metadata"
+    assert not planned.pending and not planned.ready_for_goal
